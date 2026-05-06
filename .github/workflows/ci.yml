@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TRADING_MODE: paper
+      ENABLE_LIVE_TRADING: "false"
+      ALLOW_GIT_COMMIT: "false"
+      ALLOW_GIT_PUSH: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e . --no-build-isolation
+      - run: pytest
+      - run: omni-trade --help
+      - run: omni-trade init demo --template routine-trader
+      - run: omni-trade validate
+        working-directory: demo
+      - run: omni-trade routine run pre_market --mode paper
+        working-directory: demo
+

@@ -1,0 +1,10 @@
+strategy:
+  default: moving_average
+  moving_average:
+    short_window: 3
+    long_window: 5
+    threshold: 0.002
+  ai_assisted:
+    committee_enabled: true
+    minimum_votes: 1
+

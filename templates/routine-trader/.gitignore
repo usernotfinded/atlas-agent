@@ -1,0 +1,16 @@
+.env
+*.secret
+*.key
+.omni/locks/
+audit/*.jsonl
+!audit/.gitkeep
+pending_orders/*.json
+!pending_orders/.gitkeep
+reports/generated/
+reports/daily/*.md
+!reports/daily/.gitkeep
+reports/weekly/*.md
+!reports/weekly/.gitkeep
+__pycache__/
+*.pyc
+

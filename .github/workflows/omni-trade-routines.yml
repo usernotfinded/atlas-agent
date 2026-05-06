@@ -1,0 +1,83 @@
+name: OmniTradeAI Paper Routines
+
+on:
+  # Default cron times are UTC and intentionally editable.
+  schedule:
+    - cron: "30 13 * * 1-5" # pre_market; edit this UTC cron as needed.
+    - cron: "35 14 * * 1-5" # market_open; edit this UTC cron as needed.
+    - cron: "30 17 * * 1-5" # midday_scan; edit this UTC cron as needed.
+    - cron: "15 21 * * 1-5" # market_close; edit this UTC cron as needed.
+    - cron: "30 22 * * 5" # weekly_review; edit this UTC cron as needed.
+  workflow_dispatch:
+
+env:
+  TRADING_MODE: paper
+  ENABLE_LIVE_TRADING: "false"
+  LIVE_BROKER: alpaca
+  ORDER_APPROVAL_MODE: manual_live
+  KILL_SWITCH_ENABLED: "false"
+  ALLOW_GIT_COMMIT: "true"
+  ALLOW_GIT_PUSH: "false"
+  GIT_COMMIT_AUTHOR_NAME: OmniTradeAI Agent
+  GIT_COMMIT_AUTHOR_EMAIL: omni-trade-ai@example.local
+  # Configure GitHub Secrets in repository settings, then uncomment only after paper validation:
+  # ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+  # ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+  # PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # CLICKUP_API_TOKEN: ${{ secrets.CLICKUP_API_TOKEN }}
+
+jobs:
+  pre_market:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 13 * * 1-5'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e . --no-build-isolation
+      - run: omni-trade routine run pre_market --mode paper
+
+  market_open:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '35 14 * * 1-5'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e . --no-build-isolation
+      - run: omni-trade routine run market_open --mode paper
+
+  midday_scan:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 17 * * 1-5'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e . --no-build-isolation
+      - run: omni-trade routine run midday_scan --mode paper
+
+  market_close:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 21 * * 1-5'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e . --no-build-isolation
+      - run: omni-trade routine run market_close --mode paper
+
+  weekly_review:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 22 * * 5'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e . --no-build-isolation
+      - run: omni-trade routine run weekly_review --mode paper

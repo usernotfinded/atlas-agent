@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omni-trade-ai"
+version = "0.1.0"
+description = "Safe-by-default autonomous AI trading framework"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "OmniTradeAI Contributors" }]
+
+[project.scripts]
+omni-trade = "omni_trade_ai.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.data-files]
+"share/omni-trade-ai/templates/routine-trader" = [
+  "templates/routine-trader/.env.example",
+  "templates/routine-trader/.gitignore",
+  "templates/routine-trader/README.md",
+]
+"share/omni-trade-ai/templates/routine-trader/memory" = [
+  "templates/routine-trader/memory/*.md",
+]
+"share/omni-trade-ai/templates/routine-trader/routines" = [
+  "templates/routine-trader/routines/README.md",
+]
+"share/omni-trade-ai/templates/routine-trader/routines/prompts" = [
+  "templates/routine-trader/routines/prompts/*.md",
+]
+"share/omni-trade-ai/templates/routine-trader/routines/schedules" = [
+  "templates/routine-trader/routines/schedules/*",
+]
+"share/omni-trade-ai/templates/routine-trader/skills" = [
+  "templates/routine-trader/skills/*.md",
+]
+"share/omni-trade-ai/templates/routine-trader/reports/daily" = [
+  "templates/routine-trader/reports/daily/.gitkeep",
+]
+"share/omni-trade-ai/templates/routine-trader/reports/weekly" = [
+  "templates/routine-trader/reports/weekly/.gitkeep",
+]
+"share/omni-trade-ai/templates/routine-trader/pending_orders" = [
+  "templates/routine-trader/pending_orders/.gitkeep",
+]
+"share/omni-trade-ai/templates/routine-trader/audit" = [
+  "templates/routine-trader/audit/.gitkeep",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
