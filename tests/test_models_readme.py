@@ -31,8 +31,8 @@ More text.
     new_content = readme_path.read_text()
     assert "<!-- ATLAS_MODEL_ROSTER_START -->" in new_content
     assert "<!-- ATLAS_MODEL_ROSTER_END -->" in new_content
-    assert "| Slot | Committee Role |" in new_content
-    assert "Lead Financial Analyst" in new_content
+    assert "| Rank | Model | Score |" in new_content
+    assert "Claude Opus 4.7" in new_content
 
 def test_update_readme_roster_missing_markers(tmp_path, monkeypatch):
     readme_path = tmp_path / "README.md"

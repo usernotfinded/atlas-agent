@@ -121,15 +121,15 @@ Default rankings are based on the Vals AI Finance Agent benchmark when available
 
 <!-- ATLAS_MODEL_ROSTER_START -->
 
-| Slot | Committee Role | Benchmark-Informed Model | Provider | Required Env Var | Status |
-|---|---|---|---|---|---|
-| 1 | Lead Financial Analyst | Claude Opus 4.7 | anthropic | `ANTHROPIC_API_KEY` | ❌ missing env var: ANTHROPIC_API_KEY |
-| 2 | Fundamental Analyst | Claude Sonnet 4.6 | anthropic | `ANTHROPIC_API_KEY` | ❌ missing env var: ANTHROPIC_API_KEY |
-| 3 | Market Research Analyst | Muse Spark | unsupported | `None` | ❌ provider adapter unavailable: unsupported; missing env var: MINIMAX_API_KEY |
-| 4 | Technical Analyst | DeepSeek V4 | openai_compatible | `OPENAI_COMPATIBLE_API_KEY` | ❌ missing env var: DEEPSEEK_API_KEY |
-| 5 | Risk Challenger | Claude Opus 4.6 (Thinking) | anthropic | `ANTHROPIC_API_KEY` | ❌ missing env var: ANTHROPIC_API_KEY |
-| 6 | Execution Planner | GPT 5.5 | openai_compatible | `OPENAI_COMPATIBLE_API_KEY` | ❌ missing env var: OPENAI_COMPATIBLE_API_KEY |
-| 7 | Final Arbiter | Gemini 3.1 Pro Preview (02/26) | openai_compatible | `OPENAI_COMPATIBLE_API_KEY` | ❌ missing env var: GEMINI_API_KEY |
+| Rank | Model | Score |
+|---|---|---|
+| 1 | Claude Opus 4.7 | 64.37% |
+| 2 | Claude Sonnet 4.6 | 63.33% |
+| 3 | Muse Spark | 60.59% |
+| 4 | DeepSeek V4 | 60.39% |
+| 5 | Claude Opus 4.6 (Thinking) | 60.05% |
+| 6 | GPT 5.5 | N/A |
+| 7 | Gemini 3.1 Pro Preview (02/26) | N/A |
 
 <!-- ATLAS_MODEL_ROSTER_END -->
 

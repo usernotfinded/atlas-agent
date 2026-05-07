@@ -389,32 +389,19 @@ def update_readme_roster() -> None:
     if start_marker not in content or end_marker not in content:
         raise ValueError(f"Missing {start_marker} or {end_marker} in README.md.")
         
-    assignment = assign_committee_roles(7)
+    models = list_roster()[:7]
     
     table_lines = [
-        "| Slot | Committee Role | Benchmark-Informed Model | Provider | Required Env Var | Status |",
-        "|---|---|---|---|---|---|"
+        "| Rank | Model | Score |",
+        "|---|---|---|"
     ]
     
-    for i, role_model in enumerate(assignment.roles, 1):
-        slot = str(i)
-        role = role_model.role or "Unassigned"
-        model_name = role_model.model_name
-        provider = role_model.provider or "unknown"
+    for model in models:
+        rank = str(model.rank)
+        model_name = model.model_name
+        score_str = f"{model.score:.2f}%" if model.score is not None else "N/A"
         
-        env_var = "None"
-        if provider == "anthropic":
-            env_var = "ANTHROPIC_API_KEY"
-        elif provider == "openai_compatible":
-            env_var = "OPENAI_COMPATIBLE_API_KEY"
-        elif provider == "deepseek":
-            env_var = "DEEPSEEK_API_KEY"
-        elif provider == "openrouter":
-            env_var = "OPENROUTER_API_KEY"
-            
-        status = "✅ Enabled" if role_model.enabled else f"❌ {role_model.reason}"
-        
-        table_lines.append(f"| {slot} | {role} | {model_name} | {provider} | `{env_var}` | {status} |")
+        table_lines.append(f"| {rank} | {model_name} | {score_str} |")
         
     table_content = "\n".join(table_lines)
     
