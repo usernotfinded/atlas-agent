@@ -17,7 +17,7 @@ from atlas_agent.research.perplexity import (
 from atlas_agent.research.web_research import OfflineResearchProvider
 from atlas_agent.routines.context_loader import load_routine_context
 from atlas_agent.routines.git_sync import GitSync, GitSyncError
-from atlas_agent.routines.lock import routine_lock
+from atlas_agent.routines.lock import RoutineLockError, routine_lock
 from atlas_agent.routines.memory_writer import append_memory, overwrite_memory
 from atlas_agent.routines.routine_result import RoutineResult
 
