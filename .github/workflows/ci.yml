@@ -17,12 +17,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m pip install -e . --no-build-isolation
-      - run: pytest
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest
+      - run: python -m pytest
       - run: omni-trade --help
-      - run: omni-trade init demo --template routine-trader
+      - run: omni-trade init demo-workspace --template routine-trader
       - run: omni-trade validate
-        working-directory: demo
+        working-directory: demo-workspace
       - run: omni-trade routine run pre_market --mode paper
-        working-directory: demo
-
+        working-directory: demo-workspace
+      - run: omni-trade routine run market_open --mode paper
+        working-directory: demo-workspace
