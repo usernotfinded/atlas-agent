@@ -1,4 +1,4 @@
-![Atlas Agent Banner](./assets/atlas-agent-banner.png)
+![Atlas Agent Banner](./assets/atlasagentbanner.png)
 
 # Atlas Agent
 
