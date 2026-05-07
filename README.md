@@ -1,3 +1,5 @@
+![Atlas Agent Banner](./assets/atlas-agent-banner.png)
+
 # Atlas Agent
 
 The self-improving AI trading agent built by Natan Mucelli.
