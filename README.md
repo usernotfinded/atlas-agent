@@ -2,8 +2,10 @@
 
 The autonomous AI trading agent that runs on routines, memory, model rosters, broker adapters, and risk gates.
 
-![MIT License](https://img.shields.io/badge/License-MIT-2DA44E)
-![Built by Natan Mucelli](https://img.shields.io/badge/Built%20by-Natan%20Mucelli-111111)
+<p align="center">
+<a href="https://github.com/usernotfinded/atlas-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-2DA44E?style=for-the-badge" alt="License: MIT"></a>
+<a href="https://github.com/usernotfinded"><img src="https://img.shields.io/badge/Built%20by-Natan%20Mucelli-111111?style=for-the-badge" alt="Built by Natan Mucelli"></a>
+</p>
 
 Atlas Agent is a routine-based autonomous AI trading agent. It wakes up on scheduled routines, reads Markdown memory, researches markets, proposes trades, routes every execution path through deterministic risk controls, writes reports, updates memory, and can optionally sync state through GitHub.
 
