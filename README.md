@@ -60,15 +60,20 @@ atlas --help
 atlas init my-trader --template routine-trader
 cd my-trader
 atlas validate
-atlas routine run pre_market --mode paper
-atlas routine run market_open --mode paper
+atlas agent status
+atlas agent plan
+atlas agent run --mode auto
 ```
 
+Run the agent. Atlas decides the operational cycle:
+- When markets are closed, Atlas researches, simulates, updates memory, and paper-trades.
+- When markets are open, Atlas can execute paper trades or create approval-gated live orders.
+
+Advanced users can still run specific scheduled routines or manual actions:
+
 ```bash
+atlas routine run pre_market --mode paper
 atlas backtest --strategy moving_average --symbol BTC-USD
-atlas models list
-atlas models update --source vals-finance-agent
-atlas models select --top 7
 ```
 
 ## How Atlas Agent Works
@@ -108,23 +113,57 @@ Scheduled routine
 | `atlas kill-switch enable` | Enable the kill switch. |
 | `atlas kill-switch disable` | Disable the kill switch. |
 
-## Self-Updating LLM Roster
+## Model roster: choose the agents behind Atlas
 
-Atlas Agent can pull benchmark-informed model rankings from Vals AI Finance Agent. It maintains up to 7 selected financial LLMs and feeds those selections into the AI committee. Models are filtered through available provider adapters and configured API keys.
+Atlas Agent can use a committee of up to 7 financial LLMs. The default roster is benchmark-informed using Vals AI Finance Agent, then filtered by the provider keys the user actually configures. 
 
-If the online source fails, Atlas Agent can use cached or manual roster data. The roster is an input for financial reasoning, not proof of trading performance.
+Default rankings are based on the Vals AI Finance Agent benchmark when available. This benchmark evaluates financial analyst tasks, not guaranteed trading performance.
 
-| Role | Purpose |
-| --- | --- |
-| Lead Financial Analyst | Coordinate the committee view and synthesize the primary thesis. |
-| Fundamental Analyst | Review business, macro, valuation, and event context. |
-| Market Research Analyst | Incorporate market data, news, and external research context. |
-| Technical Analyst | Evaluate price action, indicators, and strategy signals. |
-| Risk Challenger | Challenge assumptions, sizing, exposure, and downside scenarios. |
-| Execution Planner | Translate approved reasoning into execution-ready order intent. |
-| Final Arbiter | Produce the final proposed decision for deterministic validation. |
+<!-- ATLAS_MODEL_ROSTER_START -->
 
-The default roster files live in `configs/model_roster.yaml` and `configs/model_sources.yaml`. Generated routine workspaces can carry their own copies under `configs/`.
+| Slot | Committee Role | Benchmark-Informed Model | Provider | Required Env Var | Status |
+|---|---|---|---|---|---|
+| 1 | Lead Financial Analyst | Claude Opus 4.7 | anthropic | `ANTHROPIC_API_KEY` | ❌ missing env var: ANTHROPIC_API_KEY |
+| 2 | Fundamental Analyst | Claude Sonnet 4.6 | anthropic | `ANTHROPIC_API_KEY` | ❌ missing env var: ANTHROPIC_API_KEY |
+| 3 | Market Research Analyst | Muse Spark | unsupported | `None` | ❌ provider adapter unavailable: unsupported; missing env var: MINIMAX_API_KEY |
+| 4 | Technical Analyst | DeepSeek V4 | openai_compatible | `OPENAI_COMPATIBLE_API_KEY` | ❌ missing env var: DEEPSEEK_API_KEY |
+| 5 | Risk Challenger | Claude Opus 4.6 (Thinking) | anthropic | `ANTHROPIC_API_KEY` | ❌ missing env var: ANTHROPIC_API_KEY |
+| 6 | Execution Planner | GPT 5.5 | openai_compatible | `OPENAI_COMPATIBLE_API_KEY` | ❌ missing env var: OPENAI_COMPATIBLE_API_KEY |
+| 7 | Final Arbiter | Gemini 3.1 Pro Preview (02/26) | openai_compatible | `OPENAI_COMPATIBLE_API_KEY` | ❌ missing env var: GEMINI_API_KEY |
+
+<!-- ATLAS_MODEL_ROSTER_END -->
+
+### Provider Setup
+
+Set environment variables for the providers you want to enable. Do not put real keys in public files.
+
+```bash
+ANTHROPIC_API_KEY=...
+OPENAI_COMPATIBLE_API_KEY=...
+DEEPSEEK_API_KEY=...
+KIMI_API_KEY=...
+GROK_API_KEY=...
+OPENROUTER_API_KEY=...
+```
+
+### Selection Logic
+
+- Top ranked benchmark models are preferred.
+- Unavailable models are marked disabled.
+- If fewer than 7 providers are configured, Atlas reuses available providers or falls back safely.
+- You can edit `configs/model_sources.yaml` to map benchmark model names to real API model IDs.
+
+The roster improves model selection discipline, but it is not proof that Atlas will beat the market.
+
+Manage the roster via CLI:
+
+```bash
+atlas models update --source vals-finance-agent
+atlas models list
+atlas models select --top 7
+atlas models doctor
+atlas models update-readme
+```
 
 ## Provider Support
 

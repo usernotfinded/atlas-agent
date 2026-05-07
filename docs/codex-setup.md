@@ -7,6 +7,8 @@ Use `LocalCommandProvider` for Codex CLI, Claude Code, custom scripts, local mod
 Paper-first test:
 
 ```bash
-atlas routine run pre_market --mode paper
+atlas agent run --mode paper
+# or
+atlas agent run --mode auto
 ```
 

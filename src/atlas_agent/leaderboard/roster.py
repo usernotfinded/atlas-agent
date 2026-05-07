@@ -375,3 +375,51 @@ def _escape(value: str) -> str:
 
 def _parse_scalar(value: str) -> str:
     return value.strip().strip('"').strip("'")
+
+
+def update_readme_roster() -> None:
+    readme_path = Path("README.md")
+    if not readme_path.exists():
+        raise ValueError("README.md not found in current directory.")
+        
+    content = readme_path.read_text(encoding="utf-8")
+    start_marker = "<!-- ATLAS_MODEL_ROSTER_START -->"
+    end_marker = "<!-- ATLAS_MODEL_ROSTER_END -->"
+    
+    if start_marker not in content or end_marker not in content:
+        raise ValueError(f"Missing {start_marker} or {end_marker} in README.md.")
+        
+    assignment = assign_committee_roles(7)
+    
+    table_lines = [
+        "| Slot | Committee Role | Benchmark-Informed Model | Provider | Required Env Var | Status |",
+        "|---|---|---|---|---|---|"
+    ]
+    
+    for i, role_model in enumerate(assignment.roles, 1):
+        slot = str(i)
+        role = role_model.role or "Unassigned"
+        model_name = role_model.model_name
+        provider = role_model.provider or "unknown"
+        
+        env_var = "None"
+        if provider == "anthropic":
+            env_var = "ANTHROPIC_API_KEY"
+        elif provider == "openai_compatible":
+            env_var = "OPENAI_COMPATIBLE_API_KEY"
+        elif provider == "deepseek":
+            env_var = "DEEPSEEK_API_KEY"
+        elif provider == "openrouter":
+            env_var = "OPENROUTER_API_KEY"
+            
+        status = "✅ Enabled" if role_model.enabled else f"❌ {role_model.reason}"
+        
+        table_lines.append(f"| {slot} | {role} | {model_name} | {provider} | `{env_var}` | {status} |")
+        
+    table_content = "\n".join(table_lines)
+    
+    start_idx = content.find(start_marker) + len(start_marker)
+    end_idx = content.find(end_marker)
+    
+    new_content = content[:start_idx] + "\n\n" + table_content + "\n\n" + content[end_idx:]
+    readme_path.write_text(new_content, encoding="utf-8")

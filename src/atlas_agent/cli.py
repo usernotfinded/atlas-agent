@@ -79,6 +79,14 @@ def build_parser() -> argparse.ArgumentParser:
     run_once_parser.add_argument("--mode", choices=("paper", "live"), default="paper")
     run_once_parser.add_argument("--models", choices=("auto",), default=None)
 
+    agent = subparsers.add_parser("agent")
+    agent_sub = agent.add_subparsers(dest="agent_command")
+    agent_run = agent_sub.add_parser("run")
+    agent_run.add_argument("--mode", choices=("auto", "paper", "live"), default="auto")
+    agent_run.add_argument("--models", choices=("auto",), default=None)
+    agent_sub.add_parser("status")
+    agent_sub.add_parser("plan")
+
     routine = subparsers.add_parser("routine")
     routine_sub = routine.add_subparsers(dest="routine_command")
     routine_run = routine_sub.add_parser("run")
@@ -139,6 +147,10 @@ def build_parser() -> argparse.ArgumentParser:
     models_sub = models.add_subparsers(dest="models_command")
     models_update = models_sub.add_parser("update")
     models_update.add_argument("--source", default="vals-finance-agent")
+    
+    models_update_readme = models_sub.add_parser("update-readme")
+    models_update_readme.add_argument("--refresh", action="store_true")
+    
     models_sub.add_parser("list")
     models_select = models_sub.add_parser("select")
     models_select.add_argument("--top", type=int, default=7)
@@ -287,6 +299,32 @@ def main(argv: list[str] | None = None) -> int:
         if result.reasons:
             print("Reasons:", "; ".join(result.reasons))
         return 0 if result.status in {"filled", "held", "pending_approval"} else 2
+        
+    if args.command == "agent":
+        from atlas_agent.agent.status import get_agent_status
+        from atlas_agent.agent.planner import get_agent_plan
+        from atlas_agent.agent.runner import run_agent
+        
+        if args.agent_command == "status":
+            print(get_agent_status(config))
+            return 0
+        elif args.agent_command == "plan":
+            print(get_agent_plan(config))
+            return 0
+        elif args.agent_command == "run":
+            result = run_agent(mode=args.mode, config=config, models=args.models)
+            if result.lock_status:
+                print(result.lock_status)
+            if result.model_status:
+                print(result.model_status)
+            print(f"agent run {args.mode}: {result.status}")
+            print(f"Report: {result.report_path}")
+            if result.order_status:
+                print(f"Order status: {result.order_status}")
+            print(f"Notification: {result.notification_status}")
+            print(f"Git: {result.git_status}")
+            return 0
+
     if args.command == "routine" and args.routine_command == "run":
         try:
             result = run_routine(
@@ -414,6 +452,23 @@ def main(argv: list[str] | None = None) -> int:
         print(f"source: {result.source}")
         print(result.message)
         return 0
+        
+    if args.command == "models" and args.models_command == "update-readme":
+        if args.refresh:
+            try:
+                update_model_roster("vals-finance-agent")
+                print("model roster refreshed")
+            except ValueError as exc:
+                print(f"models update failed during refresh: {exc}")
+        try:
+            from atlas_agent.leaderboard.roster import update_readme_roster
+            update_readme_roster()
+            print("README model roster updated")
+        except ValueError as exc:
+            print(f"update-readme failed: {exc}")
+            return 2
+        return 0
+        
     if args.command == "models" and args.models_command == "list":
         print(format_models_table(list_roster()))
         return 0

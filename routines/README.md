@@ -5,7 +5,7 @@ Routines are stateless scheduled runs. Each run reads Markdown memory, performs 
 Manual run:
 
 ```bash
-atlas routine run pre_market --mode paper
+atlas agent run --mode auto
 ```
 
 Remote AI agents can paste prompts from `routines/prompts/`.

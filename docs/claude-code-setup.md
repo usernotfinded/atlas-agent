@@ -9,8 +9,8 @@ Unrestricted push is optional and risky. Keep `ALLOW_GIT_PUSH=false` until paper
 Test paper mode first:
 
 ```bash
-atlas routine run pre_market --mode paper
-atlas routine run market_open --mode paper
-atlas routine run market_close --mode paper
+atlas agent run --mode paper
+# or
+atlas agent run --mode auto
 ```
 
