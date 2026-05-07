@@ -78,13 +78,50 @@ MAX_CLI_SNIPPET_CHARS = 220
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="atlas")
+    description = r"""
+      ___ _____ _      _   ___      _   ___ ___ _  _ _____ 
+     / _ \_   _| |    /_\ / __|    /_\ / __| __| \| |_   _|
+    / ___ \| | | |__ / _ \\__ \   / _ \ (_ | _|| .` | | |  
+   /_/   \_|_| |____/_/ \_\___/  /_/ \_\___|___|_|\_| |_|  
+
+Atlas Agent is a self-improving AI trading agent.
+It runs autonomous trading cycles during market hours and
+self-improvement cycles during off-hours.
+"""
+    epilog = """
+Core Commands:
+  atlas init          - Initialize a new workspace
+  atlas validate      - Check configuration and safety gates
+  atlas agent status  - Show current agent state and mode
+  atlas agent plan    - Explain the next agent cycle
+  atlas agent run     - Start the autonomous agent cycle
+
+Safety First:
+  Atlas Agent is not financial advice. Trading involves risk.
+  Live trading is never enabled by default. Use 'atlas agent status'
+  to verify your current safety gates and trading mode.
+"""
+    parser = argparse.ArgumentParser(
+        prog="atlas",
+        description=description,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     subparsers = parser.add_subparsers(dest="command")
     init = subparsers.add_parser("init")
     init.add_argument("path", nargs="?", default=".")
     init.add_argument("--template", default=DEFAULT_TEMPLATE)
     init.add_argument("--force", action="store_true")
     subparsers.add_parser("validate")
+
+    subparsers.add_parser("status")
+    subparsers.add_parser("plan")
+    run_parser = subparsers.add_parser("run")
+    run_parser.add_argument("--mode", choices=("auto", "paper", "live"), default="auto")
+    run_parser.add_argument("--continuous", action="store_true")
+    run_parser.add_argument("--dry-run", action="store_true")
+    run_parser.add_argument("--interval", type=int, default=60)
+    run_parser.add_argument("--max-cycles", type=int, default=None)
 
     providers = subparsers.add_parser("providers")
     providers_sub = providers.add_subparsers(dest="providers_command")
@@ -513,6 +550,28 @@ def _print_replay(summary) -> None:
         print(f"- {line}")
 
 
+def _is_workspace(config: AtlasConfig) -> bool:
+    # If memory_dir is absolute, we assume it's a test or explicit config
+    if config.memory_dir.is_absolute():
+        return True
+    # A workspace is identified by the presence of core directories
+    # Check for memory and either configs or routines to be sure
+    return (config.memory_dir.exists() and 
+            ((config.memory_dir.parent / "configs").exists() or 
+             (config.memory_dir.parent / "routines").exists()))
+
+
+def _print_welcome() -> None:
+    print(r"""
+      ___ _____ _      _   ___      _   ___ ___ _  _ _____ 
+     / _ \_   _| |    /_\ / __|    /_\ / __| __| \| |_   _|
+    / ___ \| | | |__ / _ \\__ \   / _ \ (_ | _|| .` | | |  
+   /_/   \_|_| |____/_/ \_\___/  /_/ \_\___|___|_|\_| |_|  
+
+Atlas Agent is a self-improving AI trading agent.
+""")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     try:
@@ -521,7 +580,54 @@ def main(argv: list[str] | None = None) -> int:
         if exc.code == 0:
             return 0
         raise
-    config = AtlasConfig.from_env()
+
+    try:
+        config = AtlasConfig.from_env()
+    except ValueError as exc:
+        print(f"Configuration error: {exc}")
+        return 1
+
+    # Commands that do not require a workspace
+    if args.command in {"init", "validate", "models"} or "--help" in sys.argv or "-h" in sys.argv:
+        pass
+    elif not _is_workspace(config):
+        print("Atlas Agent needs a workspace before it can run.")
+        print("")
+        print("Create one:")
+        print("  atlas init my-trader --template routine-trader")
+        print("  cd my-trader")
+        print("  atlas")
+        return 2
+
+    if args.command is None:
+        from atlas_agent.agent.runner import run_agent
+        _print_welcome()
+        print("Starting autonomous cycle...")
+        result = run_agent(mode="auto", config=config, continuous=False)
+        return 0 if result and result.status in {"filled", "held", "pending_approval", "simulated", "complete"} else 2
+
+    if args.command == "status":
+        from atlas_agent.agent.status import get_agent_status
+        print(get_agent_status(config))
+        return 0
+    if args.command == "plan":
+        from atlas_agent.agent.planner import get_agent_plan
+        print(get_agent_plan(config))
+        return 0
+    if args.command == "run":
+        from atlas_agent.agent.planner import get_agent_plan
+        from atlas_agent.agent.runner import run_agent
+        if getattr(args, "dry_run", False):
+            print(get_agent_plan(config))
+            return 0
+        result = run_agent(
+            mode=args.mode,
+            config=config,
+            continuous=args.continuous,
+            interval=args.interval,
+            max_cycles=args.max_cycles
+        )
+        return 0 if result and result.status in {"filled", "held", "pending_approval", "simulated", "complete"} else 2
 
     if args.command == "init":
         try:
@@ -1110,7 +1216,6 @@ def main(argv: list[str] | None = None) -> int:
             print(f"| {model['rank']} | {model['model']} | {score_str} |")
         return 0
 
-    parser.print_help()
     return 0
 
 

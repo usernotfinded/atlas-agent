@@ -23,7 +23,7 @@ AI output is advisory. Broker execution stays behind strategy validation, `RiskM
 
 **Benchmark-informed model reference.** Atlas Agent provides a ranked reference of finance-capable LLMs using the Vals AI Finance Agent benchmark. This is model-selection guidance, not mandatory runtime orchestration.
 
-**Agent-first autonomous operation.** Run `atlas agent status`, `atlas agent plan`, and `atlas agent run --mode auto` as the primary UX. Named routines remain available for advanced scheduling and inspection.
+**Agent-first autonomous operation.** Run `atlas`, `atlas status`, and `atlas plan` as the primary UX. Named routines remain available for advanced scheduling and inspection.
 
 **Built-in learning loop.** Closed-market routines can review reports, rejected orders, research notes, operator feedback, and memory files to improve future behavior.
 
@@ -73,17 +73,24 @@ atlas --help
 ```bash
 atlas init my-trader --template routine-trader
 cd my-trader
-atlas validate
-atlas agent status
-atlas agent plan
-atlas agent run --mode auto
+atlas
 ```
 
-Run the agent. Atlas decides the operational cycle:
+`atlas` starts one autonomous agent cycle. It decides the operational cycle:
 - When markets are open, Atlas Agent runs the trading cycle through broker adapters and deterministic risk gates. If live execution is configured and permitted by policy, live orders still pass through approval, audit logging, kill-switch checks, and broker-specific gates. If live execution is not permitted, the same cycle can run in simulation.
 - When markets are closed, Atlas Agent does not force live execution. It researches, simulates, paper trades, reflects, improves skills, updates memory, and prepares for the next market session.
 
-Advanced users can still run specific scheduled routines or manual actions:
+## Top-level Commands
+
+Atlas provides convenience commands for the primary agent workflow:
+
+- `atlas`: Start one autonomous cycle.
+- `atlas status`: Show current agent state and mode (alias for `atlas agent status`).
+- `atlas plan`: Explain the next agent cycle (alias for `atlas agent plan`).
+- `atlas run --continuous`: Keep the agent running.
+- `atlas run --dry-run`: Preview the next cycle without executing (alias for `atlas plan`).
+
+Advanced users can still run specific scheduled routines or manual actions using the `atlas agent ...` and `atlas routine ...` commands.
 
 ```bash
 atlas routine run pre_market --mode paper
@@ -194,6 +201,10 @@ Keep secrets in local environment files or platform secret stores, validate the 
 
 | Command | Purpose |
 | --- | --- |
+| `atlas` | Start one autonomous cycle (alias for `atlas agent run --once`). |
+| `atlas status` | Show market state, mode, broker, kill switch, and pending-order status. |
+| `atlas plan` | Explain the next open-market or closed-market cycle. |
+| `atlas run --continuous` | Keep the agent running in autonomous mode. |
 | `atlas init` | Create a workspace from a template. |
 | `atlas validate` | Check local configuration and create required runtime directories. |
 | `atlas agent status` | Show market state, mode, broker, kill switch, and pending-order status. |
