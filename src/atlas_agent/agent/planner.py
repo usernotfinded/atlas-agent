@@ -1,33 +1,53 @@
 from __future__ import annotations
 
-import datetime
+from typing import Any
 
 from atlas_agent.config import AtlasConfig
 from atlas_agent.market.session import MarketSessionDetector
 
 
 def get_agent_plan(config: AtlasConfig) -> str:
+    payload = get_agent_plan_payload(config)
+    detector = MarketSessionDetector()
+    lines = [
+        "Atlas Agent Plan",
+        f"Detected Market State: {payload['market_state']}",
+        f"Requested Mode: {payload['requested_mode']}",
+        ""
+    ]
+    lines.append(f"Plan: {payload['summary']}")
+    if payload.get("safety_note"):
+        lines.append(f"Safety: {payload['safety_note']}")
+    lines.append(f"Market Calendar: {detector.config.timezone}")
+    return "\n".join(lines)
+
+
+def get_agent_plan_payload(config: AtlasConfig) -> dict[str, Any]:
     detector = MarketSessionDetector()
     state = detector.get_state()
     mode = config.trading_mode
-    
-    lines = [
-        "Atlas Agent Plan",
-        f"Detected Market State: {state}",
-        f"Requested Mode: {mode}",
-        ""
-    ]
-    
+    summary: str
+    safety_note = ""
     if state == "open":
         if mode == "live" and not config.enable_live_trading:
-            lines.append("Plan: Live mode requested but ENABLE_LIVE_TRADING is false. Fails safely. Pending/rejected flow.")
+            summary = (
+                "Live mode requested but ENABLE_LIVE_TRADING is false; "
+                "order flow fails safely and remains non-executable."
+            )
+            safety_note = "Live execution remains gated until explicit enable + approvals."
         elif mode == "live":
-            lines.append("Plan: Market open. Trade cycle (Live execution with risk manager and approval gates).")
+            summary = "Market open. Live trade cycle with risk manager and approval gates."
+            safety_note = "Each live order still requires kill-switch pass, risk pass, and approval."
         else:
-            lines.append("Plan: Market open. Trade cycle (Paper execution).")
+            summary = "Market open. Paper trade cycle."
     elif state in ("closed", "premarket", "afterhours", "weekend", "holiday"):
-        lines.append("Plan: Market closed. Research/planning/paper simulation cycle. No live broker orders will be placed.")
+        summary = "Market closed. Research/planning/paper simulation cycle; no live broker orders."
     else:
-        lines.append("Plan: Unknown market state. Defaulting to paper/research only.")
-        
-    return "\n".join(lines)
+        summary = "Unknown market state. Defaulting to paper/research cycle."
+        safety_note = "Unknown state never forces live execution."
+    return {
+        "market_state": state,
+        "requested_mode": mode,
+        "summary": summary,
+        "safety_note": safety_note,
+    }

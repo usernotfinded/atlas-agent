@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 
+
 def mine_skills_from_journal(memory_dir: Path) -> list[dict]:
     """Placeholder for mining skills from journal experience."""
     journal_path = memory_dir / "trade_journal.md"
@@ -42,6 +43,13 @@ def save_proposed_skill(skills_dir: Path, skill: dict) -> Path:
 - Last Updated: {datetime.date.today().isoformat()}
 - Confidence Level: Inferred
 - Owner: Atlas Agent
+
+## Metadata
+- status: proposed
+- confidence: 0.40
+- risk_level: medium
+- evidence: {skill['evidence']}
+- last_updated: {datetime.date.today().isoformat()}
 """
     path.write_text(content, encoding="utf-8")
     return path

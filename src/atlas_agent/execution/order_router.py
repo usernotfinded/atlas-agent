@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from atlas_agent.brokers.base import Broker
 from atlas_agent.config import AtlasConfig
+from atlas_agent.events.log import EventLogger
 from atlas_agent.execution.approval import ApprovalManager
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.execution.order import Order, OrderResult
@@ -27,7 +28,23 @@ class OrderRouter:
         portfolio: PortfolioState,
         market_price: float,
         market_is_open: bool = True,
+        event_logger: EventLogger | None = None,
+        run_id: str | None = None,
+        command: str = "atlas run-once",
     ) -> OrderResult:
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "order_created",
+                run_id=run_id,
+                command=command,
+                mode=mode,
+                payload={
+                    "order_id": order.id,
+                    "symbol": order.symbol,
+                    "side": order.side,
+                    "quantity": order.quantity,
+                },
+            )
         decision = self.risk_manager.validate_order(
             order,
             portfolio,
@@ -36,6 +53,21 @@ class OrderRouter:
             market_is_open=market_is_open,
         )
         if not decision.allowed:
+            if event_logger is not None and run_id is not None:
+                event_logger.write(
+                    "risk_rejected",
+                    run_id=run_id,
+                    command=command,
+                    mode=mode,
+                    payload={"order_id": order.id, "reasons": list(decision.reasons)},
+                )
+                event_logger.write(
+                    "order_rejected",
+                    run_id=run_id,
+                    command=command,
+                    mode=mode,
+                    payload={"order_id": order.id, "reasons": list(decision.reasons)},
+                )
             self.audit.write(
                 "order_rejected",
                 {"order_id": order.id, "reasons": decision.reasons},
@@ -48,10 +80,26 @@ class OrderRouter:
                 message="risk manager rejected order",
                 reasons=decision.reasons,
             )
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "risk_approved",
+                run_id=run_id,
+                command=command,
+                mode=mode,
+                payload={"order_id": order.id},
+            )
 
         if mode == "live":
             live_reasons = self.config.live_disabled_reasons()
             if live_reasons:
+                if event_logger is not None and run_id is not None:
+                    event_logger.write(
+                        "order_rejected",
+                        run_id=run_id,
+                        command=command,
+                        mode=mode,
+                        payload={"order_id": order.id, "reasons": list(live_reasons)},
+                    )
                 self.audit.write(
                     "live_order_rejected",
                     {"order_id": order.id, "reasons": live_reasons},
@@ -74,6 +122,14 @@ class OrderRouter:
                 )
             if not self.approval_manager.is_approved(order.id):
                 pending_path = self.approval_manager.create_pending_order(order)
+                if event_logger is not None and run_id is not None:
+                    event_logger.write(
+                        "order_pending_approval",
+                        run_id=run_id,
+                        command=command,
+                        mode=mode,
+                        payload={"order_id": order.id, "path": str(pending_path)},
+                    )
                 self.audit.write(
                     "pending_live_order_created",
                     {"order_id": order.id, "path": str(pending_path)},
@@ -87,9 +143,20 @@ class OrderRouter:
                 )
 
         result = broker.place_order(order)
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "order_executed" if result.filled else "order_rejected",
+                run_id=run_id,
+                command=command,
+                mode=mode,
+                payload={
+                    "order_id": order.id,
+                    "status": result.status,
+                    "message": result.message,
+                },
+            )
         self.audit.write(
             "broker_order_result",
             {"order_id": order.id, "status": result.status, "filled": result.filled},
         )
         return result
-

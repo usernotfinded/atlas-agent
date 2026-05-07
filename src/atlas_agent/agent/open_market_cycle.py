@@ -4,10 +4,18 @@ import datetime
 from pathlib import Path
 
 from atlas_agent.config import AtlasConfig
+from atlas_agent.events.log import EventLogger
 from atlas_agent.routines.engine import RoutineResult, run_routine
 
 
-def run_open_market_cycle(config: AtlasConfig, mode: str) -> RoutineResult:
+def run_open_market_cycle(
+    config: AtlasConfig,
+    mode: str,
+    *,
+    event_logger: EventLogger | None = None,
+    run_id: str | None = None,
+    command: str = "atlas agent run",
+) -> RoutineResult:
     # Use market_open routine as the base for open market cycle
     # We will reuse run_routine for now to utilize existing infrastructure (memory, AI, report)
     # but we direct the report to agent open market path
@@ -20,6 +28,9 @@ def run_open_market_cycle(config: AtlasConfig, mode: str) -> RoutineResult:
         mode=mode,
         config=config,
         order_runner=lambda **kwargs: run_once(**kwargs),
+        event_logger=event_logger,
+        run_id=run_id,
+        command=command,
     )
     
     import dataclasses

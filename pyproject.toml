@@ -44,6 +44,15 @@ where = ["src"]
 "share/atlas-agent/templates/routine-trader/reports/daily" = [
   "templates/routine-trader/reports/daily/.gitkeep",
 ]
+"share/atlas-agent/templates/routine-trader/reports/agent" = [
+  "templates/routine-trader/reports/agent/.gitkeep",
+]
+"share/atlas-agent/templates/routine-trader/reports/learning" = [
+  "templates/routine-trader/reports/learning/.gitkeep",
+]
+"share/atlas-agent/templates/routine-trader/reports/reflections" = [
+  "templates/routine-trader/reports/reflections/.gitkeep",
+]
 "share/atlas-agent/templates/routine-trader/reports/weekly" = [
   "templates/routine-trader/reports/weekly/.gitkeep",
 ]
@@ -52,6 +61,9 @@ where = ["src"]
 ]
 "share/atlas-agent/templates/routine-trader/audit" = [
   "templates/routine-trader/audit/.gitkeep",
+]
+"share/atlas-agent/templates/routine-trader/events" = [
+  "templates/routine-trader/events/.gitkeep",
 ]
 "share/atlas-agent/templates/routine-trader/configs" = [
   "templates/routine-trader/configs/brokers.example.yaml",

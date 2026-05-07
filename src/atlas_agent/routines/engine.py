@@ -5,7 +5,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from atlas_agent.config import AtlasConfig
+from atlas_agent.events.log import EventLogger
 from atlas_agent.execution.order import OrderResult
+from atlas_agent.leaderboard.roster import list_roster
 from atlas_agent.notifications.clickup import (
     ClickUpNotifier,
     NotificationConfigurationError,
@@ -42,6 +44,9 @@ def run_routine(
     research_provider=None,
     notifier: ClickUpNotifier | None = None,
     git_sync: GitSync | None = None,
+    event_logger: EventLogger | None = None,
+    run_id: str | None = None,
+    command: str = "atlas routine run",
 ) -> RoutineResult:
     if name not in ROUTINE_NAMES:
         raise ValueError(f"unknown routine: {name}")
@@ -59,6 +64,9 @@ def run_routine(
             notifier=notifier,
             git_sync=git_sync,
             lock_status=lock.recovery_message,
+            event_logger=event_logger,
+            run_id=run_id,
+            command=command,
         )
 
 
@@ -72,15 +80,58 @@ def _run_routine_unlocked(
     notifier: ClickUpNotifier | None = None,
     git_sync: GitSync | None = None,
     lock_status: str | None = None,
+    event_logger: EventLogger | None = None,
+    run_id: str | None = None,
+    command: str = "atlas routine run",
 ) -> RoutineResult:
     context = load_routine_context(
         memory_dir=config.memory_dir,
         reports_dir=config.reports_dir,
     )
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "memory_loaded",
+            run_id=run_id,
+            command=command,
+            mode=mode,
+            payload={"files": sorted(context.memory.keys())},
+        )
+
     research = _run_research(config.default_symbol, research_provider)
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "research_completed",
+            run_id=run_id,
+            command=command,
+            mode=mode,
+            payload={"summary": research[:200]},
+        )
+        top_models = [
+            {"rank": model.rank, "model": model.model_name, "score": model.score}
+            for model in list_roster()[:3]
+        ]
+        event_logger.write(
+            "model_guidance_loaded",
+            run_id=run_id,
+            command=command,
+            mode=mode,
+            payload={"top_models": top_models},
+        )
+
     order_result: OrderResult | None = None
     if name in {"market_open", "midday_scan"} and order_runner is not None:
-        order_result = order_runner(mode=mode, config=config)
+        try:
+            order_result = order_runner(
+                mode=mode,
+                config=config,
+                event_logger=event_logger,
+                run_id=run_id,
+                command=command,
+            )
+        except TypeError as exc:
+            if "unexpected keyword argument" not in str(exc):
+                raise
+            order_result = order_runner(mode=mode, config=config)
 
     report_path = _write_routine_report(
         name=name,
@@ -98,8 +149,33 @@ def _run_routine_unlocked(
         research_summary=research,
         order_result=order_result,
     )
+    if event_logger is not None and run_id is not None and updated:
+        event_logger.write(
+            "memory_updated",
+            run_id=run_id,
+            command=command,
+            mode=mode,
+            payload={"files": [str(path) for path in updated]},
+        )
+
     notification_status = _notify(notifier, report_path)
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "notification_sent",
+            run_id=run_id,
+            command=command,
+            mode=mode,
+            payload={"status": notification_status},
+        )
     git_status = _sync_git(git_sync, name)
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "git_sync_completed",
+            run_id=run_id,
+            command=command,
+            mode=mode,
+            payload={"status": git_status},
+        )
     return RoutineResult(
         name=name,
         mode=mode,

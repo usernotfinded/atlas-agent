@@ -12,9 +12,12 @@ demo-workspace/
 *.key
 audit/*.jsonl
 !audit/.gitkeep
+events/*.jsonl
+!events/.gitkeep
 pending_orders/*.json
 !pending_orders/.gitkeep
 reports/generated/
+reports/**/*.md
 reports/agent/*.md
 reports/daily/*.md
 !reports/daily/.gitkeep
@@ -22,6 +25,7 @@ reports/learning/*.md
 reports/reflections/*.md
 reports/weekly/*.md
 !reports/weekly/.gitkeep
+!reports/**/.gitkeep
 reports/*.json
 reports/*.md
 reports/*.csv

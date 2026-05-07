@@ -4,10 +4,18 @@ import datetime
 from pathlib import Path
 
 from atlas_agent.config import AtlasConfig
+from atlas_agent.events.log import EventLogger
 from atlas_agent.routines.engine import RoutineResult, run_routine
 
 
-def run_closed_market_cycle(config: AtlasConfig, mode: str) -> RoutineResult:
+def run_closed_market_cycle(
+    config: AtlasConfig,
+    mode: str,
+    *,
+    event_logger: EventLogger | None = None,
+    run_id: str | None = None,
+    command: str = "atlas agent run",
+) -> RoutineResult:
     # Force paper mode for closed market
     safe_mode = "paper"
     
@@ -19,6 +27,9 @@ def run_closed_market_cycle(config: AtlasConfig, mode: str) -> RoutineResult:
         mode=safe_mode,
         config=config,
         order_runner=lambda **kwargs: run_once(**kwargs),
+        event_logger=event_logger,
+        run_id=run_id,
+        command=command,
     )
     
     import dataclasses

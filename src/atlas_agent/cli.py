@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
+from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 from atlas_agent.backtest.runner import run_backtest
 from atlas_agent.brokers.alpaca import AlpacaBroker
@@ -14,6 +17,14 @@ from atlas_agent.execution.approval import ApprovalManager
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.execution.order import Order, OrderResult
 from atlas_agent.execution.order_router import OrderRouter
+from atlas_agent.events import (
+    EventLogger,
+    diagnose_events,
+    generate_run_id,
+    latest_event_file,
+    read_event_file,
+    read_recent_events,
+)
 from atlas_agent.leaderboard.roster import (
     list_roster,
     update_readme_roster,
@@ -42,6 +53,10 @@ from atlas_agent.notifications.clickup import (
     ClickUpNotifier,
     NotificationConfigurationError,
 )
+from atlas_agent.output import emit_json, error_envelope, success_envelope
+from atlas_agent.memory_doctor import run_memory_doctor
+from atlas_agent.replay import replay_from_path, replay_last_run
+from atlas_agent.demo import seed_demo_workspace
 from atlas_agent.strategies.moving_average import MovingAverageStrategy
 from atlas_agent.workspace import (
     DEFAULT_TEMPLATE,
@@ -94,14 +109,17 @@ def build_parser() -> argparse.ArgumentParser:
     agent_run.add_argument("--continuous", action="store_true")
     agent_run.add_argument("--interval", type=int, default=60)
     agent_run.add_argument("--max-cycles", type=int, default=None)
-    agent_sub.add_parser("status")
-    agent_sub.add_parser("plan")
+    agent_status = agent_sub.add_parser("status")
+    agent_status.add_argument("--json", action="store_true")
+    agent_plan = agent_sub.add_parser("plan")
+    agent_plan.add_argument("--json", action="store_true")
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
 
     skills = subparsers.add_parser("skills")
     skills_sub = skills.add_subparsers(dest="skills_command")
-    skills_sub.add_parser("list")
+    skills_list = skills_sub.add_parser("list")
+    skills_list.add_argument("--json", action="store_true")
     skills_sub.add_parser("propose")
     skills_sub.add_parser("create-from-journal")
     skills_sub.add_parser("improve")
@@ -109,6 +127,10 @@ def build_parser() -> argparse.ArgumentParser:
     skills_approve.add_argument("skill_name")
     skills_archive = skills_sub.add_parser("archive")
     skills_archive.add_argument("skill_name")
+    skills_show = skills_sub.add_parser("show")
+    skills_show.add_argument("skill_name")
+    skills_diff = skills_sub.add_parser("diff")
+    skills_diff.add_argument("skill_name")
 
     memory = subparsers.add_parser("memory")
     memory_sub = memory.add_subparsers(dest="memory_command")
@@ -116,8 +138,11 @@ def build_parser() -> argparse.ArgumentParser:
     memory_ingest.add_argument("--file", type=Path, required=True)
     memory_search = memory_sub.add_parser("search")
     memory_search.add_argument("query")
+    memory_search.add_argument("--json", action="store_true")
     memory_sub.add_parser("summarize")
     memory_sub.add_parser("nudge")
+    memory_doctor = memory_sub.add_parser("doctor")
+    memory_doctor.add_argument("--json", action="store_true")
 
     user = subparsers.add_parser("user")
     user_sub = user.add_subparsers(dest="user_command")
@@ -160,7 +185,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     portfolio = subparsers.add_parser("portfolio")
     portfolio_sub = portfolio.add_subparsers(dest="portfolio_command")
-    portfolio_sub.add_parser("show")
+    portfolio_show = portfolio_sub.add_parser("show")
+    portfolio_show.add_argument("--json", action="store_true")
 
     risk = subparsers.add_parser("risk")
     risk_sub = risk.add_subparsers(dest="risk_command")
@@ -195,16 +221,38 @@ def build_parser() -> argparse.ArgumentParser:
     schedule_github = schedule_sub.add_parser("github-actions")
     schedule_github.add_argument("--template", default=DEFAULT_TEMPLATE)
 
+    events = subparsers.add_parser("events")
+    events_sub = events.add_subparsers(dest="events_command")
+    events_list = events_sub.add_parser("list")
+    events_list.add_argument("--json", action="store_true")
+    events_list.add_argument("--limit", type=int, default=30)
+    events_tail = events_sub.add_parser("tail")
+    events_tail.add_argument("--limit", type=int, default=20)
+    events_sub.add_parser("doctor")
+
+    replay = subparsers.add_parser("replay")
+    replay.add_argument("target", nargs="?", default=None)
+    replay.add_argument("--last", action="store_true")
+
+    demo = subparsers.add_parser("demo")
+    demo_sub = demo.add_subparsers(dest="demo_command")
+    demo_seed = demo_sub.add_parser("seed")
+    demo_seed.add_argument("--force", action="store_true")
+
     models = subparsers.add_parser("models")
     models_sub = models.add_subparsers(dest="models_command")
     models_sub.add_parser("update-readme")
-    models_sub.add_parser("list")
+    models_list = models_sub.add_parser("list")
+    models_list.add_argument("--json", action="store_true")
     return parser
 
 
 def run_once(
     mode: str,
     config: AtlasConfig | None = None,
+    event_logger: EventLogger | None = None,
+    run_id: str | None = None,
+    command: str = "atlas run-once",
 ) -> OrderResult:
     config = config or AtlasConfig.from_env()
     config.ensure_dirs()
@@ -212,6 +260,18 @@ def run_once(
     bars = CSVMarketDataProvider(config.data_path).load_bars(config.default_symbol)
     decision = MovingAverageStrategy().decide(bars)
     latest = bars[-1]
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "decision_proposed",
+            run_id=run_id,
+            command=command,
+            mode=mode,
+            payload={
+                "symbol": decision.symbol,
+                "confidence": decision.confidence,
+                "action": decision.proposed_order.side if decision.proposed_order else "hold",
+            },
+        )
     if decision.proposed_order is None:
         return OrderResult(False, False, "none", "held", "strategy proposed hold")
 
@@ -243,6 +303,9 @@ def run_once(
         broker=broker,
         portfolio=portfolio,
         market_price=latest.close,
+        event_logger=event_logger,
+        run_id=run_id,
+        command=command,
     )
 
 
@@ -265,33 +328,37 @@ def _broker_for_mode(
     return CCXTBroker(config)
 
 
-def _handle_memory_search(config: AtlasConfig, query: str) -> int:
+def _memory_search_matches(config: AtlasConfig, query: str) -> tuple[list[dict[str, str]], str | None]:
     memory_dir = config.memory_dir
     if not memory_dir.exists():
-        print(f"No memory directory found at {memory_dir}.")
-        return 0
+        return [], f"No memory directory found at {memory_dir}."
 
     files = _memory_markdown_files(memory_dir)
     if not files:
-        print(f"No Markdown memory files found under {memory_dir} or {memory_dir / 'conversations'}.")
-        return 0
+        return [], f"No Markdown memory files found under {memory_dir} or {memory_dir / 'conversations'}."
 
     query_lower = query.lower()
-    matches: list[tuple[Path, str]] = []
+    matches: list[dict[str, str]] = []
     for path in files:
         content = path.read_text(encoding="utf-8", errors="replace")
         index = content.lower().find(query_lower)
         if index < 0:
             continue
         snippet = _snippet(content, index, len(query))
-        matches.append((path, snippet))
+        matches.append({"path": _display_path(path), "snippet": snippet})
+    return matches, None
 
+
+def _handle_memory_search(config: AtlasConfig, query: str) -> int:
+    matches, warning = _memory_search_matches(config, query)
+    if warning:
+        print(warning)
+        return 0
     if not matches:
         print(f"No memory matches found for: {query}")
         return 0
-
-    for path, snippet in matches:
-        print(f"{_display_path(path)}: {snippet}")
+    for match in matches:
+        print(f"{match['path']}: {match['snippet']}")
     return 0
 
 
@@ -349,6 +416,103 @@ def _handle_deploy(kind: str) -> int:
     return 0
 
 
+def _emit_json_success(command: str, data: dict[str, Any]) -> int:
+    emit_json(success_envelope(command, data))
+    return 0
+
+
+def _emit_json_error(
+    command: str,
+    *,
+    code: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+) -> int:
+    emit_json(error_envelope(command, code=code, message=message, details=details))
+    return 2
+
+
+def _portfolio_payload(config: AtlasConfig) -> dict[str, Any]:
+    workspace = config.memory_dir.parent
+    return {
+        "workspace": str(workspace),
+        "trading_mode": config.trading_mode,
+        "live_enabled": config.enable_live_trading,
+        "broker": config.live_broker if config.trading_mode == "live" else "paper",
+        "pending_orders": len(list(config.pending_orders_dir.glob("*.json"))),
+        "files": {
+            "portfolio": str(config.memory_dir / "portfolio.md"),
+            "open_positions": str(config.memory_dir / "open_positions.md"),
+            "trade_journal": str(config.memory_dir / "trade_journal.md"),
+        },
+    }
+
+
+def _memory_doctor_payload(config: AtlasConfig) -> dict[str, Any]:
+    skills_dir = config.memory_dir.parent / "skills"
+    result = run_memory_doctor(
+        memory_dir=config.memory_dir,
+        pending_orders_dir=config.pending_orders_dir,
+        reports_dir=config.reports_dir,
+        skills_dir=skills_dir,
+        stale_hours=24,
+    )
+    return {
+        "ok": result.ok,
+        "checked_at": result.checked_at,
+        "errors": [asdict(item) for item in result.errors],
+        "warnings": [asdict(item) for item in result.warnings],
+        "finding_count": len(result.findings),
+    }
+
+
+def _print_memory_doctor_text(payload: dict[str, Any]) -> None:
+    print("Memory Doctor")
+    print(f"Checked at: {payload['checked_at']}")
+    if not payload["errors"] and not payload["warnings"]:
+        print("No issues found.")
+        return
+    for error in payload["errors"]:
+        print(f"[ERROR] {error['code']}: {error['message']} ({error.get('path') or 'n/a'})")
+    for warning in payload["warnings"]:
+        print(f"[WARN] {warning['code']}: {warning['message']} ({warning.get('path') or 'n/a'})")
+
+
+def _events_to_payload(events: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "count": len(events),
+        "events": events,
+    }
+
+
+def _print_replay(summary) -> None:
+    print("Replay")
+    print(f"Source: {summary.source}")
+    print(f"Run ID: {summary.run_id or 'n/a'}")
+    print("")
+    print("inputs/context")
+    for line in summary.inputs_context or ["- none"]:
+        print(f"- {line}")
+    print("market state")
+    for line in summary.market_state or ["- none"]:
+        print(f"- {line}")
+    print("decision")
+    for line in summary.decision or ["- none"]:
+        print(f"- {line}")
+    print("risk outcome")
+    for line in summary.risk_outcome or ["- none"]:
+        print(f"- {line}")
+    print("order outcome")
+    for line in summary.order_outcome or ["- none"]:
+        print(f"- {line}")
+    print("memory/report artifacts")
+    for line in summary.artifacts or ["- none"]:
+        print(f"- {line}")
+    print("errors/warnings")
+    for line in summary.warnings or ["- none"]:
+        print(f"- {line}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     try:
@@ -400,30 +564,109 @@ def main(argv: list[str] | None = None) -> int:
             print("CSV trade log:", result.report_paths[2])
         return 0
     if args.command == "run-once":
-        result = run_once(mode=args.mode, config=config)
+        event_logger = EventLogger(config.events_dir)
+        run_id = generate_run_id()
+        event_logger.write(
+            "agent_started",
+            run_id=run_id,
+            command="atlas run-once",
+            mode=args.mode,
+            payload={"requested_mode": args.mode},
+        )
+        result = run_once(
+            mode=args.mode,
+            config=config,
+            event_logger=event_logger,
+            run_id=run_id,
+            command="atlas run-once",
+        )
+        event_logger.write(
+            "agent_completed" if result.status in {"filled", "held", "pending_approval"} else "agent_failed",
+            run_id=run_id,
+            command="atlas run-once",
+            mode=args.mode,
+            payload={"status": result.status, "message": result.message},
+        )
         print(f"{args.mode} result: {result.status} - {result.message}")
         if result.reasons:
             print("Reasons:", "; ".join(result.reasons))
         return 0 if result.status in {"filled", "held", "pending_approval"} else 2
         
     if args.command == "agent":
-        from atlas_agent.agent.status import get_agent_status
-        from atlas_agent.agent.planner import get_agent_plan
+        from atlas_agent.agent.planner import get_agent_plan, get_agent_plan_payload
         from atlas_agent.agent.runner import run_agent
+        from atlas_agent.agent.status import get_agent_status, get_agent_status_payload
         from atlas_agent.learning import run_learning_cycle, generate_reflection
         
         if args.agent_command == "status":
+            if getattr(args, "json", False):
+                return _emit_json_success(
+                    "atlas agent status",
+                    get_agent_status_payload(config),
+                )
             print(get_agent_status(config))
             return 0
         elif args.agent_command == "plan":
+            if getattr(args, "json", False):
+                return _emit_json_success(
+                    "atlas agent plan",
+                    get_agent_plan_payload(config),
+                )
             print(get_agent_plan(config))
             return 0
         elif args.agent_command == "learn":
-            report = run_learning_cycle(config.memory_dir, config.reports_dir, config.memory_dir.parent / "skills")
+            event_logger = EventLogger(config.events_dir)
+            run_id = generate_run_id()
+            event_logger.write(
+                "agent_started",
+                run_id=run_id,
+                command="atlas agent learn",
+                mode="paper",
+                payload={"source": "cli"},
+            )
+            report = run_learning_cycle(
+                config.memory_dir,
+                config.reports_dir,
+                config.memory_dir.parent / "skills",
+                event_logger=event_logger,
+                run_id=run_id,
+                command="atlas agent learn",
+                mode="paper",
+            )
+            event_logger.write(
+                "agent_completed",
+                run_id=run_id,
+                command="atlas agent learn",
+                mode="paper",
+                payload={"report_path": report},
+            )
             print(f"Learning cycle complete. Report: {report}")
             return 0
         elif args.agent_command == "reflect":
-            report = generate_reflection(config.memory_dir, config.reports_dir)
+            event_logger = EventLogger(config.events_dir)
+            run_id = generate_run_id()
+            event_logger.write(
+                "agent_started",
+                run_id=run_id,
+                command="atlas agent reflect",
+                mode="paper",
+                payload={"source": "cli"},
+            )
+            report = generate_reflection(
+                config.memory_dir,
+                config.reports_dir,
+                event_logger=event_logger,
+                run_id=run_id,
+                command="atlas agent reflect",
+                mode="paper",
+            )
+            event_logger.write(
+                "agent_completed",
+                run_id=run_id,
+                command="atlas agent reflect",
+                mode="paper",
+                payload={"report_path": str(report)},
+            )
             print(f"Reflection generated: {report}")
             return 0
         elif args.agent_command == "run":
@@ -450,23 +693,36 @@ def main(argv: list[str] | None = None) -> int:
         from atlas_agent.skills import (
             archive_skill,
             approve_skill,
+            diff_skill,
             improve_proposed_skills,
             list_skills,
+            show_skill,
         )
         from atlas_agent.learning.skill_miner import mine_skills_from_journal, save_proposed_skill
         skills_dir = config.memory_dir.parent / "skills"
 
         if args.skills_command == "list":
             skills = list_skills(skills_dir)
+            if getattr(args, "json", False):
+                return _emit_json_success("atlas skills list", skills)
             for cat, files in skills.items():
                 print(f"{cat.upper()}:")
                 for f in files:
                     print(f"  - {f}")
             return 0
         elif args.skills_command == "propose" or args.skills_command == "create-from-journal":
+            event_logger = EventLogger(config.events_dir)
+            run_id = generate_run_id()
             proposed = mine_skills_from_journal(config.memory_dir)
             for s in proposed:
                 path = save_proposed_skill(skills_dir, s)
+                event_logger.write(
+                    "skill_proposed",
+                    run_id=run_id,
+                    command=f"atlas skills {args.skills_command}",
+                    mode="paper",
+                    payload={"skill": path.name},
+                )
                 print(f"Proposed skill created: {path.name}")
             if not proposed:
                 print("No new skills identified from journal.")
@@ -492,9 +748,44 @@ def main(argv: list[str] | None = None) -> int:
             if not improved:
                 print("No proposed skills found to improve.")
                 return 0
+            event_logger = EventLogger(config.events_dir)
+            run_id = generate_run_id()
             print("Improved proposed skill drafts; active skills unchanged:")
             for path in improved:
+                event_logger.write(
+                    "skill_improved",
+                    run_id=run_id,
+                    command="atlas skills improve",
+                    mode="paper",
+                    payload={"skill": path.name},
+                )
                 print(f"- {_display_path(path)}")
+            return 0
+        elif args.skills_command == "show":
+            try:
+                skill = show_skill(skills_dir, args.skill_name)
+            except FileNotFoundError as exc:
+                print(f"Error: {exc}")
+                return 2
+            print(f"Skill: {args.skill_name}")
+            print(f"Path: {skill['path']}")
+            print(f"Status: {skill['status']}")
+            metadata = skill["metadata"]
+            if isinstance(metadata, dict):
+                print("Metadata:")
+                for key, value in metadata.items():
+                    print(f"- {key}: {value}")
+            return 0
+        elif args.skills_command == "diff":
+            try:
+                lines = diff_skill(skills_dir, args.skill_name)
+            except FileNotFoundError as exc:
+                print(f"Error: {exc}")
+                return 2
+            if not lines:
+                print("No differences between active and proposed skill versions.")
+                return 0
+            print("\n".join(lines))
             return 0
 
     if args.command == "memory":
@@ -509,7 +800,23 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Conversation memory ingested: {path}")
             return 0
         if args.memory_command == "search":
+            if getattr(args, "json", False):
+                matches, warning = _memory_search_matches(config, args.query)
+                return _emit_json_success(
+                    "atlas memory search",
+                    {
+                        "query": args.query,
+                        "matches": matches,
+                        "warning": warning,
+                    },
+                )
             return _handle_memory_search(config, args.query)
+        if args.memory_command == "doctor":
+            payload = _memory_doctor_payload(config)
+            if getattr(args, "json", False):
+                return _emit_json_success("atlas memory doctor", payload)
+            _print_memory_doctor_text(payload)
+            return 0
         if args.memory_command == "summarize":
             print("Memory summary is generated through agent learn/reflect cycles.")
             return 0
@@ -557,7 +864,90 @@ def main(argv: list[str] | None = None) -> int:
         if args.deploy_command in {"docker", "systemd", "vps", "serverless"}:
             return _handle_deploy(args.deploy_command)
 
+    if args.command == "events":
+        if args.events_command == "list":
+            latest = latest_event_file(config.events_dir)
+            events = read_event_file(latest) if latest else []
+            if len(events) > max(args.limit, 1):
+                events = events[-max(args.limit, 1) :]
+            if getattr(args, "json", False):
+                return _emit_json_success("atlas events list", _events_to_payload(events))
+            if not events:
+                print(f"No event logs found under {config.events_dir}.")
+                return 0
+            for event in events:
+                print(
+                    f"{event.get('timestamp')} {event.get('event_type')} "
+                    f"run={event.get('run_id')} mode={event.get('mode')}"
+                )
+            return 0
+        if args.events_command == "tail":
+            latest = latest_event_file(config.events_dir)
+            events = read_event_file(latest) if latest else []
+            if len(events) > max(args.limit, 1):
+                events = events[-max(args.limit, 1) :]
+            if not events:
+                print(f"No event logs found under {config.events_dir}.")
+                return 0
+            for event in events:
+                print(
+                    f"{event.get('timestamp')} {event.get('event_type')} "
+                    f"run={event.get('run_id')} mode={event.get('mode')}"
+                )
+            return 0
+        if args.events_command == "doctor":
+            report = diagnose_events(config.events_dir)
+            print(f"Event Doctor: files={report.files_scanned} events={report.events_scanned}")
+            for item in report.errors:
+                print(
+                    f"[ERROR] {item.code}: {item.message} "
+                    f"({item.path or 'n/a'}{':' + str(item.line) if item.line else ''})"
+                )
+            for item in report.warnings:
+                print(
+                    f"[WARN] {item.code}: {item.message} "
+                    f"({item.path or 'n/a'}{':' + str(item.line) if item.line else ''})"
+                )
+            return 0 if report.ok else 2
+
+    if args.command == "replay":
+        summary = None
+        if args.last:
+            summary = replay_last_run(config.events_dir)
+        elif args.target:
+            summary = replay_from_path(args.target, config.events_dir)
+        else:
+            summary = replay_last_run(config.events_dir)
+        if summary is None:
+            print("No replay data available yet. Run `atlas agent run --once` first.")
+            return 0
+        _print_replay(summary)
+        return 0
+
+    if args.command == "demo" and args.demo_command == "seed":
+        result = seed_demo_workspace(
+            workspace_dir=config.memory_dir.parent,
+            memory_dir=config.memory_dir,
+            reports_dir=config.reports_dir,
+            skills_dir=config.memory_dir.parent / "skills",
+            events_dir=config.events_dir,
+            force=args.force,
+        )
+        if result.warning:
+            print(f"demo seed warning: {result.warning}", file=sys.stderr)
+            if not result.written_paths:
+                return 2
+        if not result.written_paths:
+            print("Demo seed complete: no new files were created.")
+            return 0
+        print("Demo seed wrote:")
+        for path in result.written_paths:
+            print(f"- {_display_path(path)}")
+        return 0
+
     if args.command == "routine" and args.routine_command == "run":
+        event_logger = EventLogger(config.events_dir)
+        run_id = generate_run_id()
         try:
             result = run_routine(
                 args.name,
@@ -566,6 +956,9 @@ def main(argv: list[str] | None = None) -> int:
                 order_runner=lambda **kwargs: run_once(
                     **kwargs,
                 ),
+                event_logger=event_logger,
+                run_id=run_id,
+                command=f"atlas routine run {args.name}",
             )
         except RoutineLockError as exc:
             print(f"routine refused: {exc}")
@@ -609,7 +1002,15 @@ def main(argv: list[str] | None = None) -> int:
         print(generate_daily_report())
         return 0
     if args.command == "portfolio" and args.portfolio_command == "show":
+        payload = _portfolio_payload(config)
+        if getattr(args, "json", False):
+            return _emit_json_success("atlas portfolio show", payload)
         print("Portfolio state is local. No live broker query is made by this command.")
+        print(f"Workspace: {payload['workspace']}")
+        print(f"Trading mode: {payload['trading_mode']}")
+        print(f"Live enabled: {payload['live_enabled']}")
+        print(f"Broker: {payload['broker']}")
+        print(f"Pending orders: {payload['pending_orders']}")
         return 0
     if args.command == "risk" and args.risk_command == "check":
         print(f"kill_switch={config.kill_switch_enabled}")
@@ -679,12 +1080,34 @@ def main(argv: list[str] | None = None) -> int:
         return 0
         
     if args.command == "models" and args.models_command == "list":
+        models = [
+            {
+                "rank": model.rank,
+                "model": model.model_name,
+                "provider": model.provider,
+                "score": model.score,
+                "benchmark_name": model.benchmark_name,
+                "benchmark_url": model.benchmark_url,
+                "benchmark_updated": model.benchmark_updated,
+            }
+            for model in list_roster()[:7]
+        ]
+        if getattr(args, "json", False):
+            return _emit_json_success(
+                "atlas models list",
+                {
+                    "benchmark": "Vals AI Finance Agent",
+                    "reference_only": True,
+                    "models": models,
+                },
+            )
         print("Vals AI Finance Agent Benchmark (Reference Only)")
         print("| Rank | Model | Score |")
         print("|---|---|---|")
-        for model in list_roster()[:7]:
-            score_str = f"{model.score:.2f}%" if model.score is not None else "N/A"
-            print(f"| {model.rank} | {model.model_name} | {score_str} |")
+        for model in models:
+            score = model["score"]
+            score_str = f"{score:.2f}%" if isinstance(score, float) else "N/A"
+            print(f"| {model['rank']} | {model['model']} | {score_str} |")
         return 0
 
     parser.print_help()

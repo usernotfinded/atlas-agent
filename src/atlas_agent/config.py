@@ -74,6 +74,7 @@ class AtlasConfig:
     audit_dir: Path = Path("audit")
     pending_orders_dir: Path = Path("pending_orders")
     reports_dir: Path = Path("reports")
+    events_dir: Path = Path("events")
     allow_git_commit: bool = False
     allow_git_push: bool = False
     git_commit_author_name: str = "Atlas Agent"
@@ -118,6 +119,7 @@ class AtlasConfig:
             audit_dir=Path(os.getenv("AUDIT_DIR", "audit")),
             pending_orders_dir=Path(os.getenv("PENDING_ORDERS_DIR", "pending_orders")),
             reports_dir=Path(os.getenv("REPORTS_DIR", "reports")),
+            events_dir=Path(os.getenv("EVENTS_DIR", "events")),
             allow_git_commit=parse_bool(os.getenv("ALLOW_GIT_COMMIT"), default=False),
             allow_git_push=parse_bool(os.getenv("ALLOW_GIT_PUSH"), default=False),
             git_commit_author_name=os.getenv(
@@ -152,5 +154,6 @@ class AtlasConfig:
             self.audit_dir,
             self.pending_orders_dir,
             self.reports_dir,
+            self.events_dir,
         ):
             path.mkdir(parents=True, exist_ok=True)
