@@ -113,7 +113,7 @@ Scheduled routine
 | `atlas kill-switch enable` | Enable the kill switch. |
 | `atlas kill-switch disable` | Disable the kill switch. |
 
-## Recommended models (based on Vals.ai benchmarks)
+## Recommended models (from Vals.ai benchmarks)
 
 Atlas Agent can use a committee of up to 7 financial LLMs. The default roster is benchmark-informed using Vals AI Finance Agent, then filtered by the provider keys the user actually configures. 
 
