@@ -7,7 +7,6 @@ from pathlib import Path
 from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger
 from atlas_agent.execution.order import OrderResult
-from atlas_agent.leaderboard.roster import list_roster
 from atlas_agent.notifications.clickup import (
     ClickUpNotifier,
     NotificationConfigurationError,
@@ -105,17 +104,6 @@ def _run_routine_unlocked(
             command=command,
             mode=mode,
             payload={"summary": research[:200]},
-        )
-        top_models = [
-            {"rank": model.rank, "model": model.model_name, "score": model.score}
-            for model in list_roster()[:3]
-        ]
-        event_logger.write(
-            "model_guidance_loaded",
-            run_id=run_id,
-            command=command,
-            mode=mode,
-            payload={"top_models": top_models},
         )
 
     order_result: OrderResult | None = None

@@ -172,10 +172,18 @@ def test_model_roster_cli_commands_stay_available(
         assert "Vals AI Finance Agent" in list_output
         assert "| Rank | Model | Score |" in list_output
 
+        assert main(["models", "update", "--source", "vals-finance-agent"]) == 0
+        update_cfg_output = capsys.readouterr().out
+        assert "Guidance only" in update_cfg_output
+
         assert main(["models", "update-readme"]) == 0
         update_output = capsys.readouterr().out
 
-    assert "README model benchmark reference updated" in update_output
+        assert main(["models", "doctor"]) == 0
+        doctor_output = capsys.readouterr().out
+
+    assert "Model Roster Doctor" in doctor_output
+    assert "README recommended-model table updated" in update_output
     updated_readme = readme.read_text(encoding="utf-8")
     assert "| Rank | Model | Score |" in updated_readme
     assert "Claude Opus 4.7" in updated_readme

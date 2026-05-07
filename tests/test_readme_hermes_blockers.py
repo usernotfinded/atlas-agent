@@ -67,6 +67,7 @@ def test_readme_model_roster_is_visible_guidance_not_runtime_orchestration() -> 
     assert "| Rank | Model | Score |" in text
     assert "Vals AI Finance Agent" in text
     assert "model-selection guidance" in lower or "model selection guidance" in lower
+    assert "recommended-model table in this README" in text
     assert re.search(
         r"not (?:a )?mandatory runtime orchestration",
         lower,

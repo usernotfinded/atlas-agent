@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -29,7 +30,9 @@ from atlas_agent.events import (
     read_recent_events,
 )
 from atlas_agent.leaderboard.roster import (
+    doctor_roster,
     list_roster,
+    update_roster,
     update_readme_roster,
 )
 from atlas_agent.market_data.csv_provider import CSVMarketDataProvider
@@ -64,7 +67,13 @@ from atlas_agent.strategies.moving_average import MovingAverageStrategy
 from atlas_agent.workspace import (
     DEFAULT_TEMPLATE,
     WorkspaceInitError,
+    WorkspaceResolution,
     init_workspace,
+    clear_default_workspace,
+    get_default_workspace,
+    is_workspace,
+    resolve_workspace,
+    set_default_workspace,
 )
 
 
@@ -110,12 +119,23 @@ Safety First:
         epilog=epilog,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument("--workspace", help="Path to an Atlas workspace")
     subparsers = parser.add_subparsers(dest="command")
     init = subparsers.add_parser("init")
     init.add_argument("path", nargs="?", default=".")
     init.add_argument("--template", default=DEFAULT_TEMPLATE)
     init.add_argument("--force", action="store_true")
+    init.add_argument("--set-default", action="store_true", help="Set this workspace as the default")
     subparsers.add_parser("validate")
+
+    workspace = subparsers.add_parser("workspace")
+    workspace_sub = workspace.add_subparsers(dest="workspace_command")
+    workspace_sub.add_parser("show")
+    workspace_set = workspace_sub.add_parser("set")
+    workspace_set.add_argument("path")
+    workspace_sub.add_parser("clear")
+    workspace_doctor = workspace_sub.add_parser("doctor")
+    workspace_doctor.add_argument("--json", action="store_true")
 
     subparsers.add_parser("status")
     subparsers.add_parser("plan")
@@ -281,7 +301,10 @@ Safety First:
 
     models = subparsers.add_parser("models")
     models_sub = models.add_subparsers(dest="models_command")
+    models_update = models_sub.add_parser("update")
+    models_update.add_argument("--source", default="vals-finance-agent")
     models_sub.add_parser("update-readme")
+    models_sub.add_parser("doctor")
     models_list = models_sub.add_parser("list")
     models_list.add_argument("--json", action="store_true")
     return parser
@@ -525,6 +548,66 @@ def _events_to_payload(events: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _requires_workspace(command: str | None) -> bool:
+    if command is None:
+        return True
+    return command not in {"init", "workspace", "models", "deploy", "validate"}
+
+
+def _workspace_doctor_payload(resolution: WorkspaceResolution) -> dict[str, Any]:
+    default_workspace = get_default_workspace()
+    payload: dict[str, Any] = {
+        "ok": False,
+        "current_directory": str(Path.cwd()),
+        "resolved_workspace": str(resolution.path) if resolution.path else None,
+        "resolution_source": resolution.source,
+        "default_workspace": str(default_workspace) if default_workspace else None,
+        "environment_workspace": os.getenv("ATLAS_WORKSPACE"),
+        "warning": resolution.warning,
+        "missing_paths": [],
+        "guidance": [],
+    }
+    if resolution.path is None:
+        payload["guidance"] = [
+            "Create a workspace: atlas init my-trader --template routine-trader --set-default",
+            "or set one: atlas workspace set <path>",
+        ]
+        return payload
+
+    expected = (
+        "memory",
+        "routines",
+        "skills",
+        "reports",
+        "pending_orders",
+        "audit",
+        "events",
+        "configs",
+    )
+    missing = [
+        name for name in expected if not (resolution.path / name).exists()
+    ]
+    payload["missing_paths"] = missing
+    payload["ok"] = not missing
+    return payload
+
+
+def _print_workspace_setup_guidance(*, warning: str | None = None, stream=None) -> None:
+    output = stream if stream is not None else sys.stdout
+    if warning:
+        print(f"Workspace resolution warning: {warning}", file=output)
+        print("", file=output)
+    print("Atlas Agent needs a workspace before it can run.", file=output)
+    print("", file=output)
+    print("Create one:", file=output)
+    print("  atlas init my-trader --template routine-trader --set-default", file=output)
+    print("  cd my-trader", file=output)
+    print("  atlas", file=output)
+    print("", file=output)
+    print("Or set a default workspace:", file=output)
+    print("  atlas workspace set <path>", file=output)
+
+
 def _print_replay(summary) -> None:
     print("Replay")
     print(f"Source: {summary.source}")
@@ -553,15 +636,6 @@ def _print_replay(summary) -> None:
         print(f"- {line}")
 
 
-def _is_workspace(config: AtlasConfig) -> bool:
-    # If memory_dir is absolute, we assume it's a test or explicit config
-    if config.memory_dir.is_absolute():
-        return True
-    # A workspace is identified by the presence of core directories
-    # Check for memory and either configs or routines to be sure
-    return (config.memory_dir.exists() and 
-            ((config.memory_dir.parent / "configs").exists() or 
-             (config.memory_dir.parent / "routines").exists()))
 
 
 def _check_for_updates() -> str | None:
@@ -606,23 +680,176 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         raise
 
+    if args.command == "init":
+        try:
+            result = init_workspace(
+                args.path,
+                template=args.template,
+                force=args.force,
+            )
+            if args.set_default:
+                set_default_workspace(result.path)
+        except WorkspaceInitError as exc:
+            print(f"init refused: {exc}")
+            return 2
+        action = "overwritten" if result.overwritten else "created"
+        print(
+            f"Atlas Agent workspace {action}: "
+            f"{result.path} (template: {result.template})"
+        )
+        if args.set_default:
+            print(f"Set as default workspace: {result.path}")
+        return 0
+
+    if args.command == "workspace":
+        resolution = resolve_workspace(getattr(args, "workspace", None))
+        if args.workspace_command == "show":
+            default_ws = get_default_workspace()
+            resolved = resolution.path
+            print(f"Current directory: {Path.cwd()}")
+            print(f"Resolved workspace: {resolved or 'not resolved'}")
+            print(f"Resolution source: {resolution.source or 'none'}")
+            print(f"Default workspace: {default_ws or 'not set'}")
+            if resolution.warning:
+                print(f"Warning: {resolution.warning}")
+            return 0
+        if args.workspace_command == "set":
+            path = Path(args.path).resolve()
+            if not is_workspace(path):
+                print(f"Error: {path} does not look like a valid Atlas workspace.")
+                return 2
+            set_default_workspace(path)
+            print(f"Default workspace set to: {path}")
+            return 0
+        if args.workspace_command == "clear":
+            clear_default_workspace()
+            print("Default workspace cleared.")
+            return 0
+        if args.workspace_command == "doctor":
+            payload = _workspace_doctor_payload(resolution)
+            if getattr(args, "json", False):
+                return _emit_json_success("atlas workspace doctor", payload)
+            print("Workspace Doctor")
+            print(f"Current directory: {payload['current_directory']}")
+            print(f"Resolved workspace: {payload['resolved_workspace'] or 'not resolved'}")
+            print(f"Resolution source: {payload['resolution_source'] or 'none'}")
+            print(f"Default workspace: {payload['default_workspace'] or 'not set'}")
+            if payload["warning"]:
+                print(f"Warning: {payload['warning']}")
+            if payload["resolved_workspace"] and not payload["missing_paths"]:
+                print("Workspace structure looks valid.")
+                return 0
+            if payload["missing_paths"]:
+                print("Missing paths:")
+                for missing in payload["missing_paths"]:
+                    print(f"- {missing}")
+            for guidance in payload["guidance"]:
+                print(guidance)
+            return 2
+        return 0
+
+    if args.command == "models":
+        if args.models_command == "update":
+            try:
+                updated = update_roster(source=args.source)
+            except ValueError as exc:
+                print(f"models update refused: {exc}")
+                return 2
+            print(
+                f"Model roster updated from {args.source} ({len(updated)} entries). "
+                "Guidance only; runtime orchestration is unchanged."
+            )
+            return 0
+        if args.models_command == "update-readme":
+            try:
+                update_readme_roster()
+                print("README recommended-model table updated from configs/model_roster.yaml")
+            except Exception as exc:
+                print(f"update-readme failed: {exc}")
+                return 2
+            return 0
+        if args.models_command == "doctor":
+            report = doctor_roster()
+            print(
+                f"Model Roster Doctor: ok={report['ok']} "
+                f"source={report.get('source') or 'unknown'} "
+                f"models={report.get('model_count', 0)}"
+            )
+            for issue in report["issues"]:
+                print(f"- {issue}")
+            return 0 if report["ok"] else 2
+        if args.models_command == "list":
+            models = [
+                {
+                    "rank": model.rank,
+                    "model": model.model_name,
+                    "provider": model.provider,
+                    "score": model.score,
+                    "benchmark_name": model.benchmark_name,
+                    "benchmark_url": model.benchmark_url,
+                    "benchmark_updated": model.benchmark_updated,
+                }
+                for model in list_roster()[:7]
+            ]
+            if getattr(args, "json", False):
+                return _emit_json_success(
+                    "atlas models list",
+                    {
+                        "benchmark": "Vals AI Finance Agent",
+                        "reference_only": True,
+                        "runtime_orchestration": False,
+                        "guidance": (
+                            "The model roster is guidance for choosing models to connect. "
+                            "It updates the recommended-model table in this README. "
+                            "It is not mandatory runtime orchestration and does not guarantee trading performance."
+                        ),
+                        "models": models,
+                    },
+                )
+            print("Vals AI Finance Agent Benchmark (Reference Only)")
+            print(
+                "The model roster is guidance for choosing models to connect. "
+                "It is not runtime orchestration."
+            )
+            print("| Rank | Model | Score |")
+            print("|---|---|---|")
+            for model in models:
+                score = model["score"]
+                score_str = f"{score:.2f}%" if isinstance(score, float) else "N/A"
+                print(f"| {model['rank']} | {model['model']} | {score_str} |")
+            return 0
+        print("Use one of: atlas models list|update|update-readme|doctor")
+        return 0
+
+    resolution = resolve_workspace(getattr(args, "workspace", None))
+    if _requires_workspace(args.command):
+        if resolution.path is None:
+            if getattr(args, "json", False):
+                return _emit_json_error(
+                    "atlas",
+                    code="workspace_not_configured",
+                    message="Atlas Agent needs a workspace before it can run.",
+                    details={
+                        "resolution_source": resolution.source,
+                        "warning": resolution.warning,
+                    },
+                )
+            _print_workspace_setup_guidance(
+                warning=resolution.warning,
+                stream=sys.stderr,
+            )
+            return 2
+        os.chdir(resolution.path)
+    elif resolution.path is not None and args.command not in {"deploy", "validate"}:
+        # Use resolved workspace as context for non-workspace commands that still
+        # read local project files.
+        os.chdir(resolution.path)
+
     try:
         config = AtlasConfig.from_env()
     except ValueError as exc:
-        print(f"Configuration error: {exc}")
+        print(f"Configuration error: {exc}", file=sys.stderr)
         return 1
-
-    # Commands that do not require a workspace
-    if args.command in {"init", "validate", "models"} or "--help" in sys.argv or "-h" in sys.argv:
-        pass
-    elif not _is_workspace(config):
-        print("Atlas Agent needs a workspace before it can run.")
-        print("")
-        print("Create one:")
-        print("  atlas init my-trader --template routine-trader")
-        print("  cd my-trader")
-        print("  atlas")
-        return 2
 
     if args.command is None:
         from atlas_agent.agent.runner import run_agent
@@ -658,22 +885,6 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0 if result and result.status in {"filled", "held", "pending_approval", "simulated", "complete"} else 2
 
-    if args.command == "init":
-        try:
-            result = init_workspace(
-                args.path,
-                template=args.template,
-                force=args.force,
-            )
-        except WorkspaceInitError as exc:
-            print(f"init refused: {exc}")
-            return 2
-        action = "overwritten" if result.overwritten else "created"
-        print(
-            f"Atlas Agent workspace {action}: "
-            f"{result.path} (template: {result.template})"
-        )
-        return 0
     if args.command == "validate":
         config.ensure_dirs()
         (config.reports_dir / "daily").mkdir(parents=True, exist_ok=True)
@@ -1205,46 +1416,6 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(f"GitHub Actions workflow generated: {path}")
         return 0
-    if args.command == "models" and args.models_command == "update-readme":
-        try:
-            update_readme_roster()
-            print("README model benchmark reference updated")
-        except Exception as exc:
-            print(f"update-readme failed: {exc}")
-            return 2
-        return 0
-        
-    if args.command == "models" and args.models_command == "list":
-        models = [
-            {
-                "rank": model.rank,
-                "model": model.model_name,
-                "provider": model.provider,
-                "score": model.score,
-                "benchmark_name": model.benchmark_name,
-                "benchmark_url": model.benchmark_url,
-                "benchmark_updated": model.benchmark_updated,
-            }
-            for model in list_roster()[:7]
-        ]
-        if getattr(args, "json", False):
-            return _emit_json_success(
-                "atlas models list",
-                {
-                    "benchmark": "Vals AI Finance Agent",
-                    "reference_only": True,
-                    "models": models,
-                },
-            )
-        print("Vals AI Finance Agent Benchmark (Reference Only)")
-        print("| Rank | Model | Score |")
-        print("|---|---|---|")
-        for model in models:
-            score = model["score"]
-            score_str = f"{score:.2f}%" if isinstance(score, float) else "N/A"
-            print(f"| {model['rank']} | {model['model']} | {score_str} |")
-        return 0
-
     return 0
 
 

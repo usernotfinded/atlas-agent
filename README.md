@@ -17,19 +17,19 @@ When markets are open, Atlas Agent runs the trading cycle through broker adapter
 
 When markets are closed, Atlas Agent does not force live execution. It uses the time to research, simulate, paper trade, reflect, improve skills, update memory, and prepare for the next market session.
 
-Atlas Agent supports benchmark-informed model selection, Alpaca and broker execution adapters, Perplexity market research, ClickUp notifications, Markdown trade journals, scheduled remote routines, gated live trading, and guarded GitHub-backed persistence.
+Atlas Agent supports benchmark-informed model guidance, Alpaca and broker execution adapters, Perplexity market research, ClickUp notifications, Markdown trade journals, scheduled remote routines, gated live trading, and guarded GitHub-backed persistence.
 
 AI output is advisory. Broker execution stays behind strategy validation, `RiskManager`, the kill switch, audit logs, and approval gates.
 
 ## Features
 
-**Benchmark-informed model reference.** Atlas Agent provides a ranked reference of finance-capable LLMs using the Vals AI Finance Agent benchmark. This is model-selection guidance, not mandatory runtime orchestration.
+**Benchmark-informed model reference.** Atlas Agent provides a ranked reference of finance-capable LLMs using the Vals AI Finance Agent benchmark. This is model-selection guidance for choosing which models to connect, not mandatory runtime orchestration. It does not guarantee trading performance.
 
 **Agent-first autonomous operation.** Run `atlas`, `atlas status`, and `atlas plan` as the primary UX. Named routines remain available for advanced scheduling and inspection.
 
-**Built-in learning loop.** Closed-market routines can review reports, rejected orders, research notes, operator feedback, and memory files to improve future behavior.
+**MVP learning loop.** Closed-market routines can review reports, rejected orders, research notes, operator feedback, and memory files to improve future behavior. This is an initial implementation.
 
-**Skills from experience.** Atlas can draft, revise, and archive reusable skill notes from observed work patterns without changing broker or risk policy.
+**Skills from experience.** Atlas can draft, revise, and archive reusable skill notes from observed work patterns. Current MVP behavior uses deterministic skill normalization and pattern-based skill mining.
 
 **Conversation memory and user model.** Workspace memory can capture preferences, constraints, lessons, trading style, and conversation summaries for later search.
 
@@ -43,11 +43,11 @@ AI output is advisory. Broker execution stays behind strategy validation, `RiskM
 
 **Live-gated execution.** Live mode exists, but it requires explicit live config, broker credentials, risk approval, kill switch clearance, and manual approval gates.
 
-**Telegram control plane.** Optional Telegram commands can request status, plans, runs, learning, reflection, memory search, skill listings, pending-order review, and kill-switch actions.
+**Telegram control-plane scaffolding.** Optional Telegram diagnostics can check configuration. A full polling/webhook bot is planned for future releases.
 
-**Cloud deployment.** Atlas can run on a VPS, in Docker or systemd, as scheduled serverless jobs, or alongside GPU workers for heavier local model and research workloads.
+**Deployment templates.** Atlas includes templates for VPS, Docker, systemd, and serverless jobs.
 
-**Perplexity research integration.** Pull market context through the Perplexity research adapter when configured, while failing safely when credentials are missing.
+**Perplexity research integration.** Pull market context through the Perplexity research adapter when configured.
 
 **ClickUp notifications.** Send compact routine updates, pending approval notices, and report summaries to ClickUp without printing tokens.
 
@@ -105,21 +105,21 @@ atlas backtest --strategy moving_average --symbol BTC-USD
 Scheduled routine
 → Markdown memory
 → Market/research data
-→ Model-selection guidance
+→ Model-selection guidance (README/setup-time reference only)
 → Configured AIProvider
 → Strategy validation
 → RiskManager
 → Paper execution or pending live order
-→ Reports + journal + notifications + Telegram
-→ Learning loop + skills + memory updates
+→ Reports + journal + notifications + Telegram (Scaffolding)
+→ Learning loop (MVP) + skills + memory updates
 → Guarded Git sync
 ```
 
-## Built-in learning loop
+## MVP learning loop
 
-Atlas closes the loop after agent cycles. It reads the trade journal, daily notes, weekly reviews, past conversations, user preferences, open-position notes, rejected orders, reports, and research context. It looks for repeated mistakes, useful patterns, missing risk context, stale assumptions, and places where operator feedback should become durable memory.
+Atlas closes the loop after agent cycles. It reads the trade journal, daily notes, weekly reviews, past conversations, user preferences, open-position notes, rejected orders, reports, and research context.
 
-Learning outputs are intentionally reviewable: lessons learned, reflection reports, proposed skills, improved proposed skills, and memory nudges. Atlas does not silently overwrite core strategy rules or live-trading policy without evidence and user acceptance. Learning runs do not bypass strategy validation, `RiskManager`, approval policy, kill-switch checks, broker adapters, or audit logs.
+Learning outputs are reviewable: lessons learned, reflection reports, proposed skills, and memory nudges. Atlas does not silently overwrite core strategy rules or live-trading policy.
 
 ## Skills from experience
 
@@ -223,7 +223,9 @@ Keep secrets in local environment files or platform secret stores, validate the 
 | `atlas deploy docker` | Generate or report Docker deployment files. |
 | `atlas deploy systemd` | Generate or report a systemd service. |
 | `atlas models list` | Show the benchmark-informed model reference. |
+| `atlas models update --source vals-finance-agent` | Refresh `configs/model_roster.yaml` from Vals/cache/fallback data. |
 | `atlas models update-readme` | Refresh the benchmark reference in the README. |
+| `atlas models doctor` | Validate model-roster config and README marker health. |
 | `atlas routine run pre_market --mode paper` | Advanced: run the pre-market routine directly. |
 | `atlas routine run market_open --mode paper` | Advanced: run the market-open routine directly in simulation. |
 | `atlas run-once --mode paper` | Execute one paper-mode strategy pass. |
@@ -239,7 +241,7 @@ Keep secrets in local environment files or platform secret stores, validate the 
 
 ## Recommended models (from Vals.ai benchmarks)
 
-Atlas Agent includes a reference ranking of finance-capable LLMs based on the Vals AI Finance Agent benchmark. This benchmark evaluates financial analyst tasks, not guaranteed trading performance. The roster is model-selection guidance only; Atlas runs through the configured `AIProvider`, and users may choose any supported provider or model.
+Atlas Agent includes a reference ranking of finance-capable LLMs based on the Vals AI Finance Agent benchmark. This benchmark evaluates financial analyst tasks, not guaranteed trading performance. The roster is model-selection guidance only; Atlas runs through the configured `AIProvider`, and users may choose any supported provider or model. The model roster is guidance for choosing models to connect. It updates the recommended-model table in this README. It is not mandatory runtime orchestration and does not guarantee trading performance.
 
 <!-- ATLAS_MODEL_ROSTER_START -->
 
@@ -260,11 +262,11 @@ Atlas Agent includes a reference ranking of finance-capable LLMs based on the Va
 Set environment variables for the provider you want to enable. Do not put real keys in public files.
 
 ```bash
-ANTHROPIC_API_KEY=...
+ANTHROPIC_API_KEY=<SET_IN_ENV>
 # or
-OPENAI_API_KEY=...
+OPENAI_API_KEY=<SET_IN_ENV>
 # or
-DEEPSEEK_API_KEY=...
+DEEPSEEK_API_KEY=<SET_IN_ENV>
 ```
 
 The benchmark reference improves model selection discipline, but it does not predict trading outcomes.
@@ -273,7 +275,9 @@ Manage the reference via CLI:
 
 ```bash
 atlas models list
+atlas models update --source vals-finance-agent
 atlas models update-readme
+atlas models doctor
 ```
 
 ## Provider Support

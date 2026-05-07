@@ -50,6 +50,31 @@ def test_event_logger_redacts_secret_values(tmp_path: Path) -> None:
     assert parsed["payload"]["ALPACA_API_KEY"] == "[REDACTED]"
 
 
+def test_event_logger_final_pass_redacts_auth_headers_and_secret_tokens(tmp_path: Path) -> None:
+    logger = EventLogger(tmp_path / "events")
+    raw_value = "Bearer demoSuperSecretToken1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    auth_header = "Authorization: demoAuthorizationToken1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    logger.write(
+        "agent_started",
+        run_id=generate_run_id(),
+        command="atlas test",
+        mode="paper",
+        payload={
+            "OPENAI_COMPATIBLE_API_KEY": "demo-openai-credential-1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "note": f"{raw_value} {auth_header}",
+        },
+    )
+
+    event_file = sorted((tmp_path / "events").glob("*.jsonl"))[-1]
+    content = event_file.read_text(encoding="utf-8")
+    assert "demoSuperSecretToken" not in content
+    assert "demoAuthorizationToken" not in content
+    assert "demo-openai-credential" not in content
+    parsed = json.loads(content.strip())
+    assert parsed["payload"]["OPENAI_COMPATIBLE_API_KEY"] == "[REDACTED]"
+    assert "[REDACTED]" in parsed["payload"]["note"]
+
+
 def test_agent_run_once_writes_valid_event_schema(tmp_path: Path) -> None:
     config = _config(tmp_path)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):

@@ -47,6 +47,7 @@ def test_demo_seed_creates_synthetic_files(tmp_path: Path, capsys: pytest.Captur
     assert "synthetic" in all_text.lower()
     assert scan_text_for_secrets(all_text) == []
     assert re.search(r"\baccount_id\b", all_text, flags=re.IGNORECASE) is None
+    assert re.search(r"\b(?:sk-|pk_test_|AKIA|xoxb-|ghp_)", all_text) is None
 
 
 def test_demo_seed_refuses_workspace_with_possible_real_credentials(

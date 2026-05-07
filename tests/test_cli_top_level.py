@@ -64,11 +64,13 @@ def test_bare_atlas_in_workspace(workspace, capsys):
         assert "Starting autonomous cycle..." in captured.out
 
 
-def test_bare_atlas_outside_workspace(non_workspace, capsys):
+def test_bare_atlas_outside_workspace(non_workspace, monkeypatch, capsys):
+    monkeypatch.setenv("HOME", str(non_workspace))
     code = main([])
     assert code == 2
     captured = capsys.readouterr()
-    assert "Atlas Agent needs a workspace before it can run" in captured.out
+    combined = captured.out + captured.err
+    assert "Atlas Agent needs a workspace before it can run" in combined
     # Verify no runtime files were created
     assert not (non_workspace / "memory").exists()
     assert not (non_workspace / "events").exists()
