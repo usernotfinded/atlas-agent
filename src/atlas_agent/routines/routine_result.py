@@ -15,4 +15,3 @@ class RoutineResult:
     notification_status: str = "not_configured"
     git_status: str = "skipped"
     lock_status: str | None = None
-    model_status: str | None = None

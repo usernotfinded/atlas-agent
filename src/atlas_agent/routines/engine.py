@@ -6,7 +6,6 @@ from pathlib import Path
 
 from atlas_agent.config import AtlasConfig
 from atlas_agent.execution.order import OrderResult
-from atlas_agent.leaderboard.roster import assign_committee_roles
 from atlas_agent.notifications.clickup import (
     ClickUpNotifier,
     NotificationConfigurationError,
@@ -43,7 +42,6 @@ def run_routine(
     research_provider=None,
     notifier: ClickUpNotifier | None = None,
     git_sync: GitSync | None = None,
-    models: str | None = None,
 ) -> RoutineResult:
     if name not in ROUTINE_NAMES:
         raise ValueError(f"unknown routine: {name}")
@@ -60,7 +58,6 @@ def run_routine(
             research_provider=research_provider,
             notifier=notifier,
             git_sync=git_sync,
-            models=models,
             lock_status=lock.recovery_message,
         )
 
@@ -74,7 +71,6 @@ def _run_routine_unlocked(
     research_provider=None,
     notifier: ClickUpNotifier | None = None,
     git_sync: GitSync | None = None,
-    models: str | None = None,
     lock_status: str | None = None,
 ) -> RoutineResult:
     context = load_routine_context(
@@ -93,7 +89,6 @@ def _run_routine_unlocked(
         research_summary=research,
         order_result=order_result,
         memory_files=tuple(context.memory),
-        model_status=_model_status(models),
     )
     updated = _update_memory(
         name=name,
@@ -115,7 +110,6 @@ def _run_routine_unlocked(
         notification_status=notification_status,
         git_status=git_status,
         lock_status=lock_status,
-        model_status=_model_status(models),
     )
 
 
@@ -143,7 +137,6 @@ def _write_routine_report(
     research_summary: str,
     order_result: OrderResult | None,
     memory_files: tuple[str, ...],
-    model_status: str | None,
 ) -> Path:
     day = datetime.now(UTC).date().isoformat()
     subdir = reports_dir / ("weekly" if name == "weekly_review" else "daily")
@@ -166,7 +159,6 @@ def _write_routine_report(
             f"- Mode: {mode}",
             f"- Memory files read: {', '.join(memory_files)}",
             f"- Research: {research_summary}",
-            f"- Model roster: {model_status or 'default deterministic strategy'}",
             f"- Order result: {order_text}",
             "- Live execution requires approval before broker execution.",
             "- Next action: human review of report and pending orders, if any.",
@@ -252,9 +244,3 @@ def _sync_git(git_sync: GitSync | None, name: str) -> str:
         return git_sync.commit(f"routine: {name} {datetime.now(UTC).date().isoformat()}")
     except GitSyncError as exc:
         return f"commit refused: {exc}"
-
-
-def _model_status(models: str | None) -> str | None:
-    if models != "auto":
-        return None
-    return assign_committee_roles().message

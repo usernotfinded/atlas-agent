@@ -14,13 +14,8 @@ from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.execution.order import Order, OrderResult
 from atlas_agent.execution.order_router import OrderRouter
 from atlas_agent.leaderboard.roster import (
-    assign_committee_roles,
-    doctor_roster,
-    format_models_table,
-    format_selection,
     list_roster,
-    select_top_models,
-    update_model_roster,
+    update_readme_roster,
 )
 from atlas_agent.market_data.csv_provider import CSVMarketDataProvider
 from atlas_agent.market_data.sample_data import ensure_sample_data
@@ -77,13 +72,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     run_once_parser = subparsers.add_parser("run-once")
     run_once_parser.add_argument("--mode", choices=("paper", "live"), default="paper")
-    run_once_parser.add_argument("--models", choices=("auto",), default=None)
 
     agent = subparsers.add_parser("agent")
     agent_sub = agent.add_subparsers(dest="agent_command")
     agent_run = agent_sub.add_parser("run")
     agent_run.add_argument("--mode", choices=("auto", "paper", "live"), default="auto")
-    agent_run.add_argument("--models", choices=("auto",), default=None)
     agent_sub.add_parser("status")
     agent_sub.add_parser("plan")
 
@@ -92,7 +85,6 @@ def build_parser() -> argparse.ArgumentParser:
     routine_run = routine_sub.add_parser("run")
     routine_run.add_argument("name", choices=sorted(ROUTINE_NAMES))
     routine_run.add_argument("--mode", choices=("paper", "live"), default="paper")
-    routine_run.add_argument("--models", choices=("auto",), default=None)
     routine_sub.add_parser("unlock")
     routine_sub.add_parser("status")
 
@@ -145,24 +137,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     models = subparsers.add_parser("models")
     models_sub = models.add_subparsers(dest="models_command")
-    models_update = models_sub.add_parser("update")
-    models_update.add_argument("--source", default="vals-finance-agent")
-    
     models_update_readme = models_sub.add_parser("update-readme")
-    models_update_readme.add_argument("--refresh", action="store_true")
-    
     models_sub.add_parser("list")
-    models_select = models_sub.add_parser("select")
-    models_select.add_argument("--top", type=int, default=7)
-    models_sub.add_parser("doctor")
     return parser
 
 
 def run_once(
     mode: str,
     config: AtlasConfig | None = None,
-    *,
-    models: str | None = None,
 ) -> OrderResult:
     config = config or AtlasConfig.from_env()
     config.ensure_dirs()
@@ -183,7 +165,7 @@ def run_once(
         limit_price=latest.close,
         confidence=decision.confidence,
         stop_loss=latest.close * 0.95 if mode == "live" else None,
-        source="ai_committee",
+        source="strategy",
     )
     audit = AuditLogger(config.audit_dir)
     portfolio = PortfolioState(cash=config.starting_cash)
@@ -194,24 +176,6 @@ def run_once(
         approval_manager=ApprovalManager(config.pending_orders_dir),
         audit=audit,
     )
-    if models == "auto":
-        assignment = assign_committee_roles()
-        audit.write(
-            "model_roster_selection",
-            {
-                "message": assignment.message,
-                "roles": [
-                    {
-                        "role": item.role,
-                        "model_name": item.model_name,
-                        "provider": item.provider,
-                        "enabled": item.enabled,
-                        "reason": item.reason,
-                    }
-                    for item in assignment.roles
-                ],
-            },
-        )
     audit.write("ai_decision", {"decision": decision, "order_id": order.id})
     return router.route(
         order,
@@ -292,9 +256,7 @@ def main(argv: list[str] | None = None) -> int:
             print("CSV trade log:", result.report_paths[2])
         return 0
     if args.command == "run-once":
-        if args.models == "auto":
-            print(assign_committee_roles().message)
-        result = run_once(mode=args.mode, config=config, models=args.models)
+        result = run_once(mode=args.mode, config=config)
         print(f"{args.mode} result: {result.status} - {result.message}")
         if result.reasons:
             print("Reasons:", "; ".join(result.reasons))
@@ -312,11 +274,9 @@ def main(argv: list[str] | None = None) -> int:
             print(get_agent_plan(config))
             return 0
         elif args.agent_command == "run":
-            result = run_agent(mode=args.mode, config=config, models=args.models)
+            result = run_agent(mode=args.mode, config=config)
             if result.lock_status:
                 print(result.lock_status)
-            if result.model_status:
-                print(result.model_status)
             print(f"agent run {args.mode}: {result.status}")
             print(f"Report: {result.report_path}")
             if result.order_status:
@@ -326,6 +286,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
     if args.command == "routine" and args.routine_command == "run":
+        from atlas_agent.routines.engine import RoutineLockError, run_routine
         try:
             result = run_routine(
                 args.name,
@@ -333,17 +294,13 @@ def main(argv: list[str] | None = None) -> int:
                 config=config,
                 order_runner=lambda **kwargs: run_once(
                     **kwargs,
-                    models=args.models,
                 ),
-                models=args.models,
             )
         except RoutineLockError as exc:
             print(f"routine refused: {exc}")
             return 2
         if result.lock_status:
             print(result.lock_status)
-        if result.model_status:
-            print(result.model_status)
         print(f"routine {result.name} {result.mode}: {result.status}")
         print(f"Report: {result.report_path}")
         if result.order_status:
@@ -441,46 +398,22 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(f"GitHub Actions workflow generated: {path}")
         return 0
-    if args.command == "models" and args.models_command == "update":
-        try:
-            result = update_model_roster(args.source)
-        except ValueError as exc:
-            print(f"models update refused: {exc}")
-            return 2
-        print(f"model roster updated: {result.roster_path}")
-        print(f"cache: {result.cache_path}")
-        print(f"source: {result.source}")
-        print(result.message)
-        return 0
-        
     if args.command == "models" and args.models_command == "update-readme":
-        if args.refresh:
-            try:
-                update_model_roster("vals-finance-agent")
-                print("model roster refreshed")
-            except ValueError as exc:
-                print(f"models update failed during refresh: {exc}")
         try:
-            from atlas_agent.leaderboard.roster import update_readme_roster
             update_readme_roster()
-            print("README model roster updated")
-        except ValueError as exc:
+            print("README model benchmark reference updated")
+        except Exception as exc:
             print(f"update-readme failed: {exc}")
             return 2
         return 0
         
     if args.command == "models" and args.models_command == "list":
-        print(format_models_table(list_roster()))
-        return 0
-    if args.command == "models" and args.models_command == "select":
-        print(format_selection(select_top_models(args.top)))
-        assignment = assign_committee_roles(args.top)
-        if assignment.fallback_used:
-            print(assignment.message)
-        return 0
-    if args.command == "models" and args.models_command == "doctor":
-        for line in doctor_roster():
-            print(line)
+        print("Vals AI Finance Agent Benchmark (Reference Only)")
+        print("| Rank | Model | Score |")
+        print("|---|---|---|")
+        for model in list_roster()[:7]:
+            score_str = f"{model.score:.2f}%" if model.score is not None else "N/A"
+            print(f"| {model.rank} | {model.model_name} | {score_str} |")
         return 0
 
     parser.print_help()

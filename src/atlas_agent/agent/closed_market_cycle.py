@@ -7,7 +7,7 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.routines.engine import RoutineResult, run_routine
 
 
-def run_closed_market_cycle(config: AtlasConfig, mode: str, models: str | None = None) -> RoutineResult:
+def run_closed_market_cycle(config: AtlasConfig, mode: str) -> RoutineResult:
     # Force paper mode for closed market
     safe_mode = "paper"
     
@@ -18,8 +18,7 @@ def run_closed_market_cycle(config: AtlasConfig, mode: str, models: str | None =
         "pre_market",
         mode=safe_mode,
         config=config,
-        order_runner=lambda **kwargs: run_once(**kwargs, models=models),
-        models=models,
+        order_runner=lambda **kwargs: run_once(**kwargs),
     )
     
     import dataclasses

@@ -7,7 +7,7 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.routines.engine import RoutineResult, run_routine
 
 
-def run_open_market_cycle(config: AtlasConfig, mode: str, models: str | None = None) -> RoutineResult:
+def run_open_market_cycle(config: AtlasConfig, mode: str) -> RoutineResult:
     # Use market_open routine as the base for open market cycle
     # We will reuse run_routine for now to utilize existing infrastructure (memory, AI, report)
     # but we direct the report to agent open market path
@@ -19,8 +19,7 @@ def run_open_market_cycle(config: AtlasConfig, mode: str, models: str | None = N
         "market_open",
         mode=mode,
         config=config,
-        order_runner=lambda **kwargs: run_once(**kwargs, models=models),
-        models=models,
+        order_runner=lambda **kwargs: run_once(**kwargs),
     )
     
     import dataclasses

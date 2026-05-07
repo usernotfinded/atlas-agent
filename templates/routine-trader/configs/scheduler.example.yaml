@@ -1,0 +1,9 @@
+scheduler:
+  default_mode: paper
+  routines:
+    pre_market: "08:30"
+    market_open: "09:30"
+    midday_scan: "12:00"
+    end_of_day: "16:00"
+    weekly_review: "Friday 17:00"
+

@@ -2,28 +2,24 @@
 
 The autonomous AI trading agent that runs on routines, memory, model rosters, broker adapters, and risk gates.
 
-![Python](https://img.shields.io/badge/Language-Python-3776AB)
 ![MIT License](https://img.shields.io/badge/License-MIT-2DA44E)
 ![Built by Natan Mucelli](https://img.shields.io/badge/Built%20by-Natan%20Mucelli-111111)
-![Experimental](https://img.shields.io/badge/Status-Experimental-B54708)
-![Paper-first](https://img.shields.io/badge/Trading%20mode-Paper--first-0969DA)
-![Approval-gated live trading](https://img.shields.io/badge/Live%20trading-Approval--gated-8250DF)
 
-Atlas Agent is a routine-based autonomous AI trading agent. It wakes up on scheduled routines, reads Markdown memory, researches markets, selects financial LLMs, proposes trades, routes every execution path through deterministic risk controls, writes reports, updates memory, and can optionally sync state through GitHub.
+Atlas Agent is a routine-based autonomous AI trading agent. It wakes up on scheduled routines, reads Markdown memory, researches markets, proposes trades, routes every execution path through deterministic risk controls, writes reports, updates memory, and can optionally sync state through GitHub.
 
-It is designed around provider-agnostic AI access, broker adapters, and paper-first operation. Atlas Agent supports multi-provider AI committees, a self-updating top financial LLM roster, Alpaca and broker execution adapters, Perplexity market research, ClickUp notifications, Markdown trade journals, scheduled remote routines, and gated live trading.
+It is designed around provider-agnostic AI access, broker adapters, and paper-first operation. Atlas Agent supports benchmark-informed model selection, Alpaca and broker execution adapters, Perplexity market research, ClickUp notifications, Markdown trade journals, scheduled remote routines, and gated live trading.
 
 AI output is advisory. Broker execution stays behind strategy validation, `RiskManager`, the kill switch, audit logs, and approval gates.
 
 ## Features
 
-**Self-updating finance model roster.** Atlas Agent can update a ranked roster of up to 7 finance-capable LLMs using the Vals AI Finance Agent benchmark. The roster informs model selection for the AI committee, but it is not a guarantee of trading performance.
+**Benchmark-informed model reference.** Atlas Agent provides a ranked reference of finance-capable LLMs using the Vals AI Finance Agent benchmark. This helps users select the best single model for their agent.
 
 **Routine-based autonomous operation.** Run pre-market, market open, midday, market close, and weekly routines locally, through cron, through GitHub Actions, or through remote coding agents.
 
 **Markdown memory and trade journal.** Generated workspaces keep portfolio notes, watchlists, strategy rules, open positions, trade history, daily reports, and weekly reviews in plain Markdown.
 
-**Multi-provider AI committee.** Assign financial analysis roles across configured providers while keeping all AI providers behind the `AIProvider` interface.
+**Single-model AI analyst.** Configure your preferred financial LLM through the `AIProvider` interface.
 
 **Broker execution layer.** Use `PaperBroker` by default and route live integrations through broker adapters that implement the `Broker` interface.
 
@@ -82,8 +78,8 @@ atlas backtest --strategy moving_average --symbol BTC-USD
 Scheduled routine
 → Markdown memory
 → Market/research data
-→ Self-updating LLM roster
-→ AI committee decision
+→ Benchmark-informed model reference
+→ Single-model AI analyst
 → Strategy validation
 → RiskManager
 → Paper execution or pending live order
@@ -97,9 +93,8 @@ Scheduled routine
 | --- | --- |
 | `atlas init` | Create a workspace from a template. |
 | `atlas validate` | Check local configuration and create required runtime directories. |
-| `atlas models update` | Refresh the benchmark-informed model roster. |
-| `atlas models list` | Show the configured finance model roster. |
-| `atlas models select --top 7` | Select models for the AI committee roles. |
+| `atlas models list` | Show the benchmark-informed model reference. |
+| `atlas models update-readme` | Refresh the benchmark reference in the README. |
 | `atlas routine run pre_market --mode paper` | Run the pre-market routine in paper mode. |
 | `atlas routine run market_open --mode paper` | Run the market-open routine in paper mode. |
 | `atlas run-once --mode paper` | Execute one paper-mode strategy pass. |
@@ -115,9 +110,7 @@ Scheduled routine
 
 ## Recommended models (from Vals.ai benchmarks)
 
-Atlas Agent can use a committee of up to 7 financial LLMs. The default roster is benchmark-informed using Vals AI Finance Agent, then filtered by the provider keys the user actually configures. 
-
-Default rankings are based on the Vals AI Finance Agent benchmark when available. This benchmark evaluates financial analyst tasks, not guaranteed trading performance.
+Atlas Agent includes a reference ranking of finance-capable LLMs based on the Vals AI Finance Agent benchmark. This benchmark evaluates financial analyst tasks, not guaranteed trading performance.
 
 <!-- ATLAS_MODEL_ROSTER_START -->
 
@@ -135,33 +128,22 @@ Default rankings are based on the Vals AI Finance Agent benchmark when available
 
 ### Provider Setup
 
-Set environment variables for the providers you want to enable. Do not put real keys in public files.
+Set environment variables for the provider you want to enable. Do not put real keys in public files.
 
 ```bash
 ANTHROPIC_API_KEY=...
-OPENAI_COMPATIBLE_API_KEY=...
+# or
+OPENAI_API_KEY=...
+# or
 DEEPSEEK_API_KEY=...
-KIMI_API_KEY=...
-GROK_API_KEY=...
-OPENROUTER_API_KEY=...
 ```
 
-### Selection Logic
+The benchmark reference improves model selection discipline, but it is not proof that Atlas will beat the market.
 
-- Top ranked benchmark models are preferred.
-- Unavailable models are marked disabled.
-- If fewer than 7 providers are configured, Atlas reuses available providers or falls back safely.
-- You can edit `configs/model_sources.yaml` to map benchmark model names to real API model IDs.
-
-The roster improves model selection discipline, but it is not proof that Atlas will beat the market.
-
-Manage the roster via CLI:
+Manage the reference via CLI:
 
 ```bash
-atlas models update --source vals-finance-agent
 atlas models list
-atlas models select --top 7
-atlas models doctor
 atlas models update-readme
 ```
 
@@ -192,7 +174,7 @@ Switch providers through config; no code changes should be required.
 | `market_close` | Summarize the day, update memory, write reports, and capture execution outcomes. |
 | `weekly_review` | Review process quality, rejected orders, risk behavior, and strategy evidence. |
 
-Routine runs use a workspace lock so overlapping runs are refused. `--models auto` loads the top usable roster models and assigns committee roles.
+Routine runs use a workspace lock so overlapping runs are refused.
 
 ## Paper vs Live
 
@@ -229,9 +211,9 @@ src/atlas_agent/              Core package, CLI, providers, brokers, risk, routi
 templates/routine-trader/     Workspace template for routine-based agents
 routines/prompts/             Built-in routine prompts
 skills/                       Operator skill notes for routine work
-configs/                      Model roster, model source, provider, and broker examples
-docs/                         Safety, setup, release, and model roster notes
-tests/                        Unit tests for execution, safety, CLI, routines, and roster logic
+configs/                      Provider and broker examples
+docs/                         Safety, setup, and release notes
+tests/                        Unit tests for execution, safety, CLI, and routines
 ```
 
 ## Repository Sections
@@ -239,7 +221,6 @@ tests/                        Unit tests for execution, safety, CLI, routines, a
 | Section | What to inspect |
 | --- | --- |
 | Safety model | `docs/safety.md`, `DISCLAIMER.md`, `AGENTS.md` |
-| Model roster | `docs/model-roster.md`, `configs/model_roster.yaml`, `configs/model_sources.yaml` |
 | Routine template | `templates/routine-trader/` |
 | Scheduled prompts | `routines/prompts/` |
 | Execution code | `src/atlas_agent/execution/`, `src/atlas_agent/risk/`, `src/atlas_agent/brokers/` |
@@ -251,7 +232,6 @@ Contributions are welcome. Useful focus areas:
 
 - broker sandbox validation
 - provider adapters
-- model roster improvements
 - strategy plugins
 - dashboard
 - notification adapters

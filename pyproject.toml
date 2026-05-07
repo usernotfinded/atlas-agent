@@ -22,10 +22,6 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.data-files]
-"share/atlas-agent/configs" = [
-  "configs/model_roster.yaml",
-  "configs/model_sources.yaml",
-]
 "share/atlas-agent/templates/routine-trader" = [
   "templates/routine-trader/.env.example",
   "templates/routine-trader/.gitignore",
@@ -59,8 +55,12 @@ where = ["src"]
   "templates/routine-trader/audit/.gitkeep",
 ]
 "share/atlas-agent/templates/routine-trader/configs" = [
-  "templates/routine-trader/configs/model_roster.yaml",
-  "templates/routine-trader/configs/model_sources.yaml",
+  "templates/routine-trader/configs/brokers.example.yaml",
+  "templates/routine-trader/configs/market.example.yaml",
+  "templates/routine-trader/configs/providers.example.yaml",
+  "templates/routine-trader/configs/risk.example.yaml",
+  "templates/routine-trader/configs/scheduler.example.yaml",
+  "templates/routine-trader/configs/strategy.example.yaml",
 ]
 
 [tool.pytest.ini_options]
