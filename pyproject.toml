@@ -13,7 +13,6 @@ authors = [{ name = "Atlas Agent Contributors" }]
 
 [project.scripts]
 atlas = "atlas_agent.cli:main"
-omni-trade = "atlas_agent.cli:main"
 
 [tool.setuptools]
 include-package-data = true
