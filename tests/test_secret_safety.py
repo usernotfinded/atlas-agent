@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from omni_trade_ai.execution.audit import AuditLogger
-from omni_trade_ai.safety.secrets import scan_text_for_secrets
+from atlas_agent.execution.audit import AuditLogger
+from atlas_agent.safety.secrets import scan_text_for_secrets
 
 
 def test_no_broker_logs_secrets(tmp_path) -> None:
@@ -25,3 +25,15 @@ def test_secret_scanner_detects_real_values() -> None:
     )
 
     assert findings == ["API_KEY", "ALPACA_API_KEY"]
+
+
+def test_public_docs_do_not_add_profit_claims() -> None:
+    checked = [
+        "README.md",
+        "DISCLAIMER.md",
+        "docs/model-roster.md",
+    ]
+    text = "\n".join(open(path, encoding="utf-8").read() for path in checked).lower()
+
+    assert "guaranteed profit" not in text
+    assert "profit guarantee" in text or "no returns are guaranteed" in text

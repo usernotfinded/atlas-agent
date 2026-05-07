@@ -4,10 +4,10 @@ Run this before pushing a public GitHub release.
 
 - `pytest`
 - `python -m pip install -e . --no-build-isolation`
-- `omni-trade --help`
-- `omni-trade init demo --template routine-trader`
-- `cd demo && omni-trade validate`
-- `omni-trade routine run pre_market --mode paper`
+- `atlas --help`
+- `atlas init demo --template routine-trader`
+- `cd demo && atlas validate`
+- `atlas routine run pre_market --mode paper`
 - Secret scan across `README.md`, `docs/`, `templates/`, `routines/`, `skills/`, `src/`, `tests/`, and `.env.example`
 - Confirm no runtime personal data is committed
 - Confirm `README.md` reflects current commands and safety behavior

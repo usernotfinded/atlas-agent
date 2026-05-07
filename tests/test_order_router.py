@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from omni_trade_ai.config import OmniTradeConfig
-from omni_trade_ai.execution.approval import ApprovalManager
-from omni_trade_ai.execution.audit import AuditLogger
-from omni_trade_ai.execution.order import AccountSnapshot, Order, OrderResult
-from omni_trade_ai.execution.order_router import OrderRouter
-from omni_trade_ai.portfolio.positions import Position
-from omni_trade_ai.portfolio.state import PortfolioState
-from omni_trade_ai.risk.manager import RiskManager
+from atlas_agent.config import AtlasConfig
+from atlas_agent.execution.approval import ApprovalManager
+from atlas_agent.execution.audit import AuditLogger
+from atlas_agent.execution.order import AccountSnapshot, Order, OrderResult
+from atlas_agent.execution.order_router import OrderRouter
+from atlas_agent.portfolio.positions import Position
+from atlas_agent.portfolio.state import PortfolioState
+from atlas_agent.risk.manager import RiskManager
 
 
 @dataclass
@@ -30,7 +30,7 @@ class SpyBroker:
         return OrderResult(True, False, order_id, "cancelled", "cancelled")
 
 
-def make_router(tmp_path, config: OmniTradeConfig) -> OrderRouter:
+def make_router(tmp_path, config: AtlasConfig) -> OrderRouter:
     audit = AuditLogger(tmp_path / "audit")
     return OrderRouter(
         config=config,
@@ -41,7 +41,7 @@ def make_router(tmp_path, config: OmniTradeConfig) -> OrderRouter:
 
 
 def test_risk_rejection_prevents_broker_place_order(tmp_path) -> None:
-    config = OmniTradeConfig(max_position_size=50)
+    config = AtlasConfig(max_position_size=50)
     broker = SpyBroker()
     result = make_router(tmp_path, config).route(
         Order("BTC-USD", "buy", 1, limit_price=100, confidence=1),
@@ -56,7 +56,7 @@ def test_risk_rejection_prevents_broker_place_order(tmp_path) -> None:
 
 
 def test_live_order_without_approval_creates_pending_and_does_not_execute(tmp_path) -> None:
-    config = OmniTradeConfig(
+    config = AtlasConfig(
         trading_mode="live",
         enable_live_trading=True,
         live_broker="alpaca",
@@ -87,7 +87,7 @@ def test_live_order_without_approval_creates_pending_and_does_not_execute(tmp_pa
 
 
 def test_live_order_with_stale_missing_approval_fails_safely(tmp_path) -> None:
-    config = OmniTradeConfig(
+    config = AtlasConfig(
         trading_mode="live",
         enable_live_trading=True,
         live_broker="alpaca",

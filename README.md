@@ -1,8 +1,8 @@
-# OmniTradeAI
+# Atlas Agent
 
-Routine-based autonomous AI trader with multi-provider AI support, Alpaca execution, Markdown memory, risk gates, and scheduled operation.
+Routine-based autonomous AI trading agent with self-updating financial LLM selection, broker execution, Markdown memory, scheduled routines, approval gates, and deterministic risk controls.
 
-OmniTradeAI is an open-source trading research and automation framework. It is paper-first, provider-agnostic, and built around repeatable routines that read Markdown memory, use configured research and AI adapters, route orders through deterministic risk controls, write reports, and optionally sync state through GitHub.
+Atlas Agent connects top financial LLMs, market research, broker execution, persistent memory, and risk-gated autonomous trading routines. It is paper-first, provider-agnostic, and built around repeatable routines that read Markdown memory, use configured research and AI adapters, route orders through deterministic risk controls, write reports, and optionally sync state through GitHub.
 
 This is not financial advice. Trading can lose money. No returns are guaranteed.
 
@@ -20,31 +20,42 @@ This is not financial advice. Trading can lose money. No returns are guaranteed.
 ## Quickstart
 
 ```bash
-git clone https://github.com/<user>/omni-trade-ai.git
-cd omni-trade-ai
+git clone https://github.com/<user>/atlas-agent.git
+cd atlas-agent
 python -m pip install -e . --no-build-isolation
-omni-trade init my-trader --template routine-trader
+atlas init my-trader --template routine-trader
 cd my-trader
-omni-trade validate
-omni-trade routine run pre_market --mode paper
-omni-trade routine run market_open --mode paper
+atlas validate
+atlas routine run pre_market --mode paper
+atlas routine run market_open --mode paper
 ```
+
+The old `omni-trade` CLI is deprecated and will be removed in a future version. Use `atlas`.
 
 Run a local backtest from either the project root or a generated workspace:
 
 ```bash
-omni-trade backtest --strategy moving_average --symbol BTC-USD
+atlas backtest --strategy moving_average --symbol BTC-USD
 ```
 
 Generate a GitHub Actions routine workflow:
 
 ```bash
-omni-trade schedule github-actions --template routine-trader
+atlas schedule github-actions --template routine-trader
+```
+
+Update and inspect the finance LLM roster:
+
+```bash
+atlas models update --source vals-finance-agent
+atlas models list
+atlas models select --top 7
+atlas models doctor
 ```
 
 ## Provider Support
 
-OmniTradeAI keeps AI access behind provider adapters. AI output is advisory and must not call brokers directly.
+Atlas Agent keeps AI access behind provider adapters. AI output is advisory and must not call brokers directly.
 
 - Claude / Anthropic
 - Codex / OpenAI-compatible endpoints
@@ -56,6 +67,24 @@ OmniTradeAI keeps AI access behind provider adapters. AI output is advisory and 
 - Ollama/local wrappers through OpenAI-compatible or command adapters
 - deterministic null provider for tests
 
+## Self-Updating Finance Model Roster
+
+Atlas Agent can maintain a ranked roster of financial LLMs using the Vals AI Finance Agent benchmark. The benchmark ranking is treated as an input, not as a guarantee of trading performance. Atlas Agent filters the roster through the providers and API keys configured by the user.
+
+The roster is used by the AI committee to select up to seven models for trading analysis roles:
+
+- Lead Financial Analyst
+- Fundamental Analyst
+- Market Research Analyst
+- Technical Analyst
+- Risk Challenger
+- Execution Planner
+- Final Arbiter
+
+Atlas Agent maintains a user-editable model roster in `configs/model_roster.yaml` and model/API mappings in `configs/model_sources.yaml`. The roster updater reads the Vals AI Finance Agent benchmark, caches results in `.atlas/cache/model_roster.json`, and falls back to cached or built-in entries when live fetch or parsing fails.
+
+Model names on public leaderboards do not always match provider API IDs. Treat `model_id` values in `configs/model_sources.yaml` as editable placeholders unless you have verified them with your provider or gateway.
+
 ## Routine Workflow
 
 Generated workspaces contain `memory/`, `routines/`, `skills/`, `reports/`, `pending_orders/`, and `audit/`.
@@ -66,7 +95,9 @@ Generated workspaces contain `memory/`, `routines/`, `skills/`, `reports/`, `pen
 - `market_close`: summarize the day, update portfolio memory, and write the close report.
 - `weekly_review`: review process quality, rejected orders, and strategy evidence.
 
-Routine runs use a basic `.omni/locks/routine.lock` file so overlapping runs are refused. Use `omni-trade routine status` to inspect a lock and `omni-trade routine unlock` to remove a stale crash lock.
+Routine runs use a basic `.atlas/locks/routine.lock` file so overlapping runs are refused. Use `atlas routine status` to inspect a lock and `atlas routine unlock` to remove a stale crash lock.
+
+`--models auto` loads the top usable roster models and assigns committee roles. If fewer than seven API keys are configured, Atlas Agent reuses available models or records disabled placeholders. The AI committee can only produce proposed decisions; broker execution still goes through deterministic risk checks, approval gates, and broker adapters.
 
 ## Live Trading
 
@@ -130,5 +161,4 @@ See `docs/release-checklist.md` before publishing a public release.
 
 ## Disclaimer
 
-OmniTradeAI is software for research, automation, and self-directed trading workflows. It is not investment, legal, tax, or financial advice. You are responsible for account security, trading decisions, broker permissions, regulatory obligations, and losses.
-
+Atlas Agent is software for research, automation, and self-directed trading workflows. It is not investment, legal, tax, or financial advice. You are responsible for account security, trading decisions, broker permissions, regulatory obligations, and losses.

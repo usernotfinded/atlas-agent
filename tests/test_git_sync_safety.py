@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from omni_trade_ai.routines.git_sync import GitSync, GitSyncError
+from atlas_agent.routines.git_sync import GitSync, GitSyncError
 
 
 def _git(repo, *args: str) -> subprocess.CompletedProcess[str]:

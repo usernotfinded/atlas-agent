@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from omni_trade_ai.brokers.paper import PaperBroker
-from omni_trade_ai.execution.order import Order
-from omni_trade_ai.portfolio.state import PortfolioState
+from atlas_agent.brokers.paper import PaperBroker
+from atlas_agent.execution.order import Order
+from atlas_agent.portfolio.state import PortfolioState
 
 
 def test_paper_broker_works() -> None:

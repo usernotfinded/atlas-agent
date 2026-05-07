@@ -3,16 +3,17 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "omni-trade-ai"
+name = "atlas-agent"
 version = "0.1.0"
-description = "Safe-by-default autonomous AI trading framework"
+description = "Atlas Agent connects top financial LLMs, market research, broker execution, persistent memory, and risk-gated autonomous trading routines."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "OmniTradeAI Contributors" }]
+authors = [{ name = "Atlas Agent Contributors" }]
 
 [project.scripts]
-omni-trade = "omni_trade_ai.cli:main"
+atlas = "atlas_agent.cli:main"
+omni-trade = "atlas_agent.cli:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -21,37 +22,45 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.data-files]
-"share/omni-trade-ai/templates/routine-trader" = [
+"share/atlas-agent/configs" = [
+  "configs/model_roster.yaml",
+  "configs/model_sources.yaml",
+]
+"share/atlas-agent/templates/routine-trader" = [
   "templates/routine-trader/.env.example",
   "templates/routine-trader/.gitignore",
   "templates/routine-trader/README.md",
 ]
-"share/omni-trade-ai/templates/routine-trader/memory" = [
+"share/atlas-agent/templates/routine-trader/memory" = [
   "templates/routine-trader/memory/*.md",
 ]
-"share/omni-trade-ai/templates/routine-trader/routines" = [
+"share/atlas-agent/templates/routine-trader/routines" = [
   "templates/routine-trader/routines/README.md",
 ]
-"share/omni-trade-ai/templates/routine-trader/routines/prompts" = [
+"share/atlas-agent/templates/routine-trader/routines/prompts" = [
   "templates/routine-trader/routines/prompts/*.md",
 ]
-"share/omni-trade-ai/templates/routine-trader/routines/schedules" = [
+"share/atlas-agent/templates/routine-trader/routines/schedules" = [
   "templates/routine-trader/routines/schedules/*",
 ]
-"share/omni-trade-ai/templates/routine-trader/skills" = [
+"share/atlas-agent/templates/routine-trader/skills" = [
   "templates/routine-trader/skills/*.md",
 ]
-"share/omni-trade-ai/templates/routine-trader/reports/daily" = [
+"share/atlas-agent/templates/routine-trader/reports/daily" = [
   "templates/routine-trader/reports/daily/.gitkeep",
 ]
-"share/omni-trade-ai/templates/routine-trader/reports/weekly" = [
+"share/atlas-agent/templates/routine-trader/reports/weekly" = [
   "templates/routine-trader/reports/weekly/.gitkeep",
 ]
-"share/omni-trade-ai/templates/routine-trader/pending_orders" = [
+"share/atlas-agent/templates/routine-trader/pending_orders" = [
   "templates/routine-trader/pending_orders/.gitkeep",
 ]
-"share/omni-trade-ai/templates/routine-trader/audit" = [
+"share/atlas-agent/templates/routine-trader/audit" = [
   "templates/routine-trader/audit/.gitkeep",
+]
+"share/atlas-agent/templates/routine-trader/configs" = [
+  "templates/routine-trader/configs/model_roster.yaml",
+  "templates/routine-trader/configs/model_sources.yaml",
 ]
 
 [tool.pytest.ini_options]

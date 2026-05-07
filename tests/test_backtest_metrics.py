@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 
-from omni_trade_ai.backtest.metrics import TradeRecord, calculate_metrics
-from omni_trade_ai.backtest.runner import run_backtest
-from omni_trade_ai.config import OmniTradeConfig
+from atlas_agent.backtest.metrics import TradeRecord, calculate_metrics
+from atlas_agent.backtest.runner import run_backtest
+from atlas_agent.config import AtlasConfig
 
 
 def test_metrics_calculate_correctly() -> None:
@@ -32,7 +32,7 @@ def test_metrics_calculate_correctly() -> None:
 
 
 def test_backtest_report_files_are_written(tmp_path) -> None:
-    config = OmniTradeConfig(reports_dir=tmp_path)
+    config = AtlasConfig(reports_dir=tmp_path)
 
     result = run_backtest(symbol="BTC-USD", config=config)
 

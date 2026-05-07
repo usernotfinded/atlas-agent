@@ -26,12 +26,12 @@ This is a real AI trading framework. It supports backtesting, paper trading, gat
 
 ```bash
 pytest
-python -m omni_trade_ai.cli --help
-omni-trade --help
-omni-trade validate
-omni-trade backtest --strategy moving_average --symbol BTC-USD
-omni-trade run-once --mode paper
-omni-trade run-once --mode live
+python -m atlas_agent.cli --help
+atlas --help
+atlas validate
+atlas backtest --strategy moving_average --symbol BTC-USD
+atlas run-once --mode paper
+atlas run-once --mode live
 ```
 
 Live mode should fail safely unless explicit live config, credentials, risk checks, and approval are present.

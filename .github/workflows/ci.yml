@@ -23,11 +23,11 @@ jobs:
           python -m pip install -e .
           python -m pip install pytest
       - run: python -m pytest
-      - run: omni-trade --help
-      - run: omni-trade init demo-workspace --template routine-trader
-      - run: omni-trade validate
+      - run: atlas --help
+      - run: atlas init demo-workspace --template routine-trader
+      - run: atlas validate
         working-directory: demo-workspace
-      - run: omni-trade routine run pre_market --mode paper
+      - run: atlas routine run pre_market --mode paper
         working-directory: demo-workspace
-      - run: omni-trade routine run market_open --mode paper
+      - run: atlas routine run market_open --mode paper
         working-directory: demo-workspace

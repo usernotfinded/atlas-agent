@@ -4,10 +4,10 @@ import os
 
 import pytest
 
-from omni_trade_ai.providers.base import ProviderConfigurationError, ProviderRequest
-from omni_trade_ai.providers.local_command import LocalCommandProvider
-from omni_trade_ai.providers.null_provider import NullProvider
-from omni_trade_ai.providers.openai_compatible import OpenAICompatibleProvider
+from atlas_agent.providers.base import ProviderConfigurationError, ProviderRequest
+from atlas_agent.providers.local_command import LocalCommandProvider
+from atlas_agent.providers.null_provider import NullProvider
+from atlas_agent.providers.openai_compatible import OpenAICompatibleProvider
 
 
 def test_null_provider_deterministic() -> None:

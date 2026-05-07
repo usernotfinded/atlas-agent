@@ -1,6 +1,6 @@
 # Paper Trading Demo
 
 ```bash
-omni-trade run-once --mode paper
+atlas run-once --mode paper
 ```
 

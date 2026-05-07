@@ -1,0 +1,54 @@
+vals_finance_agent:
+  url: "https://www.vals.ai/benchmarks/finance_agent"
+  top_n: 7
+  fallback_cache: true
+
+# User-editable mappings from benchmark display names to configured provider IDs.
+# Some model IDs are placeholders because public API IDs can differ by account,
+# region, release channel, or OpenAI-compatible gateway. Verify before live use.
+model_mappings:
+  "Claude Opus 4.7":
+    provider: "anthropic"
+    env_key: "ANTHROPIC_API_KEY"
+    model_id: "claude-opus-4-7"
+    notes: "Placeholder; verify Anthropic model ID before use."
+  "Claude Sonnet 4.6":
+    provider: "anthropic"
+    env_key: "ANTHROPIC_API_KEY"
+    model_id: "claude-sonnet-4-6"
+    notes: "Placeholder; verify Anthropic model ID before use."
+  "Muse Spark":
+    provider: "unsupported"
+    env_key: "MINIMAX_API_KEY"
+    model_id: "muse-spark"
+    notes: "Placeholder; Atlas Agent does not include a MiniMax adapter yet."
+  "DeepSeek V4":
+    provider: "openai_compatible"
+    env_key: "DEEPSEEK_API_KEY"
+    model_id: "deepseek-v4"
+    notes: "Placeholder; verify DeepSeek model ID before use."
+  "Claude Opus 4.6 (Thinking)":
+    provider: "anthropic"
+    env_key: "ANTHROPIC_API_KEY"
+    model_id: "claude-opus-4-6-thinking"
+    notes: "Placeholder; verify Anthropic model ID before use."
+  "GPT 5.5":
+    provider: "openai_compatible"
+    env_key: "OPENAI_COMPATIBLE_API_KEY"
+    model_id: "gpt-5.5"
+    notes: "Placeholder; verify model ID with your OpenAI-compatible provider."
+  "Gemini 3.1 Pro Preview (02/26)":
+    provider: "openai_compatible"
+    env_key: "GEMINI_API_KEY"
+    model_id: "gemini-3.1-pro-preview"
+    notes: "Placeholder; verify model ID with your gateway."
+  "Kimi K2.5":
+    provider: "openai_compatible"
+    env_key: "KIMI_API_KEY"
+    model_id: "kimi-k2.5"
+    notes: "Placeholder; verify Moonshot/Kimi model ID before use."
+  "Grok 4.3":
+    provider: "openai_compatible"
+    env_key: "GROK_API_KEY"
+    model_id: "grok-4.3"
+    notes: "Placeholder; verify xAI model ID before use."

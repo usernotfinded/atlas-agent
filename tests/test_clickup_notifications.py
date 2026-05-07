@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from omni_trade_ai.notifications.clickup import (
+from atlas_agent.notifications.clickup import (
     ClickUpNotifier,
     NotificationConfigurationError,
 )

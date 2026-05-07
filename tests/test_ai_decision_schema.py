@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from omni_trade_ai.ai.decision_schema import DecisionSchemaError, parse_decision
-from omni_trade_ai.ai.signal_parser import parse_and_validate_signal
+from atlas_agent.ai.decision_schema import DecisionSchemaError, parse_decision
+from atlas_agent.ai.signal_parser import parse_and_validate_signal
 
 
 def test_valid_decision_schema_parses() -> None:

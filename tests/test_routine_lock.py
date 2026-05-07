@@ -6,10 +6,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from omni_trade_ai.config import OmniTradeConfig
-from omni_trade_ai.research.web_research import OfflineResearchProvider
-from omni_trade_ai.routines.engine import run_routine
-from omni_trade_ai.routines.lock import (
+from atlas_agent.config import AtlasConfig
+from atlas_agent.research.web_research import OfflineResearchProvider
+from atlas_agent.routines.engine import run_routine
+from atlas_agent.routines.lock import (
     RoutineLockError,
     acquire_routine_lock,
     lock_path,
@@ -17,8 +17,8 @@ from omni_trade_ai.routines.lock import (
 )
 
 
-def _config(tmp_path) -> OmniTradeConfig:
-    return OmniTradeConfig(
+def _config(tmp_path) -> AtlasConfig:
+    return AtlasConfig(
         memory_dir=tmp_path / "memory",
         reports_dir=tmp_path / "reports",
         audit_dir=tmp_path / "audit",

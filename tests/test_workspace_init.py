@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from omni_trade_ai.cli import main
-from omni_trade_ai.workspace import WorkspaceInitError, init_workspace
+from atlas_agent.cli import main
+from atlas_agent.workspace import WorkspaceInitError, init_workspace
 
 
 def test_init_creates_expected_workspace(tmp_path) -> None:

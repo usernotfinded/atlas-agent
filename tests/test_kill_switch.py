@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from omni_trade_ai.config import OmniTradeConfig
-from omni_trade_ai.execution.order import Order
-from omni_trade_ai.portfolio.state import PortfolioState
-from omni_trade_ai.risk.kill_switch import KillSwitch
-from omni_trade_ai.risk.manager import RiskManager
+from atlas_agent.config import AtlasConfig
+from atlas_agent.execution.order import Order
+from atlas_agent.portfolio.state import PortfolioState
+from atlas_agent.risk.kill_switch import KillSwitch
+from atlas_agent.risk.manager import RiskManager
 
 
 def test_kill_switch_file_toggle(tmp_path) -> None:
@@ -17,7 +17,7 @@ def test_kill_switch_file_toggle(tmp_path) -> None:
 
 
 def test_kill_switch_blocks_order() -> None:
-    manager = RiskManager.from_config(OmniTradeConfig(kill_switch_enabled=True))
+    manager = RiskManager.from_config(AtlasConfig(kill_switch_enabled=True))
     decision = manager.validate_order(
         Order("BTC-USD", "buy", 1, limit_price=100, confidence=1),
         PortfolioState(cash=10_000),

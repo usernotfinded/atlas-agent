@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible OmniTradeAI bug without secrets
+about: Report a reproducible Atlas Agent bug without secrets
 title: "[Bug]: "
 labels: bug
 assignees: ""
@@ -18,7 +18,7 @@ assignees: ""
 
 - Python version:
 - OS:
-- OmniTradeAI version or commit:
+- Atlas Agent version or commit:
 
 ## Safety Notes
 

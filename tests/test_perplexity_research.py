@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from omni_trade_ai.research.perplexity import (
+from atlas_agent.research.perplexity import (
     PerplexityResearchProvider,
     ResearchConfigurationError,
 )

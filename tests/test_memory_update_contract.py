@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from omni_trade_ai.routines.memory_writer import append_memory
+from atlas_agent.routines.memory_writer import append_memory
 
 
 def test_memory_update_appends_without_erasing_history(tmp_path) -> None:

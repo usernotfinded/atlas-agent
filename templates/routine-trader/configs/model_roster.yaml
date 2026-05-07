@@ -1,0 +1,55 @@
+source: vals-finance-agent
+benchmark_name: "Vals AI Finance Agent"
+benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+benchmark_updated: "2026-05-04"
+generated_at: "2026-05-07T06:41:17+00:00"
+models:
+  - rank: 1
+    model_name: "Claude Opus 4.7"
+    provider: "anthropic"
+    score: 64.37
+    benchmark_name: "Vals AI Finance Agent"
+    benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+    benchmark_updated: "2026-05-04"
+  - rank: 2
+    model_name: "Claude Sonnet 4.6"
+    provider: "anthropic"
+    score: 63.33
+    benchmark_name: "Vals AI Finance Agent"
+    benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+    benchmark_updated: "2026-05-04"
+  - rank: 3
+    model_name: "Muse Spark"
+    provider: "minimax"
+    score: 60.59
+    benchmark_name: "Vals AI Finance Agent"
+    benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+    benchmark_updated: "2026-05-04"
+  - rank: 4
+    model_name: "DeepSeek V4"
+    provider: "deepseek"
+    score: 60.39
+    benchmark_name: "Vals AI Finance Agent"
+    benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+    benchmark_updated: "2026-05-04"
+  - rank: 5
+    model_name: "Claude Opus 4.6 (Thinking)"
+    provider: "anthropic"
+    score: 60.05
+    benchmark_name: "Vals AI Finance Agent"
+    benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+    benchmark_updated: "2026-05-04"
+  - rank: 6
+    model_name: "GPT 5.5"
+    provider: "openai"
+    score: 
+    benchmark_name: "Vals AI Finance Agent"
+    benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+    benchmark_updated: "2026-05-04"
+  - rank: 7
+    model_name: "Gemini 3.1 Pro Preview (02/26)"
+    provider: "google"
+    score: 
+    benchmark_name: "Vals AI Finance Agent"
+    benchmark_url: "https://www.vals.ai/benchmarks/finance_agent"
+    benchmark_updated: "2026-05-04"

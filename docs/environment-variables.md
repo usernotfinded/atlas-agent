@@ -28,8 +28,8 @@ CLICKUP_TASK_ID=
 # Git sync for remote routines
 ALLOW_GIT_COMMIT=true
 ALLOW_GIT_PUSH=false
-GIT_COMMIT_AUTHOR_NAME=OmniTradeAI Agent
-GIT_COMMIT_AUTHOR_EMAIL=omni-trade-ai@example.local
+GIT_COMMIT_AUTHOR_NAME=Atlas Agent
+GIT_COMMIT_AUTHOR_EMAIL=atlas-agent@example.local
 
 # Provider adapter
 AI_PROVIDER=null

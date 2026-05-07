@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from omni_trade_ai.cli import run_once
-from omni_trade_ai.config import OmniTradeConfig
-from omni_trade_ai.scheduler.runner import run_scheduler_once
+from atlas_agent.cli import run_once
+from atlas_agent.config import AtlasConfig
+from atlas_agent.scheduler.runner import run_scheduler_once
 
 
 def test_paper_scheduler_can_run_autonomously(tmp_path) -> None:
-    config = OmniTradeConfig(
+    config = AtlasConfig(
         reports_dir=tmp_path / "reports",
         audit_dir=tmp_path / "audit",
         pending_orders_dir=tmp_path / "pending",
@@ -24,7 +24,7 @@ def test_paper_scheduler_can_run_autonomously(tmp_path) -> None:
 
 
 def test_live_scheduler_creates_pending_order_without_approval(tmp_path) -> None:
-    config = OmniTradeConfig(
+    config = AtlasConfig(
         trading_mode="live",
         enable_live_trading=True,
         live_broker="alpaca",
@@ -46,7 +46,7 @@ def test_live_scheduler_creates_pending_order_without_approval(tmp_path) -> None
 
 
 def test_kill_switch_blocks_scheduler_execution(tmp_path) -> None:
-    config = OmniTradeConfig(
+    config = AtlasConfig(
         kill_switch_enabled=True,
         audit_dir=tmp_path / "audit",
         pending_orders_dir=tmp_path / "pending",
