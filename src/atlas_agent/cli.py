@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
+import urllib.request
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from atlas_agent import __version__
 from atlas_agent.backtest.runner import run_backtest
 from atlas_agent.brokers.alpaca import AlpacaBroker
 from atlas_agent.brokers.binance import BinanceBroker
@@ -561,6 +564,23 @@ def _is_workspace(config: AtlasConfig) -> bool:
              (config.memory_dir.parent / "routines").exists()))
 
 
+def _check_for_updates() -> str | None:
+    """Check for updates on GitHub. Returns version string if update is available."""
+    url = "https://raw.githubusercontent.com/usernotfinded/atlas-agent/main/src/atlas_agent/__init__.py"
+    try:
+        with urllib.request.urlopen(url, timeout=1.0) as response:
+            content = response.read().decode("utf-8")
+            match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+            if match:
+                remote_version = match.group(1)
+                if remote_version != __version__:
+                    return remote_version
+    except Exception:
+        # Fail silently to avoid blocking startup or showing errors if offline
+        pass
+    return None
+
+
 def _print_welcome() -> None:
     print(r"""
       ___ _____ _      _   ___      _   ___ ___ _  _ _____ 
@@ -570,6 +590,11 @@ def _print_welcome() -> None:
 
 Atlas Agent is a self-improving AI trading agent.
 """)
+    update = _check_for_updates()
+    if update:
+        print(f"NOTICE: A newer version of Atlas Agent is available: {update} (current: {__version__})")
+        print("Run 'git pull' to update your local installation.")
+        print("")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -609,6 +634,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "status":
         from atlas_agent.agent.status import get_agent_status
         print(get_agent_status(config))
+        update = _check_for_updates()
+        if update:
+            print(f"\n[UPDATE] A newer version of Atlas Agent is available: {update} (current: {__version__})")
+            print("Run 'git pull' to update.")
         return 0
     if args.command == "plan":
         from atlas_agent.agent.planner import get_agent_plan
