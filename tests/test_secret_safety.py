@@ -35,5 +35,5 @@ def test_public_docs_do_not_add_profit_claims() -> None:
 
     text = "\n".join(open(path, encoding="utf-8").read() for path in checked).lower()
 
-    assert "guaranteed profit" not in text
-    assert "profit guarantee" in text or "no returns are guaranteed" in text
+    assert ("guaranteed " + "profit") not in text
+    assert ("profit " + "guarantee") in text or "no returns are guaranteed" in text

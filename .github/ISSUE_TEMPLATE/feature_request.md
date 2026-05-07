@@ -12,7 +12,6 @@ assignees: ""
 
 ## Safety Impact
 
-Explain how this preserves paper-first defaults, risk checks, kill switch behavior, and live approval gates.
+Explain how this preserves safe defaults, risk checks, kill switch behavior, and live approval gates.
 
 ## Alternatives Considered
-

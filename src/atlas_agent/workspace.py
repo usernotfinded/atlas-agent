@@ -99,7 +99,13 @@ def _ensure_runtime_dirs(target_path: Path) -> None:
     for directory in (
         target_path / "reports" / "daily",
         target_path / "reports" / "weekly",
+        target_path / "reports" / "learning",
+        target_path / "reports" / "reflections",
         target_path / "pending_orders",
         target_path / "audit",
+        target_path / "skills" / "active",
+        target_path / "skills" / "proposed",
+        target_path / "skills" / "archived",
+        target_path / "memory" / "conversations",
     ):
         directory.mkdir(parents=True, exist_ok=True)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 from atlas_agent.backtest.runner import run_backtest
@@ -49,6 +50,18 @@ from atlas_agent.workspace import (
 )
 
 
+SECRET_ASSIGNMENT_RE = re.compile(
+    r"\b(?P<name>[A-Z0-9_.-]*(?:API[_-]?KEY|API[_-]?SECRET|SECRET[_-]?KEY|TOKEN|PASSWORD)[A-Z0-9_.-]*)"
+    r"(?P<sep>\s*[:=]\s*)"
+    r"(?P<quote>[\"']?)"
+    r"(?P<value>[^\s,;`\"']+)"
+    r"(?P=quote)",
+    re.IGNORECASE,
+)
+BEARER_TOKEN_RE = re.compile(r"\b(Bearer\s+)[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
+MAX_CLI_SNIPPET_CHARS = 220
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="atlas")
     subparsers = parser.add_subparsers(dest="command")
@@ -77,8 +90,55 @@ def build_parser() -> argparse.ArgumentParser:
     agent_sub = agent.add_subparsers(dest="agent_command")
     agent_run = agent_sub.add_parser("run")
     agent_run.add_argument("--mode", choices=("auto", "paper", "live"), default="auto")
+    agent_run.add_argument("--once", action="store_true")
+    agent_run.add_argument("--continuous", action="store_true")
+    agent_run.add_argument("--interval", type=int, default=60)
+    agent_run.add_argument("--max-cycles", type=int, default=None)
     agent_sub.add_parser("status")
     agent_sub.add_parser("plan")
+    agent_sub.add_parser("learn")
+    agent_sub.add_parser("reflect")
+
+    skills = subparsers.add_parser("skills")
+    skills_sub = skills.add_subparsers(dest="skills_command")
+    skills_sub.add_parser("list")
+    skills_sub.add_parser("propose")
+    skills_sub.add_parser("create-from-journal")
+    skills_sub.add_parser("improve")
+    skills_approve = skills_sub.add_parser("approve")
+    skills_approve.add_argument("skill_name")
+    skills_archive = skills_sub.add_parser("archive")
+    skills_archive.add_argument("skill_name")
+
+    memory = subparsers.add_parser("memory")
+    memory_sub = memory.add_subparsers(dest="memory_command")
+    memory_ingest = memory_sub.add_parser("ingest")
+    memory_ingest.add_argument("--file", type=Path, required=True)
+    memory_search = memory_sub.add_parser("search")
+    memory_search.add_argument("query")
+    memory_sub.add_parser("summarize")
+    memory_sub.add_parser("nudge")
+
+    user = subparsers.add_parser("user")
+    user_sub = user.add_subparsers(dest="user_command")
+    user_sub.add_parser("show")
+    user_remember = user_sub.add_parser("remember")
+    user_remember.add_argument("text")
+    user_forget = user_sub.add_parser("forget")
+    user_forget.add_argument("query")
+    user_sub.add_parser("update-from-reflection")
+
+    telegram = subparsers.add_parser("telegram")
+    telegram_sub = telegram.add_subparsers(dest="telegram_command")
+    telegram_sub.add_parser("run")
+    telegram_sub.add_parser("test")
+
+    deploy = subparsers.add_parser("deploy")
+    deploy_sub = deploy.add_subparsers(dest="deploy_command")
+    deploy_sub.add_parser("vps")
+    deploy_sub.add_parser("systemd")
+    deploy_sub.add_parser("docker")
+    deploy_sub.add_parser("serverless")
 
     routine = subparsers.add_parser("routine")
     routine_sub = routine.add_subparsers(dest="routine_command")
@@ -137,7 +197,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     models = subparsers.add_parser("models")
     models_sub = models.add_subparsers(dest="models_command")
-    models_update_readme = models_sub.add_parser("update-readme")
+    models_sub.add_parser("update-readme")
     models_sub.add_parser("list")
     return parser
 
@@ -205,6 +265,90 @@ def _broker_for_mode(
     return CCXTBroker(config)
 
 
+def _handle_memory_search(config: AtlasConfig, query: str) -> int:
+    memory_dir = config.memory_dir
+    if not memory_dir.exists():
+        print(f"No memory directory found at {memory_dir}.")
+        return 0
+
+    files = _memory_markdown_files(memory_dir)
+    if not files:
+        print(f"No Markdown memory files found under {memory_dir} or {memory_dir / 'conversations'}.")
+        return 0
+
+    query_lower = query.lower()
+    matches: list[tuple[Path, str]] = []
+    for path in files:
+        content = path.read_text(encoding="utf-8", errors="replace")
+        index = content.lower().find(query_lower)
+        if index < 0:
+            continue
+        snippet = _snippet(content, index, len(query))
+        matches.append((path, snippet))
+
+    if not matches:
+        print(f"No memory matches found for: {query}")
+        return 0
+
+    for path, snippet in matches:
+        print(f"{_display_path(path)}: {snippet}")
+    return 0
+
+
+def _memory_markdown_files(memory_dir: Path) -> list[Path]:
+    files = [path for path in sorted(memory_dir.glob("*.md")) if path.is_file()]
+    conversations_dir = memory_dir / "conversations"
+    if conversations_dir.exists():
+        files.extend(
+            path
+            for path in sorted(conversations_dir.rglob("*.md"))
+            if path.is_file()
+        )
+    return files
+
+
+def _snippet(content: str, index: int, query_length: int) -> str:
+    start = max(0, index - 80)
+    end = min(len(content), index + max(query_length, 1) + 140)
+    snippet = " ".join(content[start:end].split())
+    if start > 0:
+        snippet = "... " + snippet
+    if end < len(content):
+        snippet += " ..."
+    snippet = _redact_sensitive_text(snippet)
+    if len(snippet) > MAX_CLI_SNIPPET_CHARS:
+        snippet = snippet[: MAX_CLI_SNIPPET_CHARS - 4].rstrip() + " ..."
+    return snippet
+
+
+def _redact_sensitive_text(text: str) -> str:
+    redacted = SECRET_ASSIGNMENT_RE.sub(
+        lambda match: (
+            f"{match.group('name')}{match.group('sep')}"
+            f"{match.group('quote')}[REDACTED]{match.group('quote')}"
+        ),
+        text,
+    )
+    return BEARER_TOKEN_RE.sub(r"\1[REDACTED]", redacted)
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(Path.cwd()))
+    except ValueError:
+        return str(path)
+
+
+def _handle_deploy(kind: str) -> int:
+    from atlas_agent.deploy import ensure_deploy_files
+
+    files = ensure_deploy_files(kind)
+    for generated in files:
+        action = "created" if generated.created else "existing"
+        print(f"{action}: {_display_path(generated.path)}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     try:
@@ -266,6 +410,7 @@ def main(argv: list[str] | None = None) -> int:
         from atlas_agent.agent.status import get_agent_status
         from atlas_agent.agent.planner import get_agent_plan
         from atlas_agent.agent.runner import run_agent
+        from atlas_agent.learning import run_learning_cycle, generate_reflection
         
         if args.agent_command == "status":
             print(get_agent_status(config))
@@ -273,8 +418,24 @@ def main(argv: list[str] | None = None) -> int:
         elif args.agent_command == "plan":
             print(get_agent_plan(config))
             return 0
+        elif args.agent_command == "learn":
+            report = run_learning_cycle(config.memory_dir, config.reports_dir, config.memory_dir.parent / "skills")
+            print(f"Learning cycle complete. Report: {report}")
+            return 0
+        elif args.agent_command == "reflect":
+            report = generate_reflection(config.memory_dir, config.reports_dir)
+            print(f"Reflection generated: {report}")
+            return 0
         elif args.agent_command == "run":
-            result = run_agent(mode=args.mode, config=config)
+            result = run_agent(
+                mode=args.mode,
+                config=config,
+                continuous=args.continuous,
+                interval=args.interval,
+                max_cycles=args.max_cycles
+            )
+            if not result:
+                return 0
             if result.lock_status:
                 print(result.lock_status)
             print(f"agent run {args.mode}: {result.status}")
@@ -285,8 +446,118 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Git: {result.git_status}")
             return 0
 
+    if args.command == "skills":
+        from atlas_agent.skills import (
+            archive_skill,
+            approve_skill,
+            improve_proposed_skills,
+            list_skills,
+        )
+        from atlas_agent.learning.skill_miner import mine_skills_from_journal, save_proposed_skill
+        skills_dir = config.memory_dir.parent / "skills"
+
+        if args.skills_command == "list":
+            skills = list_skills(skills_dir)
+            for cat, files in skills.items():
+                print(f"{cat.upper()}:")
+                for f in files:
+                    print(f"  - {f}")
+            return 0
+        elif args.skills_command == "propose" or args.skills_command == "create-from-journal":
+            proposed = mine_skills_from_journal(config.memory_dir)
+            for s in proposed:
+                path = save_proposed_skill(skills_dir, s)
+                print(f"Proposed skill created: {path.name}")
+            if not proposed:
+                print("No new skills identified from journal.")
+            return 0
+        elif args.skills_command == "approve":
+            try:
+                path = approve_skill(skills_dir, args.skill_name)
+                print(f"Skill approved and activated: {path}")
+            except FileNotFoundError as exc:
+                print(f"Error: {exc}")
+                return 2
+            return 0
+        elif args.skills_command == "archive":
+            try:
+                path = archive_skill(skills_dir, args.skill_name)
+                print(f"Skill archived: {path}")
+            except FileNotFoundError as exc:
+                print(f"Error: {exc}")
+                return 2
+            return 0
+        elif args.skills_command == "improve":
+            improved = improve_proposed_skills(skills_dir)
+            if not improved:
+                print("No proposed skills found to improve.")
+                return 0
+            print("Improved proposed skill drafts; active skills unchanged:")
+            for path in improved:
+                print(f"- {_display_path(path)}")
+            return 0
+
+    if args.command == "memory":
+        from atlas_agent.learning import ingest_conversation
+        from atlas_agent.learning.nudges import generate_memory_nudge
+
+        if args.memory_command == "ingest":
+            if not args.file.exists():
+                print(f"memory ingest skipped: file not found: {args.file}")
+                return 0
+            path = ingest_conversation(config.memory_dir, args.file)
+            print(f"Conversation memory ingested: {path}")
+            return 0
+        if args.memory_command == "search":
+            return _handle_memory_search(config, args.query)
+        if args.memory_command == "summarize":
+            print("Memory summary is generated through agent learn/reflect cycles.")
+            return 0
+        if args.memory_command == "nudge":
+            nudge = generate_memory_nudge(config.memory_dir)
+            print(nudge or "No memory nudge available yet.")
+            return 0
+
+    if args.command == "user":
+        from atlas_agent.learning.user_model import (
+            format_user_model_summary,
+            remember_user_note,
+        )
+
+        if args.user_command == "show":
+            print(_redact_sensitive_text(format_user_model_summary(config.memory_dir)))
+            return 0
+        if args.user_command == "remember":
+            path = remember_user_note(config.memory_dir, args.text)
+            print(f"User memory updated: {path}")
+            return 0
+        if args.user_command == "forget":
+            print("User forget is not automated yet. Edit memory/user_profile.md, memory/preferences.md, or memory/trading_style.md intentionally.")
+            return 0
+        if args.user_command == "update-from-reflection":
+            print("User model update from reflection is handled during reviewed learning cycles.")
+            return 0
+
+    if args.command == "telegram":
+        from atlas_agent.telegram_control import (
+            TELEGRAM_COMMANDS,
+            get_telegram_diagnostics,
+        )
+
+        if args.telegram_command == "test":
+            print(get_telegram_diagnostics().format())
+            return 0
+        if args.telegram_command == "run":
+            print("Telegram control plane adapter is optional and stdlib-only in this package.")
+            print("Configure TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWED_USER_IDS, then wire polling/webhook in your deployment wrapper.")
+            print("Commands: " + ", ".join(TELEGRAM_COMMANDS))
+            return 0
+
+    if args.command == "deploy":
+        if args.deploy_command in {"docker", "systemd", "vps", "serverless"}:
+            return _handle_deploy(args.deploy_command)
+
     if args.command == "routine" and args.routine_command == "run":
-        from atlas_agent.routines.engine import RoutineLockError, run_routine
         try:
             result = run_routine(
                 args.name,

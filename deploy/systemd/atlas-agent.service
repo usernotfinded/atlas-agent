@@ -1,0 +1,15 @@
+[Unit]
+Description=Atlas Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/atlas-agent
+EnvironmentFile=-/etc/atlas-agent/atlas-agent.env
+ExecStart=/usr/local/bin/atlas agent run --continuous
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+services:
+  atlas-agent:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["atlas", "agent", "run", "--continuous"]
+    env_file:
+      - ../.env
+    volumes:
+      - ../memory:/app/memory
+      - ../reports:/app/reports
+      - ../pending_orders:/app/pending_orders
+      - ../audit:/app/audit
+    restart: unless-stopped

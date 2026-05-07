@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "atlas-agent"
 version = "0.1.0"
-description = "Atlas Agent connects top financial LLMs, market research, broker execution, persistent memory, and risk-gated autonomous trading routines."
+description = "Atlas Agent is a self-improving AI trading agent with broker adapters, Markdown memory, learning loops, and deterministic risk gates."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

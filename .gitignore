@@ -15,8 +15,11 @@ audit/*.jsonl
 pending_orders/*.json
 !pending_orders/.gitkeep
 reports/generated/
+reports/agent/*.md
 reports/daily/*.md
 !reports/daily/.gitkeep
+reports/learning/*.md
+reports/reflections/*.md
 reports/weekly/*.md
 !reports/weekly/.gitkeep
 reports/*.json
@@ -25,3 +28,4 @@ reports/*.csv
 !reports/.gitkeep
 memory/*.md
 !memory/.gitkeep
+skills/proposed/*.md

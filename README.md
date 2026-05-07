@@ -1,33 +1,49 @@
 # Atlas Agent
 
-The autonomous AI trading agent that runs on routines, memory, model rosters, broker adapters, and risk gates.
+The self-improving AI trading agent built by Natan Mucelli.
 
 <p align="center">
 <a href="https://github.com/usernotfinded/atlas-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-FF4500?style=for-the-badge" alt="License: MIT"></a>
 <a href="https://github.com/usernotfinded"><img src="https://img.shields.io/badge/Built%20by-Natan%20Mucelli-8A2BE2?style=for-the-badge" alt="Built by Natan Mucelli"></a>
 </p>
 
-Atlas Agent is a routine-based autonomous AI trading agent. It wakes up on scheduled routines, reads Markdown memory, researches markets, proposes trades, routes every execution path through deterministic risk controls, writes reports, updates memory, and can optionally sync state through GitHub.
+Atlas Agent is the Hermes Agent for trading: a self-improving AI trading agent with broker adapters, deterministic risk gates, approval policy, audit logs, portfolio memory, and a built-in learning loop.
 
-It is designed around provider-agnostic AI access, broker adapters, and paper-first operation. Atlas Agent supports benchmark-informed model selection, Alpaca and broker execution adapters, Perplexity market research, ClickUp notifications, Markdown trade journals, scheduled remote routines, and gated live trading.
+It researches markets, proposes and validates actions, searches conversation memory, deepens its user model, creates and improves skills from experience, sends knowledge nudges, writes reports, and updates memory. Atlas can run locally, on a VPS, beside GPU workers, or as serverless jobs, with Telegram as an optional control plane.
+
+When markets are open, Atlas Agent runs the trading cycle through broker adapters and deterministic risk gates. If live execution is configured and permitted by policy, live orders still pass through approval, audit logging, kill-switch checks, and broker-specific gates. If live execution is not permitted, the same cycle can run in simulation.
+
+When markets are closed, Atlas Agent does not force live execution. It uses the time to research, simulate, paper trade, reflect, improve skills, update memory, and prepare for the next market session.
+
+Atlas Agent supports benchmark-informed model selection, Alpaca and broker execution adapters, Perplexity market research, ClickUp notifications, Markdown trade journals, scheduled remote routines, gated live trading, and guarded GitHub-backed persistence.
 
 AI output is advisory. Broker execution stays behind strategy validation, `RiskManager`, the kill switch, audit logs, and approval gates.
 
 ## Features
 
-**Benchmark-informed model reference.** Atlas Agent provides a ranked reference of finance-capable LLMs using the Vals AI Finance Agent benchmark. This helps users select the best single model for their agent.
+**Benchmark-informed model reference.** Atlas Agent provides a ranked reference of finance-capable LLMs using the Vals AI Finance Agent benchmark. This is model-selection guidance, not mandatory runtime orchestration.
 
-**Routine-based autonomous operation.** Run pre-market, market open, midday, market close, and weekly routines locally, through cron, through GitHub Actions, or through remote coding agents.
+**Agent-first autonomous operation.** Run `atlas agent status`, `atlas agent plan`, and `atlas agent run --mode auto` as the primary UX. Named routines remain available for advanced scheduling and inspection.
+
+**Built-in learning loop.** Closed-market routines can review reports, rejected orders, research notes, operator feedback, and memory files to improve future behavior.
+
+**Skills from experience.** Atlas can draft, revise, and archive reusable skill notes from observed work patterns without changing broker or risk policy.
+
+**Conversation memory and user model.** Workspace memory can capture preferences, constraints, lessons, trading style, and conversation summaries for later search.
 
 **Markdown memory and trade journal.** Generated workspaces keep portfolio notes, watchlists, strategy rules, open positions, trade history, daily reports, and weekly reviews in plain Markdown.
 
-**Single-model AI analyst.** Configure your preferred financial LLM through the `AIProvider` interface.
+**Configurable AI analyst.** Configure your preferred financial LLM through the `AIProvider` interface.
 
 **Broker execution layer.** Use `PaperBroker` by default and route live integrations through broker adapters that implement the `Broker` interface.
 
 **Deterministic risk manager.** Every order must pass deterministic checks for position size, daily loss, trade frequency, symbol policy, stop-loss requirements, leverage policy, and live-trading gates.
 
-**Paper-first, live-gated execution.** Paper mode is the default. Live mode exists, but it requires explicit live config, broker credentials, risk approval, kill switch clearance, and manual approval gates.
+**Live-gated execution.** Live mode exists, but it requires explicit live config, broker credentials, risk approval, kill switch clearance, and manual approval gates.
+
+**Telegram control plane.** Optional Telegram commands can request status, plans, runs, learning, reflection, memory search, skill listings, pending-order review, and kill-switch actions.
+
+**Cloud deployment.** Atlas can run on a VPS, in Docker or systemd, as scheduled serverless jobs, or alongside GPU workers for heavier local model and research workloads.
 
 **Perplexity research integration.** Pull market context through the Perplexity research adapter when configured, while failing safely when credentials are missing.
 
@@ -41,7 +57,7 @@ AI output is advisory. Broker execution stays behind strategy validation, `RiskM
 
 ## Warning
 
-Atlas Agent is experimental software. It is not financial advice. Trading can lose money. Live trading is disabled by default. No returns are guaranteed. Users are responsible for their own broker accounts, API keys, laws, taxes, and risk controls.
+Trading can lose money. Atlas Agent is software, not financial advice. Users are responsible for broker accounts, laws, taxes, risk limits, credentials, and deployment choices. Live trading is never the default and must pass explicit configuration, broker credentials, deterministic risk gates, approval policy, kill-switch checks, and audit logging.
 
 ## Quick Install
 
@@ -64,8 +80,8 @@ atlas agent run --mode auto
 ```
 
 Run the agent. Atlas decides the operational cycle:
-- When markets are closed, Atlas researches, simulates, updates memory, and paper-trades.
-- When markets are open, Atlas can execute paper trades or create approval-gated live orders.
+- When markets are open, Atlas Agent runs the trading cycle through broker adapters and deterministic risk gates. If live execution is configured and permitted by policy, live orders still pass through approval, audit logging, kill-switch checks, and broker-specific gates. If live execution is not permitted, the same cycle can run in simulation.
+- When markets are closed, Atlas Agent does not force live execution. It researches, simulates, paper trades, reflects, improves skills, updates memory, and prepares for the next market session.
 
 Advanced users can still run specific scheduled routines or manual actions:
 
@@ -80,14 +96,99 @@ atlas backtest --strategy moving_average --symbol BTC-USD
 Scheduled routine
 → Markdown memory
 → Market/research data
-→ Benchmark-informed model reference
-→ Single-model AI analyst
+→ Model-selection guidance
+→ Configured AIProvider
 → Strategy validation
 → RiskManager
 → Paper execution or pending live order
-→ Reports + journal + notifications
-→ Git sync
+→ Reports + journal + notifications + Telegram
+→ Learning loop + skills + memory updates
+→ Guarded Git sync
 ```
+
+## Built-in learning loop
+
+Atlas closes the loop after agent cycles. It reads the trade journal, daily notes, weekly reviews, past conversations, user preferences, open-position notes, rejected orders, reports, and research context. It looks for repeated mistakes, useful patterns, missing risk context, stale assumptions, and places where operator feedback should become durable memory.
+
+Learning outputs are intentionally reviewable: lessons learned, reflection reports, proposed skills, improved proposed skills, and memory nudges. Atlas does not silently overwrite core strategy rules or live-trading policy without evidence and user acceptance. Learning runs do not bypass strategy validation, `RiskManager`, approval policy, kill-switch checks, broker adapters, or audit logs.
+
+## Skills from experience
+
+Atlas can turn repeated observations into proposed skill notes, improve proposed skills, approve useful skills, and archive stale guidance. Skills are operating knowledge for research, reporting, planning, and review; they are not broker permissions and cannot authorize direct execution.
+
+Skill states:
+
+- `skills/proposed/`: drafts created from journal and reflection evidence.
+- `skills/active/`: user-approved operating knowledge.
+- `skills/archived/`: stale or retired guidance.
+
+Useful commands:
+
+```bash
+atlas skills list
+atlas skills create-from-journal
+atlas skills improve
+atlas skills approve <skill_name>
+atlas skills archive <skill_name>
+```
+
+## Conversation memory and user model
+
+Atlas workspaces can keep searchable conversation summaries, preferences, constraints, lessons learned, mistakes, trading style, and a user profile. This lets the agent adapt to the operator over time while keeping secrets out of memory files and public reports.
+
+Memory files include:
+
+- `memory/conversations/`
+- `memory/user_profile.md`
+- `memory/preferences.md`
+- `memory/trading_style.md`
+- `memory/lessons_learned.md`
+- `memory/mistakes.md`
+
+Useful commands:
+
+```bash
+atlas memory ingest --file conversation.md
+atlas memory search "risk"
+atlas user remember "Prefer lower turnover unless conviction is high."
+atlas user show
+```
+
+## Telegram control plane
+
+Telegram is an optional remote control plane for a deployed agent. It can request status, plans, runs, learning, reflection, positions, pending-order review, approval or rejection, kill-switch actions, memory lookup, and skill listings. Telegram commands are control input only; live orders still require the same risk, approval, broker, kill-switch, and audit path.
+
+Supported command surface:
+
+- `/status`
+- `/plan`
+- `/run`
+- `/learn`
+- `/reflect`
+- `/positions`
+- `/pending`
+- `/approve <order_id>`
+- `/reject <order_id>`
+- `/kill`
+- `/resume`
+- `/memory <query>`
+- `/skills`
+
+Telegram is optional. It must authorize user IDs through configuration and must never expose bot tokens, broker credentials, provider keys, or account secrets.
+
+## Cloud deployment
+
+Atlas can run locally, on a small VPS, in Docker, under systemd, as scheduled serverless jobs, or beside GPU workers for local heavy models and custom research pipelines. It is designed for lightweight VPS deployments depending on provider, workload, and model choices.
+
+Deployment paths:
+
+- small VPS for continuous agent operation
+- Docker or systemd for long-running cloud VMs
+- serverless jobs for scheduled research, learning, reports, and sync
+- GPU clusters for local heavy models or custom research pipelines
+- Telegram remote control for status, plans, learning, memory lookup, and guarded actions
+
+Keep secrets in local environment files or platform secret stores, validate the workspace before continuous operation, and keep broker execution in the main guarded Atlas process.
 
 ## CLI Quick Reference
 
@@ -95,10 +196,23 @@ Scheduled routine
 | --- | --- |
 | `atlas init` | Create a workspace from a template. |
 | `atlas validate` | Check local configuration and create required runtime directories. |
+| `atlas agent status` | Show market state, mode, broker, kill switch, and pending-order status. |
+| `atlas agent plan` | Explain the next open-market or closed-market cycle. |
+| `atlas agent run --once` | Run one agent cycle based on current market state and policy. |
+| `atlas agent learn` | Run the learning loop and write a learning report. |
+| `atlas agent reflect` | Generate a reflection report from memory and recent work. |
+| `atlas skills list` | Show active, proposed, and archived skills. |
+| `atlas skills create-from-journal` | Propose skills from journal evidence. |
+| `atlas skills improve` | Normalize proposed skills without approving them. |
+| `atlas memory search "risk"` | Search Markdown memory and conversation history. |
+| `atlas user show` | Show the current user model summary. |
+| `atlas telegram test` | Run a no-network Telegram configuration diagnostic. |
+| `atlas deploy docker` | Generate or report Docker deployment files. |
+| `atlas deploy systemd` | Generate or report a systemd service. |
 | `atlas models list` | Show the benchmark-informed model reference. |
 | `atlas models update-readme` | Refresh the benchmark reference in the README. |
-| `atlas routine run pre_market --mode paper` | Run the pre-market routine in paper mode. |
-| `atlas routine run market_open --mode paper` | Run the market-open routine in paper mode. |
+| `atlas routine run pre_market --mode paper` | Advanced: run the pre-market routine directly. |
+| `atlas routine run market_open --mode paper` | Advanced: run the market-open routine directly in simulation. |
 | `atlas run-once --mode paper` | Execute one paper-mode strategy pass. |
 | `atlas run-once --mode live` | Attempt one live-mode pass; fails safely unless all live gates pass. |
 | `atlas approve-order <order_id>` | Approve a pending live order by ID. |
@@ -112,7 +226,7 @@ Scheduled routine
 
 ## Recommended models (from Vals.ai benchmarks)
 
-Atlas Agent includes a reference ranking of finance-capable LLMs based on the Vals AI Finance Agent benchmark. This benchmark evaluates financial analyst tasks, not guaranteed trading performance.
+Atlas Agent includes a reference ranking of finance-capable LLMs based on the Vals AI Finance Agent benchmark. This benchmark evaluates financial analyst tasks, not guaranteed trading performance. The roster is model-selection guidance only; Atlas runs through the configured `AIProvider`, and users may choose any supported provider or model.
 
 <!-- ATLAS_MODEL_ROSTER_START -->
 
@@ -140,7 +254,7 @@ OPENAI_API_KEY=...
 DEEPSEEK_API_KEY=...
 ```
 
-The benchmark reference improves model selection discipline, but it is not proof that Atlas will beat the market.
+The benchmark reference improves model selection discipline, but it does not predict trading outcomes.
 
 Manage the reference via CLI:
 
@@ -182,8 +296,7 @@ Routine runs use a workspace lock so overlapping runs are refused.
 
 **Paper mode**
 
-- Default operating mode.
-- Safe for testing workflows, reports, routines, and strategy paths.
+- Simulation path for testing workflows, reports, routines, and strategy paths.
 - Uses `PaperBroker`.
 - Writes auditable paper execution records.
 
@@ -239,7 +352,7 @@ Contributions are welcome. Useful focus areas:
 - notification adapters
 - safety tests
 
-Keep live execution paper-first and approval-gated, preserve provider-agnostic architecture, and include tests for every execution path.
+Keep live execution approval-gated, preserve provider-agnostic architecture, and include tests for every execution path.
 
 ## Community and Resources
 
