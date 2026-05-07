@@ -548,10 +548,56 @@ def _events_to_payload(events: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _requires_workspace(command: str | None) -> bool:
-    if command is None:
+def config_has_workspace_context(config: AtlasConfig) -> bool:
+    workspace_paths = (
+        config.memory_dir,
+        config.reports_dir,
+        config.events_dir,
+        config.pending_orders_dir,
+        config.audit_dir,
+    )
+    if any(path.is_absolute() for path in workspace_paths):
         return True
-    return command not in {"init", "workspace", "models", "deploy", "validate"}
+    if is_workspace(Path.cwd()):
+        return True
+    existing = sum(path.exists() for path in workspace_paths)
+    return existing >= 2
+
+
+def _command_requires_workspace(args: argparse.Namespace) -> bool:
+    if args.command is None:
+        return True
+    if args.command in {"init", "workspace", "models", "validate", "deploy"}:
+        return False
+    if args.command == "providers" and args.providers_command == "list":
+        return False
+    if args.command == "brokers" and args.brokers_command == "list":
+        return False
+    if args.command == "telegram" and args.telegram_command == "test":
+        return False
+    return True
+
+
+def _load_config_for_command(
+    args: argparse.Namespace,
+    *,
+    require_workspace: bool,
+) -> tuple[AtlasConfig | None, WorkspaceResolution, str | None]:
+    resolution = resolve_workspace(getattr(args, "workspace", None))
+    if resolution.path is not None:
+        os.chdir(resolution.path)
+    try:
+        config = AtlasConfig.from_env()
+    except ValueError as exc:
+        return None, resolution, f"Configuration error: {exc}"
+
+    if not require_workspace:
+        return config, resolution, None
+    if resolution.path is not None:
+        return config, resolution, None
+    if config_has_workspace_context(config):
+        return config, resolution, None
+    return config, resolution, "workspace_not_configured"
 
 
 def _workspace_doctor_payload(resolution: WorkspaceResolution) -> dict[str, Any]:
@@ -821,34 +867,32 @@ def main(argv: list[str] | None = None) -> int:
         print("Use one of: atlas models list|update|update-readme|doctor")
         return 0
 
-    resolution = resolve_workspace(getattr(args, "workspace", None))
-    if _requires_workspace(args.command):
-        if resolution.path is None:
-            if getattr(args, "json", False):
-                return _emit_json_error(
-                    "atlas",
-                    code="workspace_not_configured",
-                    message="Atlas Agent needs a workspace before it can run.",
-                    details={
-                        "resolution_source": resolution.source,
-                        "warning": resolution.warning,
-                    },
-                )
-            _print_workspace_setup_guidance(
-                warning=resolution.warning,
-                stream=sys.stderr,
+    require_workspace = _command_requires_workspace(args)
+    config, resolution, load_error = _load_config_for_command(
+        args,
+        require_workspace=require_workspace,
+    )
+    if load_error == "workspace_not_configured":
+        if getattr(args, "json", False):
+            return _emit_json_error(
+                "atlas",
+                code="workspace_not_configured",
+                message="Atlas Agent needs a workspace before it can run.",
+                details={
+                    "resolution_source": resolution.source,
+                    "warning": resolution.warning,
+                },
             )
-            return 2
-        os.chdir(resolution.path)
-    elif resolution.path is not None and args.command not in {"deploy", "validate"}:
-        # Use resolved workspace as context for non-workspace commands that still
-        # read local project files.
-        os.chdir(resolution.path)
-
-    try:
-        config = AtlasConfig.from_env()
-    except ValueError as exc:
-        print(f"Configuration error: {exc}", file=sys.stderr)
+        _print_workspace_setup_guidance(
+            warning=resolution.warning,
+            stream=sys.stderr,
+        )
+        return 2
+    if load_error:
+        print(load_error, file=sys.stderr)
+        return 1
+    if config is None:
+        print("Configuration error: unable to load AtlasConfig.", file=sys.stderr)
         return 1
 
     if args.command is None:
