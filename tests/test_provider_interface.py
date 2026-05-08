@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 
 import pytest
 
@@ -39,7 +40,7 @@ def test_openai_compatible_missing_api_key_fails_safely(
 
 
 def test_local_command_provider_can_be_configured() -> None:
-    command = "python -c \"import sys; print(sys.stdin.read().upper())\""
+    command = f"\"{sys.executable}\" -c \"import sys; print(sys.stdin.read().upper())\""
     provider = LocalCommandProvider(command=command)
 
     response = provider.generate(ProviderRequest("s", "hello", "local"))
@@ -58,4 +59,3 @@ def test_provider_errors_do_not_execute_trades(monkeypatch: pytest.MonkeyPatch) 
 
     assert broker_called is False
     assert "OPENAI_API_KEY" not in os.environ
-
