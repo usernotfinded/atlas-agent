@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from atlas_agent.config import AtlasConfig
 from atlas_agent.brokers.base import BrokerConfigurationError
-from atlas_agent.execution.order import AccountSnapshot, Order, OrderResult
+from atlas_agent.execution.order import AccountSnapshot, FlattenResult, Order, OrderResult
 from atlas_agent.portfolio.positions import Position
 
 
@@ -29,3 +29,5 @@ class CCXTBroker:
     def cancel_order(self, order_id: str) -> OrderResult:
         raise self._disabled()
 
+    def flatten_all(self, strategy: str = "market", bps: int = 25) -> FlattenResult:
+        raise self._disabled()

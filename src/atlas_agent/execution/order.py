@@ -50,9 +50,22 @@ class OrderResult:
 
 
 @dataclass(frozen=True)
+class FlattenResult:
+    accepted: bool
+    status: str
+    message: str
+    strategy: str
+    bps: int
+    attempted: int
+    closed: int
+    failed: int
+    order_results: tuple[OrderResult, ...] = ()
+    failed_symbols: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class AccountSnapshot:
     cash: float
     equity: float
     buying_power: float
     mode: str
-

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from atlas_agent.config import AtlasConfig
 from atlas_agent.brokers.base import BrokerConfigurationError
-from atlas_agent.execution.order import AccountSnapshot, Order, OrderResult
+from atlas_agent.execution.order import AccountSnapshot, FlattenResult, Order, OrderResult
 from atlas_agent.portfolio.positions import Position
 
 
@@ -67,3 +67,16 @@ class BinanceBroker:
     def cancel_order(self, order_id: str) -> OrderResult:
         self._validate_config()
         return OrderResult(False, False, order_id, "not_sent", "cancel scaffolded")
+
+    def flatten_all(self, strategy: str = "market", bps: int = 25) -> FlattenResult:
+        self._validate_config()
+        return FlattenResult(
+            accepted=False,
+            status="failed",
+            message="Binance flatten_all is not implemented yet",
+            strategy=strategy,
+            bps=bps,
+            attempted=0,
+            closed=0,
+            failed=0,
+        )

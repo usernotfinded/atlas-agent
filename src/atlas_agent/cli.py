@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import urllib.request
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +44,6 @@ from atlas_agent.research.perplexity import (
     PerplexityResearchProvider,
     ResearchConfigurationError,
 )
-from atlas_agent.risk.kill_switch import KillSwitch
 from atlas_agent.risk.manager import RiskManager
 from atlas_agent.routines.engine import ROUTINE_NAMES, run_routine
 from atlas_agent.routines.git_sync import GitSync, GitSyncError
@@ -63,6 +62,12 @@ from atlas_agent.output import emit_json, error_envelope, success_envelope
 from atlas_agent.memory_doctor import run_memory_doctor
 from atlas_agent.replay import replay_from_path, replay_last_run
 from atlas_agent.demo import seed_demo_workspace
+from atlas_agent.safety import (
+    KillSwitchController,
+    deadman_heartbeat_path,
+    write_deadman_heartbeat,
+)
+from atlas_agent.safety.totp import verify_totp
 from atlas_agent.strategies.moving_average import MovingAverageStrategy
 from atlas_agent.workspace import (
     DEFAULT_TEMPLATE,
@@ -217,6 +222,15 @@ Safety First:
     telegram_sub = telegram.add_subparsers(dest="telegram_command")
     telegram_sub.add_parser("run")
     telegram_sub.add_parser("test")
+    telegram_kill = telegram_sub.add_parser("kill")
+    telegram_kill.add_argument("--mode", choices=("soft", "cancel", "flatten"), default="soft")
+    telegram_kill.add_argument("--reason", default="")
+    telegram_resume = telegram_sub.add_parser("resume")
+    telegram_resume.add_argument("--totp", default=None)
+    telegram_resume.add_argument("--reason", default="")
+    telegram_heartbeat = telegram_sub.add_parser("heartbeat")
+    telegram_heartbeat.add_argument("--source", default="telegram")
+    telegram_heartbeat.add_argument("--actor", default="telegram:user")
 
     deploy = subparsers.add_parser("deploy")
     deploy_sub = deploy.add_subparsers(dest="deploy_command")
@@ -254,8 +268,18 @@ Safety First:
 
     kill_switch = subparsers.add_parser("kill-switch")
     kill_sub = kill_switch.add_subparsers(dest="kill_command")
-    kill_sub.add_parser("enable")
-    kill_sub.add_parser("disable")
+    kill_enable = kill_sub.add_parser("enable")
+    kill_enable.add_argument("--mode", choices=("soft", "cancel", "flatten"), default="soft")
+    kill_enable.add_argument("--reason", default="")
+    kill_disable = kill_sub.add_parser("disable")
+    kill_disable.add_argument("--require-2fa", action="store_true")
+    kill_disable.add_argument("--totp", default=None)
+    kill_disable.add_argument("--reason", default="")
+    kill_sub.add_parser("status")
+
+    heartbeat = subparsers.add_parser("heartbeat")
+    heartbeat.add_argument("--source", default="cli")
+    heartbeat.add_argument("--actor", default="cli:user")
 
     approve = subparsers.add_parser("approve-order")
     approve.add_argument("order_id")
@@ -318,6 +342,7 @@ def run_once(
     command: str = "atlas run-once",
 ) -> OrderResult:
     config = config or AtlasConfig.from_env()
+    config = _effective_config_with_runtime_kill_switch(config)
     config.ensure_dirs()
     ensure_sample_data(config.data_path)
     bars = CSVMarketDataProvider(config.data_path).load_bars(config.default_symbol)
@@ -467,6 +492,57 @@ def _display_path(path: Path) -> str:
         return str(path.relative_to(Path.cwd()))
     except ValueError:
         return str(path)
+
+
+def _kill_switch_controller(config: AtlasConfig) -> KillSwitchController:
+    audit_logger = AuditLogger(config.audit_dir)
+
+    def _audit_hook(event_type: str, actor: str, payload: dict[str, Any]) -> None:
+        record = dict(payload)
+        record["actor"] = actor
+        audit_logger.write(event_type, record)
+
+    return KillSwitchController(
+        state_path=config.memory_dir / "kill_switch_state.json",
+        enabled_flag_path=config.memory_dir / "kill_switch.enabled",
+        audit_hook=_audit_hook,
+    )
+
+
+def _effective_config_with_runtime_kill_switch(config: AtlasConfig) -> AtlasConfig:
+    enabled = config.kill_switch_enabled or _kill_switch_controller(config).is_enabled()
+    if enabled == config.kill_switch_enabled:
+        return config
+    return replace(config, kill_switch_enabled=enabled)
+
+
+def _requires_kill_switch_totp(
+    *,
+    state_mode: str,
+    explicit_2fa: bool,
+) -> bool:
+    if explicit_2fa:
+        return True
+    return state_mode == "flatten"
+
+
+def _verify_totp_for_kill_switch(code: str | None) -> tuple[bool, str]:
+    secret = os.getenv("ATLAS_TOTP_SECRET", "").strip()
+    if not secret:
+        return False, "2FA secret missing: set ATLAS_TOTP_SECRET"
+    effective_code = code
+    if effective_code is None:
+        try:
+            effective_code = input("Enter TOTP code: ").strip()
+        except EOFError:
+            effective_code = ""
+    if not verify_totp(secret, effective_code):
+        return False, "invalid TOTP code"
+    return True, ""
+
+
+def _heartbeat_path_for_config(config: AtlasConfig) -> Path:
+    return deadman_heartbeat_path(config.memory_dir)
 
 
 def _handle_deploy(kind: str) -> int:
@@ -1239,14 +1315,55 @@ def main(argv: list[str] | None = None) -> int:
         from atlas_agent.telegram_control import (
             TELEGRAM_COMMANDS,
             get_telegram_diagnostics,
+            verify_resume_totp_from_env,
         )
 
         if args.telegram_command == "test":
             print(get_telegram_diagnostics().format())
             return 0
+        if args.telegram_command == "kill":
+            controller = _kill_switch_controller(config)
+            runtime_config = _effective_config_with_runtime_kill_switch(config)
+            broker = _broker_for_mode(
+                runtime_config.trading_mode,
+                runtime_config,
+                PortfolioState(cash=runtime_config.starting_cash),
+                AuditLogger(runtime_config.audit_dir),
+            )
+            transition = controller.enable(
+                mode=args.mode,
+                reason=args.reason,
+                actor="telegram",
+                broker=broker,
+            )
+            print(
+                f"Telegram /kill applied: changed={transition.changed} "
+                f"mode={transition.state.mode}"
+            )
+            return 0
+        if args.telegram_command == "resume":
+            controller = _kill_switch_controller(config)
+            state = controller.status()
+            if not verify_resume_totp_from_env(args.totp or ""):
+                print("Telegram /resume refused: invalid or missing TOTP")
+                return 2
+            transition = controller.disable(reason=args.reason, actor="telegram")
+            print(
+                f"Telegram /resume applied: changed={transition.changed} "
+                f"prev_mode={state.mode}"
+            )
+            return 0
+        if args.telegram_command == "heartbeat":
+            path = _heartbeat_path_for_config(config)
+            write_deadman_heartbeat(path, source=args.source, actor=args.actor)
+            print(f"Telegram heartbeat recorded: {path}")
+            return 0
         if args.telegram_command == "run":
             print("Telegram control plane adapter is optional and stdlib-only in this package.")
-            print("Configure TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWED_USER_IDS, then wire polling/webhook in your deployment wrapper.")
+            print(
+                "Configure TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWED_USER_IDS, "
+                "then wire polling/webhook in your deployment wrapper."
+            )
             print("Commands: " + ", ".join(TELEGRAM_COMMANDS))
             return 0
 
@@ -1403,20 +1520,78 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Pending orders: {payload['pending_orders']}")
         return 0
     if args.command == "risk" and args.risk_command == "check":
-        print(f"kill_switch={config.kill_switch_enabled}")
+        effective = _effective_config_with_runtime_kill_switch(config)
+        print(f"kill_switch={effective.kill_switch_enabled}")
         print(f"max_position_size={config.max_position_size}")
         print(f"max_trades_per_day={config.max_trades_per_day}")
         return 0
     if args.command == "kill-switch":
-        switch = KillSwitch(config.memory_dir / "kill_switch.enabled")
+        controller = _kill_switch_controller(config)
         if args.kill_command == "enable":
-            switch.enable()
-            print("Kill switch enabled")
+            mode = args.mode
+            runtime_config = _effective_config_with_runtime_kill_switch(config)
+            broker = _broker_for_mode(
+                runtime_config.trading_mode,
+                runtime_config,
+                PortfolioState(cash=runtime_config.starting_cash),
+                AuditLogger(runtime_config.audit_dir),
+            )
+            transition = controller.enable(
+                mode=mode,
+                reason=args.reason,
+                actor="cli",
+                broker=broker,
+            )
+            print(
+                "Kill switch enabled:"
+                f" changed={transition.changed}"
+                f" mode={transition.state.mode}"
+                f" reason={transition.state.reason or 'n/a'}"
+            )
+            if transition.cancel_results:
+                print(f"Cancel results: {len(transition.cancel_results)}")
+            if transition.flatten_result is not None:
+                print(
+                    "Flatten result: "
+                    f"{transition.flatten_result.status} "
+                    f"(closed={transition.flatten_result.closed}, "
+                    f"failed={transition.flatten_result.failed})"
+                )
             return 0
         if args.kill_command == "disable":
-            switch.disable()
-            print("Kill switch disabled")
+            state = controller.status()
+            requires_totp = _requires_kill_switch_totp(
+                state_mode=state.mode if state.enabled else "soft",
+                explicit_2fa=bool(args.require_2fa),
+            )
+            if requires_totp:
+                ok, error = _verify_totp_for_kill_switch(args.totp)
+                if not ok:
+                    print(f"Kill switch disable refused: {error}")
+                    return 2
+            transition = controller.disable(reason=args.reason, actor="cli")
+            print(
+                "Kill switch disabled:"
+                f" changed={transition.changed}"
+                f" mode={transition.state.mode}"
+            )
             return 0
+        if args.kill_command == "status":
+            state = controller.status()
+            print("Kill switch status")
+            print(f"enabled={state.enabled}")
+            print(f"mode={state.mode}")
+            print(f"reason={state.reason or 'n/a'}")
+            print(f"actor={state.actor}")
+            print(f"updated_at={state.updated_at or 'n/a'}")
+            print(f"activated_at={state.activated_at or 'n/a'}")
+            print(f"deactivated_at={state.deactivated_at or 'n/a'}")
+            return 0
+    if args.command == "heartbeat":
+        path = _heartbeat_path_for_config(config)
+        write_deadman_heartbeat(path, source=args.source, actor=args.actor)
+        print(f"Heartbeat recorded: {path}")
+        return 0
     if args.command == "approve-order":
         path = ApprovalManager(config.pending_orders_dir).approve(args.order_id)
         print(f"Approved pending order: {path}")

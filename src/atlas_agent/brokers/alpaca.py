@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from atlas_agent.config import AtlasConfig
 from atlas_agent.brokers.base import BrokerConfigurationError
-from atlas_agent.execution.order import AccountSnapshot, Order, OrderResult
+from atlas_agent.execution.order import AccountSnapshot, FlattenResult, Order, OrderResult
 from atlas_agent.portfolio.positions import Position
 
 
@@ -91,4 +91,17 @@ class AlpacaBroker:
             order_id=order_id,
             status="not_sent",
             message="Alpaca cancel transport is scaffolded",
+        )
+
+    def flatten_all(self, strategy: str = "market", bps: int = 25) -> FlattenResult:
+        self._validate_config()
+        return FlattenResult(
+            accepted=False,
+            status="failed",
+            message="Alpaca flatten_all is not implemented yet",
+            strategy=strategy,
+            bps=bps,
+            attempted=0,
+            closed=0,
+            failed=0,
         )
