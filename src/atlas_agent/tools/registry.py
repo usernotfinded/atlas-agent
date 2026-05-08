@@ -1,4 +1,7 @@
 import inspect
+import time
+import logging
+from collections import deque
 from typing import Any, Dict, List, Union
 
 from atlas_agent.core.types import Session, UserApprovalPending
@@ -18,6 +21,7 @@ class ToolRegistry:
     def __init__(self):
         self._tools: Dict[str, ToolSpec] = {}
         self.enabled_tools_config: Dict[str, bool] = {}  # Optional overrides from tools.yaml
+        self._rate_limits: Dict[str, deque] = {}
 
     def _validate_signature(self, tool: ToolSpec) -> None:
         """
@@ -29,11 +33,13 @@ class ToolRegistry:
         properties = tool.input_schema.get("properties", {})
         required = tool.input_schema.get("required", [])
 
+        has_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
+        if has_kwargs:
+            logging.warning(f"Tool {tool.name} uses VAR_KEYWORD; signature validation skipped for non-required params.")
+
         # Check that required properties are in the parameters
         for req in required:
             if req not in params:
-                # If there is a **kwargs parameter, it's technically allowed
-                has_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
                 if not has_kwargs:
                     raise ValueError(f"Required schema property '{req}' is missing from callable signature.")
 
@@ -42,9 +48,6 @@ class ToolRegistry:
             if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
                 continue
             if name == "session":
-                # Injecting session is handled specifically if needed, but standard tools might not take it directly
-                # If it's a domain tool it might just take arguments.
-                # In many agent frameworks, session is passed if requested. We'll ignore `session` for schema matching.
                 continue
             if name not in properties and param.default == inspect.Parameter.empty:
                  raise ValueError(f"Callable parameter '{name}' without default is not defined in input_schema.")
@@ -52,6 +55,7 @@ class ToolRegistry:
     def register(self, tool: ToolSpec) -> None:
         self._validate_signature(tool)
         self._tools[tool.name] = tool
+        self._rate_limits[tool.name] = deque()
 
     def get_tool(self, name: str) -> ToolSpec:
         if name not in self._tools:
@@ -109,9 +113,36 @@ class ToolRegistry:
         if not is_enabled:
             return ToolError(
                 error_type="unavailable",
-                message=f"Tool '{tool_call.name}' is disabled.",
+                message=f"Tool '{tool_call.name}' is disabled by configuration.",
                 is_retryable=False,
                 suggested_action="Tool is currently disabled by configuration.",
+            )
+            
+        # Enforce rate limit
+        if tool.rate_limit:
+            now = time.time()
+            calls = self._rate_limits[tool.name]
+            while calls and calls[0] < now - 60:
+                calls.popleft()
+            if len(calls) >= tool.rate_limit.calls_per_minute:
+                return ToolError(
+                    error_type="unavailable",
+                    message=f"Rate limit exceeded for tool {tool.name}, retry after 60 seconds",
+                    is_retryable=True,
+                    suggested_action="Wait before calling this tool again.",
+                )
+            calls.append(now)
+
+        # Validate arguments against schema
+        import jsonschema
+        try:
+            jsonschema.validate(instance=tool_call.arguments, schema=tool.input_schema)
+        except jsonschema.exceptions.ValidationError as e:
+            return ToolError(
+                error_type="validation",
+                message=f"Schema validation failed: {e.message}",
+                is_retryable=False,
+                suggested_action="Fix the arguments to match the tool schema.",
             )
 
         # Guardrail chain evaluation
@@ -119,12 +150,10 @@ class ToolRegistry:
         if guardrail_result is not None:
             if isinstance(guardrail_result, ToolError):
                 return guardrail_result
-            # If the guardrail returns ToolResult or UserApprovalPending directly
             return guardrail_result
 
         # Execute
         try:
-            # Match kwargs with signature
             sig = inspect.signature(tool.execute)
             kwargs = tool_call.arguments.copy()
             if "session" in sig.parameters:
@@ -135,8 +164,8 @@ class ToolRegistry:
             
         except Exception as e:
             return ToolError(
-                error_type="broker_error",  # Broad fallback
+                error_type="internal_error",
                 message=str(e),
-                is_retryable=True,
-                suggested_action="Check arguments and try again.",
+                is_retryable=False,
+                suggested_action="Tool implementation error; do not retry, surface to user",
             )
