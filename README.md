@@ -2,14 +2,12 @@
 
 # Atlas Agent
 
-The self-improving AI trading agent built by Natan Mucelli.
-
 <p align="center">
 <a href="https://github.com/usernotfinded/atlas-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-FF4500?style=for-the-badge" alt="License: MIT"></a>
 <a href="https://github.com/usernotfinded"><img src="https://img.shields.io/badge/Built%20by-Natan%20Mucelli-8A2BE2?style=for-the-badge" alt="Built by Natan Mucelli"></a>
 </p>
 
-Atlas Agent is the Hermes Agent for trading: a self-improving AI trading agent with broker adapters, deterministic risk gates, approval policy, audit logs, portfolio memory, and a built-in learning loop.
+**The self-improving AI trading agent built by Natan Mucelli.** Atlas Agent is an agent that trades for you: it has broker adapters, deterministic risk gates, approval policy, audit logs, portfolio memory, and a built-in learning loop.
 
 It researches markets, proposes and validates actions, searches conversation memory, deepens its user model, creates and improves skills from experience, sends knowledge nudges, writes reports, and updates memory. Atlas can run locally, on a VPS, beside GPU workers, or as serverless jobs, with Telegram as an optional control plane.
 
