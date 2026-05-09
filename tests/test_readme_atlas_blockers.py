@@ -11,7 +11,7 @@ def _readme() -> str:
     return README.read_text(encoding="utf-8")
 
 
-def test_readme_positions_hermes_self_improving_agent() -> None:
+def test_readme_positions_atlas_self_improving_agent() -> None:
     text = _readme()
     lower = text.lower()
 

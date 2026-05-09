@@ -37,15 +37,27 @@ Do not hardcode a preferred research/search vendor in user-facing documentation,
 - It handles native tool calling or implements JSON fallback parsing for a specific model family.
 - It is responsible for communication with the AI vendor, not trading logic.
 
-### Make it a Guardrail/Risk component when:
+### Make it a Guardrail/Risk/Safety component when:
 - It blocks unsafe or invalid trading behavior independently of the LLM. (Guardrail: deterministic safety/risk blocker)
-- It enforces risk limits (e.g., position size, daily loss).
+- It enforces risk limits (e.g., position size, daily loss) via the **RiskManager**.
+- It manages emergency states via the **KillSwitch**.
+- It creates or executes emergency interventions via the **SafetyActionPlanner** or **SafetyActionExecutor**.
 - It protects sensitive files, paths, or execution states.
 
 ### Make it Agent Loop logic when:
-- It manages how context is composed for the LLM.
+- It manages how context is composed for the LLM in the **AgentLoop**.
 - It coordinates session state and routes tool results back into the reasoning flow.
-- It handles the high-level coordination of an autonomous cycle.
+- It handles the high-level coordination of an autonomous tool-driven loop.
+
+### Make it an Audit component when:
+- It records immutable, tamper-evident logs via the **Audit Hash-Chain**.
+- It manages run-level **Audit Manifests** and root hashes.
+
+### Make it a Broker component when:
+- It synchronizes account state, positions, and orders via the **BrokerSyncService**.
+
+### Make it a Dashboard component when:
+- It provides read-only local visibility into the system state via the **Dashboard**.
 
 ### Make it Setup Wizard logic when:
 - It collects config and secrets, but never stores API keys in config.json.

@@ -170,7 +170,7 @@ Safety First:
     providers_sub = providers.add_subparsers(dest="providers_command")
     providers_sub.add_parser("list")
 
-    brokers = subparsers.add_parser("brokers")
+    brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
     brokers_sync = brokers_sub.add_parser("sync")
@@ -685,7 +685,7 @@ def _command_requires_workspace(args: argparse.Namespace) -> bool:
         return False
     if args.command == "providers" and args.providers_command == "list":
         return False
-    if args.command == "brokers" and args.brokers_command == "list":
+    if args.command == "broker" and args.brokers_command == "list":
         return False
     if args.command == "telegram" and args.telegram_command == "test":
         return False
@@ -1462,10 +1462,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "providers" and args.providers_command == "list":
         print("null, openai_compatible, anthropic, openrouter, local_command")
         return 0
-    if args.command == "brokers" and args.brokers_command == "list":
+    if args.command == "broker" and args.brokers_command == "list":
         print("paper, alpaca, binance, ccxt, ibkr_stub")
         return 0
-    if args.command == "brokers" and args.brokers_command == "sync":
+    if args.command == "broker" and args.brokers_command == "sync":
         from atlas_agent.brokers.sync import BrokerSyncService
         from atlas_agent.brokers.paper import PaperBroker, PaperBrokerAdapter
         
