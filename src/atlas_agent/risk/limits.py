@@ -20,6 +20,7 @@ class RiskLimits(BaseModel):
     
     minimum_confidence: float = Field(default=0.6, description="Minimum model confidence required for execution.")
     require_stop_loss_live: bool = Field(default=True, description="Require a stop loss for live orders.")
+    allow_shorting: bool = Field(default=False, description="Allow opening or flipping to short positions.")
 
 
 DEFAULT_RISK_LIMITS = RiskLimits()

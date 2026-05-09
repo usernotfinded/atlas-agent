@@ -25,7 +25,7 @@ __all__ = [
     "AdvancedKillSwitch",
     "KillSwitchController",
     "KillSwitchState",
-...
+    "KillSwitchTransition",
     "deadman_heartbeat_path",
     "live_mode_guard",
     "read_deadman_heartbeat",

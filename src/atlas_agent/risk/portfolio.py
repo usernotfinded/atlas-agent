@@ -24,7 +24,8 @@ def get_portfolio_snapshot(state: PortfolioState, marks: dict[str, float] | None
             quantity=pos.quantity,
             average_price=pos.average_price,
             market_price=market_price,
-            notional=notional
+            notional=notional,
+            side="long" if pos.quantity > 0 else "short" if pos.quantity < 0 else "flat"
         ))
         
     equity = state.equity(marks)

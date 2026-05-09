@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, List, Literal, Any
+from typing import Optional, List, Literal, Any, Tuple
 
 from atlas_agent.audit import AuditWriter
 from atlas_agent.risk.limits import RiskLimits, DEFAULT_RISK_LIMITS
@@ -8,7 +8,8 @@ from atlas_agent.risk.models import (
     RiskDecision, 
     RiskViolation, 
     PortfolioSnapshot, 
-    OrderRiskInput
+    OrderRiskInput,
+    OrderClassification
 )
 
 
@@ -44,6 +45,7 @@ class RiskManager:
             live_trading_enabled=enable_live,
             paper_only=not enable_live,
             minimum_confidence=getattr(config, "minimum_confidence", 0.6),
+            allow_shorting=getattr(config, "allow_shorting", False),
         )
         return cls(limits=limits, kill_switch_enabled=getattr(config, "kill_switch_enabled", False))
 
@@ -102,12 +104,43 @@ class RiskManager:
             
         return LegacyDecision(decision.allowed, tuple(reasons))
 
+    def _calculate_projection(
+        self, 
+        order: OrderRiskInput, 
+        portfolio: PortfolioSnapshot
+    ) -> Tuple[float, float, OrderClassification]:
+        symbol = order.symbol.upper()
+        current_pos = next((p for p in portfolio.positions if p.symbol == symbol), None)
+        
+        current_qty = current_pos.quantity if current_pos else 0.0
+        order_qty = order.quantity if order.side == "buy" else -order.quantity
+        
+        projected_qty = current_qty + order_qty
+        projected_exposure = abs(projected_qty * order.price)
+        
+        classification: OrderClassification = "unknown"
+        
+        if current_qty == 0:
+            classification = "opens_new_position"
+        elif projected_qty == 0:
+            classification = "closes_position"
+        elif (current_qty > 0 and projected_qty < 0) or (current_qty < 0 and projected_qty > 0):
+            classification = "flips_position"
+        elif abs(projected_qty) > abs(current_qty):
+            classification = "increases_risk"
+        else:
+            classification = "reduces_risk"
+            
+        return projected_qty, projected_exposure, classification
+
     def evaluate_order(
         self,
         order: OrderRiskInput,
         portfolio: PortfolioSnapshot,
         mode: Literal["paper", "live"] = "paper",
     ) -> RiskDecision:
+        projected_qty, projected_exposure, classification = self._calculate_projection(order, portfolio)
+
         if self.audit_writer:
             self.audit_writer.write_event(
                 "risk_evaluation_started",
@@ -117,7 +150,12 @@ class RiskManager:
                 payload={
                     "order": order.model_dump(),
                     "portfolio": portfolio.model_dump(),
-                    "mode": mode
+                    "mode": mode,
+                    "projection": {
+                        "projected_quantity": projected_qty,
+                        "projected_exposure": projected_exposure,
+                        "classification": classification
+                    }
                 }
             )
 
@@ -167,41 +205,77 @@ class RiskManager:
                 actual_value=symbol
             ))
 
-        # 3. Single trade limits
-        if order.notional > self.limits.max_single_trade_notional:
-            violations.append(RiskViolation(
-                rule="max_single_trade_notional",
-                message=f"max order notional exceeded",
-                limit_value=self.limits.max_single_trade_notional,
-                actual_value=order.notional
-            ))
+        # 3. Shorting policy
+        if not self.limits.allow_shorting:
+            if projected_qty < 0:
+                if classification in ["opens_new_position", "flips_position", "increases_risk"]:
+                    violations.append(RiskViolation(
+                        rule="allow_shorting",
+                        message="shorting is disabled",
+                        limit_value=False,
+                        actual_value=True
+                    ))
 
-        # 4. Position limits
-        current_position = next((p for p in portfolio.positions if p.symbol == symbol), None)
-        projected_notional = order.notional
-        if current_position:
-            projected_notional += current_position.notional
+        # 4. Limits only apply if risk increases
+        is_risk_increasing = classification in ["opens_new_position", "increases_risk", "flips_position"]
+        
+        if is_risk_increasing:
+            # Single trade limits
+            if order.notional > self.limits.max_single_trade_notional:
+                violations.append(RiskViolation(
+                    rule="max_single_trade_notional",
+                    message=f"max order notional exceeded",
+                    limit_value=self.limits.max_single_trade_notional,
+                    actual_value=order.notional
+                ))
 
-        if projected_notional > self.limits.max_position_notional:
-            violations.append(RiskViolation(
-                rule="max_position_notional",
-                message=f"max position size exceeded",
-                limit_value=self.limits.max_position_notional,
-                actual_value=projected_notional
-            ))
+            # Position limits
+            if projected_exposure > self.limits.max_position_notional:
+                violations.append(RiskViolation(
+                    rule="max_position_notional",
+                    message=f"max position size exceeded",
+                    limit_value=self.limits.max_position_notional,
+                    actual_value=projected_exposure
+                ))
 
-        # 5. Portfolio exposure limits
-        projected_total_exposure = portfolio.total_exposure + order.notional
-        max_exposure_abs = portfolio.equity * self.limits.max_portfolio_exposure_pct
-        if projected_total_exposure > max_exposure_abs:
-            violations.append(RiskViolation(
-                rule="max_portfolio_exposure_pct",
-                message=f"max portfolio exposure exceeded",
-                limit_value=max_exposure_abs,
-                actual_value=projected_total_exposure
-            ))
+            # Symbol exposure % check
+            if portfolio.equity > 0:
+                exposure_pct = projected_exposure / portfolio.equity
+                if exposure_pct > self.limits.max_symbol_exposure_pct:
+                    violations.append(RiskViolation(
+                        rule="max_symbol_exposure_pct",
+                        message=f"symbol exposure {exposure_pct:.1%} exceeds limit {self.limits.max_symbol_exposure_pct:.1%}",
+                        limit_value=self.limits.max_symbol_exposure_pct,
+                        actual_value=exposure_pct
+                    ))
 
-        # 6. Confidence check
+            # Portfolio exposure limits
+            current_symbol_exposure = 0.0
+            current_pos = next((p for p in portfolio.positions if p.symbol == symbol), None)
+            if current_pos:
+                current_symbol_exposure = current_pos.notional
+            
+            projected_total_exposure = portfolio.total_exposure - current_symbol_exposure + projected_exposure
+            max_exposure_abs = portfolio.equity * self.limits.max_portfolio_exposure_pct
+            if projected_total_exposure > max_exposure_abs:
+                violations.append(RiskViolation(
+                    rule="max_portfolio_exposure_pct",
+                    message=f"max portfolio exposure exceeded",
+                    limit_value=max_exposure_abs,
+                    actual_value=projected_total_exposure
+                ))
+            
+            # Max open positions
+            if classification == "opens_new_position":
+                if len(portfolio.positions) >= self.limits.max_open_positions:
+                    violations.append(RiskViolation(
+                        rule="max_open_positions",
+                        message=f"max open positions reached",
+                        limit_value=self.limits.max_open_positions,
+                        actual_value=len(portfolio.positions)
+                    ))
+
+        # 5. Confidence check (always applies)
         if order.confidence is not None and order.confidence < self.limits.minimum_confidence:
              violations.append(RiskViolation(
                 rule="minimum_confidence",
@@ -210,7 +284,7 @@ class RiskManager:
                 actual_value=order.confidence
             ))
 
-        # 7. Live stop loss requirement
+        # 6. Live stop loss requirement (always applies in live)
         if mode == "live" and self.limits.require_stop_loss_live and order.stop_loss is None:
             violations.append(RiskViolation(
                 rule="require_stop_loss_live",
@@ -220,12 +294,23 @@ class RiskManager:
             ))
 
         # Determine decision
+        diagnostics = {
+            "classification": classification,
+            "projected_quantity": projected_qty,
+            "projected_exposure": projected_exposure,
+            "current_exposure": next((p.notional for p in portfolio.positions if p.symbol == symbol), 0.0)
+        }
+        
         if violations:
             decision = RiskDecision(
                 allowed=False,
                 status="blocked",
                 reason="Risk violations detected",
-                violations=violations
+                violations=violations,
+                classification=classification,
+                projected_quantity=projected_qty,
+                projected_exposure=projected_exposure,
+                diagnostics=diagnostics
             )
             if self.audit_writer:
                 self.audit_writer.write_event(
@@ -237,12 +322,15 @@ class RiskManager:
                     payload=decision.model_dump()
                 )
         else:
-            # Check if it requires approval (all live trades require approval by default for now)
             if mode == "live":
                 decision = RiskDecision(
-                    allowed=True, # Allowed to proceed to approval
+                    allowed=True,
                     status="requires_approval",
-                    reason="Live order requires manual approval"
+                    reason="Live order requires manual approval",
+                    classification=classification,
+                    projected_quantity=projected_qty,
+                    projected_exposure=projected_exposure,
+                    diagnostics=diagnostics
                 )
                 if self.audit_writer:
                     self.audit_writer.write_event(
@@ -257,7 +345,11 @@ class RiskManager:
                 decision = RiskDecision(
                     allowed=True,
                     status="allowed",
-                    reason="All risk checks passed"
+                    reason="All risk checks passed",
+                    classification=classification,
+                    projected_quantity=projected_qty,
+                    projected_exposure=projected_exposure,
+                    diagnostics=diagnostics
                 )
                 if self.audit_writer:
                     self.audit_writer.write_event(
