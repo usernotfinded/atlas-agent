@@ -365,6 +365,10 @@ Safety First:
     audit_verify.add_argument("--manifest", help="Path to audit manifest file")
     audit_verify.add_argument("--all", action="store_true", help="Verify all manifests")
 
+    dashboard = subparsers.add_parser("dashboard")
+    dashboard.add_argument("--json", action="store_true", help="Emit dashboard snapshot as JSON")
+    dashboard.add_argument("--open", action="store_true", help="Open dashboard in browser")
+
     return parser
 
 
@@ -1528,7 +1532,26 @@ def main(argv: list[str] | None = None) -> int:
         if result.reasons:
             print("Reasons:", "; ".join(result.reasons))
         return 0 if result.status in {"filled", "held", "pending_approval"} else 2
+
+    if args.command == "dashboard":
+        from atlas_agent.dashboard.collectors import collect_dashboard_snapshot
+        from atlas_agent.dashboard.render import render_dashboard_html
         
+        snapshot = collect_dashboard_snapshot(config, Path.cwd())
+        
+        if args.json:
+            print(snapshot.model_dump_json(indent=2))
+            return 0
+            
+        dashboard_path = config.workspace_root / ".atlas" / "dashboard" / "index.html"
+        render_dashboard_html(snapshot, dashboard_path)
+        print(f"Dashboard generated: {dashboard_path}")
+        
+        if args.open:
+            import webbrowser
+            webbrowser.open(f"file://{dashboard_path.resolve()}")
+        return 0
+
     if args.command == "agent":
         from atlas_agent.agent.planner import get_agent_plan, get_agent_plan_payload
         from atlas_agent.agent.runner import run_agent

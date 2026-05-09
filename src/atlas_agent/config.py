@@ -79,6 +79,7 @@ class AtlasConfig:
     allow_git_push: bool = False
     git_commit_author_name: str = "Atlas Agent"
     git_commit_author_email: str = "atlas-agent@example.local"
+    workspace_root: Path = Path(".")
 
     @classmethod
     def from_env(cls) -> AtlasConfig:
@@ -130,6 +131,7 @@ class AtlasConfig:
                 "GIT_COMMIT_AUTHOR_EMAIL",
                 "atlas-agent@example.local",
             ),
+            workspace_root=Path(os.getenv("WORKSPACE_ROOT", ".")),
         )
 
     def live_disabled_reasons(self) -> tuple[str, ...]:
