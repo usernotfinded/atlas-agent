@@ -173,6 +173,8 @@ Safety First:
     brokers = subparsers.add_parser("brokers")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
+    brokers_sync = brokers_sub.add_parser("sync")
+    brokers_sync.add_argument("--json", action="store_true")
 
     backtest = subparsers.add_parser("backtest")
     backtest.add_argument("--strategy", default="moving_average")
@@ -1459,6 +1461,35 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "brokers" and args.brokers_command == "list":
         print("paper, alpaca, binance, ccxt, ibkr_stub")
         return 0
+    if args.command == "brokers" and args.brokers_command == "sync":
+        from atlas_agent.brokers.sync import BrokerSyncService
+        from atlas_agent.brokers.paper import PaperBroker, PaperBrokerAdapter
+        
+        # For CLI sync, use paper broker as default if nothing else is configured
+        paper_broker = PaperBroker(state=PortfolioState(cash=config.starting_cash))
+        broker_provider = PaperBrokerAdapter(broker=paper_broker)
+        
+        sync_service = BrokerSyncService(broker=broker_provider)
+        result = sync_service.sync()
+        
+        if getattr(args, "json", False):
+            print(result.model_dump_json(indent=2))
+            return 0
+            
+        print(f"Broker Sync Result: {result.status.upper()}")
+        print(f"  Synced At: {result.synced_at}")
+        if result.account:
+            print(f"  Account ID: {result.account.account_id}")
+            print(f"  Live: {result.account.is_live}")
+            print(f"  Cash: ${result.account.cash:,.2f}")
+            print(f"  Equity: ${result.account.equity:,.2f}")
+        print(f"  Positions: {len(result.positions)}")
+        print(f"  Open Orders: {len(result.open_orders)}")
+        if result.errors:
+            print("  Errors:")
+            for err in result.errors:
+                print(f"    - {err}")
+        return 0 if result.status == "success" else 2
     if args.command == "backtest":
         symbol = args.symbol or config.default_symbol
         result = run_backtest(symbol=symbol, strategy_name=args.strategy, config=config)

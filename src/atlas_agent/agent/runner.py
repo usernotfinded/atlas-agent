@@ -74,9 +74,10 @@ def _run_agent_loop_continuous(
 def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     from atlas_agent.audit import AuditWriter
     from atlas_agent.risk.manager import RiskManager
-    from atlas_agent.risk.portfolio import get_portfolio_snapshot
     from atlas_agent.portfolio.state import PortfolioState
     from atlas_agent.safety.kill_switch import AdvancedKillSwitch
+    from atlas_agent.brokers.sync import BrokerSyncService
+    from atlas_agent.brokers.paper import PaperBroker, PaperBrokerAdapter
     
     provider = get_provider_from_env()
     registry = ToolRegistry()
@@ -99,10 +100,27 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     # Record a fresh heartbeat at start of cycle
     kill_switch.heartbeat_manager.record(source="agent_runner")
     
-    # Load portfolio state (in a real app, this might be from a database or broker)
-    portfolio_state = PortfolioState(cash=config.starting_cash)
-    # For V3, we'd ideally load real open orders here. Mocking an empty list for now.
-    portfolio_snapshot = get_portfolio_snapshot(portfolio_state, open_orders=[])
+    # Broker Sync
+    # For now, default to PaperBroker in all modes if no real adapter is configured
+    # In V4, we'll add Alpaca/Binance adapter factories here.
+    paper_broker = PaperBroker(state=PortfolioState(cash=config.starting_cash))
+    broker_provider = PaperBrokerAdapter(broker=paper_broker)
+    
+    sync_service = BrokerSyncService(
+        broker=broker_provider,
+        audit_writer=audit_writer,
+        run_id=run_id
+    )
+    
+    sync_result = sync_service.sync()
+    if sync_result.status == "failed" and mode == "live":
+        return AgentResult(
+            status="error",
+            errors=["Broker sync failed in live mode; failing closed."],
+            diagnostics={"sync_errors": sync_result.errors}
+        )
+        
+    portfolio_snapshot = sync_service.get_portfolio_snapshot(sync_result)
     
     from atlas_agent.risk.limits import RiskLimits
     risk_limits = RiskLimits(

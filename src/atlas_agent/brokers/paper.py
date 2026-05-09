@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from uuid import uuid4
+from typing import List
 
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.execution.order import (
@@ -13,6 +14,13 @@ from atlas_agent.execution.order import (
 from atlas_agent.portfolio.journal import TradeJournal
 from atlas_agent.portfolio.positions import Position
 from atlas_agent.portfolio.state import PortfolioState
+from atlas_agent.brokers.models import (
+    BrokerAccountState,
+    BrokerPosition,
+    BrokerOrder,
+    BrokerBalance,
+)
+from atlas_agent.brokers.base import BrokerProvider
 
 
 @dataclass
@@ -21,6 +29,7 @@ class PaperBroker:
     audit: AuditLogger | None = None
     journal: TradeJournal | None = None
     fills: list[Order] = field(default_factory=list)
+    open_orders_list: list[BrokerOrder] = field(default_factory=list)
 
     def get_account(self) -> AccountSnapshot:
         equity = self.state.equity()
@@ -205,6 +214,46 @@ class PaperBroker:
             order_results=tuple(order_results),
             failed_symbols=tuple(failed_symbols),
         )
+
+
+@dataclass
+class PaperBrokerAdapter(BrokerProvider):
+    broker: PaperBroker
+
+    def get_account_state(self) -> BrokerAccountState:
+        acc = self.broker.get_account()
+        return BrokerAccountState(
+            account_id="paper_account",
+            cash=acc.cash,
+            equity=acc.equity,
+            buying_power=acc.buying_power,
+            is_live=False
+        )
+
+    def get_positions(self) -> List[BrokerPosition]:
+        return [
+            BrokerPosition(
+                symbol=p.symbol,
+                quantity=p.quantity,
+                average_price=p.average_price,
+                market_price=p.average_price, # Simple paper pricing
+                side="long" if p.quantity > 0 else "short" if p.quantity < 0 else "flat"
+            )
+            for p in self.broker.get_positions()
+        ]
+
+    def get_open_orders(self) -> List[BrokerOrder]:
+        return self.broker.open_orders_list
+
+    def get_balances(self) -> List[BrokerBalance]:
+        return [
+            BrokerBalance(
+                asset="USD",
+                free=self.broker.state.cash,
+                locked=0.0,
+                total=self.broker.state.cash
+            )
+        ]
 
 
 def _flatten_price(position: Position, *, strategy: str, bps: int) -> float:
