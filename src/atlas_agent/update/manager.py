@@ -60,6 +60,14 @@ class UpdateApplyReport:
     warnings: tuple[str, ...]
 
 
+SENSITIVE_FILES = {
+    ".env",
+    ".env.atlas",
+    ".env.local",
+    ".atlas/config.json",
+}
+
+
 class SafeUpdateManager:
     def __init__(
         self,
@@ -155,11 +163,27 @@ class SafeUpdateManager:
         self.state_store.save(state)
         return state
 
+    def _is_sensitive(self, path: Path) -> bool:
+        try:
+            rel = path.relative_to(self.workspace_root)
+            return str(rel) in SENSITIVE_FILES or rel.name.startswith(".env.")
+        except ValueError:
+            return False
+
     def apply(self, *, force: bool = False, auto: bool = False) -> UpdateApplyReport:
         state = self._load_state()
         safety = evaluate_update_safety(self.safety_check)
         blockers = list(safety.blockers)
         warnings = list(safety.warnings)
+
+        # Check for sensitive files in git if applicable
+        if self._is_git_repo() and not force:
+            sensitive_changes = self._get_git_sensitive_changes()
+            if sensitive_changes:
+                for f in sensitive_changes:
+                    blockers.append(f"update would overwrite sensitive file: {f}")
+                    warnings.append(f"Preserved local secrets file: {f}")
+                warnings.append("Skipped sensitive file during update due to local protection.")
 
         if auto and not state.auto_apply_enabled:
             return UpdateApplyReport(
@@ -307,6 +331,27 @@ class SafeUpdateManager:
         if package_name:
             resolved_sources.append(PyPIReleaseSource(package_name=package_name))
         return resolved_sources
+
+    def _get_git_sensitive_changes(self) -> list[str]:
+        # Fetch first to ensure we know about remote changes
+        self.command_runner(["git", "fetch"], self.repo_root)
+        
+        # Check diff between HEAD and origin/main (or current tracking branch)
+        # For simplicity, we compare with the upstream branch
+        result = self.command_runner(
+            ["git", "diff", "--name-only", "HEAD", "@{u}"],
+            self.repo_root,
+        )
+        if result.returncode != 0:
+            return []
+            
+        changed_files = result.stdout.strip().splitlines()
+        sensitive = []
+        for f in changed_files:
+            path = self.repo_root / f
+            if self._is_sensitive(path):
+                sensitive.append(f)
+        return sensitive
 
     def _is_git_repo(self) -> bool:
         result = self.command_runner(["git", "rev-parse", "--is-inside-work-tree"], self.repo_root)

@@ -58,6 +58,33 @@ def test_input_step_rendering():
     assert "> " in text
     assert "█" in text # Cursor
 
+def test_wizard_renderer_includes_banner():
+    state = WizardState()
+    choices = [("a", "Alpha")]
+    rendered = render_wizard_screen(state, "setup_mode", choices, 0, title="Setup")
+    text = "".join(t[1] for t in rendered)
+    
+    assert "___ _____ _      _   ___" in text
+    assert "Atlas Agent is a self-improving AI trading agent." in text
+    assert "Atlas Agent Setup" in text
+
+def test_wizard_renderer_keeps_banner_across_steps():
+    state = WizardState()
+    
+    # Step 1
+    rendered1 = render_wizard_screen(state, "setup_mode", [("q", "Quick")], 0, title="Step 1")
+    text1 = "".join(t[1] for t in rendered1)
+    assert "___ _____ _      _   ___" in text1
+    assert "Step 1" in text1
+    
+    # Step 2
+    state.setup_mode = "quick"
+    rendered2 = render_wizard_screen(state, "provider", [("p", "Provider")], 0, title="Step 2")
+    text2 = "".join(t[1] for t in rendered2)
+    assert "___ _____ _      _   ___" in text2
+    assert "Step 2" in text2
+    assert "Quick" not in text2 # Choices from previous step not in current choices
+
 def test_prompt_toolkit_filters_are_condition_instances():
     from prompt_toolkit.key_binding import KeyBindings
     from unittest.mock import patch

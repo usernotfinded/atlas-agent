@@ -10,6 +10,9 @@ from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
+YELLOW = "\033[93m"
+RESET = "\033[0m"
+
 from atlas_agent import __version__
 from atlas_agent.backtest.runner import run_backtest
 from atlas_agent.brokers.alpaca import AlpacaBroker
@@ -795,19 +798,17 @@ def _check_for_updates() -> str | None:
     return None
 
 
-def _print_welcome() -> None:
-    print(r"""
-      ___ _____ _      _   ___      _   ___ ___ _  _ _____ 
-     / _ \_   _| |    /_\ / __|    /_\ / __| __| \| |_   _|
-    / ___ \| | | |__ / _ \\__ \   / _ \ (_ | _|| .` | | |  
-   /_/   \_|_| |____/_/ \_\___/  /_/ \_\___|___|_|\_| |_|  
+from atlas_agent.ui.banner import ATLAS_ASCII_BANNER, ATLAS_TAGLINE
 
-Atlas Agent is a self-improving AI trading agent.
-""")
+def _print_welcome() -> None:
+    print(ATLAS_ASCII_BANNER)
+    print(ATLAS_TAGLINE)
+    print("")
     update = _check_for_updates()
+
     if update:
         print(f"NOTICE: A newer version of Atlas Agent is available: {update} (current: {__version__})")
-        print("Run 'git pull' to update your local installation.")
+        print(f"Run: {YELLOW}atlas update{RESET}")
         print("")
 
 
@@ -834,10 +835,16 @@ def _provider_configured(workspace_path: Path | None) -> bool:
     )
 
 
-def _broker_configured(config: AtlasConfig | None) -> bool:
+def _live_broker_credentials_configured(config: AtlasConfig | None) -> bool:
     if config is None:
         return False
-    return config.live_broker not in {"", "none"}
+    if config.live_broker == "alpaca":
+        return bool(os.getenv("ALPACA_API_KEY")) and bool(os.getenv("ALPACA_SECRET_KEY"))
+    if config.live_broker == "binance":
+        return bool(os.getenv("BINANCE_API_KEY")) and bool(os.getenv("BINANCE_SECRET_KEY"))
+    if config.live_broker == "ccxt":
+        return bool(os.getenv("CCXT_API_KEY")) or bool(os.getenv("EXCHANGE_API_KEY"))
+    return False
 
 
 def _print_first_run_onboarding(
@@ -849,22 +856,27 @@ def _print_first_run_onboarding(
     _print_welcome()
     workspace_configured = resolution.path is not None
     provider_configured = _provider_configured(resolution.path)
-    broker_configured = _broker_configured(config)
+    
     if config_error:
         trading_mode = "not configured"
         live_enabled = "no"
-    elif config is not None and config.trading_mode in {"paper", "live"}:
+        broker_mode = "not configured"
+    elif config is not None:
         trading_mode = config.trading_mode
         live_enabled = "yes" if config.enable_live_trading else "no"
+        broker_mode = config.live_broker if config.live_broker not in {"", "none"} else "paper"
     else:
         trading_mode = "not configured"
         live_enabled = "no"
+        broker_mode = "not configured"
+
+    live_creds = _live_broker_credentials_configured(config)
 
     print("Current setup status:")
     print(f"- workspace configured: {'yes' if workspace_configured else 'no'}")
     print(f"- provider configured: {'yes' if provider_configured else 'no'}")
-    print(f"- broker configured: {'yes' if broker_configured else 'no'}")
-    print(f"- trading mode: {trading_mode}")
+    print(f"- broker mode: {broker_mode}")
+    print(f"- live broker credentials: {'configured' if live_creds else 'not configured'}")
     print(f"- live trading enabled: {live_enabled}")
     if config_error:
         print(f"- config warning: {config_error}")
@@ -872,11 +884,21 @@ def _print_first_run_onboarding(
         print(f"- workspace warning: {resolution.warning}")
 
     print("")
-    print("Next commands:")
-    print("  atlas init <workspace>")
-    print("  atlas configure")
-    print("  atlas validate")
-    print("  atlas run --mode paper")
+    if workspace_configured:
+        print("Next commands:")
+        print("  atlas validate")
+        print("  atlas run --mode paper")
+        print(f"  {YELLOW}atlas update{RESET}")
+        print("")
+        print("Optional:")
+        print("  atlas configure")
+    else:
+        print("Next commands:")
+        print("  atlas init <workspace>")
+        print("  atlas configure")
+        print("  atlas validate")
+        print("  atlas run --mode paper")
+        print(f"  {YELLOW}atlas update{RESET}")
     print("")
     print("Bare `atlas` no longer starts autonomous execution. Use `atlas run` explicitly.")
 
@@ -1053,9 +1075,21 @@ def main(argv: list[str] | None = None) -> int:
             if success:
                 state.save(config_path)
                 print(f"\nConfiguration saved to {config_path}")
-                print("\nNext commands:")
-                print("  atlas validate")
-                print("  atlas run --mode paper")
+                
+                # Reload config and show final status
+                resolution = resolve_workspace(getattr(args, "workspace", None))
+                config = None
+                try:
+                    config = AtlasConfig.from_env()
+                except ValueError:
+                    pass
+                
+                print("\nSetup completed successfully.\n")
+                _print_first_run_onboarding(
+                    config=config,
+                    config_error=None,
+                    resolution=resolution,
+                )
                 return 0
             else:
                 print("\nSetup cancelled. Atlas is not configured yet.")
@@ -1124,6 +1158,21 @@ def main(argv: list[str] | None = None) -> int:
         if success:
             state.save(config_path)
             print(f"Configuration saved to {config_path}")
+            
+            # Show final status
+            resolution = resolve_workspace(getattr(args, "workspace", None))
+            config = None
+            try:
+                config = AtlasConfig.from_env()
+            except ValueError:
+                pass
+            
+            print("\nConfiguration updated successfully.\n")
+            _print_first_run_onboarding(
+                config=config,
+                config_error=None,
+                resolution=resolution,
+            )
             return 0
         else:
             print("Setup cancelled. Atlas is not configured yet.")

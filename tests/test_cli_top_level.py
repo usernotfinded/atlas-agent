@@ -63,11 +63,14 @@ def test_bare_atlas_prints_onboarding(workspace, capsys, monkeypatch, write_comp
     output = capsys.readouterr().out
     assert "Current setup status:" in output
     assert "- workspace configured: yes" in output
+    assert "- broker mode: paper" in output
+    assert "- live broker credentials: not configured" in output
     assert "Next commands:" in output
-    assert "atlas init <workspace>" in output
-    assert "atlas configure" in output
+    assert "atlas init <workspace>" not in output # Should be hidden when workspace is configured
     assert "atlas validate" in output
     assert "atlas run --mode paper" in output
+    assert "Optional:" in output
+    assert "atlas configure" in output
 
 
 def test_bare_atlas_does_not_call_runner(workspace, capsys, monkeypatch, write_complete_setup_config):

@@ -1,5 +1,6 @@
 from typing import List, Tuple, Optional
 from atlas_agent.setup.state import WizardState
+from atlas_agent.ui.banner import ATLAS_ASCII_BANNER, ATLAS_TAGLINE
 
 def render_wizard_screen(
     state: WizardState,
@@ -12,6 +13,11 @@ def render_wizard_screen(
 ) -> List[Tuple[str, str]]:
     """Pure function to render the wizard screen state."""
     lines = []
+    
+    # Prepend the banner and tagline
+    lines.append(("class:normal", ATLAS_ASCII_BANNER))
+    lines.append(("class:normal", f"\n{ATLAS_TAGLINE}\n\n"))
+    
     lines.append(("class:title", "Atlas Agent Setup\n\n"))
 
     # Selected so far summary
