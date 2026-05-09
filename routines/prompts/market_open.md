@@ -31,11 +31,11 @@ Use recent memory and today pre-market plan first. Compress old trade journal en
 
 ## APIs And Tools To Use
 
-Use `atlas run-once --mode paper` for paper execution. Use `atlas run-once --mode live` only to create a pending live order, not to execute real broker order without approval. Use Perplexity through the configured research module or API wrapper. Use Alpaca only through broker adapters or CLI, never raw ad-hoc broker calls.
+Use `atlas run-once --mode paper` for paper execution. Use `atlas run-once --mode live` only to create a pending live order, not to execute real broker order without approval. Use the configured web research provider through the research module or API wrapper. Use Alpaca only through broker adapters or CLI, never raw ad-hoc broker calls.
 
 API keys are read from environment variables. Do not look for `.env` in the remote routine environment. Never print API keys.
 
-Exact environment variable names: `TRADING_MODE`, `ENABLE_LIVE_TRADING`, `LIVE_BROKER`, `ORDER_APPROVAL_MODE`, `KILL_SWITCH_ENABLED`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL`, `PERPLEXITY_API_KEY`, `PERPLEXITY_MODEL`, `CLICKUP_API_TOKEN`, `CLICKUP_WORKSPACE_ID`, `CLICKUP_LIST_ID`, `CLICKUP_TASK_ID`, `ALLOW_GIT_COMMIT`, `ALLOW_GIT_PUSH`, `GIT_COMMIT_AUTHOR_NAME`, `GIT_COMMIT_AUTHOR_EMAIL`, `AI_PROVIDER`, `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY`, `OPENAI_COMPATIBLE_MODEL`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `KIMI_API_KEY`, `GROK_API_KEY`, `OPENROUTER_API_KEY`, `LOCAL_COMMAND`.
+Exact environment variable names: `TRADING_MODE`, `ENABLE_LIVE_TRADING`, `LIVE_BROKER`, `ORDER_APPROVAL_MODE`, `KILL_SWITCH_ENABLED`, `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL`, `ATLAS_RESEARCH_API_KEY`, `RESEARCH_MODEL`, `CLICKUP_API_TOKEN`, `CLICKUP_WORKSPACE_ID`, `CLICKUP_LIST_ID`, `CLICKUP_TASK_ID`, `ALLOW_GIT_COMMIT`, `ALLOW_GIT_PUSH`, `GIT_COMMIT_AUTHOR_NAME`, `GIT_COMMIT_AUTHOR_EMAIL`, `AI_PROVIDER`, `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY`, `OPENAI_COMPATIBLE_MODEL`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `KIMI_API_KEY`, `GROK_API_KEY`, `OPENROUTER_API_KEY`, `LOCAL_COMMAND`.
 
 ## Decision Rules
 

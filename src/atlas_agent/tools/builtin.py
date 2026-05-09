@@ -663,16 +663,29 @@ read_url_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(read_url_spec)
 
-def perplexity_research(query: str, depth: str = "standard") -> ResearchReport:
-    """Mock implementation of perplexity_research"""
+def market_research(query: str, depth: str = "standard") -> ResearchReport:
+    """Mock implementation of market_research"""
     return ResearchReport.model_construct()
 
+market_research_spec = ToolSpec(
+    name="market_research",
+    description_full="Run a deep research query via the configured web research provider. Use this for complex, multi-faceted questions where web_search would be too shallow. Do NOT use this for simple facts \u2014 it is slow and expensive. Save the result to your memory if it is reusable.",
+    description_compact="Run a deep research query via the configured web research provider.",
+    input_schema=generate_input_schema(market_research),
+    execute=market_research,
+    risk_gated=False,
+    approval_gated=False,
+    audit_logged=False,
+)
+BUILTIN_TOOLS.append(market_research_spec)
+
+# Legacy alias for backward compatibility
 perplexity_research_spec = ToolSpec(
     name="perplexity_research",
-    description_full="Run a deep research query via Perplexity (or equivalent deep-research provider). Use this for complex, multi-faceted questions where web_search would be too shallow. Do NOT use this for simple facts \u2014 it is slow and expensive. Save the result to your memory if it is reusable.",
-    description_compact="Run a deep research query via Perplexity (or equivalent deep-research provider).",
-    input_schema=generate_input_schema(perplexity_research),
-    execute=perplexity_research,
+    description_full="Legacy alias for market_research.",
+    description_compact="Legacy alias for market_research.",
+    input_schema=generate_input_schema(market_research),
+    execute=market_research,
     risk_gated=False,
     approval_gated=False,
     audit_logged=False,

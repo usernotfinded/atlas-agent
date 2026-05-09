@@ -43,8 +43,8 @@ from atlas_agent.market_data.sample_data import ensure_sample_data
 from atlas_agent.portfolio.journal import TradeJournal
 from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.reports.daily import generate_daily_report
-from atlas_agent.research.perplexity import (
-    PerplexityResearchProvider,
+from atlas_agent.research import (
+    get_research_provider,
     ResearchConfigurationError,
 )
 from atlas_agent.risk.manager import RiskManager
@@ -1880,7 +1880,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "research" and args.research_command == "market":
         try:
-            report = PerplexityResearchProvider().research_market(args.symbol)
+            report = get_research_provider().research_market(args.symbol)
         except ResearchConfigurationError as exc:
             print(f"research skipped safely: {exc}")
             return 0

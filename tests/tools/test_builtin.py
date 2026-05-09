@@ -74,9 +74,9 @@ def registry():
     return reg
 
 
-def test_registry_has_49_tools(registry):
-    assert len(registry.list_tools()) == 49
-    assert len(BUILTIN_TOOLS) == 49
+def test_registry_has_50_tools(registry):
+    assert len(registry.list_tools()) == 50
+    assert len(BUILTIN_TOOLS) == 50
 
 
 @pytest.mark.parametrize("tool_spec", BUILTIN_TOOLS, ids=lambda x: x.name)

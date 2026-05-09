@@ -16,8 +16,10 @@ ALPACA_SECRET_KEY=
 ALPACA_BASE_URL=https://paper-api.alpaca.markets
 
 # Research
-PERPLEXITY_API_KEY=
-PERPLEXITY_MODEL=sonar-pro
+# Optional Research/Search Provider
+# Configure these if you want the agent to use a web research API.
+ATLAS_RESEARCH_API_KEY=
+RESEARCH_MODEL=sonar-pro
 
 # ClickUp notifications
 CLICKUP_API_TOKEN=

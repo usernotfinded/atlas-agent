@@ -23,13 +23,13 @@ class PerplexityResearchProvider:
         model: str | None = None,
         http_post: HttpPost | None = None,
     ) -> None:
-        self.api_key = api_key if api_key is not None else os.getenv("PERPLEXITY_API_KEY")
-        self.model = model or os.getenv("PERPLEXITY_MODEL", "sonar-pro")
+        self.api_key = api_key or os.getenv("ATLAS_RESEARCH_API_KEY") or os.getenv("RESEARCH_API_KEY") or os.getenv("PERPLEXITY_API_KEY")
+        self.model = model or os.getenv("RESEARCH_MODEL") or os.getenv("PERPLEXITY_MODEL", "sonar-pro")
         self.http_post = http_post or _default_http_post
 
     def research_market(self, symbol: str) -> ResearchReport:
         if not self.api_key:
-            raise ResearchConfigurationError("PERPLEXITY_API_KEY is not configured")
+            raise ResearchConfigurationError("ATLAS_RESEARCH_API_KEY is not configured")
         payload = {
             "model": self.model,
             "messages": [

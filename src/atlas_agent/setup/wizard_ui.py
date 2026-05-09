@@ -82,6 +82,20 @@ class WizardApplication:
             else:
                 self.choices = [("default", "Default Model")]
             self.current_index = next((i for i, v in enumerate(self.choices) if v[0] == self.state.model), 0)
+        elif self.current_step == "research_provider":
+            self.title = "Optional web research provider:"
+            self.choices = [
+                ("skip", "Skip for now"),
+                ("custom", "Custom search/research API"),
+                ("local", "Self-hosted/local provider"),
+                ("existing", "Existing environment variable"),
+                ("legacy_perplexity", "Legacy Perplexity backend"),
+            ]
+            self.current_index = next((i for i, v in enumerate(self.choices) if v[0] == self.state.research_provider), 0)
+        elif self.current_step == "research_api_key_input":
+            self.title = "Enter ATLAS_RESEARCH_API_KEY (or legacy PERPLEXITY_API_KEY):"
+            self.choices = []
+            self.input_value = ""
         elif self.current_step == "messaging":
             self.title = "Select messaging integration:"
             self.choices = [
@@ -162,6 +176,13 @@ class WizardApplication:
             else:
                 self.current_step = "model"
         elif self.current_step == "model":
+            self.current_step = "research_provider"
+        elif self.current_step == "research_provider":
+            if self.state.research_provider in ["custom", "legacy_perplexity"]:
+                self.current_step = "research_api_key_input"
+            else:
+                self.current_step = "messaging"
+        elif self.current_step == "research_api_key_input":
             self.current_step = "messaging"
         elif self.current_step == "messaging":
             if self.state.setup_mode == "full":
@@ -274,6 +295,11 @@ class WizardApplication:
                         self.temp_secrets[key_name] = self.input_value.strip()
                         self.state.credentials_configured = True
                     self.next_step()
+                elif self.current_step == "research_api_key_input":
+                    if self.input_value.strip():
+                        key_name = "PERPLEXITY_API_KEY" if self.state.research_provider == "legacy_perplexity" else "ATLAS_RESEARCH_API_KEY"
+                        self.temp_secrets[key_name] = self.input_value.strip()
+                    self.next_step()
                 elif self.current_step == "custom_endpoint":
                     self.state.custom_endpoint = self.input_value.strip()
                     self.next_step()
@@ -309,7 +335,7 @@ class WizardApplication:
                 lambda: render_wizard_screen(
                     self.state, self.current_step, self.choices, 
                     self.current_index, self.input_value, self.title,
-                    is_password=(self.current_step == "api_key_input")
+                    is_password=(self.current_step in ["api_key_input", "research_api_key_input"])
                 )
             ))),
             key_bindings=kb,

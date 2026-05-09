@@ -16,7 +16,7 @@ Atlas Agent is built for precision and safety. It treats the LLM as the reasonin
 Atlas Agent is a workspace where an AI agent lives, learns, and trades.
 
 *   **The Agent:** A financial LLM (Claude, OpenAI, DeepSeek, etc.) acts as the decision-maker, processing market context and memory to form a thesis.
-*   **The Tools:** How the agent interacts with the world. From pulling OHLCV data and Perplexity research to executing orders and updating trade journals.
+*   **The Tools:** How the agent interacts with the world. From pulling OHLCV data and web research to executing orders and updating trade journals.
 *   **The Memory:** Persistent Markdown journals and logs allow the agent to carry lessons across sessions, deepening its "user model" and improving its skills over time.
 *   **The Guardrails:** Deterministic risk controls (position sizing, daily loss limits, symbol policies) are decoupled from LLM reasoning to ensure safety.
 *   **Simulation and Learning:** The default safety mode. Atlas Agent uses a high-fidelity `PaperBroker` for simulation without financial risk. During **closed-market** hours, Atlas focuses on research and the built-in **learning loop** to improve future planning.
@@ -63,6 +63,13 @@ Atlas Agent uses a dual-layer configuration system to balance portability and se
 
 *   **`.atlas/config.json`**: Stores non-secret configuration like your default symbol, trading hours, and risk parameters.
 *   **`.env.atlas`**: Stores sensitive API keys and broker secrets. This file is automatically ignored by Git and protected by the `atlas update` process.
+
+Atlas Agent can optionally connect to a configurable web research provider for market/news lookup and external context gathering. The provider is user-selected. Atlas should not require or prefer a specific research vendor. Examples include hosted search APIs, self-hosted metasearch, browser automation providers, or custom HTTP/OpenAI-compatible endpoints.
+
+```bash
+# Optional generic research provider secret
+ATLAS_RESEARCH_API_KEY=...
+```
 
 **Security Rule:** Never commit your API keys. Atlas Agent enforces this by protecting `.env.*` files from being staged or overwritten during updates.
 

@@ -20,8 +20,10 @@ We prioritize contributions that improve the reliability and safety of the agent
 
 To maintain a clean architecture, follow these guidelines when deciding where to add new functionality:
 
+Do not hardcode a preferred research/search vendor in user-facing documentation, setup flows, or tests. Research/search/browser integrations should be provider adapters. Secrets must go to .env.atlas; non-secret settings must go to .atlas/config.json.
+
 ### Make it a Tool when:
-- The LLM needs to call it as an explicit action.
+- The LLM needs to call it as an explicit action. (Tool: action exposed to the LLM)
 - It interacts with market data, broker actions, portfolio state, memory, research, trade journals, or user notifications.
 - It requires a stable JSON schema for model consumption.
 - It must be validated by the `ToolRegistry` and may require safety flags (audit, risk, or approval).
@@ -29,12 +31,13 @@ To maintain a clean architecture, follow these guidelines when deciding where to
 *Examples: `get_quote`, `get_ohlcv`, `propose_order`, `cancel_order`, `append_journal`, `request_user_approval`, `notify_user`.*
 
 ### Make it a Provider Adapter when:
+- It normalizes one vendor/backend into Atlas internal research/search/browser shapes.
 - It normalizes model-specific output into the internal `LLMResponse` or `ToolCall` models.
 - It handles native tool calling or implements JSON fallback parsing for a specific model family.
 - It is responsible for communication with the AI vendor, not trading logic.
 
 ### Make it a Guardrail/Risk component when:
-- It blocks unsafe or invalid trading behavior independently of the LLM.
+- It blocks unsafe or invalid trading behavior independently of the LLM. (Guardrail: deterministic safety/risk blocker)
 - It enforces risk limits (e.g., position size, daily loss).
 - It protects sensitive files, paths, or execution states.
 
@@ -42,6 +45,9 @@ To maintain a clean architecture, follow these guidelines when deciding where to
 - It manages how context is composed for the LLM.
 - It coordinates session state and routes tool results back into the reasoning flow.
 - It handles the high-level coordination of an autonomous cycle.
+
+### Make it Setup Wizard logic when:
+- It collects config and secrets, but never stores API keys in config.json.
 
 ### Do NOT add a new tool when:
 - A simple schema correction to an existing tool is sufficient.

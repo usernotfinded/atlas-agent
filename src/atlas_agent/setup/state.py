@@ -9,6 +9,7 @@ class WizardState:
     provider: str = ""
     model: str = ""
     custom_endpoint: Optional[str] = None
+    research_provider: str = "skip"
     messaging: str = "cli"
     workspace_path: str = "."
     trust_mode: str = "paper"

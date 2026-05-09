@@ -11,8 +11,8 @@ from atlas_agent.notifications.clickup import (
     ClickUpNotifier,
     NotificationConfigurationError,
 )
-from atlas_agent.research.perplexity import (
-    PerplexityResearchProvider,
+from atlas_agent.research import (
+    get_research_provider,
     ResearchConfigurationError,
 )
 from atlas_agent.research.web_research import OfflineResearchProvider
@@ -190,7 +190,7 @@ def _run_research(symbol: str, provider) -> str:
 
 
 def _default_research_provider():
-    return PerplexityResearchProvider()
+    return get_research_provider()
 
 
 def _write_routine_report(
