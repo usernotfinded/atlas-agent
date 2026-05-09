@@ -11,6 +11,10 @@ Atlas Agent is built for precision and safety. It treats the LLM as the reasonin
 - **Tool-driven:** 49 builtin tool schemas for research, analysis, and execution.
 - **Risk-gated:** Every action passes through a separate, deterministic guardrail system.
 
+Use the model stack that fits your trading workflow — OpenRouter, NVIDIA NIM, z.ai/GLM, Kimi/Moonshot, MiniMax, Hugging Face, OpenAI, or any OpenAI-compatible/custom endpoint. Atlas Agent is provider-neutral by design: configure your provider once, switch models through `atlas configure`, and keep the execution, memory, and risk-control layers unchanged.
+
+For finance-specific deployments, prefer models with strong results on dedicated finance-agent evaluations. The [Vals AI Finance Agent benchmark](https://www.vals.ai/benchmarks/finance_agent) is the recommended reference when selecting a model for market research, trading reasoning, and portfolio analysis.
+
 ## What Atlas Agent Is
 
 Atlas Agent is a workspace where an AI agent lives, learns, and trades.
@@ -119,24 +123,6 @@ Guardrails + Audit + Risk Controls
 | `atlas kill-switch status` | Check the status of the global kill switch. |
 
 *Note: Legacy `routine` commands are still available for backward compatibility but are being phased out in favor of the unified `run` architecture.*
-
-## Recommended Models (Reference)
-
-Atlas Agent includes a reference ranking of finance-capable LLMs based on the **Vals AI Finance Agent** benchmark. This is **model-selection guidance** only; it is not mandatory runtime orchestration and does not guarantee trading performance. The **recommended-model table in this README** is updated periodically.
-
-<!-- ATLAS_MODEL_ROSTER_START -->
-
-| Rank | Model | Score |
-|---|---|---|
-| 1 | Claude Opus 4.7 | 64.37% |
-| 2 | Claude Sonnet 4.6 | 63.33% |
-| 3 | Muse Spark | 60.59% |
-| 4 | DeepSeek V4 | 60.39% |
-| 5 | Claude Opus 4.6 (Thinking) | 60.05% |
-| 6 | GPT 5.5 | N/A |
-| 7 | Gemini 3.1 Pro Preview (02/26) | N/A |
-
-<!-- ATLAS_MODEL_ROSTER_END -->
 
 ## Telegram Control Plane
 

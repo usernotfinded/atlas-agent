@@ -58,17 +58,13 @@ def test_readme_avoids_forbidden_positioning_and_profit_claims() -> None:
     assert re.search(r"\b(?:sk-|pplx-|xox[baprs]-|akia)[a-z0-9_-]{10,}", lower) is None
 
 
-def test_readme_model_roster_is_visible_guidance_not_runtime_orchestration() -> None:
+def test_readme_mentions_provider_neutral_model_selection() -> None:
     text = _readme()
     lower = text.lower()
 
-    assert "<!-- ATLAS_MODEL_ROSTER_START -->" in text
-    assert "<!-- ATLAS_MODEL_ROSTER_END -->" in text
-    assert "| Rank | Model | Score |" in text
-    assert "Vals AI Finance Agent" in text
-    assert "model-selection guidance" in lower or "model selection guidance" in lower
-    assert "recommended-model table in this README" in text
-    assert re.search(
-        r"not (?:a )?mandatory runtime orchestration",
-        lower,
-    )
+    assert "https://www.vals.ai/benchmarks/finance_agent" in text
+    assert "provider-neutral" in lower
+    assert "openrouter, nvidia nim, z.ai/glm, kimi/moonshot" in lower
+
+    assert "<!-- ATLAS_MODEL_ROSTER_START -->" not in text
+    assert "| rank | model | score |" not in lower

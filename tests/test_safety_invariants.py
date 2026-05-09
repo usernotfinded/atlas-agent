@@ -19,13 +19,6 @@ def test_config_defaults_are_safe() -> None:
     assert config.require_order_approval is True
     assert config.order_approval_mode == "manual_live"
 
-def test_model_roster_is_present_in_readme() -> None:
-    readme_path = Path("README.md")
-    assert readme_path.exists()
-    content = readme_path.read_text(encoding="utf-8")
-    assert "<!-- ATLAS_MODEL_ROSTER_START -->" in content
-    assert "<!-- ATLAS_MODEL_ROSTER_END -->" in content
-    assert "| Rank | Model | Score |" in content
 
 def test_live_trading_disabled_reasons_work() -> None:
     # Default config

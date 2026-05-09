@@ -40,7 +40,6 @@ def _assert_json_envelope(output: str) -> dict:
         ["events", "list", "--json"],
         ["portfolio", "show", "--json"],
         ["skills", "list", "--json"],
-        ["models", "list", "--json"],
         ["memory", "search", "risk", "--json"],
         ["memory", "doctor", "--json"],
     ],

@@ -32,12 +32,6 @@ from atlas_agent.events import (
     read_event_file,
     read_recent_events,
 )
-from atlas_agent.leaderboard.roster import (
-    doctor_roster,
-    list_roster,
-    update_roster,
-    update_readme_roster,
-)
 from atlas_agent.market_data.csv_provider import CSVMarketDataProvider
 from atlas_agent.market_data.sample_data import ensure_sample_data
 from atlas_agent.portfolio.journal import TradeJournal
@@ -344,14 +338,6 @@ Safety First:
     demo_seed = demo_sub.add_parser("seed")
     demo_seed.add_argument("--force", action="store_true")
 
-    models = subparsers.add_parser("models")
-    models_sub = models.add_subparsers(dest="models_command")
-    models_update = models_sub.add_parser("update")
-    models_update.add_argument("--source", default="vals-finance-agent")
-    models_sub.add_parser("update-readme")
-    models_sub.add_parser("doctor")
-    models_list = models_sub.add_parser("list")
-    models_list.add_argument("--json", action="store_true")
     return parser
 
 
@@ -978,79 +964,6 @@ def main(argv: list[str] | None = None) -> int:
             for guidance in payload["guidance"]:
                 print(guidance)
             return 2
-        return 0
-
-    if args.command == "models":
-        if args.models_command == "update":
-            try:
-                updated = update_roster(source=args.source)
-            except ValueError as exc:
-                print(f"models update refused: {exc}")
-                return 2
-            print(
-                f"Model roster updated from {args.source} ({len(updated)} entries). "
-                "Guidance only; runtime orchestration is unchanged."
-            )
-            return 0
-        if args.models_command == "update-readme":
-            try:
-                update_readme_roster()
-                print("README recommended-model table updated from configs/model_roster.yaml")
-            except Exception as exc:
-                print(f"update-readme failed: {exc}")
-                return 2
-            return 0
-        if args.models_command == "doctor":
-            report = doctor_roster()
-            print(
-                f"Model Roster Doctor: ok={report['ok']} "
-                f"source={report.get('source') or 'unknown'} "
-                f"models={report.get('model_count', 0)}"
-            )
-            for issue in report["issues"]:
-                print(f"- {issue}")
-            return 0 if report["ok"] else 2
-        if args.models_command == "list":
-            models = [
-                {
-                    "rank": model.rank,
-                    "model": model.model_name,
-                    "provider": model.provider,
-                    "score": model.score,
-                    "benchmark_name": model.benchmark_name,
-                    "benchmark_url": model.benchmark_url,
-                    "benchmark_updated": model.benchmark_updated,
-                }
-                for model in list_roster()[:7]
-            ]
-            if getattr(args, "json", False):
-                return _emit_json_success(
-                    "atlas models list",
-                    {
-                        "benchmark": "Vals AI Finance Agent",
-                        "reference_only": True,
-                        "runtime_orchestration": False,
-                        "guidance": (
-                            "The model roster is guidance for choosing models to connect. "
-                            "It updates the recommended-model table in this README. "
-                            "It is not mandatory runtime orchestration and does not guarantee trading performance."
-                        ),
-                        "models": models,
-                    },
-                )
-            print("Vals AI Finance Agent Benchmark (Reference Only)")
-            print(
-                "The model roster is guidance for choosing models to connect. "
-                "It is not runtime orchestration."
-            )
-            print("| Rank | Model | Score |")
-            print("|---|---|---|")
-            for model in models:
-                score = model["score"]
-                score_str = f"{score:.2f}%" if isinstance(score, float) else "N/A"
-                print(f"| {model['rank']} | {model['model']} | {score_str} |")
-            return 0
-        print("Use one of: atlas models list|update|update-readme|doctor")
         return 0
 
     if args.command is None:
