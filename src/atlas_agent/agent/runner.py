@@ -72,6 +72,9 @@ def _run_agent_loop_continuous(
 
 def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     from atlas_agent.audit import AuditWriter
+    from atlas_agent.risk.manager import RiskManager
+    from atlas_agent.risk.portfolio import get_portfolio_snapshot
+    from atlas_agent.portfolio.state import PortfolioState
     
     provider = get_provider_from_env()
     registry = ToolRegistry()
@@ -81,10 +84,25 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     audit_path = config.audit_dir / "events.jsonl"
     audit_writer = AuditWriter(audit_path)
     
-    guardrails = DefaultGuardrailChain(registry)
-    loop = AgentLoop(provider, registry, guardrails, audit_writer=audit_writer)
+    # Load portfolio state (in a real app, this might be from a database or broker)
+    portfolio_state = PortfolioState(cash=config.starting_cash)
+    portfolio_snapshot = get_portfolio_snapshot(portfolio_state)
+    
+    from atlas_agent.risk.limits import RiskLimits
+    risk_limits = RiskLimits(
+        max_position_notional=config.max_position_size,
+        max_single_trade_notional=config.max_order_notional,
+        allowed_symbols=config.symbol_allowlist,
+        blocked_symbols=config.symbol_blocklist or set(),
+        live_trading_enabled=config.enable_live_trading
+    )
     
     run_id = f"run_{int(time.time())}"
+    risk_manager = RiskManager(limits=risk_limits, audit_writer=audit_writer, run_id=run_id)
+    
+    guardrails = DefaultGuardrailChain(registry)
+    loop = AgentLoop(provider, registry, guardrails, audit_writer=audit_writer, risk_manager=risk_manager)
+    
     session = Session(id=run_id, turn_count=0, has_summarized=False)
     
     from atlas_agent.ai.prompt_builder import SYSTEM_PROMPT
@@ -97,7 +115,8 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
         session=session,
         system_prompt=SYSTEM_PROMPT,
         mode=mode,
-        run_id=run_id
+        run_id=run_id,
+        portfolio_snapshot=portfolio_snapshot
     )
     
     import dataclasses

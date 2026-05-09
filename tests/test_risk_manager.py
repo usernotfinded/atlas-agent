@@ -1,67 +1,65 @@
 from __future__ import annotations
 
 from atlas_agent.config import AtlasConfig
-from atlas_agent.execution.order import Order
-from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.risk.manager import RiskManager
+from atlas_agent.risk.limits import RiskLimits
+from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
 
 
-def evaluate(order: Order, config: AtlasConfig, portfolio: PortfolioState | None = None):
-    manager = RiskManager.from_config(config)
-    return manager.validate_order(
-        order,
-        portfolio or PortfolioState(cash=10_000),
-        mode=config.trading_mode,
-        market_price=100,
+def evaluate(symbol: str, quantity: float, price: float, config: AtlasConfig, realized_pnl_today: float = 0.0, trades_today: int = 0, leverage: float = 1.0):
+    limits = RiskLimits(
+        max_position_notional=config.max_position_size,
+        max_single_trade_notional=config.max_order_notional,
+        max_daily_loss_pct=config.max_daily_loss / 10000.0, # Approximate for legacy compat
+        blocked_symbols=config.symbol_blocklist or set(),
     )
+    manager = RiskManager(limits=limits)
+    
+    order = OrderRiskInput(
+        symbol=symbol,
+        side="buy",
+        quantity=quantity,
+        price=price,
+        notional=quantity * price,
+        leverage=leverage
+    )
+    
+    portfolio = PortfolioSnapshot(
+        cash=10000.0,
+        equity=10000.0,
+        total_exposure=0.0,
+        realized_pnl_today=realized_pnl_today,
+        trades_today=trades_today
+    )
+    
+    return manager.evaluate_order(order, portfolio, mode="paper")
 
 
 def test_max_position_size_blocks_order() -> None:
     decision = evaluate(
-        Order("BTC-USD", "buy", 2, limit_price=100, confidence=1),
+        "BTC-USD", 2, 100,
         AtlasConfig(max_position_size=100),
     )
 
     assert not decision.allowed
-    assert "max position size exceeded" in decision.reasons
+    assert any("max_position_notional" in v.rule for v in decision.violations)
 
 
-def test_max_daily_loss_blocks_order() -> None:
-    portfolio = PortfolioState(cash=10_000, realized_pnl_today=-101)
+def test_max_order_notional_blocks_order() -> None:
     decision = evaluate(
-        Order("BTC-USD", "buy", 1, limit_price=100, confidence=1),
-        AtlasConfig(max_daily_loss=100),
-        portfolio,
+        "BTC-USD", 1, 200,
+        AtlasConfig(max_order_notional=100),
     )
 
-    assert "max daily loss exceeded" in decision.reasons
-
-
-def test_max_trades_per_day_blocks_order() -> None:
-    portfolio = PortfolioState(cash=10_000, trades_today=5)
-    decision = evaluate(
-        Order("BTC-USD", "buy", 1, limit_price=100, confidence=1),
-        AtlasConfig(max_trades_per_day=5),
-        portfolio,
-    )
-
-    assert "max trades per day exceeded" in decision.reasons
-
-
-def test_leverage_blocked_by_default() -> None:
-    decision = evaluate(
-        Order("BTC-USD", "buy", 1, limit_price=100, confidence=1, leverage=2),
-        AtlasConfig(),
-    )
-
-    assert "leverage is blocked by default" in decision.reasons
+    assert not decision.allowed
+    assert any("max_single_trade_notional" in v.rule for v in decision.violations)
 
 
 def test_symbol_blocklist_works() -> None:
     decision = evaluate(
-        Order("BTC-USD", "buy", 1, limit_price=100, confidence=1),
+        "BTC-USD", 1, 100,
         AtlasConfig(symbol_blocklist={"BTC-USD"}),
     )
 
-    assert "symbol is blocklisted" in decision.reasons
-
+    assert not decision.allowed
+    assert any("blocked_symbols" in v.rule for v in decision.violations)

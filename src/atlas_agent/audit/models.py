@@ -17,6 +17,10 @@ AuditEventType = Literal[
     "tool_call_blocked",
     "approval_required",
     "validation_error",
+    "risk_evaluation_started",
+    "risk_evaluation_allowed",
+    "risk_evaluation_blocked",
+    "risk_evaluation_requires_approval",
     "run_completed",
     "run_failed",
 ]

@@ -280,6 +280,7 @@ Safety First:
     risk = subparsers.add_parser("risk")
     risk_sub = risk.add_subparsers(dest="risk_command")
     risk_sub.add_parser("check")
+    risk_sub.add_parser("status")
 
     kill_switch = subparsers.add_parser("kill-switch")
     kill_sub = kill_switch.add_subparsers(dest="kill_command")
@@ -1196,6 +1197,28 @@ def main(argv: list[str] | None = None) -> int:
                 for error in result.errors:
                     print(f"- {error}")
                 return 2
+
+    if args.command == "risk":
+        from atlas_agent.risk.limits import RiskLimits
+        from atlas_agent.risk.manager import RiskManager
+        
+        if args.risk_command == "status":
+            limits = RiskLimits(
+                max_position_notional=config.max_position_size,
+                max_single_trade_notional=config.max_order_notional,
+                allowed_symbols=config.symbol_allowlist,
+                blocked_symbols=config.symbol_blocklist or set(),
+                live_trading_enabled=config.enable_live_trading
+            )
+            manager = RiskManager(limits=limits, kill_switch_enabled=config.kill_switch_enabled)
+            print("Risk Management Status:")
+            print(f"  Live Trading: {'ENABLED' if limits.live_trading_enabled else 'DISABLED'}")
+            print(f"  Kill Switch: {'ACTIVE' if manager.kill_switch_enabled else 'Inactive'}")
+            print(f"  Max Position Notional: ${limits.max_position_notional}")
+            print(f"  Max Order Notional: ${limits.max_single_trade_notional}")
+            print(f"  Allowed Symbols: {limits.allowed_symbols if limits.allowed_symbols else 'All'}")
+            print(f"  Blocked Symbols: {list(limits.blocked_symbols) if limits.blocked_symbols else 'None'}")
+            return 0
 
     if args.command == "status":
         from atlas_agent.agent.status import get_agent_status
