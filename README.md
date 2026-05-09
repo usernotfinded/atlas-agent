@@ -145,7 +145,7 @@ Atlas is designed for local-first operation but can be deployed to a VPS, Docker
 
 ## Disclaimer
 
-**Not Financial Advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss. Live trading can lose real money. You are solely responsible for your deployment, risk limits, and any financial results. Use Paper Mode until you are fully confident in your strategy and configuration.
+**NOT FINANLCIAL ADVICE.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss. Live trading can lose real money. You are solely responsible for your deployment, risk limits, and any financial results. Use Paper Mode until you are fully confident in your strategy and configuration.
 
 ---
 Built by Natan Mucelli.
