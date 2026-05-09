@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -26,4 +26,23 @@ class KillSwitchDecision(BaseModel):
     reason: Optional[str] = None
     mode: KillSwitchMode
     action_required: Optional[str] = None
+    diagnostics: dict[str, Any] = Field(default_factory=dict)
+
+
+from atlas_agent.safety.actions import SafetyActionType
+
+
+class SafetyAction(BaseModel):
+    type: SafetyActionType
+    description: str
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+class SafetyActionPlan(BaseModel):
+    plan_id: str
+    mode: KillSwitchMode
+    status: Literal["planned", "blocked", "requires_approval", "completed", "failed"]
+    reason: str
+    actions: List[SafetyAction] = Field(default_factory=list)
+    requires_approval: bool = True
     diagnostics: dict[str, Any] = Field(default_factory=dict)

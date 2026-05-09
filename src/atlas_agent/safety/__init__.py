@@ -15,6 +15,14 @@ from atlas_agent.safety.kill_switch import (
     KillSwitchState,
     KillSwitchTransition,
 )
+from atlas_agent.safety.action_plan import SafetyActionPlanner
+from atlas_agent.safety.models import (
+    SafetyAction,
+    SafetyActionPlan,
+    SafetyActionType,
+    KillSwitchMode,
+    KillSwitchDecision,
+)
 
 __all__ = [
     "DeadmanConfig",
@@ -26,6 +34,12 @@ __all__ = [
     "KillSwitchController",
     "KillSwitchState",
     "KillSwitchTransition",
+    "SafetyActionPlanner",
+    "SafetyAction",
+    "SafetyActionPlan",
+    "SafetyActionType",
+    "KillSwitchMode",
+    "KillSwitchDecision",
     "deadman_heartbeat_path",
     "live_mode_guard",
     "read_deadman_heartbeat",

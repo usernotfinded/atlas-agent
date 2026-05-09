@@ -26,6 +26,10 @@ AuditEventType = Literal[
     "kill_switch_mode_changed",
     "heartbeat_recorded",
     "heartbeat_expired",
+    "safety_action_plan_created",
+    "safety_action_plan_blocked",
+    "safety_action_requires_approval",
+    "safety_action_no_op",
     "run_completed",
     "run_failed",
 ]

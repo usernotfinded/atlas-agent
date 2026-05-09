@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Union
+from typing import Any, Union, List
 
 from atlas_agent.agent.result import AgentResult, IterationResult
 from atlas_agent.audit.writer import AuditWriter
@@ -10,6 +10,7 @@ from atlas_agent.providers.base import AIProvider
 from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
 from atlas_agent.safety.kill_switch import AdvancedKillSwitch
+from atlas_agent.safety.action_plan import SafetyActionPlanner
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ToolCall, ToolResult, ToolError, GuardrailChain
 
@@ -44,6 +45,7 @@ class AgentLoop:
         audit_writer: AuditWriter | None = None,
         risk_manager: RiskManager | None = None,
         kill_switch: AdvancedKillSwitch | None = None,
+        safety_planner: SafetyActionPlanner | None = None,
     ):
         self.provider = provider
         self.tool_registry = tool_registry
@@ -53,6 +55,7 @@ class AgentLoop:
         self.audit_writer = audit_writer
         self.risk_manager = risk_manager
         self.kill_switch = kill_switch
+        self.safety_planner = safety_planner or SafetyActionPlanner(risk_manager=risk_manager)
 
     def run(
         self,
@@ -62,6 +65,7 @@ class AgentLoop:
         mode: str = "paper",
         run_id: str | None = None,
         portfolio_snapshot: PortfolioSnapshot | None = None,
+        open_order_ids: List[str] | None = None,
     ) -> AgentResult:
         run_id = run_id or f"run_{int(session.turn_count)}_{session.id}"
         if self.audit_writer:
@@ -186,6 +190,40 @@ class AgentLoop:
                 if self.kill_switch:
                     kill_decision = self.kill_switch.evaluate()
                     if not kill_decision.allowed:
+                        diagnostics = {"kill_switch": kill_decision.model_dump()}
+                        
+                        # Generate safety action plan if needed
+                        if kill_decision.status in ["cancel_required", "flatten_required"]:
+                            portfolio = portfolio_snapshot or PortfolioSnapshot(
+                                cash=10000.0, equity=10000.0, total_exposure=0.0
+                            )
+                            plan = self.safety_planner.create_plan(
+                                kill_decision, 
+                                portfolio, 
+                                open_order_ids or [],
+                                mode=mode # type: ignore
+                            )
+                            diagnostics["safety_action_plan"] = plan.model_dump()
+                            
+                            if self.audit_writer:
+                                event_type = "safety_action_plan_created"
+                                if plan.status == "blocked": event_type = "safety_action_plan_blocked"
+                                elif plan.status == "requires_approval": event_type = "safety_action_requires_approval"
+                                elif any(a.type == "no_op" for a in plan.actions): event_type = "safety_action_no_op"
+                                
+                                self.audit_writer.write_event(
+                                    event_type,
+                                    run_id=run_id,
+                                    iteration=i,
+                                    payload={
+                                        "plan_id": plan.plan_id,
+                                        "mode": plan.mode,
+                                        "status": plan.status,
+                                        "action_count": len(plan.actions),
+                                        "action_types": [a.type for a in plan.actions]
+                                    }
+                                )
+
                         if self.audit_writer:
                             self.audit_writer.write_event(
                                 "kill_switch_blocked",
@@ -200,7 +238,7 @@ class AgentLoop:
                             iterations=iterations,
                             total_tool_calls=total_tool_calls,
                             errors=[kill_decision.reason or "Kill switch blocked execution"],
-                            diagnostics={"kill_switch": kill_decision.model_dump()}
+                            diagnostics=diagnostics
                         )
 
                 # 2. Risk Gating

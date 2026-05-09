@@ -291,6 +291,8 @@ Safety First:
     kill_sub.add_parser("lock")
     kill_sub.add_parser("reset")
     kill_sub.add_parser("heartbeat")
+    kill_plan = kill_sub.add_parser("plan")
+    kill_plan.add_argument("--mode", choices=("cancel-all", "flatten-all"), help="Simulate a specific mode")
 
     kill_switch = subparsers.add_parser("kill-switch")
     kill_sub = kill_switch.add_subparsers(dest="kill_command")
@@ -1210,7 +1212,6 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "risk":
         from atlas_agent.risk.limits import RiskLimits
-        from atlas_agent.risk.manager import RiskManager
         
         if args.risk_command == "status":
             limits = RiskLimits(
@@ -1269,6 +1270,42 @@ def main(argv: list[str] | None = None) -> int:
             new_mode = mode_map[args.kill_command]
             kill_switch.set_mode(new_mode, reason=f"CLI {args.kill_command}", actor="user")
             print(f"Kill switch mode set to: {new_mode}")
+            return 0
+            
+        if args.kill_command == "plan":
+            from atlas_agent.safety.action_plan import SafetyActionPlanner
+            from atlas_agent.risk.portfolio import get_portfolio_snapshot
+            
+            # Use current state or simulated mode
+            ks_mode = kill_switch.state_manager.load().mode
+            if args.mode:
+                ks_mode = args.mode.replace("-", "_") # type: ignore
+                
+            decision = kill_switch.evaluate()
+            # Override mode if requested for simulation
+            if args.mode:
+                from atlas_agent.safety.models import KillSwitchDecision
+                decision = KillSwitchDecision(
+                    allowed=False,
+                    status="blocked" if ks_mode == "soft_pause" else ks_mode.replace("_all", "_required"), # type: ignore
+                    mode=ks_mode # type: ignore
+                )
+
+            # Load dummy/current portfolio for planning
+            portfolio_state = PortfolioState(cash=config.starting_cash)
+            portfolio = get_portfolio_snapshot(portfolio_state)
+            
+            planner = SafetyActionPlanner(risk_manager=RiskManager())
+            plan = planner.create_plan(decision, portfolio, open_order_ids=[], mode="paper")
+            
+            print(f"Safety Action Plan (Mode: {ks_mode.upper()}):")
+            print(f"  Plan ID: {plan.plan_id}")
+            print(f"  Status: {plan.status.upper()}")
+            print(f"  Reason: {plan.reason}")
+            print(f"  Requires Approval: {plan.requires_approval}")
+            print("  Actions:")
+            for action in plan.actions:
+                print(f"    - [{action.type.upper()}] {action.description}")
             return 0
 
     if args.command == "status":
