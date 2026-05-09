@@ -57,3 +57,22 @@ def test_input_step_rendering():
     assert "http://localhost" in text
     assert "> " in text
     assert "█" in text # Cursor
+
+def test_prompt_toolkit_filters_are_condition_instances():
+    from prompt_toolkit.key_binding import KeyBindings
+    from unittest.mock import patch
+    
+    state = WizardState()
+    app = WizardApplication(state)
+    
+    # We want to instantiate the Application in `run` but not actually run it,
+    # or just run it with a mock that exits immediately to ensure key bindings
+    # are built successfully without TypeError.
+    
+    # Alternatively, we can mock `Application.run` to just return False,
+    # ensuring the instantiation `app = Application(...)` succeeds.
+    with patch("prompt_toolkit.Application.run", return_value=False):
+        try:
+            app.run()
+        except TypeError as e:
+            pytest.fail(f"TypeError raised during Application instantiation, likely a filter issue: {e}")

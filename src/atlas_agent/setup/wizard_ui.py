@@ -6,6 +6,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.containers import Window
+from prompt_toolkit.filters import Condition
 from atlas_agent.setup.state import WizardState
 from atlas_agent.setup.renderer import render_wizard_screen
 from atlas_agent.setup.theme import atlas_theme
@@ -229,7 +230,7 @@ class WizardApplication:
                 self.current_index = min(len(self.choices) - 1, self.current_index + 1)
 
         @kb.add("enter")
-        @kb.add("space", filter=lambda: bool(self.choices))
+        @kb.add("space", filter=Condition(lambda: bool(self.choices)))
         def _(event):
             if self.choices:
                 val = self.choices[self.current_index][0]
