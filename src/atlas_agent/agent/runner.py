@@ -10,19 +10,48 @@ from atlas_agent.agent.open_market_cycle import run_open_market_cycle
 from atlas_agent.routines.engine import RoutineResult
 
 
+from atlas_agent.agent.loop import AgentLoop, DefaultGuardrailChain
+from atlas_agent.agent.result import AgentResult
+from atlas_agent.core.types import Session
+from atlas_agent.providers.factory import get_provider_from_env
+from atlas_agent.tools.registry import ToolRegistry
+from atlas_agent.tools.builtin import BUILTIN_TOOLS
+
+
 def run_agent(
     mode: str, 
     config: AtlasConfig, 
     continuous: bool = False,
     interval: int = 60,
+    max_cycles: int | None = None,
+    use_loop: bool = True,
+) -> RoutineResult | AgentResult | None:
+    if use_loop:
+        return _run_agent_loop_continuous(
+            mode=mode,
+            config=config,
+            continuous=continuous,
+            interval=interval,
+            max_cycles=max_cycles
+        )
+    
+    cycles = 0
+    last_result = None
+    ...
+
+def _run_agent_loop_continuous(
+    mode: str,
+    config: AtlasConfig,
+    continuous: bool = False,
+    interval: int = 60,
     max_cycles: int | None = None
-) -> RoutineResult | None:
+) -> AgentResult | None:
     cycles = 0
     last_result = None
     
     try:
         while True:
-            last_result = _run_cycle(mode, config)
+            last_result = _run_agent_loop_cycle(mode, config)
             cycles += 1
             
             if not continuous:
@@ -39,6 +68,33 @@ def run_agent(
         print("\nAgent stopped by user. Graceful shutdown complete.")
         
     return last_result
+
+
+def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
+    provider = get_provider_from_env()
+    registry = ToolRegistry()
+    for tool in BUILTIN_TOOLS:
+        registry.register(tool)
+    
+    guardrails = DefaultGuardrailChain(registry)
+    loop = AgentLoop(provider, registry, guardrails)
+    
+    session = Session(id=f"run_{int(time.time())}", turn_count=0, has_summarized=False)
+    
+    from atlas_agent.ai.prompt_builder import SYSTEM_PROMPT
+    
+    # Simple objective for now
+    objective = f"Current mode is {mode}. Analyze the market for {config.default_symbol} and propose any necessary actions."
+    
+    result = loop.run(
+        user_objective=objective,
+        session=session,
+        system_prompt=SYSTEM_PROMPT,
+        mode=mode
+    )
+    
+    import dataclasses
+    return dataclasses.replace(result, mode=mode)
 
 
 def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:

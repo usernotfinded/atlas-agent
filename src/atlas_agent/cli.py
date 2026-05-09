@@ -1198,7 +1198,14 @@ def main(argv: list[str] | None = None) -> int:
             interval=args.interval,
             max_cycles=args.max_cycles
         )
-        return 0 if result and result.status in {"filled", "held", "pending_approval", "simulated", "complete"} else 2
+        if result is None:
+            return 0
+        # Compatibility check for both RoutineResult and AgentResult
+        success_statuses = {
+            "filled", "held", "pending_approval", "simulated", "complete",
+            "approval_required"
+        }
+        return 0 if result.status in success_statuses else 2
 
     if args.command == "validate":
         config.ensure_dirs()

@@ -20,6 +20,13 @@ class AnthropicProvider(BaseAIProvider):
     name: str = "anthropic"
     default_model: str | None = None
 
+    @classmethod
+    def from_env(cls) -> AnthropicProvider:
+        return cls(
+            api_key_env="ANTHROPIC_API_KEY",
+            default_model=os.getenv("ANTHROPIC_MODEL"),
+        )
+
     @staticmethod
     def normalize_response(raw: dict[str, Any] | list[dict[str, Any]]) -> LLMResponse:
         return AnthropicAdapter.normalize(raw)
