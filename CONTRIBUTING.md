@@ -20,13 +20,14 @@ We prioritize contributions that improve the reliability and safety of the agent
 
 To maintain a clean architecture, follow these guidelines when deciding where to add new functionality:
 
-Do not hardcode a preferred research/search vendor in user-facing documentation, setup flows, or tests. Research/search/browser integrations should be provider adapters. Secrets must go to .env.atlas; non-secret settings must go to .atlas/config.json.
+Do not hardcode a preferred research/search vendor in user-facing documentation, setup flows, or tests. Research/search/browser integrations should be provider adapters. Secrets must go to .env.atlas; non-secret settings must go to .atlas/config.json. Standardize on `ATLAS_RESEARCH_API_KEY` for research-related secrets.
 
 ### Make it a Tool when:
 - The LLM needs to call it as an explicit action. (Tool: action exposed to the LLM)
 - It interacts with market data, broker actions, portfolio state, memory, research, trade journals, or user notifications.
 - It requires a stable JSON schema for model consumption.
 - It must be validated by the `ToolRegistry` and may require safety flags (audit, risk, or approval).
+- **Backward Compatibility:** When renaming a tool, keep the old name as a legacy alias in `BUILTIN_TOOLS` to prevent breaking existing reasoning loops.
 
 *Examples: `get_quote`, `get_ohlcv`, `propose_order`, `cancel_order`, `append_journal`, `request_user_approval`, `notify_user`.*
 
