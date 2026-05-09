@@ -22,7 +22,7 @@ def _config(tmp_path: Path) -> AtlasConfig:
     )
 
 
-def test_workspace_guard_blocks_bare_atlas_without_workspace_or_default(
+def test_workspace_guard_blocks_run_without_workspace_or_default(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -33,10 +33,10 @@ def test_workspace_guard_blocks_bare_atlas_without_workspace_or_default(
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.delenv("ATLAS_WORKSPACE", raising=False)
 
-    assert main([]) == 2
+    assert main(["run"]) == 2
     captured = capsys.readouterr()
     output = captured.out + captured.err
-    assert "Atlas Agent needs a workspace before it can run." in output
+    assert "No Atlas workspace configured. Run `atlas init <name>` first." in output
     assert not (outside / "memory").exists()
     assert not (outside / "events").exists()
 

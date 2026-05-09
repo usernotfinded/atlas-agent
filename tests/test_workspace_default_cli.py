@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from atlas_agent.cli import main
-from atlas_agent.routines.routine_result import RoutineResult
 from atlas_agent.workspace import get_default_workspace
 
 
@@ -83,17 +81,10 @@ def test_bare_atlas_outside_workspace_uses_default_workspace(
     monkeypatch.chdir(outside)
     capsys.readouterr()
 
-    with patch("atlas_agent.agent.runner.run_agent") as mock_run:
-        mock_run.return_value = RoutineResult(
-            name="pre_market",
-            mode="paper",
-            status="complete",
-            report_path=tmp_path / "ws" / "reports" / "daily" / "ok.md",
-            memory_files_updated=(),
-        )
-        assert main([]) == 0
-        called_config = mock_run.call_args.kwargs["config"]
-        assert called_config.memory_dir.resolve() == (tmp_path / "ws" / "memory").resolve()
+    assert main([]) == 0
+    output = capsys.readouterr().out
+    assert "- workspace configured: yes" in output
+    assert "Bare `atlas` no longer starts autonomous execution." in output
 
 
 def test_bare_atlas_outside_workspace_without_default_does_not_create_runtime_dirs(
@@ -108,8 +99,9 @@ def test_bare_atlas_outside_workspace_without_default_does_not_create_runtime_di
     outside.mkdir(parents=True)
     monkeypatch.chdir(outside)
 
-    assert main([]) == 2
-    _ = capsys.readouterr()
+    assert main([]) == 0
+    output = capsys.readouterr().out
+    assert "- workspace configured: no" in output
     assert not (outside / "memory").exists()
     assert not (outside / "events").exists()
     assert not (outside / "reports").exists()

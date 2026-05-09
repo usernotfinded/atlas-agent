@@ -4,8 +4,10 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from unittest.mock import ANY, patch
 
 import pytest
+
 from atlas_agent.cli import main
 
 
@@ -15,7 +17,6 @@ def workspace():
     original_cwd = os.getcwd()
     os.chdir(temp_dir)
     try:
-        # Initialize workspace
         main(["init", "."])
         yield Path(temp_dir)
     finally:
@@ -35,9 +36,6 @@ def non_workspace():
         shutil.rmtree(temp_dir)
 
 
-from unittest.mock import patch, ANY
-
-
 def test_help_no_agent_start(non_workspace, capsys):
     code = main(["--help"])
     assert code == 0
@@ -46,38 +44,75 @@ def test_help_no_agent_start(non_workspace, capsys):
     assert "Starting autonomous cycle..." not in captured.out
 
 
-def test_bare_atlas_in_workspace(workspace, capsys):
-    # This might take a while if it actually runs the agent
-    # We can mock run_agent if needed, but let's see if it runs paper mode safely
-    # For testing, we might want to mock run_agent to avoid hitting APIs or taking too long
-    from unittest.mock import patch
+def test_bare_atlas_does_not_start_cycle(workspace, capsys):
+    code = main([])
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "Starting autonomous cycle..." not in output
+    assert "Bare `atlas` no longer starts autonomous execution." in output
+
+
+def test_bare_atlas_prints_onboarding(workspace, capsys):
+    code = main([])
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "Current setup status:" in output
+    assert "- workspace configured: yes" in output
+    assert "Next commands:" in output
+    assert "atlas init <workspace>" in output
+    assert "atlas configure" in output
+    assert "atlas validate" in output
+    assert "atlas run --mode paper" in output
+
+
+def test_bare_atlas_does_not_call_runner(workspace, capsys):
     with patch("atlas_agent.agent.runner.run_agent") as mock_run:
-        from atlas_agent.routines.routine_result import RoutineResult
-        mock_run.return_value = RoutineResult(
-            name="pre_market", mode="paper", status="complete", 
-            report_path=Path("reports/daily/test.md"), memory_files_updated=()
-        )
         code = main([])
         assert code == 0
-        mock_run.assert_called_once()
-        captured = capsys.readouterr()
-        assert "Starting autonomous cycle..." in captured.out
+        mock_run.assert_not_called()
+    _ = capsys.readouterr()
 
 
 def test_bare_atlas_outside_workspace(non_workspace, monkeypatch, capsys):
     monkeypatch.setenv("HOME", str(non_workspace))
     code = main([])
-    assert code == 2
+    assert code == 0
     captured = capsys.readouterr()
     combined = captured.out + captured.err
-    assert "Atlas Agent needs a workspace before it can run" in combined
-    # Verify no runtime files were created
+    assert "Current setup status:" in combined
+    assert "- workspace configured: no" in combined
+    assert "Bare `atlas` no longer starts autonomous execution." in combined
     assert not (non_workspace / "memory").exists()
     assert not (non_workspace / "events").exists()
 
 
+def test_run_requires_workspace(non_workspace, monkeypatch, capsys):
+    monkeypatch.setenv("HOME", str(non_workspace))
+    code = main(["run"])
+    assert code == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "No Atlas workspace configured. Run `atlas init <name>` first." in output
+
+
+def test_run_with_missing_workspace_exits_2(non_workspace, capsys):
+    code = main(["--workspace", str(non_workspace / "missing-workspace"), "run"])
+    assert code == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "No Atlas workspace configured. Run `atlas init <name>` first." in output
+
+
+def test_configure_command_exists(non_workspace, capsys):
+    code = main(["configure"])
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "Atlas configure (safe placeholder)" in output
+    assert "OPENAI_API_KEY" in output
+    assert "atlas run --mode paper" in output
+
+
 def test_status_alias(workspace):
-    from unittest.mock import patch
     with patch("atlas_agent.agent.status.get_agent_status") as mock_status:
         mock_status.return_value = "Mock Status"
         code = main(["status"])
@@ -86,7 +121,6 @@ def test_status_alias(workspace):
 
 
 def test_plan_alias(workspace):
-    from unittest.mock import patch
     with patch("atlas_agent.agent.planner.get_agent_plan") as mock_plan:
         mock_plan.return_value = "Mock Plan"
         code = main(["plan"])
@@ -95,37 +129,50 @@ def test_plan_alias(workspace):
 
 
 def test_run_alias(workspace):
-    from unittest.mock import patch
     with patch("atlas_agent.agent.runner.run_agent") as mock_run:
         from atlas_agent.routines.routine_result import RoutineResult
+
         mock_run.return_value = RoutineResult(
-            name="pre_market", mode="paper", status="complete", 
-            report_path=Path("reports/daily/test.md"), memory_files_updated=()
+            name="pre_market",
+            mode="paper",
+            status="complete",
+            report_path=Path("reports/daily/test.md"),
+            memory_files_updated=(),
         )
         code = main(["run"])
         assert code == 0
         mock_run.assert_called_with(
-            mode="auto", config=ANY, continuous=False, interval=60, max_cycles=None
+            mode="auto",
+            config=ANY,
+            continuous=False,
+            interval=60,
+            max_cycles=None,
         )
 
 
 def test_run_continuous_alias(workspace):
-    from unittest.mock import patch
     with patch("atlas_agent.agent.runner.run_agent") as mock_run:
         from atlas_agent.routines.routine_result import RoutineResult
+
         mock_run.return_value = RoutineResult(
-            name="pre_market", mode="paper", status="complete", 
-            report_path=Path("reports/daily/test.md"), memory_files_updated=()
+            name="pre_market",
+            mode="paper",
+            status="complete",
+            report_path=Path("reports/daily/test.md"),
+            memory_files_updated=(),
         )
         code = main(["run", "--continuous"])
         assert code == 0
         mock_run.assert_called_with(
-            mode="auto", config=ANY, continuous=True, interval=60, max_cycles=None
+            mode="auto",
+            config=ANY,
+            continuous=True,
+            interval=60,
+            max_cycles=None,
         )
 
 
 def test_run_dry_run_alias(workspace):
-    from unittest.mock import patch
     with patch("atlas_agent.agent.planner.get_agent_plan") as mock_plan:
         mock_plan.return_value = "Mock Plan"
         code = main(["run", "--dry-run"])
@@ -134,12 +181,15 @@ def test_run_dry_run_alias(workspace):
 
 
 def test_existing_agent_commands_still_work(workspace):
-    from unittest.mock import patch
     with patch("atlas_agent.agent.runner.run_agent") as mock_run:
         from atlas_agent.routines.routine_result import RoutineResult
+
         mock_run.return_value = RoutineResult(
-            name="pre_market", mode="paper", status="complete", 
-            report_path=Path("reports/daily/test.md"), memory_files_updated=()
+            name="pre_market",
+            mode="paper",
+            status="complete",
+            report_path=Path("reports/daily/test.md"),
+            memory_files_updated=(),
         )
         code = main(["agent", "run", "--once"])
         assert code == 0

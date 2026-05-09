@@ -133,6 +133,7 @@ Safety First:
     init.add_argument("--force", action="store_true")
     init.add_argument("--set-default", action="store_true", help="Set this workspace as the default")
     subparsers.add_parser("validate")
+    subparsers.add_parser("configure")
 
     workspace = subparsers.add_parser("workspace")
     workspace_sub = workspace.add_subparsers(dest="workspace_command")
@@ -659,8 +660,8 @@ def config_has_workspace_context(config: AtlasConfig) -> bool:
 
 def _command_requires_workspace(args: argparse.Namespace) -> bool:
     if args.command is None:
-        return True
-    if args.command in {"init", "workspace", "models", "validate", "deploy"}:
+        return False
+    if args.command in {"init", "workspace", "models", "validate", "deploy", "configure"}:
         return False
     if args.command == "providers" and args.providers_command == "list":
         return False
@@ -808,6 +809,76 @@ Atlas Agent is a self-improving AI trading agent.
         print(f"NOTICE: A newer version of Atlas Agent is available: {update} (current: {__version__})")
         print("Run 'git pull' to update your local installation.")
         print("")
+
+
+def _has_non_empty_file(path: Path) -> bool:
+    try:
+        return path.exists() and path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def _provider_configured(workspace_path: Path | None) -> bool:
+    provider_env_keys = (
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY",
+        "ANTHROPIC_API_KEY",
+    )
+    if any(bool(os.getenv(key, "").strip()) for key in provider_env_keys):
+        return True
+    if workspace_path is None:
+        return False
+    return any(
+        _has_non_empty_file(workspace_path / rel)
+        for rel in ("configs/providers.yaml", "configs/providers.json")
+    )
+
+
+def _broker_configured(config: AtlasConfig | None) -> bool:
+    if config is None:
+        return False
+    return config.live_broker not in {"", "none"}
+
+
+def _print_first_run_onboarding(
+    *,
+    config: AtlasConfig | None,
+    config_error: str | None,
+    resolution: WorkspaceResolution,
+) -> None:
+    _print_welcome()
+    workspace_configured = resolution.path is not None
+    provider_configured = _provider_configured(resolution.path)
+    broker_configured = _broker_configured(config)
+    if config_error:
+        trading_mode = "not configured"
+        live_enabled = "no"
+    elif config is not None and config.trading_mode in {"paper", "live"}:
+        trading_mode = config.trading_mode
+        live_enabled = "yes" if config.enable_live_trading else "no"
+    else:
+        trading_mode = "not configured"
+        live_enabled = "no"
+
+    print("Current setup status:")
+    print(f"- workspace configured: {'yes' if workspace_configured else 'no'}")
+    print(f"- provider configured: {'yes' if provider_configured else 'no'}")
+    print(f"- broker configured: {'yes' if broker_configured else 'no'}")
+    print(f"- trading mode: {trading_mode}")
+    print(f"- live trading enabled: {live_enabled}")
+    if config_error:
+        print(f"- config warning: {config_error}")
+    if resolution.warning:
+        print(f"- workspace warning: {resolution.warning}")
+
+    print("")
+    print("Next commands:")
+    print("  atlas init <workspace>")
+    print("  atlas configure")
+    print("  atlas validate")
+    print("  atlas run --mode paper")
+    print("")
+    print("Bare `atlas` no longer starts autonomous execution. Use `atlas run` explicitly.")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -960,12 +1031,33 @@ def main(argv: list[str] | None = None) -> int:
         print("Use one of: atlas models list|update|update-readme|doctor")
         return 0
 
+    if args.command is None:
+        resolution = resolve_workspace(getattr(args, "workspace", None))
+        config_error: str | None = None
+        config: AtlasConfig | None = None
+        try:
+            config = AtlasConfig.from_env()
+        except ValueError as exc:
+            config_error = f"Configuration error: {exc}"
+        _print_first_run_onboarding(
+            config=config,
+            config_error=config_error,
+            resolution=resolution,
+        )
+        return 0
+
     require_workspace = _command_requires_workspace(args)
     config, resolution, load_error = _load_config_for_command(
         args,
         require_workspace=require_workspace,
     )
     if load_error == "workspace_not_configured":
+        if args.command == "run":
+            print(
+                "No Atlas workspace configured. Run `atlas init <name>` first.",
+                file=sys.stderr,
+            )
+            return 2
         if getattr(args, "json", False):
             return _emit_json_error(
                 "atlas",
@@ -988,12 +1080,22 @@ def main(argv: list[str] | None = None) -> int:
         print("Configuration error: unable to load AtlasConfig.", file=sys.stderr)
         return 1
 
-    if args.command is None:
-        from atlas_agent.agent.runner import run_agent
-        _print_welcome()
-        print("Starting autonomous cycle...")
-        result = run_agent(mode="auto", config=config, continuous=False)
-        return 0 if result and result.status in {"filled", "held", "pending_approval", "simulated", "complete"} else 2
+    if args.command == "configure":
+        print("Atlas configure (safe placeholder)")
+        print("Set provider and execution configuration before running autonomous cycles.")
+        print("")
+        print("Recommended keys:")
+        print("- Provider: OPENAI_API_KEY or OPENROUTER_API_KEY or ANTHROPIC_API_KEY")
+        print("- Optional provider endpoint: OPENAI_BASE_URL / OPENROUTER_BASE_URL")
+        print("- Trading mode: TRADING_MODE=paper|live")
+        print("- Live toggle: ENABLE_LIVE_TRADING=true|false")
+        print("- Live broker: LIVE_BROKER=alpaca|binance|ccxt|none")
+        print("- Approval mode: ORDER_APPROVAL_MODE=auto_paper|manual_live|disabled_live")
+        print("")
+        print("Then run:")
+        print("  atlas validate")
+        print("  atlas run --mode paper")
+        return 0
 
     if args.command == "update":
         manager = SafeUpdateManager(
