@@ -338,6 +338,11 @@ Safety First:
     demo_seed = demo_sub.add_parser("seed")
     demo_seed.add_argument("--force", action="store_true")
 
+    audit = subparsers.add_parser("audit")
+    audit_sub = audit.add_subparsers(dest="audit_command")
+    audit_verify = audit_sub.add_parser("verify")
+    audit_verify.add_argument("--path", help="Path to audit log file")
+
     return parser
 
 
@@ -1172,6 +1177,25 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         print("Use one of: atlas update check|status|apply|rollback|config")
         return 0
+
+    if args.command == "audit":
+        from atlas_agent.audit import verify_audit_log
+
+        if args.audit_command == "verify":
+            path = args.path or (config.audit_dir / "events.jsonl")
+            result = verify_audit_log(path)
+            if result.valid:
+                print(
+                    f"Audit log verification successful. Checked {result.events_checked} events."
+                )
+                return 0
+            else:
+                print(
+                    f"Audit log verification FAILED. Checked {result.events_checked} events."
+                )
+                for error in result.errors:
+                    print(f"- {error}")
+                return 2
 
     if args.command == "status":
         from atlas_agent.agent.status import get_agent_status

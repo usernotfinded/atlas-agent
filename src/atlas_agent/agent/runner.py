@@ -71,15 +71,21 @@ def _run_agent_loop_continuous(
 
 
 def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
+    from atlas_agent.audit import AuditWriter
+    
     provider = get_provider_from_env()
     registry = ToolRegistry()
     for tool in BUILTIN_TOOLS:
         registry.register(tool)
     
-    guardrails = DefaultGuardrailChain(registry)
-    loop = AgentLoop(provider, registry, guardrails)
+    audit_path = config.audit_dir / "events.jsonl"
+    audit_writer = AuditWriter(audit_path)
     
-    session = Session(id=f"run_{int(time.time())}", turn_count=0, has_summarized=False)
+    guardrails = DefaultGuardrailChain(registry)
+    loop = AgentLoop(provider, registry, guardrails, audit_writer=audit_writer)
+    
+    run_id = f"run_{int(time.time())}"
+    session = Session(id=run_id, turn_count=0, has_summarized=False)
     
     from atlas_agent.ai.prompt_builder import SYSTEM_PROMPT
     
@@ -90,7 +96,8 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
         user_objective=objective,
         session=session,
         system_prompt=SYSTEM_PROMPT,
-        mode=mode
+        mode=mode,
+        run_id=run_id
     )
     
     import dataclasses

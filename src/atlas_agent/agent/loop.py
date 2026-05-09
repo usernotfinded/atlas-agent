@@ -4,6 +4,7 @@ import logging
 from typing import Any, Union
 
 from atlas_agent.agent.result import AgentResult, IterationResult
+from atlas_agent.audit.writer import AuditWriter
 from atlas_agent.core.types import Session, UserApprovalPending
 from atlas_agent.providers.base import AIProvider
 from atlas_agent.tools.registry import ToolRegistry
@@ -37,12 +38,14 @@ class AgentLoop:
         guardrails: GuardrailChain,
         max_iterations: int = 10,
         max_tool_calls: int = 50,
+        audit_writer: AuditWriter | None = None,
     ):
         self.provider = provider
         self.tool_registry = tool_registry
         self.guardrails = guardrails
         self.max_iterations = max_iterations
         self.max_tool_calls = max_tool_calls
+        self.audit_writer = audit_writer
 
     def run(
         self,
@@ -50,7 +53,16 @@ class AgentLoop:
         session: Session,
         system_prompt: str,
         mode: str = "paper",
+        run_id: str | None = None,
     ) -> AgentResult:
+        run_id = run_id or f"run_{int(session.turn_count)}_{session.id}"
+        if self.audit_writer:
+            self.audit_writer.write_event(
+                "run_started",
+                run_id=run_id,
+                payload={"user_objective": user_objective, "mode": mode}
+            )
+
         iterations = []
         messages = [{"role": "user", "content": user_objective}]
         total_tool_calls = 0
@@ -58,6 +70,14 @@ class AgentLoop:
 
         for i in range(self.max_iterations):
             # 1. Get model response
+            if self.audit_writer:
+                self.audit_writer.write_event(
+                    "provider_called",
+                    run_id=run_id,
+                    iteration=i,
+                    payload={"message_count": len(messages)}
+                )
+
             try:
                 llm_response = self.provider.complete(
                     system_prompt=system_prompt,
@@ -66,11 +86,31 @@ class AgentLoop:
                 )
             except Exception as e:
                 logging.error(f"Provider error: {e}")
+                if self.audit_writer:
+                    self.audit_writer.write_event(
+                        "run_failed",
+                        run_id=run_id,
+                        iteration=i,
+                        status="error",
+                        payload={"error": str(e)}
+                    )
                 return AgentResult(
                     status="error",
                     errors=[str(e)],
                     iterations=iterations,
                     total_tool_calls=total_tool_calls,
+                )
+
+            if self.audit_writer:
+                self.audit_writer.write_event(
+                    "provider_response",
+                    run_id=run_id,
+                    iteration=i,
+                    payload={
+                        "text": llm_response.text,
+                        "tool_call_count": len(llm_response.tool_calls),
+                        "is_final": llm_response.is_final
+                    }
                 )
 
             # Record iteration
@@ -100,6 +140,14 @@ class AgentLoop:
 
             # Check for final response
             if not llm_response.tool_calls and llm_response.is_final:
+                if self.audit_writer:
+                    self.audit_writer.write_event(
+                        "run_completed",
+                        run_id=run_id,
+                        iteration=i,
+                        status="complete",
+                        payload={"final_message": llm_response.text}
+                    )
                 return AgentResult(
                     status="complete",
                     final_message=llm_response.text,
@@ -111,6 +159,13 @@ class AgentLoop:
             tool_results = []
             for tool_call in llm_response.tool_calls:
                 if total_tool_calls >= self.max_tool_calls:
+                    if self.audit_writer:
+                        self.audit_writer.write_event(
+                            "run_completed",
+                            run_id=run_id,
+                            iteration=i,
+                            status="max_tool_calls"
+                        )
                     return AgentResult(
                         status="max_tool_calls",
                         iterations=iterations,
@@ -118,10 +173,29 @@ class AgentLoop:
                     )
 
                 total_tool_calls += 1
+                if self.audit_writer:
+                    self.audit_writer.write_event(
+                        "tool_call_requested",
+                        run_id=run_id,
+                        iteration=i,
+                        tool_name=tool_call.name,
+                        tool_call_id=tool_call.id,
+                        payload=tool_call.arguments
+                    )
+
                 result = self.tool_registry.execute(tool_call, self.guardrails, session)
                 tool_results.append(result)
 
                 if isinstance(result, UserApprovalPending):
+                    if self.audit_writer:
+                        self.audit_writer.write_event(
+                            "approval_required",
+                            run_id=run_id,
+                            iteration=i,
+                            tool_name=tool_call.name,
+                            tool_call_id=tool_call.id,
+                            payload=result.model_dump()
+                        )
                     return AgentResult(
                         status="approval_required",
                         iterations=iterations,
@@ -130,6 +204,16 @@ class AgentLoop:
                     )
                 
                 if isinstance(result, ToolError) and result.error_type == "risk_rejected":
+                     if self.audit_writer:
+                        self.audit_writer.write_event(
+                            "tool_call_blocked",
+                            run_id=run_id,
+                            iteration=i,
+                            tool_name=tool_call.name,
+                            tool_call_id=tool_call.id,
+                            status="risk_rejected",
+                            payload={"message": result.message}
+                        )
                      return AgentResult(
                         status="blocked",
                         iterations=iterations,
@@ -137,13 +221,28 @@ class AgentLoop:
                         errors=[result.message],
                     )
 
-            # Update iteration with results
-            # Note: iteration was already appended, but dataclass is frozen.
-            # We'll need to create a new IterationResult or use a list of results and then 
-            # rebuild at the end if we want it fully frozen.
-            # For now let's use a non-frozen IterationResult or just mutate it if possible.
-            # Wait, IterationResult was defined with frozen=True.
-            
+                if isinstance(result, ToolError) and result.error_type == "validation":
+                     if self.audit_writer:
+                        self.audit_writer.write_event(
+                            "validation_error",
+                            run_id=run_id,
+                            iteration=i,
+                            tool_name=tool_call.name,
+                            tool_call_id=tool_call.id,
+                            payload={"message": result.message}
+                        )
+
+                if self.audit_writer and isinstance(result, ToolResult):
+                    self.audit_writer.write_event(
+                        "tool_call_executed",
+                        run_id=run_id,
+                        iteration=i,
+                        tool_name=tool_call.name,
+                        tool_call_id=tool_call.id,
+                        status="success",
+                        payload={"result": str(result.data)}
+                    )
+
             # Re-create iteration with results
             iteration = IterationResult(
                 index=i,
@@ -162,6 +261,12 @@ class AgentLoop:
                     "content": content,
                 })
 
+        if self.audit_writer:
+            self.audit_writer.write_event(
+                "run_completed",
+                run_id=run_id,
+                status="max_iterations"
+            )
         return AgentResult(
             status="max_iterations",
             iterations=iterations,
