@@ -25,18 +25,20 @@ Atlas Agent is a workspace where an AI agent lives, learns, and trades.
 *   **The Guardrails:** Deterministic risk controls (position sizing, daily loss limits, symbol policies) are decoupled from LLM reasoning to ensure safety.
 *   **Simulation and Learning:** The default safety mode. Atlas Agent uses a high-fidelity `PaperBroker` for simulation without financial risk. During **closed-market** hours, Atlas focuses on research and the built-in **learning loop** to improve future planning.
 
-## Current Status (v0.2.3)
+## Current Status (v0.2.4)
 
 | Component | Status | Description |
-| :--- | :--- | :--- |
-| **Setup Wizard** | Implemented | Interactive onboarding with ASCII banner persistence. |
-| **Secure Credentials** | Implemented | Secrets stored in `.env.atlas`, protected from commits/updates. |
-| **Tool Registry** | Implemented | 49 builtin tool schemas with provider normalization. |
-| **Update System** | Implemented | `atlas update` command with safeguard for local config. |
-| **Risk Manager** | Implemented | Deterministic gates for size, loss, and symbol policy. |
-| **Agent Loop** | In Progress | Transitioning to tool-driven autonomous reasoning loop. |
-| **Audit Hash-Chain** | Planned | Cryptographically linked audit logs for accountability. |
-| **Live Dashboard** | Planned | Local web UI for real-time observability. |
+|---|---:|---|
+| Setup Wizard | Implemented | First-run onboarding with persistent ASCII banner, keyboard-driven setup, and safe reconfiguration through `atlas configure`. |
+| Secure Credentials | Implemented | Secrets are stored in `.env.atlas`, excluded from git, kept out of `config.json`, and protected during updates. |
+| Provider-Neutral Models | Implemented | Supports OpenRouter, NVIDIA NIM, z.ai/GLM, Kimi/Moonshot, Hugging Face, OpenAI, and custom/OpenAI-compatible endpoints without lock-in. |
+| Tool Registry | Implemented | 49 builtin tool schemas with JSON Schema validation, provider normalization, and compatibility aliases for legacy tool names. |
+| Research Provider | Implemented | Configurable vendor-neutral web research provider with `ATLAS_RESEARCH_API_KEY` and legacy fallback compatibility. |
+| Update System | Implemented | `atlas update` updates the system while protecting local config and sensitive files such as `.env.atlas`. |
+| Risk Manager | Implemented | Deterministic gates for position size, loss limits, live trading safety, and symbol policy. |
+| Agent Loop | In Progress | Transitioning from legacy routines toward a tool-driven autonomous reasoning loop. |
+| Audit Hash-Chain | Planned | Tamper-evident audit logs for accountability, replay, and post-trade review. |
+| Live Dashboard | Planned | Local observability for positions, P&L, tool calls, update state, and safety status. |
 
 ## Quickstart
 
