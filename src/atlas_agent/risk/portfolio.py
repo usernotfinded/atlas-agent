@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from typing import List
 from atlas_agent.portfolio.state import PortfolioState
-from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition
+from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition, PendingOrder
 
 
-def get_portfolio_snapshot(state: PortfolioState, marks: dict[str, float] | None = None) -> PortfolioSnapshot:
+def get_portfolio_snapshot(
+    state: PortfolioState, 
+    marks: dict[str, float] | None = None,
+    open_orders: List[PendingOrder] | None = None
+) -> PortfolioSnapshot:
     """
     Convert internal PortfolioState to a Risk-compatible PortfolioSnapshot.
     """
@@ -36,6 +41,7 @@ def get_portfolio_snapshot(state: PortfolioState, marks: dict[str, float] | None
         equity=equity,
         total_exposure=exposure,
         positions=positions,
+        open_orders=open_orders or [],
         realized_pnl_today=state.realized_pnl_today,
         unrealized_pnl=total_unrealized_pnl,
         trades_today=state.trades_today

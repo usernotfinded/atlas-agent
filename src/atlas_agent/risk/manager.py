@@ -9,7 +9,8 @@ from atlas_agent.risk.models import (
     RiskViolation, 
     PortfolioSnapshot, 
     OrderRiskInput,
-    OrderClassification
+    OrderClassification,
+    PendingOrder
 )
 
 
@@ -108,18 +109,29 @@ class RiskManager:
         self, 
         order: OrderRiskInput, 
         portfolio: PortfolioSnapshot
-    ) -> Tuple[float, float, OrderClassification]:
+    ) -> dict[str, Any]:
         symbol = order.symbol.upper()
         current_pos = next((p for p in portfolio.positions if p.symbol == symbol), None)
         
         current_qty = current_pos.quantity if current_pos else 0.0
-        order_qty = order.quantity if order.side == "buy" else -order.quantity
+        order_qty_delta = order.quantity if order.side == "buy" else -order.quantity
         
-        projected_qty = current_qty + order_qty
+        # Identify active pending orders
+        active_statuses = {"pending", "open", "partially_filled"}
+        pending_orders = [o for o in portfolio.open_orders if o.symbol == symbol and o.status in active_statuses]
+        
+        pending_qty_delta = sum((o.remaining_quantity if o.side == "buy" else -o.remaining_quantity) for o in pending_orders)
+        
+        baseline_projected_qty = current_qty + pending_qty_delta
+        
+        projected_qty = current_qty + order_qty_delta
+        projected_qty_with_pending = baseline_projected_qty + order_qty_delta
+        
         projected_exposure = abs(projected_qty * order.price)
+        projected_exposure_with_pending = abs(projected_qty_with_pending * order.price)
         
+        # Classification relative to current position
         classification: OrderClassification = "unknown"
-        
         if current_qty == 0:
             classification = "opens_new_position"
         elif projected_qty == 0:
@@ -131,7 +143,28 @@ class RiskManager:
         else:
             classification = "reduces_risk"
             
-        return projected_qty, projected_exposure, classification
+        # Classification relative to pending baseline
+        is_increasing_risk_with_pending = False
+        if baseline_projected_qty == 0:
+            is_increasing_risk_with_pending = (projected_qty_with_pending != 0)
+        elif abs(projected_qty_with_pending) > abs(baseline_projected_qty):
+            is_increasing_risk_with_pending = True
+        elif (baseline_projected_qty > 0 and projected_qty_with_pending < 0) or (baseline_projected_qty < 0 and projected_qty_with_pending > 0):
+            is_increasing_risk_with_pending = True
+
+        return {
+            "classification": classification,
+            "is_increasing_risk_with_pending": is_increasing_risk_with_pending,
+            "current_quantity": current_qty,
+            "pending_quantity_delta": pending_qty_delta,
+            "proposed_quantity_delta": order_qty_delta,
+            "projected_quantity": projected_qty,
+            "projected_quantity_with_pending": projected_qty_with_pending,
+            "projected_exposure": projected_exposure,
+            "projected_exposure_with_pending": projected_exposure_with_pending,
+            "included_pending_order_ids": [o.order_id for o in pending_orders],
+            "ignored_pending_order_ids": [o.order_id for o in portfolio.open_orders if o.symbol == symbol and o.status not in active_statuses]
+        }
 
     def evaluate_order(
         self,
@@ -139,7 +172,11 @@ class RiskManager:
         portfolio: PortfolioSnapshot,
         mode: Literal["paper", "live"] = "paper",
     ) -> RiskDecision:
-        projected_qty, projected_exposure, classification = self._calculate_projection(order, portfolio)
+        projection = self._calculate_projection(order, portfolio)
+        classification = projection["classification"]
+        projected_qty_with_pending = projection["projected_quantity_with_pending"]
+        projected_exposure_with_pending = projection["projected_exposure_with_pending"]
+        is_increasing_risk_with_pending = projection["is_increasing_risk_with_pending"]
 
         if self.audit_writer:
             self.audit_writer.write_event(
@@ -151,11 +188,7 @@ class RiskManager:
                     "order": order.model_dump(),
                     "portfolio": portfolio.model_dump(),
                     "mode": mode,
-                    "projection": {
-                        "projected_quantity": projected_qty,
-                        "projected_exposure": projected_exposure,
-                        "classification": classification
-                    }
+                    "projection": projection
                 }
             )
 
@@ -207,8 +240,10 @@ class RiskManager:
 
         # 3. Shorting policy
         if not self.limits.allow_shorting:
-            if projected_qty < 0:
-                if classification in ["opens_new_position", "flips_position", "increases_risk"]:
+            if projected_qty_with_pending < 0:
+                # Block if it opens, increases, or flips to short
+                # Even if it's "reduces_risk" relative to current, if it makes the projected short worse, it's blocked.
+                if is_increasing_risk_with_pending:
                     violations.append(RiskViolation(
                         rule="allow_shorting",
                         message="shorting is disabled",
@@ -216,11 +251,19 @@ class RiskManager:
                         actual_value=True
                     ))
 
-        # 4. Limits only apply if risk increases
-        is_risk_increasing = classification in ["opens_new_position", "increases_risk", "flips_position"]
+        # 4. Limits only apply if risk increases relative to current OR pending baseline
+        # (Worst case approach: if either the current risk is increased, or the projected risk is increased, check limits)
+        # Actually, let's be smarter: if the proposed order REDUCES absolute risk in BOTH current and pending scenarios, it's exempt.
         
-        if is_risk_increasing:
-            # Single trade limits
+        # Is it reducing risk in the current position?
+        is_reducing_current = classification in ["reduces_risk", "closes_position"]
+        # Is it reducing risk in the pending scenario?
+        is_reducing_pending = not is_increasing_risk_with_pending
+        
+        should_check_limits = not (is_reducing_current and is_reducing_pending)
+        
+        if should_check_limits:
+            # Single trade limits (always check for new orders)
             if order.notional > self.limits.max_single_trade_notional:
                 violations.append(RiskViolation(
                     rule="max_single_trade_notional",
@@ -229,18 +272,18 @@ class RiskManager:
                     actual_value=order.notional
                 ))
 
-            # Position limits
-            if projected_exposure > self.limits.max_position_notional:
+            # Position limits (including pending)
+            if projected_exposure_with_pending > self.limits.max_position_notional:
                 violations.append(RiskViolation(
                     rule="max_position_notional",
-                    message=f"max position size exceeded",
+                    message=f"max position size exceeded (including pending orders)",
                     limit_value=self.limits.max_position_notional,
-                    actual_value=projected_exposure
+                    actual_value=projected_exposure_with_pending
                 ))
 
             # Symbol exposure % check
             if portfolio.equity > 0:
-                exposure_pct = projected_exposure / portfolio.equity
+                exposure_pct = projected_exposure_with_pending / portfolio.equity
                 if exposure_pct > self.limits.max_symbol_exposure_pct:
                     violations.append(RiskViolation(
                         rule="max_symbol_exposure_pct",
@@ -255,7 +298,8 @@ class RiskManager:
             if current_pos:
                 current_symbol_exposure = current_pos.notional
             
-            projected_total_exposure = portfolio.total_exposure - current_symbol_exposure + projected_exposure
+            projected_total_exposure = portfolio.total_exposure - current_symbol_exposure + projected_exposure_with_pending
+            
             max_exposure_abs = portfolio.equity * self.limits.max_portfolio_exposure_pct
             if projected_total_exposure > max_exposure_abs:
                 violations.append(RiskViolation(
@@ -267,12 +311,16 @@ class RiskManager:
             
             # Max open positions
             if classification == "opens_new_position":
-                if len(portfolio.positions) >= self.limits.max_open_positions:
+                symbols_with_positions = {p.symbol for p in portfolio.positions}
+                symbols_with_pending = {o.symbol for o in portfolio.open_orders if o.status in {"pending", "open", "partially_filled"}}
+                unique_symbols = symbols_with_positions | symbols_with_pending
+                
+                if len(unique_symbols) >= self.limits.max_open_positions and symbol not in unique_symbols:
                     violations.append(RiskViolation(
                         rule="max_open_positions",
                         message=f"max open positions reached",
                         limit_value=self.limits.max_open_positions,
-                        actual_value=len(portfolio.positions)
+                        actual_value=len(unique_symbols)
                     ))
 
         # 5. Confidence check (always applies)
@@ -294,12 +342,7 @@ class RiskManager:
             ))
 
         # Determine decision
-        diagnostics = {
-            "classification": classification,
-            "projected_quantity": projected_qty,
-            "projected_exposure": projected_exposure,
-            "current_exposure": next((p.notional for p in portfolio.positions if p.symbol == symbol), 0.0)
-        }
+        diagnostics = projection.copy()
         
         if violations:
             decision = RiskDecision(
@@ -308,8 +351,10 @@ class RiskManager:
                 reason="Risk violations detected",
                 violations=violations,
                 classification=classification,
-                projected_quantity=projected_qty,
-                projected_exposure=projected_exposure,
+                projected_quantity=projection["projected_quantity"],
+                projected_exposure=projection["projected_exposure"],
+                projected_quantity_with_pending=projected_qty_with_pending,
+                projected_exposure_with_pending=projected_exposure_with_pending,
                 diagnostics=diagnostics
             )
             if self.audit_writer:
@@ -328,8 +373,10 @@ class RiskManager:
                     status="requires_approval",
                     reason="Live order requires manual approval",
                     classification=classification,
-                    projected_quantity=projected_qty,
-                    projected_exposure=projected_exposure,
+                    projected_quantity=projection["projected_quantity"],
+                    projected_exposure=projection["projected_exposure"],
+                    projected_quantity_with_pending=projected_qty_with_pending,
+                    projected_exposure_with_pending=projected_exposure_with_pending,
                     diagnostics=diagnostics
                 )
                 if self.audit_writer:
@@ -347,8 +394,10 @@ class RiskManager:
                     status="allowed",
                     reason="All risk checks passed",
                     classification=classification,
-                    projected_quantity=projected_qty,
-                    projected_exposure=projected_exposure,
+                    projected_quantity=projection["projected_quantity"],
+                    projected_exposure=projection["projected_exposure"],
+                    projected_quantity_with_pending=projected_qty_with_pending,
+                    projected_exposure_with_pending=projected_exposure_with_pending,
                     diagnostics=diagnostics
                 )
                 if self.audit_writer:

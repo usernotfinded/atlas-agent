@@ -101,7 +101,8 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     
     # Load portfolio state (in a real app, this might be from a database or broker)
     portfolio_state = PortfolioState(cash=config.starting_cash)
-    portfolio_snapshot = get_portfolio_snapshot(portfolio_state)
+    # For V3, we'd ideally load real open orders here. Mocking an empty list for now.
+    portfolio_snapshot = get_portfolio_snapshot(portfolio_state, open_orders=[])
     
     from atlas_agent.risk.limits import RiskLimits
     risk_limits = RiskLimits(

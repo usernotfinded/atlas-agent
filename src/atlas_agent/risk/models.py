@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -13,11 +13,27 @@ class RiskPosition(BaseModel):
     side: Literal["long", "short", "flat"] = "flat"
 
 
+class PendingOrder(BaseModel):
+    order_id: str
+    symbol: str
+    side: Literal["buy", "sell"]
+    quantity: float
+    limit_price: Optional[float] = None
+    estimated_price: Optional[float] = None
+    status: Literal["pending", "open", "partially_filled", "cancelled", "filled", "rejected"]
+    filled_quantity: float = 0.0
+
+    @property
+    def remaining_quantity(self) -> float:
+        return max(0.0, self.quantity - self.filled_quantity)
+
+
 class PortfolioSnapshot(BaseModel):
     cash: float
     equity: float
     total_exposure: float
     positions: list[RiskPosition] = Field(default_factory=list)
+    open_orders: list[PendingOrder] = Field(default_factory=list)
     realized_pnl_today: float = 0.0
     unrealized_pnl: float = 0.0
     trades_today: int = 0
@@ -59,5 +75,7 @@ class RiskDecision(BaseModel):
     classification: OrderClassification = "unknown"
     projected_quantity: float = 0.0
     projected_exposure: float = 0.0
+    projected_quantity_with_pending: float = 0.0
+    projected_exposure_with_pending: float = 0.0
     adjusted_order: Optional[dict[str, Any]] = None
     diagnostics: dict[str, Any] = Field(default_factory=dict)
