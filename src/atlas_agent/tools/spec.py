@@ -47,6 +47,10 @@ class ModelCapabilities(BaseModel):
     """Internal type used by the registry to evaluate model context limits."""
     context_window: int
     supports_native_tools: bool
+    supports_json_mode: bool = False
+    supports_streaming: bool = False
+    provider_name: str = "unknown"
+    model_name: Optional[str] = None
 
 class ToolDescription(BaseModel):
     """Internal type used by the registry to describe tools to the model."""
@@ -58,6 +62,20 @@ class ToolCall(BaseModel):
     id: str
     name: str
     arguments: dict
+    raw: Optional[dict] = None
+
+
+class TokenUsage(BaseModel):
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
+
+
+class LLMResponse(BaseModel):
+    text: Optional[str] = None
+    tool_calls: list[ToolCall] = Field(default_factory=list)
+    is_final: bool = True
+    usage: Optional[TokenUsage] = None
     raw: Optional[dict] = None
 
 class GuardrailChain(Protocol):
