@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import pytest
 from pathlib import Path
 
@@ -33,9 +34,15 @@ def test_agent_loop_emits_audit_events(tmp_path: Path):
     
     loop.run("Objective", session, "System", run_id="run_1")
     
+    # Check log
     lines = audit_path.read_text().splitlines()
-    assert len(lines) >= 3 # run_started, provider_called, provider_response, run_completed
+    assert len(lines) >= 3
     
-    events = [line for line in lines if "run_started" in line]
-    assert len(events) == 1
-    assert '"run_id":"run_1"' in events[0]
+    # Check manifest
+    manifest_path = tmp_path / "manifests" / "run_1.json"
+    assert manifest_path.exists()
+    manifest_data = json.loads(manifest_path.read_text())
+    assert manifest_data["run_id"] == "run_1"
+    assert manifest_data["status"] == "completed"
+    assert manifest_data["event_count"] >= 3
+    assert manifest_data["root_hash"] is not None

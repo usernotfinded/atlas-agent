@@ -68,13 +68,43 @@ class AgentLoop:
         open_order_ids: List[str] | None = None,
     ) -> AgentResult:
         run_id = run_id or f"run_{int(session.turn_count)}_{session.id}"
+        
         if self.audit_writer:
+            self.audit_writer.start_run(run_id)
             self.audit_writer.write_event(
                 "run_started",
                 run_id=run_id,
                 payload={"user_objective": user_objective, "mode": mode}
             )
 
+        result = self._run_loop(
+            user_objective, session, system_prompt, mode, run_id, portfolio_snapshot, open_order_ids
+        )
+
+        if self.audit_writer:
+            status_map = {
+                "complete": "completed",
+                "error": "failed",
+                "blocked": "interrupted",
+                "max_iterations": "interrupted",
+                "max_tool_calls": "interrupted",
+                "approval_required": "interrupted"
+            }
+            final_status = status_map.get(result.status, "failed")
+            self.audit_writer.finish_run(status=final_status, final_status_text=result.status) # type: ignore
+            
+        return result
+
+    def _run_loop(
+        self,
+        user_objective: str,
+        session: Session,
+        system_prompt: str,
+        mode: str,
+        run_id: str,
+        portfolio_snapshot: PortfolioSnapshot | None,
+        open_order_ids: List[str] | None,
+    ) -> AgentResult:
         iterations = []
         messages = [{"role": "user", "content": user_objective}]
         total_tool_calls = 0
@@ -136,14 +166,13 @@ class AgentLoop:
             # Update conversation history with assistant message
             assistant_msg: dict[str, Any] = {"role": "assistant", "content": llm_response.text}
             if llm_response.tool_calls:
-                # Store tool calls in the format expected by most providers
                 assistant_msg["tool_calls"] = [
                     {
                         "id": tc.id,
                         "type": "function",
                         "function": {
                             "name": tc.name,
-                            "arguments": str(tc.arguments) # Simplified for storage
+                            "arguments": str(tc.arguments)
                         }
                     }
                     for tc in llm_response.tool_calls
@@ -192,7 +221,6 @@ class AgentLoop:
                     if not kill_decision.allowed:
                         diagnostics = {"kill_switch": kill_decision.model_dump()}
                         
-                        # Generate safety action plan if needed
                         if kill_decision.status in ["cancel_required", "flatten_required"]:
                             portfolio = portfolio_snapshot or PortfolioSnapshot(
                                 cash=10000.0, equity=10000.0, total_exposure=0.0

@@ -355,6 +355,8 @@ Safety First:
     audit_sub = audit.add_subparsers(dest="audit_command")
     audit_verify = audit_sub.add_parser("verify")
     audit_verify.add_argument("--path", help="Path to audit log file")
+    audit_verify.add_argument("--manifest", help="Path to audit manifest file")
+    audit_verify.add_argument("--all", action="store_true", help="Verify all manifests")
 
     return parser
 
@@ -1192,9 +1194,48 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "audit":
-        from atlas_agent.audit import verify_audit_log
+        from atlas_agent.audit import verify_audit_log, verify_run_manifest
 
         if args.audit_command == "verify":
+            if args.all:
+                manifest_dir = config.audit_dir / "manifests"
+                if not manifest_dir.exists():
+                    print("No manifests found.")
+                    return 0
+                manifests = list(manifest_dir.glob("*.json"))
+                if not manifests:
+                    print("No manifests found.")
+                    return 0
+                
+                print(f"Verifying {len(manifests)} manifests...")
+                all_valid = True
+                for manifest_path in sorted(manifests):
+                    result = verify_run_manifest(manifest_path)
+                    status_icon = "✅" if result.valid else "❌"
+                    print(f"{status_icon} {manifest_path.name}: {result.manifest_status}")
+                    if not result.valid:
+                        all_valid = False
+                        for error in result.errors:
+                            print(f"  - {error}")
+                return 0 if all_valid else 2
+
+            if args.manifest:
+                result = verify_run_manifest(args.manifest)
+                if result.valid:
+                    print(
+                        f"Audit manifest verification successful. Checked {result.events_checked} events."
+                    )
+                    print(f"Status: {result.manifest_status.upper()}")
+                    return 0
+                else:
+                    print(
+                        f"Audit manifest verification FAILED. Checked {result.events_checked} events."
+                    )
+                    print(f"Status: {result.manifest_status.upper()}")
+                    for error in result.errors:
+                        print(f"- {error}")
+                    return 2
+
             path = args.path or (config.audit_dir / "events.jsonl")
             result = verify_audit_log(path)
             if result.valid:

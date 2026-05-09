@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, List
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -54,4 +54,27 @@ class VerificationResult(BaseModel):
     valid: bool
     events_checked: int
     first_error_index: Optional[int] = None
-    errors: list[str] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+
+
+class AuditManifest(BaseModel):
+    run_id: str
+    started_at: str
+    completed_at: Optional[str] = None
+    status: Literal["running", "completed", "failed", "interrupted"] = "running"
+    audit_log_path: str
+    event_count: int = 0
+    first_event_hash: Optional[str] = None
+    final_event_hash: Optional[str] = None
+    root_hash: Optional[str] = None
+    final_status: Optional[str] = None
+    schema_version: int = 2
+    diagnostics: dict[str, Any] = Field(default_factory=dict)
+
+
+class ManifestVerificationResult(BaseModel):
+    valid: bool
+    manifest_status: str
+    events_checked: int
+    log_integrity: VerificationResult
+    errors: List[str] = Field(default_factory=list)
