@@ -64,7 +64,18 @@ def test_readme_mentions_provider_neutral_model_selection() -> None:
 
     assert "https://www.vals.ai/benchmarks/finance_agent" in text
     assert "provider-neutral" in lower
-    assert "openrouter, nvidia nim, z.ai/glm, kimi/moonshot" in lower
 
-    assert "<!-- ATLAS_MODEL_ROSTER_START -->" not in text
+    for provider in [
+        "openrouter",
+        "nvidia nim",
+        "z.ai/glm",
+        "kimi/moonshot",
+        "hugging face",
+        "openai",
+    ]:
+        assert provider in lower
+
+    assert "custom endpoint" in lower or "openai-compatible" in lower
+
+    assert "atlas_model_roster_start" not in lower
     assert "| rank | model | score |" not in lower
