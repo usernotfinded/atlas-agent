@@ -282,6 +282,16 @@ Safety First:
     risk_sub.add_parser("check")
     risk_sub.add_parser("status")
 
+    kill = subparsers.add_parser("kill")
+    kill_sub = kill.add_subparsers(dest="kill_command")
+    kill_sub.add_parser("status")
+    kill_sub.add_parser("soft-pause")
+    kill_sub.add_parser("cancel-all")
+    kill_sub.add_parser("flatten-all")
+    kill_sub.add_parser("lock")
+    kill_sub.add_parser("reset")
+    kill_sub.add_parser("heartbeat")
+
     kill_switch = subparsers.add_parser("kill-switch")
     kill_sub = kill_switch.add_subparsers(dest="kill_command")
     kill_enable = kill_sub.add_parser("enable")
@@ -1218,6 +1228,47 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Max Order Notional: ${limits.max_single_trade_notional}")
             print(f"  Allowed Symbols: {limits.allowed_symbols if limits.allowed_symbols else 'All'}")
             print(f"  Blocked Symbols: {list(limits.blocked_symbols) if limits.blocked_symbols else 'None'}")
+            return 0
+
+    if args.command == "kill":
+        from atlas_agent.safety.kill_switch import AdvancedKillSwitch
+        safety_dir = Path(".atlas/safety")
+        safety_dir.mkdir(parents=True, exist_ok=True)
+        kill_switch = AdvancedKillSwitch(
+            state_path=safety_dir / "kill_switch.json",
+            heartbeat_path=safety_dir / "heartbeat.json"
+        )
+        
+        if args.kill_command == "status":
+            decision = kill_switch.evaluate()
+            status = kill_switch.state_manager.load()
+            print("Kill Switch Status:")
+            print(f"  Mode: {status.mode.upper()}")
+            print(f"  Status: {decision.status.upper()}")
+            print(f"  Reason: {status.reason}")
+            print(f"  Actor: {status.actor}")
+            print(f"  Updated: {status.updated_at}")
+            if decision.action_required:
+                print(f"  ACTION REQUIRED: {decision.action_required}")
+            return 0
+            
+        if args.kill_command == "heartbeat":
+            kill_switch.heartbeat_manager.record(source="cli")
+            print("Heartbeat recorded.")
+            return 0
+            
+        mode_map = {
+            "soft-pause": "soft_pause",
+            "cancel-all": "cancel_all",
+            "flatten-all": "flatten_all",
+            "lock": "locked_down",
+            "reset": "normal"
+        }
+        
+        if args.kill_command in mode_map:
+            new_mode = mode_map[args.kill_command]
+            kill_switch.set_mode(new_mode, reason=f"CLI {args.kill_command}", actor="user")
+            print(f"Kill switch mode set to: {new_mode}")
             return 0
 
     if args.command == "status":

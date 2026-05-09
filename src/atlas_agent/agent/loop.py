@@ -9,6 +9,7 @@ from atlas_agent.core.types import Session, UserApprovalPending
 from atlas_agent.providers.base import AIProvider
 from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
+from atlas_agent.safety.kill_switch import AdvancedKillSwitch
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ToolCall, ToolResult, ToolError, GuardrailChain
 
@@ -42,6 +43,7 @@ class AgentLoop:
         max_tool_calls: int = 50,
         audit_writer: AuditWriter | None = None,
         risk_manager: RiskManager | None = None,
+        kill_switch: AdvancedKillSwitch | None = None,
     ):
         self.provider = provider
         self.tool_registry = tool_registry
@@ -50,6 +52,7 @@ class AgentLoop:
         self.max_tool_calls = max_tool_calls
         self.audit_writer = audit_writer
         self.risk_manager = risk_manager
+        self.kill_switch = kill_switch
 
     def run(
         self,
@@ -179,7 +182,28 @@ class AgentLoop:
 
                 total_tool_calls += 1
                 
-                # Risk Gating
+                # 1. Kill Switch Check
+                if self.kill_switch:
+                    kill_decision = self.kill_switch.evaluate()
+                    if not kill_decision.allowed:
+                        if self.audit_writer:
+                            self.audit_writer.write_event(
+                                "kill_switch_blocked",
+                                run_id=run_id,
+                                iteration=i,
+                                tool_name=tool_call.name,
+                                tool_call_id=tool_call.id,
+                                payload=kill_decision.model_dump()
+                            )
+                        return AgentResult(
+                            status="blocked",
+                            iterations=iterations,
+                            total_tool_calls=total_tool_calls,
+                            errors=[kill_decision.reason or "Kill switch blocked execution"],
+                            diagnostics={"kill_switch": kill_decision.model_dump()}
+                        )
+
+                # 2. Risk Gating
                 tool_spec = None
                 try:
                     tool_spec = self.tool_registry.get_tool(tool_call.name)

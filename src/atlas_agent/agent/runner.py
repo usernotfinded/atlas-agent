@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger, generate_run_id
@@ -75,6 +76,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     from atlas_agent.risk.manager import RiskManager
     from atlas_agent.risk.portfolio import get_portfolio_snapshot
     from atlas_agent.portfolio.state import PortfolioState
+    from atlas_agent.safety.kill_switch import AdvancedKillSwitch
     
     provider = get_provider_from_env()
     registry = ToolRegistry()
@@ -83,6 +85,19 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     
     audit_path = config.audit_dir / "events.jsonl"
     audit_writer = AuditWriter(audit_path)
+    
+    run_id = f"run_{int(time.time())}"
+
+    # Advanced Kill Switch
+    safety_dir = Path(".atlas/safety")
+    kill_switch = AdvancedKillSwitch(
+        state_path=safety_dir / "kill_switch.json",
+        heartbeat_path=safety_dir / "heartbeat.json",
+        audit_writer=audit_writer,
+        run_id=run_id
+    )
+    # Record a fresh heartbeat at start of cycle
+    kill_switch.heartbeat_manager.record(source="agent_runner")
     
     # Load portfolio state (in a real app, this might be from a database or broker)
     portfolio_state = PortfolioState(cash=config.starting_cash)
@@ -97,11 +112,17 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
         live_trading_enabled=config.enable_live_trading
     )
     
-    run_id = f"run_{int(time.time())}"
     risk_manager = RiskManager(limits=risk_limits, audit_writer=audit_writer, run_id=run_id)
     
     guardrails = DefaultGuardrailChain(registry)
-    loop = AgentLoop(provider, registry, guardrails, audit_writer=audit_writer, risk_manager=risk_manager)
+    loop = AgentLoop(
+        provider, 
+        registry, 
+        guardrails, 
+        audit_writer=audit_writer, 
+        risk_manager=risk_manager,
+        kill_switch=kill_switch
+    )
     
     session = Session(id=run_id, turn_count=0, has_summarized=False)
     

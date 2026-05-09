@@ -3,18 +3,122 @@ from __future__ import annotations
 import json
 import threading
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, Optional, Literal
 
 from atlas_agent.brokers.base import Broker
 from atlas_agent.execution.order import FlattenResult, OrderResult
+from atlas_agent.safety.models import KillSwitchMode, KillSwitchDecision, KillSwitchStatus
+from atlas_agent.safety.state import KillSwitchState as AdvancedKillSwitchState
+from atlas_agent.safety.heartbeat import HeartbeatManager
+from atlas_agent.audit import AuditWriter
 
+
+class AdvancedKillSwitch:
+    def __init__(
+        self,
+        state_path: str | Path,
+        heartbeat_path: str | Path,
+        audit_writer: Optional[AuditWriter] = None,
+        run_id: str = "unknown",
+        iteration: Optional[int] = None,
+    ):
+        self.state_manager = AdvancedKillSwitchState(state_path)
+        self.heartbeat_manager = HeartbeatManager(heartbeat_path)
+        self.audit_writer = audit_writer
+        self.run_id = run_id
+        self.iteration = iteration
+
+    def evaluate(self) -> KillSwitchDecision:
+        status = self.state_manager.load()
+        mode = status.mode
+        
+        # Check heartbeat
+        if mode != "locked_down" and self.heartbeat_manager.is_expired():
+            if self.audit_writer:
+                self.audit_writer.write_event(
+                    "heartbeat_expired",
+                    run_id=self.run_id,
+                    iteration=self.iteration,
+                    payload={"last_heartbeat": self.heartbeat_manager.last_heartbeat().isoformat() if self.heartbeat_manager.last_heartbeat() else None}
+                )
+            return KillSwitchDecision(
+                allowed=False,
+                status="blocked",
+                reason="Dead-man heartbeat expired. Execution blocked for safety.",
+                mode=mode,
+                diagnostics={"heartbeat_expired": True}
+            )
+
+        if mode == "normal":
+            return KillSwitchDecision(allowed=True, status="allowed", mode="normal")
+            
+        if mode == "soft_pause":
+            return KillSwitchDecision(
+                allowed=False, 
+                status="blocked", 
+                reason="Kill switch is in soft_pause mode.", 
+                mode="soft_pause"
+            )
+            
+        if mode == "cancel_all":
+            return KillSwitchDecision(
+                allowed=False, 
+                status="cancel_required", 
+                reason="Kill switch is in cancel_all mode.", 
+                mode="cancel_all",
+                action_required="cancel_all"
+            )
+            
+        if mode == "flatten_all":
+            return KillSwitchDecision(
+                allowed=False, 
+                status="flatten_required", 
+                reason="Kill switch is in flatten_all mode.", 
+                mode="flatten_all",
+                action_required="flatten_all"
+            )
+            
+        if mode == "locked_down":
+            return KillSwitchDecision(
+                allowed=False, 
+                status="locked_down", 
+                reason=status.reason or "Kill switch is in locked_down mode. Explicit reset required.", 
+                mode="locked_down"
+            )
+
+        return KillSwitchDecision(
+            allowed=False,
+            status="blocked",
+            reason=f"Unknown kill switch mode: {mode}",
+            mode="locked_down"
+        )
+
+    def set_mode(self, mode: KillSwitchMode, reason: str, actor: str = "system"):
+        old_status = self.state_manager.load()
+        new_status = self.state_manager.save(mode, reason, actor)
+        
+        if self.audit_writer:
+            self.audit_writer.write_event(
+                "kill_switch_mode_changed",
+                run_id=self.run_id,
+                iteration=self.iteration,
+                payload={
+                    "old_mode": old_status.mode,
+                    "new_mode": mode,
+                    "reason": reason,
+                    "actor": actor
+                }
+            )
+        return new_status
+
+
+# --- Legacy Compatibility Block (Restored and Corrected) ---
 
 KILL_SWITCH_MODES = ("soft", "cancel", "flatten")
 MODE_RANK = {"soft": 0, "cancel": 1, "flatten": 2}
-GENERIC_CANCEL_ORDER_ID = "kill-switch-cancel-all"
 AuditHook = Callable[[str, str, dict[str, Any]], None]
 
 

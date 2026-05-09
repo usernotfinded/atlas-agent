@@ -10,6 +10,7 @@ from atlas_agent.safety.deadman import (
 from atlas_agent.safety.guards import live_mode_guard
 from atlas_agent.safety.kill_switch import (
     KILL_SWITCH_MODES,
+    AdvancedKillSwitch,
     KillSwitchController,
     KillSwitchState,
     KillSwitchTransition,
@@ -21,9 +22,10 @@ __all__ = [
     "HeartbeatRecord",
     "HeartbeatStatus",
     "KILL_SWITCH_MODES",
+    "AdvancedKillSwitch",
     "KillSwitchController",
     "KillSwitchState",
-    "KillSwitchTransition",
+...
     "deadman_heartbeat_path",
     "live_mode_guard",
     "read_deadman_heartbeat",
