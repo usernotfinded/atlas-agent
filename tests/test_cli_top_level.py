@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+import json
 from unittest.mock import ANY, patch
 
 import pytest
@@ -44,7 +45,9 @@ def test_help_no_agent_start(non_workspace, capsys):
     assert "Starting autonomous cycle..." not in captured.out
 
 
-def test_bare_atlas_does_not_start_cycle(workspace, capsys):
+def test_bare_atlas_does_not_start_cycle(workspace, capsys, monkeypatch, write_complete_setup_config):
+    write_complete_setup_config(workspace)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     code = main([])
     assert code == 0
     output = capsys.readouterr().out
@@ -52,7 +55,9 @@ def test_bare_atlas_does_not_start_cycle(workspace, capsys):
     assert "Bare `atlas` no longer starts autonomous execution." in output
 
 
-def test_bare_atlas_prints_onboarding(workspace, capsys):
+def test_bare_atlas_prints_onboarding(workspace, capsys, monkeypatch, write_complete_setup_config):
+    write_complete_setup_config(workspace)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     code = main([])
     assert code == 0
     output = capsys.readouterr().out
@@ -65,7 +70,9 @@ def test_bare_atlas_prints_onboarding(workspace, capsys):
     assert "atlas run --mode paper" in output
 
 
-def test_bare_atlas_does_not_call_runner(workspace, capsys):
+def test_bare_atlas_does_not_call_runner(workspace, capsys, monkeypatch, write_complete_setup_config):
+    write_complete_setup_config(workspace)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     with patch("atlas_agent.agent.runner.run_agent") as mock_run:
         code = main([])
         assert code == 0
@@ -75,15 +82,12 @@ def test_bare_atlas_does_not_call_runner(workspace, capsys):
 
 def test_bare_atlas_outside_workspace(non_workspace, monkeypatch, capsys):
     monkeypatch.setenv("HOME", str(non_workspace))
+    # Incomplete setup (no config at all) -> exit 2 in non-interactive
     code = main([])
-    assert code == 0
+    assert code == 2
     captured = capsys.readouterr()
     combined = captured.out + captured.err
-    assert "Current setup status:" in combined
-    assert "- workspace configured: no" in combined
-    assert "Bare `atlas` no longer starts autonomous execution." in combined
-    assert not (non_workspace / "memory").exists()
-    assert not (non_workspace / "events").exists()
+    assert "Atlas provider credentials are missing" in combined
 
 
 def test_run_requires_workspace(non_workspace, monkeypatch, capsys):
@@ -103,13 +107,12 @@ def test_run_with_missing_workspace_exits_2(non_workspace, capsys):
     assert "No Atlas workspace configured. Run `atlas init <name>` first." in output
 
 
-def test_configure_command_exists(non_workspace, capsys):
+def test_configure_noninteractive_exits_2(non_workspace, capsys):
     code = main(["configure"])
-    assert code == 0
+    assert code == 2
     output = capsys.readouterr().out
-    assert "Atlas configure (safe placeholder)" in output
-    assert "OPENAI_API_KEY" in output
-    assert "atlas run --mode paper" in output
+    assert "Non-interactive mode detected. Cannot run UI wizard." in output
+
 
 
 def test_status_alias(workspace):

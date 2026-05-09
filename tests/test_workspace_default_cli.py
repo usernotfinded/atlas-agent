@@ -69,6 +69,7 @@ def test_bare_atlas_outside_workspace_uses_default_workspace(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    write_complete_setup_config,
 ) -> None:
     home = tmp_path / "home"
     home.mkdir(parents=True)
@@ -76,6 +77,10 @@ def test_bare_atlas_outside_workspace_uses_default_workspace(
     monkeypatch.chdir(tmp_path)
 
     assert main(["init", "ws", "--template", "routine-trader", "--set-default"]) == 0
+    ws_path = tmp_path / "ws"
+    write_complete_setup_config(ws_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
     outside = tmp_path / "outside"
     outside.mkdir(parents=True)
     monkeypatch.chdir(outside)
@@ -99,9 +104,10 @@ def test_bare_atlas_outside_workspace_without_default_does_not_create_runtime_di
     outside.mkdir(parents=True)
     monkeypatch.chdir(outside)
 
-    assert main([]) == 0
+    # Incomplete setup (no config at all) -> exit 2 in non-interactive
+    assert main([]) == 2
     output = capsys.readouterr().out
-    assert "- workspace configured: no" in output
+    assert "Atlas provider credentials are missing" in output
     assert not (outside / "memory").exists()
     assert not (outside / "events").exists()
     assert not (outside / "reports").exists()

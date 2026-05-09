@@ -1032,7 +1032,35 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command is None:
+        from atlas_agent.setup.wizard import run_wizard, is_interactive
+        from atlas_agent.setup.state import WizardState
+
         resolution = resolve_workspace(getattr(args, "workspace", None))
+        if resolution.path:
+            os.chdir(resolution.path)
+
+        config_path = Path(".atlas/config.json")
+        state = WizardState.load(config_path)
+
+        if not state.is_complete:
+            if not is_interactive():
+                print("Atlas provider credentials are missing. Run `atlas configure` in an interactive terminal or set the required environment variable.")
+                return 2
+
+            _print_welcome()
+            print("First-time setup required.\n")
+            success = run_wizard(state)
+            if success:
+                state.save(config_path)
+                print(f"\nConfiguration saved to {config_path}")
+                print("\nNext commands:")
+                print("  atlas validate")
+                print("  atlas run --mode paper")
+                return 0
+            else:
+                print("\nSetup cancelled. Atlas is not configured yet.")
+                return 130
+
         config_error: str | None = None
         config: AtlasConfig | None = None
         try:
@@ -1081,21 +1109,25 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if args.command == "configure":
-        print("Atlas configure (safe placeholder)")
-        print("Set provider and execution configuration before running autonomous cycles.")
-        print("")
-        print("Recommended keys:")
-        print("- Provider: OPENAI_API_KEY or OPENROUTER_API_KEY or ANTHROPIC_API_KEY")
-        print("- Optional provider endpoint: OPENAI_BASE_URL / OPENROUTER_BASE_URL")
-        print("- Trading mode: TRADING_MODE=paper|live")
-        print("- Live toggle: ENABLE_LIVE_TRADING=true|false")
-        print("- Live broker: LIVE_BROKER=alpaca|binance|ccxt|none")
-        print("- Approval mode: ORDER_APPROVAL_MODE=auto_paper|manual_live|disabled_live")
-        print("")
-        print("Then run:")
-        print("  atlas validate")
-        print("  atlas run --mode paper")
-        return 0
+        from atlas_agent.setup.wizard import run_wizard, is_interactive
+        from atlas_agent.setup.state import WizardState
+        
+        if not is_interactive():
+            print("Non-interactive mode detected. Cannot run UI wizard.")
+            print("Please configure via environment variables or direct config file edits.")
+            return 2
+            
+        config_path = Path(".atlas/config.json")
+        state = WizardState.load(config_path)
+        
+        success = run_wizard(state)
+        if success:
+            state.save(config_path)
+            print(f"Configuration saved to {config_path}")
+            return 0
+        else:
+            print("Setup cancelled. Atlas is not configured yet.")
+            return 130
 
     if args.command == "update":
         manager = SafeUpdateManager(

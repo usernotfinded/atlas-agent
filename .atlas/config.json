@@ -1,0 +1,11 @@
+{
+  "setup_mode": "quick",
+  "provider": "anthropic",
+  "model": "claude-3-5-sonnet-20240620",
+  "custom_endpoint": null,
+  "messaging": "none",
+  "workspace_path": ".",
+  "trust_mode": "paper",
+  "broker_mode": "paper",
+  "update_channel": "stable"
+}
