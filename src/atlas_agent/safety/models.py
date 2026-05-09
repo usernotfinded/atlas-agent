@@ -46,3 +46,32 @@ class SafetyActionPlan(BaseModel):
     actions: List[SafetyAction] = Field(default_factory=list)
     requires_approval: bool = True
     diagnostics: dict[str, Any] = Field(default_factory=dict)
+
+
+SafetyActionExecutionStatus = Literal[
+    "skipped",
+    "requires_approval",
+    "completed",
+    "partially_completed",
+    "failed",
+    "blocked"
+]
+
+
+class SafetyActionExecutionResult(BaseModel):
+    action_type: SafetyActionType
+    status: SafetyActionExecutionStatus
+    tool_name: Optional[str] = None
+    tool_result: Optional[Any] = None
+    error: Optional[str] = None
+    simulated: bool = False
+
+
+class SafetyPlanExecutionResult(BaseModel):
+    plan_id: str
+    status: SafetyActionExecutionStatus
+    executed_actions: List[SafetyActionExecutionResult] = Field(default_factory=list)
+    skipped_actions: List[SafetyAction] = Field(default_factory=list)
+    failed_actions: List[SafetyActionExecutionResult] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+    diagnostics: dict[str, Any] = Field(default_factory=dict)

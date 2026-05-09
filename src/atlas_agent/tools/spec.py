@@ -88,6 +88,11 @@ class GuardrailChain(Protocol):
         ...
 
 
+class EmptyGuardrailChain:
+    def evaluate(self, tool_call: ToolCall, session: Any) -> Union[ToolResult, ToolError, None]:
+        return None
+
+
 def _type_to_schema(t: Any) -> dict:
     """Recursively convert a Python type annotation into a JSON Schema fragment."""
     origin = get_origin(t)

@@ -293,6 +293,11 @@ Safety First:
     kill_sub.add_parser("heartbeat")
     kill_plan = kill_sub.add_parser("plan")
     kill_plan.add_argument("--mode", choices=("cancel-all", "flatten-all"), help="Simulate a specific mode")
+    kill_plan.add_argument("--json", action="store_true", help="Emit plan as JSON")
+    kill_exec = kill_sub.add_parser("execute-plan")
+    kill_exec.add_argument("--plan", required=True, help="Path to safety action plan JSON")
+    kill_exec.add_argument("--approved", action="store_true", help="Explicitly approve the plan")
+    kill_exec.add_argument("--paper", action="store_true", help="Force paper mode simulation")
 
     kill_switch = subparsers.add_parser("kill-switch")
     kill_sub = kill_switch.add_subparsers(dest="kill_command")
@@ -1339,6 +1344,10 @@ def main(argv: list[str] | None = None) -> int:
             planner = SafetyActionPlanner(risk_manager=RiskManager())
             plan = planner.create_plan(decision, portfolio, open_order_ids=[], mode="paper")
             
+            if getattr(args, "json", False):
+                print(plan.model_dump_json(indent=2))
+                return 0
+
             print(f"Safety Action Plan (Mode: {ks_mode.upper()}):")
             print(f"  Plan ID: {plan.plan_id}")
             print(f"  Status: {plan.status.upper()}")
@@ -1348,6 +1357,59 @@ def main(argv: list[str] | None = None) -> int:
             for action in plan.actions:
                 print(f"    - [{action.type.upper()}] {action.description}")
             return 0
+            
+        if args.kill_command == "execute-plan":
+            from atlas_agent.safety.models import SafetyActionPlan
+            from atlas_agent.safety.executor import SafetyActionExecutor
+            from atlas_agent.risk.portfolio import get_portfolio_snapshot
+            from atlas_agent.tools.registry import ToolRegistry
+            from atlas_agent.tools.builtin import BUILTIN_TOOLS
+            from atlas_agent.core.types import Session
+            
+            plan_path = Path(args.plan)
+            if not plan_path.exists():
+                print(f"Plan file not found: {plan_path}")
+                return 1
+                
+            plan = SafetyActionPlan.model_validate_json(plan_path.read_text(encoding="utf-8"))
+            
+            registry = ToolRegistry()
+            for tool in BUILTIN_TOOLS:
+                registry.register(tool)
+                
+            portfolio_state = PortfolioState(cash=config.starting_cash)
+            portfolio = get_portfolio_snapshot(portfolio_state)
+            
+            executor = SafetyActionExecutor(
+                tool_registry=registry,
+                kill_switch=kill_switch,
+                risk_manager=RiskManager()
+            )
+            
+            mode = "paper" if args.paper else "live"
+            session = Session(id=f"cli_safety_{plan.plan_id}", turn_count=0, has_summarized=False)
+            
+            result = executor.execute_plan(
+                plan, 
+                session, 
+                portfolio, 
+                mode=mode, # type: ignore
+                approved=args.approved
+            )
+            
+            print(f"Safety Plan Execution Result (Mode: {mode.upper()}):")
+            print(f"  Plan ID: {result.plan_id}")
+            print(f"  Status: {result.status.upper()}")
+            print(f"  Executed: {len(result.executed_actions)}")
+            print(f"  Failed: {len(result.failed_actions)}")
+            print(f"  Skipped: {len(result.skipped_actions)}")
+            
+            if result.errors:
+                print("  Errors:")
+                for err in result.errors:
+                    print(f"    - {err}")
+            
+            return 0 if result.status == "completed" else 2
 
     if args.command == "status":
         from atlas_agent.agent.status import get_agent_status

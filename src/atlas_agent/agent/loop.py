@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Union, List
+from typing import Any, Union, List, Optional
 
 from atlas_agent.agent.result import AgentResult, IterationResult
 from atlas_agent.audit.writer import AuditWriter
@@ -11,6 +11,7 @@ from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
 from atlas_agent.safety.kill_switch import AdvancedKillSwitch
 from atlas_agent.safety.action_plan import SafetyActionPlanner
+from atlas_agent.safety.executor import SafetyActionExecutor
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ToolCall, ToolResult, ToolError, GuardrailChain
 
@@ -46,6 +47,7 @@ class AgentLoop:
         risk_manager: RiskManager | None = None,
         kill_switch: AdvancedKillSwitch | None = None,
         safety_planner: SafetyActionPlanner | None = None,
+        safety_executor: SafetyActionExecutor | None = None,
     ):
         self.provider = provider
         self.tool_registry = tool_registry
@@ -56,6 +58,14 @@ class AgentLoop:
         self.risk_manager = risk_manager
         self.kill_switch = kill_switch
         self.safety_planner = safety_planner or SafetyActionPlanner(risk_manager=risk_manager)
+        self.safety_executor = safety_executor or (
+            SafetyActionExecutor(
+                tool_registry=tool_registry,
+                kill_switch=kill_switch, # type: ignore
+                risk_manager=risk_manager, # type: ignore
+                audit_writer=audit_writer
+            ) if kill_switch and risk_manager else None
+        )
 
     def run(
         self,
@@ -66,6 +76,7 @@ class AgentLoop:
         run_id: str | None = None,
         portfolio_snapshot: PortfolioSnapshot | None = None,
         open_order_ids: List[str] | None = None,
+        allow_auto_safety_actions: bool = False,
     ) -> AgentResult:
         run_id = run_id or f"run_{int(session.turn_count)}_{session.id}"
         
@@ -78,7 +89,7 @@ class AgentLoop:
             )
 
         result = self._run_loop(
-            user_objective, session, system_prompt, mode, run_id, portfolio_snapshot, open_order_ids
+            user_objective, session, system_prompt, mode, run_id, portfolio_snapshot, open_order_ids, allow_auto_safety_actions
         )
 
         if self.audit_writer:
@@ -104,6 +115,7 @@ class AgentLoop:
         run_id: str,
         portfolio_snapshot: PortfolioSnapshot | None,
         open_order_ids: List[str] | None,
+        allow_auto_safety_actions: bool,
     ) -> AgentResult:
         iterations = []
         messages = [{"role": "user", "content": user_objective}]
@@ -251,6 +263,13 @@ class AgentLoop:
                                         "action_types": [a.type for a in plan.actions]
                                     }
                                 )
+
+                            # ATTEMPT EXECUTION if allowed
+                            if self.safety_executor and allow_auto_safety_actions and not plan.requires_approval:
+                                exec_res = self.safety_executor.execute_plan(
+                                    plan, session, portfolio, mode=mode # type: ignore
+                                )
+                                diagnostics["safety_execution"] = exec_res.model_dump()
 
                         if self.audit_writer:
                             self.audit_writer.write_event(

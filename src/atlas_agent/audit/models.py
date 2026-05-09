@@ -30,6 +30,13 @@ AuditEventType = Literal[
     "safety_action_plan_blocked",
     "safety_action_requires_approval",
     "safety_action_no_op",
+    "safety_plan_execution_requested",
+    "safety_plan_execution_requires_approval",
+    "safety_action_execution_started",
+    "safety_action_execution_completed",
+    "safety_action_execution_failed",
+    "safety_plan_execution_completed",
+    "safety_plan_execution_blocked",
     "run_completed",
     "run_failed",
 ]
