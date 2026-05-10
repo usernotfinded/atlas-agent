@@ -8,6 +8,12 @@
 
 Atlas is the broker-neutral control layer above user-selected models, broker/API providers, credentials, and risk limits. It treats the LLM as the reasoning engine and provides it with a toolset of **broker adapters** to perform web research, manage portfolios, and evaluate trade ideas through a rigorous deterministic **risk gates** layer.
 
+## Demo
+
+A short terminal demo will show workspace init, validation, paper mode, and audit verification.
+
+<!-- demo gif placeholder: assets/atlas-demo.gif -->
+
 ## Why Atlas?
 
 - **LLM-assisted market research**: Leverage advanced models to process market context and form data-driven theses.
