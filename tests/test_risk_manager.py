@@ -63,3 +63,48 @@ def test_symbol_blocklist_works() -> None:
 
     assert not decision.allowed
     assert any("blocked_symbols" in v.rule for v in decision.violations)
+
+def test_market_order_without_reference_price_is_rejected():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="market", limit_price=None)
+    portfolio = PortfolioState(cash=10000.0)
+    
+    # Pass market_price=0.0
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=0.0)
+    assert not decision.allowed
+    assert "reference_price_required" in decision.reasons
+    assert "Cannot evaluate notional for market order without reference price" in decision.reasons
+
+def test_market_order_with_reference_price_passes():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="market", limit_price=None)
+    portfolio = PortfolioState(cash=10000.0)
+    
+    # Pass market_price=10.0
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=10.0)
+    assert decision.allowed
+
+def test_limit_order_uses_limit_price():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig(max_order_notional=100)
+    manager = RiskManager.from_config(config)
+    
+    # limit price is 20, qty=10 -> notional 200, but market_price is 5 (notional 50)
+    # The order should be blocked because the effective price is limit_price (20) causing notional=200 > 100
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=20.0)
+    portfolio = PortfolioState(cash=10000.0)
+    
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=5.0)
+    assert not decision.allowed
+    # The reason comes from legacy shim combining them
+    assert any("max order notional exceeded" in r for r in decision.reasons)
+

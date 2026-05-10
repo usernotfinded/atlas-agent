@@ -21,7 +21,9 @@ class Order:
 
     @property
     def notional(self) -> float:
-        return self.quantity * (self.limit_price or 0.0)
+        if self.limit_price is None or self.limit_price <= 0:
+            raise ValueError("Cannot evaluate notional for market order without reference price")
+        return self.quantity * self.limit_price
 
     def with_price(self, price: float) -> Order:
         return Order(

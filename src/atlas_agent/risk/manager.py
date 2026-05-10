@@ -67,12 +67,23 @@ class RiskManager:
         """Legacy compatibility shim."""
         from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
         
+        # 1. Determine reference price
+        limit_price = getattr(order, "limit_price", None)
+        effective_price = limit_price if limit_price and limit_price > 0 else market_price
+        
+        if not effective_price or effective_price <= 0:
+            class LegacyDecision:
+                def __init__(self, allowed, reasons):
+                    self.allowed = allowed
+                    self.reasons = reasons
+            return LegacyDecision(False, ("Cannot evaluate notional for market order without reference price", "reference_price_required"))
+
         risk_input = OrderRiskInput(
             symbol=order.symbol,
             side=order.side,
             quantity=order.quantity,
-            price=market_price,
-            notional=order.quantity * market_price,
+            price=effective_price,
+            notional=order.quantity * effective_price,
             leverage=getattr(order, "leverage", 1.0),
             confidence=getattr(order, "confidence", None),
             stop_loss=getattr(order, "stop_loss", None)
