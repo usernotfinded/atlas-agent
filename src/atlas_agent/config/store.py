@@ -58,8 +58,10 @@ def _atomic_write_toml(config_dict: dict) -> None:
 
 def set_raw_value(dotted_path: str, value: Any) -> None:
     """Set a value in the raw TOML config. Rejects secrets."""
-    if dotted_path == "model.default":
+    is_model_update = False
+    if dotted_path in ("model.default", "model.model"):
         dotted_path = "model.model"
+        is_model_update = True
         
     if is_secret_key(dotted_path):
         raise ValueError(f"Cannot store secret key '{dotted_path}' in raw TOML. Use secrets store.")
@@ -73,13 +75,16 @@ def set_raw_value(dotted_path: str, value: Any) -> None:
     else:
         doc = tomlkit.document()
 
+    if is_model_update and "model" in doc and hasattr(doc["model"], "get") and "default" in doc["model"]:
+        del doc["model"]["default"]
+
     parts = dotted_path.split(".")
     
     current = doc
     for i, part in enumerate(parts[:-1]):
         if part not in current:
             current[part] = tomlkit.table()
-        elif not isinstance(current[part], dict):
+        elif not hasattr(current[part], "get"):
             # Overwrite non-dict with table if intermediate path
             current[part] = tomlkit.table()
         current = current[part]
@@ -98,14 +103,34 @@ def unset_raw_value(dotted_path: str) -> None:
     with open(path, "r", encoding="utf-8") as f:
         doc = tomlkit.load(f)
         
-    parts = dotted_path.split(".")
-    
-    current = doc
-    for part in parts[:-1]:
-        if not isinstance(current, dict) or part not in current:
-            return
-        current = current[part]
+    modified = False
+
+    if dotted_path == "model.model":
+        if "model" in doc and hasattr(doc["model"], "get"):
+            if "default" in doc["model"]:
+                del doc["model"]["default"]
+                modified = True
+            if "model" in doc["model"]:
+                del doc["model"]["model"]
+                modified = True
+    elif dotted_path == "model.default":
+        if "model" in doc and hasattr(doc["model"], "get"):
+            if "default" in doc["model"]:
+                del doc["model"]["default"]
+                modified = True
+    else:
+        parts = dotted_path.split(".")
+        current = doc
+        found = True
+        for part in parts[:-1]:
+            if not hasattr(current, "get") or part not in current:
+                found = False
+                break
+            current = current[part]
+            
+        if found and hasattr(current, "get") and parts[-1] in current:
+            del current[parts[-1]]
+            modified = True
         
-    if isinstance(current, dict) and parts[-1] in current:
-        del current[parts[-1]]
+    if modified:
         _atomic_write_toml(doc)

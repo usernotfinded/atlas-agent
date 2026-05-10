@@ -98,3 +98,19 @@ def test_manual_smoke_ux_regression(tmp_path, monkeypatch):
     assert "API key: configured/redacted" in out
     assert "live trading disabled unless explicitly enabled" in out
     assert "ANTHROPIC_API_KEY" not in out
+
+    # 12. Test unset model.default
+    code, out, err = run_cmd("atlas config unset model.default", cwd=tmp_path)
+    assert code == 0
+    toml_content = toml_path.read_text()
+    assert "provider = \"openrouter\"" in toml_content
+    assert "model = \"openai/gpt-5.5\"" in toml_content
+    assert "default" not in toml_content
+
+    # 13. Test unset model.model
+    code, out, err = run_cmd("atlas config unset model.model", cwd=tmp_path)
+    assert code == 0
+    toml_content = toml_path.read_text()
+    assert "model = \"openai/gpt-5.5\"" not in toml_content
+    assert "default" not in toml_content
+    assert "provider" in toml_content  # Should be preserved
