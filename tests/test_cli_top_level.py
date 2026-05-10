@@ -41,7 +41,7 @@ def test_help_no_agent_start(non_workspace, capsys):
     code = main(["--help"])
     assert code == 0
     captured = capsys.readouterr()
-    assert "Atlas Agent is a self-improving AI trading agent" in captured.out
+    assert "Atlas Agent is a broker-neutral supervised trading workspace" in captured.out
     assert "Starting autonomous cycle..." not in captured.out
 
 

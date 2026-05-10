@@ -5,4 +5,4 @@ ATLAS_ASCII_BANNER = r"""
    /_/   \_|_| |____/_/ \_\___/  /_/ \_\___|___|_|\_| |_|  
 """
 
-ATLAS_TAGLINE = "Atlas Agent is a self-improving AI trading agent."
+ATLAS_TAGLINE = "Atlas Agent is a broker-neutral supervised trading workspace."

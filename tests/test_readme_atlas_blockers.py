@@ -11,14 +11,19 @@ def _readme() -> str:
     return README.read_text(encoding="utf-8")
 
 
-def test_readme_positions_atlas_self_improving_agent() -> None:
+def test_readme_positions_atlas_supervised_workspace() -> None:
     text = _readme()
     lower = text.lower()
 
     for phrase in (
-        "self-improving ai trading agent",
-        "built by natan mucelli",
-        "learning loop",
+        "broker-neutral",
+        "supervised trading workspace",
+        "control layer",
+        "deterministic risk gates",
+        "approval queues",
+        "paper workflows",
+        "live trading is disabled by default",
+        "not financial advice",
     ):
         assert phrase in lower
 
@@ -51,6 +56,14 @@ def test_readme_avoids_forbidden_positioning_and_profit_claims() -> None:
         "sure " + "profit",
         "passive " + "income",
         "beat " + "the market",
+        "magic ai trading bot",
+        "autonomous profit system",
+        "production-grade live",
+        "makes money",
+        "best broker",
+        "recommended broker",
+        "self-improving ai trading agent",
+        "professional-grade toolset",
     )
     for phrase in forbidden:
         assert phrase not in lower

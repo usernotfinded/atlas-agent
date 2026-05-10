@@ -2,48 +2,47 @@
 
 # Atlas Agent
 
-**Atlas Agent is a self-improving AI trading agent that connects financial LLMs, broker tools, persistent memory, and deterministic risk controls into one local-first trading workspace.**
+**Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-Atlas Agent is built for precision and safety. It treats the LLM as the reasoning engine and provides it with a professional-grade toolset to research markets, manage portfolios, and execute trades through a rigorous deterministic risk layer.
+> **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
-- **Local-first:** Your data, memory, and credentials stay on your machine.
-- **Simulation-driven:** Paper mode is the default and safest mode for all operations. Live trading requires explicit configuration.
-- **Tool-driven:** 49 builtin tool schemas for research, analysis, and execution.
-- **Risk-gated:** Every action passes through a separate, deterministic guardrail system.
+Atlas is the broker-neutral control layer above user-selected models, broker/API providers, credentials, and risk limits. It treats the LLM as the reasoning engine and provides it with a toolset of **broker adapters** to perform web research, manage portfolios, and evaluate trade ideas through a rigorous deterministic **risk gates** layer.
 
-Use the model stack that fits your trading workflow — [OpenRouter](https://openrouter.ai), [NVIDIA NIM](https://build.nvidia.com), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), [OpenAI](https://platform.openai.com/home), [DeepSeek](https://platform.deepseek.com/usage) or any OpenAI-compatible/custom endpoint. Atlas Agent is provider-neutral by design: configure your provider once, switch models through `atlas configure`, and keep the execution, memory, and risk-control layers unchanged.
+## Why Atlas?
 
-For finance-specific deployments, prefer models with strong results on dedicated finance-agent evaluations. The [Vals AI Finance Agent benchmark](https://www.vals.ai/benchmarks/finance_agent) is the recommended reference when selecting a model for market research, trading reasoning, and portfolio analysis.
+- **LLM-assisted market research**: Leverage advanced models to process market context and form data-driven theses.
+- **Paper workflows**: Validate strategies using high-fidelity **simulation** before risking capital. Every **market-open** session is designed to favor simulation until explicitly authorized. During **closed-market** hours, Atlas focuses on **learning** and research.
+- **Deterministic risk gates**: Safety controls are decoupled from LLM reasoning to help reduce unintended actions.
+- **Approval queues**: Live actions are designed to require explicit human confirmation via local queues.
+- **Persistent trading memory**: Markdown journals allow the agent to carry lessons across sessions and improve its "user model" through a continuous **learning loop**.
+- **Tamper-evident audit logs**: Cryptographic **hash-chain** tracking for accountability, **read-only** replay, and forensic review.
+- **Bring-your-own model and provider**: **Provider-neutral** by design. You select the APIs, the models, and the credentials.
 
-## What Atlas Agent Is
+## Broker-Neutral Model
 
-Atlas Agent is a workspace where an AI agent lives, learns, and trades.
+Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is designed as the control layer above user-selected APIs.
 
-*   **The Agent:** A financial LLM (Claude, OpenAI, DeepSeek, etc.) acts as the decision-maker, processing market context and memory to form a thesis.
-*   **The Tools:** How the agent interacts with the world. From pulling OHLCV data and web research to executing orders and updating trade journals.
-*   **The Memory:** Persistent Markdown journals and logs allow the agent to carry lessons across sessions, deepening its "user model" and improving its skills over time.
-*   **The Guardrails:** Deterministic risk controls (position sizing, daily loss limits, symbol policies) are decoupled from LLM reasoning to ensure safety.
-*   **Simulation and Learning:** The default safety mode. Atlas Agent uses a high-fidelity `PaperBroker` for simulation without financial risk. During **closed-market** hours, Atlas focuses on research and the built-in **learning loop** to improve future planning.
+- **No Custody**: Atlas never touches your funds. It communicates with your chosen broker via your own API credentials.
+- **No Recommendations**: The framework does not prefer any specific broker or provider. You choose the integration that fits your regulatory and financial requirements.
+- **Universal Interface**: Switch between your preferred endpoints through a single configuration point. Supports **OpenRouter**, **NVIDIA NIM**, **z.ai/GLM**, **Kimi/Moonshot**, **Hugging Face**, **OpenAI**, and other **custom endpoint** or **OpenAI-compatible** providers. For finance-specific deployments, the [Vals AI Finance Agent benchmark](https://www.vals.ai/benchmarks/finance_agent) is a useful reference for model selection.
+
+## System Status
+
+| Component | Status | Description |
+|---|---|---|
+| **Local Workspace** | Usable | Core environment, CLI, and configuration management. |
+| **Paper Workflow** | Usable | High-fidelity simulation with deterministic pricing. |
+| **Risk Gates** | Implemented | Hard-coded limits for position size, notional, and symbols. |
+| **Audit Logs** | Implemented | Tamper-evident hash-chain and run manifests. |
+| **Broker/API Model** | Beta | Provider-neutral synchronization and adapter interfaces. |
+| **Live Trading** | Disabled | Strictly opt-in; designed to prevent orders without approval. |
+| **Broker Integrations** | Beta | Early-stage adapters for third-party broker APIs. |
+| **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
+| **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
 ## Current Status (v0.4.0)
 
-| Component | Status | Description |
-|---|---:|---|
-| Setup Wizard | Implemented | First-run onboarding with persistent ASCII banner, keyboard-driven setup, and safe reconfiguration through `atlas configure`. |
-| Provider-Neutral Models | Implemented | Supports OpenRouter, NVIDIA NIM, z.ai/GLM, Kimi/Moonshot, Hugging Face, OpenAI, and custom/OpenAI-compatible endpoints without lock-in. |
-| Tool Registry | Implemented | 49 builtin tool schemas with JSON Schema validation, provider normalization, and compatibility aliases for legacy tool names. |
-| Agent Loop | Implemented | Tool-driven autonomous reasoning loop replacing legacy routines. |
-| Audit Hash-Chain | Implemented | Tamper-evident audit logs for accountability, replay, and post-trade review. |
-| Audit Manifests / Root Hash | Implemented | Run-level manifests and root hash verification to prevent tail deletion. |
-| Portfolio Risk Manager | Implemented | Deterministic gates for position size, loss limits, live trading safety, and symbol policy. |
-| Pending Orders Risk | Implemented | Worst-reasonable exposure projection aggregating current positions and active pending orders. |
-| Kill Switch | Implemented | Advanced hierarchical state machine with dead-man heartbeat protection. |
-| Safety Action Planner | Implemented | Generates deterministic, approval-gated action plans for emergency cancellation and flattening. |
-| Safety Action Executor | Implemented | Protected proxy to execute safety plans without bypassing risk or audit gates. |
-| Broker Sync Layer | Implemented | Provider-neutral synchronization of account state, positions, and orders. |
-| Backtesting Foundation | Implemented | Deterministic, local-first engine with risk integration and audit logging. |
-| Local Dashboard | Implemented | Minimal, read-only local HTML dashboard for system visibility. |
-| Live Trading | Disabled by Default | Explicit opt-in only. All unconfigured runs default to paper simulation. |
+Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
 
 ## Quickstart
 
@@ -59,14 +58,10 @@ atlas validate
 
 # Run your first paper-trading cycle
 atlas run --mode paper
-
-# Keep Atlas updated
-atlas update
 ```
 
-1. **`atlas`**: Running bare `atlas` for the first time opens the interactive setup wizard. The wizard keeps the ASCII banner visible and collects your provider and broker credentials securely. Bare `atlas` never starts trading automatically.
-2. **`atlas run`**: Execution is explicit. Use `--mode paper` for safety and simulation. Live trading requires explicit configuration and broker sync.
-3. **`atlas update`**: The official way to update. It preserves your `.env.atlas` and local configurations without overwriting sensitive files.
+1. **`atlas`**: Running bare `atlas` for the first time opens the interactive setup wizard. It collects your provider and broker credentials securely.
+2. **`atlas run`**: Execution is explicit. Use `--mode paper` for safety and simulation. Live trading is designed to prevent orders without explicit configuration and multi-stage gates.
 
 ## Configuration & Security
 
@@ -78,99 +73,27 @@ Atlas Agent uses a dual-layer configuration system to balance portability and se
 **Security Rules:**
 *   Secrets go in `.env.atlas`.
 *   `.env.atlas` is gitignored.
-*   The dashboard is strictly read-only and must not expose secrets.
-*   Audit logs, manifests, and diagnostics must not contain secrets or raw prompts with sensitive data.
-*   The update system must not overwrite sensitive files.
-
-Non-secret local configuration belongs in `.atlas/config.toml`.
-
-Atlas Agent can optionally connect to a configurable web research provider for market/news lookup and external context gathering. The provider is user-selected. Atlas should not require or prefer a specific research vendor. Examples include hosted search APIs, self-hosted metasearch, browser automation providers, or custom HTTP/OpenAI-compatible endpoints.
-
-```bash
-# Optional generic research provider secret
-ATLAS_RESEARCH_API_KEY=...
-```
-
-## Update System
-
-Do not use `git pull` as your primary update path. Use the built-in update command:
-
-```bash
-atlas update
-```
-
-The updater is designed to safely sync the latest Atlas Agent code while preserving your sensitive local files, including `.env`, `.env.atlas`, and custom workspace configs.
+*   The dashboard is strictly **read-only** and must not expose secrets.
+*   Audit logs and diagnostics are designed to redact secrets and sensitive free-text.
 
 ## Safety Model
 
-*   **Simulation by Default**: Atlas Agent will never attempt live trading unless explicitly configured. Paper mode is the safest and default mode. Every **market-open** session begins with a simulation check.
-*   **Broker Sync & Adapters**: Broker sync is required before any live decisions are made. Execution is normalized through secure broker adapters that implement strict validation.
-*   **Deterministic Guardrails**: Risk controls and **risk gates** are hard-coded and separate from the LLM. If the LLM proposes an order that violates a risk rule, the `RiskManager` will block it before it reaches the broker.
-*   **Approval Gates**: Live orders can be configured to require manual approval via `atlas approve-order`. See [Pending Orders](docs/pending-orders.md) for details. Safety execution plans require approval unless explicitly simulated or approved.
-*   **Kill Switch**: Advanced emergency stop with hierarchical modes (soft pause, cancel all, flatten all). The **dead-man heartbeat** monitoring ensures the system fails closed if the controller process is interrupted.
-*   **Dashboard**: The local dashboard provides a **read-only** snapshot of the system state (static HTML). It cannot trigger trades, does not use remote assets, and automatically redacts all secrets.
+*   **Simulation by Default**: Atlas Agent will never attempt live trading unless explicitly configured. Paper mode is the safest and default mode.
+*   **Deterministic Guardrails**: Risk controls are hard-coded and separate from the LLM. If the LLM proposes an order that violates a risk rule, the `RiskManager` is designed to block it.
+*   **Approval Gates**: Live orders can be configured to require manual approval via `atlas approve-order`. See [Pending Orders](docs/pending-orders.md) for details.
+*   **Kill Switch**: Advanced emergency stop with hierarchical modes. The **dead-man heartbeat** monitoring ensures the system fails closed if the process is interrupted.
 *   **Responsibility**: You are responsible for your API keys, broker permissions, and any financial outcomes. Atlas Agent provides the tools; you provide the oversight.
-
-## Audit Foundation
-
-Atlas Agent implements a high-integrity audit trail designed for accountability and forensic review:
-
-- **Tamper-Evident Hash-Chain**: Every event is cryptographically linked to the previous one, forming a secure chain in `audit/audit.log`.
-- **Run Manifests**: Each session generates a signed manifest containing the run's metadata and event count.
-- **Root Hash Verification**: Validating the chain against the manifest detection both payload tampering and "tail deletion" (removing events from the end of the log).
-- **Verification**: Use `atlas audit verify --all` to check the integrity of your entire workspace history.
 
 ## Backtesting
 
-Atlas Agent includes a deterministic, local-first backtesting engine to evaluate strategies against historical data.
-
-- **Deterministic Execution**: Orders are filled based on historical price action with configurable slippage and commission. It uses a **buy-and-hold** baseline as the default strategy MVP.
-- **Risk Integration**: Every simulated trade is validated by the `RiskManager` before execution, ensuring backtests respect your real-world risk policy.
-- **Audit Integration**: Backtest runs generate the same tamper-evident audit events as live/paper runs, ensuring reproducible results.
-- **Local-First**: No network calls are made during backtesting. All data is loaded from local CSV files.
+Atlas Agent includes a deterministic, local-first backtesting engine to evaluate strategy behavior against historical benchmarks.
 
 ```bash
 # Run a buy-and-hold backtest
 atlas backtest run --symbol AAPL --data path/to/data.csv
-
-# Backtest with specific initial equity and JSON output
-atlas backtest run --symbol AAPL --data data.csv --initial-equity 50000 --json
 ```
 
-**Note:** Backtesting is a simulation tool for research purposes. Historical results do not guarantee future performance and are not financial advice. Atlas does not predict profit; it measures strategy behavior against historical benchmarks.
-
-## Architecture (v2 Direction)
-
-```text
-User / Scheduler / Event
-     ↓
-Agent Loop (Reasoning + Memory)
-     ↓
-Tool Registry (49 Builtin Tools)
-     ↓
-Market Data / Research / Memory / Broker / Update
-     ↓
-Guardrails + Audit + Risk Controls
-```
-
-## Commands
-
-| Command | Purpose |
-| :--- | :--- |
-| `atlas` | Open setup wizard or show status. |
-| `atlas configure` | Re-run the interactive setup wizard. |
-| `atlas validate` | Check local configuration and safety gates. |
-| `atlas backtest run` | Run a deterministic backtest on historical CSV data. |
-| `atlas run --mode paper` | Start the autonomous agent in simulation. |
-| `atlas update` | Safely update Atlas Agent to the latest version. |
-| `atlas audit verify` | Verify the JSONL audit log hash-chain. |
-| `atlas audit verify --all` | Verify all run-level audit manifests in the workspace. |
-| `atlas risk status` | View the current configuration of the Portfolio Risk Manager. |
-| `atlas kill status` | Check the status of the global kill switch and heartbeat. |
-| `atlas kill plan --mode flatten-all` | Generate a safety action plan without executing it. |
-| `atlas kill execute-plan --plan emergency_plan.json --paper` | Execute an approved safety plan or force a paper simulation. |
-| `atlas broker sync` | Synchronize account, positions, and orders from the broker. |
-| `atlas dashboard` | Generate a local, read-only HTML dashboard reflecting system state. |
+**Note:** Backtesting is a research tool. Historical results do not guarantee future performance. Atlas does not predict profit; it measures strategy behavior against historical data.
 
 ## Telegram Control Plane
 
@@ -178,7 +101,15 @@ Atlas Agent provides an optional Telegram interface for remote status updates an
 
 ## Deployment and Cloud
 
-Atlas is designed for local-first operation but can be deployed to a VPS, Docker container, or serverless job for continuous monitoring. Always ensure your environment variables are secured in your deployment target.
+Atlas is designed for local-first operation but can be deployed to a VPS, Docker container, or serverless job. Always ensure your environment variables are secured in your deployment target.
+
+## Commands
+
+| Command | Purpose |
+| :--- | :--- |
+| `atlas backtest run` | Run a deterministic backtest on historical CSV data. |
+| `atlas broker sync` | Synchronize account, positions, and orders from the broker. |
+| `atlas audit verify` | Verify the JSONL audit log hash-chain. |
 
 ## Disclaimer
 

@@ -1,6 +1,6 @@
 # Contributing to Atlas Agent
 
-Thank you for your interest in contributing to Atlas Agent. Atlas Agent is a local-first, self-improving AI trading agent designed for precision, safety, and transparency.
+Thank you for your interest in contributing to Atlas Agent. Atlas Agent is a local-first, broker-neutral supervised trading workspace designed for precision, safety, and transparency.
 
 ## Contribution Priorities
 

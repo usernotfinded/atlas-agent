@@ -20,7 +20,15 @@ def test_no_forbidden_terms(file_path):
         "backtest --strategy",
         "risk-free",
         "guaranteed profit",
-        "predicts profit"
+        "predicts profit",
+        "self-improving ai trading agent",
+        "professional-grade toolset",
+        "production-grade live",
+        "makes money",
+        "best broker",
+        "recommended broker",
+        "magic ai trading bot",
+        "autonomous profit system"
     ]
     
     for term in forbidden:

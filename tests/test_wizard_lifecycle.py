@@ -65,7 +65,7 @@ def test_wizard_renderer_includes_banner():
     text = "".join(t[1] for t in rendered)
     
     assert "___ _____ _      _   ___" in text
-    assert "Atlas Agent is a self-improving AI trading agent." in text
+    assert "Atlas Agent is a broker-neutral supervised trading workspace." in text
     assert "Atlas Agent Setup" in text
 
 def test_wizard_renderer_keeps_banner_across_steps():
