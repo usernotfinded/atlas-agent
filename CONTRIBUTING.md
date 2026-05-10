@@ -48,16 +48,29 @@ Do not hardcode a preferred research/search vendor in user-facing documentation,
 - It manages how context is composed for the LLM in the **AgentLoop**.
 - It coordinates session state and routes tool results back into the reasoning flow.
 - It handles the high-level coordination of an autonomous tool-driven loop.
+- Logic belongs in `src/atlas_agent/agent/`.
 
 ### Make it an Audit component when:
 - It records immutable, tamper-evident logs via the **Audit Hash-Chain**.
 - It manages run-level **Audit Manifests** and root hashes.
+- Logic belongs in `src/atlas_agent/audit/`.
+
+### Make it a Risk or Safety component when:
+- It blocks unsafe or invalid trading behavior independently of the LLM.
+- It enforces risk limits via the **RiskManager** (`src/atlas_agent/risk/`).
+- It manages emergency states via the **KillSwitch** (`src/atlas_agent/safety/`).
+- It creates or executes emergency interventions via the **SafetyActionPlanner** or **SafetyActionExecutor**.
 
 ### Make it a Broker component when:
-- It synchronizes account state, positions, and orders via the **BrokerSyncService**.
+- It synchronizes account state, positions, and orders via the **BrokerSyncService** (`src/atlas_agent/brokers/`).
+- It implements normalization for a specific broker backend.
+
+### Make it a Backtest component when:
+- It handles historical simulation, data loading, or deterministic metrics.
+- Logic belongs in `src/atlas_agent/backtest/` and `src/atlas_agent/backtest/engine.py`.
 
 ### Make it a Dashboard component when:
-- It provides read-only local visibility into the system state via the **Dashboard**.
+- It provides read-only local visibility into the system state via the **Dashboard** (`src/atlas_agent/dashboard/`).
 
 ### Make it Setup Wizard logic when:
 - It collects config and secrets, but never stores API keys in config.json.

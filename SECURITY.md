@@ -83,16 +83,31 @@ Pending live approvals are written as JSON files with expiry (`pending_orders/*.
 
 ### 2.5 Auditability and secret redaction
 
-- Audit records are written to `audit/audit.jsonl` (`AuditLogger`).
-- Event records are written to `events/YYYY-MM-DD.jsonl` (`EventLogger`) and schema-validated.
-- Redaction strips secret-like keys and token-like strings before persistence.
-- Event doctor and memory doctor commands detect schema drift and likely secret leaks (`atlas events doctor`, `atlas memory doctor`).
+- Audit records are written to a **tamper-evident hash-chain** in `audit/audit.log`.
+- Every event is cryptographically linked to the previous one.
+- **Run Manifests** and **Root Hashes** protect against "tail deletion" (removing events from the end of the log).
+- Verification against the manifest detects both payload tampering and log truncation.
+- Redaction recursively strips secret-like keys and token-like strings before persistence.
+- Event doctor and memory doctor commands detect schema drift and likely secret leaks.
 
-### 2.6 Adapter boundaries
+### 2.6 Backtesting Safety
 
-- Every broker integration must implement `Broker` (`src/atlas_agent/brokers/base.py`).
-- Every AI provider integration must implement `AIProvider` (`src/atlas_agent/providers/base.py`).
-- New adapters must preserve risk/approval/kill-switch/audit boundaries and must not create direct side channels that bypass `OrderRouter`.
+- The backtesting engine is strictly **local-first** and deterministic.
+- It does not execute real broker calls and does not require network access.
+- All simulated trades must pass through the same `RiskManager` logic as live/paper trades.
+- Backtest results are stored locally and are for research purposes only; they are not financial advice.
+
+### 2.7 Dashboard and Visibility
+
+- The local dashboard is a **read-only** static snapshot.
+- It cannot trigger or modify trades and does not expose API keys or secrets.
+- It is designed for local visibility and does not use remote assets or CDNs if possible.
+
+### 2.8 Update System and Config Safety
+
+- The `atlas update` system is designed to protect your sensitive local files.
+- It must never overwrite `.env`, `.env.atlas`, `.env.local`, or your `.atlas/config.json`.
+- Non-secret settings should reside in `.atlas/config.json`, while all credentials MUST stay in `.env.atlas`.
 
 ## 3. Out of Scope / Non-Vulnerabilities
 

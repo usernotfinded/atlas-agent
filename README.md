@@ -105,18 +105,27 @@ The updater is designed to safely sync the latest Atlas Agent code while preserv
 *   **Broker Sync & Adapters**: Broker sync is required before any live decisions are made. Execution is normalized through secure broker adapters that implement strict validation.
 *   **Deterministic Guardrails**: Risk controls and **risk gates** are hard-coded and separate from the LLM. If the LLM proposes an order that violates a risk rule, the `RiskManager` will block it before it reaches the broker.
 *   **Approval Gates**: Live orders can be configured to require manual approval via `atlas approve-order`. Safety execution plans require approval unless explicitly simulated or approved.
-*   **Kill Switch**: Advanced emergency stop with heartbeat monitoring for all trading activity.
-*   **Dashboard**: The local dashboard provides a read-only snapshot of the system state, ensuring no trades can be triggered inadvertently from the UI.
+*   **Kill Switch**: Advanced emergency stop with hierarchical modes (soft pause, cancel all, flatten all). The **dead-man heartbeat** monitoring ensures the system fails closed if the controller process is interrupted.
+*   **Dashboard**: The local dashboard provides a **read-only** snapshot of the system state (static HTML). It cannot trigger trades, does not use remote assets, and automatically redacts all secrets.
 *   **Responsibility**: You are responsible for your API keys, broker permissions, and any financial outcomes. Atlas Agent provides the tools; you provide the oversight.
+
+## Audit Foundation
+
+Atlas Agent implements a high-integrity audit trail designed for accountability and forensic review:
+
+- **Tamper-Evident Hash-Chain**: Every event is cryptographically linked to the previous one, forming a secure chain in `audit/audit.log`.
+- **Run Manifests**: Each session generates a signed manifest containing the run's metadata and event count.
+- **Root Hash Verification**: Validating the chain against the manifest detection both payload tampering and "tail deletion" (removing events from the end of the log).
+- **Verification**: Use `atlas audit verify --all` to check the integrity of your entire workspace history.
 
 ## Backtesting
 
 Atlas Agent includes a deterministic, local-first backtesting engine to evaluate strategies against historical data.
 
-- **Deterministic Execution**: Orders are filled based on historical price action with configurable slippage and commission.
-- **Risk Integration**: Every simulated trade is validated by the `RiskManager` before execution.
-- **Audit Integration**: Backtest runs generate tamper-evident audit events, ensuring reproducibility.
-- **Local-First**: No network calls are made during backtesting; all data is loaded from local CSV files.
+- **Deterministic Execution**: Orders are filled based on historical price action with configurable slippage and commission. It uses a **buy-and-hold** baseline as the default strategy MVP.
+- **Risk Integration**: Every simulated trade is validated by the `RiskManager` before execution, ensuring backtests respect your real-world risk policy.
+- **Audit Integration**: Backtest runs generate the same tamper-evident audit events as live/paper runs, ensuring reproducible results.
+- **Local-First**: No network calls are made during backtesting. All data is loaded from local CSV files.
 
 ```bash
 # Run a buy-and-hold backtest
@@ -126,7 +135,7 @@ atlas backtest run --symbol AAPL --data path/to/data.csv
 atlas backtest run --symbol AAPL --data data.csv --initial-equity 50000 --json
 ```
 
-**Note:** Backtesting is a simulation tool for research purposes. Historical results do not guarantee future performance and are not financial advice.
+**Note:** Backtesting is a simulation tool for research purposes. Historical results do not guarantee future performance and are not financial advice. Atlas does not predict profit; it measures strategy behavior against historical benchmarks.
 
 ## Architecture (v2 Direction)
 

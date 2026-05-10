@@ -23,7 +23,7 @@ atlas deploy serverless
 Runtime command:
 
 ```bash
-atlas agent run --continuous
+atlas run --mode paper --continuous
 ```
 
 Before continuous operation:

@@ -1,12 +1,17 @@
 # Atlas Agent Routines
 
-Routines are stateless scheduled runs. Each run reads Markdown memory, performs research, uses the CLI-backed trading path, writes reports, updates memory, optionally sends ClickUp notifications, and optionally commits/pushes changes.
+In Atlas Agent v0.3.0, "routines" represent the high-level autonomous reasoning cycles coordinated by the **AgentLoop**. The agent uses a tool-driven approach to research markets, manage memory, and execute trades.
 
-Manual run:
-
+## Execution
+Run a manual autonomous cycle:
 ```bash
-atlas agent run --mode auto
+atlas run --mode paper --once
 ```
 
-Remote AI agents can paste prompts from `routines/prompts/`.
+## Features
+- **Tool-Driven Reasoning**: The agent uses 49+ builtin tools to interact with the system.
+- **Memory Persistence**: Every run reads and updates Markdown journals in the `memory/` directory.
+- **Auditability**: Every tool call and risk decision is recorded in the tamper-evident audit log.
+- **Notifications**: Optional integration with ClickUp for remote session reports.
+- **Git Sync**: Optional guarded commit/push of memory and reports.
 

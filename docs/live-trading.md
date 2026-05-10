@@ -1,6 +1,24 @@
 # Live Trading
 
-Live trading is disabled by default and can lose money. Live commands exist but must fail safely unless explicit live config, credentials, risk validation, kill switch state, and approval all pass.
+**DANGER:** Live trading involves real financial risk and can lose money. 
 
-Default live approval mode is `manual_live`.
+In Atlas Agent v0.3.0, live trading is strictly **disabled by default**. Enabling it requires passing through a multi-stage gate system.
+
+## Mandatory Prerequisites
+1.  **Explicit Mode**: `TRADING_MODE=live` and `ENABLE_LIVE_TRADING=true`.
+2.  **Valid Broker Credentials**: Configured in `.env.atlas`.
+3.  **Risk Validation**: The `RiskManager` must have a valid configuration in `.atlas/config.json`.
+4.  **Broker Sync**: You must run `atlas broker sync` to ensure local account state matches the broker.
+5.  **Manual Approval**: The default `ORDER_APPROVAL_MODE=manual_live` requires every order to be approved via `atlas approve-order`.
+6.  **Kill-Switch Gating**: The kill switch must be in the `disabled` state.
+
+## Live Execution Path
+1.  **Agent Proposal**: The `AgentLoop` proposes an order tool call.
+2.  **Risk Check**: `RiskManager` intercepts and validates against limits.
+3.  **Approval Gate**: The order is placed in `pending_orders/` and an approval is requested.
+4.  **Manual Review**: The operator reviews the order and approves it via CLI.
+5.  **Order Placement**: Only then is the order sent to the live broker adapter.
+6.  **Audit**: Every step is recorded in the tamper-evident audit hash-chain.
+
+**Responsibility:** You are solely responsible for your live trading configuration, risk limits, and financial outcomes.
 

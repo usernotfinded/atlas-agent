@@ -22,6 +22,8 @@ The update manager is designed for trading-system safety, not convenience-first 
 - kill switch is unavailable;
 - working tree has uncommitted changes.
 
+**Secret Protection**: The update manager is explicitly designed to protect your sensitive local configuration. It will **never** overwrite or modify `.env`, `.env.atlas`, `.env.local`, or `.atlas/config.json`.
+
 `--force` can bypass blockers, but prints a clear warning and should be used only after explicit human review.
 
 ## Why auto-apply is disabled by default

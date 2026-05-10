@@ -1,51 +1,74 @@
 # Kill Switch Runbook
 
-Atlas Agent supports three kill-switch modes, plus a dead man's switch for automatic protection.
+Atlas Agent supports hierarchical kill-switch modes, plus a dead-man heartbeat switch for automatic protection.
 
 ## Modes
 
-- `soft`: blocks new orders. Existing positions remain open.
-- `cancel`: `soft` + cancels working/pending broker orders.
-- `flatten`: `cancel` + attempts to close all open positions.
-
-`flatten` can use:
-
-- `market` close strategy
-- `aggressive_limit` close strategy (configured bps from reference price)
+- `soft_pause`: Blocks new orders. Existing positions remain open.
+- `cancel_all`: `soft_pause` + cancels working/pending simulated/broker orders.
+- `flatten_all`: `cancel_all` + attempts to close all open positions safely.
+- `locked_down`: Final state after a flatten; requires operator intervention to reset.
 
 ## CLI Commands
 
-Enable:
-
+### Status and Planning
+View current status and dead-man heartbeat health:
 ```bash
-atlas kill-switch enable --mode soft --reason "manual pause"
-atlas kill-switch enable --mode cancel --reason "news risk"
-atlas kill-switch enable --mode flatten --reason "emergency flatten"
+atlas kill status
 ```
 
-Disable:
-
+Generate a safety action plan (e.g., to see what "flatten" would do):
 ```bash
-atlas kill-switch disable
-atlas kill-switch disable --require-2fa --totp 123456
+atlas kill plan --mode flatten-all
+atlas kill plan --mode flatten-all --json
 ```
 
-Rules:
-
-- disabling after `flatten` requires TOTP
-- set TOTP secret with `ATLAS_TOTP_SECRET` (base32)
-
-Status:
-
+### Execution
+Execute a previously generated safety plan:
 ```bash
-atlas kill-switch status
+atlas kill execute-plan --plan emergency_plan.json --approved
+atlas kill execute-plan --plan emergency_plan.json --paper # Simulation
+```
+
+Manual triggers:
+```bash
+atlas kill soft-pause
+atlas kill cancel-all
+atlas kill flatten-all
+```
+
+Reset/Disable:
+```bash
+atlas kill reset
 ```
 
 Manual heartbeat:
+```bash
+atlas kill heartbeat
+```
+
+## Dead Man's Switch (Heartbeat)
+
+Environment variables (typically in `.env.atlas`):
 
 ```bash
-atlas heartbeat --source cli --actor user:local
+DEADMAN_TIMEOUT_MINUTES=15          # 0 disables deadman
+DEADMAN_ACTION=soft_pause           # soft_pause|cancel_all|flatten_all
+DEADMAN_AUTO_RESET=true             # reset timer on user interaction
 ```
+
+The system "fails closed": if the heartbeat is not updated within the timeout, the configured safety action is automatically triggered.
+
+## Operational Drill (Recommended)
+
+Run this on paper mode before any live rollout:
+
+1. Start with no kill switch active.
+2. Trigger `soft-pause` and verify new orders are rejected in `atlas audit`.
+3. Escalate to `cancel-all` and verify working-order cancellation path executes.
+4. Run `atlas kill plan --mode flatten-all` and inspect the generated JSON.
+5. Execute the plan and verify open positions close in the paper broker.
+6. Reset the kill switch with `atlas kill reset`.
 
 ## Telegram Control Surface
 
