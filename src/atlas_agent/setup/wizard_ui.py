@@ -208,9 +208,9 @@ class WizardApplication:
         if not self.temp_secrets:
             return
         
-        from atlas_agent.config import set_atlas_secret
+        from atlas_agent.config import set_secret
         for key, value in self.temp_secrets.items():
-            set_atlas_secret(key, value)
+            set_secret(key, value)
         
         # Maintain backward compatibility for tests that expect .gitignore update
         self.ensure_gitignore(".env.atlas")

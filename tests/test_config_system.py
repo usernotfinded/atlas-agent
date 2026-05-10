@@ -1,7 +1,7 @@
 import os
 import pytest
 from pathlib import Path
-from atlas_agent.config import AtlasConfig, get_config, update_config_value, delete_config_value, set_atlas_secret
+from atlas_agent.config import AtlasConfig, get_config, set_raw_value, unset_raw_value, set_secret
 from atlas_agent.config.paths import get_config_toml_path, get_env_atlas_path
 
 @pytest.fixture(autouse=True)
@@ -22,7 +22,7 @@ def test_config_load_defaults(tmp_path, monkeypatch):
 def test_config_set_non_secret(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".atlas").mkdir(exist_ok=True)
-    update_config_value("trading_mode", "live")
+    set_raw_value("trading_mode", "live")
     
     config = get_config()
     assert config.trading_mode == "live"
@@ -35,7 +35,7 @@ def test_config_set_non_secret(tmp_path, monkeypatch):
 def test_config_set_secret_routing(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".atlas").mkdir(exist_ok=True)
-    update_config_value("openai_api_key", "test-key")
+    set_secret("OPENAI_API_KEY", "test-key")
     
     # Should NOT be in config.toml
     config_toml = get_config_toml_path()
@@ -52,7 +52,7 @@ def test_config_set_secret_routing(tmp_path, monkeypatch):
 def test_nested_config_set(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".atlas").mkdir(exist_ok=True)
-    update_config_value("model.model", "gpt-5")
+    set_raw_value("model.model", "gpt-5")
     
     config = get_config()
     assert config.model.model == "gpt-5"
@@ -64,8 +64,8 @@ def test_nested_config_set(tmp_path, monkeypatch):
 def test_config_compatibility_properties(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".atlas").mkdir(exist_ok=True)
-    update_config_value("broker.provider", "alpaca")
-    update_config_value("broker.enable_live_trading", True)
+    set_raw_value("broker.provider", "alpaca")
+    set_raw_value("broker.enable_live_trading", True)
     
     config = get_config()
     assert config.live_broker == "alpaca"

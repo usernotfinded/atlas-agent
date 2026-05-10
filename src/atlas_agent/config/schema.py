@@ -188,6 +188,12 @@ class AtlasConfig(BaseModel):
                 # Avoid overwriting if new_path already has a value in data
                 # but legacy fields should take precedence for compatibility in constructor
                 set_nested(data, new_path, val)
+                
+        if "model" in data and isinstance(data["model"], dict) and "default" in data["model"]:
+            if "model" not in data["model"]:
+                data["model"]["model"] = data["model"]["default"]
+            # Remove the legacy key so Pydantic doesn't complain about extra fields or we just clean it up
+            del data["model"]["default"]
         
         return data
 
@@ -278,8 +284,8 @@ class AtlasConfig(BaseModel):
     @classmethod
     def from_env(cls) -> AtlasConfig:
         """Compatibility method to load config using the new system but called from old code."""
-        from atlas_agent.config.store import get_config
-        return get_config()
+        from atlas_agent.config.builder import get_effective_config
+        return get_effective_config()
 
     def live_disabled_reasons(self) -> tuple[str, ...]:
         reasons: list[str] = []

@@ -37,22 +37,22 @@ class WizardState:
         return asdict(self)
         
     def save(self, path: Optional[Path] = None) -> None:
-        from atlas_agent.config import update_config_value
+        from atlas_agent.config import set_raw_value
         
         # New config system
-        update_config_value("trading_mode", self.trust_mode)
-        update_config_value("model.provider", self.provider)
-        update_config_value("model.model", self.model)
+        set_raw_value("trading_mode", self.trust_mode)
+        set_raw_value("model.provider", self.provider)
+        set_raw_value("model.model", self.model)
         if self.custom_endpoint:
-            update_config_value("model.base_url", self.custom_endpoint)
+            set_raw_value("model.base_url", self.custom_endpoint)
         
-        update_config_value("broker.provider", self.broker_mode)
-        update_config_value("update.auto_check", self.update_channel)
+        set_raw_value("broker.provider", self.broker_mode)
+        set_raw_value("update.auto_check", self.update_channel)
         
         if self.messaging == "cli":
-            update_config_value("safety.order_approval_mode", "manual_live")
+            set_raw_value("safety.order_approval_mode", "manual_live")
         
-        update_config_value("workspace_root", self.workspace_path)
+        set_raw_value("workspace_root", self.workspace_path)
 
         # Legacy backward compatibility for tests
         if path:
