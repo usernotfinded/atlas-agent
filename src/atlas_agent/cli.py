@@ -134,8 +134,10 @@ Safety First:
 
     config_parser = subparsers.add_parser("config")
     config_sub = config_parser.add_subparsers(dest="config_command")
-    config_sub.add_parser("show")
+    config_show = config_sub.add_parser("show")
+    config_show.add_argument("--effective", action="store_true")
     config_get = config_sub.add_parser("get")
+    config_get.add_argument("--effective", action="store_true")
     config_get.add_argument("key")
     config_set = config_sub.add_parser("set")
     config_set.add_argument("key")
@@ -144,6 +146,7 @@ Safety First:
     config_unset.add_argument("key")
     config_sub.add_parser("migrate")
     config_sub.add_parser("doctor")
+    config_sub.add_parser("paths")
     config_sub.add_parser("edit")
     config_check = config_sub.add_parser("check")
     config_check.add_argument("--json", action="store_true")
@@ -963,53 +966,89 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "config":
         from atlas_agent.config import (
-            get_config, update_config_value, delete_config_value, 
+            get_config, get_raw_config, get_raw_value, set_raw_value, unset_raw_value,
+            get_secret, get_secret_status, set_secret, unset_secret, is_secret_key,
             migrate_legacy_config, redact_value
         )
-        from atlas_agent.config.store import load_raw_config
-        from atlas_agent.config.paths import get_config_toml_path
+        from atlas_agent.config.secrets import canonical_env_var
+        from atlas_agent.config.paths import get_config_toml_path, get_env_atlas_path
+        import json
         
+        if args.config_command == "paths":
+            print(f"Config TOML: {get_config_toml_path()}")
+            print(f"Secrets ENV: {get_env_atlas_path()}")
+            return 0
+
         if args.config_command == "show":
-            raw = load_raw_config()
-            import tomlkit
-            # Redact secrets in display
-            def redact_recursive(d):
-                for k, v in d.items():
-                    if isinstance(v, dict):
-                        redact_recursive(v)
-                    elif isinstance(k, str) and any(kw in k.lower() for kw in ["api_key", "token", "secret", "password"]):
-                        d[k] = "[REDACTED]"
-            
-            redacted_raw = tomlkit.parse(tomlkit.dumps(raw))
-            redact_recursive(redacted_raw)
-            print(tomlkit.dumps(redacted_raw))
+            if getattr(args, "effective", False):
+                config = get_config()
+                payload = config.model_dump(mode="json")
+                def redact_secrets_in_dict(d):
+                    for k, v in d.items():
+                        if isinstance(v, dict):
+                            redact_secrets_in_dict(v)
+                        elif isinstance(k, str) and is_secret_key(k):
+                            d[k] = "[REDACTED]"
+                redact_secrets_in_dict(payload)
+                print(json.dumps(payload, indent=2))
+            else:
+                raw = get_raw_config()
+                import tomlkit
+                def redact_recursive(d):
+                    for k, v in d.items():
+                        if isinstance(v, dict):
+                            redact_recursive(v)
+                        elif isinstance(k, str) and is_secret_key(k):
+                            d[k] = "[REDACTED]"
+                redacted_raw = tomlkit.parse(tomlkit.dumps(raw))
+                redact_recursive(redacted_raw)
+                print(tomlkit.dumps(redacted_raw))
             return 0
             
         if args.config_command == "get":
-            # This is simplified, real impl should traverse nested dict
-            raw = load_raw_config()
-            parts = args.key.split(".")
-            val = raw
-            try:
-                for p in parts:
-                    val = val[p]
-                if any(kw in args.key.lower() for kw in ["api_key", "token", "secret", "password"]):
-                    print("[REDACTED]")
-                else:
+            if is_secret_key(args.key):
+                env_var = canonical_env_var(args.key)
+                print(get_secret_status(env_var))
+                return 0
+                
+            if getattr(args, "effective", False):
+                config = get_config()
+                val = config.model_dump(mode="json")
+                try:
+                    for p in args.key.split("."):
+                        val = val[p]
                     print(val)
-            except (KeyError, TypeError):
-                print(f"Key not found: {args.key}")
-                return 1
+                except (KeyError, TypeError):
+                    print(f"Key not found: {args.key}")
+                    return 1
+            else:
+                val = get_raw_value(args.key)
+                if val is None:
+                    print(f"Key not found: {args.key}")
+                    return 1
+                print(val)
             return 0
             
         if args.config_command == "set":
-            update_config_value(args.key, args.value)
-            print(f"Updated {args.key}")
+            if args.key == "model.default":
+                args.key = "model.model"
+            if is_secret_key(args.key):
+                env_var = canonical_env_var(args.key)
+                set_secret(env_var, args.value)
+                print(f"Updated secret {env_var} in .env.atlas")
+            else:
+                set_raw_value(args.key, args.value)
+                print(f"Updated {args.key} in config.toml")
             return 0
             
         if args.config_command == "unset":
-            delete_config_value(args.key)
-            print(f"Unset {args.key}")
+            if is_secret_key(args.key):
+                env_var = canonical_env_var(args.key)
+                unset_secret(env_var)
+                print(f"Unset secret {env_var}")
+            else:
+                unset_raw_value(args.key)
+                print(f"Unset {args.key}")
             return 0
             
         if args.config_command == "migrate":
@@ -1020,27 +1059,21 @@ def main(argv: list[str] | None = None) -> int:
             return 0
             
         if args.config_command == "doctor":
-            from atlas_agent.config.secrets import load_atlas_secrets
-            load_atlas_secrets()
             config = get_config()
             print("Config Doctor")
-            print(f"Trading Mode: {config.trading_mode}")
-            print(f"Live Trading: {'Enabled' if config.enable_live_trading else 'Disabled'}")
+            print(f"provider: {config.model.provider}")
+            print(f"model: {config.model.model}")
             
-            missing_secrets = []
-            if config.model.provider == "openai" and not os.getenv("OPENAI_API_KEY"):
-                missing_secrets.append("OPENAI_API_KEY")
-            elif config.model.provider == "anthropic" and not os.getenv("ANTHROPIC_API_KEY"):
-                missing_secrets.append("ANTHROPIC_API_KEY")
-            elif config.model.provider == "openrouter" and not os.getenv("OPENROUTER_API_KEY"):
-                missing_secrets.append("OPENROUTER_API_KEY")
-                
-            if missing_secrets:
-                print("Missing required secrets in .env.atlas or environment:")
-                for s in missing_secrets:
-                    print(f"  - {s}")
+            provider_key = canonical_env_var(f"providers.{config.model.provider}.api_key")
+            val = os.getenv(provider_key)
+            if val:
+                print(f"API key: configured/redacted ({provider_key})")
+            elif config.model.provider in ["null", "local_command"]:
+                print("API key: not required for this provider")
             else:
-                print("All required secrets are present.")
+                print(f"API key: missing ({provider_key})")
+                
+            print(f"live trading {'enabled' if config.enable_live_trading else 'disabled unless explicitly enabled'}")
             return 0
             
         if args.config_command == "edit":
@@ -1051,22 +1084,22 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.config_command == "check":
             config = get_config()
-            payload = config.model_dump()
-            # Redact secrets in payload
+            payload = config.model_dump(mode="json")
             def redact_secrets_in_dict(d):
                 for k, v in d.items():
                     if isinstance(v, dict):
                         redact_secrets_in_dict(v)
-                    elif isinstance(k, str) and any(kw in k.lower() for kw in ["api_key", "token", "secret", "password"]):
+                    elif isinstance(k, str) and is_secret_key(k):
                         d[k] = "[REDACTED]"
             redact_secrets_in_dict(payload)
             if getattr(args, "json", False):
-                return _emit_json_success("atlas config check", payload)
+                from atlas_agent.output import emit_json
+                return emit_json(payload)
             print("Config is valid.")
             return 0
 
     if args.command == "model":
-        from atlas_agent.config import get_config, update_config_value
+        from atlas_agent.config import get_config, set_raw_value
         config = get_config()
         if args.model_command == "list":
             print("openai/gpt-4o")
@@ -1080,10 +1113,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.model_command == "set":
             if "/" in args.model_id:
                 provider, model_name = args.model_id.split("/", 1)
-                update_config_value("model.provider", provider)
-                update_config_value("model.model", model_name)
+                set_raw_value("model.provider", provider)
+                set_raw_value("model.model", model_name)
             else:
-                update_config_value("model.model", args.model_id)
+                set_raw_value("model.model", args.model_id)
             print(f"Model set to {args.model_id}")
             return 0
 
