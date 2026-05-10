@@ -37,8 +37,8 @@ skills/proposed/*.md
 # Local Atlas runtime artifacts
 .env.atlas
 .atlas/config.toml
-.atlas/backtests/
 .atlas/config.json
+.atlas/backtests/
 .atlas/safety/heartbeat.json
 .DS_Store
 

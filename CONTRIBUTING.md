@@ -20,7 +20,7 @@ We prioritize contributions that improve the reliability and safety of the agent
 
 To maintain a clean architecture, follow these guidelines when deciding where to add new functionality:
 
-Do not hardcode a preferred research/search vendor in user-facing documentation, setup flows, or tests. Research/search/browser integrations should be provider adapters. Secrets must go to .env.atlas; non-secret settings must go to .atlas/config.json. Standardize on `ATLAS_RESEARCH_API_KEY` for research-related secrets.
+Do not hardcode a preferred research/search vendor in user-facing documentation, setup flows, or tests. Research/search/browser integrations should be provider adapters. Secrets must go to .env.atlas; non-secret settings must go to .atlas/config.toml. Standardize on `ATLAS_RESEARCH_API_KEY` for research-related secrets.
 
 ### Make it a Tool when:
 - The LLM needs to call it as an explicit action. (Tool: action exposed to the LLM)
@@ -73,7 +73,7 @@ Do not hardcode a preferred research/search vendor in user-facing documentation,
 - It provides read-only local visibility into the system state via the **Dashboard** (`src/atlas_agent/dashboard/`).
 
 ### Make it Setup Wizard logic when:
-- It collects config and secrets, but never stores API keys in config.json.
+- It collects config and secrets, but never stores API keys in config.toml.
 
 ### Do NOT add a new tool when:
 - A simple schema correction to an existing tool is sufficient.
@@ -105,14 +105,15 @@ The first time you run `atlas`, it may open the interactive setup wizard if conf
 
 ## Configuration for Development
 
-- **`.atlas/config.json`**: Stores non-secret workspace configuration.
+- **`.atlas/config.toml`**: Stores non-secret workspace configuration.
 - **`.env.atlas`**: Stores sensitive API keys and broker credentials. This file must **never** be committed.
 - **`atlas configure`**: The official command to (re)configure your environment.
 - **`atlas update`**: Preserves your secrets and local configuration while updating the codebase.
 
 | File | Purpose | Commit? |
 | :--- | :--- | :--- |
-| `.atlas/config.json` | Local Atlas configuration | No (unless used as a test fixture) |
+| `.atlas/config.toml` | Local Atlas configuration | No (unless used as a test fixture) |
+| `.atlas/config.json` | Legacy Atlas configuration (migrated to TOML) | No |
 | `.env.atlas` | API keys and secrets | **Never** |
 | `.env` / `.env.local` | Local environment secrets | **Never** |
 | `pyproject.toml` | Package metadata and dependencies | Yes |

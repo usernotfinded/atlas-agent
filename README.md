@@ -72,7 +72,7 @@ atlas update
 
 Atlas Agent uses a dual-layer configuration system to balance portability and security:
 
-*   **`.atlas/config.json`**: Stores non-secret configuration like your default symbol, trading hours, and risk parameters.
+*   **`.atlas/config.toml`**: Stores non-secret configuration like your default symbol, trading hours, and risk parameters.
 *   **`.env.atlas`**: Stores sensitive API keys and broker secrets. This file is automatically ignored by Git and protected by the `atlas update` process.
 
 **Security Rules:**
@@ -81,6 +81,8 @@ Atlas Agent uses a dual-layer configuration system to balance portability and se
 *   The dashboard is strictly read-only and must not expose secrets.
 *   Audit logs, manifests, and diagnostics must not contain secrets or raw prompts with sensitive data.
 *   The update system must not overwrite sensitive files.
+
+Non-secret local configuration belongs in `.atlas/config.toml`.
 
 Atlas Agent can optionally connect to a configurable web research provider for market/news lookup and external context gathering. The provider is user-selected. Atlas should not require or prefer a specific research vendor. Examples include hosted search APIs, self-hosted metasearch, browser automation providers, or custom HTTP/OpenAI-compatible endpoints.
 
@@ -104,7 +106,7 @@ The updater is designed to safely sync the latest Atlas Agent code while preserv
 *   **Simulation by Default**: Atlas Agent will never attempt live trading unless explicitly configured. Paper mode is the safest and default mode. Every **market-open** session begins with a simulation check.
 *   **Broker Sync & Adapters**: Broker sync is required before any live decisions are made. Execution is normalized through secure broker adapters that implement strict validation.
 *   **Deterministic Guardrails**: Risk controls and **risk gates** are hard-coded and separate from the LLM. If the LLM proposes an order that violates a risk rule, the `RiskManager` will block it before it reaches the broker.
-*   **Approval Gates**: Live orders can be configured to require manual approval via `atlas approve-order`. Safety execution plans require approval unless explicitly simulated or approved.
+*   **Approval Gates**: Live orders can be configured to require manual approval via `atlas approve-order`. See [Pending Orders](docs/pending-orders.md) for details. Safety execution plans require approval unless explicitly simulated or approved.
 *   **Kill Switch**: Advanced emergency stop with hierarchical modes (soft pause, cancel all, flatten all). The **dead-man heartbeat** monitoring ensures the system fails closed if the controller process is interrupted.
 *   **Dashboard**: The local dashboard provides a **read-only** snapshot of the system state (static HTML). It cannot trigger trades, does not use remote assets, and automatically redacts all secrets.
 *   **Responsibility**: You are responsible for your API keys, broker permissions, and any financial outcomes. Atlas Agent provides the tools; you provide the oversight.

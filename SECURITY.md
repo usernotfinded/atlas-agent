@@ -106,8 +106,8 @@ Pending live approvals are written as JSON files with expiry (`pending_orders/*.
 ### 2.8 Update System and Config Safety
 
 - The `atlas update` system is designed to protect your sensitive local files.
-- It must never overwrite `.env`, `.env.atlas`, `.env.local`, or your `.atlas/config.json`.
-- Non-secret settings should reside in `.atlas/config.json`, while all credentials MUST stay in `.env.atlas`.
+- It must never overwrite `.env`, `.env.atlas`, `.env.local`, or your `.atlas/config.toml`.
+- Non-secret settings should reside in `.atlas/config.toml`, while all credentials MUST stay in `.env.atlas`.
 
 ## 3. Out of Scope / Non-Vulnerabilities
 

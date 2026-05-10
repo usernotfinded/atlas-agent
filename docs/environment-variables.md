@@ -1,7 +1,7 @@
 # Environment Variables
 
 Atlas Agent v0.4.0 uses a dual-layer configuration system:
-- **`.atlas/config.json`**: Stores non-secret workspace configuration (default symbol, risk limits, etc.).
+- **`.atlas/config.toml`**: Stores non-secret workspace configuration (default symbol, risk limits, etc.).
 - **`.env.atlas`**: Stores sensitive API keys and broker credentials. This file is **gitignored** and protected during updates.
 
 Remote systems (CI/CD, Serverless) should inject these environment variables directly. **Never print secrets in logs.**
