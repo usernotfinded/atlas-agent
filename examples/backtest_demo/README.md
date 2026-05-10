@@ -1,6 +1,6 @@
 # Backtest Demo
 
 ```bash
-atlas backtest --strategy moving_average --symbol BTC-USD
+atlas backtest run --data data/sample/ohlcv.csv --symbol BTC-USD
 ```
 

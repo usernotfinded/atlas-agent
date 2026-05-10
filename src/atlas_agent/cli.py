@@ -14,7 +14,7 @@ YELLOW = "\033[93m"
 RESET = "\033[0m"
 
 from atlas_agent import __version__
-from atlas_agent.backtest.runner import run_backtest
+from atlas_agent.backtest import BacktestConfig, BacktestEngine
 from atlas_agent.brokers.alpaca import AlpacaBroker
 from atlas_agent.brokers.binance import BinanceBroker
 from atlas_agent.brokers.ccxt_adapter import CCXTBroker
@@ -177,8 +177,15 @@ Safety First:
     brokers_sync.add_argument("--json", action="store_true")
 
     backtest = subparsers.add_parser("backtest")
-    backtest.add_argument("--strategy", default="moving_average")
-    backtest.add_argument("--symbol", default=None)
+    backtest_sub = backtest.add_subparsers(dest="backtest_command")
+    backtest_run = backtest_sub.add_parser("run")
+    backtest_run.add_argument("--strategy", default="buy_and_hold")
+    backtest_run.add_argument("--symbol", required=True)
+    backtest_run.add_argument("--data", required=True)
+    backtest_run.add_argument("--initial-equity", type=float, default=10000.0)
+    backtest_run.add_argument("--slippage-bps", type=float, default=0.0)
+    backtest_run.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_run.add_argument("--json", action="store_true")
 
     run_once_parser = subparsers.add_parser("run-once")
     run_once_parser.add_argument("--mode", choices=("paper", "live"), default="paper")
@@ -1495,15 +1502,49 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"    - {err}")
         return 0 if result.status == "success" else 2
     if args.command == "backtest":
-        symbol = args.symbol or config.default_symbol
-        result = run_backtest(symbol=symbol, strategy_name=args.strategy, config=config)
-        print(f"Backtest complete: {symbol}")
-        print(f"Total return: {result.metrics.total_return:.2%}")
-        if result.report_paths:
-            print("JSON report:", result.report_paths[0])
-            print("Markdown report:", result.report_paths[1])
-            print("CSV trade log:", result.report_paths[2])
-        return 0
+        if args.backtest_command == "run":
+            bt_config = BacktestConfig(
+                symbol=args.symbol,
+                data_path=args.data,
+                initial_equity=args.initial_equity,
+                strategy_mode=args.strategy,
+                slippage_bps=args.slippage_bps,
+                commission_bps=args.commission_bps
+            )
+            
+            # Use AuditWriter if available
+            audit_writer = None
+            try:
+                from atlas_agent.audit import AuditWriter
+                audit_writer = AuditWriter(config.audit_dir / "audit.log")
+            except (ImportError, AttributeError):
+                pass
+
+            engine = BacktestEngine(bt_config, audit_writer=audit_writer)
+            result = engine.run()
+
+            if args.json:
+                print(result.model_dump_json(indent=2))
+                return 0
+
+            print(f"Backtest complete: {args.symbol}")
+            print(f"Status: {result.status}")
+            print(f"Initial Equity: ${result.metrics.initial_equity:,.2f}")
+            print(f"Final Equity:   ${result.metrics.final_equity:,.2f}")
+            print(f"Total Return:   {result.metrics.total_return_pct:.2f}%")
+            print(f"Max Drawdown:   {result.metrics.max_drawdown_pct:.2f}%")
+            print(f"Trade Count:    {result.metrics.trade_count}")
+            
+            # Write JSON report to disk
+            report_path = Path(".atlas/backtests") / result.run_id / "result.json"
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(result.model_dump_json(indent=2))
+            print(f"Report saved to: {report_path}")
+            
+            return 0
+        else:
+            print("Error: Use 'atlas backtest run --help' for usage.")
+            return 1
     if args.command == "run-once":
         event_logger = EventLogger(config.events_dir)
         run_id = generate_run_id()

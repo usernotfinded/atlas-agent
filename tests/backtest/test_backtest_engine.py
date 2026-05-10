@@ -1,0 +1,89 @@
+import pytest
+import csv
+from pathlib import Path
+from datetime import datetime, timedelta
+from atlas_agent.backtest import BacktestConfig, BacktestEngine
+
+@pytest.fixture
+def sample_csv(tmp_path):
+    csv_path = tmp_path / "test_data.csv"
+    with open(csv_path, mode="w", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["date", "symbol", "open", "high", "low", "close", "volume"])
+        base_date = datetime(2026, 1, 1)
+        for i in range(10):
+            writer.writerow([
+                (base_date + timedelta(days=i)).strftime("%Y-%m-%d"),
+                "AAPL",
+                100 + i,
+                105 + i,
+                95 + i,
+                101 + i,
+                1000
+            ])
+    return csv_path
+
+def test_engine_buy_and_hold(sample_csv):
+    config = BacktestConfig(
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        risk_enabled=False
+    )
+    engine = BacktestEngine(config)
+    result = engine.run()
+    
+    assert result.status == "completed"
+    assert len(result.fills) == 1
+    assert result.fills[0].side == "buy"
+    assert result.metrics.final_equity > 10000.0
+    assert len(result.equity_curve) == 10
+
+def test_engine_risk_blocking(sample_csv):
+    # Set a very low max position size to trigger risk blocking
+    config = BacktestConfig(
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        risk_enabled=True
+    )
+    
+    engine = BacktestEngine(config)
+    # Manually override limits for the test
+    from atlas_agent.risk.limits import RiskLimits
+    engine.risk_manager.limits = RiskLimits(
+        max_position_notional=100.0, # Very low
+        live_trading_enabled=False,
+        paper_only=True
+    )
+    
+    result = engine.run()
+    
+    assert len(result.fills) == 0
+    assert len(result.diagnostics["blocked_orders"]) > 0
+    assert result.metrics.final_equity == 10000.0
+
+def test_engine_slippage_affects_equity(sample_csv):
+    config_no_slip = BacktestConfig(
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        slippage_bps=0.0,
+        risk_enabled=False
+    )
+    result_no_slip = BacktestEngine(config_no_slip).run()
+    
+    config_slip = BacktestConfig(
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        slippage_bps=100.0, # 1% slippage
+        risk_enabled=False
+    )
+    result_slip = BacktestEngine(config_slip).run()
+    
+    assert result_slip.metrics.final_equity < result_no_slip.metrics.final_equity

@@ -41,6 +41,12 @@ AuditEventType = Literal[
     "safety_action_execution_failed",
     "safety_plan_execution_completed",
     "safety_plan_execution_blocked",
+    "backtest_started",
+    "backtest_order_proposed",
+    "backtest_order_blocked",
+    "backtest_order_filled",
+    "backtest_completed",
+    "backtest_failed",
     "run_completed",
     "run_failed",
 ]

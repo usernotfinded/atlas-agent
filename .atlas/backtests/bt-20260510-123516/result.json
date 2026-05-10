@@ -1,0 +1,109 @@
+{
+  "run_id": "bt-20260510-123516",
+  "status": "completed",
+  "config": {
+    "run_id": "bt-20260510-123516",
+    "symbol": "AAPL",
+    "data_path": "/private/var/folders/0g/h8_24w2d2mjcl0pvmy_q59fm0000gn/T/pytest-of-natanmucelli/pytest-289/test_cli_backtest_run_text0/data.csv",
+    "initial_equity": 10000.0,
+    "slippage_bps": 0.0,
+    "commission_bps": 0.0,
+    "start_date": null,
+    "end_date": null,
+    "strategy_mode": "buy_and_hold",
+    "risk_enabled": true,
+    "kill_switch_state": false
+  },
+  "metrics": {
+    "total_return_pct": 0.0,
+    "annualized_return_pct": 0.0,
+    "max_drawdown_pct": 0.0,
+    "trade_count": 0,
+    "win_rate": 0.0,
+    "sharpe_ratio": 0.0,
+    "best_trade_pct": 0.0,
+    "worst_trade_pct": 0.0,
+    "average_trade_pct": 0.0,
+    "exposure_time_pct": 0.0,
+    "buy_and_hold_return_pct": 0.9900990099009901,
+    "final_equity": 10000.0,
+    "initial_equity": 10000.0
+  },
+  "fills": [],
+  "equity_curve": [
+    {
+      "timestamp": "2026-01-01T00:00:00",
+      "equity": 10000.0
+    },
+    {
+      "timestamp": "2026-01-02T00:00:00",
+      "equity": 10000.0
+    }
+  ],
+  "diagnostics": {
+    "blocked_orders": [
+      {
+        "order_id": "8b6581ea-b6de-49de-baa1-626528c37c37",
+        "reason": "Risk violations detected",
+        "violations": [
+          {
+            "rule": "max_single_trade_notional",
+            "message": "max order notional exceeded",
+            "limit_value": 2500.0,
+            "actual_value": 10000.0
+          },
+          {
+            "rule": "max_position_notional",
+            "message": "max position size exceeded (including pending orders)",
+            "limit_value": 5000.0,
+            "actual_value": 20000.0
+          },
+          {
+            "rule": "max_symbol_exposure_pct",
+            "message": "symbol exposure 200.0% exceeds limit 25.0%",
+            "limit_value": 0.25,
+            "actual_value": 2.0
+          },
+          {
+            "rule": "max_portfolio_exposure_pct",
+            "message": "max portfolio exposure exceeded",
+            "limit_value": 10000.0,
+            "actual_value": 20000.0
+          }
+        ]
+      },
+      {
+        "order_id": "34100e1a-c17b-4577-8eb8-924358e2aa36",
+        "reason": "Risk violations detected",
+        "violations": [
+          {
+            "rule": "max_single_trade_notional",
+            "message": "max order notional exceeded",
+            "limit_value": 2500.0,
+            "actual_value": 10000.0
+          },
+          {
+            "rule": "max_position_notional",
+            "message": "max position size exceeded (including pending orders)",
+            "limit_value": 5000.0,
+            "actual_value": 20000.0
+          },
+          {
+            "rule": "max_symbol_exposure_pct",
+            "message": "symbol exposure 200.0% exceeds limit 25.0%",
+            "limit_value": 0.25,
+            "actual_value": 2.0
+          },
+          {
+            "rule": "max_portfolio_exposure_pct",
+            "message": "max portfolio exposure exceeded",
+            "limit_value": 10000.0,
+            "actual_value": 20000.0
+          }
+        ]
+      }
+    ]
+  },
+  "started_at": "2026-05-10T12:35:16.187299",
+  "completed_at": "2026-05-10T12:35:16.190184"
+}

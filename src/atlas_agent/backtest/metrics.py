@@ -14,20 +14,7 @@ class TradeRecord:
     realized_pnl: float = 0.0
 
 
-@dataclass(frozen=True)
-class BacktestMetrics:
-    total_return: float
-    annualized_return: float
-    max_drawdown: float
-    sharpe_ratio: float
-    win_rate: float
-    number_of_trades: int
-    average_trade_return: float
-    best_trade: float
-    worst_trade: float
-    exposure_time: float
-    buy_and_hold_return: float
-    excess_return_vs_benchmark: float
+from atlas_agent.backtest.models import BacktestMetrics
 
 
 def calculate_metrics(
@@ -45,26 +32,31 @@ def calculate_metrics(
         raise ValueError("starting_cash must be positive")
     total_return = (ending_equity - starting_cash) / starting_cash
     periods = max(len(equity_curve), 1)
-    annualized = (1 + total_return) ** (periods_per_year / periods) - 1
+    
+    # Simple annualized return
+    annualized = (1 + total_return) ** (periods_per_year / periods) - 1 if periods > 0 else 0.0
+    
     closed_returns = _closed_trade_returns(trades)
-    benchmark = (end_price - start_price) / start_price
+    benchmark = (end_price - start_price) / start_price if start_price > 0 else 0.0
+    
     return BacktestMetrics(
-        total_return=total_return,
-        annualized_return=annualized,
-        max_drawdown=_max_drawdown(equity_curve),
+        total_return_pct=total_return * 100.0,
+        annualized_return_pct=annualized * 100.0,
+        max_drawdown_pct=_max_drawdown(equity_curve) * 100.0,
         sharpe_ratio=_sharpe(equity_curve, periods_per_year),
         win_rate=_win_rate(closed_returns),
-        number_of_trades=len(trades),
-        average_trade_return=fmean(closed_returns) if closed_returns else 0.0,
-        best_trade=max(closed_returns) if closed_returns else 0.0,
-        worst_trade=min(closed_returns) if closed_returns else 0.0,
-        exposure_time=(
-            sum(1 for point in exposure_points if point) / len(exposure_points)
+        trade_count=len(trades),
+        average_trade_pct=fmean(closed_returns) * 100.0 if closed_returns else 0.0,
+        best_trade_pct=max(closed_returns) * 100.0 if closed_returns else 0.0,
+        worst_trade_pct=min(closed_returns) * 100.0 if closed_returns else 0.0,
+        exposure_time_pct=(
+            (sum(1 for point in exposure_points if point) / len(exposure_points)) * 100.0
             if exposure_points
             else 0.0
         ),
-        buy_and_hold_return=benchmark,
-        excess_return_vs_benchmark=total_return - benchmark,
+        buy_and_hold_return_pct=benchmark * 100.0,
+        final_equity=ending_equity,
+        initial_equity=starting_cash
     )
 
 

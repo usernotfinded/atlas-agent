@@ -41,6 +41,7 @@ Atlas Agent is a workspace where an AI agent lives, learns, and trades.
 | Safety Action Planner | Implemented | Generates deterministic, approval-gated action plans for emergency cancellation and flattening. |
 | Safety Action Executor | Implemented | Protected proxy to execute safety plans without bypassing risk or audit gates. |
 | Broker Sync Layer | Implemented | Provider-neutral synchronization of account state, positions, and orders. |
+| Backtesting Foundation | Implemented | Deterministic, local-first engine with risk integration and audit logging. |
 | Local Dashboard | Implemented | Minimal, read-only local HTML dashboard for system visibility. |
 | Live Trading | Disabled by Default | Explicit opt-in only. All unconfigured runs default to paper simulation. |
 
@@ -108,6 +109,25 @@ The updater is designed to safely sync the latest Atlas Agent code while preserv
 *   **Dashboard**: The local dashboard provides a read-only snapshot of the system state, ensuring no trades can be triggered inadvertently from the UI.
 *   **Responsibility**: You are responsible for your API keys, broker permissions, and any financial outcomes. Atlas Agent provides the tools; you provide the oversight.
 
+## Backtesting
+
+Atlas Agent includes a deterministic, local-first backtesting engine to evaluate strategies against historical data.
+
+- **Deterministic Execution**: Orders are filled based on historical price action with configurable slippage and commission.
+- **Risk Integration**: Every simulated trade is validated by the `RiskManager` before execution.
+- **Audit Integration**: Backtest runs generate tamper-evident audit events, ensuring reproducibility.
+- **Local-First**: No network calls are made during backtesting; all data is loaded from local CSV files.
+
+```bash
+# Run a buy-and-hold backtest
+atlas backtest run --symbol AAPL --data path/to/data.csv
+
+# Backtest with specific initial equity and JSON output
+atlas backtest run --symbol AAPL --data data.csv --initial-equity 50000 --json
+```
+
+**Note:** Backtesting is a simulation tool for research purposes. Historical results do not guarantee future performance and are not financial advice.
+
 ## Architecture (v2 Direction)
 
 ```text
@@ -129,6 +149,7 @@ Guardrails + Audit + Risk Controls
 | `atlas` | Open setup wizard or show status. |
 | `atlas configure` | Re-run the interactive setup wizard. |
 | `atlas validate` | Check local configuration and safety gates. |
+| `atlas backtest run` | Run a deterministic backtest on historical CSV data. |
 | `atlas run --mode paper` | Start the autonomous agent in simulation. |
 | `atlas update` | Safely update Atlas Agent to the latest version. |
 | `atlas audit verify` | Verify the JSONL audit log hash-chain. |
