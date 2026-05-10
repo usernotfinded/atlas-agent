@@ -90,6 +90,8 @@ Atlas Agent uses a dual-layer configuration system to balance portability and se
 *   The dashboard is strictly **read-only** and must not expose secrets.
 *   Audit logs and diagnostics are designed to redact secrets and sensitive free-text.
 
+See [Model Providers](docs/model-providers.md) for provider/model selection and API key setup.
+
 ## Safety Model
 
 *   **Simulation by Default**: Atlas Agent will never attempt live trading unless explicitly configured. Paper mode is the safest and default mode.

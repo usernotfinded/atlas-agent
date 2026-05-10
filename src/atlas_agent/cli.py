@@ -153,10 +153,14 @@ Safety First:
 
     model_parser = subparsers.add_parser("model")
     model_sub = model_parser.add_subparsers(dest="model_command")
-    model_sub.add_parser("list")
+    model_list = model_sub.add_parser("list")
+    model_list.add_argument("--provider", help="Filter models by provider ID")
+    model_sub.add_parser("providers")
     model_sub.add_parser("current")
     model_set = model_sub.add_parser("set")
     model_set.add_argument("model_id")
+    model_set.add_argument("model", nargs="?", default=None, help="Model ID (optional if model_id contains provider prefix)")
+    model_sub.add_parser("configure")
 
     workspace = subparsers.add_parser("workspace")
     workspace_sub = workspace.add_subparsers(dest="workspace_command")
@@ -1059,20 +1063,44 @@ def main(argv: list[str] | None = None) -> int:
             return 0
             
         if args.config_command == "doctor":
+            from atlas_agent.providers.catalog import get_provider_profile, normalize_provider_id
+            from atlas_agent.providers.runtime import resolve_runtime_provider
             config = get_config()
+            canonical = normalize_provider_id(config.model.provider or "")
+            profile = get_provider_profile(canonical)
+            runtime = resolve_runtime_provider(config)
             print("Config Doctor")
             print(f"provider: {config.model.provider}")
             print(f"model: {config.model.model}")
-            
-            provider_key = canonical_env_var(f"providers.{config.model.provider}.api_key")
-            val = os.getenv(provider_key)
-            if val:
-                print(f"API key: configured/redacted ({provider_key})")
-            elif config.model.provider in ["null", "local_command"]:
+
+            if profile is None:
+                print(f"API key: unknown provider '{canonical}'")
+            elif not profile.key_required:
                 print("API key: not required for this provider")
             else:
-                print(f"API key: missing ({provider_key})")
-                
+                key_source = runtime["api_key_source"]
+                env_var_used = runtime["api_key_env_var_used"]
+                if key_source in ("process_env", "env_atlas"):
+                    print(f"API key: configured/redacted ({env_var_used})")
+                else:
+                    expected_vars = ", ".join(profile.api_key_env_vars)
+                    print(f"API key: missing (expected: {expected_vars})")
+
+                # Warn about ignored keys from other providers
+                other_keys_found = []
+                for other_p in (get_provider_profile(p) for p in ["openrouter", "anthropic", "openai", "deepseek"]):
+                    if other_p and other_p.id != canonical:
+                        for var in other_p.api_key_env_vars:
+                            if os.getenv(var):
+                                other_keys_found.append(var)
+                if other_keys_found:
+                    print(f"Note: other provider keys detected but ignored: {', '.join(other_keys_found)}")
+
+                # Gemini-specific warning
+                if canonical == "google-gemini" and runtime.get("warnings"):
+                    for w in runtime["warnings"]:
+                        print(f"Warning: {w}")
+
             print(f"live trading {'enabled' if config.enable_live_trading else 'disabled unless explicitly enabled'}")
             print(f"raw prompt logging: {'enabled (redacted)' if config.audit.log_raw_prompts else 'disabled'}")
             print(f"provider text logging: {'enabled (redacted)' if config.audit.log_provider_text else 'disabled'}")
@@ -1102,24 +1130,165 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "model":
         from atlas_agent.config import get_config, set_raw_value
+        from atlas_agent.providers.catalog import (
+            list_provider_profiles,
+            get_provider_profile,
+            normalize_provider_id,
+            is_known_model_for_provider,
+        )
+        from atlas_agent.providers.runtime import resolve_runtime_provider
+        from atlas_agent.config.secrets import set_secret
         config = get_config()
+
+        if args.model_command == "providers":
+            for profile in list_provider_profiles():
+                runtime = resolve_runtime_provider(config, profile.id)
+                key_status = runtime["api_key_source"]
+                if key_status == "missing" and profile.auth_type != "none":
+                    key_label = "missing"
+                elif key_status in ("process_env", "env_atlas"):
+                    key_label = "configured"
+                else:
+                    key_label = "not required"
+                print(f"{profile.id:15s}  {profile.label:25s}  key: {key_label:12s}  default: {profile.default_model}")
+            return 0
+
         if args.model_command == "list":
-            print("openai/gpt-4o")
-            print("openai/gpt-4o-mini")
-            print("anthropic/claude-3-5-sonnet-20240620")
-            print("openrouter/anthropic/claude-3.5-sonnet")
-            return 0
-        if args.model_command == "current":
-            print(f"{config.model.provider}/{config.model.model}")
-            return 0
-        if args.model_command == "set":
-            if "/" in args.model_id:
-                provider, model_name = args.model_id.split("/", 1)
-                set_raw_value("model.provider", provider)
-                set_raw_value("model.model", model_name)
+            provider_filter = getattr(args, "provider", None)
+            if provider_filter:
+                profile = get_provider_profile(provider_filter)
+                if not profile:
+                    print(f"Unknown provider: {provider_filter}")
+                    return 2
+                profiles = [profile]
             else:
-                set_raw_value("model.model", args.model_id)
-            print(f"Model set to {args.model_id}")
+                profiles = list_provider_profiles()
+            for profile in profiles:
+                print(f"{profile.label} ({profile.id})")
+                for m in profile.models:
+                    rec = "  *" if m.recommended else ""
+                    print(f"  {m.id:40s}  {m.label}{rec}")
+            return 0
+
+        if args.model_command == "current":
+            runtime = resolve_runtime_provider(config)
+            print(f"provider: {runtime['provider']}")
+            print(f"model:    {runtime['model']}")
+            print(f"api_mode: {runtime['api_mode']}")
+            print(f"base_url: {runtime['base_url'] or '(default)'}")
+            key_source = runtime["api_key_source"]
+            env_var = runtime["api_key_env_var_used"]
+            if key_source == "process_env":
+                print(f"api_key:  configured ({env_var} from process env)")
+            elif key_source == "env_atlas":
+                print(f"api_key:  configured ({env_var} from .env.atlas)")
+            elif key_source == "none":
+                print("api_key:  not required")
+            else:
+                print("api_key:  missing")
+            if runtime.get("warnings"):
+                for w in runtime["warnings"]:
+                    print(f"warning:  {w}")
+            return 0
+
+        if args.model_command == "set":
+            # Two-arg form: atlas model set <provider> <model>
+            if args.model is not None:
+                provider_id = normalize_provider_id(args.model_id.strip())
+                model_id = args.model.strip()
+            else:
+                raw = args.model_id.strip()
+                # Support "openrouter:openai/gpt-5.5" or single-argument syntax
+                if ":" in raw and "/" in raw:
+                    provider_part, model_part = raw.split(":", 1)
+                    provider_id = normalize_provider_id(provider_part)
+                    model_id = model_part
+                elif "/" in raw:
+                    provider_part, model_part = raw.split("/", 1)
+                    provider_id = normalize_provider_id(provider_part)
+                    model_id = raw  # Keep full ID for openrouter-style models
+                    # For non-openrouter providers, use just the model_part
+                    profile = get_provider_profile(provider_id)
+                    if profile and profile.id != "openrouter":
+                        model_id = model_part
+                else:
+                    # No provider prefix; use current provider
+                    provider_id = normalize_provider_id(config.model.provider or "openai")
+                    model_id = raw
+
+            profile = get_provider_profile(provider_id)
+            if not profile:
+                print(f"Warning: unknown provider '{provider_id}'.")
+            else:
+                provider_id = profile.id  # canonical
+                if not is_known_model_for_provider(provider_id, model_id):
+                    print(f"Warning: '{model_id}' is not in the curated catalog for {provider_id}.")
+                    print("It will still be stored; custom model IDs are allowed.")
+
+            set_raw_value("model.provider", provider_id)
+            set_raw_value("model.model", model_id)
+            print(f"Model set to {provider_id}/{model_id}")
+            return 0
+
+        if args.model_command == "configure":
+            profiles = list_provider_profiles()
+            print("Select a provider:")
+            for i, profile in enumerate(profiles, 1):
+                print(f"  {i}. {profile.label} ({profile.id})")
+            try:
+                choice = input("Enter number (or provider id): ").strip()
+            except (EOFError, OSError):
+                print("Non-interactive mode. Use `atlas model set <provider>/<model>` instead.")
+                return 2
+            # Allow entering provider id directly
+            profile = None
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(profiles):
+                    profile = profiles[idx]
+            if not profile:
+                profile = get_provider_profile(choice)
+            if not profile:
+                print(f"Unknown provider: {choice}")
+                return 2
+
+            # Prompt for API key if needed and missing
+            if profile.key_required:
+                runtime = resolve_runtime_provider(config, profile.id)
+                if runtime["api_key_source"] in ("missing", ""):
+                    print(f"{profile.label} requires an API key.")
+                    env_var = profile.api_key_env_vars[0] if profile.api_key_env_vars else f"{profile.id.upper()}_API_KEY"
+                    try:
+                        key = input(f"Enter {env_var} (input hidden): ").strip()
+                    except (EOFError, OSError):
+                        print("Non-interactive mode. Use `atlas config set_atlas_secret <key> <value>`.")
+                        return 2
+                    if key:
+                        set_secret(env_var, key)
+                        print(f"Saved {env_var} to .env.atlas")
+
+            # Select model
+            print(f"Select a model for {profile.label}:")
+            for i, m in enumerate(profile.models, 1):
+                rec = "  *" if m.recommended else ""
+                print(f"  {i}. {m.id:40s}  {m.label}{rec}")
+            try:
+                mchoice = input("Enter number (or model id, or press Enter for default): ").strip()
+            except (EOFError, OSError):
+                print("Non-interactive mode. Use `atlas model set <provider>/<model>`.")
+                return 2
+            model_id = profile.default_model
+            if mchoice:
+                if mchoice.isdigit():
+                    idx = int(mchoice) - 1
+                    if 0 <= idx < len(profile.models):
+                        model_id = profile.models[idx].id
+                else:
+                    model_id = mchoice
+
+            set_raw_value("model.provider", profile.id)
+            set_raw_value("model.model", model_id)
+            print(f"Configured {profile.id}/{model_id}")
             return 0
 
     if args.command == "init":

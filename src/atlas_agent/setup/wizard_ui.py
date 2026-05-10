@@ -11,6 +11,9 @@ from atlas_agent.setup.state import WizardState
 from atlas_agent.setup.renderer import render_wizard_screen
 from atlas_agent.setup.theme import atlas_theme
 
+# TODO: Replace hardcoded provider list and key map with atlas_agent.providers.catalog
+# for canonical IDs, aliases, model catalogs, and env-var lists.
+# The wizard should reuse the catalog so provider options stay in one place.
 PROVIDER_KEY_MAP = {
     "openrouter": "OPENROUTER_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
