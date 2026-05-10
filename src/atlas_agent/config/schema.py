@@ -98,6 +98,8 @@ class SafetyConfig(BaseModel):
 class AuditConfig(BaseModel):
     enabled: bool = True
     redact_secrets: bool = True
+    log_raw_prompts: bool = False
+    log_provider_text: bool = False
     audit_dir: Path = Path("audit")
 
 

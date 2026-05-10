@@ -99,9 +99,9 @@ def build_parser() -> argparse.ArgumentParser:
     / ___ \| | | |__ / _ \\__ \   / _ \ (_ | _|| .` | | |  
    /_/   \_|_| |____/_/ \_\___/  /_/ \_\___|___|_|\_| |_|  
 
-Atlas Agent is a self-improving AI trading agent.
-It runs autonomous trading cycles during market hours and
-self-improvement cycles during off-hours.
+Atlas Agent is a broker-neutral supervised trading workspace.
+It provides market research, paper workflows, and deterministic risk gates.
+
 """
     epilog = """
 Core Commands:
@@ -1074,6 +1074,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"API key: missing ({provider_key})")
                 
             print(f"live trading {'enabled' if config.enable_live_trading else 'disabled unless explicitly enabled'}")
+            print(f"raw prompt logging: {'enabled (redacted)' if config.audit.log_raw_prompts else 'disabled'}")
+            print(f"provider text logging: {'enabled (redacted)' if config.audit.log_provider_text else 'disabled'}")
             return 0
             
         if args.config_command == "edit":

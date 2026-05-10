@@ -1,4 +1,5 @@
 from __future__ import annotations
+import hashlib
 
 import logging
 from typing import Any, Union, List, Optional
@@ -48,6 +49,8 @@ class AgentLoop:
         kill_switch: AdvancedKillSwitch | None = None,
         safety_planner: SafetyActionPlanner | None = None,
         safety_executor: SafetyActionExecutor | None = None,
+        log_raw_prompts: bool = False,
+        log_provider_text: bool = False,
     ):
         self.provider = provider
         self.tool_registry = tool_registry
@@ -66,6 +69,8 @@ class AgentLoop:
                 audit_writer=audit_writer
             ) if kill_switch and risk_manager else None
         )
+        self.log_raw_prompts = log_raw_prompts
+        self.log_provider_text = log_provider_text
 
     def run(
         self,
@@ -82,10 +87,16 @@ class AgentLoop:
         
         if self.audit_writer:
             self.audit_writer.start_run(run_id)
+            run_started_payload = {"mode": mode}
+            if self.log_raw_prompts:
+                run_started_payload["user_objective"] = user_objective
+            else:
+                run_started_payload["prompt_hash"] = hashlib.sha256(user_objective.encode("utf-8")).hexdigest()
+
             self.audit_writer.write_event(
                 "run_started",
                 run_id=run_id,
-                payload={"user_objective": user_objective, "mode": mode}
+                payload=run_started_payload
             )
 
         result = self._run_loop(
@@ -156,15 +167,24 @@ class AgentLoop:
                 )
 
             if self.audit_writer:
+                response_text = llm_response.text or ""
+                payload = {
+                    "tool_call_count": len(llm_response.tool_calls),
+                    "is_final": llm_response.is_final
+                }
+                
+                if self.log_provider_text:
+                    payload["text"] = response_text
+                else:
+                    payload["response_hash"] = hashlib.sha256(response_text.encode("utf-8")).hexdigest()
+                    payload["length"] = len(response_text)
+                    payload["provider"] = self.provider.__class__.__name__
+
                 self.audit_writer.write_event(
                     "provider_response",
                     run_id=run_id,
                     iteration=i,
-                    payload={
-                        "text": llm_response.text,
-                        "tool_call_count": len(llm_response.tool_calls),
-                        "is_final": llm_response.is_final
-                    }
+                    payload=payload
                 )
 
             # Record iteration

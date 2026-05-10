@@ -140,7 +140,9 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
         guardrails, 
         audit_writer=audit_writer, 
         risk_manager=risk_manager,
-        kill_switch=kill_switch
+        kill_switch=kill_switch,
+        log_raw_prompts=config.audit.log_raw_prompts,
+        log_provider_text=config.audit.log_provider_text
     )
     
     session = Session(id=run_id, turn_count=0, has_summarized=False)

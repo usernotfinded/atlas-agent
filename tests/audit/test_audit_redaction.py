@@ -35,3 +35,17 @@ def test_redaction_handles_various_markers():
     for marker in markers:
         payload = {marker: "val"}
         assert redact_payload(payload)[marker] == "[REDACTED]"
+
+def test_redact_payload_free_text_secrets(monkeypatch):
+    import os
+    monkeypatch.setattr(os, "environ", {"OPENAI_API_KEY": "super_secret_openai_key"})
+    
+    payload = "Here is a prompt containing super_secret_openai_key inside it."
+    redacted = redact_payload(payload)
+    assert redacted == "Here is a prompt containing [REDACTED] inside it."
+    
+    dict_payload = {
+        "message": "My key is super_secret_openai_key!"
+    }
+    redacted_dict = redact_payload(dict_payload)
+    assert redacted_dict["message"] == "My key is [REDACTED]!"
