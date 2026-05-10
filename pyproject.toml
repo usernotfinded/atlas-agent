@@ -14,7 +14,8 @@ dependencies = [
     "jsonschema>=4.0",
     "pydantic",
     "prompt_toolkit>=3.0.30",
-    "tomlkit>=0.12"
+    "tomlkit>=0.12",
+    "python-dotenv>=1.0"
 ]
 license = { text = "MIT" }
 authors = [{ name = "Atlas Agent Contributors" }]
