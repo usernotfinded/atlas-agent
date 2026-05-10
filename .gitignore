@@ -33,3 +33,9 @@ reports/*.csv
 memory/*.md
 !memory/.gitkeep
 skills/proposed/*.md
+
+# Local Atlas runtime artifacts
+.atlas/backtests/
+.atlas/config.json
+.atlas/safety/heartbeat.json
+.DS_Store
