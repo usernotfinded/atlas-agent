@@ -34,7 +34,7 @@ def test_wizard_banner_persistence(tmp_path, monkeypatch, capsys):
 def test_yellow_update_command(tmp_path, monkeypatch, capsys, write_complete_setup_config):
     monkeypatch.chdir(tmp_path)
     # Mock update available
-    with patch("atlas_agent.cli._check_for_updates", return_value="0.3.0"):
+    with patch("atlas_agent.cli._check_for_updates", return_value="0.4.0"):
         # We need a complete config to trigger onboarding print from bare atlas
         write_complete_setup_config(tmp_path)
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test")

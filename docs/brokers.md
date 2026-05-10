@@ -1,6 +1,7 @@
 # Brokers
 
-Atlas Agent v0.3.0 uses an adapter-based architecture for broker integration.
+Atlas Agent v0.4.0 uses an adapter-based architecture
+ for broker integration.
 
 ## Broker Adapters
 All adapters must implement the `Broker` interface (`src/atlas_agent/brokers/base.py`).

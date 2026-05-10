@@ -1,6 +1,7 @@
 # Safety
 
-Atlas Agent v0.3.0 prioritizes safety through multiple decoupled layers:
+Atlas Agent v0.4.0 prioritizes safety
+ through multiple decoupled layers:
 
 ## 1. Deterministic Risk Manager
 Every order proposal is intercepted and validated by the `RiskManager`. It enforces hard limits on:

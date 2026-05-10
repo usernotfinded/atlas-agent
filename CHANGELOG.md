@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-10
+
+### Added
+- **Backtesting Foundation**: Implemented a deterministic, local-first backtesting engine with historical CSV data loading, execution simulation, and full integration with RiskManager and Audit logs.
+- **Backtest CLI**: Added `atlas backtest run --data path/to/data.csv --symbol SYMBOL` command.
+- **Documentation Audit**: Repository-wide documentation update for v0.4.0 consistency, including new safety and architecture details.
+- **Runtime Hygiene**: Hardened `.gitignore` to ensure runtime artifacts in `.atlas/backtests/` and `.atlas/config.json` are not tracked.
+
+### Changed
+- **CLI Contract**: Standardized backtest and broker commands for consistency and safety.
+- **Audit Hash-Chain**: Expanded audit event types to include backtesting lifecycle events.
+
 ## [0.3.0] - 2026-05-09
 
 ### Added

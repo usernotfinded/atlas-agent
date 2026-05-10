@@ -1,6 +1,6 @@
 # Environment Variables
 
-Atlas Agent v0.3.0 uses a dual-layer configuration system:
+Atlas Agent v0.4.0 uses a dual-layer configuration system:
 - **`.atlas/config.json`**: Stores non-secret workspace configuration (default symbol, risk limits, etc.).
 - **`.env.atlas`**: Stores sensitive API keys and broker credentials. This file is **gitignored** and protected during updates.
 

@@ -1,6 +1,7 @@
 # Providers
 
-Atlas Agent v0.3.0 is model-agnostic and provider-neutral.
+Atlas Agent v0.4.0 is model-agnostic
+ and provider-neutral.
 
 ## AI Provider Adapters
 Adapters implement the `AIProvider` interface (`src/atlas_agent/providers/base.py`). They are responsible for communicating with AI backends and normalizing their output into internal `ToolCall` and `LLMResponse` objects.

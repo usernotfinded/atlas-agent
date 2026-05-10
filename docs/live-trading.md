@@ -2,7 +2,8 @@
 
 **DANGER:** Live trading involves real financial risk and can lose money. 
 
-In Atlas Agent v0.3.0, live trading is strictly **disabled by default**. Enabling it requires passing through a multi-stage gate system.
+In Atlas Agent v0.4.0, live trading is strictly
+ **disabled by default**. Enabling it requires passing through a multi-stage gate system.
 
 ## Mandatory Prerequisites
 1.  **Explicit Mode**: `TRADING_MODE=live` and `ENABLE_LIVE_TRADING=true`.

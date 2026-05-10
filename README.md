@@ -25,7 +25,7 @@ Atlas Agent is a workspace where an AI agent lives, learns, and trades.
 *   **The Guardrails:** Deterministic risk controls (position sizing, daily loss limits, symbol policies) are decoupled from LLM reasoning to ensure safety.
 *   **Simulation and Learning:** The default safety mode. Atlas Agent uses a high-fidelity `PaperBroker` for simulation without financial risk. During **closed-market** hours, Atlas focuses on research and the built-in **learning loop** to improve future planning.
 
-## Current Status (v0.3.0)
+## Current Status (v0.4.0)
 
 | Component | Status | Description |
 |---|---:|---|

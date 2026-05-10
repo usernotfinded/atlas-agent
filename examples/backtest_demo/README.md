@@ -1,6 +1,7 @@
 # Backtest Demo
 
-Atlas Agent v0.3.0 includes a deterministic, local-first backtesting engine.
+Atlas Agent v0.4.0 includes a deterministic
+, local-first backtesting engine.
 
 ## Basic Run
 Run a buy-and-hold backtest on the sample dataset:

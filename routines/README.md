@@ -1,6 +1,7 @@
 # Atlas Agent Routines
 
-In Atlas Agent v0.3.0, "routines" represent the high-level autonomous reasoning cycles coordinated by the **AgentLoop**. The agent uses a tool-driven approach to research markets, manage memory, and execute trades.
+In Atlas Agent v0.4.0, "routines" represent
+ the high-level autonomous reasoning cycles coordinated by the **AgentLoop**. The agent uses a tool-driven approach to research markets, manage memory, and execute trades.
 
 ## Execution
 Run a manual autonomous cycle:
