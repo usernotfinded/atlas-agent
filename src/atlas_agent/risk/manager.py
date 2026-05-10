@@ -36,19 +36,24 @@ class RiskManager:
         audit: Optional[Any] = None,
     ) -> RiskManager:
         """Legacy compatibility shim."""
-        from atlas_agent.risk.limits import RiskLimits
-        enable_live = getattr(config, "enable_live_trading", False)
+        def _get(obj, key, default):
+            if isinstance(obj, dict):
+                return obj.get(key, default)
+            return getattr(obj, key, default)
+
+        enable_live = _get(config, "enable_live_trading", False)
+        
         limits = RiskLimits(
-            max_position_notional=getattr(config, "max_position_size", 1000.0),
-            max_single_trade_notional=getattr(config, "max_order_notional", 500.0),
-            allowed_symbols=getattr(config, "symbol_allowlist", None),
-            blocked_symbols=getattr(config, "symbol_blocklist", set()) or set(),
+            max_position_notional=_get(config, "max_position_size", 1000.0),
+            max_single_trade_notional=_get(config, "max_order_notional", 500.0),
+            allowed_symbols=_get(config, "symbol_allowlist", None),
+            blocked_symbols=_get(config, "symbol_blocklist", set()) or set(),
             live_trading_enabled=enable_live,
             paper_only=not enable_live,
-            minimum_confidence=getattr(config, "minimum_confidence", 0.6),
-            allow_shorting=getattr(config, "allow_shorting", False),
+            minimum_confidence=_get(config, "minimum_confidence", 0.6),
+            allow_shorting=_get(config, "allow_shorting", False),
         )
-        return cls(limits=limits, kill_switch_enabled=getattr(config, "kill_switch_enabled", False))
+        return cls(limits=limits, kill_switch_enabled=_get(config, "kill_switch_enabled", False))
 
     def validate_order(
         self,

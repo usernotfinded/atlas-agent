@@ -36,10 +36,30 @@ class WizardState:
     def to_dict(self) -> dict:
         return asdict(self)
         
-    def save(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, indent=2)
+    def save(self, path: Optional[Path] = None) -> None:
+        from atlas_agent.config import update_config_value
+        
+        # New config system
+        update_config_value("trading_mode", self.trust_mode)
+        update_config_value("model.provider", self.provider)
+        update_config_value("model.model", self.model)
+        if self.custom_endpoint:
+            update_config_value("model.base_url", self.custom_endpoint)
+        
+        update_config_value("broker.provider", self.broker_mode)
+        update_config_value("update.auto_check", self.update_channel)
+        
+        if self.messaging == "cli":
+            update_config_value("safety.order_approval_mode", "manual_live")
+        
+        update_config_value("workspace_root", self.workspace_path)
+
+        # Legacy backward compatibility for tests
+        if path:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(self.to_dict(), f, indent=2)
+
             
     @classmethod
     def load(cls, path: Path) -> "WizardState":

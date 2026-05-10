@@ -208,23 +208,13 @@ class WizardApplication:
         if not self.temp_secrets:
             return
         
-        env_path = Path(".env.atlas")
-        lines = []
-        if env_path.exists():
-            lines = env_path.read_text(encoding="utf-8").splitlines()
-        
+        from atlas_agent.config import set_atlas_secret
         for key, value in self.temp_secrets.items():
-            found = False
-            for i, line in enumerate(lines):
-                if line.startswith(f"{key}="):
-                    lines[i] = f"{key}={value}"
-                    found = True
-                    break
-            if not found:
-                lines.append(f"{key}={value}")
+            set_atlas_secret(key, value)
         
-        env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        # Maintain backward compatibility for tests that expect .gitignore update
         self.ensure_gitignore(".env.atlas")
+
 
     def ensure_gitignore(self, entry: str):
         gitignore = Path(".gitignore")

@@ -83,9 +83,8 @@ def test_next_commands_contains_yellow_update(tmp_path, monkeypatch, capsys):
     _print_first_run_onboarding(
         config=None,
         config_error=None,
-        resolution=WorkspaceResolution(path=None, source="cwd")
+        resolution=WorkspaceResolution(path=None, source="cwd", warning=None)
     )
-    
     captured = capsys.readouterr()
     expected_cmd = f"{YELLOW}atlas update{RESET}"
     assert expected_cmd in captured.out
@@ -95,8 +94,9 @@ def test_next_commands_contains_yellow_update(tmp_path, monkeypatch, capsys):
     _print_first_run_onboarding(
         config=None,
         config_error=None,
-        resolution=WorkspaceResolution(path=tmp_path, source="cwd")
+        resolution=WorkspaceResolution(path=tmp_path, source="cwd", warning=None)
     )
+
     captured = capsys.readouterr()
     assert expected_cmd in captured.out
     assert "atlas init <workspace>" not in captured.out

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import shutil
@@ -6,120 +8,24 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import tomlkit
+
 
 DEFAULT_TEMPLATE = "routine-trader"
-SENSITIVE_CONFIG_MARKERS = ("KEY", "SECRET", "TOKEN", "PASSWORD", "AUTH")
-MANAGED_TEMPLATE_PATHS = (
-    "memory",
-    "routines",
-    "skills",
-    "reports",
-    "pending_orders",
-    "audit",
-    "events",
-    "configs",
-    ".env.example",
-    ".gitignore",
-    "README.md",
-)
-
-
-class WorkspaceInitError(RuntimeError):
-    pass
-
-
-@dataclass(frozen=True)
-class WorkspaceInitResult:
-    path: Path
-    template: str
-    overwritten: bool = False
+SENSITIVE_CONFIG_MARKERS = ("KEY", "SECRET", "TOKEN", "PASSWORD")
 
 
 @dataclass(frozen=True)
 class WorkspaceResolution:
     path: Path | None
     source: str | None
-    warning: str | None = None
+    warning: str | None
+    overwritten: bool = False
+    template: str | None = None
 
 
-def init_workspace(
-    target: str | Path,
-    *,
-    template: str = DEFAULT_TEMPLATE,
-    force: bool = False,
-) -> WorkspaceInitResult:
-    target_path = Path(target).resolve()
-    template_path = resolve_template_path(template)
-    if target_path.exists() and not target_path.is_dir():
-        raise WorkspaceInitError(f"target exists and is not a directory: {target_path}")
-
-    had_contents = target_path.exists() and any(target_path.iterdir())
-    if had_contents and not force:
-        raise WorkspaceInitError(
-            f"target directory is not empty: {target_path}; pass --force to overwrite"
-        )
-
-    target_path.mkdir(parents=True, exist_ok=True)
-    if force:
-        _remove_managed_paths(target_path)
-
-    for source in template_path.iterdir():
-        destination = target_path / source.name
-        if source.is_dir():
-            shutil.copytree(source, destination, dirs_exist_ok=True)
-        else:
-            shutil.copy2(source, destination)
-
-    _ensure_runtime_dirs(target_path)
-    return WorkspaceInitResult(
-        path=target_path,
-        template=template,
-        overwritten=had_contents and force,
-    )
-
-
-def resolve_template_path(template: str) -> Path:
-    if template != DEFAULT_TEMPLATE:
-        raise WorkspaceInitError(f"unknown template: {template}")
-    candidates = (
-        Path.cwd() / "templates" / template,
-        Path(__file__).resolve().parents[2] / "templates" / template,
-        Path(sysconfig.get_path("data"))
-        / "share"
-        / "atlas-agent"
-        / "templates"
-        / template,
-    )
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    raise WorkspaceInitError(f"template not found: {template}")
-
-
-def _remove_managed_paths(target_path: Path) -> None:
-    for relative in MANAGED_TEMPLATE_PATHS:
-        path = target_path / relative
-        if path.is_dir():
-            shutil.rmtree(path)
-        elif path.exists():
-            path.unlink()
-
-
-def _ensure_runtime_dirs(target_path: Path) -> None:
-    for directory in (
-        target_path / "reports" / "daily",
-        target_path / "reports" / "weekly",
-        target_path / "reports" / "learning",
-        target_path / "reports" / "reflections",
-        target_path / "pending_orders",
-        target_path / "audit",
-        target_path / "events",
-        target_path / "skills" / "active",
-        target_path / "skills" / "proposed",
-        target_path / "skills" / "archived",
-        target_path / "memory" / "conversations",
-    ):
-        directory.mkdir(parents=True, exist_ok=True)
+class WorkspaceInitError(RuntimeError):
+    pass
 
 
 def get_default_config_path() -> Path:
@@ -156,9 +62,7 @@ def clear_default_workspace() -> None:
 
 def is_workspace(path: Path) -> bool:
     # A workspace is identified by the presence of core directories
-    return (path / "memory").exists() and (
-        (path / "configs").exists() or (path / "routines").exists()
-    )
+    return path.is_dir() and (path / "memory").exists()
 
 
 def resolve_workspace_path(args_workspace: str | None = None) -> Path | None:
@@ -170,7 +74,7 @@ def resolve_workspace(args_workspace: str | None = None) -> WorkspaceResolution:
     if args_workspace:
         candidate = Path(args_workspace).expanduser().resolve()
         if is_workspace(candidate):
-            return WorkspaceResolution(path=candidate, source="flag")
+            return WorkspaceResolution(path=candidate, source="flag", warning=None)
         return WorkspaceResolution(
             path=None,
             source="flag",
@@ -182,7 +86,7 @@ def resolve_workspace(args_workspace: str | None = None) -> WorkspaceResolution:
     if env_ws:
         candidate = Path(env_ws).expanduser().resolve()
         if is_workspace(candidate):
-            return WorkspaceResolution(path=candidate, source="env")
+            return WorkspaceResolution(path=candidate, source="env", warning=None)
         return WorkspaceResolution(
             path=None,
             source="env",
@@ -192,13 +96,13 @@ def resolve_workspace(args_workspace: str | None = None) -> WorkspaceResolution:
     # 3. Current directory
     cwd = Path.cwd()
     if is_workspace(cwd):
-        return WorkspaceResolution(path=cwd, source="cwd")
+        return WorkspaceResolution(path=cwd, source="cwd", warning=None)
 
     # 4. Saved default workspace
     default_ws = _default_workspace_candidate()
     if default_ws is not None:
         if is_workspace(default_ws):
-            return WorkspaceResolution(path=default_ws, source="default")
+            return WorkspaceResolution(path=default_ws, source="default", warning=None)
         return WorkspaceResolution(
             path=None,
             source="default",
@@ -219,21 +123,39 @@ def _default_workspace_candidate() -> Path | None:
 def _load_default_config() -> dict[str, Any]:
     path = get_default_config_path()
     if not path.exists():
+        # Fallback to legacy config.json (if path was changed to global.toml)
+        legacy_path = Path.home() / ".atlas" / "config.json"
+        if legacy_path.exists() and legacy_path != path:
+            try:
+                parsed = json.loads(legacy_path.read_text(encoding="utf-8"))
+                if isinstance(parsed, dict):
+                    return parsed
+            except:
+                pass
         return {}
+    
     try:
-        parsed = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        if path.suffix == ".json":
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        else:
+            with open(path, "r", encoding="utf-8") as f:
+                parsed = tomlkit.load(f)
+                return dict(parsed)
+    except Exception:
         return {}
-    if isinstance(parsed, dict):
-        return parsed
-    return {}
 
 
 def _write_default_config(data: dict[str, Any]) -> None:
     config_path = get_default_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
     sanitized = _sanitize_default_config(data)
-    config_path.write_text(json.dumps(sanitized, indent=2, sort_keys=True), encoding="utf-8")
+    if config_path.suffix == ".json":
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(sanitized, f, indent=2, sort_keys=True)
+    else:
+        with open(config_path, "w", encoding="utf-8") as f:
+            tomlkit.dump(sanitized, f)
 
 
 def _sanitize_default_config(data: dict[str, Any]) -> dict[str, Any]:
@@ -245,3 +167,63 @@ def _sanitize_default_config(data: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, (str, int, float, bool)) or value is None:
             sanitized[key_text] = value
     return sanitized
+
+
+def init_workspace(
+    path: str | Path,
+    template: str = DEFAULT_TEMPLATE,
+    force: bool = False,
+) -> WorkspaceResolution:
+    target_path = Path(path).expanduser().resolve()
+    overwritten = False
+    if is_workspace(target_path):
+        if not force:
+            return WorkspaceResolution(path=target_path, source="cwd", warning=None)
+        overwritten = True
+    
+    # If not force and directory exists and is not empty, fail
+    if not force and target_path.exists() and any(target_path.iterdir()):
+        raise WorkspaceInitError(f"workspace path already exists and is not empty: {target_path}")
+
+    template_path = Path(sysconfig.get_path("purelib")) / "atlas_agent" / "templates" / template
+    if not template_path.exists():
+        # Fallback for local development
+        template_path = Path(__file__).parent.parent.parent / "templates" / template
+    
+    if not template_path.exists():
+        raise WorkspaceInitError(f"template not found: {template}")
+
+    target_path.mkdir(parents=True, exist_ok=True)
+    for source in template_path.iterdir():
+        destination = target_path / source.name
+        if source.is_dir():
+            shutil.copytree(source, destination, dirs_exist_ok=True)
+        else:
+            shutil.copy2(source, destination)
+
+    _ensure_runtime_dirs(target_path)
+    return WorkspaceResolution(
+        path=target_path, 
+        source="init", 
+        warning=None, 
+        overwritten=overwritten,
+        template=template
+    )
+
+
+def _ensure_runtime_dirs(target_path: Path) -> None:
+    for directory in (
+        target_path / ".atlas" / "backtests",
+        target_path / ".atlas" / "locks",
+        target_path / ".atlas" / "safety",
+        target_path / "memory" / "conversations",
+        target_path / "reports" / "daily",
+        target_path / "reports" / "agent",
+        target_path / "reports" / "learning",
+        target_path / "reports" / "reflections",
+        target_path / "reports" / "weekly",
+        target_path / "pending_orders",
+        target_path / "audit",
+        target_path / "events",
+    ):
+        directory.mkdir(parents=True, exist_ok=True)

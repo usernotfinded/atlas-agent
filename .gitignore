@@ -35,6 +35,8 @@ memory/*.md
 skills/proposed/*.md
 
 # Local Atlas runtime artifacts
+.env.atlas
+.atlas/config.toml
 .atlas/backtests/
 .atlas/config.json
 .atlas/safety/heartbeat.json

@@ -65,6 +65,7 @@ SENSITIVE_FILES = {
     ".env.atlas",
     ".env.local",
     ".atlas/config.json",
+    ".atlas/config.toml",
 }
 
 

@@ -7,7 +7,7 @@ from atlas_agent.dashboard.collectors import collect_dashboard_snapshot
 
 
 def test_collect_dashboard_snapshot_handles_empty_workspace(tmp_path: Path):
-    config = AtlasConfig()
+    config = AtlasConfig(audit_dir=tmp_path / "audit")
     snapshot = collect_dashboard_snapshot(config, tmp_path)
     
     assert snapshot.workspace == str(tmp_path)
