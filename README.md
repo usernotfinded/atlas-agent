@@ -11,7 +11,7 @@ Atlas is the broker-neutral control layer above user-selected models, broker/API
 ## Why Atlas?
 
 - **LLM-assisted market research**: Leverage advanced models to process market context and form data-driven theses.
-- **Paper workflows**: Validate strategies using high-fidelity **simulation** before risking capital. Every **market-open** session is designed to favor simulation until explicitly authorized. During **closed-market** hours, Atlas focuses on **learning** and research.
+- **Paper workflows**: Validate strategies using deterministic local **simulation** before risking capital. Every **market-open** session is designed to favor simulation until explicitly authorized. During **closed-market** hours, Atlas focuses on **learning** and research.
 - **Deterministic risk gates**: Safety controls are decoupled from LLM reasoning to help reduce unintended actions.
 - **Approval queues**: Live actions are designed to require explicit human confirmation via local queues.
 - **Persistent trading memory**: Markdown journals allow the agent to carry lessons across sessions and improve its "user model" through a continuous **learning loop**.
@@ -31,7 +31,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | Component | Status | Description |
 |---|---|---|
 | **Local Workspace** | Usable | Core environment, CLI, and configuration management. |
-| **Paper Workflow** | Usable | High-fidelity simulation with deterministic pricing. |
+| **Paper Workflow** | Usable | Deterministic local simulation with pricing. |
 | **Risk Gates** | Implemented | Hard-coded limits for position size, notional, and symbols. |
 | **Audit Logs** | Implemented | Tamper-evident hash-chain and run manifests. |
 | **Broker/API Model** | Beta | Provider-neutral synchronization and adapter interfaces. |
@@ -62,6 +62,14 @@ atlas run --mode paper
 
 1. **`atlas`**: Running bare `atlas` for the first time opens the interactive setup wizard. It collects your provider and broker credentials securely.
 2. **`atlas run`**: Execution is explicit. Use `--mode paper` for safety and simulation. Live trading is designed to prevent orders without explicit configuration and multi-stage gates.
+
+## Demos
+
+Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:
+
+- **[Paper Workflow](docs/demo-paper-workflow.md)** — create a workspace, validate config, and run a safe paper cycle with no live broker orders.
+- **[Risk Rejection](docs/demo-risk-rejection.md)** — see how deterministic risk gates block unsafe orders before they reach a broker.
+- **[Audit Verification](docs/demo-audit.md)** — verify the tamper-evident hash-chain and run manifests.
 
 ## Configuration & Security
 

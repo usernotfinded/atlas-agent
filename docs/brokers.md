@@ -6,7 +6,7 @@ Atlas Agent v0.4.0 uses an adapter-based architecture
 ## Broker Adapters
 All adapters must implement the `Broker` interface (`src/atlas_agent/brokers/base.py`).
 
-- **PaperBrokerAdapter**: A high-fidelity, local-first simulator. It is the default for all runs and does not require credentials.
+- **PaperBrokerAdapter**: A deterministic local simulator. It is the default for all runs and does not require credentials.
 - **AlpacaBroker**: Live adapter for Alpaca Markets.
 - **BinanceBroker**: Live adapter for Binance (Spot).
 - **CCXTBroker**: A multi-exchange adapter using the CCXT library.
