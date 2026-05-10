@@ -42,5 +42,6 @@ skills/proposed/*.md
 .atlas/safety/heartbeat.json
 .DS_Store
 
-# Local audit logs
+# Local audit logs and manifests
 audit/*.log
+audit/manifests/
