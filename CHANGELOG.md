@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-05-11
+
+### Fixed
+- Removed normal runtime fallback to `NullProvider`; agentic workflows now fail closed when no AI provider is configured.
+- Kept `NullProvider` available only for explicit internal/test usage.
+- Kept `local_command` hidden from normal provider selection as a legacy compatibility option.
+- Aligned LM Studio and OpenAI-compatible endpoints as first-class local/custom provider choices.
+
+
 ## [0.5.0] - 2026-05-11
 
 ### Added

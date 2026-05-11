@@ -1,6 +1,6 @@
 # Environment Variables
 
-Atlas Agent v0.5.0 uses a dual-layer configuration system:
+Atlas Agent v0.5.1 uses a dual-layer configuration system:
 - **`.atlas/config.toml`**: Stores non-secret workspace configuration (default symbol, risk limits, etc.).
 - **`.env.atlas`**: Stores sensitive API keys and broker credentials. This file is **gitignored** and protected during updates.
 
