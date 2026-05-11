@@ -176,13 +176,19 @@ def test_docs_do_not_claim_crypto_paper_universal_or_impossible() -> None:
 def test_grep_prevents_hardcoded_btc_usd_in_runtime_source() -> None:
     """BTC-USD must not appear in runtime source code; only in tests/fixtures/docs
     explicitly labeled as examples."""
-    import subprocess
+    src_dir = Path("src")
+    matches: list[str] = []
 
-    result = subprocess.run(
-        ["rg", "-n", "BTC-USD", "src/"],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 1 or result.stdout == "", (
-        f"BTC-USD found in runtime source:\n{result.stdout}"
-    )
+    for path in src_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.suffix not in {".py", ".md", ".txt", ".toml", ".yaml", ".yml", ".json"}:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        if "BTC-USD" in text:
+            matches.append(str(path))
+
+    assert matches == [], f"BTC-USD found in runtime source: {matches}"
