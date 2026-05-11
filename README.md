@@ -69,6 +69,9 @@ atlas
 # Check your configuration
 atlas validate
 
+# Configure your trading symbol (example only; choose your own)
+atlas config set market.symbol AAPL
+
 # Run your first paper-trading cycle
 atlas run --mode paper
 ```

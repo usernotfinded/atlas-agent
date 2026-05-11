@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from atlas_agent.config import AtlasConfig
+from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.execution.order import OrderResult
 from atlas_agent.research.web_research import OfflineResearchProvider
 from atlas_agent.routines.engine import run_routine
@@ -26,6 +26,7 @@ def _config(tmp_path, **kwargs) -> AtlasConfig:
         reports_dir=tmp_path / "reports",
         audit_dir=tmp_path / "audit",
         pending_orders_dir=tmp_path / "pending",
+        market=MarketConfig(symbol="TEST-SYMBOL"),
         **kwargs,
     )
 

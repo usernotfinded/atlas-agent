@@ -9,8 +9,8 @@ from atlas_agent.portfolio.state import PortfolioState
 def test_paper_flatten_market_closes_multiple_positions() -> None:
     state = PortfolioState(cash=10_000)
     broker = PaperBroker(state)
-    broker.place_order(Order("BTC-USD", "buy", 1, limit_price=100))
-    broker.place_order(Order("ETH-USD", "buy", 2, limit_price=50))
+    broker.place_order(Order("TEST-A", "buy", 1, limit_price=100))
+    broker.place_order(Order("TEST-B", "buy", 2, limit_price=50))
 
     result = broker.flatten_all(strategy="market", bps=25)
 
@@ -19,14 +19,14 @@ def test_paper_flatten_market_closes_multiple_positions() -> None:
     assert result.attempted == 2
     assert result.closed == 2
     assert result.failed == 0
-    assert state.positions["BTC-USD"].quantity == 0
-    assert state.positions["ETH-USD"].quantity == 0
+    assert state.positions["TEST-A"].quantity == 0
+    assert state.positions["TEST-B"].quantity == 0
 
 
 def test_paper_flatten_reports_partial_when_short_position_exists() -> None:
     state = PortfolioState(cash=10_000)
-    state.positions["BTC-USD"] = Position(symbol="BTC-USD", quantity=1.0, average_price=100.0)
-    state.positions["ETH-USD"] = Position(symbol="ETH-USD", quantity=-1.0, average_price=50.0)
+    state.positions["TEST-A"] = Position(symbol="TEST-A", quantity=1.0, average_price=100.0)
+    state.positions["TEST-B"] = Position(symbol="TEST-B", quantity=-1.0, average_price=50.0)
     broker = PaperBroker(state)
 
     result = broker.flatten_all(strategy="market", bps=25)
@@ -36,14 +36,14 @@ def test_paper_flatten_reports_partial_when_short_position_exists() -> None:
     assert result.attempted == 2
     assert result.closed == 1
     assert result.failed == 1
-    assert result.failed_symbols == ("ETH-USD",)
-    assert state.positions["BTC-USD"].quantity == 0
+    assert result.failed_symbols == ("TEST-B",)
+    assert state.positions["TEST-A"].quantity == 0
 
 
 def test_paper_flatten_is_idempotent_when_already_flat() -> None:
     state = PortfolioState(cash=10_000)
     broker = PaperBroker(state)
-    broker.place_order(Order("BTC-USD", "buy", 1, limit_price=100))
+    broker.place_order(Order("TEST-A", "buy", 1, limit_price=100))
 
     first = broker.flatten_all(strategy="aggressive_limit", bps=20)
     second = broker.flatten_all(strategy="aggressive_limit", bps=20)

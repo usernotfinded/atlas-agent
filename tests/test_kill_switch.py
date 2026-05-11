@@ -19,7 +19,7 @@ def test_kill_switch_file_toggle(tmp_path) -> None:
 def test_kill_switch_blocks_order() -> None:
     manager = RiskManager.from_config(AtlasConfig(kill_switch_enabled=True))
     decision = manager.validate_order(
-        Order("BTC-USD", "buy", 1, limit_price=100, confidence=1),
+        Order("TEST-SYMBOL", "buy", 1, limit_price=100, confidence=1),
         PortfolioState(cash=10_000),
         mode="paper",
         market_price=100,

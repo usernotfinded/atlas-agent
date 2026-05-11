@@ -50,7 +50,7 @@ def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:
     main(["init", "."])
     capsys.readouterr() # Clear init output
 
-    assert main(["backtest"]) == 0
+    assert main(["backtest", "run", "--symbol", "DEMO-SYMBOL", "--data", "data/sample/ohlcv.csv"]) == 0
     assert "backtest result: filled" in capsys.readouterr().out
 
 
@@ -75,7 +75,7 @@ def test_atlas_run_once_paper_works(tmp_path, monkeypatch, capsys) -> None:
     )
     write_user_discipline(".", profile)
 
-    assert main(["run-once", "--mode", "paper"]) == 0
+    assert main(["run-once", "--mode", "paper", "--symbol", "DEMO-SYMBOL"]) == 0
     assert "paper result: filled" in capsys.readouterr().out
 
 
@@ -106,7 +106,7 @@ def test_atlas_run_once_live_fails_safely_by_default(
     )
     write_user_discipline(".", profile)
 
-    assert main(["run-once", "--mode", "live"]) == 2
+    assert main(["run-once", "--mode", "live", "--symbol", "DEMO-SYMBOL"]) == 2
     output = capsys.readouterr().out
     assert "live result: rejected" in output
     assert "ENABLE_LIVE_TRADING must be true" in output

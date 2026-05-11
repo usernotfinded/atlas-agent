@@ -44,7 +44,7 @@ def test_risk_rejection_prevents_broker_place_order(tmp_path) -> None:
     config = AtlasConfig(max_position_size=50)
     broker = SpyBroker()
     result = make_router(tmp_path, config).route(
-        Order("BTC-USD", "buy", 1, limit_price=100, confidence=1),
+        Order("TEST-SYMBOL", "buy", 1, limit_price=100, confidence=1),
         mode="paper",
         broker=broker,
         portfolio=PortfolioState(cash=10_000),
@@ -65,7 +65,7 @@ def test_live_order_without_approval_creates_pending_and_does_not_execute(tmp_pa
     )
     broker = SpyBroker()
     order = Order(
-        "BTC-USD",
+        "TEST-SYMBOL",
         "buy",
         1,
         limit_price=100,
@@ -95,7 +95,7 @@ def test_live_order_with_stale_missing_approval_fails_safely(tmp_path) -> None:
     )
 
     result = make_router(tmp_path, config).route(
-        Order("BTC-USD", "buy", 1, limit_price=100, confidence=1, stop_loss=95),
+        Order("TEST-SYMBOL", "buy", 1, limit_price=100, confidence=1, stop_loss=95),
         mode="live",
         broker=SpyBroker(),
         portfolio=PortfolioState(cash=10_000),
@@ -106,7 +106,7 @@ def test_live_order_with_stale_missing_approval_fails_safely(tmp_path) -> None:
 
 
 def test_ai_output_cannot_call_broker_directly() -> None:
-    order = Order("BTC-USD", "buy", 1, limit_price=100, source="ai_committee")
+    order = Order("TEST-SYMBOL", "buy", 1, limit_price=100, source="ai_committee")
 
     assert order.source == "ai_committee"
     assert not hasattr(order, "place_order")

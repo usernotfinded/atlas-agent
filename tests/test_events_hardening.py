@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from atlas_agent.cli import main, run_once
-from atlas_agent.config import AtlasConfig
+from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.events import EventLogger, generate_run_id
 from atlas_agent.events.schema import KNOWN_EVENT_TYPES, REQUIRED_EVENT_FIELDS
 
@@ -18,6 +18,7 @@ def _config(tmp_path: Path, **overrides) -> AtlasConfig:
         "reports_dir": tmp_path / "reports",
         "events_dir": tmp_path / "events",
         "data_path": tmp_path / "data" / "ohlcv.csv",
+        "market": MarketConfig(symbol="DEMO-SYMBOL"),
     }
     values.update(overrides)
     return AtlasConfig(**values)

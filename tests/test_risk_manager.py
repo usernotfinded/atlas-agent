@@ -37,7 +37,7 @@ def evaluate(symbol: str, quantity: float, price: float, config: AtlasConfig, re
 
 def test_max_position_size_blocks_order() -> None:
     decision = evaluate(
-        "BTC-USD", 2, 100,
+        "TEST-SYMBOL", 2, 100,
         AtlasConfig(max_position_size=100),
     )
 
@@ -47,7 +47,7 @@ def test_max_position_size_blocks_order() -> None:
 
 def test_max_order_notional_blocks_order() -> None:
     decision = evaluate(
-        "BTC-USD", 1, 200,
+        "TEST-SYMBOL", 1, 200,
         AtlasConfig(max_order_notional=100),
     )
 
@@ -57,8 +57,8 @@ def test_max_order_notional_blocks_order() -> None:
 
 def test_symbol_blocklist_works() -> None:
     decision = evaluate(
-        "BTC-USD", 1, 100,
-        AtlasConfig(symbol_blocklist={"BTC-USD"}),
+        "TEST-BLOCKED", 1, 100,
+        AtlasConfig(symbol_blocklist={"TEST-BLOCKED"}),
     )
 
     assert not decision.allowed

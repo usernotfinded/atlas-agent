@@ -32,7 +32,8 @@ This is a real AI trading framework. It supports backtesting, paper trading, gat
 pytest
 pip check
 atlas validate
-atlas backtest run --data data/sample/ohlcv.csv --symbol BTC-USD
+atlas config set market.symbol AAPL
+atlas backtest run --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL
 atlas run --mode paper
 atlas run --mode live  # Should fail safely unless fully configured
 ```

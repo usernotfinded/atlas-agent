@@ -43,7 +43,17 @@ Live trading enabled: False
 
 The default trading mode is **paper**, and live trading is disabled.
 
-### 4. Run a paper cycle
+### 4. Configure a trading symbol
+
+Atlas does not choose a trading symbol for you. Set one before running:
+
+```bash
+atlas config set market.symbol AAPL
+```
+
+Use any symbol supported by your broker/API provider and paper/live setup.
+
+### 5. Run a paper cycle
 
 ```bash
 atlas run --mode paper
@@ -66,8 +76,12 @@ Nothing is traded. Nothing leaves your machine.
 2. No pending orders were created in `pending_orders/`.
 3. The demo does not require live broker credentials.
 
+## Paper/sandbox support note
+
+Paper and sandbox support depends on the selected broker/API provider and asset class. Some providers offer crypto simulation or testnet environments; others may not. Atlas does not assume crypto support.
+
 ## Next steps
 
 - Configure a provider with `atlas configure` or edit `.atlas/config.toml`.
-- Run `atlas backtest run --symbol BTC-USD --data data/sample/ohlcv.csv` to exercise the deterministic backtest engine.
+- Run `atlas backtest run --symbol DEMO-SYMBOL --data data/sample/ohlcv.csv` to exercise the deterministic backtest engine with sample data (replace with your own symbol and data).
 - Review `docs/demo-risk-rejection.md` to see how Atlas blocks unsafe orders.

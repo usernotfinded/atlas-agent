@@ -59,7 +59,7 @@ class FakeAgentService:
         return ServiceResult(
             ok=True,
             message="status ok",
-            data={"symbol": "BTC-USD", "position_pct": 15.0, "position_size_usd": 12345},
+            data={"symbol": "TEST-SYMBOL", "position_pct": 15.0, "position_size_usd": 12345},
         )
 
     async def plan(self, actor: str) -> ServiceResult:

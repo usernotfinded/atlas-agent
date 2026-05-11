@@ -13,7 +13,7 @@ def test_live_order_without_enable_live_trading_fails() -> None:
     broker = AlpacaBroker(AtlasConfig(trading_mode="live", live_broker="alpaca"))
 
     with pytest.raises(BrokerConfigurationError, match="ENABLE_LIVE_TRADING"):
-        broker.place_order(Order("BTC-USD", "buy", 1, limit_price=100))
+        broker.place_order(Order("TEST-SYMBOL", "buy", 1, limit_price=100))
 
 
 def test_alpaca_refuses_without_env_keys(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -28,7 +28,7 @@ def test_alpaca_refuses_without_env_keys(monkeypatch: pytest.MonkeyPatch) -> Non
     )
 
     with pytest.raises(BrokerConfigurationError, match="ALPACA_API_KEY"):
-        broker.place_order(Order("BTC-USD", "buy", 1, limit_price=100))
+        broker.place_order(Order("TEST-SYMBOL", "buy", 1, limit_price=100))
 
 
 def test_binance_refuses_without_env_keys(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -43,4 +43,4 @@ def test_binance_refuses_without_env_keys(monkeypatch: pytest.MonkeyPatch) -> No
     )
 
     with pytest.raises(BrokerConfigurationError, match="BINANCE_API_KEY"):
-        broker.place_order(Order("BTC-USD", "buy", 1, limit_price=100))
+        broker.place_order(Order("TEST-SYMBOL", "buy", 1, limit_price=100))

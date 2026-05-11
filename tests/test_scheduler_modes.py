@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from atlas_agent.ai.discipline import write_user_discipline
 from atlas_agent.cli import run_once
-from atlas_agent.config import AtlasConfig
+from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.scheduler.runner import run_scheduler_once
 
 GOOD_PROFILE = (
@@ -26,6 +26,7 @@ def test_paper_scheduler_can_run_autonomously(tmp_path) -> None:
         audit_dir=tmp_path / "audit",
         pending_orders_dir=tmp_path / "pending",
         memory_dir=tmp_path / "memory",
+        market=MarketConfig(symbol="DEMO-SYMBOL"),
     )
 
     result = run_scheduler_once(
@@ -48,6 +49,7 @@ def test_live_scheduler_creates_pending_order_without_approval(tmp_path) -> None
         audit_dir=tmp_path / "audit",
         pending_orders_dir=tmp_path / "pending",
         memory_dir=tmp_path / "memory",
+        market=MarketConfig(symbol="DEMO-SYMBOL"),
     )
 
     result = run_scheduler_once(
@@ -68,6 +70,7 @@ def test_kill_switch_blocks_scheduler_execution(tmp_path) -> None:
         audit_dir=tmp_path / "audit",
         pending_orders_dir=tmp_path / "pending",
         memory_dir=tmp_path / "memory",
+        market=MarketConfig(symbol="DEMO-SYMBOL"),
     )
 
     result = run_scheduler_once(

@@ -10,7 +10,7 @@ def test_valid_decision_schema_parses() -> None:
     decision = parse_decision(
         {
             "action": "buy",
-            "symbol": "btc-usd",
+            "symbol": "test-symbol",
             "confidence": 0.8,
             "time_horizon": "swing",
             "reasoning_summary": "trend",
@@ -20,13 +20,13 @@ def test_valid_decision_schema_parses() -> None:
     )
 
     assert decision.action == "buy"
-    assert decision.symbol == "BTC-USD"
+    assert decision.symbol == "TEST-SYMBOL"
     assert decision.proposed_order is not None
 
 
 def test_invalid_ai_decision_is_rejected() -> None:
     with pytest.raises(DecisionSchemaError):
-        parse_decision({"action": "moon", "symbol": "BTC-USD", "confidence": 0.9})
+        parse_decision({"action": "moon", "symbol": "TEST-SYMBOL", "confidence": 0.9})
 
 
 def test_low_confidence_decision_is_rejected_if_threshold_not_met() -> None:
@@ -34,7 +34,7 @@ def test_low_confidence_decision_is_rejected_if_threshold_not_met() -> None:
         parse_and_validate_signal(
             {
                 "action": "buy",
-                "symbol": "BTC-USD",
+                "symbol": "TEST-SYMBOL",
                 "confidence": 0.2,
                 "time_horizon": "intraday",
                 "reasoning_summary": "weak",

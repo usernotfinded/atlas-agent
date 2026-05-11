@@ -8,7 +8,7 @@ import pytest
 
 from atlas_agent.agent import runner
 from atlas_agent.ai.discipline import write_user_discipline
-from atlas_agent.config import AtlasConfig
+from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.execution.approval import ApprovalManager
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.execution.order import AccountSnapshot, Order, OrderResult
@@ -39,6 +39,7 @@ def _config(tmp_path: Path, **overrides) -> AtlasConfig:
         "pending_orders_dir": tmp_path / "pending_orders",
         "reports_dir": tmp_path / "reports",
         "data_path": tmp_path / "data" / "ohlcv.csv",
+        "market": MarketConfig(symbol="TEST-SYMBOL"),
     }
     values.update(overrides)
     return AtlasConfig(**values)
@@ -133,7 +134,7 @@ def test_risk_manager_rejection_blocks_live_broker_and_pending_order(
     risk_manager = BlockingRiskManager()
     broker = SpyBroker()
     order = Order(
-        "BTC-USD",
+        "TEST-SYMBOL",
         "buy",
         1,
         limit_price=100,

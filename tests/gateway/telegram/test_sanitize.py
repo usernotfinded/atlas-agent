@@ -10,7 +10,7 @@ def test_sanitize_output_redacts_sensitive_keys_and_tokens() -> None:
         "TELEGRAM_BOT_TOKEN": "123456:very-secret",
         "provider_api_key": "sk-supersecretkey123456789012345",
         "note": "Authorization: Bearer abcd1234efgh5678ijkl9012mnop3456",
-        "ticker": "BTC-USD",
+        "ticker": "TEST-SYMBOL",
     }
 
     sanitized = sanitize_output(payload)
@@ -19,7 +19,7 @@ def test_sanitize_output_redacts_sensitive_keys_and_tokens() -> None:
     assert sanitized["provider_api_key"] == "[REDACTED]"
     assert "[REDACTED]" in sanitized["note"]
     assert "abcd1234efgh5678ijkl9012mnop3456" not in sanitized["note"]
-    assert sanitized["ticker"] == "BTC-USD"
+    assert sanitized["ticker"] == "TEST-SYMBOL"
 
 
 def test_sanitize_output_redacts_usd_sensitive_fields() -> None:

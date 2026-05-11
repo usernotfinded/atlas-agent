@@ -13,12 +13,12 @@ from atlas_agent.providers.openai_compatible import OpenAICompatibleProvider
 
 def test_null_provider_deterministic() -> None:
     response = NullProvider().generate(
-        ProviderRequest("system", "user", "null", metadata={"symbol": "BTC-USD"})
+        ProviderRequest("system", "user", "null", metadata={"symbol": "TEST-SYMBOL"})
     )
 
     assert response.parsed_json is not None
     assert response.parsed_json["action"] == "hold"
-    assert response.parsed_json["symbol"] == "BTC-USD"
+    assert response.parsed_json["symbol"] == "TEST-SYMBOL"
 
 
 def test_openai_compatible_config_loads(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -41,7 +41,7 @@ def test_order_router_enforces_risk_manager_before_live_gates(tmp_path) -> None:
         audit=audit
     )
     
-    order = Order("BTC-USD", "buy", 1, limit_price=100)
+    order = Order("TEST-SYMBOL", "buy", 1, limit_price=100)
     result = router.route(
         order,
         mode="live",

@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from atlas_agent.config import AtlasConfig
+from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.cli import main
 from atlas_agent.ai.discipline import write_user_discipline
 
@@ -25,6 +25,7 @@ def base_config(tmp_path):
         audit_dir=tmp_path / "audit",
         reports_dir=tmp_path / "reports",
         data_path=tmp_path / "data",
+        market=MarketConfig(symbol="TEST-SYMBOL"),
     )
     config.ensure_dirs()
     return config

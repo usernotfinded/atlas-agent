@@ -151,7 +151,7 @@ def test_atlas_routine_succeeds_after_manual_setup(tmp_path: Path, monkeypatch) 
 def test_atlas_backtest_works_without_discipline(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     _atlas(["init", "."])
-    rc, out, _ = _atlas(["backtest", "run", "--symbol", "BTC-USD", "--data", "data/sample/ohlcv.csv"])
+    rc, out, _ = _atlas(["backtest", "run", "--symbol", "DEMO-SYMBOL", "--data", "data/sample/ohlcv.csv"])
     assert rc == 0
     assert "backtest result:" in out
 

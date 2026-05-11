@@ -33,6 +33,7 @@ def workspace():
     try:
         main(["init", "."])
         write_user_discipline(".", GOOD_PROFILE)
+        main(["config", "set", "market.symbol", "TEST-SYMBOL"])
         yield Path(temp_dir)
     finally:
         os.chdir(original_cwd)
@@ -167,6 +168,7 @@ def test_run_alias(workspace):
             continuous=False,
             interval=60,
             max_cycles=None,
+            symbol=ANY,
         )
 
 
@@ -189,6 +191,7 @@ def test_run_continuous_alias(workspace):
             continuous=True,
             interval=60,
             max_cycles=None,
+            symbol=ANY,
         )
 
 
