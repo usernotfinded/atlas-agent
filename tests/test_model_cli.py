@@ -162,6 +162,7 @@ class TestConfigDoctor:
         out = capsys.readouterr().out
         assert "ANTHROPIC_API_KEY" in out
         assert "configured/redacted" in out
+        assert "sk-ant-test" not in out
 
     def test_doctor_warns_about_other_provider_keys(self, workspace, capsys, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")

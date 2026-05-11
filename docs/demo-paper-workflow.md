@@ -66,7 +66,7 @@ Expected behavior:
 - **Paper mode** is used; no live broker API calls are made.
 - The `RiskManager` evaluates any simulated orders against your limits.
 - The `AuditWriter` records events to `audit/events.jsonl`.
-- If no AI provider is configured, the built-in `NullProvider` returns a deterministic "hold" response, so no orders are proposed.
+- If no AI provider is configured, agentic workflows fail closed and ask you to configure a provider.
 
 Nothing is traded. Nothing leaves your machine.
 

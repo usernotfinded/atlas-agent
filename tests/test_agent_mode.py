@@ -52,7 +52,9 @@ def test_agent_run_paper_mode(base_config, monkeypatch, capsys):
     write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
         with patch("atlas_agent.agent.runner.MarketSessionDetector.get_state", return_value="closed"):
-            ret = main(["agent", "run", "--mode", "paper"])
+            from atlas_agent.providers.null_provider import NullProvider
+            with patch("atlas_agent.agent.runner.get_provider_from_env", return_value=NullProvider()):
+                ret = main(["agent", "run", "--mode", "paper"])
     assert ret == 0
     captured = capsys.readouterr()
     assert "agent run paper:" in captured.out
@@ -84,7 +86,9 @@ def test_agent_run_auto_open_market(base_config, monkeypatch, capsys):
             mock_result.lock_status = None
             mock_result.model_status = None
             with patch("atlas_agent.agent.runner.run_open_market_cycle", return_value=mock_result):
-                ret = main(["agent", "run", "--mode", "auto"])
+                from atlas_agent.providers.null_provider import NullProvider
+                with patch("atlas_agent.agent.runner.get_provider_from_env", return_value=NullProvider()):
+                    ret = main(["agent", "run", "--mode", "auto"])
     assert ret == 0
     captured = capsys.readouterr()
     assert "agent run auto: complete" in captured.out
@@ -105,7 +109,9 @@ def test_agent_run_auto_unknown_market(base_config, monkeypatch, capsys):
             mock_result.lock_status = None
             mock_result.model_status = None
             with patch("atlas_agent.agent.runner.run_closed_market_cycle", return_value=mock_result):
-                ret = main(["agent", "run", "--mode", "auto"])
+                from atlas_agent.providers.null_provider import NullProvider
+                with patch("atlas_agent.agent.runner.get_provider_from_env", return_value=NullProvider()):
+                    ret = main(["agent", "run", "--mode", "auto"])
     assert ret == 0
     captured = capsys.readouterr()
     assert "agent run auto: complete" in captured.out

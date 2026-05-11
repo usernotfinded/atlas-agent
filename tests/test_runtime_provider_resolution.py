@@ -229,8 +229,8 @@ def test_custom_provider_does_not_fallback_to_openai(monkeypatch) -> None:
 
 def test_openrouter_metadata_headers(monkeypatch) -> None:
     """OpenRouter metadata headers are included when env vars are set."""
-    monkeypatch.setenv("OPENROUTER_SITE_URL", "https://example.com")
-    monkeypatch.setenv("OPENROUTER_SITE_NAME", "My App")
+    monkeypatch.setenv("OPENROUTER_HTTP_REFERER", "https://example.com")
+    monkeypatch.setenv("OPENROUTER_APP_TITLE", "My App")
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or")
     config = AtlasConfig()
     result = resolve_runtime_provider(config, provider="openrouter")
@@ -243,3 +243,48 @@ def test_openrouter_metadata_headers_empty_when_not_set(monkeypatch) -> None:
     config = AtlasConfig()
     result = resolve_runtime_provider(config, provider="openrouter")
     assert result["headers"] == {}
+
+
+def test_lmstudio_runtime_resolution_does_not_require_key() -> None:
+    config = AtlasConfig()
+    result = resolve_runtime_provider(config, provider="lmstudio")
+    assert result["provider"] == "lmstudio"
+    assert result["api_key_source"] == "none"
+    assert result["api_key"] == ""
+    assert result["auth_header_type"] == "none"
+    assert result["base_url"] == "http://localhost:1234/v1"
+
+
+def test_openai_compatible_requires_base_url_and_model_no_fallback(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+    monkeypatch.setenv("ATLAS_OPENAI_COMPATIBLE_API_KEY", "sk-compatible")
+    config = AtlasConfig()
+    result = resolve_runtime_provider(config, provider="openai-compatible")
+    assert result["provider"] == "openai-compatible"
+    assert result["api_key_source"] == "process_env"
+    assert result["api_key"] == "sk-compatible"
+    assert result["api_key_env_var_used"] == "ATLAS_OPENAI_COMPATIBLE_API_KEY"
+    assert result["auth_header_type"] == "bearer"
+
+
+def test_openai_compatible_no_key_emits_no_auth_header() -> None:
+    config = AtlasConfig()
+    result = resolve_runtime_provider(config, provider="openai-compatible")
+    assert result["provider"] == "openai-compatible"
+    assert result["api_key_source"] == "missing"
+    assert result["api_key"] == ""
+    assert result["auth_header_type"] == "none"
+
+def test_factory_fails_closed_when_no_provider_configured(monkeypatch) -> None:
+    from atlas_agent.providers.factory import get_provider_from_env
+    monkeypatch.delenv("AI_PROVIDER", raising=False)
+    monkeypatch.delenv("ATLAS_DRY_RUN", raising=False)
+    with pytest.raises(ValueError, match="No AI provider configured"):
+        get_provider_from_env(allow_null=False)
+
+def test_factory_allows_null_when_explicitly_requested(monkeypatch) -> None:
+    from atlas_agent.providers.factory import get_provider_from_env
+    monkeypatch.delenv("AI_PROVIDER", raising=False)
+    monkeypatch.delenv("ATLAS_DRY_RUN", raising=False)
+    provider = get_provider_from_env(allow_null=True)
+    assert provider.name == "null"

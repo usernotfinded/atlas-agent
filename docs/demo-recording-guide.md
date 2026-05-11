@@ -32,7 +32,7 @@ atlas audit verify --all
 |---|---|
 | `atlas init` | Creates `demo-workspace` with a routine-trader template. |
 | `atlas validate` | Confirms the workspace is configured and live trading is disabled. |
-| `atlas run --mode paper` | Runs a paper cycle without sending live broker orders. If no AI provider is configured, the built-in `NullProvider` returns a deterministic hold response. |
+| `atlas run --mode paper` | Runs a paper cycle without sending live broker orders. If no AI provider is configured, agentic workflows fail closed and ask you to configure a provider. |
 | `atlas audit verify --all` | Verifies any run manifests created during the session. Exit code `0` means the hash-chain is intact. |
 
 ## Recording tips

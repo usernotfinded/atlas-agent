@@ -3,7 +3,52 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+from atlas_agent.setup.wizard_ui import WizardApplication
+from atlas_agent.setup.renderer import render_wizard_screen
 from atlas_agent.setup.state import WizardState
+
+def test_wizard_hides_local_command_and_null():
+    state = WizardState()
+    state.setup_mode = "full"
+    app = WizardApplication(state)
+    app.current_step = "provider"
+    app.update_step_data()
+    choice_ids = [c[0] for c in app.choices]
+    assert "local_command" not in choice_ids
+    assert "null" not in choice_ids
+    assert "lmstudio" in choice_ids
+    assert "openai-compatible" in choice_ids
+
+def test_wizard_api_key_input_is_visible():
+    state = WizardState()
+    lines = render_wizard_screen(
+        state=state,
+        current_step="api_key_input",
+        choices=[],
+        current_index=0,
+        input_value="my-secret-key",
+        title="Enter Key",
+        is_password=False
+    )
+    text = "".join(line[1] for line in lines)
+    assert "my-secret-key" in text
+    assert "******" not in text
+
+def test_wizard_summary_redacts_api_key():
+    state = WizardState()
+    state.credentials_configured = True
+    lines = render_wizard_screen(
+        state=state,
+        current_step="model",
+        choices=[],
+        current_index=0,
+        input_value="",
+        title="Select Model",
+        is_password=False
+    )
+    text = "".join(line[1] for line in lines)
+    assert "API Key: configured" in text
+    assert "my-secret-key" not in text
 from atlas_agent.setup.wizard import is_interactive
 from atlas_agent.cli import main
 

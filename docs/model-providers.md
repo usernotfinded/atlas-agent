@@ -8,128 +8,101 @@ Atlas Agent uses a provider catalog to normalize model selection across differen
 - **Secrets** (API keys) go in `.env.atlas`.
 - `.env.atlas` is gitignored by default.
 
-Keys should be scoped, rotated regularly, and **never committed** to version control.
+### Why Atlas never stores keys in `config.toml`
+Atlas enforces strict separation between application state and credentials. `config.toml` is designed to be safe to share with your team or commit to version control if you choose to sync your workspace. By keeping secrets strictly isolated in `.env.atlas`, Atlas eliminates the risk of accidental API key leakage when pushing configurations or running audit logs.
 
 ## Supported providers
 
-| Provider ID | Label | Auth type | API mode | Auth header |
-|---|---|---|---|---|
-| `openrouter` | OpenRouter | API key | chat_completions | Bearer |
-| `openai` | OpenAI | API key | chat_completions | Bearer |
-| `anthropic` | Anthropic | API key | anthropic_messages | x-api-key |
-| `deepseek` | DeepSeek | API key | chat_completions | Bearer |
-| `kimi` | Kimi / Moonshot | API key | chat_completions | Bearer |
-| `nvidia` | NVIDIA NIM | API key | chat_completions | Bearer |
-| `xai` | xAI | API key | chat_completions | Bearer |
-| `google-gemini` | Google Gemini | API key | chat_completions | Bearer |
-| `huggingface` | Hugging Face | API key | chat_completions | Bearer |
-| `local` | Local / Self-hosted | none | chat_completions | none |
-| `custom` | Custom / OpenAI-compatible | API key | chat_completions | Bearer |
+| Provider ID | Canonical env var | Auth style | Default Base URL | Key Required? | Notes |
+|---|---|---|---|---|---|
+| `openrouter` | `OPENROUTER_API_KEY` | Bearer | `https://openrouter.ai/api/v1` | Yes | Accepts optional metadata headers |
+| `openai` | `OPENAI_API_KEY` | Bearer | `https://api.openai.com/v1` | Yes | |
+| `anthropic` | `ANTHROPIC_API_KEY` | x-api-key | `https://api.anthropic.com` | Yes | Native Anthropic messages mode |
+| `deepseek` | `DEEPSEEK_API_KEY` | Bearer | `https://api.deepseek.com` | Yes | |
+| `kimi` | `MOONSHOT_API_KEY` | Bearer | `https://api.moonshot.cn/v1` | Yes | `KIMI_API_KEY` accepted as alias |
+| `nvidia` | `NVIDIA_API_KEY` | Bearer | `https://integrate.api.nvidia.com/v1` | Yes | For cloud/API Catalog endpoints |
+| `nvidia-local` | `NVIDIA_LOCAL_API_KEY` | None (by default) | *(user-provided)* | No | For local NIM / on-prem endpoints |
+| `xai` | `XAI_API_KEY` | Bearer | `https://api.x.ai/v1` | Yes | |
+| `google-gemini` | `GEMINI_API_KEY` | x-goog-api-key | `https://generativelanguage.googleapis.com/v1beta` | Yes | Native mode; `GOOGLE_API_KEY` has precedence |
+| `gemini-openai-compatible` | `GEMINI_API_KEY` | Bearer | `.../v1beta/openai/` | Yes | OpenAI-compatible mode |
+| `huggingface` | `HF_TOKEN` | Bearer | `https://api-inference.huggingface.co/v1` | Yes | `HUGGINGFACEHUB_API_TOKEN` legacy alias |
+| `lmstudio` | *(None)* | None | `http://localhost:1234/v1` | No | Zero-auth local AI endpoint |
+| `openai-compatible` | `ATLAS_OPENAI_COMPATIBLE_API_KEY` | Bearer (if key present) | *(user-provided)* | No | Strict isolation; never falls back to OpenAI |
+| `custom` | `ATLAS_CUSTOM_API_KEY` | Bearer (if key present) | *(user-provided)* | No | Strict isolation |
 
 Provider aliases (e.g. `or` for `openrouter`) are resolved automatically.
 
-## API key environment variables
+## Explicit Configurations
 
-Each provider looks for its key in **provider-specific** env vars only. Process environment variables override `.env.atlas`. One provider's key is **never used** for another provider.
+### Anthropic native auth
+The `anthropic` provider uses Anthropic's native `anthropic_messages` API mode. Instead of a standard Bearer token, it automatically configures the correct HTTP headers required by Anthropic:
+- `x-api-key`: Uses your `ANTHROPIC_API_KEY`.
+- `anthropic-version`: Automatically set to the current default (e.g., `2023-06-01`).
+- `content-type`: `application/json`.
 
-| Provider | Canonical env var | Accepted aliases / notes |
-|---|---|---|
-| openrouter | `OPENROUTER_API_KEY` | — |
-| openai | `OPENAI_API_KEY` | — |
-| anthropic | `ANTHROPIC_API_KEY` | — |
-| deepseek | `DEEPSEEK_API_KEY` | Do not use `ANTHROPIC_API_KEY` for DeepSeek |
-| kimi | `MOONSHOT_API_KEY` | `KIMI_API_KEY` is accepted as alias |
-| nvidia | `NVIDIA_API_KEY` | `NGC_API_KEY` is **not** equivalent; used for NGC/container workflows only |
-| xai | `XAI_API_KEY` | — |
-| google-gemini | `GOOGLE_API_KEY` | `GEMINI_API_KEY` accepted; `GOOGLE_API_KEY` takes precedence when both exist (matching Google SDK behavior) |
-| huggingface | `HF_TOKEN` | `HUGGINGFACEHUB_API_TOKEN` legacy alias |
-| local | none | No key required |
-| custom | `ATLAS_CUSTOM_API_KEY` | Never falls back to `OPENAI_API_KEY` or `OPENROUTER_API_KEY` automatically |
+### Gemini native vs Gemini OpenAI-compatible
+Atlas supports two different operational modes for Google Gemini:
+- **`google-gemini` (Native)**: This is the default. It uses the `x-goog-api-key` header and formats payloads according to the native Gemini API. If both `GOOGLE_API_KEY` and `GEMINI_API_KEY` exist, Google's documentation dictates that `GOOGLE_API_KEY` takes precedence. Atlas will warn you if this conflict is detected.
+- **`gemini-openai-compatible`**: This uses the `Authorization: Bearer <key>` format and points to Google's specialized `v1beta/openai/` compatibility endpoint. It processes standard OpenAI chat completion payloads.
 
-### OpenRouter optional metadata
+### NVIDIA cloud vs local/on-prem
+NVIDIA NIM deployments differ between cloud and local:
+- **`nvidia` (Cloud)**: Connects to NVIDIA's API catalog. Requires an `NVIDIA_API_KEY`. (Note: `NGC_API_KEY` is not used for standard inference).
+- **`nvidia-local` (On-prem)**: Connects to a self-hosted NIM instance. You must provide a base URL. By default, it requires no authentication key, but respects `NVIDIA_LOCAL_API_KEY` if you have configured an auth proxy.
 
-OpenRouter accepts two non-secret metadata headers:
+### LM Studio local setup
+LM Studio is supported as a first-class local provider through OpenAI-compatible HTTP endpoints.
+To set up LM Studio:
+1. Start the LM Studio local server.
+2. Set provider to `lmstudio`.
+3. Set `base_url` (default is `http://localhost:1234/v1`).
+4. Set the model ID matching the loaded LM Studio model.
+5. No API key is required by default, and Atlas will not emit an Authorization header.
 
-- `OPENROUTER_SITE_URL` -> `HTTP-Referer`
-- `OPENROUTER_SITE_NAME` -> `X-OpenRouter-Title`
-
-These are optional and are read from environment variables, not `.env.atlas` secrets.
-
-### `.env.atlas` example
+### OpenAI-compatible/custom endpoint isolation
+Use the `openai-compatible` or `custom` providers for self-hosted, enterprise proxies, LiteLLM, or third-party OpenAI-compatible endpoints:
 
 ```bash
-# Required for your chosen provider only
-OPENROUTER_API_KEY=sk-or-...
-
-# Optional OpenRouter metadata (not secrets, but convenient in env)
-OPENROUTER_SITE_URL=https://example.com
-OPENROUTER_SITE_NAME=My Atlas Workspace
+atlas model set openai-compatible my-model
 ```
+
+Set the base URL via env var `ATLAS_OPENAI_COMPATIBLE_BASE_URL` or in `.atlas/config.toml`:
+
+```toml
+[model]
+provider = "openai-compatible"
+model = "my-model"
+
+[providers.openai_compatible]
+base_url = "https://my-api.example.com/v1"
+```
+
+**Strict Isolation:** These providers use dedicated keys (`ATLAS_OPENAI_COMPATIBLE_API_KEY` or `ATLAS_CUSTOM_API_KEY`) and **never** fall back to `OPENAI_API_KEY` or any other hosted provider's key. This protects your primary OpenAI credits from being accidentally leaked to a third-party server.
+
+## Legacy and Internal Providers
+
+### `local_command` (Legacy)
+The `local_command` provider is a legacy/advanced option primarily kept for backward compatibility. It executes a local shell command rather than HTTP requests and is hidden from normal setup wizard flows.
+
+### `NullProvider` (Internal)
+`NullProvider` is an internal, test-only provider. It returns a deterministic response ("hold") and is hidden from standard model provider lists. It should not be used for agentic workflows.
 
 ## CLI commands
 
 ### List providers
-
 ```bash
 atlas model providers
 ```
-
-Shows each provider, whether its API key is configured, and the default model.
-
-### List models
-
-```bash
-atlas model list
-atlas model list --provider openrouter
-```
-
-Shows the curated model catalog for one or all providers. Models marked with `*` are recommended defaults.
+Shows user-facing providers, auth style, and default models. Run with `--include-legacy` or `--include-internal` to see hidden options.
 
 ### Show current selection
-
 ```bash
 atlas model current
 ```
-
 Shows the effective provider, model, API mode, base URL, and API key status (env var name and source, **never the key itself**).
 
-### Set provider and model
-
-```bash
-atlas model set openrouter openai/gpt-5.5
-atlas model set openrouter:openai/gpt-5.5
-atlas model set anthropic claude-sonnet-4.6
-```
-
-The first argument is the provider; the second is the model. If the model is not in the curated catalog, Atlas warns but still stores it.
-
 ### Interactive configuration
-
 ```bash
 atlas model configure
 ```
-
-Walks through selecting a provider, entering an API key if missing, and picking a model. Non-interactive environments should use `atlas model set` instead.
-
-## Custom provider
-
-Use the `custom` provider for self-hosted or third-party OpenAI-compatible endpoints:
-
-```bash
-atlas model set custom my-model
-```
-
-Set the base URL via env var `CUSTOM_BASE_URL` or in `.atlas/config.toml`:
-
-```toml
-[model]
-provider = "custom"
-model = "my-model"
-base_url = "https://my-api.example.com/v1"
-```
-
-The custom provider uses `ATLAS_CUSTOM_API_KEY` and does **not** fall back to `OPENAI_API_KEY` or any other provider's key.
-
-## Model catalog disclaimer
-
-The model lists shipped with Atlas are **curated defaults** and **common options**. Model availability, pricing, and exact IDs depend on the provider and your account. If a model ID is not in the catalog, you can still set it with `atlas model set`; Atlas will warn but accept it.
+Walks through selecting a provider, entering an API key (visible while typing, redacted on save), and picking a model.
