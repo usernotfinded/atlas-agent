@@ -38,7 +38,7 @@ def test_readme_contains_v030_essentials():
     readme = Path("README.md").read_text(encoding="utf-8")
     
     essentials = [
-        "Current Status (v0.4.0)",
+        "Current Status (v0.5.0)",
         "atlas backtest run",
         "atlas broker sync",
         "read-only",

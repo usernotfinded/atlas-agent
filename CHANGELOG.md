@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-11
+
+### Added
+- **Mandatory Discipline Profile**: Agentic workflows now require an explicit user discipline profile. `atlas discipline setup` must be completed before paper or live trading routines can run.
+- **Explicit Symbol Configuration**: Trading symbol is now strictly user-configured. No runtime default symbol is assumed; users must set `market.symbol` via `atlas config set market.symbol <SYMBOL>`.
+- **Provider-Specific API Key Handling**: Improved per-provider credential management with clearer `.env.atlas` variable names and validation.
+- **Reference Price Requirement**: Risk-gated market orders now require a reference price to pass deterministic checks.
+- **Raw Prompt / Provider Audit Logging**: Optional opt-in logging of raw prompts and provider responses for debugging, disabled by default to protect privacy.
+- **Demo Documentation**: Added reproducible walkthroughs for paper workflow, risk rejection, and audit verification.
+
+### Changed
+- **Workspace Positioning**: Repositioned Atlas Agent as a broker-neutral supervised trading workspace, emphasizing user choice of model, broker, and risk limits.
+- **Configuration Architecture**: Consolidated on TOML + `.env.atlas` dual-layer configuration for non-secret and secret settings respectively.
+
+### Security / Safety
+- Hardened live trading gates: live mode fails safely unless explicit configuration, credentials, risk checks, and approval are all present.
+- Strengthened kill-switch and approval queue integration.
+- Removed all hardcoded BTC-USD assumptions from runtime logic.
+
+### CI / Docs
+- Fixed GitHub Actions workflow generator to include `atlas init`, `atlas discipline setup`, and `atlas config set market.symbol DEMO-SYMBOL` before every generated paper routine.
+- Updated all documentation to v0.5.0 current-status references while preserving historical changelog entries.
+
 ## [0.4.0] - 2026-05-10
 
 ### Added

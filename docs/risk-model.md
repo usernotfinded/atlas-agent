@@ -1,6 +1,6 @@
 # Risk Model
 
-Atlas Agent v0.4.0 implements a multi-stage deterministic risk model.
+Atlas Agent v0.5.0 implements a multi-stage deterministic risk model.
 
 ## Core Components
 
