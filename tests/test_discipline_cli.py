@@ -89,6 +89,14 @@ def test_discipline_setup_manual_refused_without_confirmation(tmp_path: Path) ->
     assert rc == 130 or "cancelled" in out.lower()
 
 
+def test_discipline_setup_manual_yes_creates_file(tmp_path: Path) -> None:
+    (tmp_path / ".atlas").mkdir(parents=True, exist_ok=True)
+    rc, out, _ = _atlas(["discipline", "setup", "--manual", "--yes"], cwd=tmp_path)
+    assert rc == 0
+    assert (tmp_path / ".atlas" / "discipline.md").exists()
+    assert "Discipline profile created" in out
+
+
 def test_discipline_doctor_missing(tmp_path: Path) -> None:
     (tmp_path / ".atlas").mkdir(parents=True, exist_ok=True)
     rc, out, _ = _atlas(["discipline", "doctor"], cwd=tmp_path)
@@ -119,6 +127,33 @@ def test_atlas_run_once_blocked_without_discipline(tmp_path: Path, monkeypatch) 
     rc, _, err = _atlas(["run-once", "--mode", "paper"])
     assert rc == 2
     assert "Atlas Discipline Profile is not configured" in err
+
+
+def test_atlas_routine_blocked_without_discipline(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _atlas(["init", "."])
+    rc, _, err = _atlas(["routine", "run", "pre_market", "--mode", "paper"])
+    assert rc == 2
+    assert "Atlas Discipline Profile is not configured" in err
+
+
+def test_atlas_routine_succeeds_after_manual_setup(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _atlas(["init", "."])
+    rc_setup, _, _ = _atlas(["discipline", "setup", "--manual", "--yes"])
+    assert rc_setup == 0
+    rc, out, err = _atlas(["routine", "run", "pre_market", "--mode", "paper"])
+    # The routine itself may fail for other reasons (e.g. missing data), but it must not fail
+    # because of missing discipline.
+    assert "Atlas Discipline Profile is not configured" not in err
+
+
+def test_atlas_backtest_works_without_discipline(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _atlas(["init", "."])
+    rc, out, _ = _atlas(["backtest", "run", "--symbol", "BTC-USD", "--data", "data/sample/ohlcv.csv"])
+    assert rc == 0
+    assert "backtest result:" in out
 
 
 def test_atlas_validate_reports_missing_discipline(tmp_path: Path, monkeypatch) -> None:

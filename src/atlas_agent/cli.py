@@ -282,6 +282,7 @@ Safety First:
     discipline_sub.add_parser("reset")
     discipline_setup = discipline_sub.add_parser("setup")
     discipline_setup.add_argument("--manual", action="store_true", help="Create from the default template with explicit confirmation")
+    discipline_setup.add_argument("--yes", action="store_true", help="Non-interactive confirmation for manual setup")
     discipline_sub.add_parser("doctor")
 
     telegram = subparsers.add_parser("telegram")
@@ -2365,17 +2366,18 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             if args.manual:
                 template = default_discipline_text()
-                print("The following template will be written to .atlas/discipline.md:")
-                print("---")
-                print(template)
-                print("---")
-                try:
-                    confirm = input("Confirm? [yes/no]: ").strip().lower()
-                except EOFError:
-                    confirm = "no"
-                if confirm != "yes":
-                    print("Setup cancelled.")
-                    return 130
+                if not args.yes:
+                    print("The following template will be written to .atlas/discipline.md:")
+                    print("---")
+                    print(template)
+                    print("---")
+                    try:
+                        confirm = input("Confirm? [yes/no]: ").strip().lower()
+                    except EOFError:
+                        confirm = "no"
+                    if confirm != "yes":
+                        print("Setup cancelled.")
+                        return 130
                 write_user_discipline(".", template)
                 print(f"Discipline profile created at {path}")
                 return 0
