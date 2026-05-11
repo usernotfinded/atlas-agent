@@ -3,7 +3,7 @@
 **DANGER:** Live trading involves real financial risk. This demo is for educational purposes only.
 
 ## Safety Model
-Live mode in Atlas Agent v0.4.0 is never enabled by default.
+Live mode in Atlas Agent v0.5.0 is never enabled by default.
  It requires:
 1.  **Explicit Configuration**: `TRADING_MODE=live` and `ENABLE_LIVE_TRADING=true`.
 2.  **Manual Approval**: By default, every order requires manual approval via `atlas approve-order`.
