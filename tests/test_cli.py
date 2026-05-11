@@ -55,9 +55,25 @@ def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:
 
 
 def test_atlas_run_once_paper_works(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.ai.discipline import write_user_discipline
+
     monkeypatch.chdir(tmp_path)
     main(["init", "."])
     capsys.readouterr() # Clear init output
+
+    profile = (
+        "# Profile\n\n"
+        "## Decision temperament\n\nCautious.\n\n"
+        "## Reasoning style\n\nStep-by-step.\n\n"
+        "## Communication style\n\nConcise.\n\n"
+        "## Risk posture\n\nConservative.\n\n"
+        "## Uncertainty handling\n\nExplicit.\n\n"
+        "## No-trade bias\n\nDefault to hold.\n\n"
+        "## Forbidden overrides\n\n"
+        "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+        "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
+    )
+    write_user_discipline(".", profile)
 
     assert main(["run-once", "--mode", "paper"]) == 0
     assert "paper result: filled" in capsys.readouterr().out
@@ -68,11 +84,27 @@ def test_atlas_run_once_live_fails_safely_by_default(
     monkeypatch,
     capsys,
 ) -> None:
+    from atlas_agent.ai.discipline import write_user_discipline
+
     monkeypatch.delenv("ENABLE_LIVE_TRADING", raising=False)
     monkeypatch.delenv("LIVE_BROKER", raising=False)
     monkeypatch.chdir(tmp_path)
 
     main(["init", "."])
+
+    profile = (
+        "# Profile\n\n"
+        "## Decision temperament\n\nCautious.\n\n"
+        "## Reasoning style\n\nStep-by-step.\n\n"
+        "## Communication style\n\nConcise.\n\n"
+        "## Risk posture\n\nConservative.\n\n"
+        "## Uncertainty handling\n\nExplicit.\n\n"
+        "## No-trade bias\n\nDefault to hold.\n\n"
+        "## Forbidden overrides\n\n"
+        "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+        "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
+    )
+    write_user_discipline(".", profile)
 
     assert main(["run-once", "--mode", "live"]) == 2
     output = capsys.readouterr().out

@@ -40,6 +40,7 @@ skills/proposed/*.md
 .atlas/config.json
 .atlas/backtests/
 .atlas/safety/heartbeat.json
+.atlas/discipline.md
 .DS_Store
 
 # Local audit logs and manifests

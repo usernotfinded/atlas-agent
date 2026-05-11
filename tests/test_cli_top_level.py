@@ -10,7 +10,20 @@ from unittest.mock import ANY, patch
 import pytest
 
 from atlas_agent.cli import main
+from atlas_agent.ai.discipline import write_user_discipline
 
+GOOD_PROFILE = (
+    "# Profile\n\n"
+    "## Decision temperament\n\nCautious.\n\n"
+    "## Reasoning style\n\nStep-by-step.\n\n"
+    "## Communication style\n\nConcise.\n\n"
+    "## Risk posture\n\nConservative.\n\n"
+    "## Uncertainty handling\n\nExplicit.\n\n"
+    "## No-trade bias\n\nDefault to hold.\n\n"
+    "## Forbidden overrides\n\n"
+    "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+    "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
+)
 
 @pytest.fixture
 def workspace():
@@ -19,6 +32,7 @@ def workspace():
     os.chdir(temp_dir)
     try:
         main(["init", "."])
+        write_user_discipline(".", GOOD_PROFILE)
         yield Path(temp_dir)
     finally:
         os.chdir(original_cwd)

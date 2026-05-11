@@ -13,10 +13,21 @@ from atlas_agent.routines.engine import RoutineResult
 
 from atlas_agent.agent.loop import AgentLoop, DefaultGuardrailChain
 from atlas_agent.agent.result import AgentResult
+from atlas_agent.ai.discipline import (
+    DisciplineNotConfiguredError,
+    InvalidDisciplineProfileError,
+    require_user_discipline,
+)
 from atlas_agent.core.types import Session
 from atlas_agent.providers.factory import get_provider_from_env
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.builtin import BUILTIN_TOOLS
+
+
+def _check_discipline_gate(config: AtlasConfig) -> None:
+    """Raise if user discipline is missing or invalid."""
+    workspace = config.memory_dir.parent
+    require_user_discipline(workspace)
 
 
 def run_agent(
@@ -78,7 +89,17 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     from atlas_agent.safety.kill_switch import AdvancedKillSwitch
     from atlas_agent.brokers.sync import BrokerSyncService
     from atlas_agent.brokers.paper import PaperBroker, PaperBrokerAdapter
-    
+
+    # Discipline gate: agentic loops require an explicit user discipline profile.
+    try:
+        _check_discipline_gate(config)
+    except (DisciplineNotConfiguredError, InvalidDisciplineProfileError) as exc:
+        return AgentResult(
+            status="error",
+            errors=[str(exc)],
+            diagnostics={"discipline_gate": "blocked"},
+        )
+
     provider = get_provider_from_env()
     registry = ToolRegistry()
     for tool in BUILTIN_TOOLS:
@@ -166,6 +187,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
 
 
 def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
+    _check_discipline_gate(config)
     detector = MarketSessionDetector()
     state = detector.get_state()
     event_logger = EventLogger(config.events_dir)

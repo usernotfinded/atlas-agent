@@ -76,7 +76,22 @@ def test_event_logger_final_pass_redacts_auth_headers_and_secret_tokens(tmp_path
 
 
 def test_agent_run_once_writes_valid_event_schema(tmp_path: Path) -> None:
+    from atlas_agent.ai.discipline import write_user_discipline
+
     config = _config(tmp_path)
+    profile = (
+        "# Profile\n\n"
+        "## Decision temperament\n\nCautious.\n\n"
+        "## Reasoning style\n\nStep-by-step.\n\n"
+        "## Communication style\n\nConcise.\n\n"
+        "## Risk posture\n\nConservative.\n\n"
+        "## Uncertainty handling\n\nExplicit.\n\n"
+        "## No-trade bias\n\nDefault to hold.\n\n"
+        "## Forbidden overrides\n\n"
+        "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+        "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
+    )
+    write_user_discipline(tmp_path, profile)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
         assert main(["run-once", "--mode", "paper"]) == 0
 
@@ -92,6 +107,21 @@ def test_agent_run_once_writes_valid_event_schema(tmp_path: Path) -> None:
 
 
 def test_risk_rejection_writes_risk_event(tmp_path: Path) -> None:
+    from atlas_agent.ai.discipline import write_user_discipline
+
+    profile = (
+        "# Profile\n\n"
+        "## Decision temperament\n\nCautious.\n\n"
+        "## Reasoning style\n\nStep-by-step.\n\n"
+        "## Communication style\n\nConcise.\n\n"
+        "## Risk posture\n\nConservative.\n\n"
+        "## Uncertainty handling\n\nExplicit.\n\n"
+        "## No-trade bias\n\nDefault to hold.\n\n"
+        "## Forbidden overrides\n\n"
+        "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+        "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
+    )
+    write_user_discipline(tmp_path, profile)
     config = _config(
         tmp_path,
         max_order_notional=1.0,

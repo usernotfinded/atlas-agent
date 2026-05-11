@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from atlas_agent.agent import runner
+from atlas_agent.ai.discipline import write_user_discipline
 from atlas_agent.config import AtlasConfig
 from atlas_agent.execution.approval import ApprovalManager
 from atlas_agent.execution.audit import AuditLogger
@@ -16,6 +17,19 @@ from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.risk.validation import RiskDecision
 from atlas_agent.routines.engine import RoutineResult
 from atlas_agent.cli import main
+
+GOOD_PROFILE = (
+    "# Profile\n\n"
+    "## Decision temperament\n\nCautious.\n\n"
+    "## Reasoning style\n\nStep-by-step.\n\n"
+    "## Communication style\n\nConcise.\n\n"
+    "## Risk posture\n\nConservative.\n\n"
+    "## Uncertainty handling\n\nExplicit.\n\n"
+    "## No-trade bias\n\nDefault to hold.\n\n"
+    "## Forbidden overrides\n\n"
+    "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+    "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
+)
 
 
 def _config(tmp_path: Path, **overrides) -> AtlasConfig:
@@ -78,6 +92,7 @@ def test_unknown_market_state_never_runs_live_open_market_cycle(
         enable_live_trading=True,
         live_broker="alpaca",
     )
+    write_user_discipline(tmp_path, GOOD_PROFILE)
     closed_modes: list[str] = []
 
     def fake_closed_market_cycle(config: AtlasConfig, mode: str) -> RoutineResult:

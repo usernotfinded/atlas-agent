@@ -2,6 +2,20 @@ import pytest
 from unittest.mock import patch
 from atlas_agent.config import AtlasConfig
 from atlas_agent.cli import main
+from atlas_agent.ai.discipline import write_user_discipline
+
+GOOD_PROFILE = (
+    "# Profile\n\n"
+    "## Decision temperament\n\nCautious.\n\n"
+    "## Reasoning style\n\nStep-by-step.\n\n"
+    "## Communication style\n\nConcise.\n\n"
+    "## Risk posture\n\nConservative.\n\n"
+    "## Uncertainty handling\n\nExplicit.\n\n"
+    "## No-trade bias\n\nDefault to hold.\n\n"
+    "## Forbidden overrides\n\n"
+    "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+    "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
+)
 
 @pytest.fixture
 def base_config(tmp_path):
@@ -34,16 +48,27 @@ def test_agent_plan_command(base_config, monkeypatch, capsys):
 
 def test_agent_run_paper_mode(base_config, monkeypatch, capsys):
     monkeypatch.setenv("TRADING_MODE", "paper")
+    write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
         with patch("atlas_agent.agent.runner.MarketSessionDetector.get_state", return_value="closed"):
             ret = main(["agent", "run", "--mode", "paper"])
     assert ret == 0
     captured = capsys.readouterr()
     assert "agent run paper:" in captured.out
-    
+
+def test_agent_run_without_discipline_is_blocked(base_config, monkeypatch, capsys):
+    monkeypatch.setenv("TRADING_MODE", "paper")
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
+        with pytest.raises(SystemExit) as exc_info:
+            main(["agent", "run", "--mode", "paper"])
+    assert exc_info.value.code == 2
+    captured = capsys.readouterr()
+    assert "Atlas Discipline Profile is not configured" in captured.err
+
 def test_agent_run_auto_open_market(base_config, monkeypatch, capsys):
     monkeypatch.setenv("TRADING_MODE", "live")
     monkeypatch.setenv("ENABLE_LIVE_TRADING", "true")
+    write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
         with patch("atlas_agent.agent.runner.MarketSessionDetector.get_state", return_value="open"):
             from unittest.mock import MagicMock
@@ -64,6 +89,7 @@ def test_agent_run_auto_open_market(base_config, monkeypatch, capsys):
     assert "agent run auto: complete" in captured.out
 
 def test_agent_run_auto_unknown_market(base_config, monkeypatch, capsys):
+    write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
         with patch("atlas_agent.agent.runner.MarketSessionDetector.get_state", return_value="unknown"):
             from unittest.mock import MagicMock

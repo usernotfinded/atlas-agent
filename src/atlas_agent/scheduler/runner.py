@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from atlas_agent.ai.discipline import (
+    DisciplineNotConfiguredError,
+    InvalidDisciplineProfileError,
+    require_user_discipline,
+)
 from atlas_agent.config import AtlasConfig
 from atlas_agent.execution.order import OrderResult
 
@@ -25,6 +30,9 @@ def run_scheduler_once(
 ) -> SchedulerResult:
     if routine not in VALID_ROUTINES:
         raise ValueError(f"unknown routine: {routine}")
+    # Discipline gate: scheduled routines are agentic.
+    workspace = config.memory_dir.parent
+    require_user_discipline(workspace)
     result = run_once_func(mode=mode, config=config)
     return SchedulerResult(routine=routine, mode=mode, order_result=result)
 

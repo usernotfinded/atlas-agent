@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from atlas_agent.ai.discipline import write_user_discipline
 from atlas_agent.config import AtlasConfig
 from atlas_agent.research.web_research import OfflineResearchProvider
 from atlas_agent.routines.engine import run_routine
@@ -14,6 +15,19 @@ from atlas_agent.routines.lock import (
     acquire_routine_lock,
     lock_path,
     unlock_routine,
+)
+
+GOOD_PROFILE = (
+    "# Profile\n\n"
+    "## Decision temperament\n\nCautious.\n\n"
+    "## Reasoning style\n\nStep-by-step.\n\n"
+    "## Communication style\n\nConcise.\n\n"
+    "## Risk posture\n\nConservative.\n\n"
+    "## Uncertainty handling\n\nExplicit.\n\n"
+    "## No-trade bias\n\nDefault to hold.\n\n"
+    "## Forbidden overrides\n\n"
+    "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
+    "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
 
 
@@ -27,6 +41,7 @@ def _config(tmp_path) -> AtlasConfig:
 
 
 def test_second_routine_run_refuses_while_lock_exists(tmp_path) -> None:
+    write_user_discipline(tmp_path, GOOD_PROFILE)
     lock = acquire_routine_lock(tmp_path, "pre_market")
     try:
         with pytest.raises(RoutineLockError, match="routine lock is active"):
@@ -61,6 +76,7 @@ def test_stale_lock_can_be_cleared(tmp_path) -> None:
 
 
 def test_lock_is_released_after_successful_run(tmp_path) -> None:
+    write_user_discipline(tmp_path, GOOD_PROFILE)
     result = run_routine(
         "pre_market",
         mode="paper",

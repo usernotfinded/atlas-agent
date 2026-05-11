@@ -4,6 +4,11 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
+from atlas_agent.ai.discipline import (
+    DisciplineNotConfiguredError,
+    InvalidDisciplineProfileError,
+    require_user_discipline,
+)
 from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger
 from atlas_agent.execution.order import OrderResult
@@ -52,6 +57,9 @@ def run_routine(
     if mode not in {"paper", "live"}:
         raise ValueError("routine mode must be paper or live")
     config = config or AtlasConfig.from_env()
+    # Discipline gate: routines are agentic and require a user discipline profile.
+    workspace = config.memory_dir.parent
+    require_user_discipline(workspace)
     config.ensure_dirs()
     with routine_lock(_workspace_dir(config), name) as lock:
         return _run_routine_unlocked(
