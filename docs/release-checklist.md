@@ -8,6 +8,7 @@ Run this before pushing a public GitHub release.
 - `atlas init demo --template routine-trader`
 - `cd demo && atlas validate`
 - `atlas discipline setup --manual --yes`
+- `atlas config set market.symbol DEMO-SYMBOL`
 - `atlas routine run pre_market --mode paper`
 - Secret scan across `README.md`, `docs/`, `templates/`, `routines/`, `skills/`, `src/`, `tests/`, and `.env.example`
 - Confirm no runtime personal data is committed

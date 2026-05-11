@@ -29,6 +29,8 @@ jobs:
         working-directory: demo-workspace
       - run: atlas discipline setup --manual --yes
         working-directory: demo-workspace
+      - run: atlas config set market.symbol DEMO-SYMBOL
+        working-directory: demo-workspace
       - run: atlas discipline doctor
         working-directory: demo-workspace
       - run: atlas routine run pre_market --mode paper

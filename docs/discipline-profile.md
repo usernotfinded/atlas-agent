@@ -42,6 +42,7 @@ For GitHub Actions, demos, and scripted workflows, create the discipline profile
 ```bash
 atlas init . --template routine-trader
 atlas discipline setup --manual --yes
+atlas config set market.symbol DEMO-SYMBOL
 atlas routine run pre_market --mode paper
 ```
 
