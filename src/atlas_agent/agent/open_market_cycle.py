@@ -15,6 +15,7 @@ def run_open_market_cycle(
     event_logger: EventLogger | None = None,
     run_id: str | None = None,
     command: str = "atlas agent run",
+    symbol: str | None = None,
 ) -> RoutineResult:
     # Use market_open routine as the base for open market cycle
     # We will reuse run_routine for now to utilize existing infrastructure (memory, AI, report)
@@ -31,6 +32,7 @@ def run_open_market_cycle(
         event_logger=event_logger,
         run_id=run_id,
         command=command,
+        symbol=symbol,
     )
     
     import dataclasses

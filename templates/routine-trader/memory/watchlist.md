@@ -1,6 +1,6 @@
 # Watchlist
 
-- BTC-USD
+- <SYMBOL>
 
 Add symbols only after confirming they are supported by your market data provider and broker adapter.
 

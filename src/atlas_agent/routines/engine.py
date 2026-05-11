@@ -51,6 +51,7 @@ def run_routine(
     event_logger: EventLogger | None = None,
     run_id: str | None = None,
     command: str = "atlas routine run",
+    symbol: str | None = None,
 ) -> RoutineResult:
     if name not in ROUTINE_NAMES:
         raise ValueError(f"unknown routine: {name}")
@@ -61,6 +62,15 @@ def run_routine(
     workspace = config.memory_dir.parent
     require_user_discipline(workspace)
     config.ensure_dirs()
+    effective_symbol = symbol or config.market.symbol or config.backtest.default_symbol
+    if not effective_symbol:
+        return RoutineResult(
+            name=name,
+            mode=mode,
+            status="error",
+            report_path=None,
+            errors=["No trading symbol configured. Set one with `atlas config set market.symbol <SYMBOL>` or pass `--symbol <SYMBOL>`."],
+        )
     with routine_lock(_workspace_dir(config), name) as lock:
         return _run_routine_unlocked(
             name,
@@ -74,6 +84,7 @@ def run_routine(
             event_logger=event_logger,
             run_id=run_id,
             command=command,
+            symbol=effective_symbol,
         )
 
 
@@ -90,6 +101,7 @@ def _run_routine_unlocked(
     event_logger: EventLogger | None = None,
     run_id: str | None = None,
     command: str = "atlas routine run",
+    symbol: str | None = None,
 ) -> RoutineResult:
     context = load_routine_context(
         memory_dir=config.memory_dir,
@@ -104,7 +116,10 @@ def _run_routine_unlocked(
             payload={"files": sorted(context.memory.keys())},
         )
 
-    research = _run_research(config.default_symbol, research_provider)
+    effective_symbol = symbol or config.market.symbol or config.backtest.default_symbol
+    if not effective_symbol:
+        effective_symbol = ""
+    research = _run_research(effective_symbol, research_provider)
     if event_logger is not None and run_id is not None:
         event_logger.write(
             "research_completed",

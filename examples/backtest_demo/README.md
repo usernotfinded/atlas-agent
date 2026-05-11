@@ -6,14 +6,14 @@ Atlas Agent v0.4.0 includes a deterministic
 ## Basic Run
 Run a buy-and-hold backtest on the sample dataset:
 ```bash
-atlas backtest run --symbol BTC-USD --data data/sample/ohlcv.csv
+atlas backtest run --symbol <SYMBOL> --data data/sample/ohlcv.csv
 ```
 
 ## Advanced Configuration
 You can configure the simulation parameters:
 ```bash
 atlas backtest run \
-  --symbol BTC-USD \
+  --symbol <SYMBOL> \
   --data data/sample/ohlcv.csv \
   --initial-equity 50000 \
   --slippage-bps 10 \

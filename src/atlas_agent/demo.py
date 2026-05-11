@@ -55,7 +55,7 @@ def seed_demo_workspace(
     written.extend(
         _write_if_missing(
             memory_dir / "watchlist.md",
-            "# Watchlist\n\n- BTC-USD\n- ETH-USD\n- SPY\n",
+            "# Watchlist\n\n- <SYMBOL-A>\n- <SYMBOL-B>\n- <SYMBOL-C>\n",
         )
     )
     written.extend(

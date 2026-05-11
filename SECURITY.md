@@ -160,7 +160,7 @@ pytest
 python -m atlas_agent.cli --help
 atlas --help
 atlas validate
-atlas backtest run --data data/sample/ohlcv.csv --symbol BTC-USD
+atlas backtest run --data data/sample/ohlcv.csv --symbol <SYMBOL>
 atlas run-once --mode paper
 atlas run-once --mode live
 ```

@@ -15,6 +15,7 @@ def run_closed_market_cycle(
     event_logger: EventLogger | None = None,
     run_id: str | None = None,
     command: str = "atlas agent run",
+    symbol: str | None = None,
 ) -> RoutineResult:
     # Force paper mode for closed market
     safe_mode = "paper"
@@ -30,6 +31,7 @@ def run_closed_market_cycle(
         event_logger=event_logger,
         run_id=run_id,
         command=command,
+        symbol=symbol,
     )
     
     import dataclasses

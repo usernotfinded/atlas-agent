@@ -175,6 +175,7 @@ Safety First:
     subparsers.add_parser("plan")
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("--mode", choices=("auto", "paper", "live"), default="auto")
+    run_parser.add_argument("--symbol", help="Trading symbol (defaults to market.symbol config)")
     run_parser.add_argument("--continuous", action="store_true")
     run_parser.add_argument("--dry-run", action="store_true")
     run_parser.add_argument("--interval", type=int, default=60)
@@ -219,11 +220,13 @@ Safety First:
 
     run_once_parser = subparsers.add_parser("run-once")
     run_once_parser.add_argument("--mode", choices=("paper", "live"), default="paper")
+    run_once_parser.add_argument("--symbol", help="Trading symbol (defaults to market.symbol config)")
 
     agent = subparsers.add_parser("agent")
     agent_sub = agent.add_subparsers(dest="agent_command")
     agent_run = agent_sub.add_parser("run")
     agent_run.add_argument("--mode", choices=("auto", "paper", "live"), default="auto")
+    agent_run.add_argument("--symbol", help="Trading symbol (defaults to market.symbol config)")
     agent_run.add_argument("--once", action="store_true")
     agent_run.add_argument("--continuous", action="store_true")
     agent_run.add_argument("--interval", type=int, default=60)
@@ -311,6 +314,7 @@ Safety First:
     routine_run = routine_sub.add_parser("run")
     routine_run.add_argument("name", choices=sorted(ROUTINE_NAMES))
     routine_run.add_argument("--mode", choices=("paper", "live"), default="paper")
+    routine_run.add_argument("--symbol", help="Trading symbol (defaults to market.symbol config)")
     routine_sub.add_parser("unlock")
     routine_sub.add_parser("status")
 
@@ -428,6 +432,7 @@ def run_once(
     event_logger: EventLogger | None = None,
     run_id: str | None = None,
     command: str = "atlas run-once",
+    symbol: str | None = None,
 ) -> OrderResult:
     from atlas_agent.ai.discipline import (
         DisciplineNotConfiguredError,
@@ -444,8 +449,14 @@ def run_once(
         return OrderResult(False, False, "discipline_gate", "error", str(exc))
     config = _effective_config_with_runtime_kill_switch(config)
     config.ensure_dirs()
+    effective_symbol = symbol or config.market.symbol or config.backtest.default_symbol
+    if not effective_symbol:
+        return OrderResult(
+            False, False, "missing_symbol", "error",
+            "No trading symbol configured. Set one with `atlas config set market.symbol <SYMBOL>` or pass `--symbol <SYMBOL>`.",
+        )
     ensure_sample_data(config.data_path)
-    bars = CSVMarketDataProvider(config.data_path).load_bars(config.default_symbol)
+    bars = CSVMarketDataProvider(config.data_path).load_bars(effective_symbol)
     decision = MovingAverageStrategy().decide(bars)
     latest = bars[-1]
     if event_logger is not None and run_id is not None:
@@ -687,6 +698,19 @@ def _check_discipline_or_exit(config: AtlasConfig) -> None:
     except (DisciplineNotConfiguredError, InvalidDisciplineProfileError) as exc:
         print(str(exc), file=sys.stderr)
         sys.exit(2)
+
+
+def _resolve_symbol(config: AtlasConfig, args_symbol: str | None = None) -> str:
+    """Resolve trading symbol from CLI arg, config market.symbol, or backtest.default_symbol."""
+    symbol = args_symbol or config.market.symbol or config.backtest.default_symbol
+    if not symbol:
+        print(
+            "No trading symbol configured. Set one with `atlas config set market.symbol <SYMBOL>` "
+            "or pass `--symbol <SYMBOL>`.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    return symbol
 
 
 def _portfolio_payload(config: AtlasConfig) -> dict[str, Any]:
@@ -1839,12 +1863,14 @@ def main(argv: list[str] | None = None) -> int:
             print(get_agent_plan(config))
             return 0
         _check_discipline_or_exit(config)
+        resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
         result = run_agent(
             mode=args.mode,
             config=config,
             continuous=args.continuous,
             interval=args.interval,
-            max_cycles=args.max_cycles
+            max_cycles=args.max_cycles,
+            symbol=resolved_symbol,
         )
         if result is None:
             return 0
@@ -1984,6 +2010,7 @@ def main(argv: list[str] | None = None) -> int:
             event_logger=event_logger,
             run_id=run_id,
             command="atlas run-once",
+            symbol=getattr(args, "symbol", None),
         )
         event_logger.write(
             "agent_completed" if result.status in {"filled", "held", "pending_approval"} else "agent_failed",
@@ -2095,12 +2122,14 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         elif args.agent_command == "run":
             _check_discipline_or_exit(config)
+            resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
             result = run_agent(
                 mode=args.mode,
                 config=config,
                 continuous=args.continuous,
                 interval=args.interval,
-                max_cycles=args.max_cycles
+                max_cycles=args.max_cycles,
+                symbol=resolved_symbol,
             )
             if not result:
                 return 0
@@ -2540,6 +2569,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "routine" and args.routine_command == "run":
         _check_discipline_or_exit(config)
+        resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
         event_logger = EventLogger(config.events_dir)
         run_id = generate_run_id()
         try:
@@ -2553,6 +2583,7 @@ def main(argv: list[str] | None = None) -> int:
                 event_logger=event_logger,
                 run_id=run_id,
                 command=f"atlas routine run {args.name}",
+                symbol=resolved_symbol,
             )
         except RoutineLockError as exc:
             print(f"routine refused: {exc}")

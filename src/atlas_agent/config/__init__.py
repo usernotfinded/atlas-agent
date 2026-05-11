@@ -1,10 +1,12 @@
 from typing import Any
 from atlas_agent.config.schema import (
-    AtlasConfig, 
-    parse_bool, 
-    parse_float, 
-    parse_int, 
-    parse_csv_set
+    AtlasConfig,
+    BacktestConfig,
+    MarketConfig,
+    parse_bool,
+    parse_float,
+    parse_int,
+    parse_csv_set,
 )
 from atlas_agent.config.builder import get_effective_config
 from atlas_agent.config.store import (
@@ -41,6 +43,8 @@ def delete_config_value(key: str, *args, **kwargs):
 
 __all__ = [
     "AtlasConfig",
+    "BacktestConfig",
+    "MarketConfig",
     "get_config",
     "get_effective_config",
     "update_config_value",

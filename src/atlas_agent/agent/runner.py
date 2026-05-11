@@ -37,6 +37,7 @@ def run_agent(
     interval: int = 60,
     max_cycles: int | None = None,
     use_loop: bool = True,
+    symbol: str | None = None,
 ) -> RoutineResult | AgentResult | None:
     if use_loop:
         return _run_agent_loop_continuous(
@@ -44,7 +45,8 @@ def run_agent(
             config=config,
             continuous=continuous,
             interval=interval,
-            max_cycles=max_cycles
+            max_cycles=max_cycles,
+            symbol=symbol,
         )
     
     cycles = 0
@@ -56,14 +58,15 @@ def _run_agent_loop_continuous(
     config: AtlasConfig,
     continuous: bool = False,
     interval: int = 60,
-    max_cycles: int | None = None
+    max_cycles: int | None = None,
+    symbol: str | None = None,
 ) -> AgentResult | None:
     cycles = 0
     last_result = None
     
     try:
         while True:
-            last_result = _run_agent_loop_cycle(mode, config)
+            last_result = _run_agent_loop_cycle(mode, config, symbol=symbol)
             cycles += 1
             
             if not continuous:
@@ -82,7 +85,7 @@ def _run_agent_loop_continuous(
     return last_result
 
 
-def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
+def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = None) -> AgentResult:
     from atlas_agent.audit import AuditWriter
     from atlas_agent.risk.manager import RiskManager
     from atlas_agent.portfolio.state import PortfolioState
@@ -98,6 +101,13 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
             status="error",
             errors=[str(exc)],
             diagnostics={"discipline_gate": "blocked"},
+        )
+
+    effective_symbol = symbol or config.market.symbol or config.backtest.default_symbol
+    if not effective_symbol:
+        return AgentResult(
+            status="error",
+            errors=["No trading symbol configured. Set one with `atlas config set market.symbol <SYMBOL>` or pass `--symbol <SYMBOL>`."],
         )
 
     provider = get_provider_from_env()
@@ -171,7 +181,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     from atlas_agent.ai.prompt_builder import SYSTEM_PROMPT
     
     # Simple objective for now
-    objective = f"Current mode is {mode}. Analyze the market for {config.default_symbol} and propose any necessary actions."
+    objective = f"Current mode is {mode}. Analyze the market for {effective_symbol} and propose any necessary actions."
     
     result = loop.run(
         user_objective=objective,
@@ -186,8 +196,17 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig) -> AgentResult:
     return dataclasses.replace(result, mode=mode)
 
 
-def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
+def _run_cycle(mode: str, config: AtlasConfig, symbol: str | None = None) -> RoutineResult:
     _check_discipline_gate(config)
+    effective_symbol = symbol or config.market.symbol or config.backtest.default_symbol
+    if not effective_symbol:
+        return RoutineResult(
+            name="agent_cycle",
+            mode=mode,
+            status="error",
+            report_path=None,
+            errors=["No trading symbol configured. Set one with `atlas config set market.symbol <SYMBOL>` or pass `--symbol <SYMBOL>`."],
+        )
     detector = MarketSessionDetector()
     state = detector.get_state()
     event_logger = EventLogger(config.events_dir)
@@ -217,6 +236,7 @@ def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
                     event_logger=event_logger,
                     run_id=run_id,
                     command=command,
+                    symbol=effective_symbol,
                 )
             else:
                 result = _run_closed_with_events(
@@ -225,6 +245,7 @@ def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
                     event_logger=event_logger,
                     run_id=run_id,
                     command=command,
+                    symbol=effective_symbol,
                 )
         elif mode == "paper":
             if state == "open":
@@ -234,6 +255,7 @@ def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
                     event_logger=event_logger,
                     run_id=run_id,
                     command=command,
+                    symbol=effective_symbol,
                 )
             else:
                 result = _run_closed_with_events(
@@ -242,6 +264,7 @@ def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
                     event_logger=event_logger,
                     run_id=run_id,
                     command=command,
+                    symbol=effective_symbol,
                 )
         elif mode == "live":
             if state == "open":
@@ -251,6 +274,7 @@ def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
                     event_logger=event_logger,
                     run_id=run_id,
                     command=command,
+                    symbol=effective_symbol,
                 )
             else:
                 result = _run_closed_with_events(
@@ -259,6 +283,7 @@ def _run_cycle(mode: str, config: AtlasConfig) -> RoutineResult:
                     event_logger=event_logger,
                     run_id=run_id,
                     command=command,
+                    symbol=effective_symbol,
                 )
         else:
             raise ValueError(f"Unknown agent mode: {mode}")
@@ -292,6 +317,7 @@ def _run_open_with_events(
     event_logger: EventLogger,
     run_id: str,
     command: str,
+    symbol: str | None = None,
 ) -> RoutineResult:
     try:
         return run_open_market_cycle(
@@ -300,6 +326,7 @@ def _run_open_with_events(
             event_logger=event_logger,
             run_id=run_id,
             command=command,
+            symbol=symbol,
         )
     except TypeError as exc:
         if "unexpected keyword argument" not in str(exc):
@@ -314,6 +341,7 @@ def _run_closed_with_events(
     event_logger: EventLogger,
     run_id: str,
     command: str,
+    symbol: str | None = None,
 ) -> RoutineResult:
     try:
         return run_closed_market_cycle(
@@ -322,6 +350,7 @@ def _run_closed_with_events(
             event_logger=event_logger,
             run_id=run_id,
             command=command,
+            symbol=symbol,
         )
     except TypeError as exc:
         if "unexpected keyword argument" not in str(exc):

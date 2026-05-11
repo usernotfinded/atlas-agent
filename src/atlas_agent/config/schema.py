@@ -109,9 +109,14 @@ class DashboardConfig(BaseModel):
     host: str = "127.0.0.1"
 
 
+class MarketConfig(BaseModel):
+    symbol: str = ""
+    watchlist: list[str] = []
+
+
 class BacktestConfig(BaseModel):
     initial_cash: float = 10000.0
-    default_symbol: str = "BTC-USD"
+    default_symbol: str = ""
     data_path: Path = Path("data/sample/ohlcv.csv")
     reports_dir: Path = Path("reports/backtest")
 
@@ -136,6 +141,7 @@ class AtlasConfig(BaseModel):
     safety: SafetyConfig = Field(default_factory=SafetyConfig)
     audit: AuditConfig = Field(default_factory=AuditConfig)
     dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
+    market: MarketConfig = Field(default_factory=MarketConfig)
     backtest: BacktestConfig = Field(default_factory=BacktestConfig)
     update: UpdateConfig = Field(default_factory=UpdateConfig)
 
@@ -270,7 +276,7 @@ class AtlasConfig(BaseModel):
     
     @property
     def default_symbol(self) -> str:
-        return self.backtest.default_symbol
+        return self.market.symbol or self.backtest.default_symbol
     
     @property
     def data_path(self) -> Path:
