@@ -76,4 +76,7 @@ def _render_job(routine: str, cron: str) -> str:
         with:
           python-version: "3.11"
       - run: python -m pip install -e . --no-build-isolation
+      - run: atlas init . --template routine-trader || true
+      - run: atlas discipline setup --manual --yes
+      - run: atlas config set market.symbol DEMO-SYMBOL
       - run: atlas routine run {routine} --mode paper"""
