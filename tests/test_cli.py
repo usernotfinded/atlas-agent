@@ -46,6 +46,44 @@ def test_atlas_validate_works(tmp_path, monkeypatch, capsys) -> None:
     assert "Workspace initialized missing" in capsys.readouterr().out
 
 
+def test_config_edit_uses_argv_for_editor_launch(tmp_path, monkeypatch) -> None:
+    from atlas_agent.config.paths import get_config_toml_path
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("EDITOR", "code --wait")
+
+    with patch("atlas_agent.cli.subprocess.run") as mock_run:
+        assert main(["config", "edit"]) == 0
+
+    args, kwargs = mock_run.call_args
+    assert args[0] == ["code", "--wait", str(get_config_toml_path())]
+    assert kwargs["check"] is False
+    assert "shell" not in kwargs
+
+
+def test_config_edit_does_not_execute_shell_metacharacters(tmp_path, monkeypatch) -> None:
+    from atlas_agent.config.paths import get_config_toml_path
+
+    monkeypatch.chdir(tmp_path)
+    hacked_path = tmp_path / "hacked"
+    monkeypatch.setenv("EDITOR", "code --wait; touch hacked")
+
+    with patch("atlas_agent.cli.subprocess.run") as mock_run:
+        assert main(["config", "edit"]) == 0
+
+    args, kwargs = mock_run.call_args
+    assert args[0] == [
+        "code",
+        "--wait;",
+        "touch",
+        "hacked",
+        str(get_config_toml_path()),
+    ]
+    assert kwargs["check"] is False
+    assert kwargs.get("shell", False) is False
+    assert not hacked_path.exists()
+
+
 def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     main(["init", "."])
