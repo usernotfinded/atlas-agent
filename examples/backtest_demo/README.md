@@ -1,6 +1,6 @@
 # Backtest Demo
 
-Atlas Agent v0.5.2 includes a deterministic
+Atlas Agent v0.5.3 includes a deterministic
 , local-first backtesting engine.
 
 ## Basic Run

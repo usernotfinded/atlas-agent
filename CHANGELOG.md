@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-05-12
+
+### Added
+- Added `atlas setup` guided workspace setup flow.
+- Added end-to-end setup path for provider, model, auth, discipline profile, symbol, and readiness validation.
+- Added guided setup handling for LM Studio, OpenAI-compatible endpoints, and unified Google Gemini modes.
+
+### Changed
+- First-run setup now guides users toward a ready paper-mode workspace instead of requiring multiple disconnected commands.
+- Google Gemini setup now remains a single provider with mode/auth sub-selection.
+- Setup now forces safe defaults: paper mode and live trading disabled.
+
+### Fixed
+- Reduced onboarding failure loops caused by missing discipline profile, missing symbol, or incomplete provider configuration.
+- Preserved read-only `atlas validate` behavior while reusing diagnostics at the end of guided setup.
 
 ## [0.5.2] - 2026-05-12
 
