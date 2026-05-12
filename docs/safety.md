@@ -1,6 +1,6 @@
 # Safety
 
-Atlas Agent v0.5.3 prioritizes safety
+Atlas Agent v0.5.4 prioritizes safety
  through multiple decoupled layers:
 
 ## 1. Deterministic Risk Manager

@@ -1,6 +1,6 @@
 # Brokers
 
-Atlas Agent v0.5.3 uses an adapter-based architecture
+Atlas Agent v0.5.4 uses an adapter-based architecture
  for broker integration.
 
 ## Broker Adapters

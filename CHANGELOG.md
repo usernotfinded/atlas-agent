@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-05-12
+
+### Fixed
+- Fixed setup model-selection state so stale models from a previous provider cannot appear under a newly selected provider.
+- Enforced provider-scoped text model catalogs for hosted providers.
+- Rejected invalid hosted provider/model pairs such as OpenAI with Claude models or Anthropic with GPT models.
+- Ensured setup, CLI model listing, and selected-state rendering display exact raw model IDs without prettified labels.
+
+### Changed
+- Hosted providers now use curated text-only model catalogs.
+- Freeform-compatible providers such as OpenRouter, LM Studio, local/self-hosted, OpenAI-compatible, custom endpoints, and NVIDIA local continue to allow exact custom model IDs.
+
 ## [0.5.3] - 2026-05-12
 
 ### Added

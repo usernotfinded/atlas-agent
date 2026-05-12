@@ -1,6 +1,6 @@
 # Architecture
 
-Atlas Agent v0.5.3 is a tool-driven autonomous system.
+Atlas Agent v0.5.4 is a tool-driven autonomous system.
 
 ## High-Level Flow
 
