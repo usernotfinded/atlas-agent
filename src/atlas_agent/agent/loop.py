@@ -1,5 +1,6 @@
 from __future__ import annotations
 import hashlib
+import math
 
 import logging
 from typing import Any, Union, List, Optional
@@ -71,6 +72,61 @@ class AgentLoop:
         )
         self.log_raw_prompts = log_raw_prompts
         self.log_provider_text = log_provider_text
+
+    def _parse_positive_float(self, raw: Any, field_name: str) -> float:
+        if raw is None:
+            raise ValueError(f"missing required field: {field_name}")
+        try:
+            value = float(raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid numeric field: {field_name}") from exc
+        if not math.isfinite(value):
+            raise ValueError(f"{field_name} must be a positive finite number")
+        if value <= 0:
+            raise ValueError(f"{field_name} must be positive")
+        return value
+
+    def _market_reference_price(self, args: dict[str, Any]) -> float:
+        for field_name in ("price", "reference_price", "current_price", "estimated_price"):
+            raw_value = args.get(field_name)
+            if raw_value is None:
+                continue
+            return self._parse_positive_float(raw_value, field_name)
+        raise ValueError("market orders require an explicit positive reference/current/estimated execution price")
+
+    def _build_propose_order_risk_input(
+        self,
+        tool_call: ToolCall,
+        session: Session,
+    ) -> OrderRiskInput:
+        args = tool_call.arguments or {}
+        symbol = str(args.get("symbol") or "").strip()
+        if not symbol:
+            raise ValueError("missing required field: symbol")
+
+        side = str(args.get("side") or "").strip().lower()
+        if side not in {"buy", "sell"}:
+            raise ValueError("invalid field: side")
+
+        quantity = self._parse_positive_float(args.get("quantity"), "quantity")
+        order_type = str(args.get("order_type") or "market").strip().lower()
+
+        if order_type == "limit":
+            price = self._parse_positive_float(args.get("limit_price"), "limit_price")
+        elif order_type == "market":
+            price = self._market_reference_price(args)
+        else:
+            raise ValueError(f"unsupported order_type: {order_type}")
+
+        return OrderRiskInput(
+            symbol=symbol,
+            side=side,
+            quantity=quantity,
+            price=price,
+            notional=quantity * price,
+            confidence=getattr(session, "last_confidence", None),
+            stop_loss=args.get("stop_loss"),
+        )
 
     def run(
         self,
@@ -315,22 +371,13 @@ class AgentLoop:
                 except KeyError:
                     pass
 
-                if tool_spec and tool_spec.risk_gated and self.risk_manager:
+                if tool_spec and tool_spec.risk_gated and self.risk_manager and tool_call.name == "propose_order":
                     current_portfolio = portfolio_snapshot or PortfolioSnapshot(
                         cash=10000.0, equity=10000.0, total_exposure=0.0
                     )
                     
-                    args = tool_call.arguments or {}
                     try:
-                        risk_input = OrderRiskInput(
-                            symbol=args.get("symbol", "UNKNOWN"),
-                            side=args.get("side", "buy"),
-                            quantity=float(args.get("quantity", 0)),
-                            price=float(args.get("limit_price") or args.get("price") or 0.0),
-                            notional=float(args.get("quantity", 0)) * float(args.get("limit_price") or args.get("price") or 1.0),
-                            confidence=getattr(session, "last_confidence", None),
-                            stop_loss=args.get("stop_loss")
-                        )
+                        risk_input = self._build_propose_order_risk_input(tool_call, session)
                         
                         risk_decision = self.risk_manager.evaluate_order(
                             risk_input, current_portfolio, mode=mode # type: ignore
@@ -365,7 +412,32 @@ class AgentLoop:
                                 diagnostics={"risk_decision": risk_decision.model_dump()}
                             )
                     except (ValueError, TypeError) as e:
-                        logging.warning(f"Failed to create RiskInput from tool call {tool_call.name}: {e}")
+                        error = ToolError(
+                            error_type="risk_rejected",
+                            message=f"Risk Manager blocked {tool_call.name}: {e}",
+                            is_retryable=False,
+                            suggested_action="Provide complete, valid order parameters before retrying.",
+                        )
+                        tool_results.append(error)
+
+                        if self.audit_writer:
+                            self.audit_writer.write_event(
+                                "tool_call_blocked",
+                                run_id=run_id,
+                                iteration=i,
+                                tool_name=tool_call.name,
+                                tool_call_id=tool_call.id,
+                                status="risk_rejected",
+                                payload={"reason": str(e)},
+                            )
+
+                        return AgentResult(
+                            status="blocked",
+                            iterations=iterations,
+                            total_tool_calls=total_tool_calls,
+                            errors=[error.message],
+                            diagnostics={"risk_decision": {"reason": str(e), "status": "blocked"}},
+                        )
 
                 if self.audit_writer:
                     self.audit_writer.write_event(

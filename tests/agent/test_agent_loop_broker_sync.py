@@ -32,7 +32,7 @@ def test_agent_loop_receives_synced_portfolio_snapshot(tmp_path: Path):
     )
     
     reg = ToolRegistry()
-    def propose_order(symbol: str, quantity: float, price: float): return "ok"
+    def propose_order(symbol: str, side: str, quantity: float, order_type: str, limit_price: float): return "ok"
     reg.register(ToolSpec(
         name="propose_order", 
         description_full="d", 
@@ -41,10 +41,12 @@ def test_agent_loop_receives_synced_portfolio_snapshot(tmp_path: Path):
             "type": "object", 
             "properties": {
                 "symbol": {"type": "string"},
+                "side": {"type": "string"},
                 "quantity": {"type": "number"},
-                "price": {"type": "number"}
+                "order_type": {"type": "string"},
+                "limit_price": {"type": "number"},
             },
-            "required": ["symbol", "quantity", "price"]
+            "required": ["symbol", "side", "quantity", "order_type", "limit_price"]
         },
         execute=propose_order,
         risk_gated=True
@@ -56,7 +58,17 @@ def test_agent_loop_receives_synced_portfolio_snapshot(tmp_path: Path):
     
     provider = MockProvider([
         LLMResponse(text="Trade", tool_calls=[
-            ToolCall(id="c1", name="propose_order", arguments={"symbol": "AAPL", "quantity": 6, "price": 100.0})
+            ToolCall(
+                id="c1",
+                name="propose_order",
+                arguments={
+                    "symbol": "AAPL",
+                    "side": "buy",
+                    "quantity": 6,
+                    "order_type": "limit",
+                    "limit_price": 100.0,
+                },
+            )
         ], is_final=False)
     ])
     
