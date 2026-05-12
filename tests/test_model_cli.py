@@ -260,6 +260,28 @@ class TestModelConfigure:
         config_text = (workspace / ".atlas" / "config.toml").read_text(encoding="utf-8")
         assert "sk-hidden-openai-key" not in config_text
 
+    def test_configure_rejects_multiline_hidden_api_key_without_echo(self, workspace, capsys, monkeypatch):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        responses = iter(["openai"])
+        secret_value = "sk-hidden-openai-key\nINJECTED_SECRET=leak"
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(responses))
+        monkeypatch.setattr("getpass.getpass", lambda prompt="": secret_value)
+
+        code = main(["model", "configure"])
+
+        assert code == 2
+        captured = capsys.readouterr()
+        assert "single-line" in captured.out
+        assert secret_value not in captured.out
+        assert secret_value not in captured.err
+        env_path = workspace / ".env.atlas"
+        if env_path.exists():
+            assert secret_value not in env_path.read_text(encoding="utf-8")
+        config_path = workspace / ".atlas" / "config.toml"
+        if config_path.exists():
+            assert secret_value not in config_path.read_text(encoding="utf-8")
+
     def test_configure_getpass_warning_fails_closed(self, workspace, capsys, monkeypatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)

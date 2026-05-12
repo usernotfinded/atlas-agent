@@ -1283,7 +1283,7 @@ def main(argv: list[str] | None = None) -> int:
             get_secret, get_secret_status, set_secret, unset_secret, is_secret_key,
             migrate_legacy_config, redact_value
         )
-        from atlas_agent.config.secrets import canonical_env_var
+        from atlas_agent.config.secrets import InvalidSecretValueError, canonical_env_var
         from atlas_agent.config.paths import get_config_toml_path, get_env_atlas_path
         import json
         
@@ -1347,7 +1347,11 @@ def main(argv: list[str] | None = None) -> int:
                 args.key = "model.model"
             if is_secret_key(args.key):
                 env_var = canonical_env_var(args.key)
-                set_secret(env_var, args.value)
+                try:
+                    set_secret(env_var, args.value)
+                except InvalidSecretValueError as exc:
+                    print(str(exc))
+                    return 2
                 print(f"Updated secret {env_var} in .env.atlas")
             else:
                 set_raw_value(args.key, args.value)
@@ -1449,7 +1453,7 @@ def main(argv: list[str] | None = None) -> int:
             validate_model_for_provider,
         )
         from atlas_agent.providers.runtime import resolve_runtime_provider
-        from atlas_agent.config.secrets import set_secret
+        from atlas_agent.config.secrets import InvalidSecretValueError, set_secret
         config = get_config()
 
         if args.model_command == "providers":
@@ -1618,7 +1622,11 @@ def main(argv: list[str] | None = None) -> int:
                         print("Non-interactive mode. Use `atlas config set_atlas_secret <key> <value>`.")
                         return 2
                     if key:
-                        set_secret(env_var, key)
+                        try:
+                            set_secret(env_var, key)
+                        except InvalidSecretValueError as exc:
+                            print(str(exc))
+                            return 2
                         print(f"Saved {env_var} to .env.atlas")
 
             # Select model
@@ -3004,7 +3012,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Heartbeat recorded: {path}")
         return 0
     if args.command == "approve-order":
-        path = ApprovalManager(config.pending_orders_dir).approve(args.order_id)
+        from atlas_agent.execution.approval import InvalidApprovalIdError
+
+        try:
+            path = ApprovalManager(config.pending_orders_dir).approve(args.order_id)
+        except InvalidApprovalIdError as exc:
+            print(str(exc))
+            return 2
         print(f"Approved pending order: {path}")
         return 0
     if args.command == "research" and args.research_command == "market":

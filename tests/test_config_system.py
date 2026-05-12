@@ -3,6 +3,7 @@ import pytest
 from pathlib import Path
 from atlas_agent.config import AtlasConfig, get_config, set_raw_value, unset_raw_value, set_secret
 from atlas_agent.config.paths import get_config_toml_path, get_env_atlas_path
+from atlas_agent.config.secrets import InvalidSecretValueError, load_atlas_secrets
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):
@@ -48,6 +49,69 @@ def test_config_set_secret_routing(tmp_path, monkeypatch):
     content = env_atlas.read_text()
     assert "OPENAI_API_KEY=" in content
     assert "test-key" in content
+
+def test_set_secret_single_line_value_reloads(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".atlas").mkdir(exist_ok=True)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    set_secret("OPENAI_API_KEY", "single-line-key")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    load_atlas_secrets()
+
+    assert os.environ["OPENAI_API_KEY"] == "single-line-key"
+    config_toml = get_config_toml_path()
+    if config_toml.exists():
+        assert "single-line-key" not in config_toml.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "secret_value",
+    [
+        "bad\nINJECTED_SECRET=leak",
+        "bad\rINJECTED_SECRET=leak",
+        "bad\0INJECTED_SECRET=leak",
+    ],
+)
+def test_set_secret_rejects_multiline_values_without_partial_write(tmp_path, monkeypatch, capsys, secret_value):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".atlas").mkdir(exist_ok=True)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    env_atlas = get_env_atlas_path()
+    original = "OPENAI_API_KEY=old-value\nOTHER=value\n"
+    env_atlas.write_text(original, encoding="utf-8")
+
+    with pytest.raises(InvalidSecretValueError, match="single-line"):
+        set_secret("OPENAI_API_KEY", secret_value)
+
+    captured = capsys.readouterr()
+    assert secret_value not in captured.out
+    assert secret_value not in captured.err
+    assert env_atlas.read_text(encoding="utf-8") == original
+    assert os.environ.get("OPENAI_API_KEY") is None
+    config_toml = get_config_toml_path()
+    if config_toml.exists():
+        assert secret_value not in config_toml.read_text(encoding="utf-8")
+
+
+def test_cli_config_set_rejects_multiline_secret_without_echo(tmp_path, monkeypatch, capsys):
+    from atlas_agent.cli import main
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".atlas").mkdir(exist_ok=True)
+    secret_value = "bad\nINJECTED_SECRET=leak"
+
+    code = main(["config", "set", "providers.openai.api_key", secret_value])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "single-line" in captured.out
+    assert secret_value not in captured.out
+    assert secret_value not in captured.err
+    assert not get_env_atlas_path().exists()
+    config_toml = get_config_toml_path()
+    if config_toml.exists():
+        assert secret_value not in config_toml.read_text(encoding="utf-8")
 
 def test_nested_config_set(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)

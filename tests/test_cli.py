@@ -84,6 +84,21 @@ def test_config_edit_does_not_execute_shell_metacharacters(tmp_path, monkeypatch
     assert not hacked_path.exists()
 
 
+def test_approve_order_invalid_id_fails_safely(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    code = main(["approve-order", "../secret"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Invalid pending order id" in captured.out
+    assert "../secret" not in captured.out
+    assert "../secret" not in captured.err
+    assert not (tmp_path / "secret.json").exists()
+
+
 def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     main(["init", "."])

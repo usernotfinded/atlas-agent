@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
+
 from atlas_agent.config import AtlasConfig
-from atlas_agent.execution.approval import ApprovalManager
+from atlas_agent.execution.approval import ApprovalManager, InvalidApprovalIdError
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.execution.order import AccountSnapshot, Order, OrderResult
 from atlas_agent.execution.order_router import OrderRouter
@@ -86,6 +88,51 @@ def test_live_order_without_approval_creates_pending_and_does_not_execute(tmp_pa
     assert (tmp_path / "pending" / f"{order.id}.json").exists()
 
 
+def test_approval_manager_accepts_valid_machine_generated_ids(tmp_path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = Order(
+        "TEST-SYMBOL",
+        "buy",
+        1,
+        limit_price=100,
+        confidence=1,
+        stop_loss=95,
+        id="order_ABC-123.45",
+    )
+
+    path = manager.create_pending_order(order)
+    approved_path = manager.approve(order.id)
+
+    assert path == approved_path
+    assert approved_path.name == "order_ABC-123.45.json"
+    assert approved_path.parent.resolve() == (tmp_path / "pending").resolve()
+    assert manager.is_approved(order.id) is True
+
+
+@pytest.mark.parametrize(
+    "order_id",
+    [
+        "",
+        "   ",
+        "abc/def",
+        r"abc\def",
+        ".",
+        "..",
+        "../secret",
+        "/tmp/order",
+        r"C:\tmp\order",
+    ],
+)
+def test_approval_manager_rejects_unsafe_order_ids(tmp_path, order_id) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+
+    with pytest.raises(InvalidApprovalIdError, match="Invalid pending order id"):
+        manager.path_for(order_id)
+
+    assert not (tmp_path / "secret.json").exists()
+    assert not (tmp_path / "pending" / "secret.json").exists()
+
+
 def test_live_order_with_stale_missing_approval_fails_safely(tmp_path) -> None:
     config = AtlasConfig(
         trading_mode="live",
@@ -110,4 +157,3 @@ def test_ai_output_cannot_call_broker_directly() -> None:
 
     assert order.source == "ai_committee"
     assert not hasattr(order, "place_order")
-

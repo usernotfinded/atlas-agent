@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 
 from atlas_agent.config.paths import get_env_atlas_path
 
+class InvalidSecretValueError(ValueError):
+    """Raised when a secret value cannot be safely stored in .env.atlas."""
+
+
 SECRET_KEYWORDS = {
     "api_key", "token", "secret", "password", "authorization", 
     "bearer", "cookie", "private_key", "credentials", "apca_api_key_id", "apca_api_secret_key"
@@ -42,6 +46,7 @@ def load_atlas_secrets() -> None:
 
 def set_secret(key: str, value: str) -> None:
     """Write a secret to .env.atlas."""
+    _validate_secret_value(value)
     env_path = get_env_atlas_path()
     env_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -71,6 +76,12 @@ def set_secret(key: str, value: str) -> None:
     # but only if not already set by the process itself to respect precedence
     if key not in os.environ:
         os.environ[key] = value
+
+def _validate_secret_value(value: str) -> None:
+    if not isinstance(value, str):
+        raise InvalidSecretValueError("Secret values must be single-line text.")
+    if "\n" in value or "\r" in value or "\0" in value:
+        raise InvalidSecretValueError("Secret values must be single-line text.")
 
 def unset_secret(key: str) -> None:
     """Remove a secret from .env.atlas."""

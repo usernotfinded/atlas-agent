@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from atlas_agent.execution.order import Order
+
+
+class InvalidApprovalIdError(ValueError):
+    """Raised when a pending approval id cannot be safely mapped to a file."""
+
+
+_SAFE_APPROVAL_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
 class ApprovalManager:
@@ -46,7 +54,13 @@ class ApprovalManager:
         return bool(payload.get("approved"))
 
     def path_for(self, order_id: str) -> Path:
-        return self.pending_dir / f"{order_id}.json"
+        safe_id = _validate_approval_id(order_id)
+        pending_dir = self.pending_dir.resolve()
+        path = self.pending_dir / f"{safe_id}.json"
+        resolved_path = path.resolve(strict=False)
+        if resolved_path.parent != pending_dir:
+            raise InvalidApprovalIdError("Invalid pending order id.")
+        return path
 
 
 def _order_to_dict(order: Order) -> dict[str, object]:
@@ -54,3 +68,17 @@ def _order_to_dict(order: Order) -> dict[str, object]:
     payload["created_at"] = order.created_at.isoformat()
     return payload
 
+
+def _validate_approval_id(order_id: str) -> str:
+    if not isinstance(order_id, str):
+        raise InvalidApprovalIdError("Invalid pending order id.")
+    candidate = order_id.strip()
+    if not candidate:
+        raise InvalidApprovalIdError("Invalid pending order id.")
+    if candidate in {".", ".."}:
+        raise InvalidApprovalIdError("Invalid pending order id.")
+    if not _SAFE_APPROVAL_ID.fullmatch(candidate):
+        raise InvalidApprovalIdError("Invalid pending order id.")
+    if any(part in {"", ".", ".."} for part in Path(candidate).parts):
+        raise InvalidApprovalIdError("Invalid pending order id.")
+    return candidate
