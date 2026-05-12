@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -17,23 +17,31 @@ class ModelOption:
 @dataclass(frozen=True)
 class ProviderProfile:
     id: str
-    label: str
-    auth_type: str  # "api_key", "none", "custom"
-    api_mode: str   # "chat_completions", "anthropic_messages", "custom"
-    auth_header_type: str  # "bearer", "x-api-key", "none", "custom"
+    display_name: str
+    status: str  # "stable", "beta", "local", "legacy", "internal"
+    api_mode: str
+    base_url: str
+    base_url_required: bool
+    model_required: bool
     key_required: bool
-    base_url: str = ""
-    base_url_env_var: str = ""
-    api_key_env_vars: tuple[str, ...] = ()
+    canonical_env_var: str
+    accepted_env_aliases: tuple[str, ...] = ()
+    env_precedence: tuple[str, ...] = ()
+    auth_header_type: str = "bearer"  # "bearer", "x-api-key", "x-goog-api-key", "none"
+    required_headers: dict[str, str] = field(default_factory=dict)
     optional_metadata_env_vars: tuple[str, ...] = ()
+    user_facing: bool = True
+    include_in_wizard: bool = True
+    include_in_model_providers_default: bool = True
     aliases: tuple[str, ...] = ()
     models: tuple[ModelOption, ...] = ()
     default_model: str = ""
     docs_url: str = ""
+    
+    @property
+    def label(self) -> str:
+        return self.display_name
 
-
-# Curated model catalogs — availability depends on provider and account.
-# These are common defaults, not guaranteed live inventory.
 
 _OPENROUTER_MODELS = (
     ModelOption("openai/gpt-5.5", label="GPT-5.5", recommended=True),
@@ -103,25 +111,35 @@ _LOCAL_MODELS = (
     ModelOption("local/default", label="Local Default"),
 )
 
+_LMSTUDIO_MODELS = (
+    ModelOption("local-model", label="Local Model"),
+)
+
+_OPENAI_COMPATIBLE_MODELS = (
+    ModelOption("custom-model", label="Custom Model"),
+)
+
 _CUSTOM_MODELS = (
     ModelOption("custom", label="Custom"),
 )
-
 
 _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
     p.id: p
     for p in (
         ProviderProfile(
             id="openrouter",
-            label="OpenRouter",
-            auth_type="api_key",
+            display_name="OpenRouter",
+            status="stable",
             api_mode="chat_completions",
-            auth_header_type="bearer",
-            key_required=True,
             base_url="https://openrouter.ai/api/v1",
-            base_url_env_var="OPENROUTER_BASE_URL",
-            api_key_env_vars=("OPENROUTER_API_KEY",),
-            optional_metadata_env_vars=("OPENROUTER_SITE_URL", "OPENROUTER_SITE_NAME"),
+            base_url_required=False,
+            model_required=True,
+            key_required=True,
+            canonical_env_var="OPENROUTER_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("OPENROUTER_API_KEY",),
+            auth_header_type="bearer",
+            optional_metadata_env_vars=("OPENROUTER_HTTP_REFERER", "OPENROUTER_APP_TITLE"),
             aliases=("or",),
             models=_OPENROUTER_MODELS,
             default_model="anthropic/claude-sonnet-4.6",
@@ -129,14 +147,17 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
         ),
         ProviderProfile(
             id="openai",
-            label="OpenAI",
-            auth_type="api_key",
+            display_name="OpenAI",
+            status="stable",
             api_mode="chat_completions",
-            auth_header_type="bearer",
-            key_required=True,
             base_url="https://api.openai.com/v1",
-            base_url_env_var="OPENAI_BASE_URL",
-            api_key_env_vars=("OPENAI_API_KEY",),
+            base_url_required=False,
+            model_required=True,
+            key_required=True,
+            canonical_env_var="OPENAI_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("OPENAI_API_KEY",),
+            auth_header_type="bearer",
             aliases=(),
             models=_OPENAI_MODELS,
             default_model="gpt-5.5",
@@ -144,14 +165,18 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
         ),
         ProviderProfile(
             id="anthropic",
-            label="Anthropic",
-            auth_type="api_key",
+            display_name="Anthropic",
+            status="stable",
             api_mode="anthropic_messages",
-            auth_header_type="x-api-key",
-            key_required=True,
             base_url="https://api.anthropic.com",
-            base_url_env_var="ANTHROPIC_BASE_URL",
-            api_key_env_vars=("ANTHROPIC_API_KEY",),
+            base_url_required=False,
+            model_required=True,
+            key_required=True,
+            canonical_env_var="ANTHROPIC_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("ANTHROPIC_API_KEY",),
+            auth_header_type="x-api-key",
+            required_headers={"anthropic-version": "2023-06-01", "content-type": "application/json"},
             aliases=("claude",),
             models=_ANTHROPIC_MODELS,
             default_model="claude-sonnet-4.6",
@@ -159,14 +184,17 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
         ),
         ProviderProfile(
             id="deepseek",
-            label="DeepSeek",
-            auth_type="api_key",
+            display_name="DeepSeek",
+            status="stable",
             api_mode="chat_completions",
-            auth_header_type="bearer",
+            base_url="https://api.deepseek.com",
+            base_url_required=False,
+            model_required=True,
             key_required=True,
-            base_url="https://api.deepseek.com/v1",
-            base_url_env_var="DEEPSEEK_BASE_URL",
-            api_key_env_vars=("DEEPSEEK_API_KEY",),
+            canonical_env_var="DEEPSEEK_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("DEEPSEEK_API_KEY",),
+            auth_header_type="bearer",
             aliases=("ds",),
             models=_DEEPSEEK_MODELS,
             default_model="deepseek-v4-pro",
@@ -174,80 +202,89 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
         ),
         ProviderProfile(
             id="kimi",
-            label="Kimi / Moonshot",
-            auth_type="api_key",
+            display_name="Kimi / Moonshot",
+            status="stable",
             api_mode="chat_completions",
-            auth_header_type="bearer",
-            key_required=True,
             base_url="https://api.moonshot.cn/v1",
-            base_url_env_var="KIMI_BASE_URL",
-            # MOONSHOT_API_KEY is canonical; KIMI_API_KEY is accepted alias
-            api_key_env_vars=("MOONSHOT_API_KEY", "KIMI_API_KEY"),
+            base_url_required=False,
+            model_required=True,
+            key_required=True,
+            canonical_env_var="MOONSHOT_API_KEY",
+            accepted_env_aliases=("KIMI_API_KEY",),
+            env_precedence=("MOONSHOT_API_KEY", "KIMI_API_KEY"),
+            auth_header_type="bearer",
             aliases=("moonshot",),
             models=_KIMI_MODELS,
             default_model="kimi-k2.6",
             docs_url="https://platform.moonshot.ai/docs",
         ),
         ProviderProfile(
-            id="nvidia",
-            label="NVIDIA NIM",
-            auth_type="api_key",
-            api_mode="chat_completions",
-            auth_header_type="bearer",
-            key_required=True,
-            base_url="https://integrate.api.nvidia.com/v1",
-            base_url_env_var="NVIDIA_BASE_URL",
-            # NVIDIA_API_KEY for cloud/API Catalog inference.
-            # NGC_API_KEY is NOT included here; it is for NGC/container workflows only.
-            api_key_env_vars=("NVIDIA_API_KEY",),
-            aliases=("nim",),
-            models=_NVIDIA_MODELS,
-            default_model="nvidia/nemotron-3-super-120b-a12b",
-            docs_url="https://build.nvidia.com",
-        ),
-        ProviderProfile(
-            id="xai",
-            label="xAI",
-            auth_type="api_key",
-            api_mode="chat_completions",
-            auth_header_type="bearer",
-            key_required=True,
-            base_url="https://api.x.ai/v1",
-            base_url_env_var="XAI_BASE_URL",
-            api_key_env_vars=("XAI_API_KEY",),
-            aliases=("grok",),
-            models=_XAI_MODELS,
-            default_model="grok-4",
-            docs_url="https://docs.x.ai",
-        ),
-        ProviderProfile(
             id="google-gemini",
-            label="Google Gemini",
-            auth_type="api_key",
-            api_mode="chat_completions",
-            auth_header_type="bearer",
-            key_required=True,
+            display_name="Google Gemini (Native)",
+            status="stable",
+            api_mode="gemini_native",
             base_url="https://generativelanguage.googleapis.com/v1beta",
-            base_url_env_var="GOOGLE_GEMINI_BASE_URL",
-            # GOOGLE_API_KEY takes precedence over GEMINI_API_KEY when both exist,
-            # matching Google SDK behavior.
-            api_key_env_vars=("GOOGLE_API_KEY", "GOOGLE_GEMINI_API_KEY", "GEMINI_API_KEY"),
+            base_url_required=False,
+            model_required=True,
+            key_required=True,
+            canonical_env_var="GEMINI_API_KEY",
+            accepted_env_aliases=("GOOGLE_API_KEY",),
+            env_precedence=("GOOGLE_API_KEY", "GEMINI_API_KEY"),
+            auth_header_type="x-goog-api-key",
             aliases=("gemini", "google"),
             models=_GOOGLE_MODELS,
             default_model="gemini-3.1-pro-preview",
             docs_url="https://ai.google.dev/gemini-api/docs",
         ),
         ProviderProfile(
-            id="huggingface",
-            label="Hugging Face",
-            auth_type="api_key",
+            id="gemini-openai-compatible",
+            display_name="Google Gemini (OpenAI-compatible)",
+            status="stable",
             api_mode="chat_completions",
-            auth_header_type="bearer",
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            base_url_required=False,
+            model_required=True,
             key_required=True,
+            canonical_env_var="GEMINI_API_KEY",
+            accepted_env_aliases=("GOOGLE_API_KEY",),
+            env_precedence=("GOOGLE_API_KEY", "GEMINI_API_KEY"),
+            auth_header_type="bearer",
+            aliases=("google-gemini-openai",),
+            models=_GOOGLE_MODELS,
+            default_model="gemini-3.1-pro-preview",
+            docs_url="https://ai.google.dev/gemini-api/docs",
+        ),
+        ProviderProfile(
+            id="xai",
+            display_name="xAI",
+            status="stable",
+            api_mode="chat_completions",
+            base_url="https://api.x.ai/v1",
+            base_url_required=False,
+            model_required=True,
+            key_required=True,
+            canonical_env_var="XAI_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("XAI_API_KEY",),
+            auth_header_type="bearer",
+            aliases=("grok",),
+            models=_XAI_MODELS,
+            default_model="grok-4",
+            docs_url="https://docs.x.ai",
+        ),
+        ProviderProfile(
+            id="huggingface",
+            display_name="Hugging Face",
+            status="stable",
+            api_mode="chat_completions",
             base_url="https://api-inference.huggingface.co/v1",
-            base_url_env_var="HF_BASE_URL",
-            # HF_TOKEN is canonical; HUGGINGFACEHUB_API_TOKEN is legacy alias.
-            api_key_env_vars=("HF_TOKEN", "HUGGINGFACEHUB_API_TOKEN"),
+            base_url_required=False,
+            model_required=True,
+            key_required=True,
+            canonical_env_var="HF_TOKEN",
+            accepted_env_aliases=("HUGGINGFACEHUB_API_TOKEN",),
+            env_precedence=("HF_TOKEN", "HUGGINGFACEHUB_API_TOKEN"),
+            auth_header_type="bearer",
             aliases=("hf",),
             models=_HF_MODELS,
             default_model="moonshotai/Kimi-K2.6",
@@ -255,32 +292,152 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
         ),
         ProviderProfile(
             id="local",
-            label="Local / Self-hosted",
-            auth_type="none",
+            display_name="Local / Self-hosted",
+            status="local",
             api_mode="chat_completions",
-            auth_header_type="none",
-            key_required=False,
             base_url="http://localhost:11434/v1",
-            base_url_env_var="LOCAL_BASE_URL",
-            api_key_env_vars=(),
+            base_url_required=False,
+            model_required=False,
+            key_required=False,
+            canonical_env_var="",
+            accepted_env_aliases=(),
+            env_precedence=(),
+            auth_header_type="none",
             aliases=("ollama", "llamacpp"),
             models=_LOCAL_MODELS,
             default_model="local/default",
             docs_url="",
         ),
         ProviderProfile(
-            id="custom",
-            label="Custom / OpenAI-compatible",
-            auth_type="api_key",
+            id="nvidia",
+            display_name="NVIDIA NIM (Cloud)",
+            status="stable",
             api_mode="chat_completions",
-            auth_header_type="bearer",
+            base_url="https://integrate.api.nvidia.com/v1",
+            base_url_required=False,
+            model_required=True,
             key_required=True,
+            canonical_env_var="NVIDIA_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("NVIDIA_API_KEY",),
+            auth_header_type="bearer",
+            aliases=("nim",),
+            models=_NVIDIA_MODELS,
+            default_model="nvidia/nemotron-3-super-120b-a12b",
+            docs_url="https://build.nvidia.com",
+        ),
+        ProviderProfile(
+            id="nvidia-local",
+            display_name="NVIDIA NIM (Local/On-Prem)",
+            status="local",
+            api_mode="chat_completions",
             base_url="",
-            base_url_env_var="CUSTOM_BASE_URL",
-            api_key_env_vars=("ATLAS_CUSTOM_API_KEY",),
+            base_url_required=True,
+            model_required=True,
+            key_required=False,
+            canonical_env_var="NVIDIA_LOCAL_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("NVIDIA_LOCAL_API_KEY",),
+            auth_header_type="none",
+            aliases=("nvidia-nim-local",),
+            models=_NVIDIA_MODELS,
+            default_model="nvidia/nemotron-3-super-120b-a12b",
+            docs_url="https://build.nvidia.com",
+        ),
+        ProviderProfile(
+            id="lmstudio",
+            display_name="LM Studio",
+            status="local",
+            api_mode="chat_completions",
+            base_url="http://localhost:1234/v1",
+            base_url_required=False,
+            model_required=False,
+            key_required=False,
+            canonical_env_var="",
+            accepted_env_aliases=(),
+            env_precedence=(),
+            auth_header_type="none",
+            aliases=("lm-studio",),
+            models=_LMSTUDIO_MODELS,
+            default_model="local-model",
+            docs_url="https://lmstudio.ai/docs",
+        ),
+        ProviderProfile(
+            id="openai-compatible",
+            display_name="OpenAI-compatible Endpoint",
+            status="stable",
+            api_mode="chat_completions",
+            base_url="",
+            base_url_required=True,
+            model_required=True,
+            key_required=False,
+            canonical_env_var="ATLAS_OPENAI_COMPATIBLE_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("ATLAS_OPENAI_COMPATIBLE_API_KEY",),
+            auth_header_type="bearer",
+            aliases=("openai_compatible",),
+            models=_OPENAI_COMPATIBLE_MODELS,
+            default_model="custom-model",
+            docs_url="",
+        ),
+        ProviderProfile(
+            id="custom",
+            display_name="Custom Endpoint",
+            status="stable",
+            api_mode="chat_completions",
+            base_url="",
+            base_url_required=True,
+            model_required=True,
+            key_required=False,
+            canonical_env_var="ATLAS_CUSTOM_API_KEY",
+            accepted_env_aliases=(),
+            env_precedence=("ATLAS_CUSTOM_API_KEY",),
+            auth_header_type="bearer",
             aliases=(),
             models=_CUSTOM_MODELS,
             default_model="custom",
+            docs_url="",
+        ),
+        ProviderProfile(
+            id="local_command",
+            display_name="Local Command (Legacy)",
+            status="legacy",
+            api_mode="custom",
+            base_url="",
+            base_url_required=False,
+            model_required=False,
+            key_required=False,
+            canonical_env_var="",
+            accepted_env_aliases=(),
+            env_precedence=(),
+            auth_header_type="none",
+            user_facing=False,
+            include_in_wizard=False,
+            include_in_model_providers_default=False,
+            aliases=(),
+            models=(),
+            default_model="local_command",
+            docs_url="",
+        ),
+        ProviderProfile(
+            id="null",
+            display_name="Null Provider",
+            status="internal",
+            api_mode="custom",
+            base_url="",
+            base_url_required=False,
+            model_required=False,
+            key_required=False,
+            canonical_env_var="",
+            accepted_env_aliases=(),
+            env_precedence=(),
+            auth_header_type="none",
+            user_facing=False,
+            include_in_wizard=False,
+            include_in_model_providers_default=False,
+            aliases=(),
+            models=(),
+            default_model="null",
             docs_url="",
         ),
     )
@@ -295,7 +452,7 @@ for _profile in _PROVIDER_PROFILES.values():
 
 def list_provider_profiles() -> list[ProviderProfile]:
     """Return all registered provider profiles, sorted by label."""
-    return sorted(_PROVIDER_PROFILES.values(), key=lambda p: p.label.lower())
+    return sorted(_PROVIDER_PROFILES.values(), key=lambda p: p.display_name.lower())
 
 
 def get_provider_profile(provider_id_or_alias: str) -> ProviderProfile | None:

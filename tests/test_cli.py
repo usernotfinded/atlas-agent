@@ -42,7 +42,7 @@ def test_atlas_validate_works(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
 
     assert main(["validate"]) == 0
-    assert "Configuration valid" in capsys.readouterr().out
+    assert "Workspace initialized missing" in capsys.readouterr().out
 
 
 def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:

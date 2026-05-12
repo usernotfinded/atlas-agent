@@ -161,7 +161,7 @@ def test_atlas_validate_reports_missing_discipline(tmp_path: Path, monkeypatch) 
     _atlas(["init", "."])
     rc, out, _ = _atlas(["validate"])
     assert rc == 0
-    assert "Discipline profile: missing" in out
+    assert "Discipline profile missing" in out
     assert "atlas discipline setup" in out
 
 
@@ -172,4 +172,4 @@ def test_atlas_validate_reports_configured_discipline(tmp_path: Path, monkeypatc
     write_user_discipline(tmp_path, GOOD_PROFILE)
     rc, out, _ = _atlas(["validate"])
     assert rc == 0
-    assert "configured and valid" in out
+    assert "Configured and valid." in out

@@ -23,55 +23,73 @@ def _resolve_api_key(profile: ProviderProfile) -> tuple[str, str, str]:
 
     Source strings: "process_env", "env_atlas", "missing", "none"
     """
-    if profile.auth_type == "none" or not profile.key_required:
+    if profile.auth_header_type == "none" and not profile.key_required:
         return ("", "none", "")
 
-    for var_name in profile.api_key_env_vars:
+    # Priority 1: Check process environment
+    for var_name in profile.env_precedence:
         val = os.getenv(var_name)
         if val:
             return (val, "process_env", var_name)
 
-    # Fallback to .env.atlas via get_secret (which reads from .env.atlas if env is missing)
-    for var_name in profile.api_key_env_vars:
+    # Priority 2: Fallback to .env.atlas
+    for var_name in profile.env_precedence:
         val = get_secret(var_name)
         if val:
             return (val, "env_atlas", var_name)
 
+    if not profile.key_required:
+        return ("", "missing", "")
+
     return ("", "missing", "")
 
 
-def _resolve_base_url(profile: ProviderProfile) -> str:
-    """Return base URL from env var, profile default, or empty string."""
-    if profile.base_url_env_var:
-        env_val = os.getenv(profile.base_url_env_var)
-        if env_val:
-            return env_val
+def _resolve_base_url(profile: ProviderProfile, user_provided_base_url: str = "") -> str:
+    """Return base URL from config override or profile default."""
+    if user_provided_base_url:
+        return user_provided_base_url
     return profile.base_url
 
 
 def _resolve_headers(profile: ProviderProfile) -> dict[str, str]:
-    """Return provider-specific metadata headers (no secrets)."""
+    """Return provider-specific required and metadata headers (no secrets)."""
     headers: dict[str, str] = {}
-    if profile.id == "openrouter":
-        site_url = os.getenv("OPENROUTER_SITE_URL", "")
-        site_name = os.getenv("OPENROUTER_SITE_NAME", "")
-        if site_url:
-            headers["HTTP-Referer"] = site_url
-        if site_name:
-            headers["X-OpenRouter-Title"] = site_name
+    
+    # 1. Apply required headers from profile
+    if profile.required_headers:
+        headers.update(profile.required_headers)
+        
+    # 2. Apply optional metadata from environment
+    if profile.optional_metadata_env_vars:
+        for env_var in profile.optional_metadata_env_vars:
+            val = os.getenv(env_var)
+            if val:
+                # E.g. OPENROUTER_HTTP_REFERER -> HTTP-Referer
+                if "HTTP_REFERER" in env_var:
+                    headers["HTTP-Referer"] = val
+                elif "APP_TITLE" in env_var or "SITE_NAME" in env_var:
+                    headers["X-OpenRouter-Title"] = val
+                elif "SITE_URL" in env_var:
+                    headers["HTTP-Referer"] = val
+
     return headers
 
 
-def _gemini_key_conflict_warning() -> str | None:
-    """Warn if both GOOGLE_API_KEY and GEMINI_API_KEY are present.
+def _check_warnings(profile: ProviderProfile) -> list[str]:
+    """Check for provider-specific warnings like ignored aliases."""
+    warnings: list[str] = []
+    
+    if profile.canonical_env_var and profile.accepted_env_aliases:
+        has_canonical = bool(os.getenv(profile.canonical_env_var) or get_secret(profile.canonical_env_var))
+        for alias in profile.accepted_env_aliases:
+            has_alias = bool(os.getenv(alias) or get_secret(alias))
+            if has_canonical and has_alias:
+                warnings.append(f"Both {profile.canonical_env_var} and {alias} are set; {profile.canonical_env_var} takes precedence.")
+            elif has_canonical and not has_alias and profile.id == "google-gemini":
+                # Special case: Google Gemini docs say GOOGLE_API_KEY takes precedence
+                pass
 
-    Google SDK precedence: GOOGLE_API_KEY takes precedence when both exist.
-    """
-    has_google = bool(os.getenv("GOOGLE_API_KEY"))
-    has_gemini = bool(os.getenv("GEMINI_API_KEY"))
-    if has_google and has_gemini:
-        return "Both GOOGLE_API_KEY and GEMINI_API_KEY are set; GOOGLE_API_KEY takes precedence."
-    return None
+    return warnings
 
 
 def resolve_runtime_provider(
@@ -92,9 +110,16 @@ def resolve_runtime_provider(
     # Start from config if available
     cfg_provider = ""
     cfg_model = ""
+    cfg_base_url = ""
     if config is not None:
         cfg_provider = (config.model.provider or "").lower().strip()
         cfg_model = (config.model.model or "").strip()
+        
+        # Check provider-specific base_url override if present
+        if cfg_provider and hasattr(config, "providers"):
+            provider_cfg = getattr(config.providers, cfg_provider.replace("-", "_"), None)
+            if provider_cfg and hasattr(provider_cfg, "base_url"):
+                cfg_base_url = provider_cfg.base_url
 
     # Explicit overrides
     requested_provider = (provider or cfg_provider or "openai").lower().strip()
@@ -107,7 +132,7 @@ def resolve_runtime_provider(
             "provider": canonical_provider,
             "model": model or cfg_model or "",
             "api_mode": "chat_completions",
-            "base_url": "",
+            "base_url": cfg_base_url,
             "api_key": "",
             "api_key_source": "missing",
             "api_key_env_var_used": "",
@@ -121,15 +146,16 @@ def resolve_runtime_provider(
     effective_model = model or cfg_model or profile.default_model or ""
 
     # Resolve base URL, API key, headers
-    base_url = _resolve_base_url(profile)
+    base_url = _resolve_base_url(profile, cfg_base_url)
     api_key, api_key_source, api_key_env_var_used = _resolve_api_key(profile)
     headers = _resolve_headers(profile)
 
-    warnings: list[str] = []
-    if profile.id == "google-gemini":
-        gemini_warn = _gemini_key_conflict_warning()
-        if gemini_warn:
-            warnings.append(gemini_warn)
+    warnings = _check_warnings(profile)
+
+    auth_header_type = profile.auth_header_type
+    # If key is missing for openai-compatible/custom, do not emit auth header
+    if profile.id in ("openai-compatible", "custom") and not api_key:
+        auth_header_type = "none"
 
     return {
         "provider": profile.id,
@@ -139,7 +165,7 @@ def resolve_runtime_provider(
         "api_key": api_key,
         "api_key_source": api_key_source,
         "api_key_env_var_used": api_key_env_var_used,
-        "auth_header_type": profile.auth_header_type,
+        "auth_header_type": auth_header_type,
         "headers": headers,
         "requested_provider": requested_provider,
         "warnings": warnings,

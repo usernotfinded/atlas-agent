@@ -14,12 +14,7 @@ from atlas_agent.setup.theme import atlas_theme
 # TODO: Replace hardcoded provider list and key map with atlas_agent.providers.catalog
 # for canonical IDs, aliases, model catalogs, and env-var lists.
 # The wizard should reuse the catalog so provider options stay in one place.
-PROVIDER_KEY_MAP = {
-    "openrouter": "OPENROUTER_API_KEY",
-    "anthropic": "ANTHROPIC_API_KEY",
-    "openai_compatible": "OPENAI_API_KEY",
-    "custom": "CUSTOM_PROVIDER_API_KEY",
-}
+from atlas_agent.providers.catalog import get_provider_profile, list_provider_profiles
 
 class WizardApplication:
     def __init__(self, state: WizardState):
@@ -43,17 +38,11 @@ class WizardApplication:
             self.current_index = 0 if self.state.setup_mode == "quick" else 1
         elif self.current_step == "provider":
             self.title = "Select provider:"
-            self.choices = [
-                ("openrouter", "OpenRouter — 100+ models, pay-per-use"),
-                ("anthropic", "Anthropic — Claude models"),
-                ("openai_compatible", "OpenAI-compatible endpoint"),
-                ("local_command", "Local command provider — legacy compatibility"),
-                ("custom", "Custom endpoint"),
-                ("null", "Null provider / dry-run"),
-            ]
+            self.choices = [(p.id, p.label) for p in list_provider_profiles() if p.include_in_wizard]
             self.current_index = next((i for i, v in enumerate(self.choices) if v[0] == self.state.provider), 0)
         elif self.current_step == "api_key_check":
-            key_name = PROVIDER_KEY_MAP.get(self.state.provider)
+            profile = get_provider_profile(self.state.provider)
+            key_name = profile.env_precedence[0] if profile and profile.env_precedence else f"{self.state.provider.upper()}_API_KEY"
             self.title = f"API Key Detection: {key_name} detected from environment."
             self.choices = [
                 ("use_existing", "Use existing from environment"),
@@ -62,26 +51,30 @@ class WizardApplication:
             ]
             self.current_index = 0
         elif self.current_step == "api_key_input":
-            key_name = PROVIDER_KEY_MAP.get(self.state.provider)
+            profile = get_provider_profile(self.state.provider)
+            key_name = profile.env_precedence[0] if profile and profile.env_precedence else f"{self.state.provider.upper()}_API_KEY"
             self.title = f"Enter {key_name}:"
             self.choices = []
             self.input_value = ""
         elif self.current_step == "custom_endpoint":
-            if self.state.provider == "openai_compatible":
-                self.title = "Enter OpenAI-compatible BASE URL:"
+            if self.state.provider == "lmstudio":
+                self.title = "Enter LM Studio BASE URL (default: http://localhost:1234/v1):"
+                self.input_value = self.state.custom_endpoint or "http://localhost:1234/v1"
+            elif self.state.provider in ("openai-compatible", "custom"):
+                self.title = f"Enter {self.state.provider} BASE URL:"
+                self.input_value = self.state.custom_endpoint or ""
             else:
-                self.title = "Enter Custom Provider BASE URL:"
+                self.title = "Enter BASE URL:"
+                self.input_value = self.state.custom_endpoint or ""
             self.choices = []
-            self.input_value = self.state.custom_endpoint or ""
         elif self.current_step == "model":
             if self.state.provider == "local_command":
-                self.title = "WARNING: Local command provider is legacy compatibility only.\nSelect model:"
+                self.title = "WARNING: Local command provider is legacy compatibility only.\\nSelect model:"
             else:
                 self.title = f"Select model for {self.state.provider}:"
-            if self.state.provider == "anthropic":
-                self.choices = [("claude-3-5-sonnet-20240620", "Claude 3.5 Sonnet"), ("claude-3-opus-20240229", "Claude 3 Opus")]
-            elif self.state.provider in ["openrouter", "openai_compatible", "custom"]:
-                self.choices = [("gpt-4o", "GPT-4o"), ("meta-llama/llama-3-70b-instruct", "Llama 3 70B")]
+            profile = get_provider_profile(self.state.provider)
+            if profile and profile.models:
+                self.choices = [(m.id, m.label) for m in profile.models]
             else:
                 self.choices = [("default", "Default Model")]
             self.current_index = next((i for i, v in enumerate(self.choices) if v[0] == self.state.model), 0)
@@ -148,12 +141,14 @@ class WizardApplication:
         if self.current_step == "setup_mode":
             self.current_step = "provider"
         elif self.current_step == "provider":
-            if self.state.provider == "custom":
-                self.current_step = "custom_endpoint"
-            elif self.state.provider == "local_command":
+            profile = get_provider_profile(self.state.provider)
+            if not profile:
                 self.current_step = "model"
-            elif self.state.provider in PROVIDER_KEY_MAP:
-                key_name = PROVIDER_KEY_MAP[self.state.provider]
+            elif profile.id in ("lmstudio", "openai-compatible", "custom"):
+                self.current_step = "custom_endpoint"
+            elif profile.key_required:
+                key_name = profile.canonical_env_var if profile.canonical_env_var else f"{profile.id.upper()}_API_KEY"
+                import os
                 if os.getenv(key_name):
                     self.current_step = "api_key_check"
                 else:
@@ -161,20 +156,25 @@ class WizardApplication:
             else:
                 self.current_step = "model"
         elif self.current_step == "api_key_check":
-            pass # result logic is in run()'s kb handler
+            pass # handled in run
         elif self.current_step == "api_key_input":
-            if self.state.provider == "openai_compatible" and self.history[-2] == "provider":
+            if self.state.provider in ("openai-compatible", "custom", "lmstudio") and self.history[-2] == "provider":
                 self.current_step = "custom_endpoint"
             else:
                 self.current_step = "model"
         elif self.current_step == "custom_endpoint":
-            if self.state.provider == "custom" and self.history[-2] == "provider":
-                key_name = PROVIDER_KEY_MAP[self.state.provider]
-                if os.getenv(key_name):
-                    self.current_step = "api_key_check"
+            profile = get_provider_profile(self.state.provider)
+            if profile and profile.id in ("custom", "openai-compatible") and self.history[-2] == "provider":
+                if profile.key_required:
+                    key_name = profile.canonical_env_var if profile.canonical_env_var else f"{profile.id.upper()}_API_KEY"
+                    import os
+                    if os.getenv(key_name):
+                        self.current_step = "api_key_check"
+                    else:
+                        self.current_step = "api_key_input"
                 else:
-                    self.current_step = "api_key_input"
-            elif self.state.provider == "openai_compatible" and self.history[-2] == "api_key_input":
+                    self.current_step = "model"
+            elif self.state.provider in ("openai-compatible", "custom") and self.history[-2] == "api_key_input":
                 self.current_step = "model"
             else:
                 self.current_step = "model"
@@ -261,7 +261,7 @@ class WizardApplication:
                 if self.current_step == "api_key_check":
                     if val == "use_existing":
                         self.state.credentials_configured = True
-                        if self.state.provider == "openai_compatible" and "custom_endpoint" not in self.history:
+                        if self.state.provider in ("openai-compatible", "custom", "lmstudio") and "custom_endpoint" not in self.history:
                             self.current_step = "custom_endpoint"
                         else:
                             self.current_step = "model"
@@ -271,7 +271,7 @@ class WizardApplication:
                         self.update_step_data()
                     elif val == "skip":
                         self.state.credentials_configured = False
-                        if self.state.provider == "openai_compatible" and "custom_endpoint" not in self.history:
+                        if self.state.provider in ("openai-compatible", "custom", "lmstudio") and "custom_endpoint" not in self.history:
                             self.current_step = "custom_endpoint"
                         else:
                             self.current_step = "model"
@@ -283,7 +283,8 @@ class WizardApplication:
             else:
                 # Input step
                 if self.current_step == "api_key_input":
-                    key_name = PROVIDER_KEY_MAP.get(self.state.provider)
+                    profile = get_provider_profile(self.state.provider)
+                    key_name = profile.env_precedence[0] if profile and profile.env_precedence else f"{self.state.provider.upper()}_API_KEY"
                     if self.input_value.strip():
                         self.temp_secrets[key_name] = self.input_value.strip()
                         self.state.credentials_configured = True
@@ -328,7 +329,7 @@ class WizardApplication:
                 lambda: render_wizard_screen(
                     self.state, self.current_step, self.choices, 
                     self.current_index, self.input_value, self.title,
-                    is_password=(self.current_step in ["api_key_input", "research_api_key_input"])
+                    is_password=False
                 )
             ))),
             key_bindings=kb,
