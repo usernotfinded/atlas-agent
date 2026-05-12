@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.5.2] - 2026-05-12
+
+### Fixed
+- Restored tracked readiness diagnostics package used by `atlas validate`.
+- Kept `atlas validate` and `atlas validate --json` strictly read-only.
+- Reconciled provider catalog/runtime schema for LM Studio, OpenAI-compatible endpoints, OpenRouter metadata headers, Anthropic, Gemini, and hidden legacy/internal providers.
+- Ensured setup wizard hides `local_command` and `null` while keeping LM Studio and OpenAI-compatible providers user-facing.
+
 ## [0.5.1] - 2026-05-11
 
 ### Fixed
