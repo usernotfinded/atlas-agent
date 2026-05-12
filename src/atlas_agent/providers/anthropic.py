@@ -19,6 +19,7 @@ class AnthropicProvider(BaseAIProvider):
     api_key_env: str = "ANTHROPIC_API_KEY"
     name: str = "anthropic"
     default_model: str | None = None
+    api_key_override: str | None = None
 
     @classmethod
     def from_env(cls) -> AnthropicProvider:
@@ -40,7 +41,10 @@ class AnthropicProvider(BaseAIProvider):
         temperature: float = 0.0,
     ) -> LLMResponse:
         del system_prompt, messages, tools, model, temperature
-        if not os.getenv(self.api_key_env):
+        api_key = self.api_key_override
+        if api_key is None:
+            api_key = os.getenv(self.api_key_env)
+        if not api_key:
             raise ProviderConfigurationError(f"missing API key env var: {self.api_key_env}")
         raise ProviderConfigurationError(
             "Anthropic HTTP execution is not configured in this minimal install"

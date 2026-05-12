@@ -5,6 +5,12 @@ import os
 import pytest
 
 from atlas_agent.config.schema import AtlasConfig
+from atlas_agent.providers.base import ProviderConfigurationError
+from atlas_agent.providers.factory import (
+    build_provider_from_runtime,
+    get_provider_from_runtime_config,
+)
+from atlas_agent.providers.openai_compatible import OpenAICompatibleProvider
 from atlas_agent.providers.runtime import resolve_runtime_provider
 
 
@@ -337,16 +343,46 @@ def test_openai_compatible_no_key_emits_no_auth_header() -> None:
     assert result["api_key"] == ""
     assert result["auth_header_type"] == "none"
 
-def test_factory_fails_closed_when_no_provider_configured(monkeypatch) -> None:
-    from atlas_agent.providers.factory import get_provider_from_env
+def test_runtime_provider_factory_uses_config_without_ai_provider(monkeypatch) -> None:
     monkeypatch.delenv("AI_PROVIDER", raising=False)
-    monkeypatch.delenv("ATLAS_DRY_RUN", raising=False)
-    with pytest.raises(ValueError, match="No AI provider configured"):
-        get_provider_from_env(allow_null=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+    config = AtlasConfig()
+    config.model.provider = "openai"
+    config.model.model = "gpt-5.5"
+    provider = get_provider_from_runtime_config(config)
+    assert isinstance(provider, OpenAICompatibleProvider)
+    assert provider.default_model == "gpt-5.5"
+    assert provider.api_key_override == "sk-openai"
 
-def test_factory_allows_null_when_explicitly_requested(monkeypatch) -> None:
-    from atlas_agent.providers.factory import get_provider_from_env
-    monkeypatch.delenv("AI_PROVIDER", raising=False)
-    monkeypatch.delenv("ATLAS_DRY_RUN", raising=False)
-    provider = get_provider_from_env(allow_null=True)
-    assert provider.name == "null"
+
+def test_runtime_provider_factory_fails_closed_for_unknown_provider() -> None:
+    config = AtlasConfig()
+    runtime = resolve_runtime_provider(config, provider="unknown-provider")
+    with pytest.raises(ProviderConfigurationError, match="Unknown or unconfigured AI provider"):
+        build_provider_from_runtime(runtime)
+
+
+def test_runtime_provider_factory_preserves_openai_compatible_key_isolation(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+    monkeypatch.setenv("ATLAS_OPENAI_COMPATIBLE_API_KEY", "sk-compatible")
+    config = AtlasConfig()
+    provider = get_provider_from_runtime_config(
+        config,
+        provider="openai-compatible",
+        model="internal-gateway-model",
+    )
+    assert isinstance(provider, OpenAICompatibleProvider)
+    assert provider.api_key_override == "sk-compatible"
+    assert provider.api_key_env == "ATLAS_OPENAI_COMPATIBLE_API_KEY"
+    assert provider.default_model == "internal-gateway-model"
+
+
+def test_runtime_provider_factory_google_oauth_mode_fails_closed(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_GOOGLE_OAUTH_ACCESS_TOKEN", "oauth-token")
+    config = AtlasConfig()
+    config.model.provider = "google"
+    config.model.google.api_mode = "openai_compatible"
+    config.model.google.auth_method = "oauth_adc"
+    runtime = resolve_runtime_provider(config)
+    with pytest.raises(ProviderConfigurationError, match="OAuth/ADC"):
+        build_provider_from_runtime(runtime)

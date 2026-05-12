@@ -22,6 +22,9 @@ class OpenAICompatibleProvider(BaseAIProvider):
     base_url: str = "https://api.openai.com/v1"
     name: str = "openai_compatible"
     default_model: str | None = None
+    api_key_override: str | None = None
+    auth_header_type: str = "bearer"
+    extra_headers: dict[str, str] | None = None
 
     @classmethod
     def from_env(cls, prefix: str = "OPENAI") -> OpenAICompatibleProvider:
@@ -43,8 +46,11 @@ class OpenAICompatibleProvider(BaseAIProvider):
         model: str | None = None,
         temperature: float = 0.0,
     ) -> LLMResponse:
-        api_key = os.getenv(self.api_key_env)
-        if not api_key:
+        api_key = self.api_key_override
+        if api_key is None:
+            api_key = os.getenv(self.api_key_env)
+
+        if self.auth_header_type != "none" and not api_key:
             raise ProviderConfigurationError(f"missing API key env var: {self.api_key_env}")
 
         selected_model = model or self.default_model
@@ -73,14 +79,23 @@ class OpenAICompatibleProvider(BaseAIProvider):
             ]
             body["tool_choice"] = "auto"
 
+        headers = {
+            "Content-Type": "application/json",
+        }
+        if self.extra_headers:
+            headers.update(self.extra_headers)
+        if self.auth_header_type == "bearer" and api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        elif self.auth_header_type == "x-goog-api-key" and api_key:
+            headers["x-goog-api-key"] = api_key
+        elif self.auth_header_type == "oauth_bearer" and api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
         request_body = json.dumps(body).encode("utf-8")
         http_request = urllib.request.Request(
             f"{self.base_url.rstrip('/')}/chat/completions",
             data=request_body,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
             method="POST",
         )
 

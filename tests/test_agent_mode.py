@@ -49,13 +49,15 @@ def test_agent_plan_command(base_config, monkeypatch, capsys):
 
 def test_agent_run_paper_mode(base_config, monkeypatch, capsys):
     monkeypatch.setenv("TRADING_MODE", "paper")
+    monkeypatch.delenv("AI_PROVIDER", raising=False)
     write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
         with patch("atlas_agent.agent.runner.MarketSessionDetector.get_state", return_value="closed"):
             from atlas_agent.providers.null_provider import NullProvider
-            with patch("atlas_agent.agent.runner.get_provider_from_env", return_value=NullProvider()):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=NullProvider()) as mock_provider_builder:
                 ret = main(["agent", "run", "--mode", "paper"])
     assert ret == 0
+    mock_provider_builder.assert_called_once_with(base_config)
     captured = capsys.readouterr()
     assert "agent run paper:" in captured.out
 
@@ -71,6 +73,7 @@ def test_agent_run_without_discipline_is_blocked(base_config, monkeypatch, capsy
 def test_agent_run_auto_open_market(base_config, monkeypatch, capsys):
     monkeypatch.setenv("TRADING_MODE", "live")
     monkeypatch.setenv("ENABLE_LIVE_TRADING", "true")
+    monkeypatch.delenv("AI_PROVIDER", raising=False)
     write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
         with patch("atlas_agent.agent.runner.MarketSessionDetector.get_state", return_value="open"):
@@ -87,13 +90,14 @@ def test_agent_run_auto_open_market(base_config, monkeypatch, capsys):
             mock_result.model_status = None
             with patch("atlas_agent.agent.runner.run_open_market_cycle", return_value=mock_result):
                 from atlas_agent.providers.null_provider import NullProvider
-                with patch("atlas_agent.agent.runner.get_provider_from_env", return_value=NullProvider()):
+                with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=NullProvider()):
                     ret = main(["agent", "run", "--mode", "auto"])
     assert ret == 0
     captured = capsys.readouterr()
     assert "agent run auto: complete" in captured.out
 
 def test_agent_run_auto_unknown_market(base_config, monkeypatch, capsys):
+    monkeypatch.delenv("AI_PROVIDER", raising=False)
     write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
         with patch("atlas_agent.agent.runner.MarketSessionDetector.get_state", return_value="unknown"):
@@ -110,7 +114,7 @@ def test_agent_run_auto_unknown_market(base_config, monkeypatch, capsys):
             mock_result.model_status = None
             with patch("atlas_agent.agent.runner.run_closed_market_cycle", return_value=mock_result):
                 from atlas_agent.providers.null_provider import NullProvider
-                with patch("atlas_agent.agent.runner.get_provider_from_env", return_value=NullProvider()):
+                with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=NullProvider()):
                     ret = main(["agent", "run", "--mode", "auto"])
     assert ret == 0
     captured = capsys.readouterr()

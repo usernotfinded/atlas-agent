@@ -19,7 +19,7 @@ from atlas_agent.ai.discipline import (
     require_user_discipline,
 )
 from atlas_agent.core.types import Session
-from atlas_agent.providers.factory import get_provider_from_env
+from atlas_agent.providers.factory import get_provider_from_runtime_config
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.builtin import BUILTIN_TOOLS
 
@@ -110,7 +110,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
             errors=["No trading symbol configured. Set one with `atlas config set market.symbol <SYMBOL>` or pass `--symbol <SYMBOL>`."],
         )
 
-    provider = get_provider_from_env()
+    provider = get_provider_from_runtime_config(config)
     registry = ToolRegistry()
     for tool in BUILTIN_TOOLS:
         registry.register(tool)
