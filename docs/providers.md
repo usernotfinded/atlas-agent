@@ -1,6 +1,6 @@
 # Providers
 
-Atlas Agent v0.5.1 is model-agnostic
+Atlas Agent v0.5.2 is model-agnostic
  and provider-neutral.
 
 ## AI Provider Adapters
