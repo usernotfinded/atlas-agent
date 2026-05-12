@@ -5,7 +5,11 @@ from unittest.mock import patch
 
 import pytest
 
-from atlas_agent.setup.wizard_ui import WizardApplication
+from atlas_agent.setup.wizard_ui import (
+    CUSTOM_MODEL_ID_CHOICE,
+    CUSTOM_MODEL_ID_LABEL,
+    WizardApplication,
+)
 from atlas_agent.setup.renderer import render_wizard_screen
 from atlas_agent.setup.state import WizardState
 
@@ -55,7 +59,8 @@ def test_wizard_lmstudio_does_not_require_api_key_step():
     app.next_step()
     assert app.current_step == "custom_endpoint"
     app.next_step()
-    assert app.current_step == "model_input"
+    assert app.current_step == "model"
+    assert (CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL) in app.choices
 
 def test_wizard_openai_compatible_prompts_optional_key_after_base_url():
     state = WizardState(provider="openai-compatible")
@@ -230,6 +235,7 @@ def test_nvidia_cloud_model_choices_are_curated_text_examples_only():
     ids = [model_id for model_id, _ in app.choices]
     assert "nvidia/llama-3.3-nemotron-super-49b-v1.5" in ids
     assert "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning" not in ids
+    assert (CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL) in app.choices
 
 
 def test_local_self_hosted_uses_freeform_model_input_step():
@@ -237,7 +243,8 @@ def test_local_self_hosted_uses_freeform_model_input_step():
     app = WizardApplication(state)
     app.current_step = "provider"
     app.next_step()
-    assert app.current_step == "model_input"
+    assert app.current_step == "model"
+    assert (CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL) in app.choices
 
 
 def test_nvidia_local_uses_freeform_model_input_step():
@@ -245,7 +252,8 @@ def test_nvidia_local_uses_freeform_model_input_step():
     app = WizardApplication(state)
     app.current_step = "provider"
     app.next_step()
-    assert app.current_step == "model_input"
+    assert app.current_step == "model"
+    assert (CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL) in app.choices
 
 
 def test_openrouter_uses_freeform_model_input_step():
@@ -254,6 +262,89 @@ def test_openrouter_uses_freeform_model_input_step():
     app.current_step = "provider"
     app.next_step()
     assert app.current_step in {"api_key_input", "api_key_check"}
+
+
+def test_openrouter_model_step_shows_curated_ids_plus_custom_option():
+    state = WizardState(provider="openrouter")
+    app = WizardApplication(state)
+    app.current_step = "model"
+    app.update_step_data()
+    ids = [model_id for model_id, _ in app.choices]
+    assert "openai/gpt-5.5" in ids
+    assert "anthropic/claude-sonnet-4-6" in ids
+    assert "google/gemini-3-flash-preview" in ids
+    assert (CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL) in app.choices
+
+
+def test_openrouter_curated_selection_stores_exact_model_id():
+    state = WizardState(provider="openrouter")
+    app = WizardApplication(state)
+    assert app._apply_model_choice("openai/gpt-5.5") is True
+    assert state.model == "openai/gpt-5.5"
+
+
+def test_openrouter_custom_model_selection_stores_typed_exact_id():
+    state = WizardState(provider="openrouter")
+    app = WizardApplication(state)
+    app.current_step = "model"
+    app.update_step_data()
+    assert app._apply_model_choice(CUSTOM_MODEL_ID_CHOICE) is False
+    assert app.current_step == "model_input"
+    app.input_value = "some/private-openrouter-model"
+    assert app._commit_model_input() is True
+    assert state.model == "some/private-openrouter-model"
+
+
+def test_custom_model_input_rejects_empty_string():
+    state = WizardState(provider="openrouter")
+    app = WizardApplication(state)
+    app.current_step = "model"
+    app.update_step_data()
+    app._apply_model_choice(CUSTOM_MODEL_ID_CHOICE)
+    app.input_value = ""
+    assert app._commit_model_input() is False
+    assert app.title == "Model ID is required."
+
+
+def test_selected_so_far_shows_exact_custom_model_id():
+    state = WizardState(provider="openrouter")
+    app = WizardApplication(state)
+    app.current_step = "model"
+    app.update_step_data()
+    app._apply_model_choice(CUSTOM_MODEL_ID_CHOICE)
+    app.input_value = "my-org/private-chat-model-v2"
+    assert app._commit_model_input() is True
+    lines = render_wizard_screen(
+        state=state,
+        current_step="messaging",
+        choices=[],
+        current_index=0,
+        title="Messaging",
+    )
+    text = "".join(chunk for _, chunk in lines)
+    assert "my-org/private-chat-model-v2" in text
+
+
+def test_lmstudio_model_step_shows_examples_plus_custom_option():
+    state = WizardState(provider="lmstudio")
+    app = WizardApplication(state)
+    app.current_step = "model"
+    app.update_step_data()
+    ids = [model_id for model_id, _ in app.choices]
+    assert "llama" in ids
+    assert "qwen" in ids
+    assert (CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL) in app.choices
+
+
+def test_openai_compatible_model_step_shows_examples_plus_custom_option():
+    state = WizardState(provider="openai-compatible")
+    app = WizardApplication(state)
+    app.current_step = "model"
+    app.update_step_data()
+    ids = [model_id for model_id, _ in app.choices]
+    assert "deepseek-v4-flash" in ids
+    assert "local-model" in ids
+    assert (CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL) in app.choices
 
 
 def test_regression_openai_selection_never_shows_stale_claude_model():

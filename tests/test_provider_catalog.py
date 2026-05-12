@@ -12,6 +12,25 @@ from atlas_agent.providers.catalog import (
     validate_model_for_provider,
 )
 
+OPENROUTER_IDS = {
+    "openai/gpt-5.5",
+    "openai/gpt-5.4",
+    "openai/gpt-5",
+    "openai/gpt-4o",
+    "anthropic/claude-opus-4-7",
+    "anthropic/claude-sonnet-4-6",
+    "anthropic/claude-haiku-4-5",
+    "google/gemini-3.1-pro-preview",
+    "google/gemini-3-flash-preview",
+    "google/gemini-2.5-pro",
+    "deepseek/deepseek-v4-pro",
+    "deepseek/deepseek-v4-flash",
+    "moonshotai/kimi-k2.6",
+    "x-ai/grok-4.3",
+    "qwen/qwen3.6-35b-a3b",
+    "meta-llama/llama-3.3-70b-instruct",
+}
+
 
 OPENAI_IDS = {
     "gpt-5.5",
@@ -85,7 +104,45 @@ HF_TEXT_EXAMPLE_IDS = {
     "google/gemma-4-31B-it",
     "google/gemma-4-26B-A4B-it",
     "moonshotai/Kimi-K2.6",
+    "moonshotai/Kimi-K2-Instruct-0905",
     "zai-org/GLM-5.1",
+}
+
+LMSTUDIO_EXAMPLE_IDS = {
+    "llama",
+    "qwen",
+    "gemma",
+    "mistral",
+    "deepseek",
+    "phi",
+    "yi",
+    "nous-hermes",
+}
+
+OPENAI_COMPATIBLE_EXAMPLE_IDS = {
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "kimi-k2.6",
+    "Qwen/Qwen3.6-35B-A3B",
+    "google/gemma-4-31B-it",
+    "local-model",
+    "custom-model",
+}
+
+CUSTOM_ENDPOINT_EXAMPLE_IDS = {
+    "custom-model",
+    "local-model",
+    "deployed-model",
+    "Qwen/Qwen3.6-35B-A3B",
+    "deepseek-v4-flash",
+}
+
+NVIDIA_LOCAL_EXAMPLE_IDS = {
+    "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+    "nvidia/nemotron-3-super-120b-a12b",
+    "nvidia/nemotron-3-nano-30b-a3b",
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
 }
 
 
@@ -149,6 +206,10 @@ def test_openai_catalog_text_ids_only() -> None:
     assert set(provider_model_ids("openai")) == OPENAI_IDS
 
 
+def test_openrouter_catalog_curated_text_examples_only() -> None:
+    assert set(provider_model_ids("openrouter")) == OPENROUTER_IDS
+
+
 def test_anthropic_catalog_text_ids_only() -> None:
     assert set(provider_model_ids("anthropic")) == ANTHROPIC_IDS
 
@@ -175,6 +236,22 @@ def test_nvidia_catalog_curated_text_examples_only() -> None:
 
 def test_huggingface_catalog_curated_text_examples_only() -> None:
     assert set(provider_model_ids("huggingface")) == HF_TEXT_EXAMPLE_IDS
+
+
+def test_lmstudio_catalog_curated_examples_only() -> None:
+    assert set(provider_model_ids("lmstudio")) == LMSTUDIO_EXAMPLE_IDS
+
+
+def test_openai_compatible_catalog_curated_examples_only() -> None:
+    assert set(provider_model_ids("openai-compatible")) == OPENAI_COMPATIBLE_EXAMPLE_IDS
+
+
+def test_custom_endpoint_catalog_curated_examples_only() -> None:
+    assert set(provider_model_ids("custom")) == CUSTOM_ENDPOINT_EXAMPLE_IDS
+
+
+def test_nvidia_local_catalog_curated_examples_only() -> None:
+    assert set(provider_model_ids("nvidia-local")) == NVIDIA_LOCAL_EXAMPLE_IDS
 
 
 def test_provider_defaults_are_provider_valid() -> None:
@@ -300,6 +377,8 @@ def test_openrouter_metadata_env_vars() -> None:
 
 def test_custom_model_policy_flags() -> None:
     assert provider_allows_custom_model("openrouter") is True
+    assert provider_allows_custom_model("huggingface") is True
+    assert provider_allows_custom_model("nvidia") is True
     assert provider_allows_custom_model("lmstudio") is True
     assert provider_allows_custom_model("local") is True
     assert provider_allows_custom_model("openai-compatible") is True
@@ -331,7 +410,7 @@ def test_validate_model_rejects_cross_provider_pairs() -> None:
 
 
 def test_validate_model_rejects_unknown_for_hosted_curated_providers() -> None:
-    for provider in ("openai", "anthropic", "google", "deepseek", "kimi", "xai", "nvidia", "huggingface"):
+    for provider in ("openai", "anthropic", "google", "deepseek", "kimi", "xai"):
         ok, err = validate_model_for_provider(provider, "my-random-model")
         assert ok is False
         assert err is not None
@@ -339,6 +418,8 @@ def test_validate_model_rejects_unknown_for_hosted_curated_providers() -> None:
 
 def test_validate_model_allows_freeform_for_compatible_providers() -> None:
     assert validate_model_for_provider("openrouter", "my-arbitrary-model")[0] is True
+    assert validate_model_for_provider("huggingface", "my-private-hf-model")[0] is True
+    assert validate_model_for_provider("nvidia", "my-nim-cloud-deployment")[0] is True
     assert validate_model_for_provider("openai-compatible", "custom-id")[0] is True
     assert validate_model_for_provider("lmstudio", "my-local-model")[0] is True
     assert validate_model_for_provider("local", "meta-llama/Llama-3.3-70B-Instruct")[0] is True

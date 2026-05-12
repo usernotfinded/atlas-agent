@@ -66,6 +66,22 @@ class TestModelList:
         assert "gpt-5.5" in out
         assert "OpenAI" in out
 
+    def test_list_openrouter_shows_curated_ids_and_custom_allowed_note(self, workspace, capsys):
+        code = main(["model", "list", "--provider", "openrouter"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "openai/gpt-5.5" in out
+        assert "anthropic/claude-sonnet-4-6" in out
+        assert "Custom model IDs allowed." in out
+
+    def test_list_lmstudio_shows_examples_and_custom_allowed_note(self, workspace, capsys):
+        code = main(["model", "list", "--provider", "lmstudio"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "llama" in out
+        assert "qwen" in out
+        assert "Custom model IDs allowed." in out
+
     def test_list_unknown_provider(self, workspace, capsys):
         code = main(["model", "list", "--provider", "nonexistent"])
         assert code == 2
@@ -185,6 +201,12 @@ class TestModelSet:
         assert code == 0
         out = capsys.readouterr().out
         assert "nvidia-local/nvidia/nemotron-3-super-120b-a12b" in out
+
+    def test_set_allows_huggingface_freeform_model(self, workspace, capsys):
+        code = main(["model", "set", "huggingface", "my-org/private-model-id"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "huggingface/my-org/private-model-id" in out
 
     def test_set_allows_unknown_provider_with_warning(self, workspace, capsys):
         code = main(["model", "set", "unknown-provider", "some-model"])

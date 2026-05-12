@@ -41,6 +41,7 @@ class ProviderProfile:
     models: tuple[ModelOption, ...] = ()
     default_model: str = ""
     allow_custom_model: bool = False
+    model_catalog_note: str | None = None
     docs_url: str = ""
     
     @property
@@ -51,8 +52,20 @@ class ProviderProfile:
 _OPENROUTER_MODELS = (
     ModelOption("openai/gpt-5.5", recommended=True),
     ModelOption("openai/gpt-5.4"),
-    ModelOption("anthropic/claude-sonnet-4.6"),
+    ModelOption("openai/gpt-5"),
+    ModelOption("openai/gpt-4o"),
+    ModelOption("anthropic/claude-opus-4-7"),
+    ModelOption("anthropic/claude-sonnet-4-6"),
+    ModelOption("anthropic/claude-haiku-4-5"),
     ModelOption("google/gemini-3.1-pro-preview"),
+    ModelOption("google/gemini-3-flash-preview"),
+    ModelOption("google/gemini-2.5-pro"),
+    ModelOption("deepseek/deepseek-v4-pro"),
+    ModelOption("deepseek/deepseek-v4-flash"),
+    ModelOption("moonshotai/kimi-k2.6"),
+    ModelOption("x-ai/grok-4.3"),
+    ModelOption("qwen/qwen3.6-35b-a3b"),
+    ModelOption("meta-llama/llama-3.3-70b-instruct"),
 )
 
 _OPENAI_MODELS = (
@@ -127,6 +140,7 @@ _HF_MODELS = (
     ModelOption("google/gemma-4-31B-it"),
     ModelOption("google/gemma-4-26B-A4B-it"),
     ModelOption("moonshotai/Kimi-K2.6"),
+    ModelOption("moonshotai/Kimi-K2-Instruct-0905"),
     ModelOption("zai-org/GLM-5.1"),
 )
 
@@ -152,11 +166,29 @@ _LMSTUDIO_MODELS = (
 )
 
 _OPENAI_COMPATIBLE_MODELS = (
-    ModelOption("example-model-id"),
+    ModelOption("deepseek-v4-flash"),
+    ModelOption("deepseek-v4-pro"),
+    ModelOption("kimi-k2.6"),
+    ModelOption("Qwen/Qwen3.6-35B-A3B"),
+    ModelOption("google/gemma-4-31B-it"),
+    ModelOption("local-model"),
+    ModelOption("custom-model"),
 )
 
 _CUSTOM_MODELS = (
-    ModelOption("example-model-id"),
+    ModelOption("custom-model"),
+    ModelOption("local-model"),
+    ModelOption("deployed-model"),
+    ModelOption("Qwen/Qwen3.6-35B-A3B"),
+    ModelOption("deepseek-v4-flash"),
+)
+
+_NVIDIA_LOCAL_MODELS = (
+    ModelOption("nvidia/llama-3.3-nemotron-super-49b-v1.5"),
+    ModelOption("nvidia/nemotron-3-super-120b-a12b"),
+    ModelOption("nvidia/nemotron-3-nano-30b-a3b"),
+    ModelOption("deepseek-v4-flash"),
+    ModelOption("deepseek-v4-pro"),
 )
 
 GOOGLE_PROVIDER_ID = "google"
@@ -193,6 +225,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             models=_OPENROUTER_MODELS,
             default_model="openai/gpt-5.5",
             allow_custom_model=True,
+            model_catalog_note="Curated suggestions only. Custom model IDs are allowed.",
             docs_url="https://openrouter.ai/docs",
         ),
         ProviderProfile(
@@ -320,6 +353,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             aliases=("hf",),
             models=_HF_MODELS,
             default_model="Qwen/Qwen3.6-35B-A3B",
+            allow_custom_model=True,
+            model_catalog_note="Curated suggestions only. Hugging Face catalogs are dynamic and custom IDs are allowed.",
             docs_url="https://huggingface.co/docs/api-inference",
         ),
         ProviderProfile(
@@ -339,6 +374,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             models=_LOCAL_MODELS,
             default_model="",
             allow_custom_model=True,
+            model_catalog_note="Curated examples only. Use the exact model ID exposed by your local backend.",
             docs_url="",
         ),
         ProviderProfile(
@@ -357,6 +393,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             aliases=("nim",),
             models=_NVIDIA_MODELS,
             default_model="nvidia/llama-3.3-nemotron-super-49b-v1.5",
+            allow_custom_model=True,
+            model_catalog_note="Curated suggestions only. NVIDIA NIM cloud catalogs are dynamic; custom IDs are allowed.",
             docs_url="https://build.nvidia.com",
         ),
         ProviderProfile(
@@ -373,9 +411,10 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             env_precedence=("NVIDIA_LOCAL_API_KEY",),
             auth_header_type="none",
             aliases=("nvidia-nim-local",),
-            models=_NVIDIA_MODELS,
+            models=_NVIDIA_LOCAL_MODELS,
             default_model="",
             allow_custom_model=True,
+            model_catalog_note="Curated examples only. Use the exact model ID exposed by your on-prem NIM server.",
             docs_url="https://build.nvidia.com",
         ),
         ProviderProfile(
@@ -395,6 +434,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             models=_LMSTUDIO_MODELS,
             default_model="",
             allow_custom_model=True,
+            model_catalog_note="Curated examples only. Use the exact model ID returned by your LM Studio server.",
             docs_url="https://lmstudio.ai/docs",
         ),
         ProviderProfile(
@@ -414,6 +454,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             models=_OPENAI_COMPATIBLE_MODELS,
             default_model="",
             allow_custom_model=True,
+            model_catalog_note="Curated examples only. Custom model IDs are allowed for compatible endpoints.",
             docs_url="",
         ),
         ProviderProfile(
@@ -433,6 +474,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             models=_CUSTOM_MODELS,
             default_model="",
             allow_custom_model=True,
+            model_catalog_note="Curated examples only. Custom model IDs are allowed.",
             docs_url="",
         ),
         ProviderProfile(

@@ -1485,6 +1485,8 @@ def main(argv: list[str] | None = None) -> int:
                 for m in profile.models:
                     rec = "  *" if m.recommended else ""
                     print(f"  {m.id:40s}{rec}")
+                if profile.allow_custom_model:
+                    print("  Custom model IDs allowed.")
             return 0
 
         if args.model_command == "current":

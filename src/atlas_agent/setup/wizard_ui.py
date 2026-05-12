@@ -20,6 +20,9 @@ from atlas_agent.setup.renderer import render_wizard_screen
 from atlas_agent.setup.state import WizardState
 from atlas_agent.setup.theme import atlas_theme
 
+CUSTOM_MODEL_ID_CHOICE = "__custom_model_id__"
+CUSTOM_MODEL_ID_LABEL = "Custom model ID..."
+
 
 class WizardApplication:
     def __init__(self, state: WizardState):
@@ -33,6 +36,7 @@ class WizardApplication:
         self.temp_secrets: dict[str, str] = {}
         self.google_oauth_ready = False
         self.google_oauth_messages: list[str] = []
+        self.awaiting_custom_model_input = False
         self.update_step_data()
 
     def _provider_profile(self):
@@ -44,14 +48,8 @@ class WizardApplication:
 
     @staticmethod
     def _provider_uses_freeform_model(provider_id: str) -> bool:
-        return provider_id in (
-            "openrouter",
-            "local",
-            "nvidia-local",
-            "lmstudio",
-            "openai-compatible",
-            "custom",
-        )
+        profile = get_provider_profile(provider_id)
+        return bool(profile and profile.allow_custom_model)
 
     @staticmethod
     def _provider_supports_optional_api_key(provider_id: str) -> bool:
@@ -122,6 +120,33 @@ class WizardApplication:
                 self.state.model = profile.default_model or ""
 
         self.state.provider = canonical
+
+    def _apply_model_choice(self, model_choice: str) -> bool:
+        profile = self._provider_profile()
+        if profile and profile.allow_custom_model and model_choice == CUSTOM_MODEL_ID_CHOICE:
+            self.awaiting_custom_model_input = True
+            self.current_step = "model_input"
+            self.update_step_data()
+            return False
+        self.state.model = model_choice
+        self.awaiting_custom_model_input = False
+        return True
+
+    def _commit_model_input(self) -> bool:
+        model_id = self.input_value.strip()
+        if not model_id and not self.awaiting_custom_model_input:
+            profile = self._provider_profile()
+            model_id = profile.default_model if profile else ""
+        if not model_id:
+            self.title = "Model ID is required."
+            return False
+        compatible, error = validate_model_for_provider(self.state.provider, model_id)
+        if not compatible:
+            self.title = error or "Invalid model for provider."
+            return False
+        self.state.model = model_id
+        self.awaiting_custom_model_input = False
+        return True
 
     def update_step_data(self):
         if self.current_step == "setup_mode":
@@ -236,9 +261,18 @@ class WizardApplication:
 
         if self.current_step == "model_input":
             profile = self._provider_profile()
-            default_model = self.state.model or (profile.default_model if profile else "")
+            default_model = (
+                ""
+                if self.awaiting_custom_model_input
+                else (self.state.model or (profile.default_model if profile else ""))
+            )
             provider_label = profile.label if profile else self.state.provider
-            if default_model:
+            if self.awaiting_custom_model_input:
+                note = ""
+                if profile and profile.model_catalog_note:
+                    note = f"\n{profile.model_catalog_note}"
+                self.title = f"Enter custom model ID for {provider_label}:{note}"
+            elif default_model:
                 self.title = (
                     f"Enter model ID for {provider_label}:\n"
                     f"(press Enter to keep: {default_model})"
@@ -248,18 +282,7 @@ class WizardApplication:
                 if profile and profile.models:
                     sample_ids = ", ".join(m.id for m in profile.models[:4])
                     examples = f"\nExamples: {sample_ids}"
-                note = ""
-                if self.state.provider in (
-                    "openrouter",
-                    "huggingface",
-                    "lmstudio",
-                    "local",
-                    "custom",
-                    "openai-compatible",
-                    "nvidia",
-                    "nvidia-local",
-                ):
-                    note = "\nCatalog is not exhaustive; your runtime may expose additional model IDs."
+                note = f"\n{profile.model_catalog_note}" if profile and profile.model_catalog_note else ""
                 self.title = f"Enter model ID for {provider_label}:{examples}{note}"
             self.choices = []
             self.input_value = default_model
@@ -270,14 +293,23 @@ class WizardApplication:
             if self.state.provider == "local_command":
                 self.title = "WARNING: Local command provider is legacy compatibility only.\nSelect model:"
             elif profile:
-                self.title = f"Select model for {profile.label}:"
+                note = f"\n{profile.model_catalog_note}" if profile.model_catalog_note else ""
+                self.title = f"Select model for {profile.label}:{note}"
             else:
                 self.title = f"Select model for {self.state.provider}:"
             if profile and profile.models:
                 self.choices = [(m.id, m.label) for m in profile.models]
+                if profile.allow_custom_model:
+                    self.choices.append((CUSTOM_MODEL_ID_CHOICE, CUSTOM_MODEL_ID_LABEL))
             else:
                 self.choices = [("default", "Default Model")]
-            self.current_index = next((i for i, v in enumerate(self.choices) if v[0] == self.state.model), 0)
+            selected_index = next((i for i, v in enumerate(self.choices) if v[0] == self.state.model), None)
+            if selected_index is not None:
+                self.current_index = selected_index
+            elif profile and profile.allow_custom_model and self.state.model:
+                self.current_index = len(self.choices) - 1
+            else:
+                self.current_index = 0
             return
 
         if self.current_step == "research_provider":
@@ -367,8 +399,6 @@ class WizardApplication:
                 self.current_step = "custom_endpoint"
             elif profile.key_required:
                 self.current_step = "api_key_check" if self._has_key_in_env(profile.id) else "api_key_input"
-            elif self._provider_uses_freeform_model(profile.id):
-                self.current_step = "model_input"
             else:
                 self.current_step = "model"
         elif self.current_step == "google_api_mode":
@@ -384,15 +414,10 @@ class WizardApplication:
             # handled directly in run()
             pass
         elif self.current_step == "api_key_input":
-            if self._provider_uses_freeform_model(self.state.provider):
-                self.current_step = "model_input"
-            else:
-                self.current_step = "model"
+            self.current_step = "model"
         elif self.current_step == "custom_endpoint":
             if self._provider_supports_optional_api_key(self.state.provider):
                 self.current_step = "optional_api_key_choice"
-            elif self._provider_uses_freeform_model(self.state.provider):
-                self.current_step = "model_input"
             else:
                 self.current_step = "model"
         elif self.current_step == "optional_api_key_choice":
@@ -423,6 +448,8 @@ class WizardApplication:
         self.update_step_data()
 
     def back_step(self):
+        if self.current_step == "model_input":
+            self.awaiting_custom_model_input = False
         if self.history:
             self.current_step = self.history.pop()
             self.update_step_data()
@@ -482,20 +509,14 @@ class WizardApplication:
                 if self.current_step == "api_key_check":
                     if val == "use_existing":
                         self.state.credentials_configured = True
-                        if self._provider_uses_freeform_model(self.state.provider):
-                            self.current_step = "model_input"
-                        else:
-                            self.current_step = "model"
+                        self.current_step = "model"
                         self.update_step_data()
                     elif val == "replace":
                         self.current_step = "api_key_input"
                         self.update_step_data()
                     elif val == "skip":
                         self.state.credentials_configured = False
-                        if self._provider_uses_freeform_model(self.state.provider):
-                            self.current_step = "model_input"
-                        else:
-                            self.current_step = "model"
+                        self.current_step = "model"
                         self.update_step_data()
                     return
 
@@ -514,8 +535,14 @@ class WizardApplication:
                         self.current_step = "api_key_input"
                     else:
                         self.state.credentials_configured = False
-                        self.current_step = "model_input"
+                        self.current_step = "model"
                     self.update_step_data()
+                    return
+
+                if self.current_step == "model":
+                    if not self._apply_model_choice(val):
+                        return
+                    self.next_step()
                     return
 
                 if self.current_step == "provider":
@@ -551,19 +578,8 @@ class WizardApplication:
                         self.state.custom_endpoint = "http://localhost:1234/v1"
                     self.next_step()
                 elif self.current_step == "model_input":
-                    model_id = self.input_value.strip()
-                    if not model_id:
-                        profile = self._provider_profile()
-                        model_id = profile.default_model if profile else ""
-                    if not model_id:
-                        self.title = "Model ID is required."
-                        return
-                    compatible, error = validate_model_for_provider(self.state.provider, model_id)
-                    if not compatible:
-                        self.title = error or "Invalid model for provider."
-                        return
-                    self.state.model = model_id
-                    self.next_step()
+                    if self._commit_model_input():
+                        self.next_step()
                 else:
                     setattr(self.state, self.current_step, self.input_value)
                     self.next_step()
