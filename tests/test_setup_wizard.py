@@ -72,7 +72,7 @@ def test_wizard_openai_compatible_prompts_optional_key_after_base_url():
     assert app.current_step == "optional_api_key_choice"
     assert any("Provide API key" in label for _, label in app.choices)
 
-def test_wizard_api_key_input_is_visible():
+def test_wizard_api_key_input_is_masked():
     state = WizardState()
     lines = render_wizard_screen(
         state=state,
@@ -81,11 +81,27 @@ def test_wizard_api_key_input_is_visible():
         current_index=0,
         input_value="my-secret-key",
         title="Enter Key",
-        is_password=False
+        is_password=True,
     )
     text = "".join(line[1] for line in lines)
-    assert "my-secret-key" in text
-    assert "******" not in text
+    assert "my-secret-key" not in text
+    assert "*************" in text
+
+
+def test_wizard_research_api_key_input_is_masked():
+    state = WizardState()
+    lines = render_wizard_screen(
+        state=state,
+        current_step="research_api_key_input",
+        choices=[],
+        current_index=0,
+        input_value="my-secret-key",
+        title="Enter Research Key",
+        is_password=True,
+    )
+    text = "".join(line[1] for line in lines)
+    assert "my-secret-key" not in text
+    assert "*************" in text
 
 def test_wizard_summary_redacts_api_key():
     state = WizardState()

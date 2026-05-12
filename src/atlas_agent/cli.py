@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import re
+import shlex
+import subprocess
 import sys
 import urllib.request
+import warnings
 from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
@@ -1414,7 +1418,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.config_command == "edit":
             path = get_config_toml_path()
             editor = os.getenv("EDITOR", "vim")
-            os.system(f"{editor} {path}")
+            subprocess.run(shlex.split(editor) + [str(path)], check=False)
             return 0
 
         if args.config_command == "check":
@@ -1604,7 +1608,12 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"{profile.label} requires an API key.")
                     env_var = profile.canonical_env_var if profile.canonical_env_var else f"{profile.id.upper()}_API_KEY"
                     try:
-                        key = input(f"Enter {env_var} (input hidden): ").strip()
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("error", getpass.GetPassWarning)
+                            key = getpass.getpass(f"Enter {env_var}: ").strip()
+                    except getpass.GetPassWarning:
+                        print("Secure hidden input is unavailable in this environment. Use `atlas config set_atlas_secret <key> <value>`.")
+                        return 2
                     except (EOFError, OSError):
                         print("Non-interactive mode. Use `atlas config set_atlas_secret <key> <value>`.")
                         return 2

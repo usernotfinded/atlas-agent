@@ -466,6 +466,9 @@ class WizardApplication:
         # Maintain backward compatibility for tests that expect .gitignore update
         self.ensure_gitignore(".env.atlas")
 
+    def _current_step_is_secret_input(self) -> bool:
+        return self.current_step in {"api_key_input", "research_api_key_input"}
+
     def ensure_gitignore(self, entry: str):
         gitignore = Path(".gitignore")
         if not gitignore.exists():
@@ -618,7 +621,7 @@ class WizardApplication:
                             self.current_index,
                             self.input_value,
                             self.title,
-                            is_password=False,
+                            is_password=self._current_step_is_secret_input(),
                         )
                     )
                 )

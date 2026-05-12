@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import getpass
 import shutil
 import tempfile
 from pathlib import Path
@@ -241,6 +242,58 @@ class TestModelConfigure:
         out = capsys.readouterr().out
         assert "Non-interactive" in out
 
+    def test_configure_uses_hidden_input_for_api_key(self, workspace, capsys, monkeypatch):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        responses = iter(["openai", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(responses))
+        monkeypatch.setattr("getpass.getpass", lambda prompt="": "sk-hidden-openai-key")
+
+        code = main(["model", "configure"])
+
+        assert code == 0
+        captured = capsys.readouterr()
+        assert "sk-hidden-openai-key" not in captured.out
+        assert "sk-hidden-openai-key" not in captured.err
+        env_text = (workspace / ".env.atlas").read_text(encoding="utf-8")
+        assert "OPENAI_API_KEY=sk-hidden-openai-key" in env_text
+        config_text = (workspace / ".atlas" / "config.toml").read_text(encoding="utf-8")
+        assert "sk-hidden-openai-key" not in config_text
+
+    def test_configure_getpass_warning_fails_closed(self, workspace, capsys, monkeypatch):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        responses = iter(["openai"])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(responses))
+        monkeypatch.setattr("getpass.getpass", lambda prompt="": (_ for _ in ()).throw(getpass.GetPassWarning("echo risk sk-leak")))
+
+        code = main(["model", "configure"])
+
+        assert code == 2
+        captured = capsys.readouterr()
+        assert "Secure hidden input is unavailable" in captured.out
+        assert "sk-leak" not in captured.out
+        assert "sk-leak" not in captured.err
+        env_path = workspace / ".env.atlas"
+        if env_path.exists():
+            assert "sk-leak" not in env_path.read_text(encoding="utf-8")
+
+    @pytest.mark.parametrize("exc", [EOFError("eof"), OSError("ioerr")])
+    def test_configure_hidden_input_errors_fail_closed(self, workspace, capsys, monkeypatch, exc):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        responses = iter(["openai"])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(responses))
+        monkeypatch.setattr("getpass.getpass", lambda prompt="": (_ for _ in ()).throw(exc))
+
+        code = main(["model", "configure"])
+
+        assert code == 2
+        captured = capsys.readouterr()
+        assert "Non-interactive mode." in captured.out
+        assert "sk-hidden-openai-key" not in captured.out
+        assert "sk-hidden-openai-key" not in captured.err
+
 
 class TestConfigDoctor:
     def test_doctor_checks_active_provider_key(self, workspace, capsys, monkeypatch):
@@ -266,6 +319,7 @@ class TestConfigDoctor:
         assert "ignored" in out.lower() or "other provider" in out.lower()
 
     def test_doctor_shows_missing_for_active_provider(self, workspace, capsys):
+        os.environ.pop("ANTHROPIC_API_KEY", None)
         main(["model", "set", "anthropic", "claude-sonnet-4-6"])
         capsys.readouterr()
         code = main(["config", "doctor"])
