@@ -4,7 +4,7 @@ import pytest
 
 @pytest.fixture
 def write_complete_setup_config():
-    def _write(workspace: Path, provider="anthropic", model="claude-3-5-sonnet-20240620"):
+    def _write(workspace: Path, provider="anthropic", model="claude-opus-4-7"):
         atlas_dir = workspace / ".atlas"
         atlas_dir.mkdir(parents=True, exist_ok=True)
         config_file = atlas_dir / "config.json"

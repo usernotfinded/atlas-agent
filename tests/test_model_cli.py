@@ -132,18 +132,74 @@ class TestModelSet:
         out = capsys.readouterr().out
         assert "openrouter/openai/gpt-5.5" in out
 
-    def test_set_allows_unknown_model_with_warning(self, workspace, capsys):
+    def test_set_rejects_unknown_model_for_hosted_provider(self, workspace, capsys):
         code = main(["model", "set", "openai", "my-custom-model"])
+        assert code == 2
+        out = capsys.readouterr().out
+        assert "not valid for provider 'openai'" in out
+
+    def test_set_rejects_openai_with_anthropic_model(self, workspace, capsys):
+        code = main(["model", "set", "openai", "claude-sonnet-4-6"])
+        assert code == 2
+        out = capsys.readouterr().out
+        assert "not valid for provider 'openai'" in out
+
+    def test_set_rejects_anthropic_with_openai_model(self, workspace, capsys):
+        code = main(["model", "set", "anthropic", "gpt-5.5"])
+        assert code == 2
+        out = capsys.readouterr().out
+        assert "not valid for provider 'anthropic'" in out
+
+    def test_set_allows_openrouter_freeform_model(self, workspace, capsys):
+        code = main(["model", "set", "openrouter", "my-custom-openrouter-model"])
         assert code == 0
         out = capsys.readouterr().out
-        assert "Warning" in out
-        assert "my-custom-model" in out
+        assert "openrouter/my-custom-openrouter-model" in out
+
+    def test_set_allows_openai_compatible_freeform_model(self, workspace, capsys):
+        code = main(["model", "set", "openai-compatible", "internal-gateway-model"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "openai-compatible/internal-gateway-model" in out
+
+    def test_set_allows_lmstudio_freeform_model(self, workspace, capsys):
+        code = main(["model", "set", "lmstudio", "llama-local-q8"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "lmstudio/llama-local-q8" in out
+
+    def test_set_allows_local_freeform_model(self, workspace, capsys):
+        code = main(["model", "set", "local", "meta-llama/Llama-3.3-70B-Instruct"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "local/meta-llama/Llama-3.3-70B-Instruct" in out
+
+    def test_set_allows_custom_endpoint_freeform_model(self, workspace, capsys):
+        code = main(["model", "set", "custom", "internal/proxy-model"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "custom/internal/proxy-model" in out
+
+    def test_set_allows_nvidia_local_freeform_model(self, workspace, capsys):
+        code = main(["model", "set", "nvidia-local", "nvidia/nemotron-3-super-120b-a12b"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "nvidia-local/nvidia/nemotron-3-super-120b-a12b" in out
 
     def test_set_allows_unknown_provider_with_warning(self, workspace, capsys):
         code = main(["model", "set", "unknown-provider", "some-model"])
         assert code == 0
         out = capsys.readouterr().out
         assert "Warning: unknown provider" in out
+
+    def test_rejected_cross_provider_pair_does_not_leak_into_model_current(self, workspace, capsys):
+        code = main(["model", "set", "openai", "claude-3-5-sonnet-20240620"])
+        assert code == 2
+        capsys.readouterr()
+        code = main(["model", "current"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "claude-3-5-sonnet-20240620" not in out
 
     def test_set_writes_toml_not_secrets(self, workspace):
         code = main(["model", "set", "openai", "gpt-5.5"])
@@ -167,7 +223,7 @@ class TestModelConfigure:
 class TestConfigDoctor:
     def test_doctor_checks_active_provider_key(self, workspace, capsys, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-        main(["model", "set", "anthropic", "claude-sonnet-4.6"])
+        main(["model", "set", "anthropic", "claude-sonnet-4-6"])
         capsys.readouterr()
         code = main(["config", "doctor"])
         assert code == 0
@@ -179,7 +235,7 @@ class TestConfigDoctor:
     def test_doctor_warns_about_other_provider_keys(self, workspace, capsys, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant")
-        main(["model", "set", "anthropic", "claude-sonnet-4.6"])
+        main(["model", "set", "anthropic", "claude-sonnet-4-6"])
         capsys.readouterr()
         code = main(["config", "doctor"])
         assert code == 0
@@ -188,7 +244,7 @@ class TestConfigDoctor:
         assert "ignored" in out.lower() or "other provider" in out.lower()
 
     def test_doctor_shows_missing_for_active_provider(self, workspace, capsys):
-        main(["model", "set", "anthropic", "claude-sonnet-4.6"])
+        main(["model", "set", "anthropic", "claude-sonnet-4-6"])
         capsys.readouterr()
         code = main(["config", "doctor"])
         assert code == 0
@@ -207,3 +263,29 @@ class TestConfigDoctor:
         assert "GOOGLE_API_KEY" in out
         assert "GEMINI_API_KEY" in out
         assert "precedence" in out.lower() or "Warning" in out
+
+
+class TestModelListExactIds:
+    def test_openai_list_shows_exact_raw_ids_not_prettified(self, workspace, capsys):
+        code = main(["model", "list", "--provider", "openai"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "gpt-5.5" in out
+        assert "GPT-5.5" not in out
+
+    def test_anthropic_list_shows_exact_raw_ids_not_prettified(self, workspace, capsys):
+        code = main(["model", "list", "--provider", "anthropic"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "claude-sonnet-4-6" in out
+        assert "Claude Sonnet" not in out
+
+    def test_deprecated_models_not_in_normal_model_list_output(self, workspace, capsys):
+        code = main(["model", "list"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "deepseek-chat" not in out
+        assert "deepseek-reasoner" not in out
+        assert "gpt-3.5-turbo" not in out
+        assert "kimi-latest" not in out
+        assert "grok-3" not in out

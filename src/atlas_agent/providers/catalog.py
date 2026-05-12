@@ -13,6 +13,10 @@ class ModelOption:
     free: bool = False
     context_window: int | None = None
 
+    def __post_init__(self) -> None:
+        # Product rule: user-facing model labels must exactly match stored IDs.
+        object.__setattr__(self, "label", self.id)
+
 
 @dataclass(frozen=True)
 class ProviderProfile:
@@ -36,6 +40,7 @@ class ProviderProfile:
     aliases: tuple[str, ...] = ()
     models: tuple[ModelOption, ...] = ()
     default_model: str = ""
+    allow_custom_model: bool = False
     docs_url: str = ""
     
     @property
@@ -44,83 +49,114 @@ class ProviderProfile:
 
 
 _OPENROUTER_MODELS = (
-    ModelOption("openai/gpt-5.5", label="GPT-5.5", recommended=True),
-    ModelOption("anthropic/claude-opus-4.7", label="Claude Opus 4.7"),
-    ModelOption("anthropic/claude-sonnet-4.6", label="Claude Sonnet 4.6", recommended=True),
-    ModelOption("moonshotai/kimi-k2.6", label="Kimi K2.6"),
-    ModelOption("qwen/qwen3.6-plus", label="Qwen 3.6 Plus"),
-    ModelOption("deepseek/deepseek-v4-pro", label="DeepSeek V4 Pro"),
-    ModelOption("google/gemini-3.1-pro-preview", label="Gemini 3.1 Pro Preview"),
-    ModelOption("z-ai/glm-5.1", label="GLM 5.1"),
+    ModelOption("openai/gpt-5.5", recommended=True),
+    ModelOption("openai/gpt-5.4"),
+    ModelOption("anthropic/claude-sonnet-4.6"),
+    ModelOption("google/gemini-3.1-pro-preview"),
 )
 
 _OPENAI_MODELS = (
-    ModelOption("gpt-5.5", label="GPT-5.5", recommended=True),
-    ModelOption("gpt-5.4", label="GPT-5.4"),
-    ModelOption("gpt-5.4-mini", label="GPT-5.4 Mini"),
-    ModelOption("gpt-5.3-codex", label="GPT-5.3 Codex"),
+    ModelOption("gpt-5.5", recommended=True),
+    ModelOption("gpt-5.5-pro"),
+    ModelOption("gpt-5.4"),
+    ModelOption("gpt-5.4-pro"),
+    ModelOption("gpt-5.4-mini"),
+    ModelOption("gpt-5.4-nano"),
+    ModelOption("gpt-5"),
+    ModelOption("gpt-5-pro"),
+    ModelOption("gpt-5-mini"),
+    ModelOption("gpt-5-nano"),
+    ModelOption("gpt-4.1"),
+    ModelOption("gpt-4o"),
+    ModelOption("gpt-4o-mini"),
+    ModelOption("o3-pro"),
+    ModelOption("o3"),
+    ModelOption("gpt-5.3-codex"),
+    ModelOption("gpt-oss-120b"),
+    ModelOption("gpt-oss-20b"),
 )
 
 _ANTHROPIC_MODELS = (
-    ModelOption("claude-opus-4.7", label="Claude Opus 4.7"),
-    ModelOption("claude-opus-4.6", label="Claude Opus 4.6"),
-    ModelOption("claude-sonnet-4.6", label="Claude Sonnet 4.6", recommended=True),
-    ModelOption("claude-haiku-4.5", label="Claude Haiku 4.5"),
+    ModelOption("claude-opus-4-7", recommended=True),
+    ModelOption("claude-opus-4-6"),
+    ModelOption("claude-sonnet-4-6"),
+    ModelOption("claude-haiku-4-5"),
+    ModelOption("claude-haiku-4-5-20251001"),
 )
 
 _DEEPSEEK_MODELS = (
-    ModelOption("deepseek-v4-pro", label="DeepSeek V4 Pro", recommended=True),
-    ModelOption("deepseek-v4-flash", label="DeepSeek V4 Flash"),
-    ModelOption("deepseek-chat", label="DeepSeek Chat"),
-    ModelOption("deepseek-reasoner", label="DeepSeek Reasoner"),
+    ModelOption("deepseek-v4-pro", recommended=True),
+    ModelOption("deepseek-v4-flash"),
 )
 
 _KIMI_MODELS = (
-    ModelOption("kimi-k2.6", label="Kimi K2.6", recommended=True),
-    ModelOption("kimi-k2.5", label="Kimi K2.5"),
-    ModelOption("kimi-k2-thinking", label="Kimi K2 Thinking"),
-    ModelOption("kimi-k2-turbo-preview", label="Kimi K2 Turbo Preview"),
+    ModelOption("kimi-k2.6", recommended=True),
+    ModelOption("kimi-k2.5"),
+    ModelOption("moonshot-v1-8k"),
+    ModelOption("moonshot-v1-32k"),
+    ModelOption("moonshot-v1-128k"),
 )
 
 _NVIDIA_MODELS = (
-    ModelOption("nvidia/nemotron-3-super-120b-a12b", label="Nemotron 3 Super 120B A12B"),
-    ModelOption("moonshotai/kimi-k2.6", label="Kimi K2.6"),
-    ModelOption("deepseek-ai/deepseek-v3.2", label="DeepSeek V3.2"),
-    ModelOption("qwen/qwen3.5-397b-a17b", label="Qwen 3.5 397B A17B"),
+    ModelOption("nvidia/llama-3.3-nemotron-super-49b-v1.5", recommended=True),
+    ModelOption("nvidia/nemotron-3-super-120b-a12b"),
+    ModelOption("nvidia/nemotron-3-nano-30b-a3b"),
+    ModelOption("deepseek-v4-flash"),
+    ModelOption("deepseek-v4-pro"),
+    ModelOption("gemma-4-31b-it"),
+    ModelOption("minimax-m2.7"),
 )
 
 _XAI_MODELS = (
-    ModelOption("grok-4", label="Grok 4", recommended=True),
-    ModelOption("grok-4-fast", label="Grok 4 Fast"),
-    ModelOption("grok-code-fast-1", label="Grok Code Fast 1"),
+    ModelOption("grok-4.3", recommended=True),
+    ModelOption("grok-4.20"),
+    ModelOption("grok-4.20-reasoning"),
+    ModelOption("grok-4.20-non-reasoning"),
 )
 
 _GOOGLE_MODELS = (
-    ModelOption("gemini-3.1-pro-preview", label="Gemini 3.1 Pro Preview", recommended=True),
-    ModelOption("gemini-3-flash-preview", label="Gemini 3 Flash Preview"),
-    ModelOption("gemini-3.1-flash-lite-preview", label="Gemini 3.1 Flash Lite Preview"),
+    ModelOption("gemini-3.1-pro-preview", recommended=True),
+    ModelOption("gemini-3-flash-preview"),
+    ModelOption("gemini-3.1-flash-lite"),
 )
 
 _HF_MODELS = (
-    ModelOption("moonshotai/Kimi-K2.6", label="Kimi K2.6"),
-    ModelOption("Qwen/Qwen3.5-397B-A17B", label="Qwen 3.5 397B A17B"),
-    ModelOption("deepseek-ai/DeepSeek-V3.2", label="DeepSeek V3.2"),
+    ModelOption("deepseek-ai/DeepSeek-V4-Pro"),
+    ModelOption("deepseek-ai/DeepSeek-V4-Flash"),
+    ModelOption("Qwen/Qwen3.6-35B-A3B", recommended=True),
+    ModelOption("google/gemma-4-31B-it"),
+    ModelOption("google/gemma-4-26B-A4B-it"),
+    ModelOption("moonshotai/Kimi-K2.6"),
+    ModelOption("zai-org/GLM-5.1"),
 )
 
 _LOCAL_MODELS = (
-    ModelOption("local/default", label="Local Default"),
+    ModelOption("meta-llama/Llama-3.1-8B-Instruct"),
+    ModelOption("Qwen/Qwen3.6-32B-Instruct"),
+    ModelOption("mistralai/Mistral-Small-3.2-Instruct"),
+    ModelOption("google/gemma-4-9b-it"),
+    ModelOption("deepseek-ai/DeepSeek-V4-Flash"),
+    ModelOption("NousResearch/Hermes-3-Llama-3.1-8B"),
+    ModelOption("microsoft/Phi-4-mini-instruct"),
 )
 
 _LMSTUDIO_MODELS = (
-    ModelOption("local-model", label="Local Model"),
+    ModelOption("llama"),
+    ModelOption("qwen"),
+    ModelOption("gemma"),
+    ModelOption("mistral"),
+    ModelOption("deepseek"),
+    ModelOption("phi"),
+    ModelOption("yi"),
+    ModelOption("nous-hermes"),
 )
 
 _OPENAI_COMPATIBLE_MODELS = (
-    ModelOption("custom-model", label="Custom Model"),
+    ModelOption("example-model-id"),
 )
 
 _CUSTOM_MODELS = (
-    ModelOption("custom", label="Custom"),
+    ModelOption("example-model-id"),
 )
 
 GOOGLE_PROVIDER_ID = "google"
@@ -155,7 +191,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             optional_metadata_env_vars=("OPENROUTER_HTTP_REFERER", "OPENROUTER_APP_TITLE"),
             aliases=("or",),
             models=_OPENROUTER_MODELS,
-            default_model="anthropic/claude-sonnet-4.6",
+            default_model="openai/gpt-5.5",
+            allow_custom_model=True,
             docs_url="https://openrouter.ai/docs",
         ),
         ProviderProfile(
@@ -192,7 +229,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             required_headers={"anthropic-version": "2023-06-01", "content-type": "application/json"},
             aliases=("claude",),
             models=_ANTHROPIC_MODELS,
-            default_model="claude-sonnet-4.6",
+            default_model="claude-opus-4-7",
             docs_url="https://docs.anthropic.com",
         ),
         ProviderProfile(
@@ -264,7 +301,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="bearer",
             aliases=("grok",),
             models=_XAI_MODELS,
-            default_model="grok-4",
+            default_model="grok-4.3",
             docs_url="https://docs.x.ai",
         ),
         ProviderProfile(
@@ -282,7 +319,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="bearer",
             aliases=("hf",),
             models=_HF_MODELS,
-            default_model="moonshotai/Kimi-K2.6",
+            default_model="Qwen/Qwen3.6-35B-A3B",
             docs_url="https://huggingface.co/docs/api-inference",
         ),
         ProviderProfile(
@@ -300,7 +337,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="none",
             aliases=("ollama", "llamacpp"),
             models=_LOCAL_MODELS,
-            default_model="local/default",
+            default_model="",
+            allow_custom_model=True,
             docs_url="",
         ),
         ProviderProfile(
@@ -318,7 +356,7 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="bearer",
             aliases=("nim",),
             models=_NVIDIA_MODELS,
-            default_model="nvidia/nemotron-3-super-120b-a12b",
+            default_model="nvidia/llama-3.3-nemotron-super-49b-v1.5",
             docs_url="https://build.nvidia.com",
         ),
         ProviderProfile(
@@ -336,7 +374,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="none",
             aliases=("nvidia-nim-local",),
             models=_NVIDIA_MODELS,
-            default_model="nvidia/nemotron-3-super-120b-a12b",
+            default_model="",
+            allow_custom_model=True,
             docs_url="https://build.nvidia.com",
         ),
         ProviderProfile(
@@ -354,7 +393,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="none",
             aliases=("lm-studio",),
             models=_LMSTUDIO_MODELS,
-            default_model="local-model",
+            default_model="",
+            allow_custom_model=True,
             docs_url="https://lmstudio.ai/docs",
         ),
         ProviderProfile(
@@ -372,7 +412,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="bearer",
             aliases=("openai_compatible",),
             models=_OPENAI_COMPATIBLE_MODELS,
-            default_model="custom-model",
+            default_model="",
+            allow_custom_model=True,
             docs_url="",
         ),
         ProviderProfile(
@@ -390,7 +431,8 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             auth_header_type="bearer",
             aliases=(),
             models=_CUSTOM_MODELS,
-            default_model="custom",
+            default_model="",
+            allow_custom_model=True,
             docs_url="",
         ),
         ProviderProfile(
@@ -499,3 +541,65 @@ def default_model_for_provider(provider_id: str) -> str:
 def is_known_model_for_provider(provider_id: str, model_id: str) -> bool:
     """Check whether a model ID is in the curated catalog for a provider."""
     return model_id in provider_model_ids(provider_id)
+
+
+def provider_allows_custom_model(provider_id: str) -> bool:
+    """Return True when a provider accepts arbitrary model IDs."""
+    profile = get_provider_profile(provider_id)
+    return bool(profile and profile.allow_custom_model)
+
+
+def model_catalog_owners(model_id: str) -> list[str]:
+    """Return canonical provider IDs whose curated catalogs include model_id."""
+    model_key = model_id.strip()
+    if not model_key:
+        return []
+    owners: list[str] = []
+    for profile in _PROVIDER_PROFILES.values():
+        if model_key in {m.id for m in profile.models}:
+            owners.append(profile.id)
+    return owners
+
+
+def _infer_provider_family_for_model(model_id: str) -> str | None:
+    key = model_id.strip().lower()
+    if not key:
+        return None
+
+    if key.startswith(("claude-", "anthropic/claude")):
+        return "anthropic"
+    if key.startswith(("gpt-", "o1", "o3", "o4", "openai/")):
+        return "openai"
+    if key.startswith(("gemini-", "google/gemini")):
+        return GOOGLE_PROVIDER_ID
+    if key.startswith(("deepseek-", "deepseek/")):
+        return "deepseek"
+    if key.startswith(("kimi-", "moonshot", "moonshotai/kimi")):
+        return "kimi"
+    if key.startswith(("grok-", "xai/grok")):
+        return "xai"
+    return None
+
+
+def validate_model_for_provider(provider_id: str, model_id: str) -> tuple[bool, str | None]:
+    """Validate provider/model compatibility, allowing freeform IDs where supported."""
+    canonical = normalize_provider_id(provider_id)
+    profile = get_provider_profile(canonical)
+    if profile is None:
+        return True, None
+
+    candidate = model_id.strip()
+    if profile.model_required and not candidate:
+        return False, f"Model is required for provider '{profile.id}'."
+
+    if not candidate or is_known_model_for_provider(profile.id, candidate):
+        return True, None
+
+    if profile.allow_custom_model:
+        return True, None
+
+    return (
+        False,
+        f"Model '{candidate}' is not valid for provider '{profile.id}'. "
+        "Choose one of the provider's listed model IDs or use a freeform-compatible provider.",
+    )

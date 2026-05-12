@@ -10,7 +10,7 @@ from atlas_agent.cli import main
 def test_credentials_status_affects_completeness():
     state = WizardState(
         provider="anthropic",
-        model="claude-3",
+        model="claude-opus-4-7",
         messaging="cli",
         workspace_path=".",
         trust_mode="paper",
@@ -87,7 +87,7 @@ def test_cli_noninteractive_missing_credentials_exits_2(mock_is_interactive, tmp
     # Config exists but credentials_configured is False
     state = WizardState(
         provider="anthropic",
-        model="claude-3",
+        model="claude-opus-4-7",
         messaging="cli",
         workspace_path=".",
         trust_mode="paper",

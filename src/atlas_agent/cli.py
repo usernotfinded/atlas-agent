@@ -1237,7 +1237,11 @@ def _run_guided_setup(*, args: argparse.Namespace) -> int:
         print("Setup cancelled.")
         return 2
 
-    state.save(config_path)
+    try:
+        state.save(config_path)
+    except ValueError as exc:
+        print(f"Setup failed: {exc}")
+        return 2
 
     workspace_root = Path(".")
     discipline_ok, discipline_reason = _configure_discipline_for_setup(workspace_root)
@@ -1437,6 +1441,8 @@ def main(argv: list[str] | None = None) -> int:
             get_provider_profile,
             normalize_provider_id,
             is_known_model_for_provider,
+            provider_allows_custom_model,
+            validate_model_for_provider,
         )
         from atlas_agent.providers.runtime import resolve_runtime_provider
         from atlas_agent.config.secrets import set_secret
@@ -1478,7 +1484,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{profile.label} ({profile.id})")
                 for m in profile.models:
                     rec = "  *" if m.recommended else ""
-                    print(f"  {m.id:40s}  {m.label}{rec}")
+                    print(f"  {m.id:40s}{rec}")
             return 0
 
         if args.model_command == "current":
@@ -1547,9 +1553,16 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Warning: unknown provider '{provider_id}'.")
             else:
                 provider_id = profile.id  # canonical
-                if not is_known_model_for_provider(provider_id, model_id):
+                valid_pair, validation_error = validate_model_for_provider(provider_id, model_id)
+                if not valid_pair:
+                    print(f"Error: {validation_error}")
+                    return 2
+                if (
+                    not provider_allows_custom_model(provider_id)
+                    and not is_known_model_for_provider(provider_id, model_id)
+                ):
                     print(f"Warning: '{model_id}' is not in the curated catalog for {provider_id}.")
-                    print("It will still be stored; custom model IDs are allowed.")
+                    print("Proceeding because this may be a newer model ID.")
 
             set_raw_value("model.provider", provider_id)
             set_raw_value("model.model", model_id)
@@ -1601,7 +1614,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Select a model for {profile.label}:")
             for i, m in enumerate(profile.models, 1):
                 rec = "  *" if m.recommended else ""
-                print(f"  {i}. {m.id:40s}  {m.label}{rec}")
+                print(f"  {i}. {m.id:40s}{rec}")
             try:
                 mchoice = input("Enter number (or model id, or press Enter for default): ").strip()
             except (EOFError, OSError):
@@ -1709,7 +1722,11 @@ def main(argv: list[str] | None = None) -> int:
             print("First-time setup required.\n")
             success = run_wizard(state)
             if success:
-                state.save(config_path)
+                try:
+                    state.save(config_path)
+                except ValueError as exc:
+                    print(f"Setup failed: {exc}")
+                    return 2
                 print(f"\nConfiguration saved to {config_path}")
                 
                 # Reload config and show final status
@@ -1795,7 +1812,11 @@ def main(argv: list[str] | None = None) -> int:
         
         success = run_wizard(state)
         if success:
-            state.save(config_path)
+            try:
+                state.save(config_path)
+            except ValueError as exc:
+                print(f"Setup failed: {exc}")
+                return 2
             print(f"Configuration saved to {config_path}")
             
             # Show final status

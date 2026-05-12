@@ -68,8 +68,8 @@ class ModelConfig(BaseModel):
 
 class ProviderConfig(BaseModel):
     openai: ModelConfig = Field(default_factory=lambda: ModelConfig(provider="openai", model="gpt-4o"))
-    anthropic: ModelConfig = Field(default_factory=lambda: ModelConfig(provider="anthropic", model="claude-3-5-sonnet-20240620"))
-    openrouter: ModelConfig = Field(default_factory=lambda: ModelConfig(provider="openrouter", model="anthropic/claude-3.5-sonnet"))
+    anthropic: ModelConfig = Field(default_factory=lambda: ModelConfig(provider="anthropic", model="claude-opus-4-7"))
+    openrouter: ModelConfig = Field(default_factory=lambda: ModelConfig(provider="openrouter", model="openai/gpt-5.5"))
     local: ModelConfig = Field(default_factory=lambda: ModelConfig(provider="local", model="llama3"))
 
 

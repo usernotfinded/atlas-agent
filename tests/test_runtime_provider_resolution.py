@@ -94,7 +94,7 @@ def test_model_fallback_to_provider_default() -> None:
     config.model.model = ""
     result = resolve_runtime_provider(config)
     assert result["provider"] == "openrouter"
-    assert result["model"] == "anthropic/claude-sonnet-4.6"
+    assert result["model"] == "openai/gpt-5.5"
 
 
 def test_api_key_not_printed_in_result() -> None:

@@ -19,9 +19,18 @@ class WizardState:
     update_channel: str = "stable"
     credentials_configured: bool = False
 
+    def _provider_model_error(self) -> str | None:
+        from atlas_agent.providers.catalog import normalize_provider_id, validate_model_for_provider
+
+        canonical_provider = normalize_provider_id(self.provider)
+        ok, error = validate_model_for_provider(canonical_provider, self.model)
+        if ok:
+            return None
+        return error
+
     @property
     def is_complete(self) -> bool:
-        from atlas_agent.providers.catalog import get_provider_profile
+        from atlas_agent.providers.catalog import get_provider_profile, normalize_provider_id
 
         mandatory_fields = [
             "provider", "model", "messaging", 
@@ -35,11 +44,16 @@ class WizardState:
         if self.provider in ["null", "local_command"]:
             return True
 
-        profile = get_provider_profile(self.provider)
+        canonical_provider = normalize_provider_id(self.provider)
+        profile_error = self._provider_model_error()
+        if profile_error:
+            return False
+
+        profile = get_provider_profile(canonical_provider)
         if profile and not profile.key_required:
             return True
 
-        if self.provider == "google" and self.google_auth_method == "oauth_adc":
+        if canonical_provider == "google" and self.google_auth_method == "oauth_adc":
             return self.credentials_configured
 
         return self.credentials_configured
@@ -48,8 +62,8 @@ class WizardState:
         return asdict(self)
         
     def save(self, path: Optional[Path] = None) -> None:
-        from atlas_agent.config import set_raw_value
-        from atlas_agent.providers.catalog import normalize_provider_id
+        from atlas_agent.config import set_raw_value, unset_raw_value
+        from atlas_agent.providers.catalog import default_model_for_provider, normalize_provider_id
 
         # Ensure the local workspace config dir exists so config writes do not
         # fall back to $HOME/.atlas outside the active workspace.
@@ -58,16 +72,30 @@ class WizardState:
         # New config system
         set_raw_value("trading_mode", self.trust_mode)
         canonical_provider = normalize_provider_id(self.provider)
+        if not self.model:
+            self.model = default_model_for_provider(canonical_provider)
+        model_error = self._provider_model_error()
+        if model_error:
+            raise ValueError(model_error)
+
         set_raw_value("model.provider", canonical_provider)
         set_raw_value("model.model", self.model)
         if canonical_provider == "google":
             set_raw_value("model.google.api_mode", self.google_api_mode)
             set_raw_value("model.google.auth_method", self.google_auth_method)
-        if self.custom_endpoint:
-            if canonical_provider == "google":
+            unset_raw_value("model.base_url")
+            if self.custom_endpoint:
                 set_raw_value("model.google.base_url", self.custom_endpoint)
             else:
+                unset_raw_value("model.google.base_url")
+        else:
+            unset_raw_value("model.google.api_mode")
+            unset_raw_value("model.google.auth_method")
+            unset_raw_value("model.google.base_url")
+            if self.custom_endpoint:
                 set_raw_value("model.base_url", self.custom_endpoint)
+            else:
+                unset_raw_value("model.base_url")
         
         set_raw_value("broker.provider", self.broker_mode)
         set_raw_value("update.auto_check", self.update_channel)

@@ -46,6 +46,8 @@ def render_wizard_screen(
     return lines
 
 def get_summary_lines(state: WizardState, current_step: str) -> List[Tuple[str, str]]:
+    from atlas_agent.providers.catalog import validate_model_for_provider
+
     steps_order = [
         "setup_mode",
         "provider",
@@ -91,6 +93,16 @@ def get_summary_lines(state: WizardState, current_step: str) -> List[Tuple[str, 
             lines.append(("class:muted", "  API Key: "))
             status = "configured" if state.credentials_configured else "missing"
             lines.append(("class:normal", f"{status}\n"))
+            continue
+
+        if step == "model":
+            lines.append(("class:muted", "  Model: "))
+            model_value = (state.model or "").strip()
+            if model_value:
+                compatible, _ = validate_model_for_provider(state.provider, model_value)
+                if not compatible:
+                    model_value = ""
+            lines.append(("class:normal", f"{model_value or 'not selected'}\n"))
             continue
             
         val = getattr(state, step)

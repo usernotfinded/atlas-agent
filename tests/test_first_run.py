@@ -28,7 +28,7 @@ def test_bare_atlas_configured_does_not_launch_wizard(mock_run_wizard, mock_is_i
     
     state = WizardState(
         provider="anthropic",
-        model="claude-3-5-sonnet",
+        model="claude-opus-4-7",
         messaging="cli",
         workspace_path=".",
         trust_mode="paper",
@@ -55,7 +55,7 @@ def test_bare_atlas_incomplete_config_launches_wizard(mock_run_wizard, mock_is_i
     # Missing messaging, broker_mode, etc.
     state = WizardState(
         provider="anthropic",
-        model="claude-3-5-sonnet",
+        model="claude-opus-4-7",
         messaging=""
     )
     state.save(tmp_path / ".atlas/config.json")
@@ -89,7 +89,7 @@ def test_configure_always_launches_wizard_even_if_configured(mock_run_wizard, mo
     
     state = WizardState(
         provider="anthropic",
-        model="claude-3-5-sonnet",
+        model="claude-opus-4-7",
         messaging="cli",
         workspace_path=".",
         trust_mode="paper",

@@ -13,6 +13,8 @@ from atlas_agent.providers.catalog import (
     GOOGLE_PROVIDER_ID,
     get_provider_profile,
     list_provider_profiles,
+    normalize_provider_id,
+    validate_model_for_provider,
 )
 from atlas_agent.setup.renderer import render_wizard_screen
 from atlas_agent.setup.state import WizardState
@@ -42,7 +44,14 @@ class WizardApplication:
 
     @staticmethod
     def _provider_uses_freeform_model(provider_id: str) -> bool:
-        return provider_id in ("lmstudio", "openai-compatible", "custom")
+        return provider_id in (
+            "openrouter",
+            "local",
+            "nvidia-local",
+            "lmstudio",
+            "openai-compatible",
+            "custom",
+        )
 
     @staticmethod
     def _provider_supports_optional_api_key(provider_id: str) -> bool:
@@ -86,6 +95,33 @@ class WizardApplication:
         if not profile:
             return False
         return any(bool(os.getenv(var)) for var in profile.env_precedence)
+
+    def _discard_temp_secrets_for_provider(self, provider_id: str) -> None:
+        profile = get_provider_profile(provider_id)
+        if not profile:
+            return
+        for env_var in profile.env_precedence:
+            self.temp_secrets.pop(env_var, None)
+
+    def _apply_provider_selection(self, provider_id: str) -> None:
+        canonical = normalize_provider_id(provider_id)
+        previous = normalize_provider_id(self.state.provider) if self.state.provider else ""
+        changed = canonical != previous
+        profile = get_provider_profile(canonical)
+
+        if changed and previous:
+            self._discard_temp_secrets_for_provider(previous)
+            self.state.custom_endpoint = None
+            self.state.google_api_mode = "native"
+            self.state.google_auth_method = "api_key"
+            self.state.credentials_configured = False
+            self.state.model = profile.default_model if profile else ""
+        elif profile:
+            compatible, _ = validate_model_for_provider(canonical, self.state.model)
+            if not compatible:
+                self.state.model = profile.default_model or ""
+
+        self.state.provider = canonical
 
     def update_step_data(self):
         if self.current_step == "setup_mode":
@@ -201,10 +237,30 @@ class WizardApplication:
         if self.current_step == "model_input":
             profile = self._provider_profile()
             default_model = self.state.model or (profile.default_model if profile else "")
-            self.title = (
-                f"Enter model ID for {profile.label if profile else self.state.provider}:\n"
-                f"(press Enter to keep: {default_model})"
-            )
+            provider_label = profile.label if profile else self.state.provider
+            if default_model:
+                self.title = (
+                    f"Enter model ID for {provider_label}:\n"
+                    f"(press Enter to keep: {default_model})"
+                )
+            else:
+                examples = ""
+                if profile and profile.models:
+                    sample_ids = ", ".join(m.id for m in profile.models[:4])
+                    examples = f"\nExamples: {sample_ids}"
+                note = ""
+                if self.state.provider in (
+                    "openrouter",
+                    "huggingface",
+                    "lmstudio",
+                    "local",
+                    "custom",
+                    "openai-compatible",
+                    "nvidia",
+                    "nvidia-local",
+                ):
+                    note = "\nCatalog is not exhaustive; your runtime may expose additional model IDs."
+                self.title = f"Enter model ID for {provider_label}:{examples}{note}"
             self.choices = []
             self.input_value = default_model
             return
@@ -311,6 +367,8 @@ class WizardApplication:
                 self.current_step = "custom_endpoint"
             elif profile.key_required:
                 self.current_step = "api_key_check" if self._has_key_in_env(profile.id) else "api_key_input"
+            elif self._provider_uses_freeform_model(profile.id):
+                self.current_step = "model_input"
             else:
                 self.current_step = "model"
         elif self.current_step == "google_api_mode":
@@ -460,7 +518,10 @@ class WizardApplication:
                     self.update_step_data()
                     return
 
-                setattr(self.state, self.current_step, val)
+                if self.current_step == "provider":
+                    self._apply_provider_selection(val)
+                else:
+                    setattr(self.state, self.current_step, val)
                 self.next_step()
             else:
                 # Input step
@@ -496,6 +557,10 @@ class WizardApplication:
                         model_id = profile.default_model if profile else ""
                     if not model_id:
                         self.title = "Model ID is required."
+                        return
+                    compatible, error = validate_model_for_provider(self.state.provider, model_id)
+                    if not compatible:
+                        self.title = error or "Invalid model for provider."
                         return
                     self.state.model = model_id
                     self.next_step()
