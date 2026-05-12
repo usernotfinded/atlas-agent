@@ -56,5 +56,5 @@ def test_generated_workspace_validates(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(workspace)
 
     assert main(["validate"]) == 0
-    assert "Configuration valid" in capsys.readouterr().out
+    assert "Workspace initialized" in capsys.readouterr().out
 

@@ -129,7 +129,8 @@ Safety First:
     init.add_argument("--template", default=DEFAULT_TEMPLATE)
     init.add_argument("--force", action="store_true")
     init.add_argument("--set-default", action="store_true", help="Set this workspace as the default")
-    subparsers.add_parser("validate")
+    validate_parser = subparsers.add_parser("validate")
+    validate_parser.add_argument("--json", action="store_true", help="Output readiness report as JSON")
     subparsers.add_parser("configure")
 
     config_parser = subparsers.add_parser("config")
@@ -155,7 +156,9 @@ Safety First:
     model_sub = model_parser.add_subparsers(dest="model_command")
     model_list = model_sub.add_parser("list")
     model_list.add_argument("--provider", help="Filter models by provider ID")
-    model_sub.add_parser("providers")
+    model_providers = model_sub.add_parser("providers")
+    model_providers.add_argument("--include-legacy", action="store_true", help="Include legacy providers like local_command")
+    model_providers.add_argument("--include-internal", action="store_true", help="Include internal providers like null")
     model_sub.add_parser("current")
     model_set = model_sub.add_parser("set")
     model_set.add_argument("model_id")
@@ -1148,14 +1151,14 @@ def main(argv: list[str] | None = None) -> int:
                 if key_source in ("process_env", "env_atlas"):
                     print(f"API key: configured/redacted ({env_var_used})")
                 else:
-                    expected_vars = ", ".join(profile.api_key_env_vars)
+                    expected_vars = ", ".join(profile.env_precedence)
                     print(f"API key: missing (expected: {expected_vars})")
 
                 # Warn about ignored keys from other providers
                 other_keys_found = []
                 for other_p in (get_provider_profile(p) for p in ["openrouter", "anthropic", "openai", "deepseek"]):
                     if other_p and other_p.id != canonical:
-                        for var in other_p.api_key_env_vars:
+                        for var in other_p.env_precedence:
                             if os.getenv(var):
                                 other_keys_found.append(var)
                 if other_keys_found:
@@ -1207,17 +1210,24 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.model_command == "providers":
             for profile in list_provider_profiles():
+                if not profile.include_in_model_providers_default:
+                    continue
                 runtime = resolve_runtime_provider(config, profile.id)
                 key_status = runtime["api_key_source"]
-                if key_status == "missing" and profile.auth_type != "none":
+                if key_status == "missing" and profile.auth_header_type != "none" and profile.key_required:
                     key_label = "missing"
                 elif key_status in ("process_env", "env_atlas"):
                     key_label = "configured"
                 else:
                     key_label = "not required"
                 print(f"{profile.id:15s}  {profile.label:25s}  key: {key_label:12s}  default: {profile.default_model}")
-            return 0
 
+            if getattr(args, "include_legacy", False):
+                print(f"{'local_command':15s}  {'Local command (legacy)':25s}  key: {'not required':12s}  default: {'local_command'}")
+
+            if getattr(args, "include_internal", False):
+                print(f"{'null':15s}  {'Null provider / dry-run':25s}  key: {'not required':12s}  default: {'null'}")
+            return 0
         if args.model_command == "list":
             provider_filter = getattr(args, "provider", None)
             if provider_filter:
@@ -1322,7 +1332,7 @@ def main(argv: list[str] | None = None) -> int:
                 runtime = resolve_runtime_provider(config, profile.id)
                 if runtime["api_key_source"] in ("missing", ""):
                     print(f"{profile.label} requires an API key.")
-                    env_var = profile.api_key_env_vars[0] if profile.api_key_env_vars else f"{profile.id.upper()}_API_KEY"
+                    env_var = profile.canonical_env_var if profile.canonical_env_var else f"{profile.id.upper()}_API_KEY"
                     try:
                         key = input(f"Enter {env_var} (input hidden): ").strip()
                     except (EOFError, OSError):
@@ -1882,27 +1892,19 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result.status in success_statuses else 2
 
     if args.command == "validate":
-        from atlas_agent.ai.discipline import discipline_status
+        from atlas_agent.diagnostics.readiness import run_diagnostics, print_readiness_report
 
-        config.ensure_dirs()
-        (config.reports_dir / "daily").mkdir(parents=True, exist_ok=True)
-        (config.reports_dir / "weekly").mkdir(parents=True, exist_ok=True)
-        ensure_sample_data(config.data_path)
-        print("Configuration valid. Default mode:", config.trading_mode)
-        print("Live trading enabled:", config.enable_live_trading)
-        status = discipline_status(config.memory_dir.parent)
-        if status["configured"] and status["valid"]:
-            print("Discipline profile: configured and valid")
-        elif status["configured"]:
-            print("Discipline profile: configured but invalid")
-            for err in status["errors"]:
-                print(f"  - {err}")
+        report = run_diagnostics(config)
+        
+        if getattr(args, "json", False):
+            import json
+            print(json.dumps(report.to_dict(), indent=2))
         else:
-            print("Discipline profile: missing")
-            print("Next step: run `atlas discipline setup`")
+            print_readiness_report(report)
+            
         return 0
     if args.command == "providers" and args.providers_command == "list":
-        print("null, openai_compatible, anthropic, openrouter, local_command")
+        print("openai_compatible, anthropic, openrouter")
         return 0
     if args.command == "broker" and args.brokers_command == "list":
         print("paper, alpaca, binance, ccxt, ibkr_stub")
