@@ -23,32 +23,75 @@ Atlas enforces strict separation between application state and credentials. `con
 | `nvidia` | `NVIDIA_API_KEY` | Bearer | `https://integrate.api.nvidia.com/v1` | Yes | For cloud/API Catalog endpoints |
 | `nvidia-local` | `NVIDIA_LOCAL_API_KEY` | None (by default) | *(user-provided)* | No | For local NIM / on-prem endpoints |
 | `xai` | `XAI_API_KEY` | Bearer | `https://api.x.ai/v1` | Yes | |
-| `google-gemini` | `GEMINI_API_KEY` | x-goog-api-key | `https://generativelanguage.googleapis.com/v1beta` | Yes | Native mode; `GOOGLE_API_KEY` has precedence |
-| `gemini-openai-compatible` | `GEMINI_API_KEY` | Bearer | `.../v1beta/openai/` | Yes | OpenAI-compatible mode |
+| `google` | `GOOGLE_API_KEY` | Mode-dependent | Mode-dependent | Yes (for `api_key` auth) | Unified Google Gemini provider; supports native + OpenAI-compatible modes |
 | `huggingface` | `HF_TOKEN` | Bearer | `https://api-inference.huggingface.co/v1` | Yes | `HUGGINGFACEHUB_API_TOKEN` legacy alias |
 | `lmstudio` | *(None)* | None | `http://localhost:1234/v1` | No | Zero-auth local AI endpoint |
 | `openai-compatible` | `ATLAS_OPENAI_COMPATIBLE_API_KEY` | Bearer (if key present) | *(user-provided)* | No | Strict isolation; never falls back to OpenAI |
 | `custom` | `ATLAS_CUSTOM_API_KEY` | Bearer (if key present) | *(user-provided)* | No | Strict isolation |
 
-Provider aliases (e.g. `or` for `openrouter`) are resolved automatically.
+Provider aliases (for example `or` for `openrouter`) are resolved automatically.
+
+## Google Gemini (Unified Provider)
+
+Atlas exposes one user-facing Google provider: **Google Gemini** (`provider = "google"`).
+
+After choosing Google Gemini, select a mode:
+
+- **Native Gemini API**
+  - recommended default
+  - uses Gemini-native API behavior
+  - best future compatibility with Gemini-specific features
+- **OpenAI-compatible endpoint**
+  - useful when reusing OpenAI-compatible clients/adapters
+  - uses Gemini's OpenAI-compatible endpoint
+  - may not expose every Gemini-native feature
+
+### Google auth methods
+
+Google mode also supports two auth methods:
+
+- **`api_key`** (default)
+  - Uses `GOOGLE_API_KEY` or `GEMINI_API_KEY`.
+  - If both are present, `GOOGLE_API_KEY` wins and Atlas emits a warning.
+- **`oauth_adc`**
+  - Uses Google Application Default Credentials (ADC) or an explicitly provided OAuth bearer token source.
+  - Atlas does **not** silently fall back to API key auth when `oauth_adc` is selected.
+  - If credentials are unavailable, Atlas fails clearly with remediation guidance.
+
+### Google config shape
+
+```toml
+[model]
+provider = "google"
+model = "gemini-3-flash-preview"
+
+[model.google]
+api_mode = "native"           # native | openai_compatible
+auth_method = "api_key"       # api_key | oauth_adc
+base_url = ""                 # optional override
+```
+
+### Backward compatibility aliases
+
+Legacy provider IDs are still accepted and normalized internally:
+
+- `google-gemini` -> `provider = "google"` + `api_mode = "native"`
+- `gemini-openai-compatible` -> `provider = "google"` + `api_mode = "openai_compatible"`
+- `google-gemini-openai-compatible` -> `provider = "google"` + `api_mode = "openai_compatible"`
+- `google` and `gemini` resolve to `provider = "google"`
 
 ## Explicit Configurations
 
 ### Anthropic native auth
 The `anthropic` provider uses Anthropic's native `anthropic_messages` API mode. Instead of a standard Bearer token, it automatically configures the correct HTTP headers required by Anthropic:
 - `x-api-key`: Uses your `ANTHROPIC_API_KEY`.
-- `anthropic-version`: Automatically set to the current default (e.g., `2023-06-01`).
+- `anthropic-version`: Automatically set to the current default (for example `2023-06-01`).
 - `content-type`: `application/json`.
-
-### Gemini native vs Gemini OpenAI-compatible
-Atlas supports two different operational modes for Google Gemini:
-- **`google-gemini` (Native)**: This is the default. It uses the `x-goog-api-key` header and formats payloads according to the native Gemini API. If both `GOOGLE_API_KEY` and `GEMINI_API_KEY` exist, Google's documentation dictates that `GOOGLE_API_KEY` takes precedence. Atlas will warn you if this conflict is detected.
-- **`gemini-openai-compatible`**: This uses the `Authorization: Bearer <key>` format and points to Google's specialized `v1beta/openai/` compatibility endpoint. It processes standard OpenAI chat completion payloads.
 
 ### NVIDIA cloud vs local/on-prem
 NVIDIA NIM deployments differ between cloud and local:
-- **`nvidia` (Cloud)**: Connects to NVIDIA's API catalog. Requires an `NVIDIA_API_KEY`. (Note: `NGC_API_KEY` is not used for standard inference).
-- **`nvidia-local` (On-prem)**: Connects to a self-hosted NIM instance. You must provide a base URL. By default, it requires no authentication key, but respects `NVIDIA_LOCAL_API_KEY` if you have configured an auth proxy.
+- **`nvidia` (Cloud)**: Connects to NVIDIA's API catalog. Requires an `NVIDIA_API_KEY`. (`NGC_API_KEY` is not used for standard inference.)
+- **`nvidia-local` (On-prem)**: Connects to a self-hosted NIM instance. You must provide a base URL. By default, it requires no authentication key, but respects `NVIDIA_LOCAL_API_KEY` if you configured an auth proxy.
 
 ### LM Studio local setup
 LM Studio is supported as a first-class local provider through OpenAI-compatible HTTP endpoints.
@@ -66,7 +109,7 @@ Use the `openai-compatible` or `custom` providers for self-hosted, enterprise pr
 atlas model set openai-compatible my-model
 ```
 
-Set the base URL via env var `ATLAS_OPENAI_COMPATIBLE_BASE_URL` or in `.atlas/config.toml`:
+Set the base URL in `.atlas/config.toml`:
 
 ```toml
 [model]
@@ -77,7 +120,7 @@ model = "my-model"
 base_url = "https://my-api.example.com/v1"
 ```
 
-**Strict Isolation:** These providers use dedicated keys (`ATLAS_OPENAI_COMPATIBLE_API_KEY` or `ATLAS_CUSTOM_API_KEY`) and **never** fall back to `OPENAI_API_KEY` or any other hosted provider's key. This protects your primary OpenAI credits from being accidentally leaked to a third-party server.
+These providers use dedicated keys (`ATLAS_OPENAI_COMPATIBLE_API_KEY` or `ATLAS_CUSTOM_API_KEY`) and **never** fall back to `OPENAI_API_KEY` or any other hosted provider key.
 
 ## Legacy and Internal Providers
 
@@ -99,10 +142,10 @@ Shows user-facing providers, auth style, and default models. Run with `--include
 ```bash
 atlas model current
 ```
-Shows the effective provider, model, API mode, base URL, and API key status (env var name and source, **never the key itself**).
+Shows effective provider, mode, auth status, base URL, and model. Secrets are never printed.
 
 ### Interactive configuration
 ```bash
 atlas model configure
 ```
-Walks through selecting a provider, entering an API key (visible while typing, redacted on save), and picking a model.
+Walks through selecting a provider and model. Keys are saved to `.env.atlas`, not `config.toml`.

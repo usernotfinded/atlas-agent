@@ -88,7 +88,8 @@ def test_manual_smoke_ux_regression(tmp_path, monkeypatch):
     # 10. atlas model current
     code, out, err = run_cmd("atlas model current", cwd=tmp_path)
     assert code == 0
-    assert "provider: openrouter" in out
+    assert "provider: OpenRouter" in out
+    assert "provider_id: openrouter" in out
     assert "model:    openai/gpt-5.5" in out
 
     # 11. check doctor output matches spec

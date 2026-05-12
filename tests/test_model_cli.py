@@ -36,7 +36,9 @@ class TestModelProviders:
         assert "kimi" in out
         assert "nvidia" in out
         assert "xai" in out
-        assert "google-gemini" in out
+        assert "google" in out
+        assert "Google Gemini" in out
+        assert "google-gemini" not in out
         assert "huggingface" in out
         assert "local" in out
         assert "custom" in out
@@ -78,8 +80,9 @@ class TestModelCurrent:
         out = capsys.readouterr().out
         assert "provider:" in out
         assert "model:" in out
+        assert "mode:" in out
         assert "api_mode:" in out
-        assert "api_key:" in out
+        assert "auth:" in out
         # Must not leak raw API key
         assert "sk-" not in out
 
@@ -99,6 +102,15 @@ class TestModelCurrent:
         assert code == 0
         out = capsys.readouterr().out
         assert "not required" in out
+
+    def test_current_shows_google_mode_and_provider_label(self, workspace, capsys):
+        main(["model", "set", "google", "gemini-3.1-pro-preview"])
+        capsys.readouterr()
+        code = main(["model", "current"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "provider: Google Gemini" in out
+        assert "mode:     Native Gemini API" in out
 
 
 class TestModelSet:

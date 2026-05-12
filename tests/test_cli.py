@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import atlas_agent
 from atlas_agent.cli import main
+from atlas_agent.config import get_config
 
 
 def test_atlas_help_works(capsys) -> None:
@@ -110,3 +111,110 @@ def test_atlas_run_once_live_fails_safely_by_default(
     output = capsys.readouterr().out
     assert "live result: rejected" in output
     assert "ENABLE_LIVE_TRADING must be true" in output
+
+
+def test_atlas_setup_guided_with_mocked_wizard(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", ".", "--template", "routine-trader"]) == 0
+    capsys.readouterr()
+
+    def _fake_wizard(state):
+        state.provider = "openai"
+        state.model = "gpt-5.5"
+        state.credentials_configured = True
+        return True
+
+    with patch("atlas_agent.setup.wizard.is_interactive", return_value=True), patch(
+        "atlas_agent.setup.wizard.run_wizard", side_effect=_fake_wizard
+    ), patch("builtins.input", side_effect=["1", "AAPL"]):
+        code = main(["setup"])
+
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "Setup readiness summary" in output
+    assert "DEMO-SYMBOL" not in output
+
+    config = get_config()
+    assert config.model.provider == "openai"
+    assert config.model.model == "gpt-5.5"
+    assert config.market.symbol == "AAPL"
+    assert config.trading_mode == "paper"
+    assert config.enable_live_trading is False
+    assert (tmp_path / ".atlas" / "discipline.md").exists()
+    assert not list((tmp_path / ".atlas" / "backtests").rglob("*.json"))
+
+
+def test_atlas_setup_secret_hygiene_with_mocked_wizard(tmp_path, monkeypatch, capsys):
+    from atlas_agent.config import set_secret
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", ".", "--template", "routine-trader"]) == 0
+    capsys.readouterr()
+
+    def _fake_wizard(state):
+        state.provider = "openrouter"
+        state.model = "openai/gpt-5.5"
+        state.credentials_configured = True
+        set_secret("OPENROUTER_API_KEY", "sk-or-setup-test")
+        return True
+
+    with patch("atlas_agent.setup.wizard.is_interactive", return_value=True), patch(
+        "atlas_agent.setup.wizard.run_wizard", side_effect=_fake_wizard
+    ), patch("builtins.input", side_effect=["1", "AAPL"]):
+        code = main(["setup"])
+
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "sk-or-setup-test" not in output
+
+    config_toml = (tmp_path / ".atlas" / "config.toml").read_text(encoding="utf-8")
+    assert "sk-or-setup-test" not in config_toml
+
+    env_atlas = (tmp_path / ".env.atlas").read_text(encoding="utf-8")
+    assert "OPENROUTER_API_KEY=sk-or-setup-test" in env_atlas
+
+
+def test_atlas_setup_cancelled_returns_2(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", ".", "--template", "routine-trader"]) == 0
+    capsys.readouterr()
+
+    with patch("atlas_agent.setup.wizard.is_interactive", return_value=True), patch(
+        "atlas_agent.setup.wizard.run_wizard", return_value=False
+    ):
+        code = main(["setup"])
+
+    assert code == 2
+    assert "Setup cancelled." in capsys.readouterr().out
+
+
+def test_atlas_setup_discipline_requires_confirmation(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", ".", "--template", "routine-trader"]) == 0
+    capsys.readouterr()
+
+    def _fake_wizard(state):
+        state.provider = "openai"
+        state.model = "gpt-5.5"
+        state.credentials_configured = True
+        return True
+
+    with patch("atlas_agent.setup.wizard.is_interactive", return_value=True), patch(
+        "atlas_agent.setup.wizard.run_wizard", side_effect=_fake_wizard
+    ), patch("builtins.input", side_effect=["3"]):
+        code = main(["setup"])
+
+    assert code == 2
+    assert not (tmp_path / ".atlas" / "discipline.md").exists()
+
+
+def test_atlas_setup_noninteractive_fails_closed(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", ".", "--template", "routine-trader"]) == 0
+    capsys.readouterr()
+
+    with patch("atlas_agent.setup.wizard.is_interactive", return_value=False):
+        code = main(["setup"])
+
+    assert code == 2
+    assert "requires an interactive terminal" in capsys.readouterr().out.lower()

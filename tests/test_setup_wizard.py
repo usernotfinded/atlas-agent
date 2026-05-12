@@ -16,8 +16,54 @@ def test_wizard_hides_local_command_and_null():
     choice_ids = [c[0] for c in app.choices]
     assert "local_command" not in choice_ids
     assert "null" not in choice_ids
+    assert "google" in choice_ids
+    assert "google-gemini" not in choice_ids
+    assert "gemini-openai-compatible" not in choice_ids
     assert "lmstudio" in choice_ids
     assert "openai-compatible" in choice_ids
+
+def test_wizard_google_provider_opens_mode_step():
+    state = WizardState()
+    app = WizardApplication(state)
+    app.current_step = "provider"
+    app.state.provider = "google"
+    app.next_step()
+    assert app.current_step == "google_api_mode"
+    assert "Native Gemini API" in app.title
+    assert "OpenAI-compatible endpoint" in app.title
+
+def test_wizard_google_oauth_does_not_ask_for_api_key(monkeypatch):
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
+    monkeypatch.delenv("GOOGLE_OAUTH_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("ATLAS_GOOGLE_OAUTH_ACCESS_TOKEN", raising=False)
+
+    state = WizardState(provider="google")
+    app = WizardApplication(state)
+    app.current_step = "google_auth_method"
+    app.state.google_auth_method = "oauth_adc"
+    app.next_step()
+    assert app.current_step == "google_oauth_adc_check"
+    assert "readiness check" in app.title.lower()
+    assert "Enter GOOGLE_API_KEY" not in app.title
+
+def test_wizard_lmstudio_does_not_require_api_key_step():
+    state = WizardState(provider="lmstudio")
+    app = WizardApplication(state)
+    app.current_step = "provider"
+    app.next_step()
+    assert app.current_step == "custom_endpoint"
+    app.next_step()
+    assert app.current_step == "model_input"
+
+def test_wizard_openai_compatible_prompts_optional_key_after_base_url():
+    state = WizardState(provider="openai-compatible")
+    app = WizardApplication(state)
+    app.current_step = "provider"
+    app.next_step()
+    assert app.current_step == "custom_endpoint"
+    app.next_step()
+    assert app.current_step == "optional_api_key_choice"
+    assert any("Provide API key" in label for _, label in app.choices)
 
 def test_wizard_api_key_input_is_visible():
     state = WizardState()

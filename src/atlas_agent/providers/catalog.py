@@ -123,6 +123,19 @@ _CUSTOM_MODELS = (
     ModelOption("custom", label="Custom"),
 )
 
+GOOGLE_PROVIDER_ID = "google"
+GOOGLE_NATIVE_PROVIDER_ALIASES: tuple[str, ...] = (
+    "google",
+    "gemini",
+    "google-gemini",
+    "google-gemini-native",
+)
+GOOGLE_OPENAI_COMPATIBLE_PROVIDER_ALIASES: tuple[str, ...] = (
+    "gemini-openai-compatible",
+    "google-gemini-openai",
+    "google-gemini-openai-compatible",
+)
+
 _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
     p.id: p
     for p in (
@@ -219,37 +232,19 @@ _PROVIDER_PROFILES: dict[str, ProviderProfile] = {
             docs_url="https://platform.moonshot.ai/docs",
         ),
         ProviderProfile(
-            id="google-gemini",
-            display_name="Google Gemini (Native)",
+            id=GOOGLE_PROVIDER_ID,
+            display_name="Google Gemini",
             status="stable",
             api_mode="gemini_native",
             base_url="https://generativelanguage.googleapis.com/v1beta",
             base_url_required=False,
             model_required=True,
             key_required=True,
-            canonical_env_var="GEMINI_API_KEY",
-            accepted_env_aliases=("GOOGLE_API_KEY",),
+            canonical_env_var="GOOGLE_API_KEY",
+            accepted_env_aliases=("GEMINI_API_KEY",),
             env_precedence=("GOOGLE_API_KEY", "GEMINI_API_KEY"),
             auth_header_type="x-goog-api-key",
-            aliases=("gemini", "google"),
-            models=_GOOGLE_MODELS,
-            default_model="gemini-3.1-pro-preview",
-            docs_url="https://ai.google.dev/gemini-api/docs",
-        ),
-        ProviderProfile(
-            id="gemini-openai-compatible",
-            display_name="Google Gemini (OpenAI-compatible)",
-            status="stable",
-            api_mode="chat_completions",
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            base_url_required=False,
-            model_required=True,
-            key_required=True,
-            canonical_env_var="GEMINI_API_KEY",
-            accepted_env_aliases=("GOOGLE_API_KEY",),
-            env_precedence=("GOOGLE_API_KEY", "GEMINI_API_KEY"),
-            auth_header_type="bearer",
-            aliases=("google-gemini-openai",),
+            aliases=GOOGLE_NATIVE_PROVIDER_ALIASES + GOOGLE_OPENAI_COMPATIBLE_PROVIDER_ALIASES,
             models=_GOOGLE_MODELS,
             default_model="gemini-3.1-pro-preview",
             docs_url="https://ai.google.dev/gemini-api/docs",
@@ -470,6 +465,21 @@ def normalize_provider_id(provider_id_or_alias: str) -> str:
     """Return the canonical provider ID, or the input unchanged if unknown."""
     profile = get_provider_profile(provider_id_or_alias)
     return profile.id if profile else provider_id_or_alias.lower().strip()
+
+
+def is_google_provider_id(provider_id_or_alias: str) -> bool:
+    """Return True when a provider id/alias resolves to canonical Google Gemini."""
+    return normalize_provider_id(provider_id_or_alias) == GOOGLE_PROVIDER_ID
+
+
+def infer_google_api_mode(provider_id_or_alias: str) -> str | None:
+    """Infer google mode from a legacy provider id/alias, if present."""
+    key = provider_id_or_alias.lower().strip()
+    if key in GOOGLE_OPENAI_COMPATIBLE_PROVIDER_ALIASES:
+        return "openai_compatible"
+    if key in GOOGLE_NATIVE_PROVIDER_ALIASES:
+        return "native"
+    return None
 
 
 def provider_model_ids(provider_id: str) -> list[str]:

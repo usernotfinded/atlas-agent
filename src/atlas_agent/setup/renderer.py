@@ -47,9 +47,18 @@ def render_wizard_screen(
 
 def get_summary_lines(state: WizardState, current_step: str) -> List[Tuple[str, str]]:
     steps_order = [
-        "setup_mode", "provider", "custom_endpoint", "api_key", "model", 
-        "messaging", "workspace_path", "trust_mode", 
-        "broker_mode", "update_channel"
+        "setup_mode",
+        "provider",
+        "google_api_mode",
+        "google_auth_method",
+        "custom_endpoint",
+        "api_key",
+        "model",
+        "messaging",
+        "workspace_path",
+        "trust_mode",
+        "broker_mode",
+        "update_channel",
     ]
     
     relevant_steps = []
@@ -57,10 +66,14 @@ def get_summary_lines(state: WizardState, current_step: str) -> List[Tuple[str, 
         if step == current_step:
             break
         # Logic to skip irrelevant steps in summary
-        if step == "custom_endpoint" and state.provider not in ["custom", "openai_compatible"]:
+        if step in {"google_api_mode", "google_auth_method"} and state.provider != "google":
+            continue
+        if step == "custom_endpoint" and state.provider not in ["custom", "openai-compatible", "lmstudio"]:
             continue
         if step == "api_key":
             if state.provider in ["null", "local_command"]:
+                continue
+            if state.provider == "google" and state.google_auth_method == "oauth_adc":
                 continue
             relevant_steps.append(step)
             continue

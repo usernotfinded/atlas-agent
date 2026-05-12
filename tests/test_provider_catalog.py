@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from atlas_agent.providers.catalog import (
+    infer_google_api_mode,
     list_provider_profiles,
     get_provider_profile,
     normalize_provider_id,
@@ -21,7 +22,9 @@ def test_list_includes_major_providers() -> None:
     assert "kimi" in ids
     assert "nvidia" in ids
     assert "xai" in ids
-    assert "google-gemini" in ids
+    assert "google" in ids
+    assert "google-gemini" not in ids
+    assert "gemini-openai-compatible" not in ids
     assert "huggingface" in ids
     assert "lmstudio" in ids
     assert "openai-compatible" in ids
@@ -35,8 +38,11 @@ def test_alias_normalization() -> None:
     assert normalize_provider_id("moonshot") == "kimi"
     assert normalize_provider_id("nim") == "nvidia"
     assert normalize_provider_id("grok") == "xai"
-    assert normalize_provider_id("gemini") == "google-gemini"
-    assert normalize_provider_id("google") == "google-gemini"
+    assert normalize_provider_id("gemini") == "google"
+    assert normalize_provider_id("google") == "google"
+    assert normalize_provider_id("google-gemini") == "google"
+    assert normalize_provider_id("gemini-openai-compatible") == "google"
+    assert normalize_provider_id("google-gemini-openai-compatible") == "google"
     assert normalize_provider_id("hf") == "huggingface"
     assert normalize_provider_id("ollama") == "local"
     assert normalize_provider_id("lm-studio") == "lmstudio"
@@ -117,10 +123,17 @@ def test_huggingface_uses_hf_token() -> None:
 
 def test_gemini_env_var_order() -> None:
     """GOOGLE_API_KEY takes precedence over GEMINI_API_KEY."""
-    p = get_provider_profile("google-gemini")
+    p = get_provider_profile("google")
     assert p is not None
     assert p.env_precedence[0] == "GOOGLE_API_KEY"
     assert "GEMINI_API_KEY" in p.env_precedence
+
+
+def test_gemini_mode_inference_for_legacy_ids() -> None:
+    assert infer_google_api_mode("google-gemini") == "native"
+    assert infer_google_api_mode("gemini") == "native"
+    assert infer_google_api_mode("gemini-openai-compatible") == "openai_compatible"
+    assert infer_google_api_mode("google-gemini-openai-compatible") == "openai_compatible"
 
 
 def test_custom_provider_key() -> None:

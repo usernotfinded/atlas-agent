@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Optional, Set
+from typing import Any, Literal, Optional, Set
 
 from pydantic import BaseModel, Field, SecretStr, model_validator
 
@@ -51,9 +51,15 @@ def parse_csv_set(value: str | None) -> set[str]:
 
 
 class ModelConfig(BaseModel):
+    class GoogleModelSettings(BaseModel):
+        api_mode: Optional[Literal["native", "openai_compatible"]] = None
+        auth_method: Optional[Literal["api_key", "oauth_adc"]] = None
+        base_url: Optional[str] = None
+
     provider: str = "openai"
     model: str = "gpt-4o"
     base_url: Optional[str] = None
+    google: GoogleModelSettings = Field(default_factory=GoogleModelSettings)
     api_key_env: Optional[str] = None
     timeout: float = 30.0
     max_retries: int = 3

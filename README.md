@@ -63,20 +63,21 @@ Atlas is currently in active development. The current status of major features i
 # Install in editable mode
 pip install -e .
 
-# Start the setup wizard
-atlas
+# Create a workspace
+atlas init <workspace> --template routine-trader
+cd <workspace>
+
+# Guided first-run setup
+atlas setup
 
 # Check your configuration
 atlas validate
-
-# Configure your trading symbol (example only; choose your own)
-atlas config set market.symbol AAPL
 
 # Run your first paper-trading cycle
 atlas run --mode paper
 ```
 
-1. **`atlas`**: Running bare `atlas` for the first time opens the interactive setup wizard. It collects your provider and broker credentials securely.
+1. **`atlas setup`**: Guided setup walks through provider/model/auth, discipline profile, symbol selection, and a final readiness summary.
 2. **`atlas run`**: Execution is explicit. Use `--mode paper` for safety and simulation. Live trading is designed to prevent orders without explicit configuration and multi-stage gates.
 
 ## Demos

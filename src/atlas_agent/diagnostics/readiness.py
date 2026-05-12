@@ -106,6 +106,13 @@ def check_provider(config: AtlasConfig) -> list[ReadinessCheck]:
             status="info",
             message="Not required for this provider."
         ))
+    elif runtime.get("auth_method") == "oauth_adc" and runtime.get("credential_source") != "missing":
+        checks.append(ReadinessCheck(
+            id="provider.api_key",
+            label="Credentials",
+            status="pass",
+            message=f"OAuth/ADC configured ({runtime.get('credential_source')})",
+        ))
     elif key_source in ("process_env", "env_atlas"):
         env_var_used = runtime["api_key_env_var_used"]
         checks.append(ReadinessCheck(
@@ -115,7 +122,10 @@ def check_provider(config: AtlasConfig) -> list[ReadinessCheck]:
             message=f"Configured ({env_var_used})"
         ))
     else:
-        expected_vars = ", ".join(profile.env_precedence)
+        if runtime.get("auth_method") == "oauth_adc":
+            expected_vars = "GOOGLE_APPLICATION_CREDENTIALS or gcloud ADC"
+        else:
+            expected_vars = ", ".join(profile.env_precedence)
         checks.append(ReadinessCheck(
             id="provider.api_key",
             label="API key",

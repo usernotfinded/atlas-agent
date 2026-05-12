@@ -28,6 +28,9 @@ def clean_env(monkeypatch):
         "HUGGINGFACEHUB_API_TOKEN",
         "ATLAS_CUSTOM_API_KEY",
         "CUSTOM_API_KEY",
+        "ATLAS_GOOGLE_OAUTH_ACCESS_TOKEN",
+        "GOOGLE_OAUTH_ACCESS_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
     ):
         monkeypatch.delenv(key, raising=False)
 
@@ -175,7 +178,12 @@ def test_gemini_google_key_takes_precedence(monkeypatch) -> None:
     monkeypatch.setenv("GOOGLE_API_KEY", "sk-google")
     monkeypatch.setenv("GEMINI_API_KEY", "sk-gemini")
     config = AtlasConfig()
-    result = resolve_runtime_provider(config, provider="google-gemini")
+    result = resolve_runtime_provider(config, provider="google")
+    assert result["provider"] == "google"
+    assert result["provider_label"] == "Google Gemini"
+    assert result["api_mode"] == "gemini_native"
+    assert result["auth_method"] == "api_key"
+    assert result["auth_header_type"] == "x-goog-api-key"
     assert result["api_key"] == "sk-google"
     assert result["api_key_env_var_used"] == "GOOGLE_API_KEY"
     assert len(result["warnings"]) == 1
@@ -185,10 +193,64 @@ def test_gemini_google_key_takes_precedence(monkeypatch) -> None:
 def test_gemini_uses_gemini_key_when_google_missing(monkeypatch) -> None:
     monkeypatch.setenv("GEMINI_API_KEY", "sk-gemini")
     config = AtlasConfig()
-    result = resolve_runtime_provider(config, provider="google-gemini")
+    result = resolve_runtime_provider(config, provider="google")
     assert result["api_key"] == "sk-gemini"
     assert result["api_key_env_var_used"] == "GEMINI_API_KEY"
     assert len(result["warnings"]) == 0
+
+
+def test_legacy_openai_compatible_gemini_provider_normalizes_and_sets_mode() -> None:
+    config = AtlasConfig()
+    result = resolve_runtime_provider(config, provider="gemini-openai-compatible")
+    assert result["provider"] == "google"
+    assert result["api_mode"] == "openai_compatible"
+    assert result["mode_label"] == "OpenAI-compatible endpoint"
+    assert result["auth_header_type"] == "none"
+    assert result["base_url"].endswith("/v1beta/openai/")
+
+
+def test_google_configured_openai_mode_uses_bearer(monkeypatch) -> None:
+    monkeypatch.setenv("GOOGLE_API_KEY", "sk-google")
+    config = AtlasConfig()
+    config.model.provider = "google"
+    config.model.google.api_mode = "openai_compatible"
+    config.model.google.auth_method = "api_key"
+    result = resolve_runtime_provider(config)
+    assert result["provider"] == "google"
+    assert result["api_mode"] == "openai_compatible"
+    assert result["auth_header_type"] == "bearer"
+    assert result["api_key_env_var_used"] == "GOOGLE_API_KEY"
+
+
+def test_google_oauth_adc_missing_fails_clearly() -> None:
+    config = AtlasConfig()
+    config.model.provider = "google"
+    config.model.google.api_mode = "native"
+    config.model.google.auth_method = "oauth_adc"
+    result = resolve_runtime_provider(config)
+    assert result["provider"] == "google"
+    assert result["auth_method"] == "oauth_adc"
+    assert result["credential_source"] == "missing"
+    assert result["auth_header_type"] == "none"
+    assert result["api_key"] == ""
+    assert result["errors"]
+    assert "credentials are unavailable" in result["errors"][0].lower()
+
+
+def test_google_oauth_adc_uses_explicit_token_without_api_key_fallback(monkeypatch) -> None:
+    monkeypatch.setenv("GOOGLE_API_KEY", "sk-google")
+    monkeypatch.setenv("ATLAS_GOOGLE_OAUTH_ACCESS_TOKEN", "oauth-token")
+    config = AtlasConfig()
+    config.model.provider = "google"
+    config.model.google.api_mode = "native"
+    config.model.google.auth_method = "oauth_adc"
+    result = resolve_runtime_provider(config)
+    assert result["provider"] == "google"
+    assert result["auth_method"] == "oauth_adc"
+    assert result["credential_source"] == "env:ATLAS_GOOGLE_OAUTH_ACCESS_TOKEN"
+    assert result["auth_header_type"] == "oauth_bearer"
+    # oauth_adc mode must not switch to API-key auth semantics.
+    assert result["api_key_env_var_used"] == ""
 
 
 def test_huggingface_uses_hf_token(monkeypatch) -> None:

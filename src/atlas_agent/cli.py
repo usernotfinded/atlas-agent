@@ -106,6 +106,7 @@ It provides market research, paper workflows, and deterministic risk gates.
     epilog = """
 Core Commands:
   atlas init          - Initialize a new workspace
+  atlas setup         - Guided end-to-end setup (provider, discipline, symbol, readiness)
   atlas validate      - Check configuration and safety gates
   atlas agent status  - Show current agent state and mode
   atlas agent plan    - Explain the next agent cycle
@@ -132,6 +133,7 @@ Safety First:
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--json", action="store_true", help="Output readiness report as JSON")
     subparsers.add_parser("configure")
+    subparsers.add_parser("setup")
 
     config_parser = subparsers.add_parser("config")
     config_sub = config_parser.add_subparsers(dest="config_command")
@@ -788,7 +790,7 @@ def config_has_workspace_context(config: AtlasConfig) -> bool:
 def _command_requires_workspace(args: argparse.Namespace) -> bool:
     if args.command is None:
         return False
-    if args.command in {"init", "workspace", "models", "validate", "deploy", "configure", "discipline"}:
+    if args.command in {"init", "workspace", "models", "validate", "deploy", "configure", "setup", "discipline"}:
         return False
     if args.command == "providers" and args.providers_command == "list":
         return False
@@ -869,7 +871,7 @@ def _print_workspace_setup_guidance(*, warning: str | None = None, stream=None) 
     print("Create one:", file=output)
     print("  atlas init my-trader --template routine-trader --set-default", file=output)
     print("  cd my-trader", file=output)
-    print("  atlas", file=output)
+    print("  atlas setup", file=output)
     print("", file=output)
     print("Or set a default workspace:", file=output)
     print("  atlas workspace set <path>", file=output)
@@ -1010,6 +1012,7 @@ def _print_first_run_onboarding(
     print("")
     if workspace_configured:
         print("Next commands:")
+        print("  atlas setup")
         print("  atlas validate")
         print("  atlas run --mode paper")
         print(f"  {YELLOW}atlas update{RESET}")
@@ -1019,12 +1022,242 @@ def _print_first_run_onboarding(
     else:
         print("Next commands:")
         print("  atlas init <workspace>")
-        print("  atlas configure")
+        print("  cd <workspace>")
+        print("  atlas setup")
         print("  atlas validate")
         print("  atlas run --mode paper")
         print(f"  {YELLOW}atlas update{RESET}")
     print("")
     print("Bare `atlas` no longer starts autonomous execution. Use `atlas run` explicitly.")
+
+
+def _prompt_yes_no(question: str, *, default_no: bool = True) -> bool:
+    suffix = " [y/N]: " if default_no else " [Y/n]: "
+    try:
+        value = input(question + suffix).strip().lower()
+    except (EOFError, OSError):
+        return not default_no
+    if not value:
+        return not default_no
+    return value in {"y", "yes"}
+
+
+def _ensure_workspace_for_setup(resolution: WorkspaceResolution) -> tuple[WorkspaceResolution, int | None]:
+    """Ensure setup runs inside a workspace.
+
+    Returns updated resolution and optional early return code.
+    """
+    if resolution.path is not None:
+        return resolution, None
+
+    from atlas_agent.setup.wizard import is_interactive
+
+    if not is_interactive():
+        _print_workspace_setup_guidance(warning=resolution.warning, stream=sys.stdout)
+        return resolution, 2
+
+    print("No Atlas workspace is currently configured for this directory.")
+    if not _prompt_yes_no("Initialize the current directory as an Atlas workspace using template 'routine-trader'?"):
+        print("Setup cancelled before workspace initialization.")
+        return resolution, 2
+
+    try:
+        init_result = init_workspace(".", template=DEFAULT_TEMPLATE, force=False)
+    except WorkspaceInitError as exc:
+        print(f"Workspace initialization failed: {exc}")
+        return resolution, 2
+
+    if init_result.path is not None:
+        os.chdir(init_result.path)
+    print(f"Workspace ready: {init_result.path}")
+    return resolve_workspace(None), None
+
+
+def _configure_discipline_for_setup(workspace_root: Path) -> tuple[bool, str]:
+    from atlas_agent.ai.discipline import (
+        default_discipline_text,
+        discipline_status,
+        sanitize_discipline_text,
+        validate_discipline_text,
+        write_user_discipline,
+    )
+
+    status = discipline_status(workspace_root)
+    if status["configured"] and status["valid"]:
+        return True, "existing"
+
+    print("Discipline profile is required for agentic workflows.")
+    print("You must define the agent's discipline/personality/mental model before paper run workflows.")
+    print("Options:")
+    print("  1. Create a safe template now (you must review/customize it).")
+    print("  2. Paste a full discipline markdown profile now.")
+    print("  3. Cancel setup.")
+
+    while True:
+        try:
+            choice = input("Select option [1/2/3]: ").strip()
+        except (EOFError, OSError):
+            return False, "cancelled"
+        if choice == "1":
+            template = default_discipline_text()
+            write_user_discipline(workspace_root, template)
+            ok, errors = validate_discipline_text(template)
+            if not ok:
+                print("Template discipline validation failed:")
+                for err in errors:
+                    print(f"- {err}")
+                return False, "invalid_template"
+            print("Discipline template written to .atlas/discipline.md")
+            print("Review and customize this file before production usage.")
+            return True, "template"
+        if choice == "2":
+            print("Paste discipline markdown. End input with a single line containing only `.`")
+            lines: list[str] = []
+            while True:
+                try:
+                    line = input()
+                except (EOFError, OSError):
+                    line = "."
+                if line.strip() == ".":
+                    break
+                lines.append(line)
+            raw_text = "\n".join(lines).strip()
+            if not raw_text:
+                print("Discipline text cannot be empty.")
+                continue
+            content = sanitize_discipline_text(raw_text)
+            ok, errors = validate_discipline_text(content)
+            if not ok:
+                print("Discipline profile is invalid:")
+                for err in errors:
+                    print(f"- {err}")
+                print("Please retry.")
+                continue
+            write_user_discipline(workspace_root, content)
+            print("Discipline profile saved to .atlas/discipline.md")
+            return True, "manual"
+        if choice == "3":
+            return False, "cancelled"
+        print("Invalid selection. Choose 1, 2, or 3.")
+
+
+def _configure_symbol_for_setup(config: AtlasConfig, provided_symbol: str | None = None) -> tuple[bool, str]:
+    from atlas_agent.config import set_raw_value
+
+    current_symbol = (config.market.symbol or "").strip()
+    if provided_symbol:
+        symbol = provided_symbol.strip().upper()
+        if not symbol or symbol == "DEMO-SYMBOL":
+            return False, "invalid_symbol"
+        set_raw_value("market.symbol", symbol)
+        return True, symbol
+
+    if current_symbol and current_symbol != "DEMO-SYMBOL":
+        if _prompt_yes_no(f"Keep current trading symbol '{current_symbol}'?", default_no=False):
+            return True, current_symbol
+
+    while True:
+        try:
+            symbol = input("Enter trading symbol (example: AAPL): ").strip().upper()
+        except (EOFError, OSError):
+            return False, "cancelled"
+        if not symbol:
+            print("Symbol is required.")
+            continue
+        if symbol == "DEMO-SYMBOL":
+            print("DEMO-SYMBOL is reserved for tests/CI. Please enter a real symbol.")
+            continue
+        set_raw_value("market.symbol", symbol)
+        return True, symbol
+
+
+def _print_setup_readiness_summary(config: AtlasConfig) -> None:
+    from atlas_agent.diagnostics.readiness import run_diagnostics
+
+    report = run_diagnostics(config)
+    by_id = {check.id: check for check in report.checks}
+
+    def label(status: str) -> str:
+        if status == "pass":
+            return "[✓]"
+        if status == "warn":
+            return "[!]"
+        if status == "info":
+            return "[i]"
+        return "[x]"
+
+    provider_ok = by_id.get("provider.configured")
+    auth_ok = by_id.get("provider.api_key")
+    discipline_ok = by_id.get("discipline.configured")
+    symbol_ok = by_id.get("market.symbol")
+    audit_ok = by_id.get("audit.enabled")
+    risk_ok = by_id.get("risk.configured")
+    live_ok = by_id.get("live.disabled_by_default") or by_id.get("live.enabled")
+    workspace_ok = by_id.get("workspace.initialized")
+
+    print("\nSetup readiness summary:")
+    if workspace_ok:
+        print(f"{label(workspace_ok.status)} workspace: {workspace_ok.message}")
+    if provider_ok:
+        model_desc = f"{config.model.provider}/{config.model.model or '(missing model)'}"
+        print(f"{label(provider_ok.status)} provider/model: {model_desc}")
+    if auth_ok:
+        print(f"{label(auth_ok.status)} auth: {auth_ok.message}")
+    if discipline_ok:
+        print(f"{label(discipline_ok.status)} discipline: {discipline_ok.message}")
+    if symbol_ok:
+        print(f"{label(symbol_ok.status)} symbol: {symbol_ok.message}")
+    if audit_ok:
+        print(f"{label(audit_ok.status)} audit safety: {audit_ok.message}")
+    if risk_ok:
+        print(f"{label(risk_ok.status)} risk gates: {risk_ok.message}")
+    if live_ok:
+        print(f"{label(live_ok.status)} live trading disabled: {live_ok.message}")
+
+
+def _run_guided_setup(*, args: argparse.Namespace) -> int:
+    from atlas_agent.setup.state import WizardState
+    from atlas_agent.setup.wizard import is_interactive, run_wizard
+    from atlas_agent.config import get_config, set_raw_value
+
+    resolution = resolve_workspace(getattr(args, "workspace", None))
+    resolution, early_code = _ensure_workspace_for_setup(resolution)
+    if early_code is not None:
+        return early_code
+    if resolution.path is not None:
+        os.chdir(resolution.path)
+
+    if not is_interactive():
+        print("Non-interactive mode detected. `atlas setup` requires an interactive terminal.")
+        return 2
+
+    config_path = Path(".atlas/config.json")
+    state = WizardState.load(config_path)
+    if not run_wizard(state):
+        print("Setup cancelled.")
+        return 2
+
+    state.save(config_path)
+
+    workspace_root = Path(".")
+    discipline_ok, discipline_reason = _configure_discipline_for_setup(workspace_root)
+    if not discipline_ok:
+        print(f"Setup stopped: discipline step incomplete ({discipline_reason}).")
+        return 2
+
+    config_after_wizard = get_config()
+    symbol_ok, symbol_value = _configure_symbol_for_setup(config_after_wizard)
+    if not symbol_ok:
+        print(f"Setup stopped: symbol step incomplete ({symbol_value}).")
+        return 2
+
+    # Setup must never enable live trading by default.
+    set_raw_value("trading_mode", "paper")
+    set_raw_value("broker.enable_live_trading", False)
+
+    final_config = AtlasConfig.from_env()
+    _print_setup_readiness_summary(final_config)
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1165,7 +1398,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"Note: other provider keys detected but ignored: {', '.join(other_keys_found)}")
 
                 # Gemini-specific warning
-                if canonical == "google-gemini" and runtime.get("warnings"):
+                if canonical == "google" and runtime.get("warnings"):
                     for w in runtime["warnings"]:
                         print(f"Warning: {w}")
 
@@ -1199,6 +1432,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "model":
         from atlas_agent.config import get_config, set_raw_value
         from atlas_agent.providers.catalog import (
+            infer_google_api_mode,
             list_provider_profiles,
             get_provider_profile,
             normalize_provider_id,
@@ -1214,7 +1448,9 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 runtime = resolve_runtime_provider(config, profile.id)
                 key_status = runtime["api_key_source"]
-                if key_status == "missing" and profile.auth_header_type != "none" and profile.key_required:
+                if runtime.get("auth_method") == "oauth_adc":
+                    key_label = "oauth/adc" if runtime.get("credential_source") != "missing" else "oauth missing"
+                elif key_status == "missing" and profile.auth_header_type != "none" and profile.key_required:
                     key_label = "missing"
                 elif key_status in ("process_env", "env_atlas"):
                     key_label = "configured"
@@ -1247,20 +1483,30 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.model_command == "current":
             runtime = resolve_runtime_provider(config)
-            print(f"provider: {runtime['provider']}")
+            print(f"provider: {runtime.get('provider_label', runtime['provider'])}")
+            print(f"provider_id: {runtime['provider']}")
             print(f"model:    {runtime['model']}")
+            print(f"mode:     {runtime.get('mode_label', runtime['api_mode'])}")
             print(f"api_mode: {runtime['api_mode']}")
             print(f"base_url: {runtime['base_url'] or '(default)'}")
             key_source = runtime["api_key_source"]
             env_var = runtime["api_key_env_var_used"]
-            if key_source == "process_env":
-                print(f"api_key:  configured ({env_var} from process env)")
-            elif key_source == "env_atlas":
-                print(f"api_key:  configured ({env_var} from .env.atlas)")
-            elif key_source == "none":
-                print("api_key:  not required")
+            if runtime.get("auth_method") == "oauth_adc":
+                if runtime.get("credential_source") != "missing":
+                    print(f"auth:     OAuth/ADC configured ({runtime['credential_source']})")
+                else:
+                    print("auth:     OAuth/ADC missing")
             else:
-                print("api_key:  missing")
+                if key_source == "process_env":
+                    print(f"auth:     API key configured ({env_var} from process env)")
+                elif key_source == "env_atlas":
+                    print(f"auth:     API key configured ({env_var} from .env.atlas)")
+                elif key_source == "none":
+                    print("auth:     not required")
+                else:
+                    print("auth:     API key missing")
+            for err in runtime.get("errors", []):
+                print(f"error:    {err}")
             if runtime.get("warnings"):
                 for w in runtime["warnings"]:
                     print(f"warning:  {w}")
@@ -1269,17 +1515,21 @@ def main(argv: list[str] | None = None) -> int:
         if args.model_command == "set":
             # Two-arg form: atlas model set <provider> <model>
             if args.model is not None:
-                provider_id = normalize_provider_id(args.model_id.strip())
+                raw_provider_input = args.model_id.strip()
+                provider_id = normalize_provider_id(raw_provider_input)
                 model_id = args.model.strip()
             else:
                 raw = args.model_id.strip()
+                raw_provider_input = ""
                 # Support "openrouter:openai/gpt-5.5" or single-argument syntax
                 if ":" in raw and "/" in raw:
                     provider_part, model_part = raw.split(":", 1)
+                    raw_provider_input = provider_part
                     provider_id = normalize_provider_id(provider_part)
                     model_id = model_part
                 elif "/" in raw:
                     provider_part, model_part = raw.split("/", 1)
+                    raw_provider_input = provider_part
                     provider_id = normalize_provider_id(provider_part)
                     model_id = raw  # Keep full ID for openrouter-style models
                     # For non-openrouter providers, use just the model_part
@@ -1288,6 +1538,7 @@ def main(argv: list[str] | None = None) -> int:
                         model_id = model_part
                 else:
                     # No provider prefix; use current provider
+                    raw_provider_input = config.model.provider or "openai"
                     provider_id = normalize_provider_id(config.model.provider or "openai")
                     model_id = raw
 
@@ -1302,6 +1553,10 @@ def main(argv: list[str] | None = None) -> int:
 
             set_raw_value("model.provider", provider_id)
             set_raw_value("model.model", model_id)
+            if provider_id == "google":
+                inferred_google_mode = infer_google_api_mode(raw_provider_input)
+                if inferred_google_mode:
+                    set_raw_value("model.google.api_mode", inferred_google_mode)
             print(f"Model set to {provider_id}/{model_id}")
             return 0
 
@@ -1522,6 +1777,9 @@ def main(argv: list[str] | None = None) -> int:
     if config is None:
         print("Configuration error: unable to load AtlasConfig.", file=sys.stderr)
         return 1
+
+    if args.command == "setup":
+        return _run_guided_setup(args=args)
 
     if args.command == "configure":
         from atlas_agent.setup.wizard import run_wizard, is_interactive
