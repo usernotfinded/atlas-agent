@@ -1,5 +1,6 @@
 import pytest
 from pathlib import Path
+import tomllib
 
 def get_markdown_files():
     return list(Path(".").glob("**/*.md"))
@@ -34,11 +35,16 @@ def test_no_forbidden_terms(file_path):
     for term in forbidden:
         assert term not in content, f"Forbidden term '{term}' found in {file_path}"
 
+def _project_version() -> str:
+    with Path("pyproject.toml").open("rb") as f:
+        return tomllib.load(f)["project"]["version"]
+
+
 def test_readme_contains_v030_essentials():
     readme = Path("README.md").read_text(encoding="utf-8")
     
     essentials = [
-        "Current Status (v0.5.2)",
+        f"Current Status (v{_project_version()})",
         "atlas backtest run",
         "atlas broker sync",
         "read-only",
