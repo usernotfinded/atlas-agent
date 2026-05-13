@@ -46,3 +46,31 @@ def test_validate_json_is_read_only(clean_workspace, capsys):
     
     files_after = get_file_list(clean_workspace)
     assert files_before == files_after, "validate --json created files"
+
+
+def test_validate_invalid_config_reports_error_without_mutating_files(clean_workspace, capsys):
+    config_path = clean_workspace / ".atlas" / "config.toml"
+    secret_like_value = "sk-secret-validate-should-not-leak"
+    config_path.write_text(
+        f'[broker]\nenable_live_trading = "{secret_like_value}"\n',
+        encoding="utf-8",
+    )
+
+    def snapshot_files(d: Path) -> dict[str, bytes]:
+        return {
+            str(path.relative_to(d)): path.read_bytes()
+            for path in d.rglob("*")
+            if path.is_file()
+        }
+
+    before = snapshot_files(clean_workspace)
+    code = main(["validate"])
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    after = snapshot_files(clean_workspace)
+
+    assert code == 1
+    assert "Configuration error:" in combined
+    assert "Invalid Atlas config schema" in combined
+    assert secret_like_value not in combined
+    assert before == after, "validate mutated files when config is invalid"

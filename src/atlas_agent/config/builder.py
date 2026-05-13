@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from atlas_agent.config.schema import AtlasConfig
 from atlas_agent.config.store import get_raw_config
 from atlas_agent.config.secrets import load_atlas_secrets
+from atlas_agent.config.errors import format_schema_validation_error
 
 def get_effective_config(cli_overrides: Optional[Dict[str, Any]] = None) -> AtlasConfig:
     """
@@ -27,10 +28,8 @@ def get_effective_config(cli_overrides: Optional[Dict[str, Any]] = None) -> Atla
     # 4. Validate and build the effective read-only config
     try:
         config = AtlasConfig.model_validate(config_dict)
-    except ValidationError:
-        # Fallback to defaults or partial if invalid, though ideally we'd fail loudly
-        # For legacy compatibility, we return defaults. Real errors should be handled by validation.
-        config = AtlasConfig()
+    except ValidationError as exc:
+        raise format_schema_validation_error(exc) from exc
         
     return config
 

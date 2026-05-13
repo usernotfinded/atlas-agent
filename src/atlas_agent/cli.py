@@ -24,6 +24,7 @@ from atlas_agent.brokers.binance import BinanceBroker
 from atlas_agent.brokers.ccxt_adapter import CCXTBroker
 from atlas_agent.brokers.paper import PaperBroker
 from atlas_agent.config import AtlasConfig
+from atlas_agent.config.errors import AtlasConfigError
 from atlas_agent.execution.approval import ApprovalManager
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.execution.order import Order, OrderResult
@@ -693,6 +694,11 @@ def _emit_json_error(
     return 2
 
 
+def _emit_config_error(exc: Exception) -> int:
+    print(f"Configuration error: {exc}", file=sys.stderr)
+    return 1
+
+
 def _check_discipline_or_exit(config: AtlasConfig) -> None:
     """Exit with an error if the user discipline profile is missing or invalid."""
     from atlas_agent.ai.discipline import (
@@ -815,6 +821,8 @@ def _load_config_for_command(
         os.chdir(resolution.path)
     try:
         config = AtlasConfig.from_env()
+    except AtlasConfigError as exc:
+        return None, resolution, f"Configuration error: {exc}"
     except ValueError as exc:
         return None, resolution, f"Configuration error: {exc}"
 
@@ -1294,7 +1302,10 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.config_command == "show":
             if getattr(args, "effective", False):
-                config = get_config()
+                try:
+                    config = get_config()
+                except AtlasConfigError as exc:
+                    return _emit_config_error(exc)
                 payload = config.model_dump(mode="json")
                 def redact_secrets_in_dict(d):
                     for k, v in d.items():
@@ -1305,7 +1316,10 @@ def main(argv: list[str] | None = None) -> int:
                 redact_secrets_in_dict(payload)
                 print(json.dumps(payload, indent=2))
             else:
-                raw = get_raw_config()
+                try:
+                    raw = get_raw_config()
+                except AtlasConfigError as exc:
+                    return _emit_config_error(exc)
                 import tomlkit
                 def redact_recursive(d):
                     for k, v in d.items():
@@ -1325,7 +1339,10 @@ def main(argv: list[str] | None = None) -> int:
                 return 0
                 
             if getattr(args, "effective", False):
-                config = get_config()
+                try:
+                    config = get_config()
+                except AtlasConfigError as exc:
+                    return _emit_config_error(exc)
                 val = config.model_dump(mode="json")
                 try:
                     for p in args.key.split("."):
@@ -1378,7 +1395,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.config_command == "doctor":
             from atlas_agent.providers.catalog import get_provider_profile, normalize_provider_id
             from atlas_agent.providers.runtime import resolve_runtime_provider
-            config = get_config()
+            try:
+                config = get_config()
+            except AtlasConfigError as exc:
+                return _emit_config_error(exc)
             canonical = normalize_provider_id(config.model.provider or "")
             profile = get_provider_profile(canonical)
             runtime = resolve_runtime_provider(config)
@@ -1426,7 +1446,10 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.config_command == "check":
-            config = get_config()
+            try:
+                config = get_config()
+            except AtlasConfigError as exc:
+                return _emit_config_error(exc)
             payload = config.model_dump(mode="json")
             def redact_secrets_in_dict(d):
                 for k, v in d.items():
@@ -1454,7 +1477,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         from atlas_agent.providers.runtime import resolve_runtime_provider
         from atlas_agent.config.secrets import InvalidSecretValueError, set_secret
-        config = get_config()
+        try:
+            config = get_config()
+        except AtlasConfigError as exc:
+            return _emit_config_error(exc)
 
         if args.model_command == "providers":
             for profile in list_provider_profiles():

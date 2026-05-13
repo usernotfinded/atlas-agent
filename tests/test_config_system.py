@@ -139,3 +139,32 @@ def test_redaction(tmp_path, monkeypatch):
     from atlas_agent.config import redact_value
     assert redact_value("1234567890") == "1234...7890"
     assert redact_value("short") == "*****"
+
+
+def test_get_config_invalid_toml_raises_controlled_error(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".atlas").mkdir(exist_ok=True)
+    (tmp_path / ".atlas" / "config.toml").write_text(
+        'trading_mode = "paper"\n[model\nprovider = "openai"\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Invalid TOML syntax"):
+        get_config()
+
+
+def test_get_config_invalid_schema_raises_controlled_error_without_value(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".atlas").mkdir(exist_ok=True)
+    secret_like_value = "sk-secret-should-not-leak"
+    (tmp_path / ".atlas" / "config.toml").write_text(
+        f'[broker]\nenable_live_trading = "{secret_like_value}"\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError) as exc:
+        get_config()
+
+    message = str(exc.value)
+    assert "Invalid Atlas config schema" in message
+    assert secret_like_value not in message

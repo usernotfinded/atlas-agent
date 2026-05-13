@@ -13,6 +13,7 @@ else:
 
 from atlas_agent.config.paths import get_config_toml_path
 from atlas_agent.config.secrets import is_secret_key
+from atlas_agent.config.errors import format_toml_syntax_error
 
 def load_raw_config() -> dict:
     """Load raw TOML config as a dict using fast stdlib parser."""
@@ -20,8 +21,13 @@ def load_raw_config() -> dict:
     if not path.exists():
         return {}
     
-    with open(path, "rb") as f:
-        return tomllib.load(f)
+    try:
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+    except Exception as exc:
+        if exc.__class__.__name__ == "TOMLDecodeError":
+            raise format_toml_syntax_error(path, exc) from exc
+        raise
 
 def get_raw_config() -> dict:
     """Get the entire raw persisted config dict."""

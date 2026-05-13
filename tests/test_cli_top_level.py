@@ -203,6 +203,64 @@ def test_run_dry_run_alias(workspace):
         mock_plan.assert_called_once()
 
 
+def test_run_dry_run_invalid_toml_returns_controlled_config_error(workspace, capsys):
+    config_toml = workspace / ".atlas" / "config.toml"
+    config_toml.write_text(
+        'trading_mode = "paper"\n[model\nprovider = "openai"\n',
+        encoding="utf-8",
+    )
+
+    with patch("atlas_agent.agent.planner.get_agent_plan") as mock_plan:
+        code = main(["run", "--dry-run"])
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert code == 1
+    assert "Configuration error:" in combined
+    assert "Invalid TOML syntax" in combined
+    mock_plan.assert_not_called()
+
+
+def test_run_dry_run_invalid_schema_does_not_fallback_to_defaults(workspace, capsys):
+    secret_like_value = "sk-secret-runtime-should-not-leak"
+    config_toml = workspace / ".atlas" / "config.toml"
+    config_toml.write_text(
+        f'[broker]\nenable_live_trading = "{secret_like_value}"\n',
+        encoding="utf-8",
+    )
+
+    with patch("atlas_agent.agent.planner.get_agent_plan") as mock_plan:
+        code = main(["run", "--dry-run"])
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert code == 1
+    assert "Configuration error:" in combined
+    assert "Invalid Atlas config schema" in combined
+    assert secret_like_value not in combined
+    assert "gpt-4o" not in combined
+    mock_plan.assert_not_called()
+
+
+def test_model_current_invalid_schema_returns_controlled_error(workspace, capsys):
+    secret_like_value = "sk-secret-model-should-not-leak"
+    config_toml = workspace / ".atlas" / "config.toml"
+    config_toml.write_text(
+        f'[broker]\nenable_live_trading = "{secret_like_value}"\n',
+        encoding="utf-8",
+    )
+
+    code = main(["model", "current"])
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+
+    assert code == 1
+    assert "Configuration error:" in combined
+    assert "Invalid Atlas config schema" in combined
+    assert secret_like_value not in combined
+    assert "provider: " not in combined
+
+
 def test_existing_agent_commands_still_work(workspace):
     with patch("atlas_agent.agent.runner.run_agent") as mock_run:
         from atlas_agent.routines.routine_result import RoutineResult
