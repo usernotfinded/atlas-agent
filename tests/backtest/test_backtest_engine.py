@@ -3,6 +3,8 @@ import csv
 from pathlib import Path
 from datetime import datetime, timedelta
 from atlas_agent.backtest import BacktestConfig, BacktestEngine
+from atlas_agent.backtest.models import BacktestOrder, BacktestPosition
+from atlas_agent.backtest.data import load_market_data
 
 @pytest.fixture
 def sample_csv(tmp_path):
@@ -87,3 +89,88 @@ def test_engine_slippage_affects_equity(sample_csv):
     result_slip = BacktestEngine(config_slip).run()
     
     assert result_slip.metrics.final_equity < result_no_slip.metrics.final_equity
+
+
+def test_portfolio_snapshot_with_existing_position_does_not_crash(sample_csv):
+    config = BacktestConfig(
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        risk_enabled=True,
+    )
+    engine = BacktestEngine(config)
+    engine.positions["AAPL"] = BacktestPosition(
+        symbol="AAPL",
+        quantity=5.0,
+        average_entry_price=100.0,
+        notional=500.0,
+    )
+
+    snapshot = engine._get_portfolio_snapshot(current_price=105.0)
+
+    assert len(snapshot.positions) == 1
+    pos = snapshot.positions[0]
+    assert pos.symbol == "AAPL"
+    assert pos.quantity == 5.0
+    assert pos.market_price == 105.0
+    assert pos.side == "long"
+    assert pos.notional == 525.0
+
+
+def test_existing_position_can_be_evaluated_on_later_tick_without_crash(sample_csv):
+    config = BacktestConfig(
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        risk_enabled=True,
+    )
+    engine = BacktestEngine(config)
+    from atlas_agent.risk.limits import RiskLimits
+
+    engine.risk_manager.limits = RiskLimits(
+        max_position_notional=20000.0,
+        max_single_trade_notional=20000.0,
+        max_symbol_exposure_pct=2.0,
+        max_portfolio_exposure_pct=2.0,
+        live_trading_enabled=False,
+        paper_only=True,
+    )
+    bars = load_market_data(str(sample_csv), "AAPL")
+
+    # First step opens and fills an initial position.
+    engine._step(bars[0])
+    assert "AAPL" in engine.positions
+
+    # Add a second order so risk evaluation snapshots include an existing position.
+    engine.pending_orders.append(
+        BacktestOrder(
+            order_id="second-order",
+            timestamp=bars[1].timestamp,
+            symbol="AAPL",
+            side="sell",
+            quantity=engine.positions["AAPL"].quantity / 2,
+            price=bars[1].open,
+        )
+    )
+
+    # Must not raise when evaluating the later tick with an existing position.
+    engine._step(bars[1])
+    engine._step(bars[2])
+
+    assert len(engine.equity_curve) == 3
+
+
+def test_buy_and_hold_sample_data_is_deterministic(sample_csv):
+    config = BacktestConfig(
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        risk_enabled=False,
+    )
+    result = BacktestEngine(config).run()
+
+    assert result.status == "completed"
+    assert result.metrics.final_equity == pytest.approx(10900.0)

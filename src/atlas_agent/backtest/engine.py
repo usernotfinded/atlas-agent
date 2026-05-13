@@ -17,7 +17,7 @@ from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.execution import ExecutionSimulator
 from atlas_agent.backtest.metrics import calculate_metrics, TradeRecord
 from atlas_agent.risk.manager import RiskManager
-from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot, PendingOrder
+from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot, PendingOrder, RiskPosition
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.audit import AuditWriter
 
@@ -209,12 +209,15 @@ class BacktestEngine:
     def _get_portfolio_snapshot(self, current_price: float) -> PortfolioSnapshot:
         positions = []
         for pos in self.positions.values():
-            from atlas_agent.risk.models import PositionSnapshot
-            positions.append(PositionSnapshot(
+            notional = abs(pos.quantity * current_price)
+            side = "long" if pos.quantity > 0 else "short" if pos.quantity < 0 else "flat"
+            positions.append(RiskPosition(
                 symbol=pos.symbol,
                 quantity=pos.quantity,
                 average_price=pos.average_entry_price,
-                notional=pos.quantity * current_price
+                market_price=current_price,
+                notional=notional,
+                side=side,
             ))
         
         open_orders = []
@@ -224,9 +227,10 @@ class BacktestEngine:
                 symbol=o.symbol,
                 side=o.side,
                 quantity=o.quantity,
-                remaining_quantity=o.quantity,
-                price=o.price or 0.0,
-                status="pending"
+                limit_price=o.price if o.type == "limit" else None,
+                estimated_price=o.price if o.type == "market" else None,
+                status="pending",
+                filled_quantity=0.0,
             ))
 
         equity = self._calculate_equity(current_price)
