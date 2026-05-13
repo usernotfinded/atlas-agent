@@ -62,22 +62,41 @@ def parse_decision(payload: str | dict[str, Any]) -> AIDecision:
     )
 
 
+def _is_positive_finite(value: float) -> bool:
+    import math
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
+
+
 def _parse_order(payload: Any) -> ProposedOrder | None:
     if payload in (None, {}, "null"):
         return None
     try:
         side = str(payload["side"]).lower()
-        quantity = float(payload["quantity"])
+        raw_quantity = payload["quantity"]
+        if isinstance(raw_quantity, bool):
+            raise DecisionSchemaError("proposed_order.quantity must be a positive finite number")
+        quantity = float(raw_quantity)
         order_type = str(payload.get("order_type", "market")).lower()
         limit_price = payload.get("limit_price")
+    except DecisionSchemaError:
+        raise
     except (KeyError, TypeError, ValueError) as exc:
         raise DecisionSchemaError("proposed_order is invalid") from exc
     if side not in {"buy", "sell"}:
         raise DecisionSchemaError("proposed_order.side must be buy or sell")
-    if quantity < 0:
-        raise DecisionSchemaError("proposed_order.quantity cannot be negative")
+    if not _is_positive_finite(quantity):
+        raise DecisionSchemaError("proposed_order.quantity must be a positive finite number")
     if order_type not in VALID_ORDER_TYPES:
         raise DecisionSchemaError("proposed_order.order_type is invalid")
+    if limit_price is not None:
+        if isinstance(limit_price, bool):
+            raise DecisionSchemaError("proposed_order.limit_price must be a positive finite number")
+        try:
+            lp = float(limit_price)
+        except (TypeError, ValueError):
+            raise DecisionSchemaError("proposed_order.limit_price must be a number")
+        if not _is_positive_finite(lp):
+            raise DecisionSchemaError("proposed_order.limit_price must be a positive finite number")
     return ProposedOrder(
         side=side,
         quantity=quantity,

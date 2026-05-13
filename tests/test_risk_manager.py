@@ -108,3 +108,137 @@ def test_limit_order_uses_limit_price():
     # The reason comes from legacy shim combining them
     assert any("max order notional exceeded" in r for r in decision.reasons)
 
+
+def test_risk_manager_rejects_nan_quantity():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=float("nan"), order_type="limit", limit_price=100.0)
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=100.0)
+    assert not decision.allowed
+    assert "invalid_quantity" in decision.reasons
+
+
+def test_risk_manager_rejects_inf_quantity():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=float("inf"), order_type="limit", limit_price=100.0)
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=100.0)
+    assert not decision.allowed
+    assert "invalid_quantity" in decision.reasons
+
+
+def test_risk_manager_rejects_zero_quantity():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=0, order_type="limit", limit_price=100.0)
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=100.0)
+    assert not decision.allowed
+    assert "invalid_quantity" in decision.reasons
+
+
+def test_risk_manager_rejects_negative_quantity():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=-1, order_type="limit", limit_price=100.0)
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=100.0)
+    assert not decision.allowed
+    assert "invalid_quantity" in decision.reasons
+
+
+def test_risk_manager_rejects_nan_limit_price():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=float("nan"))
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=100.0)
+    assert not decision.allowed
+    assert "invalid_limit_price" in decision.reasons
+
+
+def test_risk_manager_rejects_inf_limit_price():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=float("inf"))
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=100.0)
+    assert not decision.allowed
+    assert "invalid_limit_price" in decision.reasons
+
+
+def test_risk_manager_rejects_zero_limit_price():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=0.0)
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=100.0)
+    assert not decision.allowed
+    assert "invalid_limit_price" in decision.reasons
+
+
+def test_risk_manager_rejects_nan_market_price():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="market", limit_price=None)
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=float("nan"))
+    assert not decision.allowed
+    assert "reference_price_required" in decision.reasons
+
+
+def test_risk_manager_rejects_inf_market_price():
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+    config = AtlasConfig()
+    manager = RiskManager.from_config(config)
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="market", limit_price=None)
+    portfolio = PortfolioState(cash=10000.0)
+    decision = manager.validate_order(order, portfolio, mode="paper", market_price=float("inf"))
+    assert not decision.allowed
+    assert "reference_price_required" in decision.reasons
+
+
+def test_evaluate_order_rejects_nan_price_directly():
+    from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
+    manager = RiskManager()
+    order = OrderRiskInput(
+        symbol="AAPL", side="buy", quantity=10,
+        price=float("nan"), notional=100.0,
+    )
+    portfolio = PortfolioSnapshot(cash=10000.0, equity=10000.0, total_exposure=0.0)
+    decision = manager.evaluate_order(order, portfolio, mode="paper")
+    assert not decision.allowed
+    assert any(v.rule == "invalid_price" for v in decision.violations)
+
+
+def test_evaluate_order_rejects_nan_quantity_directly():
+    from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
+    manager = RiskManager()
+    order = OrderRiskInput(
+        symbol="AAPL", side="buy", quantity=float("nan"),
+        price=100.0, notional=100.0,
+    )
+    portfolio = PortfolioSnapshot(cash=10000.0, equity=10000.0, total_exposure=0.0)
+    decision = manager.evaluate_order(order, portfolio, mode="paper")
+    assert not decision.allowed
+    assert any(v.rule == "invalid_quantity" for v in decision.violations)
+

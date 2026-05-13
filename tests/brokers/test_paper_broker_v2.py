@@ -41,3 +41,88 @@ def test_paper_adapter_get_account_state():
     assert acc.cash == 10000
     assert acc.equity == 10000
     assert acc.is_live is False
+
+
+import pytest
+from atlas_agent.execution.order import Order
+
+
+@pytest.mark.parametrize("bad_price", [float("nan"), float("inf"), float("-inf"), 0, -1])
+def test_paper_broker_rejects_invalid_limit_price(bad_price):
+    state = PortfolioState(cash=10000)
+    broker = PaperBroker(state=state)
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=bad_price)
+    result = broker.place_order(order)
+    assert result.status == "rejected"
+    assert "positive price" in result.message
+
+
+@pytest.mark.parametrize("bad_quantity", [float("nan"), float("inf"), float("-inf"), 0, -1])
+def test_paper_broker_rejects_invalid_quantity(bad_quantity):
+    state = PortfolioState(cash=10000)
+    broker = PaperBroker(state=state)
+    order = Order(symbol="AAPL", side="buy", quantity=bad_quantity, order_type="limit", limit_price=100.0)
+    result = broker.place_order(order)
+    assert result.status == "rejected"
+    assert "positive quantity" in result.message
+
+
+def test_paper_broker_accepts_valid_positive_finite_values():
+    state = PortfolioState(cash=10000)
+    broker = PaperBroker(state=state)
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=150.0)
+    result = broker.place_order(order)
+    assert result.status == "filled"
+    assert result.filled is True
+
+
+@pytest.mark.parametrize("bad_quantity", ["abc", {}, [], object()])
+def test_paper_broker_rejects_non_numeric_quantity(bad_quantity):
+    state = PortfolioState(cash=10000)
+    broker = PaperBroker(state=state)
+    initial_cash = state.cash
+    order = Order(symbol="AAPL", side="buy", quantity=bad_quantity, order_type="limit", limit_price=100.0)
+    result = broker.place_order(order)
+    assert result.status == "rejected"
+    assert "positive quantity" in result.message
+    assert state.cash == initial_cash
+    assert not state.positions
+
+
+@pytest.mark.parametrize("bad_price", ["abc", {}, [], object()])
+def test_paper_broker_rejects_non_numeric_limit_price(bad_price):
+    state = PortfolioState(cash=10000)
+    broker = PaperBroker(state=state)
+    initial_cash = state.cash
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=bad_price)
+    result = broker.place_order(order)
+    assert result.status == "rejected"
+    assert "positive price" in result.message
+    assert state.cash == initial_cash
+    assert not state.positions
+
+
+@pytest.mark.parametrize("bad_quantity", [True, False])
+def test_paper_broker_rejects_boolean_quantity(bad_quantity):
+    state = PortfolioState(cash=10000)
+    broker = PaperBroker(state=state)
+    initial_cash = state.cash
+    order = Order(symbol="AAPL", side="buy", quantity=bad_quantity, order_type="limit", limit_price=100.0)
+    result = broker.place_order(order)
+    assert result.status == "rejected"
+    assert "positive quantity" in result.message
+    assert state.cash == initial_cash
+    assert not state.positions
+
+
+@pytest.mark.parametrize("bad_price", [True, False])
+def test_paper_broker_rejects_boolean_limit_price(bad_price):
+    state = PortfolioState(cash=10000)
+    broker = PaperBroker(state=state)
+    initial_cash = state.cash
+    order = Order(symbol="AAPL", side="buy", quantity=10, order_type="limit", limit_price=bad_price)
+    result = broker.place_order(order)
+    assert result.status == "rejected"
+    assert "positive price" in result.message
+    assert state.cash == initial_cash
+    assert not state.positions

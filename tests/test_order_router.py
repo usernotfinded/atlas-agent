@@ -203,3 +203,97 @@ def test_broker_place_order_exception_is_sanitized_and_audited_safely(tmp_path) 
     assert payload["payload"]["broker_error"]["message"] == "broker operation failed"
     assert "raw-secret" not in serialized
     assert "account_id=acct-123" not in serialized
+
+
+@pytest.mark.parametrize("bad_quantity", [float("nan"), float("inf"), float("-inf"), 0, -1])
+def test_order_router_rejects_invalid_quantity(tmp_path, bad_quantity) -> None:
+    config = AtlasConfig()
+    result = make_router(tmp_path, config).route(
+        Order("TEST-SYMBOL", "buy", bad_quantity, limit_price=100, confidence=1),
+        mode="paper",
+        broker=SpyBroker(),
+        portfolio=PortfolioState(cash=10_000),
+        market_price=100,
+    )
+    assert result.status == "rejected"
+    assert "invalid_quantity" in result.reasons
+    assert "raw-secret" not in str(result)
+
+
+@pytest.mark.parametrize("bad_limit_price", [float("nan"), float("inf"), float("-inf"), 0, -1])
+def test_order_router_rejects_invalid_limit_price(tmp_path, bad_limit_price) -> None:
+    config = AtlasConfig()
+    result = make_router(tmp_path, config).route(
+        Order("TEST-SYMBOL", "buy", 1, limit_price=bad_limit_price, confidence=1),
+        mode="paper",
+        broker=SpyBroker(),
+        portfolio=PortfolioState(cash=10_000),
+        market_price=100,
+    )
+    assert result.status == "rejected"
+    assert "invalid_limit_price" in result.reasons
+    assert "raw-secret" not in str(result)
+
+
+@pytest.mark.parametrize("bad_quantity", ["abc", {}, [], object()])
+def test_order_router_rejects_non_numeric_quantity(tmp_path, bad_quantity) -> None:
+    config = AtlasConfig()
+    broker = SpyBroker()
+    result = make_router(tmp_path, config).route(
+        Order("TEST-SYMBOL", "buy", bad_quantity, limit_price=100, confidence=1),
+        mode="paper",
+        broker=broker,
+        portfolio=PortfolioState(cash=10_000),
+        market_price=100,
+    )
+    assert result.status == "rejected"
+    assert "invalid_quantity" in result.reasons
+    assert broker.called is False
+
+
+@pytest.mark.parametrize("bad_limit_price", ["abc", {}, [], object()])
+def test_order_router_rejects_non_numeric_limit_price(tmp_path, bad_limit_price) -> None:
+    config = AtlasConfig()
+    broker = SpyBroker()
+    result = make_router(tmp_path, config).route(
+        Order("TEST-SYMBOL", "buy", 1, limit_price=bad_limit_price, confidence=1),
+        mode="paper",
+        broker=broker,
+        portfolio=PortfolioState(cash=10_000),
+        market_price=100,
+    )
+    assert result.status == "rejected"
+    assert "invalid_limit_price" in result.reasons
+    assert broker.called is False
+
+
+@pytest.mark.parametrize("bad_quantity", [True, False])
+def test_order_router_rejects_boolean_quantity(tmp_path, bad_quantity) -> None:
+    config = AtlasConfig()
+    broker = SpyBroker()
+    result = make_router(tmp_path, config).route(
+        Order("TEST-SYMBOL", "buy", bad_quantity, limit_price=100, confidence=1),
+        mode="paper",
+        broker=broker,
+        portfolio=PortfolioState(cash=10_000),
+        market_price=100,
+    )
+    assert result.status == "rejected"
+    assert "invalid_quantity" in result.reasons
+    assert broker.called is False
+
+
+@pytest.mark.parametrize("bad_limit_price", [True, False])
+def test_order_router_rejects_boolean_limit_price(tmp_path, bad_limit_price) -> None:
+    config = AtlasConfig()
+    broker = SpyBroker()
+    result = make_router(tmp_path, config).route(
+        Order("TEST-SYMBOL", "buy", 1, limit_price=bad_limit_price, confidence=1),
+        mode="paper",
+        broker=broker,
+        portfolio=PortfolioState(cash=10_000),
+        market_price=100,
+    )
+    assert result.status == "rejected"
+    assert "invalid_limit_price" in result.reasons
+    assert broker.called is False

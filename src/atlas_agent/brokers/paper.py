@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from uuid import uuid4
 from typing import List
@@ -45,7 +46,7 @@ class PaperBroker:
 
     def place_order(self, order: Order) -> OrderResult:
         price = order.limit_price
-        if price is None or price <= 0:
+        if price is None or isinstance(price, bool) or not isinstance(price, (int, float)) or not math.isfinite(price) or price <= 0:
             return OrderResult(
                 accepted=False,
                 filled=False,
@@ -53,6 +54,15 @@ class PaperBroker:
                 status="rejected",
                 message="paper orders require a positive price",
                 reasons=("missing price",),
+            )
+        if isinstance(order.quantity, bool) or not isinstance(order.quantity, (int, float)) or not math.isfinite(order.quantity) or order.quantity <= 0:
+            return OrderResult(
+                accepted=False,
+                filled=False,
+                order_id=order.id,
+                status="rejected",
+                message="paper orders require a positive quantity",
+                reasons=("invalid quantity",),
             )
         symbol = order.symbol.upper()
         if order.side.lower() == "buy":

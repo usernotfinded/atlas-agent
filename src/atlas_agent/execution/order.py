@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import uuid4
@@ -21,8 +22,10 @@ class Order:
 
     @property
     def notional(self) -> float:
-        if self.limit_price is None or self.limit_price <= 0:
+        if self.limit_price is None or isinstance(self.limit_price, bool) or not isinstance(self.limit_price, (int, float)) or not math.isfinite(self.limit_price) or self.limit_price <= 0:
             raise ValueError("Cannot evaluate notional for market order without reference price")
+        if isinstance(self.quantity, bool) or not isinstance(self.quantity, (int, float)) or not math.isfinite(self.quantity) or self.quantity <= 0:
+            raise ValueError("order quantity must be a positive finite number")
         return self.quantity * self.limit_price
 
     def with_price(self, price: float) -> Order:

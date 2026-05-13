@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from atlas_agent.brokers.base import Broker
@@ -33,6 +34,24 @@ class OrderRouter:
         run_id: str | None = None,
         command: str = "atlas run-once",
     ) -> OrderResult:
+        if isinstance(order.quantity, bool) or not isinstance(order.quantity, (int, float)) or not math.isfinite(order.quantity) or order.quantity <= 0:
+            return OrderResult(
+                accepted=False,
+                filled=False,
+                order_id=order.id,
+                status="rejected",
+                message="order quantity must be a positive finite number",
+                reasons=("invalid_quantity",),
+            )
+        if order.limit_price is not None and (isinstance(order.limit_price, bool) or not isinstance(order.limit_price, (int, float)) or not math.isfinite(order.limit_price) or order.limit_price <= 0):
+            return OrderResult(
+                accepted=False,
+                filled=False,
+                order_id=order.id,
+                status="rejected",
+                message="limit price must be a positive finite number",
+                reasons=("invalid_limit_price",),
+            )
         if event_logger is not None and run_id is not None:
             event_logger.write(
                 "order_created",

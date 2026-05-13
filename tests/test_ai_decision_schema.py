@@ -43,3 +43,84 @@ def test_low_confidence_decision_is_rejected_if_threshold_not_met() -> None:
             minimum_confidence=0.55,
         )
 
+
+@pytest.mark.parametrize("bad_quantity", [float("nan"), float("inf"), float("-inf"), 0, -1])
+def test_decision_schema_rejects_invalid_quantity(bad_quantity) -> None:
+    with pytest.raises(DecisionSchemaError, match="quantity must be a positive finite number"):
+        parse_decision(
+            {
+                "action": "buy",
+                "symbol": "TEST-SYMBOL",
+                "confidence": 0.8,
+                "time_horizon": "swing",
+                "reasoning_summary": "trend",
+                "risk_notes": "small size",
+                "proposed_order": {"side": "buy", "quantity": bad_quantity, "order_type": "market"},
+            }
+        )
+
+
+@pytest.mark.parametrize("bad_limit_price", [float("nan"), float("inf"), float("-inf"), 0, -1])
+def test_decision_schema_rejects_invalid_limit_price(bad_limit_price) -> None:
+    with pytest.raises(DecisionSchemaError, match="limit_price must be a positive finite number"):
+        parse_decision(
+            {
+                "action": "buy",
+                "symbol": "TEST-SYMBOL",
+                "confidence": 0.8,
+                "time_horizon": "swing",
+                "reasoning_summary": "trend",
+                "risk_notes": "small size",
+                "proposed_order": {"side": "buy", "quantity": 1, "order_type": "limit", "limit_price": bad_limit_price},
+            }
+        )
+
+
+def test_decision_schema_accepts_valid_positive_finite_numbers() -> None:
+    decision = parse_decision(
+        {
+            "action": "buy",
+            "symbol": "test-symbol",
+            "confidence": 0.8,
+            "time_horizon": "swing",
+            "reasoning_summary": "trend",
+            "risk_notes": "small size",
+            "proposed_order": {"side": "buy", "quantity": 1.5, "order_type": "limit", "limit_price": 150.0},
+        }
+    )
+    assert decision.proposed_order is not None
+    assert decision.proposed_order.quantity == 1.5
+    assert decision.proposed_order.limit_price == 150.0
+
+
+@pytest.mark.parametrize("bad_quantity", [True, False])
+def test_decision_schema_rejects_boolean_quantity(bad_quantity) -> None:
+    with pytest.raises(DecisionSchemaError, match="quantity must be a positive finite number"):
+        parse_decision(
+            {
+                "action": "buy",
+                "symbol": "TEST-SYMBOL",
+                "confidence": 0.8,
+                "time_horizon": "swing",
+                "reasoning_summary": "trend",
+                "risk_notes": "small size",
+                "proposed_order": {"side": "buy", "quantity": bad_quantity, "order_type": "market"},
+            }
+        )
+
+
+@pytest.mark.parametrize("bad_limit_price", [True, False])
+def test_decision_schema_rejects_boolean_limit_price(bad_limit_price) -> None:
+    with pytest.raises(DecisionSchemaError, match="limit_price must be a positive finite number"):
+        parse_decision(
+            {
+                "action": "buy",
+                "symbol": "TEST-SYMBOL",
+                "confidence": 0.8,
+                "time_horizon": "swing",
+                "reasoning_summary": "trend",
+                "risk_notes": "small size",
+                "proposed_order": {"side": "buy", "quantity": 1, "order_type": "limit", "limit_price": bad_limit_price},
+            }
+        )
+

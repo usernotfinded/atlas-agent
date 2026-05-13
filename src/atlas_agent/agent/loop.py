@@ -76,6 +76,8 @@ class AgentLoop:
     def _parse_positive_float(self, raw: Any, field_name: str) -> float:
         if raw is None:
             raise ValueError(f"missing required field: {field_name}")
+        if isinstance(raw, bool):
+            raise ValueError(f"invalid numeric field: {field_name}")
         try:
             value = float(raw)
         except (TypeError, ValueError) as exc:

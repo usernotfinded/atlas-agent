@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Optional, List, Literal, Any, Tuple
 
 from atlas_agent.audit import AuditWriter
@@ -67,16 +68,33 @@ class RiskManager:
         """Legacy compatibility shim."""
         from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
         
-        # 1. Determine reference price
-        limit_price = getattr(order, "limit_price", None)
-        effective_price = limit_price if limit_price and limit_price > 0 else market_price
-        
-        if not effective_price or effective_price <= 0:
+        # 0. Validate quantity
+        quantity = getattr(order, "quantity", None)
+        if quantity is None or isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or not math.isfinite(quantity) or quantity <= 0:
             class LegacyDecision:
                 def __init__(self, allowed, reasons):
                     self.allowed = allowed
                     self.reasons = reasons
-            return LegacyDecision(False, ("Cannot evaluate notional for market order without reference price", "reference_price_required"))
+            return LegacyDecision(False, ("order quantity must be a positive finite number", "invalid_quantity"))
+        
+        # 1. Determine reference price
+        limit_price = getattr(order, "limit_price", None)
+        if limit_price is not None:
+            if isinstance(limit_price, bool) or not isinstance(limit_price, (int, float)) or not math.isfinite(limit_price) or limit_price <= 0:
+                class LegacyDecision:
+                    def __init__(self, allowed, reasons):
+                        self.allowed = allowed
+                        self.reasons = reasons
+                return LegacyDecision(False, ("limit price must be a positive finite number", "invalid_limit_price"))
+            effective_price = limit_price
+        else:
+            if isinstance(market_price, bool) or not isinstance(market_price, (int, float)) or not math.isfinite(market_price) or market_price <= 0:
+                class LegacyDecision:
+                    def __init__(self, allowed, reasons):
+                        self.allowed = allowed
+                        self.reasons = reasons
+                return LegacyDecision(False, ("Cannot evaluate notional for market order without reference price", "reference_price_required"))
+            effective_price = market_price
 
         risk_input = OrderRiskInput(
             symbol=order.symbol,
@@ -188,6 +206,35 @@ class RiskManager:
         portfolio: PortfolioSnapshot,
         mode: Literal["paper", "live"] = "paper",
     ) -> RiskDecision:
+        if isinstance(order.quantity, bool) or not isinstance(order.quantity, (int, float)) or not math.isfinite(order.quantity) or order.quantity <= 0:
+            return RiskDecision(
+                allowed=False,
+                status="blocked",
+                reason="order quantity must be a positive finite number",
+                violations=[RiskViolation(
+                    rule="invalid_quantity",
+                    message="order quantity must be a positive finite number",
+                    limit_value="positive finite",
+                    actual_value=order.quantity,
+                )],
+                classification="unknown",
+                diagnostics={},
+            )
+        if isinstance(order.price, bool) or not isinstance(order.price, (int, float)) or not math.isfinite(order.price) or order.price <= 0:
+            return RiskDecision(
+                allowed=False,
+                status="blocked",
+                reason="order price must be a positive finite number",
+                violations=[RiskViolation(
+                    rule="invalid_price",
+                    message="order price must be a positive finite number",
+                    limit_value="positive finite",
+                    actual_value=order.price,
+                )],
+                classification="unknown",
+                diagnostics={},
+            )
+
         projection = self._calculate_projection(order, portfolio)
         classification = projection["classification"]
         projected_qty_with_pending = projection["projected_quantity_with_pending"]
