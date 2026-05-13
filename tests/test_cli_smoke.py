@@ -124,6 +124,7 @@ def test_cli_broker_sync_live_missing_credentials_returns_controlled_failure(
     tmp_path: Path, capsys, monkeypatch
 ):
     config = AtlasConfig(
+        trading_mode="live",
         memory_dir=tmp_path / "memory",
         audit_dir=tmp_path / "audit",
         pending_orders_dir=tmp_path / "pending_orders",
@@ -175,3 +176,50 @@ def test_cli_risk_status(tmp_path: Path, capsys, monkeypatch):
         assert main(["risk", "status"]) == 0
     out = capsys.readouterr().out.strip()
     assert "Risk Management Status:" in out
+
+
+def test_cli_broker_sync_live_alpaca_with_credentials_returns_success(
+    tmp_path: Path, capsys, monkeypatch
+):
+    config = AtlasConfig(
+        trading_mode="live",
+        memory_dir=tmp_path / "memory",
+        audit_dir=tmp_path / "audit",
+        pending_orders_dir=tmp_path / "pending_orders",
+        reports_dir=tmp_path / "reports",
+        events_dir=tmp_path / "events",
+        data_path=tmp_path / "data" / "ohlcv.csv",
+        workspace_root=tmp_path,
+        broker={"provider": "alpaca", "enable_live_trading": True},
+    )
+    config.ensure_dirs()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ALPACA_API_KEY", "demo-key")
+    monkeypatch.setenv("ALPACA_SECRET_KEY", "demo-secret")
+
+    def _fake_request(_self, _method: str, path: str):
+        if path == "/v2/account":
+            return {
+                "cash": "1234.56",
+                "portfolio_value": "5678.90",
+                "buying_power": "9999.99",
+            }
+        if path == "/v2/positions":
+            return []
+        if path == "/v2/orders?status=open":
+            return []
+        raise ValueError(f"unexpected path: {path}")
+
+    with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_request):
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            code = main(["broker", "sync", "--mode", "live", "--json"])
+
+    assert code == 0
+    out = capsys.readouterr().out.strip()
+    data = json.loads(out)
+    assert data["status"] == "success"
+    assert data["account"]["cash"] == 1234.56
+    assert data["positions"] == []
+    assert data["open_orders"] == []
+    assert "demo-key" not in out
+    assert "demo-secret" not in out

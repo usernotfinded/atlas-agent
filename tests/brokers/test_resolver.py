@@ -75,17 +75,17 @@ def test_live_unconfigured_with_none_config() -> None:
     assert status.code == "live_broker_unconfigured"
 
 
-def test_live_configured_alpaca_with_credentials_reports_deferred() -> None:
+def test_live_configured_alpaca_with_credentials_reports_sync_ready() -> None:
     config = AtlasConfig(broker={"provider": "alpaca", "enable_live_trading": True})
     resolver = BrokerResolver(config)
     with patch.dict(os.environ, {"ALPACA_API_KEY": "key", "ALPACA_SECRET_KEY": "secret"}, clear=False):
         status = resolver.resolve_status("live")
     assert status.configured is True
     assert status.credentials_configured is True
-    assert status.can_sync is False
+    assert status.can_sync is True
     assert status.can_submit is False
-    assert status.code == "live_sync_deferred"
-    assert "deferred" in status.message
+    assert status.code == "live_sync_ready"
+    assert "submit remains disabled" in status.message
 
 
 def test_live_configured_binance_with_credentials_reports_deferred() -> None:
@@ -145,7 +145,7 @@ def test_live_unknown_broker_fails_safe() -> None:
     assert "not supported" in status.message
 
 
-def test_live_resolve_sync_provider_returns_none() -> None:
+def test_live_resolve_sync_provider_returns_none_for_binance() -> None:
     config = AtlasConfig(broker={"provider": "binance", "enable_live_trading": True})
     resolver = BrokerResolver(config)
     env = {"BINANCE_API_KEY": "key", "BINANCE_API_SECRET": "secret"}
@@ -156,6 +156,19 @@ def test_live_resolve_sync_provider_returns_none() -> None:
     assert resolution.status.code == "live_sync_deferred"
 
 
+def test_live_resolve_sync_provider_returns_alpaca_adapter() -> None:
+    config = AtlasConfig(broker={"provider": "alpaca", "enable_live_trading": True})
+    resolver = BrokerResolver(config)
+    env = {"ALPACA_API_KEY": "key", "ALPACA_SECRET_KEY": "secret"}
+    with patch.dict(os.environ, env, clear=False):
+        resolution = resolver.resolve_sync_provider("live")
+    assert resolution.sync_provider is not None
+    assert resolution.execution_broker is None
+    assert resolution.status.code == "live_sync_ready"
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    assert isinstance(resolution.sync_provider, AlpacaBrokerAdapter)
+
+
 def test_live_resolve_execution_broker_returns_none() -> None:
     config = AtlasConfig(broker={"provider": "alpaca", "enable_live_trading": True})
     resolver = BrokerResolver(config)
@@ -164,7 +177,7 @@ def test_live_resolve_execution_broker_returns_none() -> None:
         resolution = resolver.resolve_execution_broker("live")
     assert resolution.execution_broker is None
     assert resolution.sync_provider is None
-    assert resolution.status.code == "live_sync_deferred"
+    assert resolution.status.code == "live_sync_ready"
 
 
 def test_live_resolve_sync_provider_never_paper_fallback() -> None:
