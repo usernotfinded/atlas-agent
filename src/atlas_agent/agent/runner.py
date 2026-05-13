@@ -141,6 +141,16 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
         effective_mode = "live" if (config.trading_mode == "live" and config.enable_live_trading) else "paper"
 
     resolver = BrokerResolver(config)
+
+    # Batch 3.1: Live agent runtime sync is deferred until risk-state
+    # integration and approved-order semantics are implemented.
+    if effective_mode == "live":
+        return AgentResult(
+            status="error",
+            errors=["live agent runtime sync is deferred"],
+            diagnostics={"broker_status": resolver.resolve_status("live").to_dict()},
+        )
+
     resolution = resolver.resolve_sync_provider(effective_mode)
 
     if resolution.sync_provider is None:

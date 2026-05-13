@@ -11,6 +11,9 @@ from atlas_agent.portfolio.state import PortfolioState
 if TYPE_CHECKING:
     from atlas_agent.config import AtlasConfig
 
+if TYPE_CHECKING:
+    from atlas_agent.config import AtlasConfig
+
 
 @dataclass(frozen=True)
 class BrokerStatus:
@@ -124,6 +127,18 @@ class BrokerResolver:
                 message="live broker credentials are missing",
             )
 
+        if broker_id == "alpaca":
+            return BrokerStatus(
+                mode="live",
+                broker_id=broker_id,
+                configured=True,
+                credentials_configured=True,
+                can_sync=True,
+                can_submit=False,
+                code="live_sync_ready",
+                message="live Alpaca sync is ready; submit remains disabled",
+            )
+
         return BrokerStatus(
             mode="live",
             broker_id=broker_id,
@@ -146,7 +161,14 @@ class BrokerResolver:
                 sync_provider=adapter,
                 status=status,
             )
-        # Live or unknown: always None
+        if mode == "live" and status.broker_id == "alpaca" and status.can_sync:
+            from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+            return BrokerResolution(
+                execution_broker=None,
+                sync_provider=AlpacaBrokerAdapter(config=self.config),
+                status=status,
+            )
+        # Live unsupported or unknown: None
         return BrokerResolution(
             execution_broker=None,
             sync_provider=None,
