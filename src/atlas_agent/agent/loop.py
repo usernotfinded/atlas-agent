@@ -443,6 +443,26 @@ class AgentLoop:
                             diagnostics={"risk_decision": {"reason": str(e), "status": "blocked"}},
                         )
 
+                    # Batch 3.2: Live analysis-only gate
+                    if mode == "live":
+                        analysis_result = {
+                            "status": "live_analysis_only",
+                            "risk_decision": risk_decision.model_dump(),
+                            "message": "Risk check passed. Live order submission is deferred.",
+                        }
+                        tool_results.append(ToolResult(data=analysis_result, error=False))
+
+                        if self.audit_writer:
+                            self.audit_writer.write_event(
+                                "tool_call_live_analysis_only",
+                                run_id=run_id,
+                                iteration=i,
+                                tool_name=tool_call.name,
+                                tool_call_id=tool_call.id,
+                                payload=analysis_result,
+                            )
+                        continue
+
                 if self.audit_writer:
                     self.audit_writer.write_event(
                         "tool_call_requested",
