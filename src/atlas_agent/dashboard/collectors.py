@@ -10,8 +10,45 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.dashboard.models import DashboardSnapshot, DashboardStatusSummary
 from atlas_agent.audit.redaction import redact_payload
 from atlas_agent.audit.verify import verify_audit_log, verify_run_manifest
+from atlas_agent.providers.catalog import get_provider_profile
+from atlas_agent.providers.runtime import resolve_runtime_provider
 from atlas_agent.safety.state import KillSwitchState
 from atlas_agent.safety.heartbeat import HeartbeatManager
+
+
+def _collect_provider_summary(config: AtlasConfig) -> DashboardStatusSummary:
+    try:
+        runtime = resolve_runtime_provider(config)
+    except Exception:
+        return DashboardStatusSummary(
+            status="unknown",
+            message="Provider: unknown",
+        )
+
+    provider_id = str(runtime.get("provider") or "unknown")
+    provider_label = str(runtime.get("provider_label") or provider_id)
+    key_source = str(runtime.get("api_key_source") or "missing")
+    errors = runtime.get("errors") or []
+    profile = get_provider_profile(provider_id)
+
+    if profile is None or provider_id in {"null", "local_command"} or errors:
+        status = "unknown"
+    elif key_source in {"process_env", "env_atlas", "oauth_adc", "none"}:
+        status = "active"
+    else:
+        status = "missing"
+
+    if key_source in {"process_env", "env_atlas", "oauth_adc"}:
+        credential_status = "credentials configured"
+    elif key_source == "none":
+        credential_status = "credentials not required"
+    else:
+        credential_status = "credentials missing"
+
+    return DashboardStatusSummary(
+        status=status,
+        message=f"Provider: {provider_label} ({provider_id}); {credential_status}",
+    )
 
 
 def collect_dashboard_snapshot(config: AtlasConfig, workspace_root: Path) -> DashboardSnapshot:
@@ -22,12 +59,7 @@ def collect_dashboard_snapshot(config: AtlasConfig, workspace_root: Path) -> Das
     mode = config.trading_mode if config.trading_mode in ["paper", "live"] else "unknown"
     
     # 2. Provider Summary
-    provider_name = os.getenv("AI_PROVIDER", "not configured")
-    provider_status = "active" if provider_name != "not configured" else "missing"
-    provider_summary = DashboardStatusSummary(
-        status=provider_status,
-        message=f"Provider: {provider_name}"
-    )
+    provider_summary = _collect_provider_summary(config)
 
     # 3. Broker Sync Summary (Safe collection)
     broker_sync_summary = DashboardStatusSummary(status="unknown", message="No recent sync data")

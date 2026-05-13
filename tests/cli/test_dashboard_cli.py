@@ -29,3 +29,24 @@ def test_dashboard_json_flag_emits_valid_json(tmp_path: Path, monkeypatch, capsy
     
     assert data["workspace"] == str(tmp_path)
     assert data["configured"] is True
+
+
+def test_dashboard_json_provider_summary_uses_config_toml_not_ai_provider(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("AI_PROVIDER", "anthropic")
+    assert main(["init", ".", "--force"]) == 0
+    assert main(["config", "set", "model.provider", "openrouter"]) == 0
+    capsys.readouterr()
+
+    assert main(["dashboard", "--json"]) == 0
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+
+    provider_message = data["provider_summary"]["message"]
+    assert "OpenRouter" in provider_message
+    assert "openrouter" in provider_message
+    assert "anthropic" not in provider_message.lower()
