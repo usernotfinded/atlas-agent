@@ -142,14 +142,21 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
 
     resolver = BrokerResolver(config)
 
-    # Batch 3.1: Live agent runtime sync is deferred until risk-state
-    # integration and approved-order semantics are implemented.
     if effective_mode == "live":
-        return AgentResult(
-            status="error",
-            errors=["live agent runtime sync is deferred"],
-            diagnostics={"broker_status": resolver.resolve_status("live").to_dict()},
-        )
+        if not config.enable_live_trading:
+            return AgentResult(
+                status="error",
+                errors=["Live trading is not enabled. Set enable_live_trading=true to use live analysis mode."],
+                diagnostics={"broker_status": resolver.resolve_status("live").to_dict()},
+            )
+        status = resolver.resolve_status("live")
+        if not status.can_sync:
+            return AgentResult(
+                status="error",
+                errors=[status.message],
+                diagnostics={"broker_status": status.to_dict()},
+            )
+        # Proceed to sync below
 
     resolution = resolver.resolve_sync_provider(effective_mode)
 
@@ -167,8 +174,39 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     )
 
     sync_result = sync_service.sync()
-        
-    portfolio_snapshot = sync_service.get_portfolio_snapshot(sync_result)
+
+    # Live mode: critical sync fields are required
+    if effective_mode == "live":
+        broker_errors = sync_result.diagnostics.get("broker_errors", [])
+        if not isinstance(broker_errors, list):
+            return AgentResult(
+                status="error",
+                errors=["live broker sync failed: malformed diagnostics"],
+                diagnostics={"broker_status": resolution.status.to_dict()},
+            )
+        failed_ops = {
+            e.get("operation")
+            for e in broker_errors
+            if isinstance(e, dict) and isinstance(e.get("operation"), str)
+        }
+        critical_ops = {"sync_account_state", "sync_positions", "sync_open_orders"}
+        if sync_result.account is None:
+            failed_ops.add("sync_account_state")
+        if failed_ops & critical_ops:
+            missing = sorted(failed_ops & critical_ops)
+            return AgentResult(
+                status="error",
+                errors=[f"live broker sync failed: {', '.join(missing)}"],
+                diagnostics={
+                    "broker_status": resolution.status.to_dict(),
+                    "sync_status": sync_result.status,
+                    "failed_operations": missing,
+                },
+            )
+
+    portfolio_snapshot = sync_service.get_portfolio_snapshot(
+        sync_result, broker_id=resolution.status.broker_id
+    )
     
     from atlas_agent.risk.limits import RiskLimits
     risk_limits = RiskLimits(
