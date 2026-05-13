@@ -989,7 +989,8 @@ def _live_broker_credentials_configured(config: AtlasConfig | None) -> bool:
     if config.live_broker == "alpaca":
         return bool(os.getenv("ALPACA_API_KEY")) and bool(os.getenv("ALPACA_SECRET_KEY"))
     if config.live_broker == "binance":
-        return bool(os.getenv("BINANCE_API_KEY")) and bool(os.getenv("BINANCE_SECRET_KEY"))
+        binance_secret = os.getenv("BINANCE_API_SECRET") or os.getenv("BINANCE_SECRET_KEY")
+        return bool(os.getenv("BINANCE_API_KEY")) and bool(binance_secret)
     if config.live_broker == "ccxt":
         return bool(os.getenv("CCXT_API_KEY")) or bool(os.getenv("EXCHANGE_API_KEY"))
     return False

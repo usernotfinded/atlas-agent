@@ -13,13 +13,17 @@ from atlas_agent.portfolio.positions import Position
 class BinanceBroker:
     config: AtlasConfig
 
+    def _api_secret(self) -> str | None:
+        # BINANCE_SECRET_KEY is kept as a legacy compatibility alias.
+        return os.getenv("BINANCE_API_SECRET") or os.getenv("BINANCE_SECRET_KEY")
+
     def _validate_config(self) -> None:
         reasons = list(self.config.live_disabled_reasons())
         if self.config.live_broker != "binance":
             reasons.append("LIVE_BROKER must be binance")
         if not os.getenv("BINANCE_API_KEY"):
             reasons.append("BINANCE_API_KEY is missing")
-        if not os.getenv("BINANCE_API_SECRET"):
+        if not self._api_secret():
             reasons.append("BINANCE_API_SECRET is missing")
         if reasons:
             raise BrokerConfigurationError("; ".join(reasons))
@@ -34,6 +38,9 @@ class BinanceBroker:
 
     def place_order(self, order: Order) -> OrderResult:
         self._validate_config()
+        secret = self._api_secret()
+        if not secret:
+            raise BrokerConfigurationError("BINANCE_API_SECRET is missing")
         try:
             import ccxt  # type: ignore
         except ModuleNotFoundError as exc:
@@ -41,7 +48,7 @@ class BinanceBroker:
         exchange = ccxt.binance(
             {
                 "apiKey": os.environ["BINANCE_API_KEY"],
-                "secret": os.environ["BINANCE_API_SECRET"],
+                "secret": secret,
                 "options": {"defaultType": "spot"},
                 "enableRateLimit": True,
             }

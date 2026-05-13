@@ -98,6 +98,40 @@ def test_bare_atlas_does_not_call_runner(workspace, capsys, monkeypatch, write_c
     _ = capsys.readouterr()
 
 
+def test_onboarding_binance_credentials_use_canonical_secret_env(workspace, capsys, monkeypatch, write_complete_setup_config):
+    write_complete_setup_config(workspace)
+    assert main(["config", "set", "broker.provider", "binance"]) == 0
+    monkeypatch.setenv("BINANCE_API_KEY", "demo-binance-key")
+    monkeypatch.setenv("BINANCE_API_SECRET", "demo-binance-secret")
+    monkeypatch.delenv("BINANCE_SECRET_KEY", raising=False)
+
+    code = main([])
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "- live broker credentials: configured" in output
+    assert "demo-binance-key" not in output
+    assert "demo-binance-secret" not in output
+
+
+def test_onboarding_binance_legacy_secret_alias_is_compatibility_only(
+    workspace,
+    capsys,
+    monkeypatch,
+    write_complete_setup_config,
+):
+    write_complete_setup_config(workspace)
+    assert main(["config", "set", "broker.provider", "binance"]) == 0
+    monkeypatch.setenv("BINANCE_API_KEY", "demo-binance-key")
+    monkeypatch.delenv("BINANCE_API_SECRET", raising=False)
+    monkeypatch.setenv("BINANCE_SECRET_KEY", "legacy-binance-secret")
+
+    code = main([])
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "- live broker credentials: configured" in output
+    assert "legacy-binance-secret" not in output
+
+
 def test_bare_atlas_outside_workspace(non_workspace, monkeypatch, capsys):
     monkeypatch.setenv("HOME", str(non_workspace))
     # Incomplete setup (no config at all) -> exit 2 in non-interactive
