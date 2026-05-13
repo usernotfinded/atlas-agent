@@ -50,6 +50,34 @@ def test_validate_json_is_read_only(clean_workspace, capsys):
     assert files_before == files_after, "validate --json created files"
 
 
+def test_validate_strict_is_read_only(clean_workspace, capsys):
+    def get_file_list(d: Path) -> set[str]:
+        return {str(p.relative_to(d)) for p in d.rglob("*") if p.is_file()}
+
+    files_before = get_file_list(clean_workspace)
+
+    code = main(["validate", "--strict"])
+    assert code in (0, 2)
+    _ = capsys.readouterr()
+
+    files_after = get_file_list(clean_workspace)
+    assert files_before == files_after, "validate --strict created files"
+
+
+def test_validate_json_strict_is_read_only(clean_workspace, capsys):
+    def get_file_list(d: Path) -> set[str]:
+        return {str(p.relative_to(d)) for p in d.rglob("*") if p.is_file()}
+
+    files_before = get_file_list(clean_workspace)
+
+    code = main(["validate", "--json", "--strict"])
+    assert code in (0, 2)
+    _ = capsys.readouterr()
+
+    files_after = get_file_list(clean_workspace)
+    assert files_before == files_after, "validate --json --strict created files"
+
+
 def test_validate_invalid_config_reports_error_without_mutating_files(clean_workspace, capsys):
     config_path = clean_workspace / ".atlas" / "config.toml"
     secret_like_value = "sk-secret-validate-should-not-leak"

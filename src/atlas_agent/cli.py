@@ -137,6 +137,11 @@ Safety First:
     init.add_argument("--set-default", action="store_true", help="Set this workspace as the default")
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--json", action="store_true", help="Output readiness report as JSON")
+    validate_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero when readiness checks fail.",
+    )
     subparsers.add_parser("configure")
     subparsers.add_parser("setup")
 
@@ -697,6 +702,11 @@ def _emit_json_error(
 def _emit_config_error(exc: Exception) -> int:
     print(f"Configuration error: {exc}", file=sys.stderr)
     return 1
+
+
+def _readiness_passed(report: Any) -> bool:
+    checks = getattr(report, "checks", []) or []
+    return all(getattr(check, "status", None) != "fail" for check in checks)
 
 
 def _check_discipline_or_exit(config: AtlasConfig) -> None:
@@ -1448,19 +1458,33 @@ def main(argv: list[str] | None = None) -> int:
         if args.config_command == "check":
             try:
                 config = get_config()
+                payload = config.model_dump(mode="json")
+                def redact_secrets_in_dict(d):
+                    for k, v in d.items():
+                        if isinstance(v, dict):
+                            redact_secrets_in_dict(v)
+                        elif isinstance(k, str) and is_secret_key(k):
+                            d[k] = "[REDACTED]"
+                redact_secrets_in_dict(payload)
             except AtlasConfigError as exc:
+                if getattr(args, "json", False):
+                    return _emit_json_error(
+                        "atlas config check",
+                        code="config_load_failed",
+                        message=f"Configuration error: {exc}",
+                    )
                 return _emit_config_error(exc)
-            payload = config.model_dump(mode="json")
-            def redact_secrets_in_dict(d):
-                for k, v in d.items():
-                    if isinstance(v, dict):
-                        redact_secrets_in_dict(v)
-                    elif isinstance(k, str) and is_secret_key(k):
-                        d[k] = "[REDACTED]"
-            redact_secrets_in_dict(payload)
+            except Exception:
+                if getattr(args, "json", False):
+                    return _emit_json_error(
+                        "atlas config check",
+                        code="config_check_failed",
+                        message="Configuration check failed.",
+                    )
+                print("Configuration check failed.", file=sys.stderr)
+                return 1
             if getattr(args, "json", False):
-                from atlas_agent.output import emit_json
-                return emit_json(payload)
+                return _emit_json_success("atlas config check", payload)
             print("Config is valid.")
             return 0
 
@@ -1834,9 +1858,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     if load_error:
+        if args.command == "validate" and getattr(args, "json", False):
+            return _emit_json_error(
+                "atlas validate",
+                code="config_load_failed",
+                message=load_error,
+            )
         print(load_error, file=sys.stderr)
         return 1
     if config is None:
+        if args.command == "validate" and getattr(args, "json", False):
+            return _emit_json_error(
+                "atlas validate",
+                code="config_load_failed",
+                message="Configuration error: unable to load AtlasConfig.",
+            )
         print("Configuration error: unable to load AtlasConfig.", file=sys.stderr)
         return 1
 
@@ -2218,14 +2254,33 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "validate":
         from atlas_agent.diagnostics.readiness import run_diagnostics, print_readiness_report
 
-        report = run_diagnostics(config)
-        
+        strict = bool(getattr(args, "strict", False))
+        try:
+            report = run_diagnostics(config)
+        except Exception:
+            if getattr(args, "json", False):
+                return _emit_json_error(
+                    "atlas validate",
+                    code="validate_failed",
+                    message="Readiness diagnostics failed.",
+                )
+            print("Readiness diagnostics failed.", file=sys.stderr)
+            return 1
+
+        passed = _readiness_passed(report)
+
         if getattr(args, "json", False):
-            import json
-            print(json.dumps(report.to_dict(), indent=2))
-        else:
-            print_readiness_report(report)
-            
+            payload = {
+                "strict": strict,
+                "passed": passed,
+                "report": report.to_dict(),
+            }
+            emit_json(success_envelope("atlas validate", payload))
+            return 2 if strict and not passed else 0
+
+        print_readiness_report(report)
+        if strict and not passed:
+            return 2
         return 0
     if args.command == "providers" and args.providers_command == "list":
         print("openai_compatible, anthropic, openrouter")
