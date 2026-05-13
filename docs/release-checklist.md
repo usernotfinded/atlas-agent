@@ -2,21 +2,29 @@
 
 Run this before pushing a public GitHub release.
 
-- `pytest`
-- `python -m pip install -e . --no-build-isolation`
-- `atlas --help`
-- `atlas init demo --template routine-trader`
-- `cd demo && atlas validate`
-- `atlas discipline setup --manual --yes`
-- `atlas config set market.symbol DEMO-SYMBOL`
-- `atlas routine run pre_market --mode paper`
-- Secret scan across `README.md`, `docs/`, `templates/`, `routines/`, `skills/`, `src/`, `tests/`, and `.env.example`
-- Confirm no runtime personal data is committed
-- Confirm `README.md` reflects current commands and safety behavior
-- Confirm `LICENSE` exists
-- Confirm `DISCLAIMER.md` exists
-- Confirm package install works
-- Confirm GitHub Actions workflow generation works
-- Confirm live mode fails safely by default
-- Confirm paper routine works
+## Required Validation Commands
 
+- `python3.11 -m pytest -q`
+- `python3.11 -m pip check`
+- `./scripts/demo_paper_workflow.sh`
+
+## Validate Contract Checks
+
+- `atlas validate`
+Expectation: human-readable readiness report; command remains read-only.
+- `atlas validate --json`
+Expectation: one parseable JSON envelope on stdout; no mixed human text; non-strict readiness failures still exit `0`.
+- `atlas validate --strict`
+Expectation: read-only; exits non-zero (`2`) when readiness checks fail.
+- `atlas validate --json --strict`
+Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-zero (`2`) when readiness checks fail.
+- Serious config/load/internal failures in any validate mode remain non-zero.
+
+## Release Hygiene Assertions
+
+- Positioning remains broker-neutral supervised workspace, not autonomous trading.
+- Demo flow is paper-only and reproducible via `./scripts/demo_paper_workflow.sh`.
+- Live trading remains disabled by default unless explicitly enabled by the user.
+- No release docs include return guarantees, zero-risk language, autonomous income claims, live-readiness overstatements, or broker-preference marketing language.
+- Do not reference a demo GIF as present unless `assets/atlas-demo.gif` actually exists.
+- Confirm no private values or credential-like strings are committed in docs or scripts.

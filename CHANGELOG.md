@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2026-05-13
+
+### Fixed
+- Hardened credential handling and audit safety paths used during setup and runtime checks.
+- Corrected runtime provider/config consistency paths used by diagnostics and dashboard summaries.
+- Enforced fail-closed behavior for invalid Atlas config loading and schema validation in normal runtime/CLI paths.
+- Strengthened approval and input validation paths, including approval ID checks and private `.env` value handling.
+- Ensured agent runtime system prompts include the configured discipline profile after discipline gating succeeds.
+- Corrected readiness audit flag lookup to use `config.audit` fields for raw prompt/provider text logging checks.
+- Fixed backtest portfolio snapshot position-model wiring so snapshots with existing positions do not crash.
+- Stabilized `atlas validate --json` and `atlas config check --json` envelope behavior and strict/non-strict exit-code contracts.
+
+### Changed
+- Dashboard provider summary now reflects configured/resolved Atlas provider metadata instead of `AI_PROVIDER` environment fallback.
+- Demo/proof layer now uses a reproducible paper workflow script (`scripts/demo_paper_workflow.sh`) and updated docs aligned with paper-only safety posture.
+
+### Documentation
+- Updated demo and release-facing docs to keep broker-neutral supervised-workspace positioning, paper workflow emphasis, and live-trading-disabled-by-default guidance.
+- Clarified that no demo GIF is currently checked in (`assets/atlas-demo.gif` is not present).
+
 ## [0.5.4] - 2026-05-12
 
 ### Fixed
