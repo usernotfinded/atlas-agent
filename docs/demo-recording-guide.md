@@ -1,38 +1,25 @@
 # Demo Recording Guide
 
-This document describes the script for recording a short terminal demo of Atlas Agent.
+This document describes how to record a short terminal demo of Atlas Agent.
 
 ## Recording script
 
-Run the following commands in a clean terminal window:
+Run the reproducible paper workflow from the repository root:
 
 ```bash
-# 1. Install Atlas Agent
-pip install -e .
-
-# 2. Create a workspace
-atlas init demo-workspace --template routine-trader
-
-# 3. Enter the workspace
-cd demo-workspace
-
-# 4. Validate configuration
-atlas validate
-
-# 5. Run a paper cycle
-atlas run --mode paper
-
-# 6. Verify the audit trail
-atlas audit verify --all
+./scripts/demo_paper_workflow.sh
 ```
 
 ## What to expect
 
 | Step | Expected behavior |
 |---|---|
-| `atlas init` | Creates `demo-workspace` with a routine-trader template. |
-| `atlas validate` | Confirms the workspace is configured and live trading is disabled. |
-| `atlas run --mode paper` | Runs a paper cycle without sending live broker orders. If no AI provider is configured, agentic workflows fail closed and ask you to configure a provider. |
+| `atlas init` | Creates a temporary routine-trader workspace. |
+| `atlas discipline setup --manual --yes` | Creates the safe default discipline profile required by agentic workflows. |
+| `atlas config set market.symbol ATLAS-DEMO` | Sets an explicit demo symbol without implying a product default. |
+| `atlas validate` | Reports readiness while keeping the workspace read-only. |
+| `atlas run --mode paper --dry-run --symbol ATLAS-DEMO` | Prints the planned paper workflow without sending live broker orders. |
+| `atlas backtest run` | Runs the deterministic sample-data backtest with the `DEMO-SYMBOL` fixture. |
 | `atlas audit verify --all` | Verifies any run manifests created during the session. Exit code `0` means the hash-chain is intact. |
 
 ## Recording tips
@@ -41,10 +28,10 @@ atlas audit verify --all
 - Ensure the prompt shows the current directory clearly.
 - Do not show real API keys or broker credentials.
 - Keep the recording under 60 seconds.
-- Export the final GIF to `assets/atlas-demo.gif`.
+- If you create a GIF, export it to `assets/atlas-demo.gif` only after checking every frame for secrets.
 
 ## After recording
 
 1. Check that no secrets appear in the GIF frames.
-2. Add `assets/atlas-demo.gif` to the repository.
-3. Remove the HTML comment in README.md (`<!-- demo gif placeholder -->`) and ensure the GIF renders.
+2. Add `assets/atlas-demo.gif` to the repository only if the recording is clean and current.
+3. Update README.md to render the GIF only after the file exists.

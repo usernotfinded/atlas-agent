@@ -2,6 +2,14 @@
 
 This demo shows Atlas Agent running in **paper mode**, the default and safest way to explore the system. No live broker orders are sent.
 
+For a reproducible terminal run, use:
+
+```bash
+./scripts/demo_paper_workflow.sh
+```
+
+The script creates a temporary workspace, writes a safe discipline profile, sets `ATLAS-DEMO`, validates the workspace, runs a paper dry-run, runs the deterministic sample-data backtest with the `DEMO-SYMBOL` fixture, and verifies audit manifests when present.
+
 ## Prerequisites
 
 ```bash
@@ -43,38 +51,45 @@ Live trading enabled: False
 
 The default trading mode is **paper**, and live trading is disabled.
 
-### 4. Configure a trading symbol
+### 4. Configure a demo trading symbol
 
 Atlas does not choose a trading symbol for you. Set one before running:
 
 ```bash
-atlas config set market.symbol AAPL
+atlas config set market.symbol ATLAS-DEMO
 ```
 
-Use any symbol supported by your broker/API provider and paper/live setup.
+For real workflows outside this demo, choose a symbol supported by your selected data or broker/API provider.
 
-### 5. Run a paper cycle
+### 5. Create a discipline profile
+
+Agentic workflows require an explicit discipline profile. For the demo, create the default safe template:
 
 ```bash
-atlas run --mode paper
+atlas discipline setup --manual --yes
+```
+
+### 6. Run a paper dry-run
+
+```bash
+atlas run --mode paper --dry-run --symbol ATLAS-DEMO
 ```
 
 Expected behavior:
 
 - Config loads from `.atlas/config.toml`.
-- The system detects the market state (open or closed).
+- The CLI prints the planned paper workflow without contacting a live broker.
 - **Paper mode** is used; no live broker API calls are made.
-- The `RiskManager` evaluates any simulated orders against your limits.
-- The `AuditWriter` records events to `audit/events.jsonl`.
-- If no AI provider is configured, agentic workflows fail closed and ask you to configure a provider.
+- If no AI provider is configured, non-dry-run agentic workflows fail closed and ask you to configure a provider.
 
-Nothing is traded. Nothing leaves your machine.
+No live orders are sent.
 
 ## What to verify
 
-1. `audit/events.jsonl` contains a `run_started` event.
-2. No pending orders were created in `pending_orders/`.
-3. The demo does not require live broker credentials.
+1. `.atlas/config.toml` contains `market.symbol = "ATLAS-DEMO"`.
+2. `.atlas/discipline.md` exists and validates.
+3. No pending orders were created in `pending_orders/`.
+4. The demo does not require live broker credentials.
 
 ## Paper/sandbox support note
 

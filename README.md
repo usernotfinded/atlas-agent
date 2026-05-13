@@ -17,9 +17,15 @@ Atlas is the broker-neutral control layer above user-selected models, broker/API
 
 ## Demo
 
-A short terminal demo will show workspace init, validation, paper mode, and audit verification.
+Run the reproducible paper-mode workflow:
 
-<!-- demo gif placeholder: assets/atlas-demo.gif -->
+```bash
+./scripts/demo_paper_workflow.sh
+```
+
+The demo creates a temporary Atlas workspace, installs a safe discipline profile, sets the explicit `ATLAS-DEMO` paper symbol, runs `atlas validate`, shows a paper-mode dry run, runs a deterministic sample-data backtest with the `DEMO-SYMBOL` fixture, and verifies audit manifests when present.
+
+It does not require live trading, real broker credentials, or private values. It is a paper-mode proof of workflow mechanics, not a live-trading setup or performance claim. No `assets/atlas-demo.gif` recording is checked in yet; the script is the reproducible demo artifact.
 
 ## Why Atlas?
 
@@ -84,6 +90,7 @@ atlas run --mode paper
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:
 
+- **[Paper Workflow Script](scripts/demo_paper_workflow.sh)** — create a temporary workspace, validate config, run a paper dry-run, execute a deterministic sample-data backtest, and verify audit artifacts.
 - **[Paper Workflow](docs/demo-paper-workflow.md)** — create a workspace, validate config, and run a safe paper cycle with no live broker orders.
 - **[Risk Rejection](docs/demo-risk-rejection.md)** — see how deterministic risk gates block unsafe orders before they reach a broker.
 - **[Audit Verification](docs/demo-audit.md)** — verify the tamper-evident hash-chain and run manifests.
