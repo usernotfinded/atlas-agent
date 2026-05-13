@@ -18,6 +18,7 @@ from atlas_agent.ai.discipline import (
     InvalidDisciplineProfileError,
     require_user_discipline,
 )
+from atlas_agent.ai.prompt_builder import build_agent_system_prompt
 from atlas_agent.core.types import Session
 from atlas_agent.providers.factory import get_provider_from_runtime_config
 from atlas_agent.tools.registry import ToolRegistry
@@ -96,6 +97,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     # Discipline gate: agentic loops require an explicit user discipline profile.
     try:
         _check_discipline_gate(config)
+        system_prompt = build_agent_system_prompt(config.memory_dir.parent)
     except (DisciplineNotConfiguredError, InvalidDisciplineProfileError) as exc:
         return AgentResult(
             status="error",
@@ -178,15 +180,13 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     
     session = Session(id=run_id, turn_count=0, has_summarized=False)
     
-    from atlas_agent.ai.prompt_builder import SYSTEM_PROMPT
-    
     # Simple objective for now
     objective = f"Current mode is {mode}. Analyze the market for {effective_symbol} and propose any necessary actions."
     
     result = loop.run(
         user_objective=objective,
         session=session,
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt,
         mode=mode,
         run_id=run_id,
         portfolio_snapshot=portfolio_snapshot

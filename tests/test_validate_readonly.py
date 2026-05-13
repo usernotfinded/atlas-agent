@@ -8,6 +8,8 @@ from pathlib import Path
 import pytest
 
 from atlas_agent.cli import main
+from atlas_agent.config import AtlasConfig
+from atlas_agent.diagnostics.readiness import run_diagnostics
 
 @pytest.fixture
 def clean_workspace():
@@ -74,3 +76,46 @@ def test_validate_invalid_config_reports_error_without_mutating_files(clean_work
     assert "Invalid Atlas config schema" in combined
     assert secret_like_value not in combined
     assert before == after, "validate mutated files when config is invalid"
+
+
+def test_readiness_audit_logging_checks_use_config_audit_flags(tmp_path: Path) -> None:
+    (tmp_path / ".atlas").mkdir(parents=True, exist_ok=True)
+    config = AtlasConfig(
+        workspace_root=tmp_path,
+        memory_dir=tmp_path / "memory",
+    )
+    config.audit.log_raw_prompts = True
+    config.audit.log_provider_text = True
+
+    report = run_diagnostics(config)
+    by_id = {check.id: check for check in report.checks}
+
+    raw_prompt_check = by_id["audit.raw_prompt_logging"]
+    provider_text_check = by_id["audit.provider_text_logging"]
+
+    assert raw_prompt_check.status == "warn"
+    assert "Enabled" in raw_prompt_check.message
+    assert provider_text_check.status == "warn"
+    assert "Enabled" in provider_text_check.message
+
+
+def test_readiness_audit_logging_checks_ignore_safety_shadow_fields(tmp_path: Path) -> None:
+    (tmp_path / ".atlas").mkdir(parents=True, exist_ok=True)
+    config = AtlasConfig(
+        workspace_root=tmp_path,
+        memory_dir=tmp_path / "memory",
+    )
+    config.audit.log_raw_prompts = False
+    config.audit.log_provider_text = False
+
+    # Shadow fields on safety must not influence audit logging readiness checks.
+    object.__setattr__(config.safety, "log_raw_prompts", True)
+    object.__setattr__(config.safety, "log_provider_text", True)
+
+    report = run_diagnostics(config)
+    by_id = {check.id: check for check in report.checks}
+
+    assert by_id["audit.raw_prompt_logging"].status == "info"
+    assert by_id["audit.raw_prompt_logging"].message == "Disabled."
+    assert by_id["audit.provider_text_logging"].status == "info"
+    assert by_id["audit.provider_text_logging"].message == "Disabled."

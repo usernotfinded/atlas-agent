@@ -3,6 +3,7 @@ from unittest.mock import patch
 from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.cli import main
 from atlas_agent.ai.discipline import write_user_discipline
+from atlas_agent.agent.result import AgentResult
 
 GOOD_PROFILE = (
     "# Profile\n\n"
@@ -119,3 +120,21 @@ def test_agent_run_auto_unknown_market(base_config, monkeypatch, capsys):
     assert ret == 0
     captured = capsys.readouterr()
     assert "agent run auto: complete" in captured.out
+
+
+def test_agent_loop_runtime_prompt_includes_workspace_discipline(base_config, monkeypatch):
+    monkeypatch.setenv("TRADING_MODE", "paper")
+    monkeypatch.delenv("AI_PROVIDER", raising=False)
+    write_user_discipline(base_config.memory_dir.parent, GOOD_PROFILE)
+
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=base_config):
+        from atlas_agent.providers.null_provider import NullProvider
+        with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=NullProvider()):
+            with patch("atlas_agent.agent.runner.AgentLoop.run", return_value=AgentResult(status="complete")) as mock_run:
+                ret = main(["agent", "run", "--mode", "paper"])
+
+    assert ret == 0
+    assert mock_run.call_count == 1
+    system_prompt = mock_run.call_args.kwargs["system_prompt"]
+    assert "# Discipline Profile" in system_prompt
+    assert GOOD_PROFILE in system_prompt

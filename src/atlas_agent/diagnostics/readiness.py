@@ -191,8 +191,8 @@ def check_audit(config: AtlasConfig) -> list[ReadinessCheck]:
         message="Enabled"
     ))
     
-    raw_prompt_logging = getattr(config.safety, "log_raw_prompts", False)
-    provider_text_logging = getattr(config.safety, "log_provider_text", False)
+    raw_prompt_logging = config.audit.log_raw_prompts
+    provider_text_logging = config.audit.log_provider_text
     
     if raw_prompt_logging:
         checks.append(ReadinessCheck(
