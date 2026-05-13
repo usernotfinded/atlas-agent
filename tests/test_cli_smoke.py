@@ -43,6 +43,35 @@ def test_cli_broker_sync_json(tmp_path: Path, capsys, monkeypatch):
     assert "positions" in data
 
 
+def test_cli_broker_sync_json_sanitizes_broker_errors(tmp_path: Path, capsys, monkeypatch):
+    config = _config(tmp_path)
+    config.ensure_dirs()
+    monkeypatch.chdir(tmp_path)
+
+    def _raise_secret(*_args, **_kwargs):
+        raise RuntimeError("api_key=raw-secret token=raw-secret")
+
+    monkeypatch.setattr("atlas_agent.brokers.paper.PaperBrokerAdapter.get_positions", _raise_secret)
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        assert main(["broker", "sync", "--json"]) == 0
+
+    out = capsys.readouterr().out.strip()
+    data = json.loads(out)
+    assert data["status"] == "partial"
+    assert "raw-secret" not in out
+    assert data["errors"] == [
+        "sync_positions failed [broker_operation_failed]: broker operation failed"
+    ]
+    assert data["diagnostics"]["broker_errors"] == [
+        {
+            "code": "broker_operation_failed",
+            "operation": "sync_positions",
+            "broker": "paper",
+            "message": "broker operation failed",
+        }
+    ]
+
+
 def test_cli_audit_verify_all(tmp_path: Path, capsys, monkeypatch):
     config = _config(tmp_path)
     config.ensure_dirs()
