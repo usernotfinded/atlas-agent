@@ -20,6 +20,7 @@ RESET = "\033[0m"
 from atlas_agent import __version__
 from atlas_agent.backtest import BacktestConfig, BacktestEngine
 from atlas_agent.brokers.alpaca import AlpacaBroker
+from atlas_agent.brokers.base import BrokerConfigurationError
 from atlas_agent.brokers.binance import BinanceBroker
 from atlas_agent.brokers.ccxt_adapter import CCXTBroker
 from atlas_agent.brokers.paper import PaperBroker
@@ -220,6 +221,7 @@ Safety First:
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
     brokers_sync = brokers_sub.add_parser("sync")
+    brokers_sync.add_argument("--mode", choices=("paper", "live"), default="paper")
     brokers_sync.add_argument("--json", action="store_true")
 
     backtest = subparsers.add_parser("backtest")
@@ -503,7 +505,17 @@ def run_once(
     )
     audit = AuditLogger(config.audit_dir)
     portfolio = PortfolioState(cash=config.starting_cash)
-    broker = _broker_for_mode(mode, config, portfolio, audit)
+    try:
+        broker = _broker_for_mode(mode, config, portfolio, audit)
+    except BrokerConfigurationError as exc:
+        return OrderResult(
+            accepted=False,
+            filled=False,
+            order_id=order.id,
+            status="rejected",
+            message=str(exc),
+            reasons=("broker_configuration_error",),
+        )
     router = OrderRouter(
         config=config,
         risk_manager=RiskManager.from_config(config, audit),
@@ -529,17 +541,25 @@ def _broker_for_mode(
     portfolio: PortfolioState,
     audit: AuditLogger,
 ):
+    from atlas_agent.brokers.resolver import BrokerResolver
+
+    resolver = BrokerResolver(config)
+    resolution = resolver.resolve_execution_broker(mode)
+
+    if mode == "live" and not resolution.status.can_submit:
+        raise BrokerConfigurationError(resolution.status.message)
+
     if mode == "paper":
         return PaperBroker(
             portfolio,
             audit=audit,
             journal=TradeJournal(config.memory_dir / "trade_journal.md"),
         )
-    if config.live_broker == "alpaca":
-        return AlpacaBroker(config)
-    if config.live_broker == "binance":
-        return BinanceBroker(config)
-    return CCXTBroker(config)
+
+    if resolution.execution_broker is not None:
+        return resolution.execution_broker
+
+    raise BrokerConfigurationError(f"no execution broker available for mode: {mode}")
 
 
 def _memory_search_matches(config: AtlasConfig, query: str) -> tuple[list[dict[str, str]], str | None]:
@@ -983,25 +1003,14 @@ def _provider_configured(workspace_path: Path | None) -> bool:
     )
 
 
-def _live_broker_credentials_configured(config: AtlasConfig | None) -> bool:
-    if config is None:
-        return False
-    if config.live_broker == "alpaca":
-        return bool(os.getenv("ALPACA_API_KEY")) and bool(os.getenv("ALPACA_SECRET_KEY"))
-    if config.live_broker == "binance":
-        binance_secret = os.getenv("BINANCE_API_SECRET") or os.getenv("BINANCE_SECRET_KEY")
-        return bool(os.getenv("BINANCE_API_KEY")) and bool(binance_secret)
-    if config.live_broker == "ccxt":
-        return bool(os.getenv("CCXT_API_KEY")) or bool(os.getenv("EXCHANGE_API_KEY"))
-    return False
-
-
 def _print_first_run_onboarding(
     *,
     config: AtlasConfig | None,
     config_error: str | None,
     resolution: WorkspaceResolution,
 ) -> None:
+    from atlas_agent.brokers.resolver import BrokerResolver
+
     _print_welcome()
     workspace_configured = resolution.path is not None
     provider_configured = _provider_configured(resolution.path)
@@ -1019,7 +1028,8 @@ def _print_first_run_onboarding(
         live_enabled = "no"
         broker_mode = "not configured"
 
-    live_creds = _live_broker_credentials_configured(config)
+    live_status = BrokerResolver(config).resolve_status("live")
+    live_creds = live_status.credentials_configured
 
     print("Current setup status:")
     print(f"- workspace configured: {'yes' if workspace_configured else 'no'}")
@@ -2290,20 +2300,28 @@ def main(argv: list[str] | None = None) -> int:
         print("paper, alpaca, binance, ccxt, ibkr_stub")
         return 0
     if args.command == "broker" and args.brokers_command == "sync":
+        from atlas_agent.brokers.resolver import BrokerResolver
         from atlas_agent.brokers.sync import BrokerSyncService
-        from atlas_agent.brokers.paper import PaperBroker, PaperBrokerAdapter
-        
-        # For CLI sync, use paper broker as default if nothing else is configured
-        paper_broker = PaperBroker(state=PortfolioState(cash=config.starting_cash))
-        broker_provider = PaperBrokerAdapter(broker=paper_broker)
-        
-        sync_service = BrokerSyncService(broker=broker_provider)
-        result = sync_service.sync()
-        
+        from atlas_agent.brokers.models import BrokerSyncResult
+
+        mode = getattr(args, "mode", "paper")
+        resolver = BrokerResolver(config)
+        resolution = resolver.resolve_sync_provider(mode)
+
+        if resolution.sync_provider is None:
+            result = BrokerSyncResult(
+                status="failed",
+                errors=[resolution.status.message],
+                diagnostics={"broker_status": resolution.status.to_dict()},
+            )
+        else:
+            sync_service = BrokerSyncService(broker=resolution.sync_provider)
+            result = sync_service.sync()
+
         if getattr(args, "json", False):
             print(result.model_dump_json(indent=2))
             return 0
-            
+
         print(f"Broker Sync Result: {result.status.upper()}")
         print(f"  Synced At: {result.synced_at}")
         if result.account:

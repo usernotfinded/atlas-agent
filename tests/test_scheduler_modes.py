@@ -39,7 +39,9 @@ def test_paper_scheduler_can_run_autonomously(tmp_path) -> None:
     assert result.order_result.status == "filled"
 
 
-def test_live_scheduler_creates_pending_order_without_approval(tmp_path) -> None:
+def test_live_scheduler_fails_closed_at_broker_resolver_gate(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+    monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
     write_user_discipline(tmp_path, GOOD_PROFILE)
     config = AtlasConfig(
         trading_mode="live",
@@ -59,8 +61,8 @@ def test_live_scheduler_creates_pending_order_without_approval(tmp_path) -> None
         run_once_func=run_once,
     )
 
-    assert result.order_result.status == "pending_approval"
-    assert list((tmp_path / "pending").glob("*.json"))
+    assert result.order_result.status == "rejected"
+    assert "credentials are missing" in result.order_result.message or "deferred" in result.order_result.message
 
 
 def test_kill_switch_blocks_scheduler_execution(tmp_path) -> None:

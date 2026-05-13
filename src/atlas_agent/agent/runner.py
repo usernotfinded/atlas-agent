@@ -134,24 +134,29 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     kill_switch.heartbeat_manager.record(source="agent_runner")
     
     # Broker Sync
-    # For now, default to PaperBroker in all modes if no real adapter is configured
-    # In V4, we'll add Alpaca/Binance adapter factories here.
-    paper_broker = PaperBroker(state=PortfolioState(cash=config.starting_cash))
-    broker_provider = PaperBrokerAdapter(broker=paper_broker)
-    
+    from atlas_agent.brokers.resolver import BrokerResolver
+
+    effective_mode = mode
+    if effective_mode == "auto":
+        effective_mode = "live" if (config.trading_mode == "live" and config.enable_live_trading) else "paper"
+
+    resolver = BrokerResolver(config)
+    resolution = resolver.resolve_sync_provider(effective_mode)
+
+    if resolution.sync_provider is None:
+        return AgentResult(
+            status="error",
+            errors=[resolution.status.message],
+            diagnostics={"broker_status": resolution.status.to_dict()},
+        )
+
     sync_service = BrokerSyncService(
-        broker=broker_provider,
+        broker=resolution.sync_provider,
         audit_writer=audit_writer,
         run_id=run_id
     )
-    
+
     sync_result = sync_service.sync()
-    if sync_result.status == "failed" and mode == "live":
-        return AgentResult(
-            status="error",
-            errors=["Broker sync failed in live mode; failing closed."],
-            diagnostics={"sync_errors": sync_result.errors}
-        )
         
     portfolio_snapshot = sync_service.get_portfolio_snapshot(sync_result)
     
