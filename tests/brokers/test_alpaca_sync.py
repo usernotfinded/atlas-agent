@@ -33,6 +33,16 @@ def test_require_finite_rejects_inf() -> None:
         _require_finite(float("inf"), "x")
 
 
+def test_require_finite_rejects_true() -> None:
+    with pytest.raises(ValueError, match="invalid numeric value"):
+        _require_finite(True, "x")
+
+
+def test_require_finite_rejects_false() -> None:
+    with pytest.raises(ValueError, match="invalid numeric value"):
+        _require_finite(False, "x")
+
+
 def test_require_finite_non_negative_accepts_zero() -> None:
     assert _require_finite_non_negative(0, "cash") == 0.0
 
@@ -40,6 +50,16 @@ def test_require_finite_non_negative_accepts_zero() -> None:
 def test_require_finite_non_negative_rejects_negative() -> None:
     with pytest.raises(ValueError, match="invalid numeric value"):
         _require_finite_non_negative(-1, "cash")
+
+
+def test_require_finite_non_negative_rejects_true() -> None:
+    with pytest.raises(ValueError, match="invalid numeric value"):
+        _require_finite_non_negative(True, "cash")
+
+
+def test_require_finite_non_negative_rejects_false() -> None:
+    with pytest.raises(ValueError, match="invalid numeric value"):
+        _require_finite_non_negative(False, "cash")
 
 
 def test_require_finite_positive_rejects_zero() -> None:
@@ -127,6 +147,36 @@ def test_get_account_state_rejects_nan_equity() -> None:
                 adapter.get_account_state()
 
 
+def test_get_account_state_rejects_bool_cash() -> None:
+    adapter = _adapter()
+    raw = {"cash": True, "portfolio_value": "100", "buying_power": "100"}
+    with _with_env():
+        with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
+            with pytest.raises(ValueError, match="invalid numeric value") as exc_info:
+                adapter.get_account_state()
+    assert "True" not in str(exc_info.value)
+
+
+def test_get_account_state_rejects_bool_portfolio_value() -> None:
+    adapter = _adapter()
+    raw = {"cash": "100", "portfolio_value": False, "buying_power": "100"}
+    with _with_env():
+        with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
+            with pytest.raises(ValueError, match="invalid numeric value") as exc_info:
+                adapter.get_account_state()
+    assert "False" not in str(exc_info.value)
+
+
+def test_get_account_state_rejects_bool_buying_power() -> None:
+    adapter = _adapter()
+    raw = {"cash": "100", "portfolio_value": "100", "buying_power": True}
+    with _with_env():
+        with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
+            with pytest.raises(ValueError, match="invalid numeric value") as exc_info:
+                adapter.get_account_state()
+    assert "True" not in str(exc_info.value)
+
+
 # ---------------------------------------------------------------------------
 # Adapter: get_positions
 # ---------------------------------------------------------------------------
@@ -181,6 +231,41 @@ def test_get_positions_rejects_zero_avg_entry() -> None:
         with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
             with pytest.raises(ValueError, match="invalid numeric value"):
                 adapter.get_positions()
+
+
+def test_get_positions_rejects_bool_qty() -> None:
+    adapter = _adapter()
+    raw = [
+        {
+            "symbol": "AAPL",
+            "qty": True,
+            "avg_entry_price": "150.0",
+            "current_price": "155.0",
+        },
+    ]
+    with _with_env():
+        with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
+            with pytest.raises(ValueError, match="invalid numeric value") as exc_info:
+                adapter.get_positions()
+    assert "True" not in str(exc_info.value)
+
+
+def test_get_positions_negative_qty_still_allowed() -> None:
+    adapter = _adapter()
+    raw = [
+        {
+            "symbol": "TSLA",
+            "qty": "-5",
+            "avg_entry_price": "200.0",
+            "current_price": "195.0",
+        },
+    ]
+    with _with_env():
+        with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
+            positions = adapter.get_positions()
+    assert len(positions) == 1
+    assert positions[0].quantity == -5.0
+    assert positions[0].side == "short"
 
 
 # ---------------------------------------------------------------------------
@@ -244,6 +329,42 @@ def test_get_open_orders_rejects_zero_qty() -> None:
         with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
             with pytest.raises(ValueError, match="invalid numeric value"):
                 adapter.get_open_orders()
+
+
+def test_get_open_orders_rejects_bool_filled_qty() -> None:
+    adapter = _adapter()
+    raw = [
+        {
+            "id": "ord-3",
+            "symbol": "AAPL",
+            "side": "buy",
+            "qty": "10",
+            "filled_qty": True,
+        },
+    ]
+    with _with_env():
+        with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
+            with pytest.raises(ValueError, match="invalid numeric value") as exc_info:
+                adapter.get_open_orders()
+    assert "True" not in str(exc_info.value)
+
+
+def test_get_open_orders_zero_filled_qty_still_allowed() -> None:
+    adapter = _adapter()
+    raw = [
+        {
+            "id": "ord-4",
+            "symbol": "AAPL",
+            "side": "buy",
+            "qty": "10",
+            "filled_qty": "0",
+        },
+    ]
+    with _with_env():
+        with patch.object(AlpacaBrokerAdapter, "_request", return_value=raw):
+            orders = adapter.get_open_orders()
+    assert len(orders) == 1
+    assert orders[0].filled_quantity == 0.0
 
 
 # ---------------------------------------------------------------------------

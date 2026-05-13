@@ -120,6 +120,8 @@ class AlpacaBroker:
 # ---------------------------------------------------------------------------
 
 def _require_finite(value: object, field_name: str) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"Alpaca returned invalid numeric value for {field_name}")
     v = float(value)  # type: ignore[arg-type]
     if not math.isfinite(v):
         raise ValueError(f"Alpaca returned invalid numeric value for {field_name}")
