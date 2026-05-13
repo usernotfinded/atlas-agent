@@ -37,6 +37,10 @@ class PortfolioSnapshot(BaseModel):
     realized_pnl_today: float = 0.0
     unrealized_pnl: float = 0.0
     trades_today: int = 0
+    synced_at: Optional[str] = None
+    sync_status: Literal["success", "partial", "failed"] = "success"
+    sync_source: Optional[str] = None
+    broker_id: Optional[str] = None
 
 
 class OrderRiskInput(BaseModel):

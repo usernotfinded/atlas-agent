@@ -67,3 +67,14 @@ def test_sync_service_handles_partial_failure():
             "message": "broker operation failed",
         }
     ]
+
+
+def test_portfolio_snapshot_includes_sync_provenance(paper_adapter):
+    sync_service = BrokerSyncService(broker=paper_adapter)
+    result = sync_service.sync()
+    snapshot = sync_service.get_portfolio_snapshot(result, broker_id="paper")
+
+    assert snapshot.synced_at is not None
+    assert snapshot.sync_status == "success"
+    assert snapshot.sync_source == "broker_sync"
+    assert snapshot.broker_id == "paper"

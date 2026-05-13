@@ -123,12 +123,16 @@ class BrokerSyncService:
 
         return result
 
-    def get_portfolio_snapshot(self, sync_result: BrokerSyncResult) -> PortfolioSnapshot:
+    def get_portfolio_snapshot(
+        self,
+        sync_result: BrokerSyncResult,
+        broker_id: str | None = None,
+    ) -> PortfolioSnapshot:
         """
         Convert sync result into Risk-ready PortfolioSnapshot.
         """
         acc = sync_result.account
-        
+
         # Risk-ready positions
         risk_positions = [
             RiskPosition(
@@ -141,7 +145,7 @@ class BrokerSyncService:
             )
             for p in sync_result.positions
         ]
-        
+
         # Risk-ready pending orders
         pending_orders = [
             PendingOrder(
@@ -155,15 +159,18 @@ class BrokerSyncService:
             )
             for o in sync_result.open_orders
         ]
-        
+
         equity = acc.equity if acc else 0.0
         exposure = sum(p.notional for p in risk_positions)
-        
+
         return PortfolioSnapshot(
             cash=acc.cash if acc else 0.0,
             equity=equity,
             total_exposure=exposure,
             positions=risk_positions,
             open_orders=pending_orders,
-            # realized_pnl_today, trades_today could be fetched from broker if supported
+            synced_at=sync_result.synced_at,
+            sync_status=sync_result.status,
+            sync_source="broker_sync",
+            broker_id=broker_id,
         )
