@@ -1,6 +1,6 @@
 # Environment Variables
 
-Atlas Agent v0.5.4 uses a dual-layer configuration system:
+Atlas Agent v0.5.5 uses a dual-layer configuration system:
 - **`.atlas/config.toml`**: Stores non-secret workspace configuration (default symbol, risk limits, etc.).
 - **`.env.atlas`**: Stores sensitive API keys and broker credentials. This file is **gitignored** and protected during updates.
 
@@ -28,10 +28,15 @@ GROK_API_KEY=YOUR_GROK_KEY
 OPENROUTER_API_KEY=YOUR_OPENROUTER_KEY
 LOCAL_COMMAND=
 
-# Broker Credentials (Alpaca Example)
-APCA_API_KEY_ID=YOUR_ALPACA_KEY
-APCA_API_SECRET_KEY=YOUR_ALPACA_SECRET
-APCA_API_BASE_URL=https://paper-api.alpaca.markets
+# Broker Credentials (Alpaca)
+ALPACA_API_KEY=YOUR_ALPACA_KEY
+ALPACA_SECRET_KEY=YOUR_ALPACA_SECRET
+ALPACA_ENDPOINT_MODE=paper        # paper|live
+
+# Broker Credentials (Binance)
+BINANCE_API_KEY=YOUR_BINANCE_KEY
+BINANCE_API_SECRET=YOUR_BINANCE_SECRET   # canonical
+# BINANCE_SECRET_KEY=YOUR_BINANCE_SECRET  # legacy compatibility alias only
 
 # Research (Optional)
 ATLAS_RESEARCH_API_KEY=YOUR_RESEARCH_KEY
@@ -54,5 +59,5 @@ CLICKUP_LIST_ID=YOUR_LIST_ID
 CLICKUP_TASK_ID=YOUR_TASK_ID
 ```
 
-Paper mode is the default and safest way to run. Live mode requires explicit configuration and multiple safety gates.
+Paper mode is the default and safest way to run. Live mode requires explicit configuration and multiple safety gates. Live broker support is not production-grade.
 

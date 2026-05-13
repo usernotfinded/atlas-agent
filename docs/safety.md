@@ -1,6 +1,6 @@
 # Safety
 
-Atlas Agent v0.5.4 prioritizes safety
+Atlas Agent v0.5.5 prioritizes safety
  through multiple decoupled layers:
 
 ## 1. Deterministic Risk Manager
@@ -29,5 +29,5 @@ Live trading is never enabled by default. It requires:
 - `TRADING_MODE=live`
 - `ENABLE_LIVE_TRADING=true`
 - Manual approval for every order by default.
-- Active broker synchronization.
+- Active broker synchronization (deferred until live adapter maturity).
 

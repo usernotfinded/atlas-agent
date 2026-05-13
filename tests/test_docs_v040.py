@@ -65,6 +65,55 @@ def test_no_stale_v02_references():
         content = file_path.read_text(encoding="utf-8")
         assert "Current Status (v0.2" not in content, f"Stale status reference found in {file_path}"
 
+def test_no_stale_v054_references():
+    # Skip historical/audit files that intentionally reference past versions
+    skip_patterns = ("changelog", "audit_enhancements", "history", "release-notes")
+    for file_path in get_markdown_files():
+        path_lower = str(file_path).lower()
+        if "reports/" in path_lower or "memory/" in path_lower:
+            continue
+        if any(skip in path_lower for skip in skip_patterns):
+            continue
+        content = file_path.read_text(encoding="utf-8")
+        assert "v0.5.4" not in content, f"Stale v0.5.4 reference found in {file_path}"
+
+
+def test_no_forbidden_live_maturity_terms():
+    extra_forbidden = [
+        "fully supported live broker",
+        "autonomous trading bot",
+        "production-grade live trading",
+    ]
+    for file_path in get_markdown_files():
+        if "reports/" in str(file_path) or "memory/" in str(file_path):
+            continue
+        content = file_path.read_text(encoding="utf-8").lower()
+        for term in extra_forbidden:
+            assert term not in content, f"Forbidden maturity term '{term}' found in {file_path}"
+
+
+def test_env_var_docs_use_canonical_alpaca_names():
+    env_doc = Path("docs/environment-variables.md").read_text(encoding="utf-8")
+    assert "ALPACA_API_KEY=" in env_doc, "docs/environment-variables.md must use ALPACA_API_KEY"
+    assert "ALPACA_SECRET_KEY=" in env_doc, "docs/environment-variables.md must use ALPACA_SECRET_KEY"
+    assert "APCA_API_KEY_ID=" not in env_doc, "docs/environment-variables.md must not use stale APCA_API_KEY_ID"
+    assert "APCA_API_SECRET_KEY=" not in env_doc, "docs/environment-variables.md must not use stale APCA_API_SECRET_KEY"
+
+
+def test_env_var_docs_use_canonical_binance_secret():
+    env_doc = Path("docs/environment-variables.md").read_text(encoding="utf-8")
+    assert "BINANCE_API_SECRET=" in env_doc, "docs/environment-variables.md must list BINANCE_API_SECRET"
+    assert "BINANCE_SECRET_KEY=" in env_doc, "docs/environment-variables.md must mention BINANCE_SECRET_KEY as legacy alias"
+
+
+def test_live_alpaca_demo_uses_canonical_env_names():
+    demo_doc = Path("examples/live_alpaca_demo/README.md").read_text(encoding="utf-8")
+    assert "ALPACA_API_KEY=" in demo_doc, "live_alpaca_demo must use ALPACA_API_KEY"
+    assert "ALPACA_SECRET_KEY=" in demo_doc, "live_alpaca_demo must use ALPACA_SECRET_KEY"
+    assert "APCA_API_KEY_ID=" not in demo_doc, "live_alpaca_demo must not use stale APCA_API_KEY_ID"
+    assert "APCA_API_SECRET_KEY=" not in demo_doc, "live_alpaca_demo must not use stale APCA_API_SECRET_KEY"
+
+
 def test_no_realistic_keys_in_docs():
     # Very simple check for common key patterns
     key_patterns = ["sk-", "AKIA"]
