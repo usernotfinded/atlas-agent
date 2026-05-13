@@ -205,19 +205,21 @@ class AgentLoop:
                     messages=messages,
                     tools=self.tool_registry.describe_for_model(self.provider.capabilities()),
                 )
-            except Exception as e:
-                logging.error(f"Provider error: {e}")
+            except Exception as exc:
+                from atlas_agent.runtime_errors import make_safe_runtime_error
+                safe_error = make_safe_runtime_error(operation="provider_complete", exc=exc)
+                logging.error(f"Provider error: {safe_error.message}")
                 if self.audit_writer:
                     self.audit_writer.write_event(
                         "run_failed",
                         run_id=run_id,
                         iteration=i,
                         status="error",
-                        payload={"error": str(e)}
+                        payload=safe_error.to_dict(),
                     )
                 return AgentResult(
                     status="error",
-                    errors=[str(e)],
+                    errors=[safe_error.message],
                     iterations=iterations,
                     total_tool_calls=total_tool_calls,
                 )

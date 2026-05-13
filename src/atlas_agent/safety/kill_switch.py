@@ -372,10 +372,14 @@ class KillSwitchController:
         try:
             return broker.flatten_all(strategy=strategy, bps=bps)
         except Exception as exc:
+            from atlas_agent.brokers.errors import make_broker_error
+            broker_error = make_broker_error(
+                operation="flatten_all", broker=broker, exc=exc
+            )
             return FlattenResult(
                 accepted=False,
                 status="failed",
-                message=f"flatten call failed: {exc}",
+                message=broker_error.message,
                 strategy=strategy,
                 bps=bps,
                 attempted=0,
