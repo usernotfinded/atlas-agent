@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from atlas_agent.brokers.base import Broker
+from atlas_agent.brokers.errors import make_broker_error
 from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger
 from atlas_agent.execution.approval import ApprovalManager
@@ -142,7 +143,43 @@ class OrderRouter:
                     message=f"live order pending approval: {pending_path}",
                 )
 
-        result = broker.place_order(order)
+        try:
+            result = broker.place_order(order)
+        except Exception as exc:
+            broker_error = make_broker_error(
+                operation="place_order",
+                broker=broker,
+                exc=exc,
+            )
+            if event_logger is not None and run_id is not None:
+                event_logger.write(
+                    "order_rejected",
+                    run_id=run_id,
+                    command=command,
+                    mode=mode,
+                    payload={
+                        "order_id": order.id,
+                        "status": "failed",
+                        "broker_error": broker_error.to_dict(),
+                    },
+                )
+            self.audit.write(
+                "broker_order_result",
+                {
+                    "order_id": order.id,
+                    "status": "failed",
+                    "filled": False,
+                    "broker_error": broker_error.to_dict(),
+                },
+            )
+            return OrderResult(
+                accepted=False,
+                filled=False,
+                order_id=order.id,
+                status="failed",
+                message=broker_error.message,
+                reasons=(broker_error.code, f"operation={broker_error.operation}", f"broker={broker_error.broker}"),
+            )
         if event_logger is not None and run_id is not None:
             event_logger.write(
                 "order_executed" if result.filled else "order_rejected",

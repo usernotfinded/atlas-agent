@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from atlas_agent.brokers.errors import make_broker_error
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.safety.secrets import scan_text_for_secrets
 
@@ -37,3 +38,15 @@ def test_public_docs_do_not_add_profit_claims() -> None:
 
     assert ("guaranteed " + "profit") not in text
     assert ("profit " + "guarantee") in text or "no returns are guaranteed" in text
+
+
+def test_broker_error_strings_do_not_include_secret_fragments() -> None:
+    error = make_broker_error(
+        operation="sync_positions",
+        broker="binance",
+        exc=RuntimeError("token=raw-secret should never leak"),
+    )
+
+    serialized = json.dumps(error.to_dict(), sort_keys=True) + " " + error.to_error_string()
+    assert "raw-secret" not in serialized
+    assert "token=" not in serialized

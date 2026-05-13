@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 import pytest
 
@@ -27,6 +28,23 @@ class SpyBroker:
     def place_order(self, order: Order) -> OrderResult:
         self.called = True
         return OrderResult(True, True, order.id, "filled", "filled")
+
+    def cancel_order(self, order_id: str) -> OrderResult:
+        return OrderResult(True, False, order_id, "cancelled", "cancelled")
+
+
+@dataclass
+class ExplodingBroker:
+    error_text: str = "token=raw-secret should never leak"
+
+    def get_account(self) -> AccountSnapshot:
+        return AccountSnapshot(0, 0, 0, "exploding")
+
+    def get_positions(self) -> list[Position]:
+        return []
+
+    def place_order(self, order: Order) -> OrderResult:
+        raise RuntimeError(self.error_text)
 
     def cancel_order(self, order_id: str) -> OrderResult:
         return OrderResult(True, False, order_id, "cancelled", "cancelled")
@@ -157,3 +175,31 @@ def test_ai_output_cannot_call_broker_directly() -> None:
 
     assert order.source == "ai_committee"
     assert not hasattr(order, "place_order")
+
+
+def test_broker_place_order_exception_is_sanitized_and_audited_safely(tmp_path) -> None:
+    config = AtlasConfig()
+    result = make_router(tmp_path, config).route(
+        Order("TEST-SYMBOL", "buy", 1, limit_price=100, confidence=1),
+        mode="paper",
+        broker=ExplodingBroker(error_text="api_key=raw-secret account_id=acct-123"),
+        portfolio=PortfolioState(cash=10_000),
+        market_price=100,
+    )
+
+    assert result.status == "failed"
+    assert result.message == "broker operation failed"
+    assert "broker_operation_failed" in result.reasons
+    assert "operation=place_order" in result.reasons
+    assert "broker=explodingbroker" in result.reasons
+
+    audit_path = tmp_path / "audit" / "audit.jsonl"
+    payload = json.loads(audit_path.read_text(encoding="utf-8").splitlines()[-1])
+    serialized = json.dumps(payload, sort_keys=True)
+    assert payload["event_type"] == "broker_order_result"
+    assert payload["payload"]["broker_error"]["code"] == "broker_operation_failed"
+    assert payload["payload"]["broker_error"]["operation"] == "place_order"
+    assert payload["payload"]["broker_error"]["broker"] == "explodingbroker"
+    assert payload["payload"]["broker_error"]["message"] == "broker operation failed"
+    assert "raw-secret" not in serialized
+    assert "account_id=acct-123" not in serialized

@@ -101,6 +101,7 @@ def test_bare_atlas_does_not_call_runner(workspace, capsys, monkeypatch, write_c
 def test_onboarding_binance_credentials_use_canonical_secret_env(workspace, capsys, monkeypatch, write_complete_setup_config):
     write_complete_setup_config(workspace)
     assert main(["config", "set", "broker.provider", "binance"]) == 0
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setenv("BINANCE_API_KEY", "demo-binance-key")
     monkeypatch.setenv("BINANCE_API_SECRET", "demo-binance-secret")
     monkeypatch.delenv("BINANCE_SECRET_KEY", raising=False)
@@ -121,6 +122,7 @@ def test_onboarding_binance_legacy_secret_alias_is_compatibility_only(
 ):
     write_complete_setup_config(workspace)
     assert main(["config", "set", "broker.provider", "binance"]) == 0
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setenv("BINANCE_API_KEY", "demo-binance-key")
     monkeypatch.delenv("BINANCE_API_SECRET", raising=False)
     monkeypatch.setenv("BINANCE_SECRET_KEY", "legacy-binance-secret")
