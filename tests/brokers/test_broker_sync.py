@@ -58,4 +58,12 @@ def test_sync_service_handles_partial_failure():
     result = sync_service.sync()
     
     assert result.status == "partial"
-    assert "Fail positions" in result.errors[0]
+    assert result.errors[0] == "sync_positions failed [broker_operation_failed]: broker operation failed"
+    assert result.diagnostics["broker_errors"] == [
+        {
+            "code": "broker_operation_failed",
+            "operation": "sync_positions",
+            "broker": "failingprovider",
+            "message": "broker operation failed",
+        }
+    ]

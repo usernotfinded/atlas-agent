@@ -5,6 +5,7 @@ from typing import Optional, List, Literal
 
 from atlas_agent.audit import AuditWriter
 from atlas_agent.brokers.base import BrokerProvider
+from atlas_agent.brokers.errors import make_broker_error
 from atlas_agent.brokers.models import BrokerSyncResult, BrokerPosition, BrokerOrder
 from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition, PendingOrder
 
@@ -32,6 +33,7 @@ class BrokerSyncService:
             )
 
         errors = []
+        broker_errors: list[dict[str, str]] = []
         account = None
         positions = []
         open_orders = []
@@ -39,23 +41,47 @@ class BrokerSyncService:
 
         try:
             account = self.broker.get_account_state()
-        except Exception as e:
-            errors.append(f"Failed to fetch account state: {e}")
+        except Exception as exc:
+            broker_error = make_broker_error(
+                operation="sync_account_state",
+                broker=self.broker,
+                exc=exc,
+            )
+            errors.append(broker_error.to_error_string())
+            broker_errors.append(broker_error.to_dict())
 
         try:
             positions = self.broker.get_positions()
-        except Exception as e:
-            errors.append(f"Failed to fetch positions: {e}")
+        except Exception as exc:
+            broker_error = make_broker_error(
+                operation="sync_positions",
+                broker=self.broker,
+                exc=exc,
+            )
+            errors.append(broker_error.to_error_string())
+            broker_errors.append(broker_error.to_dict())
 
         try:
             open_orders = self.broker.get_open_orders()
-        except Exception as e:
-            errors.append(f"Failed to fetch open orders: {e}")
+        except Exception as exc:
+            broker_error = make_broker_error(
+                operation="sync_open_orders",
+                broker=self.broker,
+                exc=exc,
+            )
+            errors.append(broker_error.to_error_string())
+            broker_errors.append(broker_error.to_dict())
 
         try:
             balances = self.broker.get_balances()
-        except Exception as e:
-            errors.append(f"Failed to fetch balances: {e}")
+        except Exception as exc:
+            broker_error = make_broker_error(
+                operation="sync_balances",
+                broker=self.broker,
+                exc=exc,
+            )
+            errors.append(broker_error.to_error_string())
+            broker_errors.append(broker_error.to_dict())
 
         status: Literal["success", "partial", "failed"] = "success"
         if errors:
@@ -77,7 +103,8 @@ class BrokerSyncService:
             positions=positions,
             open_orders=open_orders,
             balances=balances,
-            errors=errors
+            errors=errors,
+            diagnostics={"broker_errors": broker_errors},
         )
 
         if self.audit_writer:
