@@ -54,7 +54,7 @@ def _validate_client_order_id(client_order_id: str | None) -> None:
 
 
 def _is_allowed_reconcile_status(status: str) -> bool:
-    return status in ("approved", "submit_uncertain", "reconciliation_required", "duplicate_reconciled")
+    return status in ("approved", "submit_uncertain", "reconciliation_required", "duplicate_reconciled", "submit_requested")
 
 
 def _check_expiry(payload: dict[str, Any]) -> tuple[bool, str]:
@@ -203,7 +203,7 @@ def run_reconcile(
         error_msg = str(exc)
         if "order not found" in error_msg:
             # Not found — do not submit, do not mark submitted
-            if current_status in ("submit_uncertain", "reconciliation_required"):
+            if current_status in ("submit_uncertain", "reconciliation_required", "submit_requested"):
                 # Keep or ensure reconciliation_required
                 mark_reconciliation_required(path, "broker order not found during reconcile")
                 return ReconcileReport(
@@ -219,7 +219,7 @@ def run_reconcile(
                 message="No broker order found for this client_order_id.",
             )
         # Transport / malformed / other broker error
-        if current_status in ("submit_uncertain", "reconciliation_required", "approved"):
+        if current_status in ("submit_uncertain", "reconciliation_required", "submit_requested", "approved"):
             mark_reconciliation_required(path, "broker query failed during reconcile")
         return ReconcileReport(
             ok=False,
@@ -229,7 +229,7 @@ def run_reconcile(
         )
     except Exception:
         # Catch-all for unexpected errors
-        if current_status in ("submit_uncertain", "reconciliation_required", "approved"):
+        if current_status in ("submit_uncertain", "reconciliation_required", "submit_requested", "approved"):
             mark_reconciliation_required(path, "unexpected error during reconcile")
         return ReconcileReport(
             ok=False,

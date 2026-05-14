@@ -806,3 +806,430 @@ def test_submit_execution_still_does_not_call_place_order(tmp_path: Path) -> Non
 
     assert report.ok is False
     mock_place.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.7: Pre-Submit Mutation Wiring Behind Hard-Disabled Gate
+# ---------------------------------------------------------------------------
+
+def test_can_submit_false_no_mutation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="can-submit-false")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    before = path.read_text(encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "can_submit_false"
+    after = path.read_text(encoding="utf-8")
+    assert before == after
+
+
+def test_can_submit_false_does_not_call_mark_submit_requested(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-mark-47")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.execution.submit_execution.mark_submit_requested", side_effect=AssertionError("mark_submit_requested must not be called")) as mock_mark:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    mock_mark.assert_not_called()
+
+
+def test_mocked_can_submit_true_marks_submit_requested(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="mock-true")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "submit_requested"
+    assert loaded["client_order_id"] is not None
+    assert loaded["client_order_id"].startswith("atlas-")
+    assert loaded["submit_requested_at"] is not None
+    assert loaded.get("submitted_at") is None
+    assert loaded.get("broker_order_id") is None
+    assert loaded["status_transitions"][-1]["status"] == "submit_requested"
+    assert len(loaded["submit_attempts"]) == 1
+    assert loaded["submit_attempts"][0]["status"] == "submit_requested"
+
+
+def test_mocked_can_submit_true_returns_broker_submit_not_implemented(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="mock-block")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "blocked"
+    assert report.blocked_reason == "broker_submit_not_implemented"
+    assert "not implemented" in report.message.lower()
+    assert report.gates["can_submit"] == "pass"
+    assert report.gates["broker_submit"] == "not_implemented"
+
+
+def test_mocked_can_submit_true_keeps_submitted_at_null(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-submitted-at")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        run_submit_execution(order.id, FakeConfig(), manager)
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded.get("submitted_at") is None
+
+
+def test_mocked_can_submit_true_keeps_broker_order_id_null(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-broker-id")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        run_submit_execution(order.id, FakeConfig(), manager)
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded.get("broker_order_id") is None
+
+
+def test_mocked_can_submit_true_does_not_call_place_order(tmp_path: Path) -> None:
+    from atlas_agent.brokers.alpaca import AlpacaBroker
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-place-47")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch.object(AlpacaBroker, "place_order", side_effect=AssertionError("place_order must not be called")) as mock_place:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    mock_place.assert_not_called()
+
+
+def test_mocked_can_submit_true_does_not_call_resolve_execution_broker(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-exec-47")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_resolver.resolve_execution_broker = MagicMock(side_effect=AssertionError("must not be called"))
+        mock_resolver_cls.return_value = mock_resolver
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    mock_resolver.resolve_execution_broker.assert_not_called()
+
+
+def test_mocked_can_submit_true_does_not_call_order_router_route(tmp_path: Path) -> None:
+    from atlas_agent.execution.order_router import OrderRouter
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-route-47")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch.object(OrderRouter, "route", side_effect=AssertionError("OrderRouter.route must not be called")) as mock_route:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    mock_route.assert_not_called()
+
+
+def test_rerun_on_submit_requested_blocks_before_sync(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="rerun-sr")
+    payload = _make_v2_payload(order, status="submit_requested")
+    # Pre-seed a submit_attempt to simulate prior Batch 4.7 run
+    payload["submit_attempts"] = [{
+        "attempt_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "client_order_id": "atlas-rerun-deadbeef",
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    payload["client_order_id"] = "atlas-rerun-deadbeef"
+    payload["submit_requested_at"] = datetime.now(UTC).isoformat()
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls:
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "reconciliation_required"
+    assert report.gates["idempotency"] == "fail"
+    mock_sync_cls.assert_not_called()
+
+
+def test_rerun_on_submit_requested_does_not_append_second_attempt(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="rerun-no-dup")
+    payload = _make_v2_payload(order, status="submit_requested")
+    payload["submit_attempts"] = [{
+        "attempt_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "client_order_id": "atlas-rerun2-deadbeef",
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    payload["client_order_id"] = "atlas-rerun2-deadbeef"
+    payload["submit_requested_at"] = datetime.now(UTC).isoformat()
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert len(loaded["submit_attempts"]) == 1
+
+
+def test_sync_failure_blocks_before_mutation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="sync-fail-before")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.execution.submit_execution.mark_submit_requested", side_effect=AssertionError("must not be called")) as mock_mark:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = (
+            [],
+            {"status": "error", "errors": ["sync failed"], "diagnostics": {"failed_operations": ["sync_account_state"]}},
+        )
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "live_sync_failed"
+    mock_mark.assert_not_called()
+
+
+def test_risk_failure_blocks_before_mutation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="risk-fail-before")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.execution.submit_execution.mark_submit_requested", side_effect=AssertionError("must not be called")) as mock_mark:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=False)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "risk_revalidation_failed"
+    mock_mark.assert_not_called()
+
+
+def test_kill_switch_blocks_before_mutation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="ks-before")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.execution.submit_execution.mark_submit_requested", side_effect=AssertionError("must not be called")) as mock_mark:
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=True, mode="soft_pause")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "kill_switch_active"
+    mock_mark.assert_not_called()
+    mock_sync_cls.assert_not_called()
+
+
+def test_market_order_blocks_before_mutation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-before", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.execution.submit_execution.mark_submit_requested", side_effect=AssertionError("must not be called")) as mock_mark:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_price_unavailable"
+    mock_mark.assert_not_called()

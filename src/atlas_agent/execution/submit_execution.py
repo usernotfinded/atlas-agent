@@ -19,6 +19,7 @@ from atlas_agent.execution.submit_state import (
     compute_client_order_id,
     is_submit_blocked_by_state,
     load_pending_order,
+    mark_submit_requested,
 )
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.manager import RiskManager
@@ -198,6 +199,15 @@ def run_submit_execution(
             gates={**gates, "idempotency": "fail"},
             blocked_reason="reconciliation_required",
             message="Order requires reconciliation. Run --reconcile first.",
+        )
+    if current_status == "submit_requested":
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "idempotency": "fail"},
+            blocked_reason="reconciliation_required",
+            message="Order is in submit_requested state. Run --reconcile first.",
         )
     if current_status in ("cancelled", "rejected", "expired"):
         return SubmitExecutionReport(
@@ -426,17 +436,27 @@ def run_submit_execution(
             warnings=warnings,
         )
 
-    # Future batch: broker submit would go here
     gates["can_submit"] = "pass"
 
-    return SubmitExecutionReport(
-        ok=True,
-        status="ready",
+    # Batch 4.7: Atomically transition to submit_requested, then hard-block
+    # before broker submission. This validates the mutation boundary under
+    # mocked can_submit=True while keeping production (can_submit=False) unchanged.
+    mark_submit_requested(
+        path,
         order_id=order_id,
-        gates=gates,
-        warnings=warnings,
-        message="All safety gates passed. Live submit is enabled.",
+        client_order_id=cid,
+        actor="submit:cli",
+    )
+
+    return SubmitExecutionReport(
+        ok=False,
+        status="blocked",
+        order_id=order_id,
+        gates={**gates, "broker_submit": "not_implemented"},
+        blocked_reason="broker_submit_not_implemented",
+        message="Submit state prepared, but broker submission is not implemented in this release.",
         client_order_id=cid,
         risk=risk_dict,
         sync={"status": "success", "warnings": sync_warnings},
+        warnings=warnings,
     )

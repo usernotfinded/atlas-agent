@@ -104,7 +104,7 @@ def run_submit_dry_run(
     # 3. Idempotency state check (before approved gate, because these states
     # are "approved" flag-wise but not actionable)
     current_status = payload.get("status")
-    if current_status in ("submit_uncertain", "reconciliation_required"):
+    if current_status in ("submit_uncertain", "reconciliation_required", "submit_requested"):
         return DryRunReport(
             ok=False,
             status="blocked",

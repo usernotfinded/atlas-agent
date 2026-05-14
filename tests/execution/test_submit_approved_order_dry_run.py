@@ -732,3 +732,68 @@ def test_dry_run_unchanged(tmp_path: Path) -> None:
     assert report.blocked_reason is None
     after = path.read_text(encoding="utf-8")
     assert before == after
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.7: Dry-run blocks on submit_requested
+# ---------------------------------------------------------------------------
+
+def test_dry_run_blocks_submit_requested(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="dry-sr")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "submit_requested"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    payload["client_order_id"] = "atlas-dry-sr-deadbeef"
+    payload["submit_attempts"] = [{
+        "attempt_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "client_order_id": "atlas-dry-sr-deadbeef",
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    report = run_submit_dry_run(order.id, FakeConfig(), manager)
+    assert report.ok is False
+    assert report.gates["idempotency"] == "fail"
+    assert report.blocked_reason == "reconciliation_required"
+    assert "Run --reconcile first" in report.message
+
+
+def test_dry_run_submit_requested_no_mutation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="dry-sr-no-mut")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "submit_requested"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    payload["client_order_id"] = "atlas-dry-sr2-deadbeef"
+    payload["submit_attempts"] = [{
+        "attempt_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "client_order_id": "atlas-dry-sr2-deadbeef",
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    before = path.read_text(encoding="utf-8")
+
+    report = run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    after = path.read_text(encoding="utf-8")
+    assert before == after
