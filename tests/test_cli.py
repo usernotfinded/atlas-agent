@@ -5,12 +5,13 @@ import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import atlas_agent
 import pytest
 from atlas_agent.cli import main
 from atlas_agent.config import get_config
+from atlas_agent.execution.order import Order
 
 
 def test_atlas_help_works(capsys) -> None:
@@ -577,6 +578,550 @@ def test_cli_approve_order_does_not_leak_fake_private_values(tmp_path, monkeypat
     # Leaked tampered values must not appear in output
     assert "FAKE_API_KEY_12345" not in captured.out
     assert "FAKE_API_KEY_12345" not in captured.err
+
+
+# ---------------------------------------------------------------------------
+# submit-approved-order --dry-run
+# ---------------------------------------------------------------------------
+
+def _mock_dry_run_services():
+    """Return a context-manager factory that patches all external dry-run services."""
+    from unittest.mock import patch
+
+    def _make_sync_result():
+        from atlas_agent.risk.models import PortfolioSnapshot
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        return mock_result
+
+    def _make_risk_decision(allowed: bool = True):
+        from atlas_agent.risk.models import RiskDecision
+        return RiskDecision(
+            allowed=allowed,
+            status="requires_approval" if allowed else "blocked",
+            reason="All risk checks passed" if allowed else "Risk violations detected",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+    def _make_broker_status(can_sync: bool = True, can_submit: bool = False):
+        mock = MagicMock()
+        mock.can_sync = can_sync
+        mock.can_submit = can_submit
+        mock.broker_id = "alpaca"
+        mock.to_dict.return_value = {"can_sync": can_sync, "can_submit": can_submit}
+        return mock
+
+    def _make_broker_resolution():
+        mock = MagicMock()
+        mock.sync_provider = MagicMock()
+        return mock
+
+    def _make_sync_service():
+        from atlas_agent.risk.models import PortfolioSnapshot
+        mock_service = MagicMock()
+        mock_service.sync.return_value = _make_sync_result()
+        mock_service.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+        return mock_service
+
+    def _make_risk_manager(allowed: bool = True):
+        mock = MagicMock()
+        mock.evaluate_order.return_value = _make_risk_decision(allowed)
+        return mock
+
+    class _Patcher:
+        def __init__(self, can_sync=True, can_submit=False, sync_error=None, sync_warnings=None, risk_allowed=True):
+            self.can_sync = can_sync
+            self.can_submit = can_submit
+            self.sync_error = sync_error
+            self.sync_warnings = sync_warnings or []
+            self.risk_allowed = risk_allowed
+
+        def __enter__(self):
+            from contextlib import ExitStack
+            self.stack = ExitStack()
+            mr = self.stack.enter_context(patch("atlas_agent.execution.submit_dry_run.BrokerResolver"))
+            ms = self.stack.enter_context(patch("atlas_agent.execution.submit_dry_run.BrokerSyncService"))
+            mv = self.stack.enter_context(patch("atlas_agent.execution.submit_dry_run.validate_live_sync"))
+            mri = self.stack.enter_context(patch("atlas_agent.execution.submit_dry_run.RiskManager"))
+            mr.return_value.resolve_status.return_value = _make_broker_status(self.can_sync, self.can_submit)
+            mr.return_value.resolve_sync_provider.return_value = _make_broker_resolution()
+            ms.return_value = _make_sync_service()
+            mv.return_value = (self.sync_warnings, self.sync_error)
+            mri.return_value = _make_risk_manager(self.risk_allowed)
+            return self
+
+        def __exit__(self, *args):
+            self.stack.close()
+            return False
+
+    return _Patcher
+
+
+def test_submit_approved_order_without_dry_run_fails(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    code = main(["submit-approved-order", "some-id"])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "not implemented" in captured.out.lower()
+
+
+def _enable_live_trading_in_workspace(tmp_path: Path) -> None:
+    """Write broker config to workspace .atlas/config.toml for dry-run tests."""
+    config_toml = tmp_path / ".atlas" / "config.toml"
+    config_toml.write_text('[broker]\nenable_live_trading = true\nprovider = "alpaca"\n', encoding="utf-8")
+
+
+def test_submit_approved_order_dry_run_valid_approved(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with _mock_dry_run_services()(can_sync=True, can_submit=False, risk_allowed=True):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "dry_run_ready" in captured.out or "Dry-run passed" in captured.out
+
+
+def test_submit_approved_order_dry_run_json_output(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with _mock_dry_run_services()(can_sync=True, can_submit=False, risk_allowed=True):
+        code = main(["submit-approved-order", order.id, "--dry-run", "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    output = json.loads(captured.out)
+    assert output["ok"] is True
+    assert "data" in output
+    assert output["data"]["status"] == "dry_run_ready"
+
+
+def test_submit_approved_order_dry_run_does_not_call_broker_place_order(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch("atlas_agent.cli._broker_for_mode") as mock_broker, \
+         _mock_dry_run_services()(can_sync=True, can_submit=False, risk_allowed=True):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    mock_broker.assert_not_called()
+
+
+def test_submit_approved_order_dry_run_does_not_call_resolve_execution_broker(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch("atlas_agent.brokers.resolver.BrokerResolver.resolve_execution_broker") as mock_resolve, \
+         _mock_dry_run_services()(can_sync=True, can_submit=False, risk_allowed=True):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    mock_resolve.assert_not_called()
+
+
+def test_submit_approved_order_dry_run_does_not_instantiate_order_router(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch("atlas_agent.execution.order_router.OrderRouter") as mock_router, \
+         _mock_dry_run_services()(can_sync=True, can_submit=False, risk_allowed=True):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    mock_router.assert_not_called()
+
+
+def test_submit_approved_order_dry_run_does_not_create_pending_files(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    before_files = set((tmp_path / "pending_orders").iterdir())
+
+    with _mock_dry_run_services()(can_sync=True, can_submit=False, risk_allowed=True):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    after_files = set((tmp_path / "pending_orders").iterdir())
+    assert before_files == after_files
+
+
+def test_submit_approved_order_dry_run_does_not_modify_pending_file(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    before = path.read_text(encoding="utf-8")
+
+    with _mock_dry_run_services()(can_sync=True, can_submit=False, risk_allowed=True):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    after = path.read_text(encoding="utf-8")
+    assert before == after
+
+
+def test_submit_approved_order_dry_run_rejects_unapproved(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "not approved" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_rejects_expired(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["expires_at"] = (datetime.now(UTC) - timedelta(minutes=1)).isoformat()
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "expired" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_rejects_tampered_hash(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["order"]["quantity"] = 999.0
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "invalid or corrupted" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_rejects_malformed_json(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    path = manager.path_for(order.id)
+    path.write_text("not valid json {{{", encoding="utf-8")
+
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "invalid or corrupted" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_rejects_already_submitted(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["client_order_id"] = "already-set"
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "client_order_id" in captured.out.lower() or "already" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_rejects_live_disabled(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    monkeypatch.setenv("ENABLE_LIVE_TRADING", "false")
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "live trading" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_rejects_can_sync_false(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with _mock_dry_run_services()(can_sync=False):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "sync" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_rejects_sync_critical_error(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    sync_error = {
+        "status": "error",
+        "errors": ["live broker sync failed: sync_account_state"],
+        "diagnostics": {"failed_operations": ["sync_account_state"]},
+    }
+    with _mock_dry_run_services()(sync_error=sync_error):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "sync failed" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_proceeds_with_balances_warning(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with _mock_dry_run_services()(
+        sync_warnings=[{"operation": "sync_balances", "code": "broker_operation_failed", "broker": "alpaca"}],
+        risk_allowed=True,
+    ):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "dry_run_ready" in captured.out or "Dry-run passed" in captured.out
+
+
+def test_submit_approved_order_dry_run_risk_rejection(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with _mock_dry_run_services()(risk_allowed=False):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "risk" in captured.out.lower() or "blocked" in captured.out.lower()
+
+
+def test_submit_approved_order_dry_run_json_blocked_emits_safe_json(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run", "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    output = json.loads(captured.out)
+    assert output["ok"] is False
+    assert "error" in output
+    assert "not approved" in output["error"]["message"].lower()
+
+
+def test_submit_approved_order_dry_run_text_no_leak(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["order"]["symbol"] = "LEAK_SECRET_999"
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with _mock_dry_run_services()():
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "LEAK_SECRET_999" not in captured.out
+    assert "LEAK_SECRET_999" not in captured.err
+
+
+def test_submit_approved_order_dry_run_path_traversal_rejected(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    code = main(["submit-approved-order", "../../etc/passwd", "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "invalid" in captured.out.lower()
+    assert "passwd" not in captured.out
+    assert "passwd" not in captured.err
 
 
 def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:

@@ -390,6 +390,11 @@ Safety First:
     approve = subparsers.add_parser("approve-order")
     approve.add_argument("order_id")
 
+    submit = subparsers.add_parser("submit-approved-order")
+    submit.add_argument("order_id")
+    submit.add_argument("--dry-run", action="store_true")
+    submit.add_argument("--json", action="store_true")
+
     research = subparsers.add_parser("research")
     research_sub = research.add_subparsers(dest="research_command")
     research_market = research_sub.add_parser("market")
@@ -3389,6 +3394,83 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(f"Approved pending order: {path}")
         return 0
+    if args.command == "submit-approved-order":
+        if not args.dry_run:
+            if args.json:
+                return _emit_json_error(
+                    "atlas submit-approved-order",
+                    code="submit_not_implemented",
+                    message="Live submit is not implemented. Use --dry-run to validate submit readiness.",
+                )
+            print("Live submit is not implemented. Use --dry-run to validate submit readiness.")
+            return 2
+
+        from atlas_agent.execution.approval import InvalidApprovalIdError, InvalidPendingOrderError
+        from atlas_agent.execution.submit_dry_run import run_submit_dry_run
+
+        try:
+            report = run_submit_dry_run(
+                order_id=args.order_id,
+                config=config,
+                approval_manager=ApprovalManager(config.pending_orders_dir),
+            )
+        except InvalidApprovalIdError:
+            if args.json:
+                return _emit_json_error(
+                    "atlas submit-approved-order --dry-run",
+                    code="invalid_order_id",
+                    message="Invalid pending order id.",
+                )
+            print("Invalid pending order id.")
+            return 2
+        except InvalidPendingOrderError:
+            if args.json:
+                return _emit_json_error(
+                    "atlas submit-approved-order --dry-run",
+                    code="invalid_pending_order",
+                    message="Pending order file is invalid or corrupted.",
+                )
+            print("Pending order file is invalid or corrupted.")
+            return 2
+        except FileNotFoundError:
+            if args.json:
+                return _emit_json_error(
+                    "atlas submit-approved-order --dry-run",
+                    code="pending_order_not_found",
+                    message="Pending order not found.",
+                )
+            print("Pending order not found.")
+            return 2
+
+        if args.json:
+            payload = report.to_dict()
+            if report.ok:
+                return _emit_json_success("atlas submit-approved-order --dry-run", payload)
+            return _emit_json_error(
+                "atlas submit-approved-order --dry-run",
+                code="dry_run_blocked",
+                message=report.message,
+                details={
+                    "gates": report.gates,
+                    "blocked_reason": report.blocked_reason,
+                },
+            )
+
+        if report.blocked_reason == "invalid order id":
+            print("Invalid pending order id.")
+            return 2
+
+        print("Submit Dry-Run Report")
+        print(f"Order: {report.order_id}")
+        print(f"Status: {report.status}")
+        for gate, result in report.gates.items():
+            print(f"  {gate}: {result}")
+        if report.warnings:
+            print("Warnings:")
+            for w in report.warnings:
+                print(f"  - {w}")
+        print(report.message)
+        return 0 if report.ok else 2
     if args.command == "research" and args.research_command == "market":
         try:
             report = get_research_provider().research_market(args.symbol)
