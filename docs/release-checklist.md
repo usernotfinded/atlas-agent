@@ -101,6 +101,27 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - `--dry-run` and `--reconcile` behavior remain unchanged.
 - Paper mode remains unchanged.
 
+## Broker Foundation 4.8 Release Assertions
+
+- `submit_state.py` contains unwired post-submit state mutation helpers: `mark_acknowledged()`, `mark_submit_failed()`, `mark_submit_uncertain()`, and `mark_submit_prepare_failed()`.
+- New helpers are **unwired** from runtime submit execution. `run_submit_execution()` does not import or call any new helper.
+- `submit_execution.py` is unchanged.
+- `cli.py` is unchanged.
+- `BrokerResolver` is unchanged.
+- `can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None` in production.
+- No `broker.place_order` path was added.
+- `--dry-run` behavior remains unchanged.
+- `--reconcile` behavior remains unchanged.
+- Paper mode remains unchanged.
+- `submitted_at` is set **only** by `mark_acknowledged()` after broker ACK.
+- `submitted_at` remains `null` for `failed`, `submit_uncertain`, and `submit_prepare_failed`.
+- `broker_order_id` is validated as a safe non-empty string; secret-shaped values are rejected without leaking.
+- `broker_status` is validated against a safe allowlist.
+- Status transition reasons are static strings; no raw `broker_order_id` or broker error text is interpolated.
+- `mark_submit_prepare_failed()` restricts `error_code` to exactly `execution_broker_unavailable` or `execution_broker_invalid`.
+- All validation errors use static safe messages; no raw values leak in exception text.
+
 ## Broker Foundation 4.7 Release Assertions
 
 - Production `can_submit=false` path does not call `mark_submit_requested()`.

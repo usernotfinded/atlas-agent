@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev6] - 2026-05-14
+
+### Added
+- **Batch 4.8 — Unwired Post-Submit State Mutation Helpers**:
+  - `mark_acknowledged()` — atomically transitions a pending order from `submit_requested` to `acknowledged` after broker confirmation. Sets `submitted_at`, `broker_order_id`, and `broker_status`. Updates the last `submit_attempt` entry in-place. Validates `broker_order_id` as a safe non-empty string and `broker_status` against an allowlist. Status transition reason is static (`"broker_acknowledged"`); no raw `broker_order_id` interpolation.
+  - `mark_submit_failed()` — atomically transitions from `submit_requested` to `failed` after explicit broker rejection. Keeps `submitted_at=null`. Updates last `submit_attempt` with `status="failed"` and an allowlisted `error_code`.
+  - `mark_submit_uncertain()` — atomically transitions from `submit_requested` to `submit_uncertain` for post-broker uncertainty (timeout, 5xx, transport, malformed response, CID mismatch). Keeps `submitted_at=null`. Updates last `submit_attempt` with `status="submit_uncertain"` and an allowlisted `error_code`.
+  - `mark_submit_prepare_failed()` — atomically transitions from `submit_requested` to `submit_prepare_failed` for pre-broker local failure (resolver returns None, execution broker invalid). Keeps `submitted_at=null`. Restricts `error_code` to exactly `execution_broker_unavailable` or `execution_broker_invalid`.
+  - `_validate_broker_order_id()` — rejects empty/none values and secret-shaped strings (containing `API_KEY`, `SECRET`, `TOKEN`, `PASSWORD`).
+  - `_validate_broker_status()` — rejects unknown broker statuses against a safe allowlist.
+  - `_update_last_attempt_status()` — shared helper that updates the last `submit_attempt` entry in-place without creating duplicates.
+  - Expanded `_SUBMIT_ATTEMPT_STATUSES` to include `"submit_prepare_failed"`.
+  - Expanded `_SUBMIT_ATTEMPT_ERROR_CODES` to include `"execution_broker_unavailable"` and `"execution_broker_invalid"`.
+
+### Security / Safety
+- Helpers are **unwired** from runtime submit execution. `run_submit_execution()` does not import or call any new helper.
+- `BrokerResolver.can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None`.
+- No `broker.place_order` path was added.
+- `submitted_at` is only set after broker ACK (`acknowledged`). Remains `null` for `failed`, `submit_uncertain`, and `submit_prepare_failed`.
+- All validation errors use static safe messages; no raw value leakage.
+- No live submit enablement.
+
 ## [0.5.6.dev5] - 2026-05-14
 
 ### Added
