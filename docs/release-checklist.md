@@ -80,3 +80,23 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - `resolve_execution_broker("live")` remains `None`.
 - No live submit enablement.
 - `--dry-run` and `--reconcile` behavior remain unchanged.
+
+## Broker Foundation 4.6 Release Assertions
+
+- `submit_state.py` contains pure helper functions `build_submit_requested_payload()`, `mark_submit_requested()`, and `append_submit_attempt()`.
+- `build_submit_requested_payload()` validates `status="approved"`, hash integrity, deterministic `client_order_id`, and existing stored `client_order_id` before constructing the mutation.
+- `append_submit_attempt()` enforces exact allowed keys and validates: UUID4 `attempt_id`, Alpaca-compatible `client_order_id`, enum `status`, ISO `created_at`, allowlisted `actor`, bool `risk_revalidated`/`sync_revalidated`, and allowlisted `error_code`.
+- `build_submit_requested_payload()` passes its constructed submit attempt through `append_submit_attempt()` so all schema/validation rules are enforced by a single code path.
+- `attempt_id` must be a canonical UUID4 string (`uuid.UUID(..., version=4)` check).
+- `actor` allowlist is exactly `{"submit:cli", "system"}`.
+- `error_code` allowlist is exactly `{"broker_rejected_order", "broker_unavailable", "broker_transport_failed", "malformed_broker_response", "client_order_id_mismatch", "order_not_found", "unknown"}`.
+- Existing `client_order_id` in payload is validated against `compute_client_order_id(order_id, order_hash)`. Mismatched values raise `SubmitStateError`; no silent overwrite occurs.
+- All validation errors use static safe messages; no raw values (client_order_id, secrets, payload fields) leak in exception text.
+- Helpers are **unwired** from runtime submit execution: `run_submit_execution()` does not call `mark_submit_requested()` or any helper.
+- No CLI flag exposes the helpers (`--prepare-submit-state` does not exist).
+- `submit-approved-order` no-flag continues to block at `can_submit=false` with zero file mutation.
+- `BrokerResolver.can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None`.
+- No live submit enablement.
+- `--dry-run` and `--reconcile` behavior remain unchanged.
+- Paper mode remains unchanged.

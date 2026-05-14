@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev4] - 2026-05-14
+
+### Added
+- **Batch 4.6 — Submit State Mutation Boundary Helpers**:
+  - `build_submit_requested_payload()` — pure helper that returns a deep-copied payload transitioned to `submit_requested` state. Validates `status="approved"`, hash integrity, deterministic `client_order_id`, and existing stored `client_order_id`. Sets `submit_requested_at` while keeping `submitted_at` unchanged/null.
+  - `mark_submit_requested()` — atomic file mutation (temp-file + rename) that transitions a pending order to `submit_requested` state with full validation.
+  - `append_submit_attempt()` — pure helper that enforces exact allowed keys on submit attempts and validates all fields: UUID4 `attempt_id`, Alpaca-compatible `client_order_id`, enum `status`, ISO `created_at`, allowlisted `actor`, bool `risk_revalidated`/`sync_revalidated`, and allowlisted `error_code`.
+  - UUID4 validation for `attempt_id`: canonical UUID4 string check via `uuid.UUID(..., version=4)`.
+  - Actor allowlist: `{"submit:cli", "system"}`.
+  - Error code allowlist: `{"broker_rejected_order", "broker_unavailable", "broker_transport_failed", "malformed_broker_response", "client_order_id_mismatch", "order_not_found", "unknown"}`.
+  - `build_submit_requested_payload` passes its constructed submit attempt through `append_submit_attempt` so all schema/validation rules are enforced by a single code path.
+  - Deterministic `client_order_id` validation in `build_submit_requested_payload`: if payload already contains `client_order_id`, it must match `compute_client_order_id(order_id, order_hash)` and the provided `client_order_id`; mismatches raise `SubmitStateError` without silent overwrite.
+
+### Security / Safety
+- Helpers are **unwired** from runtime submit execution. `run_submit_execution()` continues to block at `can_submit=false` with zero file mutation.
+- `BrokerResolver.can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None`.
+- No live submit enablement.
+- No raw value leakage: all validation errors use static safe messages.
+
 ## [0.5.6.dev3] - 2026-05-14
 
 ### Added

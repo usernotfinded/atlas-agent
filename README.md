@@ -59,9 +59,18 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.6.dev3)
+## Current Status (v0.5.6.dev4)
 
 Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
+
+### What's New in v0.5.6.dev4
+- **Submit state mutation boundary helpers (Batch 4.6)**: `build_submit_requested_payload()`, `mark_submit_requested()`, and `append_submit_attempt()` in `submit_state.py` provide tested, atomic, recoverable state-transition primitives for the boundary immediately before broker submission.
+- **`submit_requested` payload construction**: Pure helper constructs the exact mutation that would occur before `broker.place_order` — setting `status="submit_requested"`, `client_order_id`, `submit_requested_at`, a status transition, and a `submit_attempts` entry.
+- **UUID4 submit attempt IDs**: `attempt_id` is validated as a canonical UUID4 string. Non-UUID values (including secret-shaped strings) are rejected.
+- **Actor and error_code allowlists**: `actor` is restricted to `{"submit:cli", "system"}`. `error_code` is restricted to an explicit safe enum (`broker_rejected_order`, `broker_unavailable`, `broker_transport_failed`, `malformed_broker_response`, `client_order_id_mismatch`, `order_not_found`, `unknown`).
+- **Deterministic `client_order_id` validation**: Existing `client_order_id` in a pending file is validated against `compute_client_order_id(order_id, order_hash)`. Mismatched or invalid values are rejected; no silent overwrite occurs.
+- **Helpers remain unwired from runtime submit execution**: `run_submit_execution()` continues to block at `can_submit=false` with zero file mutation. No CLI flag exposes the helpers.
+- **No live submit enabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
 
 ### What's New in v0.5.6.dev3
 - **`submit-approved-order` no-flag execution skeleton**: Runs all live submit safety gates — pending order validation, idempotency checks, live-trading gate, kill-switch gate, fresh read-only broker sync, and risk revalidation — before failing closed at `can_submit=false`.
