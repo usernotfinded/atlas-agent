@@ -1435,3 +1435,281 @@ def test_atlas_setup_noninteractive_fails_closed(tmp_path, monkeypatch, capsys):
 
     assert code == 2
     assert "requires an interactive terminal" in capsys.readouterr().out.lower()
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.4 CLI reconcile tests
+# ---------------------------------------------------------------------------
+
+def test_submit_approved_order_reconcile_flag_parses() -> None:
+    from atlas_agent.cli import build_parser
+    parser = build_parser()
+    args = parser.parse_args(["submit-approved-order", "abc123", "--reconcile"])
+    assert args.reconcile is True
+    assert args.dry_run is False
+
+
+def test_submit_approved_order_reconcile_and_dry_run_mutual_exclusion(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    code = main(["submit-approved-order", "test-order", "--dry-run", "--reconcile"])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "mutually exclusive" in captured.out.lower()
+
+
+def test_submit_without_dry_run_or_reconcile_still_blocked(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    code = main(["submit-approved-order", "test-order"])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "not implemented" in captured.out.lower()
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.4.1 CLI reconcile coverage
+# ---------------------------------------------------------------------------
+
+def _make_order(**kwargs):
+    from atlas_agent.execution.order import Order
+    defaults = {
+        "symbol": "TEST",
+        "side": "buy",
+        "quantity": 1.0,
+        "limit_price": 100.0,
+        "confidence": 1.0,
+        "stop_loss": 95.0,
+    }
+    defaults.update(kwargs)
+    return Order(**defaults)
+
+
+def _write_v2_pending_with_cid(tmp_path: Path, order_id: str, cid: str, status: str = "approved", broker_order_id: str | None = None):
+    from atlas_agent.execution.approval import ApprovalManager, _compute_order_hash, _order_to_dict
+    from datetime import UTC, datetime, timedelta
+    import json
+
+    order = _make_order(id=order_id)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    path = manager.path_for(order.id)
+    order_dict = _order_to_dict(order)
+    now = datetime.now(UTC)
+    payload = {
+        "schema_version": "2",
+        "order": order_dict,
+        "approved": True,
+        "created_at": now.isoformat(),
+        "approved_at": now.isoformat(),
+        "expires_at": (now + timedelta(minutes=30)).isoformat(),
+        "approval_actor": "test",
+        "order_hash": _compute_order_hash(order_dict),
+        "status": status,
+        "status_transitions": [
+            {"status": "pending_approval", "at": now.isoformat(), "actor": "system"},
+            {"status": status, "at": now.isoformat(), "actor": "test"},
+        ],
+        "submit_attempts": [],
+        "broker_order_id": broker_order_id,
+        "client_order_id": cid,
+        "fill_quantity": 0.0,
+        "fill_price": None,
+        "submitted_at": None,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return manager, path
+
+
+def _configured_atlas_config(tmp_path: Path):
+    from atlas_agent.config import AtlasConfig
+    return AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True},
+        workspace_root=tmp_path,
+        pending_orders_dir=tmp_path / "pending_orders",
+    )
+
+
+def test_cli_submit_approved_order_reconcile_success_text(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.models import BrokerOrder
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    _write_v2_pending_with_cid(tmp_path, "reconcile-ok", "atlas-ok-deadbeef")
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
+        order_id="broker-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="filled",
+    )
+
+    from atlas_agent.config import AtlasConfig
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )):
+        code = main(["submit-approved-order", "reconcile-ok", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "Reconcile Report" in captured.out
+    assert "Broker order" in captured.out
+    assert "No duplicate submit" in captured.out or "reconciled" in captured.out.lower()
+
+
+def test_cli_submit_approved_order_reconcile_success_json(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.models import BrokerOrder
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    _write_v2_pending_with_cid(tmp_path, "reconcile-json", "atlas-json-deadbeef")
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
+        order_id="broker-222",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )):
+        code = main(["submit-approved-order", "reconcile-json", "--reconcile", "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    payload = json.loads(captured.out)
+    assert payload["ok"] is True
+    data = payload["data"]
+    assert data["status"] == "duplicate_reconciled"
+    assert data["broker_order_id"] == "broker-222"
+
+
+def test_cli_submit_approved_order_reconcile_not_found_sanitized(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.base import BrokerOperationError
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    _write_v2_pending_with_cid(tmp_path, "reconcile-notfound", "atlas-notfound-deadbeef")
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.side_effect = BrokerOperationError("order not found")
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )):
+        code = main(["submit-approved-order", "reconcile-notfound", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "No broker order found" in captured.out
+    # Sanitized: no raw fake secrets or payload values
+    assert "atlas-notfound-deadbeef" not in captured.out
+    assert "atlas-notfound-deadbeef" not in captured.err
+
+
+def test_cli_submit_approved_order_reconcile_invalid_file_sanitized(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    # Write a corrupted pending order file
+    pending_dir = tmp_path / "pending_orders"
+    pending_dir.mkdir(parents=True, exist_ok=True)
+    (pending_dir / "reconcile-bad.json").write_text("not valid json {{{", encoding="utf-8")
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config):
+        code = main(["submit-approved-order", "reconcile-bad", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "invalid or corrupted" in captured.out.lower()
+    # No raw payload leak
+    assert "not valid json" not in captured.out
+    assert "not valid json" not in captured.err
+
+
+def test_cli_submit_approved_order_reconcile_duplicate_reconciled_no_broker_query(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    _write_v2_pending_with_cid(
+        tmp_path,
+        "reconcile-dup",
+        "atlas-dup-deadbeef",
+        status="duplicate_reconciled",
+        broker_order_id="broker-333",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.side_effect = AssertionError("must not be called")
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )):
+        code = main(["submit-approved-order", "reconcile-dup", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "already reconciled" in captured.out.lower()
+    mock_adapter.get_order_by_client_order_id.assert_not_called()

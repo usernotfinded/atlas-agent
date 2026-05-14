@@ -13,6 +13,7 @@ from atlas_agent.execution.approval import (
     InvalidApprovalIdError,
     InvalidPendingOrderError,
 )
+from atlas_agent.execution.submit_state import compute_client_order_id
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.models import OrderRiskInput
@@ -30,6 +31,7 @@ class DryRunReport:
     message: str = ""
     risk: dict[str, Any] | None = None
     sync: dict[str, Any] | None = None
+    client_order_id_preview: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -43,6 +45,7 @@ class DryRunReport:
             "message": self.message,
             "risk": self.risk,
             "sync": self.sync,
+            "client_order_id_preview": self.client_order_id_preview,
         }
 
 
@@ -98,8 +101,21 @@ def run_submit_dry_run(
     gates["pending_file"] = "pass"
     gates["integrity"] = "pass"
 
-    # 3. Must be approved
-    if not payload.get("approved") or payload.get("status") != "approved":
+    # 3. Idempotency state check (before approved gate, because these states
+    # are "approved" flag-wise but not actionable)
+    current_status = payload.get("status")
+    if current_status in ("submit_uncertain", "reconciliation_required"):
+        return DryRunReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "idempotency": "fail"},
+            blocked_reason="reconciliation_required",
+            message="Order is in submit_uncertain or reconciliation_required state. Run --reconcile first.",
+        )
+
+    # 4. Must be approved
+    if not payload.get("approved") or current_status != "approved":
         return DryRunReport(
             ok=False,
             status="blocked",
@@ -110,7 +126,7 @@ def run_submit_dry_run(
         )
     gates["approved"] = "pass"
 
-    # 4. Must not be expired
+    # 5. Must not be expired
     expires_at_raw = payload.get("expires_at")
     if not expires_at_raw:
         return DryRunReport(
@@ -145,17 +161,17 @@ def run_submit_dry_run(
         )
     gates["not_expired"] = "pass"
 
-    # 5. Must not already have client_order_id
+    # 6. Must not already have client_order_id
     if payload.get("client_order_id") is not None:
         return DryRunReport(
             ok=False,
             status="blocked",
             order_id=order_id,
-            gates={**gates, "not_submitted": "fail"},
-            blocked_reason="already submitted",
-            message="Order already has a client_order_id.",
+            gates={**gates, "idempotency": "fail"},
+            blocked_reason="client_order_id_already_present",
+            message="Order already has a client_order_id. Run --reconcile before any further submit action.",
         )
-    gates["not_submitted"] = "pass"
+    gates["idempotency"] = "pass"
 
     # 6. Must not already have broker_order_id
     if payload.get("broker_order_id") is not None:
@@ -310,7 +326,10 @@ def run_submit_dry_run(
 
     gates["risk_revalidation"] = "pass"
 
-    # 15. Dry-run success
+    # 15. Compute client_order_id preview (never persisted)
+    cid_preview = compute_client_order_id(order_id, payload["order_hash"])
+
+    # 16. Dry-run success
     return DryRunReport(
         ok=True,
         status="dry_run_ready",
@@ -320,4 +339,5 @@ def run_submit_dry_run(
         message="Dry-run passed. Live submit remains disabled.",
         risk=risk_dict,
         sync={"status": "success", "warnings": sync_warnings},
+        client_order_id_preview=cid_preview,
     )

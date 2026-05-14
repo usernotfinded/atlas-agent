@@ -393,6 +393,7 @@ Safety First:
     submit = subparsers.add_parser("submit-approved-order")
     submit.add_argument("order_id")
     submit.add_argument("--dry-run", action="store_true")
+    submit.add_argument("--reconcile", action="store_true")
     submit.add_argument("--json", action="store_true")
 
     research = subparsers.add_parser("research")
@@ -3395,6 +3396,73 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Approved pending order: {path}")
         return 0
     if args.command == "submit-approved-order":
+        # --dry-run and --reconcile are mutually exclusive
+        if args.dry_run and args.reconcile:
+            if args.json:
+                return _emit_json_error(
+                    "atlas submit-approved-order",
+                    code="invalid_args",
+                    message="--dry-run and --reconcile are mutually exclusive.",
+                )
+            print("--dry-run and --reconcile are mutually exclusive.")
+            return 2
+
+        if args.reconcile:
+            from atlas_agent.execution.approval import InvalidApprovalIdError, InvalidPendingOrderError
+            from atlas_agent.execution.submit_reconcile import ReconcileReport, run_reconcile
+
+            try:
+                report = run_reconcile(
+                    order_id=args.order_id,
+                    config=config,
+                    approval_manager=ApprovalManager(config.pending_orders_dir),
+                )
+            except InvalidApprovalIdError:
+                if args.json:
+                    return _emit_json_error(
+                        "atlas submit-approved-order --reconcile",
+                        code="invalid_order_id",
+                        message="Invalid pending order id.",
+                    )
+                print("Invalid pending order id.")
+                return 2
+            except InvalidPendingOrderError:
+                if args.json:
+                    return _emit_json_error(
+                        "atlas submit-approved-order --reconcile",
+                        code="invalid_pending_order",
+                        message="Pending order file is invalid or corrupted.",
+                    )
+                print("Pending order file is invalid or corrupted.")
+                return 2
+            except FileNotFoundError:
+                if args.json:
+                    return _emit_json_error(
+                        "atlas submit-approved-order --reconcile",
+                        code="pending_order_not_found",
+                        message="Pending order not found.",
+                    )
+                print("Pending order not found.")
+                return 2
+
+            if args.json:
+                payload = report.to_dict()
+                if report.ok:
+                    return _emit_json_success("atlas submit-approved-order --reconcile", payload)
+                return _emit_json_error(
+                    "atlas submit-approved-order --reconcile",
+                    code="reconcile_blocked",
+                    message=report.message,
+                )
+
+            print("Reconcile Report")
+            print(f"Order: {report.order_id}")
+            print(f"Status: {report.status}")
+            if report.broker_order_id:
+                print(f"Broker order: {report.broker_order_id}")
+            print(report.message)
+            return 0 if report.ok else 2
+
         if not args.dry_run:
             if args.json:
                 return _emit_json_error(

@@ -161,7 +161,8 @@ def test_dry_run_client_order_id_present(tmp_path: Path) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
     assert report.ok is False
-    assert report.gates["not_submitted"] == "fail"
+    assert report.gates["idempotency"] == "fail"
+    assert report.blocked_reason == "client_order_id_already_present"
 
 
 def test_dry_run_broker_order_id_present(tmp_path: Path) -> None:
@@ -371,7 +372,7 @@ def test_dry_run_happy_path(tmp_path: Path) -> None:
     assert report.gates["integrity"] == "pass"
     assert report.gates["approved"] == "pass"
     assert report.gates["not_expired"] == "pass"
-    assert report.gates["not_submitted"] == "pass"
+    assert report.gates["idempotency"] == "pass"
     assert report.gates["no_broker_order_id"] == "pass"
     assert report.gates["no_submit_attempts"] == "pass"
     assert report.gates["live_trading_enabled"] == "pass"
@@ -583,3 +584,122 @@ def test_dry_run_never_calls_order_router_route(tmp_path: Path) -> None:
 
     assert report.ok is True
     mock_route.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.4 dry-run preview + idempotency gates
+# ---------------------------------------------------------------------------
+
+def test_dry_run_includes_client_order_id_preview(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="preview-cid")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "approved"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_dry_run.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_dry_run.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_dry_run.RiskManager") as mock_risk_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        report = run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.client_order_id_preview is not None
+    assert report.client_order_id_preview.startswith("atlas-")
+
+
+def test_dry_run_does_not_persist_client_order_id(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-persist-cid")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "approved"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_dry_run.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_dry_run.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_dry_run.RiskManager") as mock_risk_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded.get("client_order_id") is None
+
+
+def test_dry_run_blocks_submit_uncertain(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="uncertain")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "submit_uncertain"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    report = run_submit_dry_run(order.id, FakeConfig(), manager)
+    assert report.ok is False
+    assert report.gates["idempotency"] == "fail"
+    assert report.blocked_reason == "reconciliation_required"
+    assert "Run --reconcile first" in report.message
+
+
+def test_dry_run_blocks_reconciliation_required(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="recon-req")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "reconciliation_required"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    report = run_submit_dry_run(order.id, FakeConfig(), manager)
+    assert report.ok is False
+    assert report.gates["idempotency"] == "fail"
+    assert report.blocked_reason == "reconciliation_required"
+    assert "Run --reconcile first" in report.message
+
+
+def test_dry_run_does_not_call_get_order_by_client_order_id(tmp_path: Path) -> None:
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-get-order")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "approved"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_dry_run.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_dry_run.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_dry_run.RiskManager") as mock_risk_cls, \
+         patch.object(AlpacaBrokerAdapter, "get_order_by_client_order_id", side_effect=AssertionError("must not be called")) as mock_get:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        report = run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    mock_get.assert_not_called()
