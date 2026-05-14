@@ -1,28 +1,32 @@
 # Pending Orders
 
-`pending_orders/` is the local approval queue used by Atlas Agent when live trading is enabled.
+`pending_orders/` is the local approval queue used by Atlas Agent for paper and legacy live trading workflows.
 
-Atlas Agent does not directly place live broker orders by default. In live mode, proposed orders are first written to disk as pending approval records. A human must explicitly review and approve them before execution can continue.
+Atlas Agent does not directly place live broker orders by default. In **paper** mode and certain **legacy/manual live** paths, proposed orders may be written to disk as pending approval records. A human must explicitly review and approve them before execution can continue.
+
+In **live analysis-only** mode, the agent consumes live broker snapshots but proposed orders return `live_analysis_only`. They are **not** written to `pending_orders/`, **not** sent to the approval manager, and **not** submitted to the broker. Approved-order broker submission remains deferred.
 
 ## How it works
 
-1. **Order proposal**  
+1. **Order proposal**
    The agent generates a trade recommendation.
 
-2. **Risk and safety checks**  
+2. **Risk and safety checks**
    The proposed order passes through the RiskManager, live-trading gates, kill-switch checks, and approval policy.
 
-3. **Pending approval record**  
-   If the order is allowed but requires human approval, Atlas writes a JSON record under:
+3. **Pending approval record**
+   If the order is allowed but requires human approval (paper or legacy live paths), Atlas writes a JSON record under:
 
    ```text
    pending_orders/<order_id>.json
    ```
 
-4. **Human approval**  
+   Live analysis-only orders do **not** create pending approval records.
+
+4. **Human approval**
    The order remains paused until a user explicitly approves it through the CLI.
 
-5. **Cleanup**  
+5. **Cleanup**
    Once approved, rejected, expired, or cancelled, the pending order record is removed or archived according to the configured workflow.
 
 ## CLI usage

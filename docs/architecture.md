@@ -11,8 +11,7 @@ Atlas Agent v0.5.5 is a tool-driven supervised system.
 5.  **ApprovalManager**: Handles manual approvals for live orders or safety plans.
 6.  **OrderRouter / Broker**: Routes approved orders through normalized broker adapters.
 7.  **Audit / Events**: Records every action into a tamper-evident hash-chain with run manifests and root hash verification.
-8.  **BrokerSyncService**: Provides the synchronization interface for account and portfolio state. Live sync depends on adapter maturity and is deferred until live adapters are production-ready.
+8.  **BrokerSyncService**: Provides the synchronization interface for account and portfolio state. Alpaca read-only live sync is available for analysis-only mode. Live execution sync and other broker adapters (Binance, CCXT, IBKR) remain deferred until mature.
 9.  **BacktestEngine**: Provides a deterministic, local-first simulation path for strategy evaluation.
 
 AI providers and models never call broker adapters or execution modules directly. Every action is routed through the **ToolRegistry** and subject to **Risk** and **Audit** gates.
-

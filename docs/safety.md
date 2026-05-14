@@ -28,6 +28,5 @@ All system actions, including risk rejections and kill-switch activations, are r
 Live trading is never enabled by default. It requires:
 - `TRADING_MODE=live`
 - `ENABLE_LIVE_TRADING=true`
-- Manual approval for every order by default.
-- Active broker synchronization (deferred until live adapter maturity).
-
+- Manual approval for every order in legacy/manual paths.
+- Alpaca read-only broker synchronization is available for live analysis-only mode. Live order submission remains disabled (`can_submit=false`). Other broker sync remains deferred.

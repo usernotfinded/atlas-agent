@@ -128,3 +128,84 @@ def test_no_realistic_keys_in_docs():
             # Match sk- followed by ~20+ alphanumeric chars
             if re.search(pattern + r"[a-zA-Z0-9]{20,}", content):
                  pytest.fail(f"Realistic looking API key pattern found in {file_path}")
+
+
+# ---------------------------------------------------------------------------
+# Broker Foundation 3.4 docs-truth tests
+# ---------------------------------------------------------------------------
+
+def _docs_text() -> str:
+    """Combined text of all docs/ markdown files."""
+    texts = []
+    for p in Path("docs").glob("*.md"):
+        texts.append(p.read_text(encoding="utf-8"))
+    return "\n".join(texts).lower()
+
+
+def test_docs_do_not_claim_alpaca_sync_is_stubbed():
+    text = _docs_text()
+    # Alpaca sync is now implemented; docs must not claim it is stubbed
+    bad_phrases = [
+        "alpaca ... sync are stubbed",
+        "alpaca ... account and position sync are stubbed",
+        "live adapters currently have stubbed account and position sync",
+    ]
+    for phrase in bad_phrases:
+        assert phrase not in text, f"Docs still claim Alpaca sync is stubbed: {phrase}"
+
+
+def test_docs_do_not_claim_live_sync_globally_deferred():
+    text = _docs_text()
+    # Live Alpaca sync exists; broad "live sync deferred" is stale
+    bad_phrases = [
+        "live sync is currently deferred",
+        "live sync depends on adapter maturity and is deferred",
+        "live sync depends on adapter maturity: paperbrokeradapter supports full sync, while live adapters currently have stubbed",
+        "active broker synchronization (deferred until live adapter maturity)",
+    ]
+    for phrase in bad_phrases:
+        assert phrase not in text, f"Docs still claim live sync is globally deferred: {phrase}"
+
+
+def test_docs_mention_live_analysis_only():
+    text = _docs_text()
+    assert "live_analysis_only" in text, "Docs must mention live_analysis_only"
+
+
+def test_docs_mention_can_submit_false_or_submit_disabled():
+    text = _docs_text()
+    assert (
+        "can_submit=false" in text
+        or "can_submit = false" in text
+        or "submit remains disabled" in text
+        or "live submit remains gated and disabled" in text
+    ), "Docs must mention that live can_submit is false or submit is disabled"
+
+
+def test_docs_mention_resolve_execution_broker_live_returns_none():
+    text = _docs_text()
+    assert (
+        "resolve_execution_broker(\"live\")" in text
+        or "resolve_execution_broker('live')" in text
+        or "returns none" in text
+    ), "Docs must mention resolve_execution_broker('live') behavior or equivalent"
+
+
+def test_docs_mention_binance_ccxt_ibkr_deferred():
+    text = _docs_text()
+    assert "binance" in text and "deferred" in text, "Docs must mention Binance/CCXT/IBKR deferred status"
+
+
+def test_docs_do_not_claim_live_agent_creates_pending_orders():
+    text = _docs_text()
+    bad_phrases = [
+        "in live mode, proposed orders are first written to disk as pending approval records",
+        "live mode ... pending_orders",
+    ]
+    for phrase in bad_phrases:
+        assert phrase not in text, f"Docs incorrectly claim live agent creates pending orders: {phrase}"
+
+
+def test_docs_mention_alpaca_read_only_sync():
+    text = _docs_text()
+    assert "alpaca read-only" in text or "alpaca read only" in text, "Docs must mention Alpaca read-only sync"
