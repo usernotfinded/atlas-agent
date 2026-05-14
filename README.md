@@ -59,9 +59,16 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.6.dev2)
+## Current Status (v0.5.6.dev3)
 
 Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
+
+### What's New in v0.5.6.dev3
+- **`submit-approved-order` no-flag execution skeleton**: Runs all live submit safety gates — pending order validation, idempotency checks, live-trading gate, kill-switch gate, fresh read-only broker sync, and risk revalidation — before failing closed at `can_submit=false`.
+- **Fresh live sync + risk revalidation**: Every no-flag submit performs a fresh `BrokerSyncService.sync()` and `RiskManager.evaluate_order(..., mode="live")` against the synced portfolio snapshot before the final `can_submit` gate.
+- **Market orders blocked safely**: Market orders are rejected with `market_price_unavailable` until a safe quote source is integrated.
+- **No pending file mutation / no `client_order_id` persistence**: The execution skeleton is strictly read-only with respect to pending order files. Missing `client_order_id` is computed deterministically but never persisted.
+- **Live submit remains fully disabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
 
 ### What's New in v0.5.6.dev2
 - **`submit-approved-order --dry-run`**: Validate all live submit gates without executing — includes deterministic `client_order_id` preview and idempotency checks.

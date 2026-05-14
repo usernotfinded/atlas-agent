@@ -49,7 +49,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 
 ## Broker Foundation 4.4 Release Assertions
 
-- `submit-approved-order` without `--dry-run` or `--reconcile` fails controlled (returns "not implemented" error).
+- `submit-approved-order` without `--dry-run` or `--reconcile` runs the gated execution skeleton and fails controlled at `can_submit=false`.
 - `--dry-run` never mutates pending files.
 - `--dry-run` never persists `client_order_id`.
 - `--dry-run` never calls broker GET reconciliation (`get_order_by_client_order_id`).
@@ -64,3 +64,19 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - `BrokerResolver.can_submit` remains `false` for all live brokers.
 - `resolve_execution_broker("live")` remains `None`.
 - No claims that live trading is ready for unattended deployment or without risk in release docs or README.
+
+## Broker Foundation 4.5 Release Assertions
+
+- `submit-approved-order` no-flag path runs the full execution skeleton (`run_submit_execution`).
+- Execution skeleton performs all safety gates in order: path traversal → file integrity → terminal states → approved → expiry → live trading enabled → kill switch normal → `client_order_id` validation → fresh broker sync → sync validation → market order block → risk revalidation → `can_submit=false` block.
+- Fresh live sync (`BrokerSyncService.sync()`) happens on every no-flag submit attempt.
+- Risk revalidation (`RiskManager.evaluate_order(..., mode="live")`) uses the synced `PortfolioSnapshot`.
+- Market orders are blocked with `market_price_unavailable`; no market order reaches `can_submit` or `place_order`.
+- No pending file mutation in the execution skeleton.
+- Missing `client_order_id` is computed deterministically but never persisted.
+- Existing `client_order_id` in pending file is validated but not modified.
+- Invalid / path-traversal order ids are masked as `<invalid>` in report output; raw user input never leaks to text, JSON, or diagnostics.
+- `BrokerResolver.can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None`.
+- No live submit enablement.
+- `--dry-run` and `--reconcile` behavior remain unchanged.

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev3] - 2026-05-14
+
+### Added
+- **Batch 4.5 — Gated Submit Execution Skeleton**:
+  - `submit-approved-order` no-flag path runs a full execution skeleton through all safety gates before failing closed at `can_submit=false`.
+  - Gate order: path traversal guard → pending file validation → terminal-state / idempotency blocks → approved status → expiry check → live-trading enabled → kill-switch normal → `client_order_id` validation → fresh broker sync → sync validation → market-order block → risk revalidation (`mode="live"`) → `can_submit=false` block.
+  - Fresh live sync via `BrokerSyncService.sync()` and `validate_live_sync()` on every submit attempt.
+  - Risk revalidation via `RiskManager.evaluate_order(..., mode="live")` using the synced `PortfolioSnapshot`.
+  - Market orders are blocked with `market_price_unavailable` until a safe quote source is integrated.
+  - Missing `client_order_id` is computed deterministically (`compute_client_order_id`) but never persisted to the pending file.
+  - No pending file mutation; no `place_order` call; no `resolve_execution_broker("live")` call; no `OrderRouter.route` call.
+- **Batch 4.5 Output Safety**: Invalid / path-traversal order ids are masked as `<invalid>` in `SubmitExecutionReport.order_id`, preventing raw user input from leaking to CLI text/JSON output.
+
+### Security / Safety
+- `BrokerResolver.can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None`.
+- No live submit enablement.
+
 ## [0.5.6.dev2] - 2026-05-14
 
 ### Added
