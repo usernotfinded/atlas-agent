@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev0] - 2026-05-14
+
+### Added
+- **Alpaca Read-Only Live Sync**: `AlpacaBrokerAdapter` provides HTTP GET-only synchronization for account state, positions, open orders, and balances. Requires `ALPACA_API_KEY` and `ALPACA_SECRET_KEY`.
+- **Live Agent Analysis-Only Mode**: When `TRADING_MODE=live` and `ENABLE_LIVE_TRADING=true`, the agent consumes live Alpaca portfolio snapshots for risk-aware analysis without order submission.
+- **`live_analysis_only` Deferred Execution**: Live `propose_order` tool calls that pass risk checks return `live_analysis_only` and do not create pending orders, approval requests, or broker submissions.
+- **Structured `broker_errors` Diagnostics**: `BrokerSyncResult` carries typed `broker_errors` with strict fail-closed validation. Malformed diagnostics reject the sync.
+- **Noncritical Sync Warning Surfacing**: Balances-only sync failure proceeds with safe diagnostic warnings; critical failures (account, positions, open_orders) fail closed.
+- **Auto-Mode `effective_mode` Consistency**: `mode="auto"` resolves to `"live"` or `"paper"` and propagates correctly through AgentLoop, risk manager, and model prompts.
+
+### Changed
+- `BrokerResolver` live Alpaca: `can_sync=true` when credentials are present; `can_submit=false` for all live brokers.
+- `resolve_execution_broker("live")` returns `None`.
+- Docs truth alignment: `live-trading.md`, `brokers.md`, `pending-orders.md`, `architecture.md`, `safety.md` updated to distinguish Alpaca read-only sync (available) from live submit and other broker sync (deferred).
+
+### Documentation
+- Added docs-truth tests enforcing accurate live-sync state descriptions.
+- Clarified that live analysis-only mode does not create pending order files.
+
 ## [0.5.5] - 2026-05-13
 
 ### Fixed

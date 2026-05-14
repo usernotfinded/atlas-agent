@@ -53,13 +53,13 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Paper Workflow** | Usable | Deterministic local simulation with pricing. |
 | **Risk Gates** | Implemented | Hard-coded limits for position size, notional, and symbols. |
 | **Audit Logs** | Implemented | Tamper-evident hash-chain and run manifests. |
-| **Broker/API Model** | Beta | Provider-neutral synchronization and adapter interfaces. |
+| **Broker/API Model** | Beta | Alpaca read-only live sync available. Other adapters remain beta/deferred. |
 | **Live Trading** | Disabled | Strictly opt-in; designed to prevent orders without approval. |
 | **Broker Integrations** | Beta | Early-stage adapters for third-party broker APIs. |
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.5)
+## Current Status (v0.5.6.dev0)
 
 Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
 

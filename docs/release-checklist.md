@@ -28,3 +28,12 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - No release docs include return guarantees, zero-risk language, autonomous income claims, live-readiness overstatements, or broker-preference marketing language.
 - Do not reference a demo GIF as present unless `assets/atlas-demo.gif` actually exists.
 - Confirm no private values or credential-like strings are committed in docs or scripts.
+
+## Broker Foundation 3.x Release Assertions
+
+- `can_submit=false` for all live brokers (`BrokerResolver` live status never enables submit).
+- `resolve_execution_broker("live")` returns `None` (no live execution broker resolved).
+- Live `propose_order` creates no `pending_orders/` files and does not invoke `ApprovalManager`.
+- Alpaca read-only sync is GET-only; `AlpacaBrokerAdapter` implements `BrokerProvider`, not `Broker`, and has no order submission methods.
+- Non-Alpaca broker sync (Binance, CCXT, IBKR) remains deferred.
+- Docs do not claim production-ready live trading or recommend any specific broker.
