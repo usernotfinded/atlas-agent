@@ -86,6 +86,44 @@ class MockProvider:
         return ModelCapabilities(context_window=128000, supports_native_tools=True)
 
 
+class ProposeOrderMockProvider:
+    def __init__(self):
+        self._calls = 0
+
+    def complete(self, **kwargs):
+        from atlas_agent.tools.spec import LLMResponse, ToolCall
+        self._calls += 1
+        if self._calls == 1:
+            return LLMResponse(text="Trading", tool_calls=[
+                ToolCall(
+                    id="c1",
+                    name="propose_order",
+                    arguments={
+                        "symbol": "AAPL",
+                        "side": "buy",
+                        "quantity": 2,
+                        "order_type": "limit",
+                        "limit_price": 15.0,
+                        "thesis": {
+                            "direction_rationale": "Test rationale",
+                            "timeframe": "intraday",
+                            "catalyst": "Test catalyst",
+                            "invalidation_condition": "Test condition",
+                            "risk_reward_estimate": 2.0,
+                            "confidence": "medium",
+                            "bear_case_acknowledged": "Test bear",
+                        },
+                        "invalidation_price": 10.0,
+                    },
+                )
+            ], is_final=False)
+        return LLMResponse(text="Analysis complete.", tool_calls=[], is_final=True)
+
+    def capabilities(self):
+        from atlas_agent.tools.spec import ModelCapabilities
+        return ModelCapabilities(context_window=128000, supports_native_tools=True)
+
+
 # ---------------------------------------------------------------------------
 # Live mode opt-in and sync consumption
 # ---------------------------------------------------------------------------
@@ -391,3 +429,128 @@ def test_run_agent_live_malformed_no_private_values_leaked(live_config: AtlasCon
     assert "hunter2" not in error_text
     assert "sk-live-abc123" not in diagnostics_text
     assert "hunter2" not in diagnostics_text
+
+
+# ---------------------------------------------------------------------------
+# Batch 3.3: effective_mode consistency and noncritical warning surfacing
+# ---------------------------------------------------------------------------
+
+def test_run_agent_auto_resolves_to_live_uses_live_analysis_only(live_config: AtlasConfig) -> None:
+    live_config.risk.max_position_notional = 10000.0
+    live_config.risk.max_order_notional = 10000.0
+    live_config.risk.require_stop_loss_live = False
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=ProposeOrderMockProvider()):
+                result = run_agent(mode="auto", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "complete"
+    assert result.mode == "live"
+    # The tool result should be live_analysis_only, not approval_required
+    assert len(result.iterations) == 2
+    tool_result = result.iterations[0].tool_results[0]
+    from atlas_agent.tools.spec import ToolResult
+    assert isinstance(tool_result, ToolResult)
+    assert tool_result.data["status"] == "live_analysis_only"
+
+
+def test_run_agent_auto_resolves_to_live_no_approval_pending(live_config: AtlasConfig) -> None:
+    live_config.risk.max_position_notional = 10000.0
+    live_config.risk.max_order_notional = 10000.0
+    live_config.risk.require_stop_loss_live = False
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=ProposeOrderMockProvider()):
+                result = run_agent(mode="auto", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status != "approval_required"
+    assert result.status == "complete"
+
+
+def test_run_agent_auto_resolves_to_live_no_pending_orders_file(live_config: AtlasConfig) -> None:
+    live_config.risk.max_position_notional = 10000.0
+    live_config.risk.max_order_notional = 10000.0
+    live_config.risk.require_stop_loss_live = False
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=ProposeOrderMockProvider()):
+                result = run_agent(mode="auto", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "complete"
+    assert list(live_config.pending_orders_dir.iterdir()) == []
+
+
+def test_run_agent_auto_resolves_to_paper_preserves_paper_behavior(tmp_path: Path) -> None:
+    config = AtlasConfig(
+        trading_mode="paper",
+        broker={"provider": "alpaca", "enable_live_trading": False},
+        market={"symbol": "AAPL"},
+        memory_dir=tmp_path / "memory",
+        audit_dir=tmp_path / "audit",
+        pending_orders_dir=tmp_path / "pending_orders",
+        reports_dir=tmp_path / "reports",
+        events_dir=tmp_path / "events",
+        data_path=tmp_path / "data" / "ohlcv.csv",
+        workspace_root=tmp_path,
+    )
+    config.ensure_dirs()
+    write_user_discipline(tmp_path, GOOD_PROFILE)
+    config.risk.max_position_notional = 10000.0
+    config.risk.max_order_notional = 10000.0
+    config.risk.require_stop_loss_live = False
+
+    with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=ProposeOrderMockProvider()):
+        result = run_agent(mode="auto", config=config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.mode == "paper"
+    # Paper mode should still hit the approval gate
+    assert result.status == "approval_required"
+
+
+def test_run_agent_live_sync_balances_failure_surfaces_warning_diagnostics(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"code": "broker_operation_failed", "operation": "sync_balances", "broker": "alpaca", "message": "timeout"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "complete"
+    diagnostics = result.diagnostics
+    assert diagnostics.get("sync_status") == "partial"
+    assert diagnostics.get("noncritical_failed_operations") == ["sync_balances"]
+    warnings = diagnostics.get("sync_warnings", [])
+    assert len(warnings) == 1
+    assert warnings[0]["operation"] == "sync_balances"
+    assert warnings[0]["code"] == "broker_operation_failed"
+    assert warnings[0]["broker"] == "alpaca"
+    assert "broker_status" in diagnostics
+
+
+def test_run_agent_live_sync_warning_does_not_leak_private_values(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"code": "broker_operation_failed", "operation": "sync_balances", "broker": "alpaca", "message": "api_key=secret123 timeout"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "complete"
+    diagnostics_text = str(result.diagnostics)
+    assert "api_key=secret123" not in diagnostics_text
+    assert "secret123" not in diagnostics_text

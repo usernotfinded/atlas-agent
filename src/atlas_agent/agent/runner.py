@@ -176,6 +176,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     sync_result = sync_service.sync()
 
     # Live mode: critical sync fields are required
+    sync_warnings: list[dict[str, str]] = []
     if effective_mode == "live":
         broker_errors = sync_result.diagnostics.get("broker_errors", [])
         if not isinstance(broker_errors, list):
@@ -240,6 +241,15 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
                     "failed_operations": missing,
                 },
             )
+        # Collect noncritical warnings (e.g., balances-only failure)
+        noncritical_ops = sorted(failed_ops - critical_ops)
+        for op in noncritical_ops:
+            entry = next((e for e in broker_errors if e.get("operation") == op), {})
+            sync_warnings.append({
+                "operation": op,
+                "code": entry.get("code", "unknown"),
+                "broker": entry.get("broker", "unknown"),
+            })
 
     portfolio_snapshot = sync_service.get_portfolio_snapshot(
         sync_result, broker_id=resolution.status.broker_id
@@ -251,7 +261,9 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
         max_single_trade_notional=config.max_order_notional,
         allowed_symbols=config.symbol_allowlist,
         blocked_symbols=config.symbol_blocklist or set(),
-        live_trading_enabled=config.enable_live_trading
+        live_trading_enabled=config.enable_live_trading,
+        paper_only=not config.enable_live_trading,
+        require_stop_loss_live=config.require_stop_loss_live,
     )
     
     risk_manager = RiskManager(limits=risk_limits, audit_writer=audit_writer, run_id=run_id)
@@ -277,13 +289,23 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
         user_objective=objective,
         session=session,
         system_prompt=system_prompt,
-        mode=mode,
+        mode=effective_mode,
         run_id=run_id,
         portfolio_snapshot=portfolio_snapshot
     )
-    
+
+    # Surface noncritical sync warnings in final diagnostics for live mode
+    if effective_mode == "live" and sync_warnings:
+        diagnostics = dict(result.diagnostics or {})
+        diagnostics["sync_status"] = sync_result.status
+        diagnostics["sync_warnings"] = sync_warnings
+        diagnostics["noncritical_failed_operations"] = [w["operation"] for w in sync_warnings]
+        diagnostics["broker_status"] = resolution.status.to_dict()
+        import dataclasses
+        result = dataclasses.replace(result, diagnostics=diagnostics)
+
     import dataclasses
-    return dataclasses.replace(result, mode=mode)
+    return dataclasses.replace(result, mode=effective_mode)
 
 
 def _run_cycle(mode: str, config: AtlasConfig, symbol: str | None = None) -> RoutineResult:
