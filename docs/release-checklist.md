@@ -176,6 +176,19 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Reconcile does not emit `live_submit_attempted`.
 - Paper mode remains unchanged.
 
+## Broker Foundation 5.2 Release Assertions
+
+- `live_submit_blocked` is emitted for `invalid_pending_order` from initial load/integrity failure (gate `integrity`).
+- `live_submit_blocked` is emitted for `invalid_pending_order` from `order_reconstruction` failure (gate `order_reconstruction`).
+- `live_submit_blocked` is emitted for `invalid_client_order_id` with `client_order_id=None` in the audit payload (gate `client_order_id`).
+- `live_submit_attempted` is emitted exactly once and immediately before `execution_broker.place_order()`.
+- Zero `live_submit_attempted` events are emitted on any blocked path.
+- Audit writer failure does not alter `SubmitExecutionReport` outcome.
+- `atlas broker opt-in` typed confirmation cannot be bypassed by `--yes`.
+- Kill-switch unreadable opt-in output is a static sanitized message; no exception text, paths, or secrets leak to CLI output.
+- Missing live broker credentials block opt-in before any opt-in record is written.
+- Protected untracked files (`AUDIT_ENHANCEMENTS_2026-05-13.md`, `BATCH2_PLAN.md`, `memory/kill_switch_state.json.lock`) must not be staged.
+
 ## Broker Foundation 4.7 Release Assertions
 
 - Production `can_submit=false` path does not call `mark_submit_requested()`.

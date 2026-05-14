@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.7.dev0] - 2026-05-14
+## [0.5.7.dev1] - 2026-05-14
 
 ### Added
 - **Batch 5.0 — Production Live-Submit Opt-In Layer**:
@@ -40,14 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Audit payloads contain only safe structured fields (`order_id`, `client_order_id`, `broker_id`, `reason_code`, `gate`, `status`, `mode`). No raw order data, broker responses, exceptions, paths, or secrets.
   - CLI `submit-approved-order` (no flags) now creates an `AuditWriter` and passes it to `run_submit_execution`.
 - **Batch 5.2 — Live-Submit Audit and Opt-In Hardening**:
-  - `atlas broker opt-in` now additionally verifies live broker credentials are configured before recording the opt-in.
-  - Comprehensive audit emission coverage tests added for every live-submit gate:
-    - Positive tests: `live_trading_disabled`, `kill_switch_active` (both checks), `broker_sync_unavailable` (both paths), `live_sync_failed`, `market_price_unavailable`, `live_submit_side_not_allowed`, `execution_broker_invalid`.
-    - Negative tests: terminal states (`already_submitted`, etc.), `not_approved`, `approval_expired`, `path_traversal`, `pending_order_not_found` do **not** emit `live_submit_blocked`.
+  - `live_submit_blocked` coverage expanded to all previously missed branches:
+    - `invalid_pending_order` from initial load/integrity failure (`load_pending_order` raises `InvalidPendingOrderError` or `json.JSONDecodeError`) — gate `integrity`.
+    - `invalid_pending_order` from `order_reconstruction` failure (`_reconstruct_order` raises after all earlier gates pass) — gate `order_reconstruction`.
+    - `invalid_client_order_id` with `client_order_id=None` in audit payload — gate `client_order_id`.
+  - `live_submit_attempted` is emitted exactly once and immediately before `execution_broker.place_order()`; zero `live_submit_attempted` events on all blocked paths.
+  - Audit write failure safety: `RuntimeError` during `write_event` does not change `SubmitExecutionReport` outcome.
   - Payload safety tests strengthened to prove audit events never contain: raw order payload, broker response bodies, exception text, stack traces, API keys, APCA headers, file paths, or raw pending payload values.
   - Payload key-set test proves `live_submit_blocked` payloads contain exactly the allowed structured fields (`mode`, `broker_id`, `order_id`, `client_order_id`, `reason_code`, `gate`, `status`).
-  - Audit write failure safety tests verify that `RuntimeError` during `write_event` does not change `SubmitExecutionReport` outcome.
-  - New CLI tests: `enable_live_trading=false` blocks opt-in; missing credentials block opt-in.
+  - Opt-in CLI output safety: kill-switch unreadable errors print a static sanitized message (`"Kill switch state is unreadable."`) — no exception text, paths, or secrets leak to stdout.
+  - Opt-in credential check: `atlas broker opt-in` verifies live broker credentials are configured before writing the opt-in record.
+  - Opt-in typed confirmation remains mandatory; `--yes` is rejected and cannot bypass typed confirmation.
+  - Missing-credentials test clears `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` from the environment to avoid false negatives from ambient variables.
   - New CLI commands:
     - `atlas broker opt-in` — requires typed confirmation, writes opt-in record to `audit/live_submit_opt_in.jsonl` and audit log.
     - `atlas broker opt-out` — writes opt-out record to invalidate prior opt-in.

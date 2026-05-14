@@ -59,53 +59,19 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7.dev0)
+## Current Status (v0.5.7.dev1)
 
-Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
+Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit is disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
-### What's New in v0.5.7.dev0
-- **Production live-submit opt-in layer (Batch 5.0)**: `broker.enable_live_submit` is a new, separate opt-in flag for actual order placement. It is independent from `broker.enable_live_trading` (which controls sync/read-only broker contact).
-- **Multi-factor opt-in gate**: `BrokerResolver.can_submit` can become `true` ONLY when ALL conditions are satisfied: `enable_live_submit=true`, `enable_live_trading=true`, kill switch normal, `trading_mode=live`, approval not disabled, leverage off, credentials present, AND a valid opt-in audit record exists.
-- **Deterministic opt-in audit record**: `audit/live_submit_opt_in.jsonl` stores opt-in state with `event_type="live_submit_opt_in_enabled"`, broker ID match, config fingerprint (SHA-256 hash), parseable timestamp, no subsequent opt-out, and 24-hour expiry.
-- **CLI opt-in/opt-out commands**: `atlas broker opt-in` requires typed confirmation and writes the audit record. `atlas broker opt-out` invalidates the prior opt-in.
-- **Live-submit hard limits**: Defense-in-depth limits checked **before** `mark_submit_requested()`: `live_submit_max_order_notional`, `live_submit_allowed_symbols`, `live_submit_allowed_sides`. If any limit fails, the pending file remains completely unchanged.
-- **`resolve_execution_broker("live")` returns real broker only when `can_submit=true`**: When `can_submit` is `false` (production default), `resolve_execution_broker("live")` returns `execution_broker=None` and never instantiates `AlpacaBroker`.
-- **Default behavior unchanged**: With `enable_live_submit=false` (default), Batch 5.0 behaves identically to Batch 4.9 — `can_submit=false`, no mutation, no broker contact.
-- **No live submit enabled by default**: Explicit multi-factor opt-in is required. No unattended live trading. No automatic retries. Paper mode untouched.
-- **Batch 5.1 — Live submit audit hardening**: `run_submit_execution()` now emits `live_submit_blocked` when any live-submit gate blocks, and `live_submit_attempted` exactly once immediately before `place_order()`. Audit payloads are strictly safe — no raw order data, broker responses, exceptions, paths, or secrets. Audit write failures are caught silently and never affect submit behavior.
+For full release history, see [CHANGELOG.md](CHANGELOG.md).
 
-### What's New in v0.5.6.dev7
-- **Pre-submit mutation wiring behind hard-disabled gate (Batch 4.7)**: `run_submit_execution()` now calls `mark_submit_requested()` **only after** `can_submit=true`, then immediately blocks with `broker_submit_not_implemented` before any broker submission.
-- **Mocked `can_submit=true` path prepares `submit_requested` state**: When all safety gates pass under a mocked/test `can_submit=true` resolver, the pending file is atomically mutated to `status="submit_requested"` with `client_order_id`, `submit_requested_at`, a status transition, and a `submit_attempts` entry. `submitted_at` and `broker_order_id` remain `null`.
-- **Production `can_submit=false` path still performs zero mutation**: Alpaca live broker continues to return `can_submit=false`, so production behavior is identical to Batch 4.6 — all gates run, then block with `can_submit_false` and no file mutation.
-- **`broker_submit_not_implemented` hard block (Batch 4.7 only)**: After `mark_submit_requested()` succeeded, `run_submit_execution()` returned `blocked_reason="broker_submit_not_implemented"`. This was superseded by Batch 4.9 which wires the actual broker boundary behind `can_submit=true`.
-- **No `broker.place_order` call (Batch 4.7 only)**: In Batch 4.7, `place_order` was never called and `resolve_execution_broker("live")` was never called. Batch 4.9 added the broker boundary wiring.
-- **`submit_requested` rerun protection**: If a pending file is already in `submit_requested` state, `run_submit_execution()` blocks at the idempotency gate with `reconciliation_required` before sync/risk/mutation. No duplicate `submit_attempts` are appended.
-- **Reconcile supports `submit_requested`**: `run_reconcile()` now accepts `submit_requested` as a valid reconcile status. Broker found → `duplicate_reconciled`; broker not found → `reconciliation_required`.
-- **Dry-run blocks `submit_requested`**: `run_submit_dry_run()` treats `submit_requested` like `submit_uncertain` and `reconciliation_required`, blocking with no file mutation.
-- **No live submit enabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
-
-### What's New in v0.5.6.dev4
-- **Submit state mutation boundary helpers (Batch 4.6)**: `build_submit_requested_payload()`, `mark_submit_requested()`, and `append_submit_attempt()` in `submit_state.py` provide tested, atomic, recoverable state-transition primitives for the boundary immediately before broker submission.
-- **`submit_requested` payload construction**: Pure helper constructs the exact mutation that would occur before `broker.place_order` — setting `status="submit_requested"`, `client_order_id`, `submit_requested_at`, a status transition, and a `submit_attempts` entry.
-- **UUID4 submit attempt IDs**: `attempt_id` is validated as a canonical UUID4 string. Non-UUID values (including secret-shaped strings) are rejected.
-- **Actor and error_code allowlists**: `actor` is restricted to `{"submit:cli", "system"}`. `error_code` is restricted to an explicit safe enum (`broker_rejected_order`, `broker_unavailable`, `broker_transport_failed`, `malformed_broker_response`, `client_order_id_mismatch`, `order_not_found`, `unknown`).
-- **Deterministic `client_order_id` validation**: Existing `client_order_id` in a pending file is validated against `compute_client_order_id(order_id, order_hash)`. Mismatched or invalid values are rejected; no silent overwrite occurs.
-- **Helpers remain unwired from runtime submit execution**: `run_submit_execution()` continues to block at `can_submit=false` with zero file mutation. No CLI flag exposes the helpers.
-- **No live submit enabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
-
-### What's New in v0.5.6.dev3
-- **`submit-approved-order` no-flag execution skeleton**: Runs all live submit safety gates — pending order validation, idempotency checks, live-trading gate, kill-switch gate, fresh read-only broker sync, and risk revalidation — before failing closed at `can_submit=false`.
-- **Fresh live sync + risk revalidation**: Every no-flag submit performs a fresh `BrokerSyncService.sync()` and `RiskManager.evaluate_order(..., mode="live")` against the synced portfolio snapshot before the final `can_submit` gate.
-- **Market orders blocked safely**: Market orders are rejected with `market_price_unavailable` until a safe quote source is integrated.
-- **No pending file mutation / no `client_order_id` persistence**: The execution skeleton is strictly read-only with respect to pending order files. Missing `client_order_id` is computed deterministically but never persisted.
-- **Live submit remains fully disabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
-
-### What's New in v0.5.6.dev2
-- **`submit-approved-order --dry-run`**: Validate all live submit gates without executing — includes deterministic `client_order_id` preview and idempotency checks.
-- **`submit-approved-order --reconcile`**: Read-only broker reconciliation for approved orders. Queries the broker via `GET` only (`AlpacaBrokerAdapter.get_order_by_client_order_id`) to detect duplicate submits. Never calls `place_order`.
-- **Idempotency state machine**: Pending orders track `submit_uncertain` and `reconciliation_required` states to prevent accidental duplicate submissions.
-- **Live submit remains fully disabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
+### What's New in v0.5.7.dev1
+- **Live-submit audit hardening**: Blocked live-submit gates emit safe `live_submit_blocked` audit events.
+- **`live_submit_attempted`** is emitted exactly once immediately before `place_order()`.
+- **Audit payloads avoid raw order payloads, broker responses, exception text, paths, headers, and secrets.**
+- **Broker opt-in output is sanitized**, including unreadable kill-switch state failures.
+- **Typed broker-name confirmation remains mandatory**; `--yes` cannot bypass live-submit opt-in confirmation.
+- **Live submit remains disabled by default.**
 
 ## Quickstart
 
