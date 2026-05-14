@@ -376,3 +376,241 @@ def test_run_once_live_sync_warning_surfaces_in_reasons(
     assert "live_submit_deferred" in result.reasons
     assert "sync_balances_warning" in result.reasons
     assert "sync_balances" in result.message
+
+
+
+@patch("atlas_agent.brokers.resolver.BrokerResolver")
+@patch("atlas_agent.brokers.sync.BrokerSyncService")
+@patch("atlas_agent.brokers.live_sync_validation.validate_live_sync")
+@patch("atlas_agent.cli._broker_for_mode")
+@patch("atlas_agent.cli.OrderRouter")
+@patch("atlas_agent.cli.ApprovalManager")
+def test_run_once_live_analysis_path_never_reaches_execution_artifacts(
+    mock_approval_manager_cls,
+    mock_order_router_cls,
+    mock_broker_for_mode,
+    mock_validate,
+    mock_sync_service_cls,
+    mock_resolver_cls,
+    tmp_path: Path,
+) -> None:
+    """Live analysis-only path must not touch any execution or approval artifacts."""
+    from atlas_agent.brokers.models import BrokerAccountState, BrokerSyncResult
+    from atlas_agent.risk.models import PortfolioSnapshot
+
+    config = _make_config(tmp_path)
+    _write_sample_data(config.data_path)
+
+    mock_resolver_cls.return_value.resolve_status.return_value = MagicMock(
+        can_sync=True,
+        broker_id="alpaca",
+        mode="live",
+        configured=True,
+        credentials_configured=True,
+        can_submit=False,
+        code="live_sync_ready",
+        message="live sync ready",
+    )
+    mock_resolver_cls.return_value.resolve_sync_provider.return_value = MagicMock(
+        sync_provider=MagicMock(),
+        status=MagicMock(),
+    )
+    # Ensure resolve_execution_broker is trackable on the mock class
+    mock_resolver_cls.return_value.resolve_execution_broker = MagicMock()
+
+    sync_result = BrokerSyncResult(
+        status="success",
+        account=BrokerAccountState(account_id="acc-1", cash=10000.0, equity=10000.0),
+        diagnostics={"broker_errors": []},
+    )
+    mock_sync_service = MagicMock()
+    mock_sync_service.sync.return_value = sync_result
+    snapshot = PortfolioSnapshot(cash=10000.0, equity=10000.0, total_exposure=0.0)
+    mock_sync_service.get_portfolio_snapshot.return_value = snapshot
+    mock_sync_service_cls.return_value = mock_sync_service
+
+    mock_validate.return_value = ([], None)
+
+    with patch("atlas_agent.ai.discipline.require_user_discipline"):
+        result = run_once(mode="live", config=config, symbol="DEMO-SYMBOL")
+
+    assert isinstance(result, OrderResult)
+    assert result.status == "live_analysis_only"
+
+    # Execution/approval artifacts must never be reached
+    mock_broker_for_mode.assert_not_called()
+    mock_order_router_cls.assert_not_called()
+    mock_approval_manager_cls.assert_not_called()
+    mock_resolver_cls.return_value.resolve_execution_broker.assert_not_called()
+
+    # No pending order files should exist
+    pending_files = list(config.pending_orders_dir.iterdir())
+    assert pending_files == []
+
+
+
+@patch("atlas_agent.brokers.resolver.BrokerResolver")
+@patch("atlas_agent.brokers.sync.BrokerSyncService")
+@patch("atlas_agent.brokers.live_sync_validation.validate_live_sync")
+@patch("atlas_agent.risk.manager.RiskManager")
+def test_run_once_live_evaluate_order_receives_snapshot_with_open_orders(
+    mock_risk_manager_cls,
+    mock_validate,
+    mock_sync_service_cls,
+    mock_resolver_cls,
+    tmp_path: Path,
+) -> None:
+    """RiskManager.evaluate_order must receive a PortfolioSnapshot containing synced open_orders."""
+    from atlas_agent.brokers.models import BrokerAccountState, BrokerSyncResult
+    from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition, PendingOrder, RiskDecision
+
+    config = _make_config(tmp_path)
+    _write_sample_data(config.data_path)
+
+    mock_resolver_cls.return_value.resolve_status.return_value = MagicMock(
+        can_sync=True,
+        broker_id="alpaca",
+        mode="live",
+        configured=True,
+        credentials_configured=True,
+        can_submit=False,
+        code="live_sync_ready",
+        message="live sync ready",
+    )
+    mock_resolver_cls.return_value.resolve_sync_provider.return_value = MagicMock(
+        sync_provider=MagicMock(),
+        status=MagicMock(),
+    )
+
+    sync_result = BrokerSyncResult(
+        status="success",
+        account=BrokerAccountState(account_id="acc-1", cash=10000.0, equity=10000.0),
+        diagnostics={"broker_errors": []},
+    )
+    mock_sync_service = MagicMock()
+    mock_sync_service.sync.return_value = sync_result
+    snapshot = PortfolioSnapshot(
+        cash=10000.0,
+        equity=10000.0,
+        total_exposure=0.0,
+        positions=[
+            RiskPosition(
+                symbol="DEMO-SYMBOL",
+                quantity=1.0,
+                average_price=100.0,
+                market_price=100.0,
+                notional=100.0,
+                side="long",
+            )
+        ],
+        open_orders=[
+            PendingOrder(
+                order_id="open-1",
+                symbol="DEMO-SYMBOL",
+                side="buy",
+                quantity=2.0,
+                status="open",
+                filled_quantity=0.0,
+            )
+        ],
+    )
+    mock_sync_service.get_portfolio_snapshot.return_value = snapshot
+    mock_sync_service_cls.return_value = mock_sync_service
+
+    mock_validate.return_value = ([], None)
+
+    # Risk decision passes
+    mock_risk_manager_cls.return_value.evaluate_order.return_value = RiskDecision(
+        allowed=True,
+        status="allowed",
+        reason="test pass",
+        violations=[],
+        classification="opens_new_position",
+    )
+
+    with patch("atlas_agent.ai.discipline.require_user_discipline"):
+        result = run_once(mode="live", config=config, symbol="DEMO-SYMBOL")
+
+    assert isinstance(result, OrderResult)
+    assert result.status == "live_analysis_only"
+
+    # Verify evaluate_order was called with a PortfolioSnapshot that has open_orders
+    mock_risk_manager_cls.return_value.evaluate_order.assert_called_once()
+    call_args = mock_risk_manager_cls.return_value.evaluate_order.call_args
+    passed_snapshot = call_args[0][1]
+    assert isinstance(passed_snapshot, PortfolioSnapshot)
+    assert len(passed_snapshot.open_orders) == 1
+    assert passed_snapshot.open_orders[0].order_id == "open-1"
+    assert passed_snapshot.open_orders[0].symbol == "DEMO-SYMBOL"
+    assert call_args.kwargs.get("mode") == "live"
+
+
+
+def test_run_once_paper_path_unchanged(tmp_path: Path) -> None:
+    """Paper mode must continue to use synthetic PortfolioState and execute through OrderRouter."""
+    config = _make_config(tmp_path, enable_live_trading=False)
+    _write_sample_data(config.data_path)
+
+    with patch("atlas_agent.ai.discipline.require_user_discipline"):
+        result = run_once(mode="paper", config=config, symbol="DEMO-SYMBOL")
+
+    assert isinstance(result, OrderResult)
+    # Paper mode with sample data and default config should fill
+    assert result.status == "filled"
+    assert result.accepted is True
+    assert result.filled is True
+
+
+@patch("atlas_agent.brokers.resolver.BrokerResolver")
+@patch("atlas_agent.brokers.sync.BrokerSyncService")
+@patch("atlas_agent.brokers.live_sync_validation.validate_live_sync")
+def test_run_once_live_no_broker_place_order_called(
+    mock_validate,
+    mock_sync_service_cls,
+    mock_resolver_cls,
+    tmp_path: Path,
+) -> None:
+    """No broker.place_order must be invoked in live analysis-only path."""
+    from atlas_agent.brokers.models import BrokerAccountState, BrokerSyncResult
+    from atlas_agent.risk.models import PortfolioSnapshot
+
+    config = _make_config(tmp_path)
+    _write_sample_data(config.data_path)
+
+    mock_resolver_cls.return_value.resolve_status.return_value = MagicMock(
+        can_sync=True,
+        broker_id="alpaca",
+        mode="live",
+        configured=True,
+        credentials_configured=True,
+        can_submit=False,
+        code="live_sync_ready",
+        message="live sync ready",
+    )
+    mock_resolver_cls.return_value.resolve_sync_provider.return_value = MagicMock(
+        sync_provider=MagicMock(),
+        status=MagicMock(),
+    )
+
+    sync_result = BrokerSyncResult(
+        status="success",
+        account=BrokerAccountState(account_id="acc-1", cash=10000.0, equity=10000.0),
+        diagnostics={"broker_errors": []},
+    )
+    mock_sync_service = MagicMock()
+    mock_sync_service.sync.return_value = sync_result
+    snapshot = PortfolioSnapshot(cash=10000.0, equity=10000.0, total_exposure=0.0)
+    mock_sync_service.get_portfolio_snapshot.return_value = snapshot
+    mock_sync_service_cls.return_value = mock_sync_service
+
+    mock_validate.return_value = ([], None)
+
+    # Patch the underlying broker provider to ensure place_order cannot be called
+    mock_sync_provider = mock_resolver_cls.return_value.resolve_sync_provider.return_value.sync_provider
+    mock_sync_provider.place_order = MagicMock()
+
+    with patch("atlas_agent.ai.discipline.require_user_discipline"):
+        result = run_once(mode="live", config=config, symbol="DEMO-SYMBOL")
+
+    assert result.status == "live_analysis_only"
+    mock_sync_provider.place_order.assert_not_called()
