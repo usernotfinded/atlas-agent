@@ -7,6 +7,7 @@ Run this before pushing a public GitHub release.
 - `python3.11 -m pytest -q`
 - `python3.11 -m pip check`
 - `./scripts/demo_paper_workflow.sh`
+- `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 
 ## Validate Contract Checks
 
