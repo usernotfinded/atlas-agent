@@ -470,3 +470,87 @@ def test_dry_run_report_to_dict_is_safe(tmp_path: Path) -> None:
     assert d["status"] == "blocked"
     assert "order_id" in d
     assert "gates" in d
+
+
+# ---------------------------------------------------------------------------
+# Negative guard tests — dry-run must never call mutation helpers
+# ---------------------------------------------------------------------------
+
+def test_dry_run_never_calls_manager_create_pending_order(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="guard-create")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "approved"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_dry_run.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_dry_run.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_dry_run.RiskManager") as mock_risk_cls, \
+         patch.object(manager, "create_pending_order", side_effect=AssertionError("create_pending_order must not be called")) as mock_create:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        report = run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    mock_create.assert_not_called()
+
+
+def test_dry_run_never_calls_manager_approve(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="guard-approve")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "approved"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_dry_run.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_dry_run.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_dry_run.RiskManager") as mock_risk_cls, \
+         patch.object(manager, "approve", side_effect=AssertionError("approve must not be called")) as mock_approve:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        report = run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    mock_approve.assert_not_called()
+
+
+def test_dry_run_never_calls_order_router_route(tmp_path: Path) -> None:
+    from atlas_agent.execution.order_router import OrderRouter
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="guard-route")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "approved"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_dry_run.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_dry_run.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_dry_run.RiskManager") as mock_risk_cls, \
+         patch.object(OrderRouter, "route", side_effect=AssertionError("OrderRouter.route must not be called")) as mock_route:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        report = run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    mock_route.assert_not_called()

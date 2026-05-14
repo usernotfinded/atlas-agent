@@ -1124,6 +1124,119 @@ def test_submit_approved_order_dry_run_path_traversal_rejected(tmp_path, monkeyp
     assert "passwd" not in captured.err
 
 
+def test_submit_approved_order_dry_run_never_calls_create_pending_order(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch.object(
+        ApprovalManager, "create_pending_order", side_effect=AssertionError("create_pending_order must not be called")
+    ) as mock_create, _mock_dry_run_services()(
+        can_sync=True, can_submit=False, risk_allowed=True
+    ):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    mock_create.assert_not_called()
+
+
+def test_submit_approved_order_dry_run_never_calls_approve(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch.object(
+        ApprovalManager, "approve", side_effect=AssertionError("approve must not be called")
+    ) as mock_approve, _mock_dry_run_services()(
+        can_sync=True, can_submit=False, risk_allowed=True
+    ):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    mock_approve.assert_not_called()
+
+
+def test_submit_approved_order_dry_run_never_calls_order_router_route(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order_router import OrderRouter
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch.object(
+        OrderRouter, "route", side_effect=AssertionError("OrderRouter.route must not be called")
+    ) as mock_route, _mock_dry_run_services()(
+        can_sync=True, can_submit=False, risk_allowed=True
+    ):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    mock_route.assert_not_called()
+
+
+def test_submit_approved_order_dry_run_never_mutates_pending_file_even_if_create_pending_order_is_patched(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0)
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    before = path.read_text(encoding="utf-8")
+
+    with patch.object(
+        ApprovalManager, "create_pending_order", side_effect=AssertionError("create_pending_order must not be called")
+    ) as mock_create, _mock_dry_run_services()(
+        can_sync=True, can_submit=False, risk_allowed=True
+    ):
+        code = main(["submit-approved-order", order.id, "--dry-run"])
+
+    assert code == 0
+    mock_create.assert_not_called()
+    after = path.read_text(encoding="utf-8")
+    assert before == after
+
+
 def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     main(["init", "."])
