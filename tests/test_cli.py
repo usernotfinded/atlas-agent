@@ -1237,6 +1237,32 @@ def test_submit_approved_order_dry_run_never_mutates_pending_file_even_if_create
     assert before == after
 
 
+def test_broker_resolver_can_submit_remains_false() -> None:
+    from atlas_agent.brokers.resolver import BrokerResolver
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True},
+    )
+    resolver = BrokerResolver(config)
+    status = resolver.resolve_status("live")
+    assert status.can_submit is False
+
+
+def test_resolve_execution_broker_live_returns_none() -> None:
+    from atlas_agent.brokers.resolver import BrokerResolver
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True},
+    )
+    resolver = BrokerResolver(config)
+    resolution = resolver.resolve_execution_broker("live")
+    assert resolution.execution_broker is None
+
+
 def test_atlas_backtest_works(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     main(["init", "."])

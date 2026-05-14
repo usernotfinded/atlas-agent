@@ -57,3 +57,7 @@ class BrokerProvider(Protocol):
 
 class BrokerConfigurationError(RuntimeError):
     pass
+
+
+class BrokerOperationError(RuntimeError):
+    """Raised when a broker operation fails due to provider-side or transport-side error."""

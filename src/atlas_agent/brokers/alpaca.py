@@ -6,10 +6,10 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from typing import List
+from typing import ClassVar, List
 
 from atlas_agent.config import AtlasConfig
-from atlas_agent.brokers.base import BrokerConfigurationError, BrokerProvider
+from atlas_agent.brokers.base import BrokerConfigurationError, BrokerOperationError, BrokerProvider
 from atlas_agent.brokers.models import (
     BrokerAccountState,
     BrokerBalance,
@@ -25,6 +25,26 @@ class AlpacaBroker:
     config: AtlasConfig
     paper_endpoint: str = "https://paper-api.alpaca.markets"
     live_endpoint: str = "https://api.alpaca.markets"
+
+    _VALID_ORDER_TYPES = {"market", "limit"}
+    _STATUS_ALLOWLIST = {
+        "new",
+        "partially_filled",
+        "filled",
+        "done_for_day",
+        "canceled",
+        "expired",
+        "replaced",
+        "pending_cancel",
+        "pending_replace",
+        "accepted",
+        "pending_new",
+        "accepted_for_bidding",
+        "stopped",
+        "rejected",
+        "suspended",
+        "calculated",
+    }
 
     def _validate_config(self) -> None:
         reasons = list(self.config.live_disabled_reasons())
@@ -45,22 +65,46 @@ class AlpacaBroker:
         self._validate_config()
         return []
 
-    def place_order(self, order: Order) -> OrderResult:
+    def place_order(
+        self,
+        order: Order,
+        *,
+        client_order_id: str | None = None,
+    ) -> OrderResult:
         self._validate_config()
+
+        # client_order_id is required for Alpaca submit
+        if client_order_id is None:
+            raise BrokerOperationError("client_order_id required")
+        _validate_client_order_id(client_order_id)
+
+        # Order validation
+        if isinstance(order.quantity, bool) or not isinstance(order.quantity, (int, float)) or not math.isfinite(order.quantity) or order.quantity <= 0:
+            raise BrokerOperationError("invalid order")
+        if order.side not in ("buy", "sell"):
+            raise BrokerOperationError("invalid order")
+        if order.order_type not in self._VALID_ORDER_TYPES:
+            raise BrokerOperationError("invalid order")
+        if order.order_type == "limit":
+            if order.limit_price is None or isinstance(order.limit_price, bool) or not isinstance(order.limit_price, (int, float)) or not math.isfinite(order.limit_price) or order.limit_price <= 0:
+                raise BrokerOperationError("invalid order")
+
         endpoint = (
             self.live_endpoint
             if os.getenv("ALPACA_ENDPOINT_MODE", "paper").strip().lower() == "live"
             else self.paper_endpoint
         )
-        payload = {
+        payload: dict[str, object] = {
             "symbol": order.symbol,
             "qty": str(order.quantity),
             "side": order.side.lower(),
             "type": order.order_type,
             "time_in_force": "day",
+            "client_order_id": client_order_id,
         }
         if order.order_type == "limit":
             payload["limit_price"] = str(order.limit_price)
+
         request = urllib.request.Request(
             f"{endpoint}/v2/orders",
             data=json.dumps(payload).encode("utf-8"),
@@ -71,24 +115,50 @@ class AlpacaBroker:
             },
             method="POST",
         )
+
         try:
             with urllib.request.urlopen(request, timeout=20) as response:
                 raw = json.loads(response.read().decode("utf-8"))
-        except urllib.error.URLError as exc:
+        except TimeoutError:
+            raise BrokerOperationError("broker transport request failed")
+        except urllib.error.HTTPError as exc:
+            code = getattr(exc, "code", 0)
+            if code >= 500:
+                raise BrokerOperationError("broker unavailable")
+            raise BrokerOperationError("broker rejected order")
+        except urllib.error.URLError:
+            raise BrokerOperationError("broker transport request failed")
+        except json.JSONDecodeError:
+            raise BrokerOperationError("malformed broker response")
+
+        if not isinstance(raw, dict):
+            raise BrokerOperationError("malformed broker response")
+        if "id" not in raw or "status" not in raw:
+            raise BrokerOperationError("malformed broker response")
+        status = raw.get("status")
+        if not isinstance(status, str) or status not in self._STATUS_ALLOWLIST:
+            raise BrokerOperationError("malformed broker response")
+        resp_client_order_id = raw.get("client_order_id")
+        if resp_client_order_id != client_order_id:
+            raise BrokerOperationError("client_order_id mismatch")
+
+        broker_order_id = str(raw["id"])
+        if status == "rejected":
             return OrderResult(
                 accepted=False,
                 filled=False,
-                order_id=order.id,
-                status="failed",
-                message="Alpaca order request failed",
-                reasons=(exc.__class__.__name__,),
+                order_id=broker_order_id,
+                status="rejected",
+                message="Alpaca order rejected",
+                reasons=(),
             )
         return OrderResult(
-            accepted=True,
-            filled=raw.get("status") == "filled",
-            order_id=str(raw.get("id", order.id)),
-            status=str(raw.get("status", "accepted")),
+            accepted=status in {"new", "partially_filled", "filled", "accepted", "pending_new", "accepted_for_bidding"},
+            filled=status == "filled",
+            order_id=broker_order_id,
+            status=status,
             message="Alpaca order submitted",
+            reasons=(),
         )
 
     def cancel_order(self, order_id: str) -> OrderResult:
@@ -145,6 +215,20 @@ def _require_finite_positive(value: object, field_name: str) -> float:
 
 
 # ---------------------------------------------------------------------------
+# client_order_id validation helper
+# ---------------------------------------------------------------------------
+
+def _validate_client_order_id(client_order_id: str | None) -> None:
+    if not isinstance(client_order_id, str) or not client_order_id:
+        raise BrokerOperationError("invalid client_order_id")
+    if len(client_order_id) > 64:
+        raise BrokerOperationError("invalid client_order_id")
+    import re as _re
+    if not _re.fullmatch(r"[A-Za-z0-9_-]+", client_order_id):
+        raise BrokerOperationError("invalid client_order_id")
+
+
+# ---------------------------------------------------------------------------
 # Alpaca read-only sync adapter
 # ---------------------------------------------------------------------------
 
@@ -159,6 +243,24 @@ class AlpacaBrokerAdapter(BrokerProvider):
     config: AtlasConfig
     paper_endpoint: str = "https://paper-api.alpaca.markets"
     live_endpoint: str = "https://api.alpaca.markets"
+
+    _ALPACA_STATUS_MAP: ClassVar[dict[str, str]] = {
+        "new": "pending",
+        "open": "open",
+        "partially_filled": "partially_filled",
+        "filled": "filled",
+        "done_for_day": "open",
+        "canceled": "cancelled",
+        "expired": "cancelled",
+        "replaced": "open",
+        "pending_cancel": "open",
+        "pending_replace": "open",
+        "accepted": "pending",
+        "pending_new": "pending",
+        "accepted_for_bidding": "pending",
+        "stopped": "open",
+        "rejected": "rejected",
+    }
 
     def _validate_config(self) -> None:
         reasons = list(self.config.live_disabled_reasons())
@@ -273,3 +375,66 @@ class AlpacaBrokerAdapter(BrokerProvider):
                 total=account.cash,
             )
         ]
+
+    @classmethod
+    def _map_alpaca_status(cls, raw_status: str) -> str:
+        mapped = cls._ALPACA_STATUS_MAP.get(raw_status)
+        if mapped is None:
+            raise BrokerOperationError("malformed broker response")
+        return mapped
+
+    def get_order_by_client_order_id(self, client_order_id: str) -> BrokerOrder:
+        """Fetch a single order by client_order_id. Raises BrokerOperationError on failure."""
+        self._validate_config()
+        _validate_client_order_id(client_order_id)
+
+        import urllib.parse
+        query = urllib.parse.urlencode({"client_order_id": client_order_id})
+        try:
+            raw = self._request("GET", f"/v2/orders:by_client_order_id?{query}")
+        except TimeoutError:
+            raise BrokerOperationError("broker transport request failed")
+        except urllib.error.HTTPError as exc:
+            code = getattr(exc, "code", 0)
+            if code == 404:
+                raise BrokerOperationError("order not found")
+            if code >= 500:
+                raise BrokerOperationError("broker unavailable")
+            raise BrokerOperationError("broker rejected order")
+        except urllib.error.URLError:
+            raise BrokerOperationError("broker transport request failed")
+        except json.JSONDecodeError:
+            raise BrokerOperationError("malformed broker response")
+
+        if not isinstance(raw, dict):
+            raise BrokerOperationError("malformed broker response")
+        required_fields = {"id", "symbol", "side", "qty", "status"}
+        if not required_fields.issubset(raw.keys()):
+            raise BrokerOperationError("malformed broker response")
+
+        try:
+            status = self._map_alpaca_status(str(raw["status"]))
+            qty = _require_finite_positive(raw["qty"], "qty")
+            filled_qty = _require_finite_non_negative(raw.get("filled_qty", 0), "filled_qty")
+            limit_price_raw = raw.get("limit_price")
+            limit_price = (
+                _require_finite_positive(limit_price_raw, "limit_price")
+                if limit_price_raw is not None
+                else None
+            )
+            side = str(raw["side"]).lower()
+            if side not in ("buy", "sell"):
+                raise BrokerOperationError("malformed broker response")
+            return BrokerOrder(
+                order_id=str(raw["id"]),
+                symbol=str(raw["symbol"]),
+                side=side,  # type: ignore[arg-type]
+                quantity=qty,
+                limit_price=limit_price,
+                status=status,  # type: ignore[arg-type]
+                filled_quantity=filled_qty,
+            )
+        except BrokerOperationError:
+            raise
+        except Exception:
+            raise BrokerOperationError("malformed broker response")
