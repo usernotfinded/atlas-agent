@@ -52,7 +52,7 @@ def test_readme_contains_v030_essentials():
         "hash-chain",
         "kill switch",
         "heartbeat",
-        "live trading | disabled by default"
+        "live submit remains disabled by default"
     ]
     
     for item in essentials:
