@@ -554,3 +554,28 @@ def test_run_agent_live_sync_warning_does_not_leak_private_values(live_config: A
     diagnostics_text = str(result.diagnostics)
     assert "api_key=secret123" not in diagnostics_text
     assert "secret123" not in diagnostics_text
+
+
+def test_run_agent_auto_live_objective_text_uses_live_not_auto(live_config: AtlasConfig) -> None:
+    """When mode='auto' resolves to live, the model prompt must say 'live', not 'auto'."""
+    from unittest.mock import MagicMock
+    from atlas_agent.agent.loop import AgentLoop
+
+    captured_objective = None
+
+    def capture_run(_self, *, user_objective, **kwargs):
+        nonlocal captured_objective
+        captured_objective = user_objective
+        from atlas_agent.agent.result import AgentResult
+        return AgentResult(status="complete")
+
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch.object(AgentLoop, "run", capture_run):
+                    run_agent(mode="auto", config=live_config, use_loop=True, continuous=False)
+
+    assert captured_objective is not None
+    assert "Current mode is live" in captured_objective
+    assert "Current mode is auto" not in captured_objective

@@ -283,7 +283,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     session = Session(id=run_id, turn_count=0, has_summarized=False)
     
     # Simple objective for now
-    objective = f"Current mode is {mode}. Analyze the market for {effective_symbol} and propose any necessary actions."
+    objective = f"Current mode is {effective_mode}. Analyze the market for {effective_symbol} and propose any necessary actions."
     
     result = loop.run(
         user_objective=objective,
