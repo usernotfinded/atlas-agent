@@ -1925,6 +1925,7 @@ def test_submit_approved_order_execution_json_output(tmp_path, monkeypatch, caps
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -1991,6 +1992,7 @@ def test_submit_approved_order_execution_can_submit_false(tmp_path, monkeypatch,
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -2056,6 +2058,7 @@ def test_submit_approved_order_execution_no_place_order_called(tmp_path, monkeyp
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -2128,6 +2131,7 @@ def test_cli_default_can_submit_false_no_mutation(tmp_path, monkeypatch, capsys)
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -2196,6 +2200,7 @@ def test_cli_mocked_can_submit_true_mutates_to_submit_requested(tmp_path, monkey
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -2230,9 +2235,9 @@ def test_cli_mocked_can_submit_true_mutates_to_submit_requested(tmp_path, monkey
 
     captured = capsys.readouterr()
     assert code == 2
-    assert "broker_submit_not_implemented" in captured.out
+    assert "execution_broker_unavailable" in captured.out
     loaded = json.loads(path.read_text(encoding="utf-8"))
-    assert loaded["status"] == "submit_requested"
+    assert loaded["status"] == "submit_prepare_failed"
     assert loaded["client_order_id"] is not None
     assert loaded.get("submitted_at") is None
     assert loaded.get("broker_order_id") is None
@@ -2266,6 +2271,7 @@ def test_cli_mocked_can_submit_true_text_output_sanitized(tmp_path, monkeypatch,
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -2300,8 +2306,7 @@ def test_cli_mocked_can_submit_true_text_output_sanitized(tmp_path, monkeypatch,
 
     captured = capsys.readouterr()
     assert code == 2
-    assert "broker_submit_not_implemented" in captured.out
-    assert "not implemented" in captured.out.lower()
+    assert "Execution broker is not available." in captured.out
     # No raw API keys or secrets
     assert "ALPACA" not in captured.out or "alpaca" in captured.out.lower()  # "alpaca" is safe broker name
     assert "SECRET" not in captured.out
@@ -2337,6 +2342,7 @@ def test_cli_mocked_can_submit_true_json_output_parseable(tmp_path, monkeypatch,
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -2374,9 +2380,9 @@ def test_cli_mocked_can_submit_true_json_output_parseable(tmp_path, monkeypatch,
     output = json.loads(captured.out)
     assert output["ok"] is False
     assert output["error"]["code"] == "submit_blocked"
-    assert output["error"]["details"]["blocked_reason"] == "broker_submit_not_implemented"
+    assert output["error"]["details"]["blocked_reason"] == "execution_broker_unavailable"
     assert output["error"]["details"]["gates"]["can_submit"] == "pass"
-    assert output["error"]["details"]["gates"]["broker_submit"] == "not_implemented"
+    assert output["error"]["details"]["gates"]["execution_broker"] == "unavailable"
 
 
 def test_cli_dry_run_unchanged(tmp_path, monkeypatch, capsys) -> None:
@@ -2409,6 +2415,7 @@ def test_cli_dry_run_unchanged(tmp_path, monkeypatch, capsys) -> None:
         mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
         mr.return_value.resolve_status.return_value = mock_status
         mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
 
         mock_result = MagicMock()
         mock_result.status = "success"
@@ -2479,3 +2486,448 @@ def test_cli_reconcile_unchanged(tmp_path, monkeypatch, capsys) -> None:
     captured = capsys.readouterr()
     assert code == 0
     assert "duplicate_reconciled" in captured.out.lower() or "reconciled" in captured.out.lower()
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.9: CLI broker submit boundary tests
+# ---------------------------------------------------------------------------
+
+def test_cli_production_can_submit_false_still_blocks(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order import Order
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    before = path.read_text(encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = False
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=None)
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id, "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    output = json.loads(captured.out)
+    assert output["ok"] is False
+    assert output["error"]["details"]["blocked_reason"] == "can_submit_false"
+    after = path.read_text(encoding="utf-8")
+    assert before == after
+
+
+def test_cli_mocked_can_submit_true_accepted_prints_acknowledged(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order import Order, OrderResult
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    mock_broker = MagicMock()
+    mock_broker.place_order.return_value = OrderResult(
+        accepted=True, filled=False, order_id="broker-123", status="new", message="ok"
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = True
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=mock_broker)
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "acknowledged" in captured.out.lower()
+
+
+def test_cli_mocked_can_submit_true_accepted_json(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order import Order, OrderResult
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    mock_broker = MagicMock()
+    mock_broker.place_order.return_value = OrderResult(
+        accepted=True, filled=False, order_id="broker-123", status="new", message="ok"
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = True
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=mock_broker)
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id, "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    output = json.loads(captured.out)
+    assert output["ok"] is True
+    assert output["data"]["status"] == "acknowledged"
+
+
+def test_cli_mocked_rejected_returns_failed_safely(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order import Order, OrderResult
+    from atlas_agent.brokers.base import BrokerOperationError
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    mock_broker = MagicMock()
+    mock_broker.place_order.side_effect = BrokerOperationError("broker rejected order")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = True
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=mock_broker)
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id, "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    output = json.loads(captured.out)
+    assert output["ok"] is False
+    assert output["error"]["details"]["blocked_reason"] == "broker_rejected_order"
+    assert "broker rejected order." in output["error"]["message"].lower()
+
+
+def test_cli_mocked_uncertain_returns_reconcile_message(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order import Order
+    from atlas_agent.brokers.base import BrokerOperationError
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    mock_broker = MagicMock()
+    mock_broker.place_order.side_effect = BrokerOperationError("broker unavailable")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = True
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=mock_broker)
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "--reconcile" in captured.out
+    assert "uncertain" in captured.out.lower()
+
+
+def test_cli_no_raw_secret_path_payload_broker_error_in_output(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order import Order
+    from atlas_agent.brokers.base import BrokerOperationError
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    mock_broker = MagicMock()
+    mock_broker.place_order.side_effect = BrokerOperationError("broker unavailable")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = True
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": True}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+        mr.return_value.resolve_execution_broker.return_value = MagicMock(execution_broker=mock_broker)
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id, "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    combined = captured.out + captured.err
+    assert "SECRET" not in combined
+    assert "API_KEY" not in combined
+    assert "password" not in combined.lower()
+    assert "FAKE_BROKER_BODY" not in combined
+    # No raw broker error text
+    assert "broker unavailable" not in combined.lower()

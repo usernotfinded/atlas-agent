@@ -275,6 +275,13 @@ _SUBMIT_ATTEMPT_ERROR_CODES = frozenset({
     "unknown",
     "execution_broker_unavailable",
     "execution_broker_invalid",
+    "kill_switch_active",
+})
+
+_PREPARE_FAILED_ERROR_CODES = frozenset({
+    "execution_broker_unavailable",
+    "execution_broker_invalid",
+    "kill_switch_active",
 })
 
 
@@ -800,7 +807,7 @@ def mark_submit_prepare_failed(
     if payload.get("status") != "submit_requested":
         raise SubmitStateError("status must be submit_requested")
 
-    if error_code not in ("execution_broker_unavailable", "execution_broker_invalid"):
+    if error_code not in _PREPARE_FAILED_ERROR_CODES:
         raise SubmitStateError("invalid submit attempt")
 
     if now is None:

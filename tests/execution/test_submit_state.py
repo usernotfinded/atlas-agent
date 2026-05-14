@@ -1347,106 +1347,6 @@ def test_submitted_at_set_for_acknowledged(tmp_path: Path) -> None:
     assert loaded["submitted_at"] == "2026-05-14T14:00:00+00:00"
 
 
-# ---------------------------------------------------------------------------
-# Batch 4.8 unwiring confirmation
-# ---------------------------------------------------------------------------
-
-def test_submit_execution_still_does_not_call_mark_acknowledged(tmp_path: Path) -> None:
-    """Confirm run_submit_execution does not import or call mark_acknowledged (Batch 4.8 unwired)."""
-    from atlas_agent.execution import submit_execution
-    from atlas_agent.execution.submit_execution import run_submit_execution
-    from unittest.mock import MagicMock, patch
-
-    # Verify the function is not imported by submit_execution
-    assert not hasattr(submit_execution, "mark_acknowledged")
-
-    manager = ApprovalManager(tmp_path / "pending")
-    order = _make_order(id="unwired-ack")
-    payload = _make_v2_payload(order)
-    path = manager.path_for(order.id)
-    _write_payload(path, payload)
-
-    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
-         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
-         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
-         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
-         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
-        mock_resolver_cls.return_value = MagicMock()
-        mock_resolver_cls.return_value.resolve_status.return_value = MagicMock(
-            can_sync=True, can_submit=False, broker_id="alpaca"
-        )
-        mock_sync_cls.return_value = MagicMock()
-        mock_sync_cls.return_value.sync.return_value = MagicMock(
-            status="success", account=MagicMock(), positions=[], open_orders=[],
-            balances=[], errors=[], diagnostics={"broker_errors": []}
-        )
-        from atlas_agent.risk.models import PortfolioSnapshot
-        mock_sync_cls.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
-            cash=10000, equity=10000, total_exposure=0
-        )
-        mock_validate.return_value = ([], None)
-        from atlas_agent.risk.models import RiskDecision
-        mock_risk_cls.return_value.evaluate_order.return_value = RiskDecision(
-            allowed=True, status="allowed", reason="ok", violations=[],
-            classification="opens_new_position",
-        )
-        mock_ks = MagicMock()
-        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
-        mock_ks_cls.return_value = mock_ks
-
-        report = run_submit_execution(order.id, _FakeConfig(), manager)
-
-    assert report.ok is False
-
-
-def test_submit_execution_still_does_not_call_mark_submit_failed(tmp_path: Path) -> None:
-    """Confirm run_submit_execution does not import or call mark_submit_failed (Batch 4.8 unwired)."""
-    from atlas_agent.execution import submit_execution
-    from atlas_agent.execution.submit_execution import run_submit_execution
-    from unittest.mock import MagicMock, patch
-
-    # Verify the function is not imported by submit_execution
-    assert not hasattr(submit_execution, "mark_submit_failed")
-
-    manager = ApprovalManager(tmp_path / "pending")
-    order = _make_order(id="unwired-fail")
-    payload = _make_v2_payload(order)
-    path = manager.path_for(order.id)
-    _write_payload(path, payload)
-
-    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
-         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
-         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
-         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
-         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
-        mock_resolver_cls.return_value = MagicMock()
-        mock_resolver_cls.return_value.resolve_status.return_value = MagicMock(
-            can_sync=True, can_submit=False, broker_id="alpaca"
-        )
-        mock_sync_cls.return_value = MagicMock()
-        mock_sync_cls.return_value.sync.return_value = MagicMock(
-            status="success", account=MagicMock(), positions=[], open_orders=[],
-            balances=[], errors=[], diagnostics={"broker_errors": []}
-        )
-        from atlas_agent.risk.models import PortfolioSnapshot
-        mock_sync_cls.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
-            cash=10000, equity=10000, total_exposure=0
-        )
-        mock_validate.return_value = ([], None)
-        from atlas_agent.risk.models import RiskDecision
-        mock_risk_cls.return_value.evaluate_order.return_value = RiskDecision(
-            allowed=True, status="allowed", reason="ok", violations=[],
-            classification="opens_new_position",
-        )
-        mock_ks = MagicMock()
-        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
-        mock_ks_cls.return_value = mock_ks
-
-        report = run_submit_execution(order.id, _FakeConfig(), manager)
-
-    assert report.ok is False
-
-
 class _FakeConfig:
     enable_live_trading = True
     max_position_size = 10000.0
@@ -1457,3 +1357,46 @@ class _FakeConfig:
     pending_orders_dir = Path("pending_orders")
     live_broker = "alpaca"
     memory_dir = Path("memory")
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.9: mark_submit_prepare_failed allowlist
+# ---------------------------------------------------------------------------
+
+def test_mark_submit_prepare_failed_accepts_kill_switch_active(tmp_path: Path) -> None:
+    order = _make_order(id="prep-ks")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    now = datetime.now(UTC)
+    mark_submit_prepare_failed(path, error_code="kill_switch_active", now=now)
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "submit_prepare_failed"
+    assert loaded["submit_attempts"][0]["error_code"] == "kill_switch_active"
+    assert loaded.get("submitted_at") is None
+    assert loaded.get("broker_order_id") is None
+
+
+def test_mark_submit_prepare_failed_rejects_broker_rejected_order(tmp_path: Path) -> None:
+    order = _make_order(id="prep-rej")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    now = datetime.now(UTC)
+    with pytest.raises(SubmitStateError) as exc:
+        mark_submit_prepare_failed(path, error_code="broker_rejected_order", now=now)
+    assert str(exc.value) == "invalid submit attempt"
+
+
+def test_mark_submit_prepare_failed_rejects_broker_unavailable(tmp_path: Path) -> None:
+    order = _make_order(id="prep-unav")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    now = datetime.now(UTC)
+    with pytest.raises(SubmitStateError) as exc:
+        mark_submit_prepare_failed(path, error_code="broker_unavailable", now=now)
+    assert str(exc.value) == "invalid submit attempt"

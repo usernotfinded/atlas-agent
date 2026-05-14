@@ -59,11 +59,11 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.6.dev6)
+## Current Status (v0.5.6.dev7)
 
 Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
 
-### What's New in v0.5.6.dev6
+### What's New in v0.5.6.dev7
 - **Post-submit state mutation helpers (Batch 4.8)**: `mark_acknowledged()`, `mark_submit_failed()`, `mark_submit_uncertain()`, and `mark_submit_prepare_failed()` in `submit_state.py` provide atomic, validated state transitions for the boundary immediately after broker submission.
 - **`mark_acknowledged()`**: Transitions from `submit_requested` to `acknowledged` after broker confirmation. Sets `submitted_at`, `broker_order_id`, and `broker_status`. Updates the last `submit_attempt` entry in-place with `status="acknowledged"`.
 - **`mark_submit_failed()`**: Transitions from `submit_requested` to `failed` after explicit broker rejection (4xx or rejected status). Keeps `submitted_at=null`. Sets `error_code` on the last submit attempt.
@@ -73,9 +73,11 @@ Atlas is currently in active development. The current status of major features i
 - **Static transition reasons**: Status transitions use static safe strings (`"broker_acknowledged"`, `"broker_rejected"`, `"broker_uncertain"`, `"execution_broker_failed"`). No raw `broker_order_id` or broker error text is interpolated into transition reasons.
 - **Broker status allowlist**: `broker_status` is validated against a safe allowlist. Unknown values are rejected.
 - **Broker order ID validation**: `broker_order_id` is validated as a safe non-empty string. Secret-shaped values (containing `API_KEY`, `SECRET`, `TOKEN`, `PASSWORD`) are rejected.
-- **Error code allowlist expansion**: Added `execution_broker_unavailable` and `execution_broker_invalid` to the submit attempt error code allowlist.
+- **Error code allowlist expansion**: Added `execution_broker_unavailable`, `execution_broker_invalid`, and `kill_switch_active` to the submit attempt error code allowlist.
 - **Submit attempt status expansion**: Added `submit_prepare_failed` to the submit attempt status allowlist.
-- **Helpers remain unwired from runtime**: `run_submit_execution()` does not import or call any new helper. No `broker.place_order` path was added. No `resolve_execution_broker("live")` call was added.
+- **Broker submit boundary wired behind can_submit**: `run_submit_execution()` now reconstructs the Order, calls `mark_submit_requested()`, resolves the execution broker, re-checks the kill switch, and calls `place_order` — but only when `can_submit=true`. Production still blocks at `can_submit=false` before mutation or broker contact.
+- **place_order reachable only in tests**: The `place_order` path is reachable only under mocked `can_submit=true` + mocked execution broker in tests. No production live submit is enabled.
+- **Failure-safe local state writes**: If `mark_acknowledged`, `mark_submit_failed`, or `mark_submit_uncertain` raises after broker contact, the code returns a static sanitized report with `reconciliation_required`. No `place_order` retry occurs.
 - **No live submit enabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
 
 ### What's New in v0.5.6.dev5

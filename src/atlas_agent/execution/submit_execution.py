@@ -15,11 +15,16 @@ from atlas_agent.execution.approval import (
     InvalidApprovalIdError,
     InvalidPendingOrderError,
 )
+from atlas_agent.execution.order import Order
 from atlas_agent.execution.submit_state import (
     compute_client_order_id,
     is_submit_blocked_by_state,
     load_pending_order,
+    mark_acknowledged,
+    mark_submit_failed,
+    mark_submit_prepare_failed,
     mark_submit_requested,
+    mark_submit_uncertain,
 )
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.manager import RiskManager
@@ -102,6 +107,132 @@ def _check_kill_switch(config: Any) -> tuple[bool, str]:
     return True, ""
 
 
+def _reconstruct_order(order_dict: dict[str, Any]) -> Order:
+    """Reconstruct an Order from a pending payload order dict.
+
+    The pending payload stores created_at as an ISO string; parse it back
+    to a datetime before constructing the Order dataclass.
+    """
+    from copy import deepcopy
+
+    d = deepcopy(order_dict)
+    created_at_raw = d.get("created_at")
+    if isinstance(created_at_raw, str):
+        d["created_at"] = datetime.fromisoformat(created_at_raw)
+    return Order(**d)
+
+
+def _broker_error_code(exc: BrokerOperationError) -> str:
+    """Map BrokerOperationError static messages to safe internal error codes.
+
+    Exact matching only.
+    No substring routing.
+    Unknown messages become "unknown".
+    """
+    msg = str(exc)
+
+    if msg == "broker rejected order":
+        return "broker_rejected_order"
+    if msg == "broker unavailable":
+        return "broker_unavailable"
+    if msg == "broker transport request failed":
+        return "broker_transport_failed"
+    if msg == "malformed broker response":
+        return "malformed_broker_response"
+    if msg == "client_order_id mismatch":
+        return "client_order_id_mismatch"
+
+    return "unknown"
+
+
+def _broker_rejected_report(
+    order_id: str,
+    cid: str,
+    gates: dict[str, str],
+    risk_dict: dict[str, Any] | None,
+    sync_warnings: list[str],
+    warnings: list[str],
+) -> SubmitExecutionReport:
+    return SubmitExecutionReport(
+        ok=False,
+        status="blocked",
+        order_id=order_id,
+        gates={**gates, "broker_submit": "rejected"},
+        blocked_reason="broker_rejected_order",
+        message="Broker rejected order.",
+        client_order_id=cid,
+        risk=risk_dict,
+        sync={"status": "success", "warnings": sync_warnings},
+        warnings=warnings,
+    )
+
+
+def _reconciliation_required_report(
+    order_id: str,
+    cid: str,
+    gates: dict[str, str],
+    risk_dict: dict[str, Any] | None,
+    sync_warnings: list[str],
+    warnings: list[str],
+) -> SubmitExecutionReport:
+    return SubmitExecutionReport(
+        ok=False,
+        status="blocked",
+        order_id=order_id,
+        gates={**gates, "broker_submit": "uncertain"},
+        blocked_reason="reconciliation_required",
+        message="Broker response received, but local state update failed. Run --reconcile first.",
+        client_order_id=cid,
+        risk=risk_dict,
+        sync={"status": "success", "warnings": sync_warnings},
+        warnings=warnings,
+    )
+
+
+def _ack_local_write_failed_report(
+    order_id: str,
+    cid: str,
+    gates: dict[str, str],
+    risk_dict: dict[str, Any] | None,
+    sync_warnings: list[str],
+    warnings: list[str],
+) -> SubmitExecutionReport:
+    return SubmitExecutionReport(
+        ok=False,
+        status="blocked",
+        order_id=order_id,
+        gates={**gates, "broker_submit": "uncertain"},
+        blocked_reason="reconciliation_required",
+        message="Broker acknowledged order, but local state update failed. Run --reconcile first.",
+        client_order_id=cid,
+        risk=risk_dict,
+        sync={"status": "success", "warnings": sync_warnings},
+        warnings=warnings,
+    )
+
+
+def _uncertain_report(
+    order_id: str,
+    cid: str,
+    gates: dict[str, str],
+    risk_dict: dict[str, Any] | None,
+    sync_warnings: list[str],
+    warnings: list[str],
+) -> SubmitExecutionReport:
+    return SubmitExecutionReport(
+        ok=False,
+        status="blocked",
+        order_id=order_id,
+        gates={**gates, "broker_submit": "uncertain"},
+        blocked_reason="reconciliation_required",
+        message="Broker submission outcome is uncertain. Run --reconcile first.",
+        client_order_id=cid,
+        risk=risk_dict,
+        sync={"status": "success", "warnings": sync_warnings},
+        warnings=warnings,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Main execution skeleton
 # ---------------------------------------------------------------------------
@@ -111,12 +242,24 @@ def run_submit_execution(
     config: Any,
     approval_manager: ApprovalManager,
 ) -> SubmitExecutionReport:
-    """Execute the submit-approved-order skeleton up to the can_submit gate.
+    """Execute the submit-approved-order skeleton through the broker boundary.
 
     Performs all safety gates, fresh live sync, and risk revalidation.
-    Fails closed at can_submit=false without calling broker.place_order,
-    resolve_execution_broker, or OrderRouter.route.
-    Never mutates the pending file. Never persists client_order_id.
+
+    Production path (can_submit=false):
+      - Remains read-only and does not mutate pending files.
+      - Fails closed before broker.place_order, resolve_execution_broker,
+        or OrderRouter.route.
+
+    Mocked/test path (can_submit=true):
+      - May prepare submit_requested state and proceed through the broker
+        submit boundary (reconstruct Order, resolve execution broker,
+        place_order, map response).
+      - Reachable only when tests mock can_submit=True and mock
+        resolve_execution_broker to return a valid execution broker.
+
+    Production live submit remains disabled because BrokerResolver.can_submit
+    remains false for all live brokers.
     """
     gates: dict[str, str] = {}
     warnings: list[str] = []
@@ -208,6 +351,33 @@ def run_submit_execution(
             gates={**gates, "idempotency": "fail"},
             blocked_reason="reconciliation_required",
             message="Order is in submit_requested state. Run --reconcile first.",
+        )
+    if current_status == "acknowledged":
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "idempotency": "fail"},
+            blocked_reason="already_submitted",
+            message="Order has already been submitted.",
+        )
+    if current_status == "submit_prepare_failed":
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "idempotency": "fail"},
+            blocked_reason="submit_prepare_failed",
+            message="Order preparation failed. Review config and retry.",
+        )
+    if current_status == "failed":
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "idempotency": "fail"},
+            blocked_reason="submit_failed",
+            message="Order is in a terminal failed state.",
         )
     if current_status in ("cancelled", "rejected", "expired"):
         return SubmitExecutionReport(
@@ -438,25 +608,311 @@ def run_submit_execution(
 
     gates["can_submit"] = "pass"
 
-    # Batch 4.7: Atomically transition to submit_requested, then hard-block
-    # before broker submission. This validates the mutation boundary under
-    # mocked can_submit=True while keeping production (can_submit=False) unchanged.
-    mark_submit_requested(
-        path,
-        order_id=order_id,
-        client_order_id=cid,
-        actor="submit:cli",
-    )
+    # Reconstruct Order before any mutation.
+    try:
+        order = _reconstruct_order(payload["order"])
+    except Exception:
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "order_reconstruction": "fail"},
+            blocked_reason="invalid_pending_order",
+            message="Pending order file is invalid or corrupted.",
+            client_order_id=cid,
+            risk=risk_dict,
+            sync={"status": "success", "warnings": sync_warnings},
+            warnings=warnings,
+        )
 
-    return SubmitExecutionReport(
-        ok=False,
-        status="blocked",
-        order_id=order_id,
-        gates={**gates, "broker_submit": "not_implemented"},
-        blocked_reason="broker_submit_not_implemented",
-        message="Submit state prepared, but broker submission is not implemented in this release.",
-        client_order_id=cid,
-        risk=risk_dict,
-        sync={"status": "success", "warnings": sync_warnings},
-        warnings=warnings,
-    )
+    # Crash-recovery anchor.
+    try:
+        mark_submit_requested(
+            path,
+            order_id=order_id,
+            client_order_id=cid,
+            actor="submit:cli",
+        )
+    except Exception:
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "submit_state_mutation": "fail"},
+            blocked_reason="submit_state_mutation_failed",
+            message="Submit state could not be prepared.",
+            client_order_id=cid,
+            risk=risk_dict,
+            sync={"status": "success", "warnings": sync_warnings},
+            warnings=warnings,
+        )
+
+    resolution = resolver.resolve_execution_broker("live")
+    execution_broker = resolution.execution_broker
+
+    if execution_broker is None:
+        try:
+            mark_submit_prepare_failed(
+                path,
+                error_code="execution_broker_unavailable",
+                now=datetime.now(UTC),
+            )
+        except Exception:
+            pass
+
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "execution_broker": "unavailable"},
+            blocked_reason="execution_broker_unavailable",
+            message="Execution broker is not available.",
+            client_order_id=cid,
+            risk=risk_dict,
+            sync={"status": "success", "warnings": sync_warnings},
+            warnings=warnings,
+        )
+
+    if not callable(getattr(execution_broker, "place_order", None)):
+        try:
+            mark_submit_prepare_failed(
+                path,
+                error_code="execution_broker_invalid",
+                now=datetime.now(UTC),
+            )
+        except Exception:
+            pass
+
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "execution_broker": "invalid"},
+            blocked_reason="execution_broker_invalid",
+            message="Execution broker is not valid.",
+            client_order_id=cid,
+            risk=risk_dict,
+            sync={"status": "success", "warnings": sync_warnings},
+            warnings=warnings,
+        )
+
+    # Final kill switch check immediately before broker contact.
+    ks_ok, _ks_reason = _check_kill_switch(config)
+    if not ks_ok:
+        try:
+            mark_submit_prepare_failed(
+                path,
+                error_code="kill_switch_active",
+                now=datetime.now(UTC),
+            )
+        except Exception:
+            pass
+
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "kill_switch": "fail"},
+            blocked_reason="kill_switch_active",
+            message="Kill switch is active.",
+            client_order_id=cid,
+            risk=risk_dict,
+            sync={"status": "success", "warnings": sync_warnings},
+            warnings=warnings,
+        )
+
+    try:
+        result = execution_broker.place_order(order, client_order_id=cid)
+
+    except BrokerOperationError as exc:
+        code = _broker_error_code(exc)
+
+        if code == "broker_rejected_order":
+            try:
+                mark_submit_failed(
+                    path,
+                    error_code=code,
+                    now=datetime.now(UTC),
+                )
+                return _broker_rejected_report(
+                    order_id,
+                    cid,
+                    gates,
+                    risk_dict,
+                    sync_warnings,
+                    warnings,
+                )
+            except Exception:
+                try:
+                    mark_submit_uncertain(
+                        path,
+                        error_code="unknown",
+                        now=datetime.now(UTC),
+                    )
+                except Exception:
+                    pass
+
+                return _reconciliation_required_report(
+                    order_id,
+                    cid,
+                    gates,
+                    risk_dict,
+                    sync_warnings,
+                    warnings,
+                )
+
+        try:
+            mark_submit_uncertain(
+                path,
+                error_code=code,
+                now=datetime.now(UTC),
+            )
+            return _uncertain_report(
+                order_id,
+                cid,
+                gates,
+                risk_dict,
+                sync_warnings,
+                warnings,
+            )
+        except Exception:
+            pass
+
+        return _reconciliation_required_report(
+            order_id,
+            cid,
+            gates,
+            risk_dict,
+            sync_warnings,
+            warnings,
+        )
+
+    except Exception:
+        try:
+            mark_submit_uncertain(
+                path,
+                error_code="unknown",
+                now=datetime.now(UTC),
+            )
+            return _uncertain_report(
+                order_id,
+                cid,
+                gates,
+                risk_dict,
+                sync_warnings,
+                warnings,
+            )
+        except Exception:
+            pass
+
+        return _reconciliation_required_report(
+            order_id,
+            cid,
+            gates,
+            risk_dict,
+            sync_warnings,
+            warnings,
+        )
+
+    # Map normal result.
+    if result.accepted and result.order_id:
+        try:
+            mark_acknowledged(
+                path,
+                broker_order_id=result.order_id,
+                broker_status=result.status,
+                now=datetime.now(UTC),
+            )
+        except Exception:
+            try:
+                mark_submit_uncertain(
+                    path,
+                    error_code="unknown",
+                    now=datetime.now(UTC),
+                )
+            except Exception:
+                pass
+
+            return _ack_local_write_failed_report(
+                order_id,
+                cid,
+                gates,
+                risk_dict,
+                sync_warnings,
+                warnings,
+            )
+
+        return SubmitExecutionReport(
+            ok=True,
+            status="acknowledged",
+            order_id=order_id,
+            gates={**gates, "broker_submit": "acknowledged"},
+            blocked_reason=None,
+            message="Broker acknowledged order.",
+            client_order_id=cid,
+            risk=risk_dict,
+            sync={"status": "success", "warnings": sync_warnings},
+            warnings=warnings,
+        )
+
+    # accepted=True but missing broker_order_id — malformed broker response.
+    if result.accepted:
+        try:
+            mark_submit_uncertain(
+                path,
+                error_code="malformed_broker_response",
+                now=datetime.now(UTC),
+            )
+            return _uncertain_report(
+                order_id,
+                cid,
+                gates,
+                risk_dict,
+                sync_warnings,
+                warnings,
+            )
+        except Exception:
+            pass
+
+        return _reconciliation_required_report(
+            order_id,
+            cid,
+            gates,
+            risk_dict,
+            sync_warnings,
+            warnings,
+        )
+
+    # accepted=False.
+    try:
+        mark_submit_failed(
+            path,
+            error_code="broker_rejected_order",
+            now=datetime.now(UTC),
+        )
+        return _broker_rejected_report(
+            order_id,
+            cid,
+            gates,
+            risk_dict,
+            sync_warnings,
+            warnings,
+        )
+    except Exception:
+        try:
+            mark_submit_uncertain(
+                path,
+                error_code="unknown",
+                now=datetime.now(UTC),
+            )
+        except Exception:
+            pass
+
+        return _reconciliation_required_report(
+            order_id,
+            cid,
+            gates,
+            risk_dict,
+            sync_warnings,
+            warnings,
+        )

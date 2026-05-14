@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev7] - 2026-05-14
+
+### Added
+- **Batch 4.9 — Wire Broker Submit Boundary Behind Mocked can_submit=true**:
+  - `run_submit_execution()` now wires the full broker submission boundary after `can_submit=true`:
+    - Reconstructs `Order` from pending payload **before** `mark_submit_requested()` to prevent crash-recovery ambiguity.
+    - `mark_submit_requested()` is wrapped in try/except; failure returns `blocked_reason="submit_state_mutation_failed"` with no broker calls.
+    - `resolve_execution_broker("live")` → validates execution broker and `place_order` callable.
+    - Re-checks kill switch immediately before `place_order`.
+    - `broker.place_order(order, client_order_id=...)` called exactly once; never retried.
+    - Response mapping:
+      - `accepted=True` + valid `order_id` → `mark_acknowledged()` → `ok=True, status="acknowledged"`.
+      - `accepted=True` + missing `order_id` → `mark_submit_uncertain("malformed_broker_response")`.
+      - `accepted=False` → `mark_submit_failed("broker_rejected_order")` → `blocked_reason="broker_rejected_order"`.
+      - `BrokerOperationError("broker rejected order")` → `mark_submit_failed("broker_rejected_order")`.
+      - `BrokerOperationError` (timeout/transport/malformed/CID mismatch/unknown) → `mark_submit_uncertain()` → `blocked_reason="reconciliation_required"`.
+      - Unexpected exception → `mark_submit_uncertain("unknown")`.
+    - All post-broker local state mutations are failure-safe: if `mark_acknowledged`, `mark_submit_failed`, or `mark_submit_uncertain` raises, the code falls back to a static sanitized report with `blocked_reason="reconciliation_required"`. No retry of `place_order`.
+  - `_reconstruct_order()` — helper that parses `created_at` ISO string back to datetime before constructing `Order`.
+  - `_broker_error_code()` — maps `BrokerOperationError` static messages to safe internal error codes using **exact string matching only** (no substring routing).
+  - Report helpers: `_broker_rejected_report()`, `_reconciliation_required_report()`, `_ack_local_write_failed_report()`, `_uncertain_report()` — all return static safe messages.
+  - Idempotency gate expanded: `acknowledged` and `submit_prepare_failed` are now blocked before sync/risk.
+  - `mark_submit_prepare_failed()` allowlist restricted to pre-broker failures only: `execution_broker_unavailable`, `execution_broker_invalid`, `kill_switch_active`.
+  - Added `kill_switch_active` to `_SUBMIT_ATTEMPT_ERROR_CODES` and `_PREPARE_FAILED_ERROR_CODES`.
+
+### Security / Safety
+- Production remains completely blocked: `BrokerResolver.can_submit` is still `false` for live Alpaca.
+- `resolve_execution_broker("live")` still returns `None` in production.
+- `broker.place_order` is only reachable when tests mock `can_submit=True` AND mock `resolve_execution_broker` to return a valid execution broker.
+- All report messages are static strings. No `ks_reason` interpolation, no raw broker errors, no HTTP bodies/headers, no exception text, no path values, no order payload values.
+- No `enable_live_submit` config added.
+- No `resolver.py` production behavior changes.
+- Dry-run remains strictly read-only.
+- Paper mode untouched.
+
+### Tests
+- 38+ new unit tests in `test_submit_execution.py` covering: production safety barriers, mocked acceptance/rejection/uncertainty paths, resolver/kill-switch failure paths, local write failure fallbacks, exact-match broker error codes, missing order_id handling, idempotency gates, leak checks.
+- 3 new state tests in `test_submit_state.py` for `mark_submit_prepare_failed` allowlist behavior.
+- 6 new CLI tests in `test_cli.py` for production blocking, mocked acceptance/rejection/uncertainty text and JSON output, and leak verification.
+
 ## [0.5.6.dev6] - 2026-05-14
 
 ### Added
