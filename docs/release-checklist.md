@@ -104,13 +104,11 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 ## Broker Foundation 4.8 Release Assertions
 
 - `submit_state.py` contains unwired post-submit state mutation helpers: `mark_acknowledged()`, `mark_submit_failed()`, `mark_submit_uncertain()`, and `mark_submit_prepare_failed()`.
-- New helpers are **unwired** from runtime submit execution. `run_submit_execution()` does not import or call any new helper.
-- `submit_execution.py` is unchanged.
-- `cli.py` is unchanged.
-- `BrokerResolver` is unchanged.
+- `submit_execution.py` is unchanged from the Batch 4.8 perspective (helpers were unwired at that time).
+- `cli.py` is unchanged from the Batch 4.8 perspective.
+- `BrokerResolver` is unchanged from the Batch 4.8 perspective.
 - `can_submit` remains `false` for all live brokers.
 - `resolve_execution_broker("live")` remains `None` in production.
-- No `broker.place_order` path was added.
 - `--dry-run` behavior remains unchanged.
 - `--reconcile` behavior remains unchanged.
 - Paper mode remains unchanged.
@@ -119,17 +117,40 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - `broker_order_id` is validated as a safe non-empty string; secret-shaped values are rejected without leaking.
 - `broker_status` is validated against a safe allowlist.
 - Status transition reasons are static strings; no raw `broker_order_id` or broker error text is interpolated.
-- `mark_submit_prepare_failed()` restricts `error_code` to exactly `execution_broker_unavailable` or `execution_broker_invalid`.
+- `mark_submit_prepare_failed()` restricts `error_code` to exactly `execution_broker_unavailable`, `execution_broker_invalid`, or `kill_switch_active`.
 - All validation errors use static safe messages; no raw values leak in exception text.
+
+## Broker Foundation 4.9 Release Assertions
+
+- `can_submit` remains `false` for all live brokers (`BrokerResolver` live status never enables submit).
+- Production `can_submit=false` path blocks before mutation and before any broker contact.
+- Production `can_submit=false` path does not call `resolve_execution_broker("live")`.
+- Production `can_submit=false` path does not call `broker.place_order`.
+- Mocked/test `can_submit=true` path reconstructs the Order from the pending payload before `mark_submit_requested()`.
+- `mark_submit_requested()` must succeed before `resolve_execution_broker` or `place_order` is called.
+- Final kill-switch check happens immediately before `place_order`.
+- Exactly one `place_order` call per mocked submit attempt; no retry on failure or timeout.
+- Accepted broker result (`accepted=True` + valid `order_id`) → `mark_acknowledged()` → sets `submitted_at` and `broker_order_id`.
+- Rejected broker result (`accepted=False` or `BrokerOperationError("broker rejected order")`) → `mark_submit_failed()` → `submitted_at` remains `null`.
+- Uncertain broker outcomes (timeout, transport, malformed response, CID mismatch, unexpected exception) → `mark_submit_uncertain()` → `submitted_at` remains `null`.
+- Prepare failures (resolver returns None, invalid broker, kill switch active after `mark_submit_requested`) → `mark_submit_prepare_failed()` → `submitted_at` remains `null`.
+- Post-broker local write failure (e.g. `mark_acknowledged` raises) does not retry `place_order`; returns static sanitized report with `reconciliation_required`.
+- Report messages are static strings; no raw broker errors, HTTP bodies, headers, exception text, path values, or order payload values leak.
+- `failed` status is explicitly blocked at the idempotency gate before sync/risk/mutation.
+- Dry-run remains strictly read-only.
+- Reconcile remains read-only and never calls `place_order`.
+- Paper mode remains unchanged.
+- No production live submit is enabled.
+- No production-ready live trading claim exists in README or CHANGELOG.
 
 ## Broker Foundation 4.7 Release Assertions
 
 - Production `can_submit=false` path does not call `mark_submit_requested()`.
 - Production `can_submit=false` path does not mutate pending files.
 - Mocked `can_submit=true` path may write `submit_requested` state via `mark_submit_requested()`.
-- Mocked `can_submit=true` path immediately blocks with `blocked_reason="broker_submit_not_implemented"`.
-- Mocked `can_submit=true` path does not call `resolve_execution_broker("live")`.
-- Mocked `can_submit=true` path does not call `broker.place_order` / `AlpacaBroker.place_order`.
+- Mocked `can_submit=true` path immediately blocks with `blocked_reason="broker_submit_not_implemented"` (Batch 4.7 behavior; superseded by Batch 4.9).
+- Mocked `can_submit=true` path does not call `resolve_execution_broker("live")` (Batch 4.7 behavior; superseded by Batch 4.9).
+- Mocked `can_submit=true` path does not call `broker.place_order` / `AlpacaBroker.place_order` (Batch 4.7 behavior; superseded by Batch 4.9).
 - Mocked `can_submit=true` path does not call `OrderRouter.route`.
 - `submit_requested` rerun blocks with `reconciliation_required` at the idempotency gate.
 - `submit_requested` rerun does not append duplicate `submit_attempts`.
