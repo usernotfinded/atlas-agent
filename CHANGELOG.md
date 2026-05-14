@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev1] - 2026-05-14
+
+### Added
+- **Execution/Approval Bypass Guard Tests**: Regression tests prove `run_once --mode live` analysis-only path never reaches `_broker_for_mode`, `OrderRouter.route`, `ApprovalManager`, `resolve_execution_broker("live")`, or `broker.place_order`. No pending order files are created.
+- **Open Orders in Live Risk Evaluation**: Tests verify `RiskManager.evaluate_order` receives a `PortfolioSnapshot` containing synced `open_orders` (as `PendingOrder` list) so projected exposure includes pending baseline.
+
+### Fixed
+- `RiskManager.evaluate_order` audit writer compatibility in `run_once` live path: passes `audit_writer=None` to avoid `AuditLogger`/`AuditWriter` interface mismatch.
+
 ## [0.5.6.dev0] - 2026-05-14
 
 ### Added
