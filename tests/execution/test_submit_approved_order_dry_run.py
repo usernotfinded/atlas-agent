@@ -703,3 +703,32 @@ def test_dry_run_does_not_call_get_order_by_client_order_id(tmp_path: Path) -> N
 
     assert report.ok is True
     mock_get.assert_not_called()
+
+
+def test_dry_run_unchanged(tmp_path: Path) -> None:
+    """Confirm dry-run behavior is unchanged after Batch 4.6 helper additions."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="dry-run-unchanged")
+    payload = _valid_v2_payload(manager, order)
+    payload["approved"] = True
+    payload["status"] = "approved"
+    payload["approved_at"] = datetime.now(UTC).isoformat()
+    payload["approval_actor"] = "test"
+    path = manager.path_for(order.id)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    before = path.read_text(encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_dry_run.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_dry_run.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_dry_run.RiskManager") as mock_risk_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        report = run_submit_dry_run(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.blocked_reason is None
+    after = path.read_text(encoding="utf-8")
+    assert before == after

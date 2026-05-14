@@ -508,3 +508,33 @@ def test_reconcile_reuses_existing_client_order_id(tmp_path: Path) -> None:
 
     assert report.ok is True
     mock_adapter.get_order_by_client_order_id.assert_called_once_with(cid)
+
+
+def test_reconcile_unchanged(tmp_path: Path) -> None:
+    """Confirm reconcile behavior is unchanged after Batch 4.6 helper additions."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="reconcile-unchanged")
+    cid = "reconcile-unchanged-cid"
+    payload = _make_v2_payload(order, client_order_id=cid, status="submit_uncertain")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    before = path.read_text(encoding="utf-8")
+
+    broker_order = BrokerOrder(
+        order_id="broker-001",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    after = path.read_text(encoding="utf-8")
+    assert before != after  # reconcile is allowed to mutate
+    loaded = json.loads(after)
+    assert loaded["status"] == "duplicate_reconciled"

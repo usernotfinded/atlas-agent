@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,11 @@ from atlas_agent.execution.approval import (
     _compute_order_hash,
     _validate_v2_payload_integrity,
 )
+
+
+class SubmitStateError(Exception):
+    """Raised for invalid submit-state transitions or arguments."""
+
 
 
 # ---------------------------------------------------------------------------
@@ -199,4 +206,311 @@ def mark_duplicate_reconciled(
         "reason": f"broker_order_id={broker_order_id}",
     })
     _atomic_write_json(path, payload)
+    return path
+
+
+# ---------------------------------------------------------------------------
+# client_order_id validation
+# ---------------------------------------------------------------------------
+
+def _validate_client_order_id(client_order_id: str | None) -> None:
+    """Validate a client_order_id against Alpaca requirements.
+
+    Raises SubmitStateError on any failure. Never includes the raw value
+    in exception messages.
+    """
+    if not isinstance(client_order_id, str) or not client_order_id:
+        raise SubmitStateError("invalid client_order_id")
+    if len(client_order_id) > _MAX_CLIENT_ORDER_ID_LEN:
+        raise SubmitStateError("invalid client_order_id")
+    if not _CLIENT_ORDER_ID_SAFE_RE.fullmatch(client_order_id):
+        raise SubmitStateError("invalid client_order_id")
+
+
+# ---------------------------------------------------------------------------
+# Submit attempt helpers
+# ---------------------------------------------------------------------------
+
+_SUBMIT_ATTEMPT_ALLOWED_KEYS = frozenset({
+    "attempt_id",
+    "client_order_id",
+    "status",
+    "created_at",
+    "actor",
+    "risk_revalidated",
+    "sync_revalidated",
+    "broker_order_id",
+    "error_code",
+})
+
+_SUBMIT_ATTEMPT_REQUIRED_KEYS = frozenset({
+    "attempt_id",
+    "client_order_id",
+    "status",
+    "created_at",
+    "actor",
+})
+
+_SUBMIT_ATTEMPT_STATUSES = frozenset({
+    "prepared",
+    "submit_requested",
+    "acknowledged",
+    "failed",
+    "submit_uncertain",
+})
+
+_SUBMIT_ACTORS = frozenset({
+    "submit:cli",
+    "system",
+})
+
+_SUBMIT_ATTEMPT_ERROR_CODES = frozenset({
+    "broker_rejected_order",
+    "broker_unavailable",
+    "broker_transport_failed",
+    "malformed_broker_response",
+    "client_order_id_mismatch",
+    "order_not_found",
+    "unknown",
+})
+
+
+def _validate_iso_datetime(value: Any, field_name: str = "datetime") -> None:
+    """Validate that value is a valid ISO 8601 datetime string.
+
+    Raises SubmitStateError with a static message (no raw value leak).
+    """
+    if not isinstance(value, str) or not value.strip():
+        raise SubmitStateError(f"invalid {field_name}")
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        raise SubmitStateError(f"invalid {field_name}")
+
+
+def _validate_submit_attempt_id(attempt_id: Any) -> None:
+    if not isinstance(attempt_id, str):
+        raise SubmitStateError("invalid submit attempt")
+    try:
+        parsed = uuid.UUID(attempt_id, version=4)
+    except (AttributeError, TypeError, ValueError):
+        raise SubmitStateError("invalid submit attempt")
+    if parsed.version != 4 or str(parsed) != attempt_id:
+        raise SubmitStateError("invalid submit attempt")
+
+
+def _validate_submit_actor(actor: Any) -> None:
+    if actor not in _SUBMIT_ACTORS:
+        raise SubmitStateError("invalid submit attempt")
+
+
+def _validate_submit_error_code(error_code: Any) -> None:
+    if error_code is None:
+        return
+    if error_code not in _SUBMIT_ATTEMPT_ERROR_CODES:
+        raise SubmitStateError("invalid submit attempt")
+
+
+def append_submit_attempt(
+    payload: dict[str, Any],
+    attempt: dict[str, Any],
+) -> dict[str, Any]:
+    """Return a deep-copied payload with the attempt appended to submit_attempts.
+
+    Does not mutate the input payload. Enforces exact allowed keys and
+    validates all fields. Rejects unknown extra fields and raw/untrusted values.
+    """
+    if not isinstance(attempt, dict):
+        raise SubmitStateError("attempt must be a dict")
+
+    # Reject unknown extra fields
+    extra_keys = set(attempt.keys()) - _SUBMIT_ATTEMPT_ALLOWED_KEYS
+    if extra_keys:
+        raise SubmitStateError("invalid submit attempt")
+
+    # Reject missing required fields
+    missing = _SUBMIT_ATTEMPT_REQUIRED_KEYS - set(attempt.keys())
+    if missing:
+        raise SubmitStateError("attempt missing required fields")
+
+    # attempt_id: canonical UUID4 string
+    _validate_submit_attempt_id(attempt.get("attempt_id"))
+
+    # client_order_id: Alpaca-compatible
+    _validate_client_order_id(attempt.get("client_order_id"))
+
+    # status: allowed enum
+    _status = attempt.get("status")
+    if _status not in _SUBMIT_ATTEMPT_STATUSES:
+        raise SubmitStateError("invalid submit attempt status")
+
+    # created_at: ISO datetime
+    _validate_iso_datetime(attempt.get("created_at"), "created_at")
+
+    # actor: safe submit-state actor only
+    _validate_submit_actor(attempt.get("actor"))
+
+    # risk_revalidated: bool
+    _risk = attempt.get("risk_revalidated")
+    if not isinstance(_risk, bool):
+        raise SubmitStateError("invalid risk_revalidated")
+
+    # sync_revalidated: bool
+    _sync = attempt.get("sync_revalidated")
+    if not isinstance(_sync, bool):
+        raise SubmitStateError("invalid sync_revalidated")
+
+    # broker_order_id: None or non-empty string
+    _boid = attempt.get("broker_order_id")
+    if _boid is not None and (not isinstance(_boid, str) or not _boid):
+        raise SubmitStateError("invalid broker_order_id")
+
+    # error_code: None or explicit safe enum
+    _validate_submit_error_code(attempt.get("error_code"))
+
+    submit_attempts = payload.get("submit_attempts")
+    if not isinstance(submit_attempts, list):
+        raise SubmitStateError("submit_attempts must be a list")
+
+    new_payload = copy.deepcopy(payload)
+    new_payload["submit_attempts"] = list(new_payload["submit_attempts"])
+    new_payload["submit_attempts"].append(copy.deepcopy(attempt))
+    return new_payload
+
+
+# ---------------------------------------------------------------------------
+# Build submit-requested payload (pure function)
+# ---------------------------------------------------------------------------
+
+def build_submit_requested_payload(
+    payload: dict[str, Any],
+    *,
+    order_id: str,
+    client_order_id: str,
+    now: datetime,
+    actor: str = "submit:cli",
+    attempt_id: str | None = None,
+) -> dict[str, Any]:
+    """Return a deep-copied payload transitioned to submit_requested state.
+
+    Does not mutate the input payload. Validates all preconditions:
+      - payload status must be "approved"
+      - order_hash must match recomputed hash
+      - client_order_id must be Alpaca-compatible
+      - client_order_id must equal compute_client_order_id(order_id, order_hash)
+
+    Sets:
+      - status = "submit_requested"
+      - client_order_id = client_order_id
+      - submit_requested_at = now.isoformat()
+      - submitted_at remains unchanged
+      - appends status transition
+      - appends submit_attempt entry
+    """
+    if payload.get("status") != "approved":
+        raise SubmitStateError("payload status must be approved")
+
+    if not verify_order_hash(payload):
+        raise InvalidPendingOrderError("order hash mismatch")
+
+    _validate_client_order_id(client_order_id)
+    _validate_submit_actor(actor)
+
+    expected_cid = compute_client_order_id(order_id, payload["order_hash"])
+    if client_order_id != expected_cid:
+        raise SubmitStateError("client_order_id does not match deterministic computation")
+
+    existing_cid = payload.get("client_order_id")
+    if existing_cid is not None:
+        _validate_client_order_id(existing_cid)
+        if existing_cid != expected_cid:
+            raise SubmitStateError("client_order_id mismatch")
+        if existing_cid != client_order_id:
+            raise SubmitStateError("client_order_id mismatch")
+
+    new_payload = copy.deepcopy(payload)
+    new_payload["status"] = "submit_requested"
+    new_payload["client_order_id"] = client_order_id
+    new_payload["submit_requested_at"] = now.isoformat()
+    # submitted_at must remain unchanged / null in Batch 4.6
+
+    transition: dict[str, Any] = {
+        "status": "submit_requested",
+        "at": now.isoformat(),
+        "actor": actor,
+    }
+    new_payload["status_transitions"] = list(new_payload.get("status_transitions", []))
+    new_payload["status_transitions"].append(transition)
+
+    safe_attempt_id = attempt_id or str(uuid.uuid4())
+    attempt = {
+        "attempt_id": safe_attempt_id,
+        "client_order_id": client_order_id,
+        "status": "submit_requested",
+        "created_at": now.isoformat(),
+        "actor": actor,
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }
+    return append_submit_attempt(new_payload, attempt)
+
+
+# ---------------------------------------------------------------------------
+# Atomic submit-requested mutation
+# ---------------------------------------------------------------------------
+
+def mark_submit_requested(
+    path: Path,
+    *,
+    order_id: str,
+    client_order_id: str,
+    actor: str = "submit:cli",
+    now: datetime | None = None,
+    attempt_id: str | None = None,
+) -> Path:
+    """Atomically transition the pending order to submit_requested state.
+
+    Preconditions (fail-closed):
+      - File must exist and be valid v2 schema.
+      - status must be "approved".
+      - Hash must match.
+      - client_order_id must be valid and match deterministic computation.
+      - If payload already has a client_order_id, it must match the provided one.
+
+    Side effects:
+      - Sets payload["status"] = "submit_requested"
+      - Sets payload["client_order_id"] = client_order_id
+      - Sets payload["submit_requested_at"] = now.isoformat()
+      - Appends status_transition entry
+      - Appends submit_attempt entry with status="submit_requested"
+
+    Returns the path to the updated file.
+    """
+    payload = load_pending_order(path)
+
+    if payload.get("status") != "approved":
+        raise SubmitStateError("status must be approved")
+
+    expected_cid = compute_client_order_id(order_id, payload["order_hash"])
+    existing_cid = payload.get("client_order_id")
+    if existing_cid is not None and existing_cid != expected_cid:
+        raise SubmitStateError("stored client_order_id does not match deterministic computation")
+
+    if existing_cid is not None and existing_cid != client_order_id:
+        raise SubmitStateError("provided client_order_id does not match stored value")
+
+    if now is None:
+        now = datetime.now(UTC)
+
+    new_payload = build_submit_requested_payload(
+        payload,
+        order_id=order_id,
+        client_order_id=client_order_id,
+        now=now,
+        actor=actor,
+        attempt_id=attempt_id,
+    )
+    _atomic_write_json(path, new_payload)
     return path

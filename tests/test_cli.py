@@ -1473,6 +1473,82 @@ def test_submit_without_dry_run_or_reconcile_still_blocked(tmp_path, monkeypatch
     assert "pending_order_not_found" in captured.out
 
 
+def test_cli_submit_approved_order_still_blocks_at_can_submit_false(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.order import Order
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+    path = manager.path_for(order.id)
+    before = path.read_text(encoding="utf-8")
+
+    mock_status = MagicMock()
+    mock_status.can_sync = True
+    mock_status.can_submit = False
+    mock_status.broker_id = "alpaca"
+
+    mock_resolution = MagicMock()
+    mock_resolution.sync_provider = MagicMock()
+
+    mock_sync_result = MagicMock()
+    mock_sync_result.status = "success"
+    mock_sync_result.account = MagicMock()
+    mock_sync_result.positions = []
+    mock_sync_result.open_orders = []
+    mock_sync_result.balances = []
+    mock_sync_result.errors = []
+    mock_sync_result.diagnostics = {"broker_errors": []}
+
+    mock_sync_service = MagicMock()
+    mock_sync_service.sync.return_value = mock_sync_result
+    from atlas_agent.risk.models import PortfolioSnapshot
+    mock_sync_service.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+        cash=10000, equity=10000, total_exposure=0
+    )
+
+    mock_risk_decision = MagicMock()
+    mock_risk_decision.allowed = True
+    mock_risk_decision.status = "allowed"
+    mock_risk_decision.reason = "All risk checks passed"
+    mock_risk_decision.violations = []
+    mock_risk_decision.classification = "opens_new_position"
+
+    mock_risk_manager = MagicMock()
+    mock_risk_manager.evaluate_order.return_value = mock_risk_decision
+
+    mock_ks = MagicMock()
+    mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value.resolve_status.return_value = mock_status
+        mock_resolver_cls.return_value.resolve_sync_provider.return_value = mock_resolution
+        mock_sync_cls.return_value = mock_sync_service
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = mock_risk_manager
+        mock_ks_cls.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "can_submit_false" in captured.out or "submit remains disabled" in captured.out.lower()
+    after = path.read_text(encoding="utf-8")
+    assert before == after
+
+
 # ---------------------------------------------------------------------------
 # Batch 4.4.1 CLI reconcile coverage
 # ---------------------------------------------------------------------------

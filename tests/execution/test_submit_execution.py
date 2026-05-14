@@ -717,3 +717,92 @@ def test_skeleton_no_private_values_leak(tmp_path: Path) -> None:
     assert "TEST" not in report.message
     assert "buy" not in report.message
     assert "100.0" not in report.message
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.6: confirm helpers remain unwired
+# ---------------------------------------------------------------------------
+
+def test_submit_execution_still_does_not_mutate_file_while_can_submit_false(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-mutate-46")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    before = path.read_text(encoding="utf-8")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "can_submit_false"
+    after = path.read_text(encoding="utf-8")
+    assert before == after
+
+
+def test_submit_execution_still_does_not_call_mark_submit_requested(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-mark-46")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.execution.submit_state.mark_submit_requested", side_effect=AssertionError("mark_submit_requested must not be called")) as mock_mark:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    mock_mark.assert_not_called()
+
+
+def test_submit_execution_still_does_not_call_place_order(tmp_path: Path) -> None:
+    from atlas_agent.brokers.alpaca import AlpacaBroker
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="no-place-46")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch.object(AlpacaBroker, "place_order", side_effect=AssertionError("place_order must not be called")) as mock_place:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    mock_place.assert_not_called()
