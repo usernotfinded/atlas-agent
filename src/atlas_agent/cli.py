@@ -3372,12 +3372,20 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Heartbeat recorded: {path}")
         return 0
     if args.command == "approve-order":
-        from atlas_agent.execution.approval import InvalidApprovalIdError
+        import json
+
+        from atlas_agent.execution.approval import InvalidApprovalIdError, InvalidPendingOrderError
 
         try:
             path = ApprovalManager(config.pending_orders_dir).approve(args.order_id)
-        except InvalidApprovalIdError as exc:
-            print(str(exc))
+        except InvalidApprovalIdError:
+            print("Invalid pending order id.")
+            return 2
+        except (InvalidPendingOrderError, json.JSONDecodeError):
+            print("Pending order file is invalid or corrupted.")
+            return 2
+        except FileNotFoundError:
+            print("Pending order not found.")
             return 2
         print(f"Approved pending order: {path}")
         return 0

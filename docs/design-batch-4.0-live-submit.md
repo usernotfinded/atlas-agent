@@ -572,7 +572,7 @@ def _pre_submit_risk_revalidation(order, snapshot, config):
 - [ ] No broker credentials in config.toml.
 - [ ] No private values in CLI, JSON, audit, events, diagnostics, or logs.
 - [ ] No raw broker exceptions in user-facing output.
-- [ ] No production-grade live trading claims in docs.
+- [ ] No claims of production-ready live trading maturity in docs.
 - [ ] Paper mode must remain completely unchanged.
 
 ---
