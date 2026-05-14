@@ -59,9 +59,20 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.6.dev4)
+## Current Status (v0.5.6.dev5)
 
 Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
+
+### What's New in v0.5.6.dev5
+- **Pre-submit mutation wiring behind hard-disabled gate (Batch 4.7)**: `run_submit_execution()` now calls `mark_submit_requested()` **only after** `can_submit=true`, then immediately blocks with `broker_submit_not_implemented` before any broker submission.
+- **Mocked `can_submit=true` path prepares `submit_requested` state**: When all safety gates pass under a mocked/test `can_submit=true` resolver, the pending file is atomically mutated to `status="submit_requested"` with `client_order_id`, `submit_requested_at`, a status transition, and a `submit_attempts` entry. `submitted_at` and `broker_order_id` remain `null`.
+- **Production `can_submit=false` path still performs zero mutation**: Alpaca live broker continues to return `can_submit=false`, so production behavior is identical to Batch 4.6 — all gates run, then block with `can_submit_false` and no file mutation.
+- **`broker_submit_not_implemented` hard block**: After `mark_submit_requested()` succeeds, `run_submit_execution()` returns `blocked_reason="broker_submit_not_implemented"` with the message *"Submit state prepared, but broker submission is not implemented in this release."*
+- **No `broker.place_order` call**: Even in the mocked `can_submit=true` path, `place_order` is never called. `resolve_execution_broker("live")` is never called. `OrderRouter.route` is never called.
+- **`submit_requested` rerun protection**: If a pending file is already in `submit_requested` state, `run_submit_execution()` blocks at the idempotency gate with `reconciliation_required` before sync/risk/mutation. No duplicate `submit_attempts` are appended.
+- **Reconcile supports `submit_requested`**: `run_reconcile()` now accepts `submit_requested` as a valid reconcile status. Broker found → `duplicate_reconciled`; broker not found → `reconciliation_required`.
+- **Dry-run blocks `submit_requested`**: `run_submit_dry_run()` treats `submit_requested` like `submit_uncertain` and `reconciliation_required`, blocking with no file mutation.
+- **No live submit enabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
 
 ### What's New in v0.5.6.dev4
 - **Submit state mutation boundary helpers (Batch 4.6)**: `build_submit_requested_payload()`, `mark_submit_requested()`, and `append_submit_attempt()` in `submit_state.py` provide tested, atomic, recoverable state-transition primitives for the boundary immediately before broker submission.

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev5] - 2026-05-14
+
+### Added
+- **Batch 4.7 — Pre-Submit Mutation Wiring Behind Hard-Disabled Gate**:
+  - `run_submit_execution()` wires `mark_submit_requested()` into the execution skeleton **only after** the `can_submit=true` gate, then immediately hard-blocks with `broker_submit_not_implemented` before any broker submission.
+  - `submit_requested` idempotency gate: reruns on `submit_requested` status block at the idempotency check with `reconciliation_required`, preventing duplicate `submit_attempts` and repeated sync/risk work.
+  - Mocked/test `can_submit=true` path atomically writes `submit_requested` state (`status`, `client_order_id`, `submit_requested_at`, status transition, submit attempt) then returns `blocked_reason="broker_submit_not_implemented"`.
+  - Production `can_submit=false` path is unchanged: all gates run, then block with `can_submit_false` and zero file mutation.
+  - `submit_reconcile.py` accepts `submit_requested` as a valid reconcile status. Broker found → `duplicate_reconciled`; broker not found → `reconciliation_required`.
+  - `submit_dry_run.py` blocks on `submit_requested` like `submit_uncertain`/`reconciliation_required`, remaining strictly read-only.
+
+### Security / Safety
+- `BrokerResolver.can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None`.
+- `broker.place_order` is never called, even in mocked `can_submit=true` tests.
+- `OrderRouter.route` is never called from submit execution.
+- `submitted_at` and `broker_order_id` remain `null` in Batch 4.7.
+- No live submit enablement.
+- Dry-run and reconcile behavior remain unchanged for existing statuses.
+
 ## [0.5.6.dev4] - 2026-05-14
 
 ### Added

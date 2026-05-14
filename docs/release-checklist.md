@@ -100,3 +100,20 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - No live submit enablement.
 - `--dry-run` and `--reconcile` behavior remain unchanged.
 - Paper mode remains unchanged.
+
+## Broker Foundation 4.7 Release Assertions
+
+- Production `can_submit=false` path does not call `mark_submit_requested()`.
+- Production `can_submit=false` path does not mutate pending files.
+- Mocked `can_submit=true` path may write `submit_requested` state via `mark_submit_requested()`.
+- Mocked `can_submit=true` path immediately blocks with `blocked_reason="broker_submit_not_implemented"`.
+- Mocked `can_submit=true` path does not call `resolve_execution_broker("live")`.
+- Mocked `can_submit=true` path does not call `broker.place_order` / `AlpacaBroker.place_order`.
+- Mocked `can_submit=true` path does not call `OrderRouter.route`.
+- `submit_requested` rerun blocks with `reconciliation_required` at the idempotency gate.
+- `submit_requested` rerun does not append duplicate `submit_attempts`.
+- Reconcile supports `submit_requested` status (found → `duplicate_reconciled`; not found → `reconciliation_required`).
+- Dry-run remains read-only and blocks on `submit_requested`.
+- `submitted_at` remains `null` after Batch 4.7.
+- `broker_order_id` remains `null` after Batch 4.7.
+- No production-ready live trading claim exists in README or CHANGELOG.
