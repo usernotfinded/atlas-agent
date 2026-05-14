@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7.dev0] - 2026-05-14
+
+### Added
+- **Batch 5.0 — Production Live-Submit Opt-In Layer**:
+  - `broker.enable_live_submit: bool = False` — separate opt-in flag for actual order placement, independent from `broker.enable_live_trading` (which controls sync/read-only).
+  - `BrokerResolver._resolve_can_submit()` — multi-factor opt-in gate. `can_submit` becomes `true` ONLY when ALL conditions are satisfied:
+    1. `broker.enable_live_submit=true`
+    2. `broker.enable_live_trading=true`
+    3. Kill switch is normal (not soft_pause/cancel_all/flatten_all/locked_down)
+    4. `trading_mode == "live"`
+    5. `order_approval_mode != "disabled_live"`
+    6. `allow_leverage == false`
+    7. Live broker credentials are configured
+    8. Valid opt-in audit record exists (`audit/live_submit_opt_in.jsonl`)
+  - Deterministic opt-in record validation (`_live_submit_opt_in_status`):
+    - Parses `audit/live_submit_opt_in.jsonl` for `event_type="live_submit_opt_in_enabled"`
+    - Validates `broker_id` match, `config_fingerprint` match (SHA-256 of provider + limits), parseable `created_at`, no subsequent `opt_out`, and 24-hour expiry.
+  - `resolve_execution_broker("live")` now returns a real `AlpacaBroker` **only** when `status.can_submit` is `true`. When `can_submit` is `false`, it returns `execution_broker=None` and never instantiates `AlpacaBroker`.
+  - Live-submit hard limits in `run_submit_execution()` (gate 16, evaluated **before** `mark_submit_requested()`):
+    - `risk.live_submit_max_order_notional` — notional cap (falls back to `risk.max_order_notional`)
+    - `risk.live_submit_allowed_symbols` — symbol allowlist (falls back to `risk.symbol_allowlist`)
+    - `risk.live_submit_allowed_sides` — side restriction (e.g. `{"buy"}`)
+    - If any limit fails, the pending file remains completely unchanged. No `mark_submit_requested()`, no `resolve_execution_broker()`, no `place_order()`.
+  - New audit event types registered: `live_submit_opt_in_enabled`, `live_submit_opt_in_disabled`, `live_submit_opt_in_config_changed`, `live_submit_blocked`, `live_submit_attempted`.
+    - `live_submit_opt_in_enabled` and `live_submit_opt_in_disabled` are emitted by the opt-in / opt-out CLI commands.
+    - `live_submit_blocked` and `live_submit_attempted` are registered event types only in Batch 5.0; runtime emission from `run_submit_execution()` is deferred to a future audit-hardening batch.
+  - New CLI commands:
+    - `atlas broker opt-in` — requires typed confirmation, writes opt-in record to `audit/live_submit_opt_in.jsonl` and audit log.
+    - `atlas broker opt-out` — writes opt-out record to invalidate prior opt-in.
+  - Config schema additions:
+    - `BrokerConfig.enable_live_submit: bool = False`
+    - `RiskConfig.live_submit_max_order_notional: float = 0.0`
+    - `RiskConfig.live_submit_allowed_symbols: Optional[Set[str]] = None`
+    - `RiskConfig.live_submit_allowed_sides: Optional[Set[str]] = None`
+    - Legacy field mappings for all new keys.
+    - Compatibility properties on `AtlasConfig`.
+  - Updated `configs/brokers.example.yaml` and `configs/risk.example.yaml` with new fields.
+
+### Security / Safety
+- Default behavior is identical to Batch 4.9: `can_submit=false`, no mutation, no broker contact.
+- No production live submit enabled by default. Explicit multi-factor opt-in required.
+- Only `run_submit_execution()` is permitted to call `resolve_execution_broker("live")` for live submissions.
+- Kill switch still blocks live submit when active.
+- No profit claims or zero-risk language added.
+- Paper mode untouched.
+
+### Tests
+- 12 new resolver tests covering all can_submit conditions and opt-in record validation.
+- 8 new submit execution tests for live-submit hard limits (notional, symbol, side), zero-mutation guarantees, and skipped-evaluation when `can_submit=false`.
+- 8 new config schema tests for new fields, defaults, legacy mapping, and isolation.
+- 7 new CLI tests for opt-in/opt-out commands (prerequisite checks, record writing, confirmation prompts).
+
 ## [0.5.6.dev7] - 2026-05-14
 
 ### Added

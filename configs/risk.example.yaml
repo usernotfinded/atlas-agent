@@ -11,4 +11,8 @@ risk:
   enforce_market_hours: false
   symbol_allowlist: []
   symbol_blocklist: []
+  # Live-submit defense-in-depth limits
+  live_submit_max_order_notional: 0    # 0 = use max_order_notional
+  live_submit_allowed_symbols: []      # empty = use symbol_allowlist
+  live_submit_allowed_sides: []        # empty = all sides
 

@@ -76,6 +76,7 @@ class ProviderConfig(BaseModel):
 class BrokerConfig(BaseModel):
     provider: str = "none"
     enable_live_trading: bool = False
+    enable_live_submit: bool = False   # NEW: separate opt-in for actual order placement
     paper_broker_default: str = "paper"
     # Note: credential keys are stored here as names of env vars, not values
 
@@ -92,6 +93,10 @@ class RiskConfig(BaseModel):
     enforce_market_hours: bool = False
     symbol_allowlist: Optional[Set[str]] = None
     symbol_blocklist: Optional[Set[str]] = None
+    # NEW: live-submit-specific hard limits (defense-in-depth)
+    live_submit_max_order_notional: float = 0.0  # 0 means use max_order_notional
+    live_submit_allowed_symbols: Optional[Set[str]] = None  # None means use symbol_allowlist
+    live_submit_allowed_sides: Optional[Set[str]] = None    # e.g. {"buy"}, None means all
 
 
 class SafetyConfig(BaseModel):
@@ -175,6 +180,7 @@ class AtlasConfig(BaseModel):
 
         mapping = {
             "enable_live_trading": "broker.enable_live_trading",
+            "enable_live_submit": "broker.enable_live_submit",
             "live_broker": "broker.provider",
             "order_approval_mode": "safety.order_approval_mode",
             "require_order_approval": "safety.require_order_approval",
@@ -190,6 +196,9 @@ class AtlasConfig(BaseModel):
             "enforce_market_hours": "risk.enforce_market_hours",
             "symbol_allowlist": "risk.symbol_allowlist",
             "symbol_blocklist": "risk.symbol_blocklist",
+            "live_submit_max_order_notional": "risk.live_submit_max_order_notional",
+            "live_submit_allowed_symbols": "risk.live_submit_allowed_symbols",
+            "live_submit_allowed_sides": "risk.live_submit_allowed_sides",
             "starting_cash": "backtest.initial_cash",
             "default_symbol": "backtest.default_symbol",
             "data_path": "backtest.data_path",
@@ -216,6 +225,10 @@ class AtlasConfig(BaseModel):
     def enable_live_trading(self) -> bool:
         return self.broker.enable_live_trading
     
+    @property
+    def enable_live_submit(self) -> bool:
+        return self.broker.enable_live_submit
+
     @property
     def live_broker(self) -> str:
         return self.broker.provider
@@ -276,6 +289,18 @@ class AtlasConfig(BaseModel):
     def symbol_blocklist(self) -> Optional[Set[str]]:
         return self.risk.symbol_blocklist
     
+    @property
+    def live_submit_max_order_notional(self) -> float:
+        return self.risk.live_submit_max_order_notional
+
+    @property
+    def live_submit_allowed_symbols(self) -> Optional[Set[str]]:
+        return self.risk.live_submit_allowed_symbols
+
+    @property
+    def live_submit_allowed_sides(self) -> Optional[Set[str]]:
+        return self.risk.live_submit_allowed_sides
+
     @property
     def starting_cash(self) -> float:
         return self.backtest.initial_cash

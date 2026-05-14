@@ -143,6 +143,25 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - No production live submit is enabled.
 - No production-ready live trading claim exists in README or CHANGELOG.
 
+## Broker Foundation 5.0 Release Assertions
+
+- `broker.enable_live_submit` defaults to `False` and is independent from `broker.enable_live_trading`.
+- With default settings (`enable_live_submit=false`), behavior is identical to Batch 4.9: `can_submit=false`, no mutation, no broker contact.
+- `can_submit` becomes `true` only when ALL required conditions are satisfied: `enable_live_submit=true`, `enable_live_trading=true`, kill switch normal, `trading_mode=live`, approval not disabled, leverage off, credentials present, valid opt-in audit record.
+- `resolve_execution_broker("live")` returns a real `AlpacaBroker` **only** when `status.can_submit` is `true`.
+- `resolve_execution_broker("live")` returns `execution_broker=None` when `can_submit` is `false`, and never instantiates `AlpacaBroker`.
+- Live-submit hard limits (`live_submit_max_order_notional`, `live_submit_allowed_symbols`, `live_submit_allowed_sides`) are evaluated **before** `mark_submit_requested()`.
+- If any live-submit hard limit fails, the pending file remains completely unchanged. No `mark_submit_requested()`, no `resolve_execution_broker()`, no `place_order()`.
+- When `can_submit=false`, live-submit hard limits are skipped entirely; the function blocks at `can_submit=false` with zero mutation.
+- Only `run_submit_execution()` is permitted to call `resolve_execution_broker("live")` for live submissions.
+- Opt-in record is stored in `audit/live_submit_opt_in.jsonl` with deterministic validation: event type match, broker ID match, config fingerprint match, parseable timestamp, no subsequent opt-out, and 24-hour expiry.
+- `atlas broker opt-in` requires typed confirmation, valid prerequisites, and writes the opt-in record.
+- `atlas broker opt-out` writes an opt-out record that invalidates prior opt-ins.
+- Dry-run remains strictly read-only.
+- Reconcile remains read-only and never calls `place_order`.
+- Paper mode remains unchanged.
+- No profit claims, zero-risk language, or live-readiness overstatements exist in README or CHANGELOG.
+
 ## Broker Foundation 4.7 Release Assertions
 
 - Production `can_submit=false` path does not call `mark_submit_requested()`.

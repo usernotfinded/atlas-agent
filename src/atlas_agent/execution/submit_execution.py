@@ -246,20 +246,23 @@ def run_submit_execution(
 
     Performs all safety gates, fresh live sync, and risk revalidation.
 
-    Production path (can_submit=false):
+    Production path (can_submit=false, default):
       - Remains read-only and does not mutate pending files.
       - Fails closed before broker.place_order, resolve_execution_broker,
         or OrderRouter.route.
 
-    Mocked/test path (can_submit=true):
+    Opt-in live path (can_submit=true):
+      - Requires broker.enable_live_submit=true plus all multi-factor opt-in
+        conditions (kill switch normal, trading_mode=live, live trading enabled,
+        approval not disabled, leverage off, credentials present, valid opt-in
+        audit record, live-submit hard limits satisfied).
       - May prepare submit_requested state and proceed through the broker
         submit boundary (reconstruct Order, resolve execution broker,
         place_order, map response).
-      - Reachable only when tests mock can_submit=True and mock
-        resolve_execution_broker to return a valid execution broker.
+      - Only reachable after explicit CLI opt-in with typed confirmation.
 
-    Production live submit remains disabled because BrokerResolver.can_submit
-    remains false for all live brokers.
+    This is the ONLY function permitted to call resolve_execution_broker("live")
+    for live submissions. No other CLI or runtime path may do so.
     """
     gates: dict[str, str] = {}
     warnings: list[str] = []
@@ -591,7 +594,66 @@ def run_submit_execution(
 
     gates["risk_revalidation"] = "pass"
 
-    # 16. Check can_submit
+    # 16. Live-submit hard limits revalidation (defense-in-depth)
+    # Only evaluated when broker_status.can_submit is true.
+    # If any limit fails, the pending file MUST remain unchanged.
+    if broker_status.can_submit:
+        live_submit_max = (
+            config.risk.live_submit_max_order_notional
+            or config.risk.max_order_notional
+        )
+        if risk_input.notional > live_submit_max:
+            return SubmitExecutionReport(
+                ok=False,
+                status="blocked",
+                order_id=order_id,
+                gates={**gates, "live_submit_limits": "fail"},
+                blocked_reason="live_submit_max_notional_exceeded",
+                message="Order notional exceeds live submit hard limit.",
+                client_order_id=cid,
+                risk=risk_dict,
+                sync={"status": "success", "warnings": sync_warnings},
+                warnings=warnings,
+            )
+
+        live_submit_symbols = (
+            config.risk.live_submit_allowed_symbols
+            or config.risk.symbol_allowlist
+        )
+        if live_submit_symbols is not None:
+            normalized_symbols = {str(s).upper() for s in live_submit_symbols}
+            if risk_input.symbol.upper() not in normalized_symbols:
+                return SubmitExecutionReport(
+                    ok=False,
+                    status="blocked",
+                    order_id=order_id,
+                    gates={**gates, "live_submit_limits": "fail"},
+                    blocked_reason="live_submit_symbol_not_allowed",
+                    message="Symbol is not in the live submit allowlist.",
+                    client_order_id=cid,
+                    risk=risk_dict,
+                    sync={"status": "success", "warnings": sync_warnings},
+                    warnings=warnings,
+                )
+
+        live_submit_sides = config.risk.live_submit_allowed_sides
+        if live_submit_sides is not None and risk_input.side.lower() not in {s.lower() for s in live_submit_sides}:
+            return SubmitExecutionReport(
+                ok=False,
+                status="blocked",
+                order_id=order_id,
+                gates={**gates, "live_submit_limits": "fail"},
+                blocked_reason="live_submit_side_not_allowed",
+                message="Order side is not allowed for live submit.",
+                client_order_id=cid,
+                risk=risk_dict,
+                sync={"status": "success", "warnings": sync_warnings},
+                warnings=warnings,
+            )
+
+        gates["live_submit_limits"] = "pass"
+
+    # 17. Check can_submit
     if not broker_status.can_submit:
         return SubmitExecutionReport(
             ok=False,

@@ -16,3 +16,8 @@ brokers:
   ibkr:
     enabled: false
     status: stub_only
+
+# Live-submit opt-in (global broker-level)
+broker:
+  enable_live_trading: false
+  enable_live_submit: false   # NEW: separate opt-in for actual order placement

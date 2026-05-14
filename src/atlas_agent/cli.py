@@ -11,6 +11,7 @@ import sys
 import urllib.request
 import warnings
 from dataclasses import asdict, replace
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -223,6 +224,9 @@ Safety First:
     brokers_sync = brokers_sub.add_parser("sync")
     brokers_sync.add_argument("--mode", choices=("paper", "live"), default="paper")
     brokers_sync.add_argument("--json", action="store_true")
+    brokers_opt_in = brokers_sub.add_parser("opt-in")
+    brokers_opt_in.add_argument("--yes", action="store_true", help=argparse.SUPPRESS)
+    brokers_opt_out = brokers_sub.add_parser("opt-out")
 
     backtest = subparsers.add_parser("backtest")
     backtest_sub = backtest.add_subparsers(dest="backtest_command")
@@ -1563,6 +1567,125 @@ def _run_guided_setup(*, args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_broker_opt_in(args: argparse.Namespace, config: AtlasConfig) -> int:
+    """Handle `atlas broker opt-in live-submit`."""
+    from atlas_agent.brokers.resolver import _compute_live_submit_fingerprint
+
+    # --yes is not allowed for live submit opt-in; typed confirmation is mandatory.
+    if getattr(args, "yes", False):
+        print("ERROR: Typed broker-name confirmation is required for live submit opt-in.")
+        return 2
+
+    # Prerequisites
+    if not config.broker.enable_live_submit:
+        print("ERROR: broker.enable_live_submit must be true in config.")
+        return 2
+    if not config.broker.enable_live_trading:
+        print("ERROR: broker.enable_live_trading must be true.")
+        return 2
+    if config.trading_mode != "live":
+        print(f"ERROR: trading_mode must be 'live' (currently '{config.trading_mode}').")
+        return 2
+
+    # Kill switch check
+    from atlas_agent.safety.kill_switch import KillSwitchController
+    try:
+        ks = KillSwitchController(
+            state_path=Path(config.memory_dir) / "kill_switch_state.json",
+            enabled_flag_path=Path(config.memory_dir) / "kill_switch.enabled",
+        )
+        ks_status = ks.status()
+        if ks_status.enabled and ks_status.mode != "normal":
+            print(f"ERROR: Kill switch is active (mode={ks_status.mode}).")
+            return 2
+    except Exception as exc:
+        print(f"ERROR: Kill switch state unreadable: {exc}")
+        return 2
+
+    broker_id = config.broker.provider
+    if broker_id in {"", "none"}:
+        print("ERROR: No live broker configured.")
+        return 2
+
+    # Confirmation prompt
+    if not getattr(args, "yes", False):
+        print(f"WARNING: You are about to enable live order submission for broker '{broker_id}'.")
+        print("This allows the agent to place real orders with real money.")
+        print("Type the broker name exactly to confirm, or press Ctrl-C to abort.")
+        try:
+            confirmation = input(f"Confirm [{broker_id}]: ")
+        except (KeyboardInterrupt, EOFError):
+            print("\nAborted.")
+            return 1
+        if confirmation.strip() != broker_id:
+            print("ERROR: Confirmation did not match. Aborted.")
+            return 2
+
+    # Write opt-in record
+    opt_in_path = Path(config.audit_dir) / "live_submit_opt_in.jsonl"
+    opt_in_path.parent.mkdir(parents=True, exist_ok=True)
+    fingerprint = _compute_live_submit_fingerprint(config)
+    record = {
+        "event_type": "live_submit_opt_in_enabled",
+        "opt_in": True,
+        "broker_id": broker_id,
+        "config_fingerprint": fingerprint,
+        "created_at": datetime.now(UTC).isoformat(),
+        "expiry_hours": 24,
+    }
+    with open(opt_in_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record) + "\n")
+
+    # Write to audit log
+    try:
+        from atlas_agent.audit import AuditWriter
+        audit_writer = AuditWriter(config.audit_dir / "audit.log")
+        audit_writer.write_event(
+            "live_submit_opt_in_enabled",
+            run_id="cli-opt-in",
+            payload={
+                "broker_id": broker_id,
+                "config_fingerprint": fingerprint,
+                "opt_in_path": str(opt_in_path),
+            },
+        )
+    except Exception:
+        pass  # Best-effort audit logging
+
+    print(f"Live submit opt-in recorded for broker '{broker_id}'.")
+    print(f"Config fingerprint: {fingerprint}")
+    print("The opt-in expires in 24 hours.")
+    return 0
+
+
+def _cmd_broker_opt_out(args: argparse.Namespace, config: AtlasConfig) -> int:
+    """Handle `atlas broker opt-out live-submit`."""
+    opt_in_path = Path(config.audit_dir) / "live_submit_opt_in.jsonl"
+    opt_in_path.parent.mkdir(parents=True, exist_ok=True)
+    record = {
+        "event_type": "live_submit_opt_in_disabled",
+        "opt_in": False,
+        "broker_id": config.broker.provider,
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+    with open(opt_in_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record) + "\n")
+
+    try:
+        from atlas_agent.audit import AuditWriter
+        audit_writer = AuditWriter(config.audit_dir / "audit.log")
+        audit_writer.write_event(
+            "live_submit_opt_in_disabled",
+            run_id="cli-opt-out",
+            payload={"broker_id": config.broker.provider},
+        )
+    except Exception:
+        pass
+
+    print(f"Live submit opt-out recorded for broker '{config.broker.provider}'.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     try:
@@ -2602,6 +2725,10 @@ def main(argv: list[str] | None = None) -> int:
             for err in result.errors:
                 print(f"    - {err}")
         return 0 if result.status == "success" else 2
+    if args.command == "broker" and args.brokers_command == "opt-in":
+        return _cmd_broker_opt_in(args, config)
+    if args.command == "broker" and args.brokers_command == "opt-out":
+        return _cmd_broker_opt_out(args, config)
     if args.command == "backtest":
         if args.backtest_command == "run" or args.backtest_command is None:
             # If no sub-command, use defaults from config

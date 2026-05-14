@@ -48,6 +48,11 @@ AuditEventType = Literal[
     "backtest_order_filled",
     "backtest_completed",
     "backtest_failed",
+    "live_submit_opt_in_enabled",
+    "live_submit_opt_in_disabled",
+    "live_submit_opt_in_config_changed",
+    "live_submit_blocked",
+    "live_submit_attempted",
     "run_completed",
     "run_failed",
 ]

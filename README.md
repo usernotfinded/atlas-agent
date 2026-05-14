@@ -54,36 +54,26 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Risk Gates** | Implemented | Hard-coded limits for position size, notional, and symbols. |
 | **Audit Logs** | Implemented | Tamper-evident hash-chain and run manifests. |
 | **Broker/API Model** | Beta | Alpaca read-only live sync available. `AlpacaBrokerAdapter.get_order_by_client_order_id` supports reconciliation. Other adapters remain beta/deferred. |
-| **Live Trading** | Disabled | Strictly opt-in; `can_submit=false` enforced. `resolve_execution_broker("live")` returns `None`. No live execution broker exposed. |
+| **Live Trading** | Disabled by default | Strictly opt-in; by default `can_submit=false` is enforced and `resolve_execution_broker("live")` returns `None`. Only after the explicit Batch 5.0 live-submit opt-in gates are all satisfied can `can_submit` become `true` and `resolve_execution_broker("live")` return a real broker. |
 | **Broker Integrations** | Beta | Early-stage adapters for third-party broker APIs. |
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.6.dev7)
+## Current Status (v0.5.7.dev0)
 
 Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
 
-### What's New in v0.5.6.dev7
-- **Post-submit state mutation helpers (Batch 4.8)**: `mark_acknowledged()`, `mark_submit_failed()`, `mark_submit_uncertain()`, and `mark_submit_prepare_failed()` in `submit_state.py` provide atomic, validated state transitions for the boundary immediately after broker submission.
-- **`mark_acknowledged()`**: Transitions from `submit_requested` to `acknowledged` after broker confirmation. Sets `submitted_at`, `broker_order_id`, and `broker_status`. Updates the last `submit_attempt` entry in-place with `status="acknowledged"`.
-- **`mark_submit_failed()`**: Transitions from `submit_requested` to `failed` after explicit broker rejection (4xx or rejected status). Keeps `submitted_at=null`. Sets `error_code` on the last submit attempt.
-- **`mark_submit_uncertain()`**: Transitions from `submit_requested` to `submit_uncertain` for post-broker uncertainty (timeout, 5xx, transport, malformed response, CID mismatch after request may have been sent). Keeps `submitted_at=null`.
-- **`mark_submit_prepare_failed()`**: Transitions from `submit_requested` to `submit_prepare_failed` for pre-broker local failure (resolver returns None, execution broker invalid). Keeps `submitted_at=null`. Restricted error codes: `execution_broker_unavailable`, `execution_broker_invalid`.
-- **`submitted_at` semantics**: Set **only** after broker ACK (`acknowledged`). Remains `null` for `failed`, `submit_uncertain`, and `submit_prepare_failed`.
-- **Static transition reasons**: Status transitions use static safe strings (`"broker_acknowledged"`, `"broker_rejected"`, `"broker_uncertain"`, `"execution_broker_failed"`). No raw `broker_order_id` or broker error text is interpolated into transition reasons.
-- **Broker status allowlist**: `broker_status` is validated against a safe allowlist. Unknown values are rejected.
-- **Broker order ID validation**: `broker_order_id` is validated as a safe non-empty string. Secret-shaped values (containing `API_KEY`, `SECRET`, `TOKEN`, `PASSWORD`) are rejected.
-- **Error code allowlist expansion**: Added `execution_broker_unavailable`, `execution_broker_invalid`, and `kill_switch_active` to the submit attempt error code allowlist.
-- **Submit attempt status expansion**: Added `submit_prepare_failed` to the submit attempt status allowlist.
-- **Broker submit boundary wired behind can_submit**: `run_submit_execution()` now reconstructs the Order, calls `mark_submit_requested()`, resolves the execution broker, re-checks the kill switch, and calls `place_order` — but only when `can_submit=true`. Production still blocks at `can_submit=false` before mutation or broker contact. `resolve_execution_broker("live")` is never reached in production because `can_submit=false` blocks first.
-- **place_order reachable only in tests**: The `place_order` path is reachable only under mocked `can_submit=true` + mocked execution broker in tests. No production live submit is enabled.
-- **Accepted broker result maps to acknowledged**: When `place_order` returns `accepted=True` with a valid `order_id`, the pending file transitions to `acknowledged`, `submitted_at` is set, and `broker_order_id` is stored.
-- **Rejected broker result maps to failed**: When `place_order` returns `accepted=False` or raises `BrokerOperationError("broker rejected order")`, the pending file transitions to `failed` with `error_code="broker_rejected_order"`.
-- **Uncertain broker outcomes require `--reconcile`**: Timeout, transport failure, malformed response, or CID mismatch transitions the file to `submit_uncertain`. The report message advises `Run --reconcile first.`
-- **Failure-safe local state writes**: If `mark_acknowledged`, `mark_submit_failed`, or `mark_submit_uncertain` raises after broker contact, the code returns a static sanitized report with `reconciliation_required`. No `place_order` retry occurs.
-- **No live submit enabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
+### What's New in v0.5.7.dev0
+- **Production live-submit opt-in layer (Batch 5.0)**: `broker.enable_live_submit` is a new, separate opt-in flag for actual order placement. It is independent from `broker.enable_live_trading` (which controls sync/read-only broker contact).
+- **Multi-factor opt-in gate**: `BrokerResolver.can_submit` can become `true` ONLY when ALL conditions are satisfied: `enable_live_submit=true`, `enable_live_trading=true`, kill switch normal, `trading_mode=live`, approval not disabled, leverage off, credentials present, AND a valid opt-in audit record exists.
+- **Deterministic opt-in audit record**: `audit/live_submit_opt_in.jsonl` stores opt-in state with `event_type="live_submit_opt_in_enabled"`, broker ID match, config fingerprint (SHA-256 hash), parseable timestamp, no subsequent opt-out, and 24-hour expiry.
+- **CLI opt-in/opt-out commands**: `atlas broker opt-in` requires typed confirmation and writes the audit record. `atlas broker opt-out` invalidates the prior opt-in.
+- **Live-submit hard limits**: Defense-in-depth limits checked **before** `mark_submit_requested()`: `live_submit_max_order_notional`, `live_submit_allowed_symbols`, `live_submit_allowed_sides`. If any limit fails, the pending file remains completely unchanged.
+- **`resolve_execution_broker("live")` returns real broker only when `can_submit=true`**: When `can_submit` is `false` (production default), `resolve_execution_broker("live")` returns `execution_broker=None` and never instantiates `AlpacaBroker`.
+- **Default behavior unchanged**: With `enable_live_submit=false` (default), Batch 5.0 behaves identically to Batch 4.9 — `can_submit=false`, no mutation, no broker contact.
+- **No live submit enabled by default**: Explicit multi-factor opt-in is required. No unattended live trading. No automatic retries. Paper mode untouched.
 
-### What's New in v0.5.6.dev5
+### What's New in v0.5.6.dev7
 - **Pre-submit mutation wiring behind hard-disabled gate (Batch 4.7)**: `run_submit_execution()` now calls `mark_submit_requested()` **only after** `can_submit=true`, then immediately blocks with `broker_submit_not_implemented` before any broker submission.
 - **Mocked `can_submit=true` path prepares `submit_requested` state**: When all safety gates pass under a mocked/test `can_submit=true` resolver, the pending file is atomically mutated to `status="submit_requested"` with `client_order_id`, `submit_requested_at`, a status transition, and a `submit_attempts` entry. `submitted_at` and `broker_order_id` remain `null`.
 - **Production `can_submit=false` path still performs zero mutation**: Alpaca live broker continues to return `can_submit=false`, so production behavior is identical to Batch 4.6 — all gates run, then block with `can_submit_false` and no file mutation.

@@ -2931,3 +2931,181 @@ def test_cli_no_raw_secret_path_payload_broker_error_in_output(tmp_path, monkeyp
     assert "FAKE_BROKER_BODY" not in combined
     # No raw broker error text
     assert "broker unavailable" not in combined.lower()
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.0: Broker opt-in / opt-out CLI
+# ---------------------------------------------------------------------------
+
+def _setup_workspace(tmp_path: Path) -> None:
+    """Create minimal workspace directories so config_has_workspace_context passes."""
+    (tmp_path / "memory").mkdir()
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "events").mkdir()
+    (tmp_path / "pending_orders").mkdir()
+    (tmp_path / "audit").mkdir()
+
+
+def test_broker_opt_in_fails_when_enable_live_submit_false(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": False},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        code = main(["broker", "opt-in"])
+    assert code == 2
+    assert "enable_live_submit must be true" in capsys.readouterr().out
+
+
+def test_broker_opt_in_fails_when_trading_mode_not_live(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="paper",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        code = main(["broker", "opt-in"])
+    assert code == 2
+    assert "trading_mode must be 'live'" in capsys.readouterr().out
+
+
+def test_broker_opt_in_fails_when_kill_switch_active(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
+         patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls:
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=True, mode="soft_pause")
+        mock_ks_cls.return_value = mock_ks
+        code = main(["broker", "opt-in"])
+    assert code == 2
+    assert "Kill switch is active" in capsys.readouterr().out
+
+
+def test_broker_opt_in_writes_opt_in_record(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+        audit={"audit_dir": tmp_path / "audit"},
+    )
+    opt_in_path = tmp_path / "audit" / "live_submit_opt_in.jsonl"
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
+         patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.cli.input", return_value="alpaca"):
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        code = main(["broker", "opt-in"])
+    assert code == 0
+    assert opt_in_path.exists()
+    lines = opt_in_path.read_text(encoding="utf-8").strip().split("\n")
+    record = json.loads(lines[0])
+    assert record["event_type"] == "live_submit_opt_in_enabled"
+    assert record["opt_in"] is True
+    assert record["broker_id"] == "alpaca"
+    assert "config_fingerprint" in record
+    assert "created_at" in record
+
+
+def test_broker_opt_in_yes_does_not_bypass_typed_confirmation(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+        audit={"audit_dir": tmp_path / "audit"},
+    )
+    opt_in_path = tmp_path / "audit" / "live_submit_opt_in.jsonl"
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
+         patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls:
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        code = main(["broker", "opt-in", "--yes"])
+    assert code == 2
+    assert "Typed broker-name confirmation is required" in capsys.readouterr().out
+    assert not opt_in_path.exists()
+
+
+def test_broker_opt_out_writes_opt_out_record(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+        audit={"audit_dir": tmp_path / "audit"},
+    )
+    opt_in_path = tmp_path / "audit" / "live_submit_opt_in.jsonl"
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        code = main(["broker", "opt-out"])
+    assert code == 0
+    assert opt_in_path.exists()
+    lines = opt_in_path.read_text(encoding="utf-8").strip().split("\n")
+    record = json.loads(lines[0])
+    assert record["event_type"] == "live_submit_opt_in_disabled"
+    assert record["opt_in"] is False
+    assert "created_at" in record
+
+
+def test_broker_opt_in_prompts_for_confirmation(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+        audit={"audit_dir": tmp_path / "audit"},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
+         patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.cli.input", return_value="alpaca"):
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        code = main(["broker", "opt-in"])
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "Confirm [alpaca]" in out or "live order submission" in out
+
+
+def test_broker_opt_in_rejects_mismatched_confirmation(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+        audit={"audit_dir": tmp_path / "audit"},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
+         patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.cli.input", return_value="wrong"):
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        code = main(["broker", "opt-in"])
+    assert code == 2
+    assert "Confirmation did not match" in capsys.readouterr().out
