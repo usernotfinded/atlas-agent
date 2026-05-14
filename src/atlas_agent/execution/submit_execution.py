@@ -237,10 +237,72 @@ def _uncertain_report(
 # Main execution skeleton
 # ---------------------------------------------------------------------------
 
+def _emit_live_submit_blocked(
+    audit_writer: Any,
+    order_id: str,
+    client_order_id: str | None,
+    broker_id: str,
+    blocked_reason: str,
+    gate: str,
+) -> None:
+    """Best-effort audit emission for live-submit blocked events.
+
+    Never raises. Never leaks raw values.
+    """
+    if audit_writer is None:
+        return
+    try:
+        audit_writer.write_event(
+            "live_submit_blocked",
+            run_id="submit-execution",
+            payload={
+                "mode": "live",
+                "broker_id": broker_id,
+                "order_id": order_id,
+                "client_order_id": client_order_id,
+                "reason_code": blocked_reason,
+                "gate": gate,
+                "status": "blocked",
+            },
+        )
+    except Exception:
+        pass
+
+
+def _emit_live_submit_attempted(
+    audit_writer: Any,
+    order_id: str,
+    client_order_id: str,
+    broker_id: str,
+) -> None:
+    """Best-effort audit emission for live-submit attempted events.
+
+    Emitted immediately before broker.place_order.
+    Never raises. Never leaks raw values.
+    """
+    if audit_writer is None:
+        return
+    try:
+        audit_writer.write_event(
+            "live_submit_attempted",
+            run_id="submit-execution",
+            payload={
+                "mode": "live",
+                "broker_id": broker_id,
+                "order_id": order_id,
+                "client_order_id": client_order_id,
+                "status": "attempted",
+            },
+        )
+    except Exception:
+        pass
+
+
 def run_submit_execution(
     order_id: str,
     config: Any,
     approval_manager: ApprovalManager,
+    audit_writer: Any | None = None,
 ) -> SubmitExecutionReport:
     """Execute the submit-approved-order skeleton through the broker boundary.
 
@@ -296,6 +358,11 @@ def run_submit_execution(
     try:
         payload = load_pending_order(path)
     except (InvalidPendingOrderError, json.JSONDecodeError):
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "invalid_pending_order", "integrity",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -419,6 +486,11 @@ def run_submit_execution(
 
     # 7. Require live trading enabled
     if not getattr(config, "enable_live_trading", False):
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "live_trading_disabled", "live_trading_enabled",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -432,6 +504,11 @@ def run_submit_execution(
     # 8. Require kill switch normal
     ks_ok, ks_reason = _check_kill_switch(config)
     if not ks_ok:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "kill_switch_active", "kill_switch",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -448,6 +525,11 @@ def run_submit_execution(
         try:
             _validate_client_order_id(existing_cid)
         except BrokerOperationError:
+            _emit_live_submit_blocked(
+                audit_writer, order_id, None,
+                getattr(config, "live_broker", "none"),
+                "invalid_client_order_id", "client_order_id",
+            )
             return SubmitExecutionReport(
                 ok=False,
                 status="blocked",
@@ -467,6 +549,11 @@ def run_submit_execution(
     gates["can_sync"] = "pass" if broker_status.can_sync else "fail"
 
     if not broker_status.can_sync:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "broker_sync_unavailable", "can_sync",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -480,6 +567,11 @@ def run_submit_execution(
     # 11. Fresh live sync
     resolution = resolver.resolve_sync_provider("live")
     if resolution.sync_provider is None:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "broker_sync_unavailable", "fresh_sync",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -500,6 +592,11 @@ def run_submit_execution(
     # 12. Validate live sync
     sync_warnings, sync_error = validate_live_sync(sync_result, broker_status)
     if sync_error is not None:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "live_sync_failed", "fresh_sync",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -525,6 +622,11 @@ def run_submit_execution(
     order_type = order_dict.get("order_type", "market")
 
     if order_type == "market":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "market_price_unavailable", "market_price",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -579,6 +681,11 @@ def run_submit_execution(
     }
 
     if not decision.allowed:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "risk_revalidation_failed", "risk_revalidation",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -603,6 +710,11 @@ def run_submit_execution(
             or config.risk.max_order_notional
         )
         if risk_input.notional > live_submit_max:
+            _emit_live_submit_blocked(
+                audit_writer, order_id, cid,
+                broker_status.broker_id,
+                "live_submit_max_notional_exceeded", "live_submit_limits",
+            )
             return SubmitExecutionReport(
                 ok=False,
                 status="blocked",
@@ -623,6 +735,11 @@ def run_submit_execution(
         if live_submit_symbols is not None:
             normalized_symbols = {str(s).upper() for s in live_submit_symbols}
             if risk_input.symbol.upper() not in normalized_symbols:
+                _emit_live_submit_blocked(
+                    audit_writer, order_id, cid,
+                    broker_status.broker_id,
+                    "live_submit_symbol_not_allowed", "live_submit_limits",
+                )
                 return SubmitExecutionReport(
                     ok=False,
                     status="blocked",
@@ -638,6 +755,11 @@ def run_submit_execution(
 
         live_submit_sides = config.risk.live_submit_allowed_sides
         if live_submit_sides is not None and risk_input.side.lower() not in {s.lower() for s in live_submit_sides}:
+            _emit_live_submit_blocked(
+                audit_writer, order_id, cid,
+                broker_status.broker_id,
+                "live_submit_side_not_allowed", "live_submit_limits",
+            )
             return SubmitExecutionReport(
                 ok=False,
                 status="blocked",
@@ -655,6 +777,11 @@ def run_submit_execution(
 
     # 17. Check can_submit
     if not broker_status.can_submit:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "can_submit_false", "can_submit",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -674,6 +801,11 @@ def run_submit_execution(
     try:
         order = _reconstruct_order(payload["order"])
     except Exception:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "invalid_pending_order", "order_reconstruction",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -696,6 +828,11 @@ def run_submit_execution(
             actor="submit:cli",
         )
     except Exception:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "submit_state_mutation_failed", "submit_state_mutation",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -722,6 +859,11 @@ def run_submit_execution(
         except Exception:
             pass
 
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "execution_broker_unavailable", "execution_broker",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -745,6 +887,11 @@ def run_submit_execution(
         except Exception:
             pass
 
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "execution_broker_invalid", "execution_broker",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -770,6 +917,11 @@ def run_submit_execution(
         except Exception:
             pass
 
+        _emit_live_submit_blocked(
+            audit_writer, order_id, cid,
+            broker_status.broker_id,
+            "kill_switch_active", "kill_switch",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -783,6 +935,9 @@ def run_submit_execution(
             warnings=warnings,
         )
 
+    _emit_live_submit_attempted(
+        audit_writer, order_id, cid, broker_status.broker_id,
+    )
     try:
         result = execution_broker.place_order(order, client_order_id=cid)
 

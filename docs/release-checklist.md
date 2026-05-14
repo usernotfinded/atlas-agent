@@ -162,6 +162,20 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Paper mode remains unchanged.
 - No profit claims, zero-risk language, or live-readiness overstatements exist in README or CHANGELOG.
 
+## Broker Foundation 5.1 Release Assertions
+
+- `run_submit_execution()` accepts an optional `audit_writer` parameter defaulting to `None`.
+- `live_submit_blocked` is emitted for every live-submit gate failure: `live_trading_disabled`, `kill_switch_active` (both checks), `broker_sync_unavailable`, `live_sync_failed`, `market_price_unavailable`, `risk_revalidation_failed`, `live_submit_max_notional_exceeded`, `live_submit_symbol_not_allowed`, `live_submit_side_not_allowed`, `can_submit_false`, `invalid_pending_order`, `invalid_client_order_id`, `submit_state_mutation_failed`, `execution_broker_unavailable`, `execution_broker_invalid`.
+- `live_submit_attempted` is emitted exactly once, immediately before `execution_broker.place_order()`, only when all gates pass.
+- `live_submit_attempted` is **not** emitted when `can_submit=false`, hard limits fail, state mutation fails, broker resolution fails, or the final kill-switch check fails.
+- Audit emission is best-effort: write failures are caught silently and never change `SubmitExecutionReport` outcome.
+- Audit payloads contain only safe structured fields (`order_id`, `client_order_id`, `broker_id`, `reason_code`, `gate`, `status`, `mode`). No raw order data, broker responses, exceptions, paths, or secrets.
+- CLI `submit-approved-order` (no flags) passes an `AuditWriter` to `run_submit_execution`.
+- Existing callers of `run_submit_execution()` without `audit_writer` continue to work unchanged.
+- Dry-run does not emit `live_submit_attempted`.
+- Reconcile does not emit `live_submit_attempted`.
+- Paper mode remains unchanged.
+
 ## Broker Foundation 4.7 Release Assertions
 
 - Production `can_submit=false` path does not call `mark_submit_requested()`.

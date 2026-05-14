@@ -30,7 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - If any limit fails, the pending file remains completely unchanged. No `mark_submit_requested()`, no `resolve_execution_broker()`, no `place_order()`.
   - New audit event types registered: `live_submit_opt_in_enabled`, `live_submit_opt_in_disabled`, `live_submit_opt_in_config_changed`, `live_submit_blocked`, `live_submit_attempted`.
     - `live_submit_opt_in_enabled` and `live_submit_opt_in_disabled` are emitted by the opt-in / opt-out CLI commands.
-    - `live_submit_blocked` and `live_submit_attempted` are registered event types only in Batch 5.0; runtime emission from `run_submit_execution()` is deferred to a future audit-hardening batch.
+    - `live_submit_blocked` and `live_submit_attempted` runtime emission from `run_submit_execution()` implemented in Batch 5.1.
+- **Batch 5.1 — Live Submit Audit Hardening**:
+  - `run_submit_execution()` now accepts an optional `audit_writer` parameter (default `None`).
+  - `live_submit_blocked` is emitted when any live-submit safety gate blocks the order, including: `live_trading_disabled`, `kill_switch_active`, `broker_sync_unavailable`, `live_sync_failed`, `market_price_unavailable`, `risk_revalidation_failed`, `live_submit_max_notional_exceeded`, `live_submit_symbol_not_allowed`, `live_submit_side_not_allowed`, `can_submit_false`, `invalid_pending_order`, `submit_state_mutation_failed`, `execution_broker_unavailable`, `execution_broker_invalid`.
+  - `live_submit_attempted` is emitted exactly once, immediately before `execution_broker.place_order()`, only when all gates pass.
+  - `live_submit_attempted` is **not** emitted when `can_submit=false`, hard limits fail, state mutation fails, broker resolution fails, or the final kill-switch check fails.
+  - Audit emission is best-effort: failures are caught silently and never change `SubmitExecutionReport` outcome.
+  - Audit payloads contain only safe structured fields (`order_id`, `client_order_id`, `broker_id`, `reason_code`, `gate`, `status`, `mode`). No raw order data, broker responses, exceptions, paths, or secrets.
+  - CLI `submit-approved-order` (no flags) now creates an `AuditWriter` and passes it to `run_submit_execution`.
   - New CLI commands:
     - `atlas broker opt-in` — requires typed confirmation, writes opt-in record to `audit/live_submit_opt_in.jsonl` and audit log.
     - `atlas broker opt-out` — writes opt-out record to invalidate prior opt-in.

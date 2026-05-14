@@ -72,6 +72,7 @@ Atlas is currently in active development. The current status of major features i
 - **`resolve_execution_broker("live")` returns real broker only when `can_submit=true`**: When `can_submit` is `false` (production default), `resolve_execution_broker("live")` returns `execution_broker=None` and never instantiates `AlpacaBroker`.
 - **Default behavior unchanged**: With `enable_live_submit=false` (default), Batch 5.0 behaves identically to Batch 4.9 — `can_submit=false`, no mutation, no broker contact.
 - **No live submit enabled by default**: Explicit multi-factor opt-in is required. No unattended live trading. No automatic retries. Paper mode untouched.
+- **Batch 5.1 — Live submit audit hardening**: `run_submit_execution()` now emits `live_submit_blocked` when any live-submit gate blocks, and `live_submit_attempted` exactly once immediately before `place_order()`. Audit payloads are strictly safe — no raw order data, broker responses, exceptions, paths, or secrets. Audit write failures are caught silently and never affect submit behavior.
 
 ### What's New in v0.5.6.dev7
 - **Pre-submit mutation wiring behind hard-disabled gate (Batch 4.7)**: `run_submit_execution()` now calls `mark_submit_requested()` **only after** `can_submit=true`, then immediately blocks with `broker_submit_not_implemented` before any broker submission.

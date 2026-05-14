@@ -3662,11 +3662,19 @@ def main(argv: list[str] | None = None) -> int:
         from atlas_agent.execution.approval import InvalidApprovalIdError, InvalidPendingOrderError
         from atlas_agent.execution.submit_execution import run_submit_execution
 
+        audit_writer = None
+        try:
+            from atlas_agent.audit import AuditWriter
+            audit_writer = AuditWriter(config.audit_dir / "audit.log")
+        except (ImportError, AttributeError):
+            pass
+
         try:
             report = run_submit_execution(
                 order_id=args.order_id,
                 config=config,
                 approval_manager=ApprovalManager(config.pending_orders_dir),
+                audit_writer=audit_writer,
             )
         except InvalidApprovalIdError:
             if args.json:
