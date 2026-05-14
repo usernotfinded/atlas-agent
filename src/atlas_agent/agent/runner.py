@@ -182,12 +182,49 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
             return AgentResult(
                 status="error",
                 errors=["live broker sync failed: malformed diagnostics"],
-                diagnostics={"broker_status": resolution.status.to_dict()},
+                diagnostics={
+                    "broker_status": resolution.status.to_dict(),
+                    "sync_status": sync_result.status,
+                    "failed_operations": ["malformed_broker_errors"],
+                },
             )
+        # Validate every item is a well-formed error dict with required string fields
+        required_fields = {"code", "operation", "broker", "message"}
+        for entry in broker_errors:
+            if not isinstance(entry, dict):
+                return AgentResult(
+                    status="error",
+                    errors=["live broker sync failed: malformed diagnostics"],
+                    diagnostics={
+                        "broker_status": resolution.status.to_dict(),
+                        "sync_status": sync_result.status,
+                        "failed_operations": ["malformed_broker_errors"],
+                    },
+                )
+            missing_fields = required_fields - set(entry.keys())
+            if missing_fields:
+                return AgentResult(
+                    status="error",
+                    errors=["live broker sync failed: malformed diagnostics"],
+                    diagnostics={
+                        "broker_status": resolution.status.to_dict(),
+                        "sync_status": sync_result.status,
+                        "failed_operations": ["malformed_broker_errors"],
+                    },
+                )
+            if not all(isinstance(entry.get(f), str) for f in required_fields):
+                return AgentResult(
+                    status="error",
+                    errors=["live broker sync failed: malformed diagnostics"],
+                    diagnostics={
+                        "broker_status": resolution.status.to_dict(),
+                        "sync_status": sync_result.status,
+                        "failed_operations": ["malformed_broker_errors"],
+                    },
+                )
         failed_ops = {
             e.get("operation")
             for e in broker_errors
-            if isinstance(e, dict) and isinstance(e.get("operation"), str)
         }
         critical_ops = {"sync_account_state", "sync_positions", "sync_open_orders"}
         if sync_result.account is None:

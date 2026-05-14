@@ -257,3 +257,137 @@ def test_run_agent_live_malformed_diagnostics_fails_closed(live_config: AtlasCon
     assert isinstance(result, AgentResult)
     assert result.status == "error"
     assert "malformed diagnostics" in result.errors[0]
+    assert result.diagnostics.get("failed_operations") == ["malformed_broker_errors"]
+
+
+def _mock_sync_result_with_errors(broker_errors):
+    return MagicMock(
+        status="partial",
+        synced_at="2026-05-13T12:00:00Z",
+        account=MagicMock(cash=100, equity=100),
+        positions=[],
+        open_orders=[],
+        diagnostics={"broker_errors": broker_errors},
+    )
+
+
+def test_run_agent_live_broker_errors_list_with_non_dict_fails_closed(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        ["bad-entry"]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "error"
+    assert "malformed diagnostics" in result.errors[0]
+    assert result.diagnostics.get("failed_operations") == ["malformed_broker_errors"]
+
+
+def test_run_agent_live_broker_errors_list_dict_missing_operation_fails_closed(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"code": "broker_operation_failed", "broker": "alpaca", "message": "fail"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "error"
+    assert "malformed diagnostics" in result.errors[0]
+    assert result.diagnostics.get("failed_operations") == ["malformed_broker_errors"]
+
+
+def test_run_agent_live_broker_errors_list_dict_missing_code_broker_message_fails_closed(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"operation": "sync_positions"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "error"
+    assert "malformed diagnostics" in result.errors[0]
+    assert result.diagnostics.get("failed_operations") == ["malformed_broker_errors"]
+
+
+def test_run_agent_live_broker_errors_list_dict_non_string_operation_fails_closed(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"code": "x", "operation": 123, "broker": "alpaca", "message": "fail"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "error"
+    assert "malformed diagnostics" in result.errors[0]
+    assert result.diagnostics.get("failed_operations") == ["malformed_broker_errors"]
+
+
+def test_run_agent_live_valid_broker_errors_sync_balances_only_proceeds(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"code": "broker_operation_failed", "operation": "sync_balances", "broker": "alpaca", "message": "timeout"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "complete"
+
+
+def test_run_agent_live_valid_broker_errors_sync_positions_still_fails_closed(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"code": "broker_operation_failed", "operation": "sync_positions", "broker": "alpaca", "message": "timeout"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "error"
+    assert "sync_positions" in result.errors[0]
+    assert result.diagnostics.get("failed_operations") == ["sync_positions"]
+
+
+def test_run_agent_live_malformed_no_private_values_leaked(live_config: AtlasConfig) -> None:
+    env = {"ALPACA_API_KEY": "test-key", "ALPACA_SECRET_KEY": "test-secret"}
+    with patch.dict(os.environ, env, clear=False):
+        with patch("atlas_agent.brokers.alpaca.AlpacaBrokerAdapter._request", _fake_alpaca_request):
+            with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=MockProvider()):
+                with patch("atlas_agent.brokers.sync.BrokerSyncService.sync") as mock_sync:
+                    mock_sync.return_value = _mock_sync_result_with_errors(
+                        [{"secret_api_key": "sk-live-abc123", "password": "hunter2"}]
+                    )
+                    result = run_agent(mode="live", config=live_config, use_loop=True, continuous=False)
+
+    assert isinstance(result, AgentResult)
+    assert result.status == "error"
+    assert "malformed diagnostics" in result.errors[0]
+    error_text = " ".join(result.errors)
+    diagnostics_text = str(result.diagnostics)
+    assert "sk-live-abc123" not in error_text
+    assert "hunter2" not in error_text
+    assert "sk-live-abc123" not in diagnostics_text
+    assert "hunter2" not in diagnostics_text
