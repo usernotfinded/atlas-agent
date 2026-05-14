@@ -75,7 +75,7 @@ def test_readme_mentions_provider_neutral_model_selection() -> None:
     text = _readme()
     lower = text.lower()
 
-    assert "https://www.vals.ai/benchmarks/finance_agent" in text
+    assert "https://www.vals.ai/benchmarks/fabv2" in text
     assert "provider-neutral" in lower
 
     for provider in [
