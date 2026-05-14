@@ -35,6 +35,9 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - `can_submit=false` for all live brokers (`BrokerResolver` live status never enables submit).
 - `resolve_execution_broker("live")` returns `None` (no live execution broker resolved).
 - Live `propose_order` creates no `pending_orders/` files and does not invoke `ApprovalManager`.
+- `run_once --mode live` performs broker sync and risk evaluation but does not submit orders, create pending orders, or invoke `ApprovalManager`.
+- `run_once --mode live` requires `enable_live_trading=true`; returns controlled rejection without sync if disabled.
+- Synced open orders influence `run_once` live risk evaluation via `PortfolioSnapshot`.
 - Alpaca read-only sync is GET-only; `AlpacaBrokerAdapter` implements `BrokerProvider`, not `Broker`, and has no order submission methods.
 - Non-Alpaca broker sync (Binance, CCXT, IBKR) remains deferred.
 - Docs do not claim production-ready live trading or recommend any specific broker.

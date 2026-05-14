@@ -37,6 +37,12 @@ KNOWN_EVENT_TYPES = {
     "git_sync_completed",
     "agent_completed",
     "agent_failed",
+    "run_once_live_disabled",
+    "run_once_live_sync_started",
+    "run_once_live_sync_failed",
+    "run_once_live_risk_evaluated",
+    "run_once_live_analysis_only",
+    "run_once_live_rejected",
 }
 
 LIKELY_SECRET_PATTERNS = (

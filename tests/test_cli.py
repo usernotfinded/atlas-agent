@@ -163,7 +163,7 @@ def test_atlas_run_once_live_fails_safely_by_default(
     assert main(["run-once", "--mode", "live", "--symbol", "DEMO-SYMBOL"]) == 2
     output = capsys.readouterr().out
     assert "live result: rejected" in output
-    assert "live broker is not configured" in output
+    assert "live trading disabled" in output.lower() or "live trading is not enabled" in output.lower()
 
 
 def test_atlas_setup_guided_with_mocked_wizard(tmp_path, monkeypatch, capsys):

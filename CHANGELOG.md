@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Alpaca Read-Only Live Sync**: `AlpacaBrokerAdapter` provides HTTP GET-only synchronization for account state, positions, open orders, and balances. Requires `ALPACA_API_KEY` and `ALPACA_SECRET_KEY`.
 - **Live Agent Analysis-Only Mode**: When `TRADING_MODE=live` and `ENABLE_LIVE_TRADING=true`, the agent consumes live Alpaca portfolio snapshots for risk-aware analysis without order submission.
 - **`live_analysis_only` Deferred Execution**: Live `propose_order` tool calls that pass risk checks return `live_analysis_only` and do not create pending orders, approval requests, or broker submissions.
+- **`run_once --mode live` Analysis-Only Path**: `run_once` now supports live analysis with real broker sync, risk evaluation against synced portfolio (including open orders), and returns `live_analysis_only` without order submission, pending orders, or approval artifacts.
+- **Shared Live Sync Validation Helper**: `validate_live_sync()` in `brokers/live_sync_validation.py` extracts the live sync critical-check logic used by both `AgentLoop` and `run_once`, preventing duplication.
 - **Structured `broker_errors` Diagnostics**: `BrokerSyncResult` carries typed `broker_errors` with strict fail-closed validation. Malformed diagnostics reject the sync.
 - **Noncritical Sync Warning Surfacing**: Balances-only sync failure proceeds with safe diagnostic warnings; critical failures (account, positions, open_orders) fail closed.
 - **Auto-Mode `effective_mode` Consistency**: `mode="auto"` resolves to `"live"` or `"paper"` and propagates correctly through AgentLoop, risk manager, and model prompts.
