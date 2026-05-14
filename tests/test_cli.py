@@ -666,7 +666,7 @@ def _mock_dry_run_services():
     return _Patcher
 
 
-def test_submit_approved_order_without_dry_run_fails(tmp_path, monkeypatch, capsys) -> None:
+def test_submit_approved_order_without_flags_pending_not_found(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     assert main(["init", "."]) == 0
     capsys.readouterr()
@@ -674,7 +674,7 @@ def test_submit_approved_order_without_dry_run_fails(tmp_path, monkeypatch, caps
     code = main(["submit-approved-order", "some-id"])
     captured = capsys.readouterr()
     assert code == 2
-    assert "not implemented" in captured.out.lower()
+    assert "pending_order_not_found" in captured.out
 
 
 def _enable_live_trading_in_workspace(tmp_path: Path) -> None:
@@ -1470,7 +1470,7 @@ def test_submit_without_dry_run_or_reconcile_still_blocked(tmp_path, monkeypatch
     code = main(["submit-approved-order", "test-order"])
     captured = capsys.readouterr()
     assert code == 2
-    assert "not implemented" in captured.out.lower()
+    assert "pending_order_not_found" in captured.out
 
 
 # ---------------------------------------------------------------------------
@@ -1713,3 +1713,306 @@ def test_cli_submit_approved_order_reconcile_duplicate_reconciled_no_broker_quer
     assert code == 0
     assert "already reconciled" in captured.out.lower()
     mock_adapter.get_order_by_client_order_id.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# submit-approved-order execution skeleton (no flags)
+# ---------------------------------------------------------------------------
+
+
+def test_submit_approved_order_execution_live_trading_disabled(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    # live trading not enabled in config
+    code = main(["submit-approved-order", order.id])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "live_trading_disabled" in captured.out
+
+
+def test_submit_approved_order_execution_kill_switch_active(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=True, mode="soft_pause")
+        mock_ks_cls.return_value = mock_ks
+        code = main(["submit-approved-order", order.id])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "kill_switch_active" in captured.out
+
+
+def test_submit_approved_order_execution_invalid_order_id(capsys) -> None:
+    code = main(["submit-approved-order", "../../etc/passwd"])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "invalid pending order id" in captured.out.lower()
+    assert "../../etc/passwd" not in captured.out
+    assert "etc/passwd" not in captured.out
+
+
+def test_submit_approved_order_execution_invalid_order_id_json(capsys) -> None:
+    code = main(["submit-approved-order", "../../etc/passwd", "--json"])
+    captured = capsys.readouterr()
+    assert code == 2
+    output = json.loads(captured.out)
+    assert output["ok"] is False
+    assert output["error"]["code"] == "submit_blocked"
+    assert output["error"]["details"]["blocked_reason"] == "invalid_pending_order_id"
+    assert "../../etc/passwd" not in captured.out
+    assert "etc/passwd" not in captured.out
+
+
+def test_submit_approved_order_execution_fake_secret_not_leaked(capsys) -> None:
+    # Path-traversal + fake secret combination triggers InvalidApprovalIdError
+    code = main(["submit-approved-order", "../../etc/FAKE_API_KEY_12345"])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "invalid pending order id" in captured.out.lower()
+    assert "FAKE_API_KEY_12345" not in captured.out
+    assert "FAKE_API_KEY" not in captured.out
+    assert "etc/passwd" not in captured.out
+
+
+def test_submit_approved_order_execution_tampered_file_no_secret_leak(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.execution.submit_state import _compute_order_hash
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    # Tamper the file by injecting a fake secret into the payload
+    path = manager.path_for(order.id)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["order_hash"] = "tampered"
+    payload["order"]["symbol"] = "SECRET_SYMBOL_999"
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    code = main(["submit-approved-order", order.id])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "invalid_pending_order" in captured.out.lower()
+    assert "SECRET_SYMBOL_999" not in captured.out
+    assert "tampered" not in captured.out
+
+
+def test_submit_approved_order_execution_json_output(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = False
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id, "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    output = json.loads(captured.out)
+    assert output["ok"] is False
+    assert output["error"]["code"] == "submit_blocked"
+    assert output["error"]["details"]["blocked_reason"] == "can_submit_false"
+    assert output["error"]["details"]["gates"]["can_submit"] == "fail"
+
+
+def test_submit_approved_order_execution_can_submit_false(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = False
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "can_submit_false" in captured.out
+    assert "All safety gates passed" in captured.out
+
+
+def test_submit_approved_order_execution_no_place_order_called(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.execution.approval import ApprovalManager
+    from atlas_agent.brokers.alpaca import AlpacaBroker
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
+    _enable_live_trading_in_workspace(tmp_path)
+
+    order = Order(symbol="AAPL", side="buy", quantity=1.0, limit_price=100.0, order_type="limit")
+    manager = ApprovalManager(tmp_path / "pending_orders")
+    manager.create_pending_order(order)
+    manager.approve(order.id)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mr, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as ms, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mv, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mri, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mks, \
+         patch.object(AlpacaBroker, "place_order", side_effect=AssertionError("place_order must not be called")) as mock_place:
+        mock_status = MagicMock()
+        mock_status.can_sync = True
+        mock_status.can_submit = False
+        mock_status.broker_id = "alpaca"
+        mock_status.to_dict.return_value = {"can_sync": True, "can_submit": False}
+        mr.return_value.resolve_status.return_value = mock_status
+        mr.return_value.resolve_sync_provider.return_value = MagicMock(sync_provider=MagicMock())
+
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.account = MagicMock()
+        mock_result.positions = []
+        mock_result.open_orders = []
+        mock_result.balances = []
+        mock_result.errors = []
+        mock_result.diagnostics = {"broker_errors": []}
+        ms.return_value.sync.return_value = mock_result
+        from atlas_agent.risk.models import PortfolioSnapshot
+        ms.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+
+        mv.return_value = ([], None)
+
+        from atlas_agent.risk.models import RiskDecision
+        mri.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mks.return_value = mock_ks
+
+        code = main(["submit-approved-order", order.id])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "can_submit_false" in captured.out
+    mock_place.assert_not_called()
