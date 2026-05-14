@@ -3008,10 +3008,14 @@ def test_broker_opt_in_writes_opt_in_record(tmp_path, monkeypatch, capsys) -> No
     opt_in_path = tmp_path / "audit" / "live_submit_opt_in.jsonl"
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
          patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls, \
-         patch("atlas_agent.cli.input", return_value="alpaca"):
+         patch("atlas_agent.cli.input", return_value="alpaca"), \
+         patch("atlas_agent.brokers.resolver.BrokerResolver") as mock_resolver_cls:
         mock_ks = MagicMock()
         mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
         mock_ks_cls.return_value = mock_ks
+        mock_resolver = MagicMock()
+        mock_resolver._credentials_configured.return_value = True
+        mock_resolver_cls.return_value = mock_resolver
         code = main(["broker", "opt-in"])
     assert code == 0
     assert opt_in_path.exists()
@@ -3080,10 +3084,14 @@ def test_broker_opt_in_prompts_for_confirmation(tmp_path, monkeypatch, capsys) -
     )
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
          patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls, \
-         patch("atlas_agent.cli.input", return_value="alpaca"):
+         patch("atlas_agent.cli.input", return_value="alpaca"), \
+         patch("atlas_agent.brokers.resolver.BrokerResolver") as mock_resolver_cls:
         mock_ks = MagicMock()
         mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
         mock_ks_cls.return_value = mock_ks
+        mock_resolver = MagicMock()
+        mock_resolver._credentials_configured.return_value = True
+        mock_resolver_cls.return_value = mock_resolver
         code = main(["broker", "opt-in"])
     assert code == 0
     out = capsys.readouterr().out
@@ -3102,10 +3110,81 @@ def test_broker_opt_in_rejects_mismatched_confirmation(tmp_path, monkeypatch, ca
     )
     with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
          patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls, \
-         patch("atlas_agent.cli.input", return_value="wrong"):
+         patch("atlas_agent.cli.input", return_value="wrong"), \
+         patch("atlas_agent.brokers.resolver.BrokerResolver") as mock_resolver_cls:
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        mock_resolver = MagicMock()
+        mock_resolver._credentials_configured.return_value = True
+        mock_resolver_cls.return_value = mock_resolver
+        code = main(["broker", "opt-in"])
+    assert code == 2
+    assert "Confirmation did not match" in capsys.readouterr().out
+
+
+def test_broker_opt_in_fails_when_enable_live_trading_false(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": False, "enable_live_submit": True},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        code = main(["broker", "opt-in"])
+    assert code == 2
+    assert "enable_live_trading must be true" in capsys.readouterr().out
+
+
+def test_broker_opt_in_fails_when_credentials_missing(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+    monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
+         patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls:
         mock_ks = MagicMock()
         mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
         mock_ks_cls.return_value = mock_ks
         code = main(["broker", "opt-in"])
     assert code == 2
-    assert "Confirmation did not match" in capsys.readouterr().out
+    assert "credentials are missing" in capsys.readouterr().out
+
+
+def test_broker_opt_in_kill_switch_unreadable_no_leak(tmp_path, monkeypatch, capsys) -> None:
+    """Kill-switch unreadable path must not leak exception text, paths, or secrets,
+    and must not write an opt-in record.
+    """
+    monkeypatch.chdir(tmp_path)
+    _setup_workspace(tmp_path)
+    monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+    monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig(
+        trading_mode="live",
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
+    )
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config), \
+         patch("atlas_agent.safety.kill_switch.KillSwitchController") as mock_ks_cls:
+        mock_ks_cls.side_effect = RuntimeError("/Users/secret/path/kill_switch.json.lock: permission denied")
+        code = main(["broker", "opt-in"])
+    captured = capsys.readouterr().out
+    assert code == 2
+    assert "Kill switch state is unreadable" in captured
+    # No raw exception text, paths, or secrets in output
+    assert "permission denied" not in captured
+    assert "/Users/" not in captured
+    assert "secret" not in captured.lower()
+    assert "kill_switch" not in captured.lower()
+    # No opt-in record written
+    opt_in_file = tmp_path / ".atlas" / "safety" / "live_submit_opt_in.jsonl"
+    assert not opt_in_file.exists() or opt_in_file.read_text().strip() == ""

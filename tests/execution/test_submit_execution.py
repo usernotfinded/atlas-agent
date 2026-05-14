@@ -3062,6 +3062,53 @@ def test_mark_submit_requested_failure_emits_blocked(tmp_path: Path) -> None:
     assert len(attempted_events) == 0
 
 
+def test_order_reconstruction_failure_emits_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-reconstruct-fail")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls, \
+         patch("atlas_agent.execution.submit_execution._reconstruct_order", side_effect=RuntimeError("FAKE_SECRET_PAYLOAD {'symbol': 'LEAK'}")):
+        mock_resolver = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_exec_resolution = MagicMock()
+        mock_exec_resolution.execution_broker = MagicMock()
+        mock_resolver.resolve_execution_broker.return_value = mock_exec_resolution
+        mock_resolver_cls.return_value = mock_resolver
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfigCanSubmit(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "invalid_pending_order"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    event_payload = blocked_events[0]["payload"]
+    assert event_payload["reason_code"] == "invalid_pending_order"
+    assert event_payload["gate"] == "order_reconstruction"
+    assert event_payload["order_id"] == order.id
+    payload_str = str(event_payload)
+    # Zero live_submit_attempted
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+    # No payload leaks
+    assert "FAKE_SECRET" not in payload_str
+    assert "LEAK" not in payload_str
+    assert "symbol" not in payload_str.lower()
+    assert "traceback" not in payload_str.lower()
+
+
 def test_resolve_execution_broker_none_emits_blocked(tmp_path: Path) -> None:
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="audit-no-broker")
@@ -3337,3 +3384,406 @@ def test_audit_payload_does_not_contain_secrets(tmp_path: Path) -> None:
         assert "symbol" not in payload_str.lower()
         assert "quantity" not in payload_str.lower()
         assert "limit_price" not in payload_str.lower()
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.2: Live-submit audit hardening — missing gate coverage
+# ---------------------------------------------------------------------------
+
+def test_live_trading_disabled_emits_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-live-off")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    config = FakeConfig()
+    config.enable_live_trading = False
+
+    report = run_submit_execution(order.id, config, manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "live_trading_disabled"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "live_trading_disabled"
+    assert blocked_events[0]["payload"]["gate"] == "live_trading_enabled"
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+def test_kill_switch_active_first_check_emits_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-ks-first")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=True, mode="soft_pause")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "kill_switch_active"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "kill_switch_active"
+    assert blocked_events[0]["payload"]["gate"] == "kill_switch"
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+def test_broker_sync_unavailable_can_sync_emits_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-sync")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=False, can_submit=False)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "broker_sync_unavailable"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "broker_sync_unavailable"
+    assert blocked_events[0]["payload"]["gate"] == "can_sync"
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+def test_broker_sync_unavailable_provider_emits_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-provider")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_resolver.resolve_sync_provider.return_value = MagicMock(sync_provider=None)
+        mock_resolver_cls.return_value = mock_resolver
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "broker_sync_unavailable"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "broker_sync_unavailable"
+    assert blocked_events[0]["payload"]["gate"] == "fresh_sync"
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+def test_live_sync_failed_emits_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-sync-fail")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([{"operation": "test", "error": "FAKE_BROKER_ERROR_BODY"}], "sync_failed")
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "live_sync_failed"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "live_sync_failed"
+    assert blocked_events[0]["payload"]["gate"] == "fresh_sync"
+    # Payload must not contain raw broker error text
+    payload_str = str(blocked_events[0]["payload"])
+    assert "FAKE_BROKER_ERROR_BODY" not in payload_str
+    assert "traceback" not in payload_str.lower()
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+def test_market_price_unavailable_emits_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-market", order_type="market")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_price_unavailable"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "market_price_unavailable"
+    assert blocked_events[0]["payload"]["gate"] == "market_price"
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+def test_live_submit_side_not_allowed_emits_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-side", side="sell")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfigCanSubmit(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "live_submit_side_not_allowed"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "live_submit_side_not_allowed"
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+def test_execution_broker_invalid_emits_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-broker-invalid", symbol="TEST", side="buy", quantity=1.0, limit_price=100.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_exec_resolution = MagicMock()
+        # execution_broker exists but has no place_order callable
+        mock_exec_resolution.execution_broker = object()
+        mock_resolver.resolve_execution_broker.return_value = mock_exec_resolution
+        mock_resolver_cls.return_value = mock_resolver
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfigCanSubmit(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    assert report.blocked_reason == "execution_broker_invalid"
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    assert blocked_events[0]["payload"]["reason_code"] == "execution_broker_invalid"
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 0
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.2: Negative tests — these gates must NOT emit live_submit_blocked
+# ---------------------------------------------------------------------------
+
+def test_path_traversal_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    mock_audit = _mock_audit_writer()
+    report = run_submit_execution("../../etc/passwd", FakeConfig(), manager, audit_writer=mock_audit)
+    assert report.ok is False
+    assert report.blocked_reason == "invalid_pending_order_id"
+    assert len(mock_audit.events) == 0
+
+
+def test_pending_order_not_found_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    mock_audit = _mock_audit_writer()
+    report = run_submit_execution("nonexistent-order", FakeConfig(), manager, audit_writer=mock_audit)
+    assert report.ok is False
+    assert report.blocked_reason == "pending_order_not_found"
+    assert len(mock_audit.events) == 0
+
+
+def test_already_submitted_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="already-submitted")
+    payload = _make_v2_payload(order, status="submitted")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+    report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+    assert report.ok is False
+    assert report.blocked_reason == "already_submitted"
+    assert len(mock_audit.events) == 0
+
+
+def test_not_approved_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="not-approved")
+    payload = _make_v2_payload(order, approved=False, status="pending_approval")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+    report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+    assert report.ok is False
+    assert report.blocked_reason == "not_approved"
+    assert len(mock_audit.events) == 0
+
+
+def test_approval_expired_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="expired")
+    payload = _make_v2_payload(order)
+    payload["expires_at"] = "2020-01-01T00:00:00+00:00"
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+    report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+    assert report.ok is False
+    assert report.blocked_reason == "approval_expired"
+    assert len(mock_audit.events) == 0
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.2: Payload safety hardening
+# ---------------------------------------------------------------------------
+
+def test_attempted_payload_on_broker_error_contains_no_broker_body(tmp_path: Path) -> None:
+    """live_submit_attempted payload must not contain broker response body or exception text."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-attempt-payload", symbol="TEST", side="buy", quantity=1.0, limit_price=100.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    mock_broker = MagicMock()
+    mock_broker.place_order.side_effect = BrokerOperationError("broker transport request failed")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_exec_resolution = MagicMock()
+        mock_exec_resolution.execution_broker = mock_broker
+        mock_resolver.resolve_execution_broker.return_value = mock_exec_resolution
+        mock_resolver_cls.return_value = mock_resolver
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        report = run_submit_execution(order.id, FakeConfigCanSubmit(), manager, audit_writer=mock_audit)
+
+    assert report.ok is False
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 1
+    p = attempted_events[0]["payload"]
+    p_str = str(p)
+    assert p["status"] == "attempted"
+    assert "broker transport" not in p_str
+    assert "exception" not in p_str.lower()
+    assert "traceback" not in p_str.lower()
+    assert "response" not in p_str.lower()
+    assert "body" not in p_str.lower()
+    assert "FAKE_BROKER" not in p_str
+    assert "symbol" not in p_str.lower()
+    assert "quantity" not in p_str.lower()
+    assert "limit_price" not in p_str.lower()
+    assert "APCA" not in p_str
+    assert "header" not in p_str.lower()
+
+
+def test_blocked_payload_contains_only_safe_fields(tmp_path: Path) -> None:
+    """live_submit_blocked payload must contain only the safe structured field set."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="audit-safe-payload")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    mock_audit = _mock_audit_writer()
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+        run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
+
+    blocked_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_blocked"]
+    assert len(blocked_events) == 1
+    p = blocked_events[0]["payload"]
+    allowed_keys = {"mode", "broker_id", "order_id", "client_order_id", "reason_code", "gate", "status"}
+    assert set(p.keys()) == allowed_keys
+    p_str = str(p)
+    assert "symbol" not in p_str.lower()
+    assert "quantity" not in p_str.lower()
+    assert "limit_price" not in p_str.lower()
+    assert "side" not in p_str.lower()
+    assert "stop_loss" not in p_str.lower()
+    assert "confidence" not in p_str.lower()
+    assert "leverage" not in p_str.lower()
+    assert "path" not in p_str.lower() or "order_id" in p_str
+    assert "pending_orders" not in p_str
+    assert str(path) not in p_str
+    assert "traceback" not in p_str.lower()
+    assert "exception" not in p_str.lower()
+    assert "APCA" not in p_str
+    assert "api_key" not in p_str.lower()
+    assert "secret" not in p_str.lower()

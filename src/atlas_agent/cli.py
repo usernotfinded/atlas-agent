@@ -1598,13 +1598,20 @@ def _cmd_broker_opt_in(args: argparse.Namespace, config: AtlasConfig) -> int:
         if ks_status.enabled and ks_status.mode != "normal":
             print(f"ERROR: Kill switch is active (mode={ks_status.mode}).")
             return 2
-    except Exception as exc:
-        print(f"ERROR: Kill switch state unreadable: {exc}")
+    except Exception:
+        print("ERROR: Kill switch state is unreadable.")
         return 2
 
     broker_id = config.broker.provider
     if broker_id in {"", "none"}:
         print("ERROR: No live broker configured.")
+        return 2
+
+    # Credentials check
+    from atlas_agent.brokers.resolver import BrokerResolver
+    resolver = BrokerResolver(config)
+    if not resolver._credentials_configured(broker_id):
+        print("ERROR: Live broker credentials are missing.")
         return 2
 
     # Confirmation prompt

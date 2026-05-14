@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Audit emission is best-effort: failures are caught silently and never change `SubmitExecutionReport` outcome.
   - Audit payloads contain only safe structured fields (`order_id`, `client_order_id`, `broker_id`, `reason_code`, `gate`, `status`, `mode`). No raw order data, broker responses, exceptions, paths, or secrets.
   - CLI `submit-approved-order` (no flags) now creates an `AuditWriter` and passes it to `run_submit_execution`.
+- **Batch 5.2 — Live-Submit Audit and Opt-In Hardening**:
+  - `atlas broker opt-in` now additionally verifies live broker credentials are configured before recording the opt-in.
+  - Comprehensive audit emission coverage tests added for every live-submit gate:
+    - Positive tests: `live_trading_disabled`, `kill_switch_active` (both checks), `broker_sync_unavailable` (both paths), `live_sync_failed`, `market_price_unavailable`, `live_submit_side_not_allowed`, `execution_broker_invalid`.
+    - Negative tests: terminal states (`already_submitted`, etc.), `not_approved`, `approval_expired`, `path_traversal`, `pending_order_not_found` do **not** emit `live_submit_blocked`.
+  - Payload safety tests strengthened to prove audit events never contain: raw order payload, broker response bodies, exception text, stack traces, API keys, APCA headers, file paths, or raw pending payload values.
+  - Payload key-set test proves `live_submit_blocked` payloads contain exactly the allowed structured fields (`mode`, `broker_id`, `order_id`, `client_order_id`, `reason_code`, `gate`, `status`).
+  - Audit write failure safety tests verify that `RuntimeError` during `write_event` does not change `SubmitExecutionReport` outcome.
+  - New CLI tests: `enable_live_trading=false` blocks opt-in; missing credentials block opt-in.
   - New CLI commands:
     - `atlas broker opt-in` — requires typed confirmation, writes opt-in record to `audit/live_submit_opt_in.jsonl` and audit log.
     - `atlas broker opt-out` — writes opt-out record to invalidate prior opt-in.
