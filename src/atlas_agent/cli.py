@@ -504,6 +504,19 @@ def run_once(
         source="strategy",
     )
     audit = AuditLogger(config.audit_dir)
+
+    # Live analysis-only path: sync real portfolio, evaluate risk, no submit
+    if mode == "live":
+        return _run_once_live_analysis(
+            order=order,
+            config=config,
+            audit=audit,
+            event_logger=event_logger,
+            run_id=run_id,
+            command=command,
+            market_price=latest.close,
+        )
+
     portfolio = PortfolioState(cash=config.starting_cash)
     try:
         broker = _broker_for_mode(mode, config, portfolio, audit)
@@ -560,6 +573,253 @@ def _broker_for_mode(
         return resolution.execution_broker
 
     raise BrokerConfigurationError(f"no execution broker available for mode: {mode}")
+
+
+def _run_once_live_analysis(
+    order: Order,
+    config: AtlasConfig,
+    audit: AuditLogger,
+    event_logger: EventLogger | None,
+    run_id: str | None,
+    command: str,
+    market_price: float,
+) -> OrderResult:
+    """Live analysis-only path: sync real portfolio, evaluate risk, never submit."""
+    from atlas_agent.brokers.live_sync_validation import validate_live_sync
+    from atlas_agent.brokers.resolver import BrokerResolver
+    from atlas_agent.brokers.sync import BrokerSyncService
+    from atlas_agent.risk.limits import RiskLimits
+    from atlas_agent.risk.manager import RiskManager
+    from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
+
+    # 1. Live opt-in gate
+    if not config.enable_live_trading:
+        audit.write("run_once_live_disabled", {"order_id": order.id, "mode": "live"})
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "run_once_live_disabled",
+                run_id=run_id,
+                command=command,
+                mode="live",
+                payload={"order_id": order.id},
+            )
+        return OrderResult(
+            accepted=False,
+            filled=False,
+            order_id=order.id,
+            status="rejected",
+            message="Live trading is not enabled. Set enable_live_trading=true to use live analysis mode.",
+            reasons=("live_trading_disabled",),
+        )
+
+    resolver = BrokerResolver(config)
+
+    # 2. Resolve broker status
+    status = resolver.resolve_status("live")
+    if not status.can_sync:
+        audit.write("run_once_live_sync_failed", {"order_id": order.id, "mode": "live", "reason": "can_sync_false"})
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "run_once_live_sync_failed",
+                run_id=run_id,
+                command=command,
+                mode="live",
+                payload={"order_id": order.id, "reason": "can_sync_false"},
+            )
+        return OrderResult(
+            accepted=False,
+            filled=False,
+            order_id=order.id,
+            status="rejected",
+            message=status.message,
+            reasons=("broker_sync_unavailable",),
+        )
+
+    # 3. Resolve sync provider
+    resolution = resolver.resolve_sync_provider("live")
+    if resolution.sync_provider is None:
+        audit.write("run_once_live_sync_failed", {"order_id": order.id, "mode": "live", "reason": "no_sync_provider"})
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "run_once_live_sync_failed",
+                run_id=run_id,
+                command=command,
+                mode="live",
+                payload={"order_id": order.id, "reason": "no_sync_provider"},
+            )
+        return OrderResult(
+            accepted=False,
+            filled=False,
+            order_id=order.id,
+            status="rejected",
+            message=resolution.status.message,
+            reasons=("broker_sync_unavailable",),
+        )
+
+    audit.write("run_once_live_sync_started", {"order_id": order.id, "mode": "live", "broker_id": status.broker_id})
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "run_once_live_sync_started",
+            run_id=run_id,
+            command=command,
+            mode="live",
+            payload={"order_id": order.id, "broker_id": status.broker_id},
+        )
+
+    # 4. Sync
+    sync_service = BrokerSyncService(
+        broker=resolution.sync_provider,
+        audit_writer=None,
+        run_id=run_id or "unknown",
+    )
+    sync_result = sync_service.sync()
+
+    # 5. Validate sync result
+    sync_warnings, sync_error = validate_live_sync(sync_result, resolution.status)
+    if sync_error is not None:
+        failed_operations = sync_error["diagnostics"].get("failed_operations", [])
+        audit.write(
+            "run_once_live_sync_failed",
+            {"order_id": order.id, "mode": "live", "failed_operations": failed_operations},
+        )
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "run_once_live_sync_failed",
+                run_id=run_id,
+                command=command,
+                mode="live",
+                payload={"order_id": order.id, "failed_operations": failed_operations},
+            )
+        return OrderResult(
+            accepted=False,
+            filled=False,
+            order_id=order.id,
+            status="rejected",
+            message=sync_error["errors"][0],
+            reasons=tuple(str(op) for op in failed_operations),
+        )
+
+    # 6. Build PortfolioSnapshot
+    portfolio_snapshot = sync_service.get_portfolio_snapshot(
+        sync_result, broker_id=resolution.status.broker_id
+    )
+
+    # 7. Build OrderRiskInput
+    effective_price = order.limit_price if order.limit_price is not None else market_price
+    risk_input = OrderRiskInput(
+        symbol=order.symbol,
+        side=order.side,
+        quantity=order.quantity,
+        price=effective_price,
+        notional=order.quantity * effective_price,
+        leverage=getattr(order, "leverage", 1.0),
+        confidence=order.confidence,
+        stop_loss=order.stop_loss,
+    )
+
+    # 8. Evaluate risk
+    risk_limits = RiskLimits(
+        max_position_notional=config.max_position_size,
+        max_single_trade_notional=config.max_order_notional,
+        allowed_symbols=config.symbol_allowlist,
+        blocked_symbols=config.symbol_blocklist or set(),
+        live_trading_enabled=config.enable_live_trading,
+        paper_only=not config.enable_live_trading,
+        require_stop_loss_live=config.require_stop_loss_live,
+    )
+    risk_manager = RiskManager(
+        limits=risk_limits,
+        audit_writer=None,
+        run_id=run_id or "unknown",
+    )
+    decision = risk_manager.evaluate_order(risk_input, portfolio_snapshot, mode="live")
+
+    audit.write(
+        "run_once_live_risk_evaluated",
+        {
+            "order_id": order.id,
+            "mode": "live",
+            "allowed": decision.allowed,
+            "violations_count": len(decision.violations),
+            "classification": decision.classification,
+        },
+    )
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "run_once_live_risk_evaluated",
+            run_id=run_id,
+            command=command,
+            mode="live",
+            payload={
+                "order_id": order.id,
+                "allowed": decision.allowed,
+                "violations_count": len(decision.violations),
+                "classification": decision.classification,
+            },
+        )
+
+    if not decision.allowed:
+        audit.write(
+            "run_once_live_rejected",
+            {
+                "order_id": order.id,
+                "mode": "live",
+                "reasons": [v.rule for v in decision.violations],
+            },
+        )
+        if event_logger is not None and run_id is not None:
+            event_logger.write(
+                "run_once_live_rejected",
+                run_id=run_id,
+                command=command,
+                mode="live",
+                payload={
+                    "order_id": order.id,
+                    "reasons": [v.rule for v in decision.violations],
+                },
+            )
+        return OrderResult(
+            accepted=False,
+            filled=False,
+            order_id=order.id,
+            status="rejected",
+            message="risk manager rejected order",
+            reasons=tuple(v.rule for v in decision.violations),
+        )
+
+    # 9. Analysis-only success
+    warning_reasons: list[str] = []
+    message = "Risk check passed. Live order submission is deferred."
+    if sync_warnings:
+        warning_names = [w["operation"] for w in sync_warnings]
+        message += f" Sync warning(s): {', '.join(warning_names)}."
+        warning_reasons = [f"{w['operation']}_warning" for w in sync_warnings]
+
+    reasons: tuple[str, ...] = ("live_submit_deferred",)
+    if warning_reasons:
+        reasons = ("live_submit_deferred",) + tuple(warning_reasons)
+
+    audit.write(
+        "run_once_live_analysis_only",
+        {"order_id": order.id, "mode": "live", "message": message},
+    )
+    if event_logger is not None and run_id is not None:
+        event_logger.write(
+            "run_once_live_analysis_only",
+            run_id=run_id,
+            command=command,
+            mode="live",
+            payload={"order_id": order.id, "message": message},
+        )
+
+    return OrderResult(
+        accepted=False,
+        filled=False,
+        order_id=order.id,
+        status="live_analysis_only",
+        message=message,
+        reasons=reasons,
+    )
 
 
 def _memory_search_matches(config: AtlasConfig, query: str) -> tuple[list[dict[str, str]], str | None]:

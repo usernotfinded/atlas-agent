@@ -23,6 +23,7 @@ from atlas_agent.core.types import Session
 from atlas_agent.providers.factory import get_provider_from_runtime_config
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.builtin import BUILTIN_TOOLS
+from atlas_agent.brokers.live_sync_validation import validate_live_sync
 
 
 def _check_discipline_gate(config: AtlasConfig) -> None:
@@ -178,78 +179,13 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     # Live mode: critical sync fields are required
     sync_warnings: list[dict[str, str]] = []
     if effective_mode == "live":
-        broker_errors = sync_result.diagnostics.get("broker_errors", [])
-        if not isinstance(broker_errors, list):
+        sync_warnings, sync_error = validate_live_sync(sync_result, resolution.status)
+        if sync_error is not None:
             return AgentResult(
                 status="error",
-                errors=["live broker sync failed: malformed diagnostics"],
-                diagnostics={
-                    "broker_status": resolution.status.to_dict(),
-                    "sync_status": sync_result.status,
-                    "failed_operations": ["malformed_broker_errors"],
-                },
+                errors=sync_error["errors"],
+                diagnostics=sync_error["diagnostics"],
             )
-        # Validate every item is a well-formed error dict with required string fields
-        required_fields = {"code", "operation", "broker", "message"}
-        for entry in broker_errors:
-            if not isinstance(entry, dict):
-                return AgentResult(
-                    status="error",
-                    errors=["live broker sync failed: malformed diagnostics"],
-                    diagnostics={
-                        "broker_status": resolution.status.to_dict(),
-                        "sync_status": sync_result.status,
-                        "failed_operations": ["malformed_broker_errors"],
-                    },
-                )
-            missing_fields = required_fields - set(entry.keys())
-            if missing_fields:
-                return AgentResult(
-                    status="error",
-                    errors=["live broker sync failed: malformed diagnostics"],
-                    diagnostics={
-                        "broker_status": resolution.status.to_dict(),
-                        "sync_status": sync_result.status,
-                        "failed_operations": ["malformed_broker_errors"],
-                    },
-                )
-            if not all(isinstance(entry.get(f), str) for f in required_fields):
-                return AgentResult(
-                    status="error",
-                    errors=["live broker sync failed: malformed diagnostics"],
-                    diagnostics={
-                        "broker_status": resolution.status.to_dict(),
-                        "sync_status": sync_result.status,
-                        "failed_operations": ["malformed_broker_errors"],
-                    },
-                )
-        failed_ops = {
-            e.get("operation")
-            for e in broker_errors
-        }
-        critical_ops = {"sync_account_state", "sync_positions", "sync_open_orders"}
-        if sync_result.account is None:
-            failed_ops.add("sync_account_state")
-        if failed_ops & critical_ops:
-            missing = sorted(failed_ops & critical_ops)
-            return AgentResult(
-                status="error",
-                errors=[f"live broker sync failed: {', '.join(missing)}"],
-                diagnostics={
-                    "broker_status": resolution.status.to_dict(),
-                    "sync_status": sync_result.status,
-                    "failed_operations": missing,
-                },
-            )
-        # Collect noncritical warnings (e.g., balances-only failure)
-        noncritical_ops = sorted(failed_ops - critical_ops)
-        for op in noncritical_ops:
-            entry = next((e for e in broker_errors if e.get("operation") == op), {})
-            sync_warnings.append({
-                "operation": op,
-                "code": entry.get("code", "unknown"),
-                "broker": entry.get("broker", "unknown"),
-            })
 
     portfolio_snapshot = sync_service.get_portfolio_snapshot(
         sync_result, broker_id=resolution.status.broker_id
