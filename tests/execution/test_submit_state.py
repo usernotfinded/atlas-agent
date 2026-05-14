@@ -29,6 +29,10 @@ from atlas_agent.execution.submit_state import (
     mark_reconciliation_required,
     mark_duplicate_reconciled,
     _atomic_write_json,
+    mark_acknowledged,
+    mark_submit_failed,
+    mark_submit_uncertain,
+    mark_submit_prepare_failed,
 )
 
 
@@ -916,3 +920,540 @@ def test_mark_submit_requested_rejects_tampered_hash(tmp_path: Path) -> None:
             order_id=order.id,
             client_order_id=cid,
         )
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.8: Post-submit state mutation helpers (unwired)
+# ---------------------------------------------------------------------------
+
+def _make_submit_requested_payload(order: Order, **overrides) -> dict:
+    """Return a payload already in submit_requested state."""
+    payload = _make_v2_payload(order)
+    cid = compute_client_order_id(order.id, payload["order_hash"])
+    payload["status"] = "submit_requested"
+    payload["client_order_id"] = cid
+    payload["submit_requested_at"] = datetime.now(UTC).isoformat()
+    payload["status_transitions"].append({
+        "status": "submit_requested",
+        "at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+    })
+    payload["submit_attempts"] = [{
+        "attempt_id": str(uuid.uuid4()),
+        "client_order_id": cid,
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    payload.update(overrides)
+    return payload
+
+
+# ---------------------------------------------------------------------------
+# mark_acknowledged
+# ---------------------------------------------------------------------------
+
+def test_mark_acknowledged_sets_status_and_submitted_at(tmp_path: Path) -> None:
+    order = _make_order(id="ack-test")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    now = datetime(2026, 5, 14, 13, 0, 0, tzinfo=UTC)
+
+    mark_acknowledged(
+        path,
+        broker_order_id="broker-123",
+        broker_status="new",
+        now=now,
+    )
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "acknowledged"
+    assert loaded["submitted_at"] == "2026-05-14T13:00:00+00:00"
+    assert loaded["broker_order_id"] == "broker-123"
+    assert loaded["broker_status"] == "new"
+
+
+def test_mark_acknowledged_updates_last_attempt(tmp_path: Path) -> None:
+    order = _make_order(id="ack-attempt")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_acknowledged(
+        path,
+        broker_order_id="broker-456",
+        broker_status="filled",
+    )
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert len(loaded["submit_attempts"]) == 1
+    attempt = loaded["submit_attempts"][0]
+    assert attempt["status"] == "acknowledged"
+    assert attempt["broker_order_id"] == "broker-456"
+    assert attempt["error_code"] is None
+
+
+def test_mark_acknowledged_appends_status_transition(tmp_path: Path) -> None:
+    order = _make_order(id="ack-transition")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_acknowledged(
+        path,
+        broker_order_id="broker-789",
+        broker_status="accepted",
+    )
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    transition = loaded["status_transitions"][-1]
+    assert transition["status"] == "acknowledged"
+    assert transition["actor"] == "system"
+    assert transition["reason"] == "broker_acknowledged"
+    assert "broker-789" not in transition["reason"]
+
+
+def test_mark_acknowledged_rejects_non_submit_requested_status(tmp_path: Path) -> None:
+    order = _make_order(id="ack-bad-status")
+    payload = _make_v2_payload(order, status="approved")
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="status must be submit_requested"):
+        mark_acknowledged(path, broker_order_id="broker-123", broker_status="new")
+
+
+def test_mark_acknowledged_rejects_empty_broker_order_id(tmp_path: Path) -> None:
+    order = _make_order(id="ack-bad-boid")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        mark_acknowledged(path, broker_order_id="", broker_status="new")
+
+
+def test_mark_acknowledged_rejects_none_broker_order_id(tmp_path: Path) -> None:
+    order = _make_order(id="ack-none-boid")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        mark_acknowledged(path, broker_order_id=None, broker_status="new")
+
+
+def test_mark_acknowledged_rejects_unknown_broker_status(tmp_path: Path) -> None:
+    order = _make_order(id="ack-bad-status2")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid broker_status"):
+        mark_acknowledged(path, broker_order_id="broker-123", broker_status="hacked")
+
+
+def test_mark_acknowledged_rejects_secret_shaped_broker_order_id(tmp_path: Path) -> None:
+    order = _make_order(id="ack-secret")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        mark_acknowledged(path, broker_order_id="FAKE_SECRET_KEY_123", broker_status="new")
+
+
+def test_mark_acknowledged_preserves_original_on_write_failure(tmp_path: Path) -> None:
+    order = _make_order(id="ack-atomic")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    original = path.read_text(encoding="utf-8")
+
+    def _failing_write(*args, **kwargs):
+        raise OSError("disk full")
+
+    with patch.object(Path, "write_text", _failing_write):
+        with pytest.raises(OSError, match="disk full"):
+            mark_acknowledged(path, broker_order_id="broker-999", broker_status="new")
+
+    after = path.read_text(encoding="utf-8")
+    assert after == original
+
+
+# ---------------------------------------------------------------------------
+# mark_submit_failed
+# ---------------------------------------------------------------------------
+
+def test_mark_submit_failed_sets_status_and_error_code(tmp_path: Path) -> None:
+    order = _make_order(id="fail-test")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_submit_failed(path, error_code="broker_rejected_order")
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "failed"
+    assert loaded.get("submitted_at") is None
+    assert loaded.get("broker_order_id") is None
+    assert len(loaded["submit_attempts"]) == 1
+    assert loaded["submit_attempts"][0]["status"] == "failed"
+    assert loaded["submit_attempts"][0]["error_code"] == "broker_rejected_order"
+
+
+def test_mark_submit_failed_rejects_non_submit_requested_status(tmp_path: Path) -> None:
+    order = _make_order(id="fail-bad-status")
+    payload = _make_v2_payload(order, status="approved")
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="status must be submit_requested"):
+        mark_submit_failed(path, error_code="broker_rejected_order")
+
+
+def test_mark_submit_failed_rejects_unknown_error_code(tmp_path: Path) -> None:
+    order = _make_order(id="fail-bad-code")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid submit attempt"):
+        mark_submit_failed(path, error_code="hacked")
+
+
+def test_mark_submit_failed_rejects_secret_shaped_error_code(tmp_path: Path) -> None:
+    order = _make_order(id="fail-secret")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid submit attempt"):
+        mark_submit_failed(path, error_code="FAKE_API_KEY_123")
+
+    # Verify secret does not leak in exception message
+    try:
+        mark_submit_failed(path, error_code="FAKE_API_KEY_123")
+    except SubmitStateError as exc:
+        assert "FAKE_API_KEY" not in str(exc)
+
+
+def test_mark_submit_failed_preserves_original_on_write_failure(tmp_path: Path) -> None:
+    order = _make_order(id="fail-atomic")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    original = path.read_text(encoding="utf-8")
+
+    def _failing_write(*args, **kwargs):
+        raise OSError("disk full")
+
+    with patch.object(Path, "write_text", _failing_write):
+        with pytest.raises(OSError, match="disk full"):
+            mark_submit_failed(path, error_code="broker_rejected_order")
+
+    after = path.read_text(encoding="utf-8")
+    assert after == original
+
+
+# ---------------------------------------------------------------------------
+# mark_submit_uncertain
+# ---------------------------------------------------------------------------
+
+def test_mark_submit_uncertain_sets_status_and_error_code(tmp_path: Path) -> None:
+    order = _make_order(id="uncertain-test")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_submit_uncertain(path, error_code="broker_transport_failed")
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "submit_uncertain"
+    assert loaded.get("submitted_at") is None
+    assert loaded.get("broker_order_id") is None
+    assert len(loaded["submit_attempts"]) == 1
+    assert loaded["submit_attempts"][0]["status"] == "submit_uncertain"
+    assert loaded["submit_attempts"][0]["error_code"] == "broker_transport_failed"
+
+
+def test_mark_submit_uncertain_rejects_non_submit_requested_status(tmp_path: Path) -> None:
+    order = _make_order(id="uncertain-bad-status")
+    payload = _make_v2_payload(order, status="approved")
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="status must be submit_requested"):
+        mark_submit_uncertain(path, error_code="broker_transport_failed")
+
+
+def test_mark_submit_uncertain_rejects_unknown_error_code(tmp_path: Path) -> None:
+    order = _make_order(id="uncertain-bad-code")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid submit attempt"):
+        mark_submit_uncertain(path, error_code="hacked")
+
+
+def test_mark_submit_uncertain_preserves_original_on_write_failure(tmp_path: Path) -> None:
+    order = _make_order(id="uncertain-atomic")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    original = path.read_text(encoding="utf-8")
+
+    def _failing_write(*args, **kwargs):
+        raise OSError("disk full")
+
+    with patch.object(Path, "write_text", _failing_write):
+        with pytest.raises(OSError, match="disk full"):
+            mark_submit_uncertain(path, error_code="broker_unavailable")
+
+    after = path.read_text(encoding="utf-8")
+    assert after == original
+
+
+# ---------------------------------------------------------------------------
+# mark_submit_prepare_failed
+# ---------------------------------------------------------------------------
+
+def test_mark_submit_prepare_failed_sets_status_and_error_code(tmp_path: Path) -> None:
+    order = _make_order(id="prepare-fail-test")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_submit_prepare_failed(path, error_code="execution_broker_unavailable")
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "submit_prepare_failed"
+    assert loaded.get("submitted_at") is None
+    assert loaded.get("broker_order_id") is None
+    assert len(loaded["submit_attempts"]) == 1
+    assert loaded["submit_attempts"][0]["status"] == "submit_prepare_failed"
+    assert loaded["submit_attempts"][0]["error_code"] == "execution_broker_unavailable"
+
+
+def test_mark_submit_prepare_failed_rejects_non_submit_requested_status(tmp_path: Path) -> None:
+    order = _make_order(id="prepare-bad-status")
+    payload = _make_v2_payload(order, status="approved")
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="status must be submit_requested"):
+        mark_submit_prepare_failed(path, error_code="execution_broker_unavailable")
+
+
+def test_mark_submit_prepare_failed_rejects_non_preparation_error_codes(tmp_path: Path) -> None:
+    order = _make_order(id="prepare-bad-code")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    # These are post-broker error codes, not allowed for submit_prepare_failed
+    for bad_code in ("broker_rejected_order", "broker_transport_failed", "unknown"):
+        with pytest.raises(SubmitStateError, match="invalid submit attempt"):
+            mark_submit_prepare_failed(path, error_code=bad_code)
+
+
+def test_mark_submit_prepare_failed_accepts_both_valid_codes(tmp_path: Path) -> None:
+    order = _make_order(id="prepare-valid")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_submit_prepare_failed(path, error_code="execution_broker_unavailable")
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "submit_prepare_failed"
+
+    # Reset and try the other valid code
+    _write_payload(path, payload)
+    mark_submit_prepare_failed(path, error_code="execution_broker_invalid")
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "submit_prepare_failed"
+
+
+def test_mark_submit_prepare_failed_preserves_original_on_write_failure(tmp_path: Path) -> None:
+    order = _make_order(id="prepare-atomic")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    original = path.read_text(encoding="utf-8")
+
+    def _failing_write(*args, **kwargs):
+        raise OSError("disk full")
+
+    with patch.object(Path, "write_text", _failing_write):
+        with pytest.raises(OSError, match="disk full"):
+            mark_submit_prepare_failed(path, error_code="execution_broker_invalid")
+
+    after = path.read_text(encoding="utf-8")
+    assert after == original
+
+
+# ---------------------------------------------------------------------------
+# submitted_at semantics across all post-submit helpers
+# ---------------------------------------------------------------------------
+
+def test_submitted_at_null_for_failed(tmp_path: Path) -> None:
+    order = _make_order(id="at-null-fail")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_submit_failed(path, error_code="broker_rejected_order")
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded.get("submitted_at") is None
+
+
+def test_submitted_at_null_for_submit_prepare_failed(tmp_path: Path) -> None:
+    order = _make_order(id="at-null-prepare")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_submit_prepare_failed(path, error_code="execution_broker_unavailable")
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded.get("submitted_at") is None
+
+
+def test_submitted_at_null_for_submit_uncertain(tmp_path: Path) -> None:
+    order = _make_order(id="at-null-uncertain")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_submit_uncertain(path, error_code="broker_transport_failed")
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded.get("submitted_at") is None
+
+
+def test_submitted_at_set_for_acknowledged(tmp_path: Path) -> None:
+    order = _make_order(id="at-set-ack")
+    payload = _make_submit_requested_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    now = datetime(2026, 5, 14, 14, 0, 0, tzinfo=UTC)
+    mark_acknowledged(path, broker_order_id="broker-999", broker_status="new", now=now)
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["submitted_at"] == "2026-05-14T14:00:00+00:00"
+
+
+# ---------------------------------------------------------------------------
+# Batch 4.8 unwiring confirmation
+# ---------------------------------------------------------------------------
+
+def test_submit_execution_still_does_not_call_mark_acknowledged(tmp_path: Path) -> None:
+    """Confirm run_submit_execution does not import or call mark_acknowledged (Batch 4.8 unwired)."""
+    from atlas_agent.execution import submit_execution
+    from atlas_agent.execution.submit_execution import run_submit_execution
+    from unittest.mock import MagicMock, patch
+
+    # Verify the function is not imported by submit_execution
+    assert not hasattr(submit_execution, "mark_acknowledged")
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="unwired-ack")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = MagicMock()
+        mock_resolver_cls.return_value.resolve_status.return_value = MagicMock(
+            can_sync=True, can_submit=False, broker_id="alpaca"
+        )
+        mock_sync_cls.return_value = MagicMock()
+        mock_sync_cls.return_value.sync.return_value = MagicMock(
+            status="success", account=MagicMock(), positions=[], open_orders=[],
+            balances=[], errors=[], diagnostics={"broker_errors": []}
+        )
+        from atlas_agent.risk.models import PortfolioSnapshot
+        mock_sync_cls.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+        mock_validate.return_value = ([], None)
+        from atlas_agent.risk.models import RiskDecision
+        mock_risk_cls.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True, status="allowed", reason="ok", violations=[],
+            classification="opens_new_position",
+        )
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, _FakeConfig(), manager)
+
+    assert report.ok is False
+
+
+def test_submit_execution_still_does_not_call_mark_submit_failed(tmp_path: Path) -> None:
+    """Confirm run_submit_execution does not import or call mark_submit_failed (Batch 4.8 unwired)."""
+    from atlas_agent.execution import submit_execution
+    from atlas_agent.execution.submit_execution import run_submit_execution
+    from unittest.mock import MagicMock, patch
+
+    # Verify the function is not imported by submit_execution
+    assert not hasattr(submit_execution, "mark_submit_failed")
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="unwired-fail")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = MagicMock()
+        mock_resolver_cls.return_value.resolve_status.return_value = MagicMock(
+            can_sync=True, can_submit=False, broker_id="alpaca"
+        )
+        mock_sync_cls.return_value = MagicMock()
+        mock_sync_cls.return_value.sync.return_value = MagicMock(
+            status="success", account=MagicMock(), positions=[], open_orders=[],
+            balances=[], errors=[], diagnostics={"broker_errors": []}
+        )
+        from atlas_agent.risk.models import PortfolioSnapshot
+        mock_sync_cls.return_value.get_portfolio_snapshot.return_value = PortfolioSnapshot(
+            cash=10000, equity=10000, total_exposure=0
+        )
+        mock_validate.return_value = ([], None)
+        from atlas_agent.risk.models import RiskDecision
+        mock_risk_cls.return_value.evaluate_order.return_value = RiskDecision(
+            allowed=True, status="allowed", reason="ok", violations=[],
+            classification="opens_new_position",
+        )
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, _FakeConfig(), manager)
+
+    assert report.ok is False
+
+
+class _FakeConfig:
+    enable_live_trading = True
+    max_position_size = 10000.0
+    max_order_notional = 5000.0
+    symbol_allowlist = None
+    symbol_blocklist = set()
+    require_stop_loss_live = True
+    pending_orders_dir = Path("pending_orders")
+    live_broker = "alpaca"
+    memory_dir = Path("memory")

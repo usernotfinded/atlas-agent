@@ -257,6 +257,7 @@ _SUBMIT_ATTEMPT_STATUSES = frozenset({
     "acknowledged",
     "failed",
     "submit_uncertain",
+    "submit_prepare_failed",
 })
 
 _SUBMIT_ACTORS = frozenset({
@@ -272,6 +273,8 @@ _SUBMIT_ATTEMPT_ERROR_CODES = frozenset({
     "client_order_id_mismatch",
     "order_not_found",
     "unknown",
+    "execution_broker_unavailable",
+    "execution_broker_invalid",
 })
 
 
@@ -512,5 +515,314 @@ def mark_submit_requested(
         actor=actor,
         attempt_id=attempt_id,
     )
+    _atomic_write_json(path, new_payload)
+    return path
+
+
+# ---------------------------------------------------------------------------
+# Broker status allowlist
+# ---------------------------------------------------------------------------
+
+_BROKER_STATUS_ALLOWLIST = frozenset({
+    "new",
+    "partially_filled",
+    "filled",
+    "done_for_day",
+    "canceled",
+    "expired",
+    "replaced",
+    "pending_cancel",
+    "pending_replace",
+    "accepted",
+    "pending_new",
+    "accepted_for_bidding",
+    "stopped",
+    "rejected",
+    "suspended",
+    "calculated",
+    "open",
+    "pending",
+    "cancelled",
+})
+
+
+def _validate_broker_order_id(broker_order_id: Any) -> None:
+    """Validate a broker_order_id. Raises SubmitStateError with static message.
+
+    Rejects secret-shaped values to prevent accidental leakage.
+    """
+    if not isinstance(broker_order_id, str) or not broker_order_id:
+        raise SubmitStateError("invalid broker_order_id")
+    # Reject obvious secret-shaped values
+    upper = broker_order_id.upper()
+    if "API_KEY" in upper or "SECRET" in upper or "TOKEN" in upper or "PASSWORD" in upper:
+        raise SubmitStateError("invalid broker_order_id")
+
+
+def _validate_broker_status(broker_status: Any) -> None:
+    """Validate a broker_status against the safe allowlist.
+
+    Raises SubmitStateError with a static message (no raw value leak).
+    """
+    if not isinstance(broker_status, str) or broker_status not in _BROKER_STATUS_ALLOWLIST:
+        raise SubmitStateError("invalid broker_status")
+
+
+# ---------------------------------------------------------------------------
+# Post-submit state mutation helpers (all use atomic write)
+# ---------------------------------------------------------------------------
+
+def _update_last_attempt_status(
+    payload: dict[str, Any],
+    status: str,
+    error_code: str | None = None,
+    broker_order_id: str | None = None,
+) -> None:
+    """Update the last submit_attempt entry in-place.
+
+    Does not validate; callers must ensure status/error_code are safe.
+    """
+    attempts = payload.get("submit_attempts")
+    if isinstance(attempts, list) and attempts:
+        last = attempts[-1]
+        last["status"] = status
+        if error_code is not None:
+            last["error_code"] = error_code
+        if broker_order_id is not None:
+            last["broker_order_id"] = broker_order_id
+
+
+def mark_acknowledged(
+    path: Path,
+    *,
+    broker_order_id: str,
+    broker_status: str,
+    now: datetime | None = None,
+) -> Path:
+    """Atomically update the pending order to acknowledged state.
+
+    Preconditions (fail-closed):
+      - File must exist and be valid v2 schema.
+      - status must be "submit_requested".
+      - broker_order_id must be a non-empty string.
+      - broker_status must be in the safe allowlist.
+
+    Side effects:
+      - Sets payload["status"] = "acknowledged"
+      - Sets payload["submitted_at"] = now.isoformat()
+      - Sets payload["broker_order_id"] = broker_order_id
+      - Sets payload["broker_status"] = broker_status
+      - Updates the last submit_attempt entry:
+          status="acknowledged", broker_order_id set, error_code stays None
+      - Appends status_transition entry with static reason
+
+    Returns the path to the updated file.
+    """
+    payload = load_pending_order(path)
+
+    if payload.get("status") != "submit_requested":
+        raise SubmitStateError("status must be submit_requested")
+
+    _validate_broker_order_id(broker_order_id)
+    _validate_broker_status(broker_status)
+
+    if now is None:
+        now = datetime.now(UTC)
+
+    new_payload = copy.deepcopy(payload)
+    new_payload["status"] = "acknowledged"
+    new_payload["submitted_at"] = now.isoformat()
+    new_payload["broker_order_id"] = broker_order_id
+    new_payload["broker_status"] = broker_status
+
+    _update_last_attempt_status(
+        new_payload,
+        status="acknowledged",
+        broker_order_id=broker_order_id,
+    )
+
+    new_payload["status_transitions"] = list(new_payload.get("status_transitions", []))
+    new_payload["status_transitions"].append({
+        "status": "acknowledged",
+        "at": now.isoformat(),
+        "actor": "system",
+        "reason": "broker_acknowledged",
+    })
+
+    _atomic_write_json(path, new_payload)
+    return path
+
+
+def mark_submit_failed(
+    path: Path,
+    *,
+    error_code: str,
+    now: datetime | None = None,
+) -> Path:
+    """Atomically mark the pending order as failed after broker rejection.
+
+    Preconditions (fail-closed):
+      - File must exist and be valid v2 schema.
+      - status must be "submit_requested".
+      - error_code must be in the safe allowlist.
+
+    Side effects:
+      - Sets payload["status"] = "failed"
+      - Keeps submitted_at unchanged / null
+      - Keeps broker_order_id unchanged / null
+      - Updates the last submit_attempt entry: status="failed", error_code set
+      - Appends status_transition entry
+
+    Returns the path to the updated file.
+    """
+    payload = load_pending_order(path)
+
+    if payload.get("status") != "submit_requested":
+        raise SubmitStateError("status must be submit_requested")
+
+    if error_code not in _SUBMIT_ATTEMPT_ERROR_CODES:
+        raise SubmitStateError("invalid submit attempt")
+
+    if now is None:
+        now = datetime.now(UTC)
+
+    new_payload = copy.deepcopy(payload)
+    new_payload["status"] = "failed"
+
+    _update_last_attempt_status(
+        new_payload,
+        status="failed",
+        error_code=error_code,
+    )
+
+    new_payload["status_transitions"] = list(new_payload.get("status_transitions", []))
+    new_payload["status_transitions"].append({
+        "status": "failed",
+        "at": now.isoformat(),
+        "actor": "system",
+        "reason": "broker_rejected",
+        "code": error_code,
+    })
+
+    _atomic_write_json(path, new_payload)
+    return path
+
+
+def mark_submit_uncertain(
+    path: Path,
+    *,
+    error_code: str,
+    now: datetime | None = None,
+) -> Path:
+    """Atomically mark the pending order as uncertain after broker timeout/transport.
+
+    Used ONLY for post-broker uncertainty (timeout, 5xx, transport, malformed
+    response, client_order_id mismatch after request may have been sent, or
+    local write failure after broker ACK).
+
+    Preconditions (fail-closed):
+      - File must exist and be valid v2 schema.
+      - status must be "submit_requested".
+      - error_code must be in the safe allowlist.
+
+    Side effects:
+      - Sets payload["status"] = "submit_uncertain"
+      - Keeps submitted_at unchanged / null
+      - Keeps broker_order_id unchanged / null
+      - Updates the last submit_attempt entry: status="submit_uncertain", error_code set
+      - Appends status_transition entry
+
+    Returns the path to the updated file.
+    """
+    payload = load_pending_order(path)
+
+    if payload.get("status") != "submit_requested":
+        raise SubmitStateError("status must be submit_requested")
+
+    if error_code not in _SUBMIT_ATTEMPT_ERROR_CODES:
+        raise SubmitStateError("invalid submit attempt")
+
+    if now is None:
+        now = datetime.now(UTC)
+
+    new_payload = copy.deepcopy(payload)
+    new_payload["status"] = "submit_uncertain"
+
+    _update_last_attempt_status(
+        new_payload,
+        status="submit_uncertain",
+        error_code=error_code,
+    )
+
+    new_payload["status_transitions"] = list(new_payload.get("status_transitions", []))
+    new_payload["status_transitions"].append({
+        "status": "submit_uncertain",
+        "at": now.isoformat(),
+        "actor": "system",
+        "reason": "broker_uncertain",
+        "code": error_code,
+    })
+
+    _atomic_write_json(path, new_payload)
+    return path
+
+
+def mark_submit_prepare_failed(
+    path: Path,
+    *,
+    error_code: str,
+    now: datetime | None = None,
+) -> Path:
+    """Atomically mark the pending order as prepare-failed.
+
+    Used ONLY for pre-broker local failure after submit_requested was written:
+      - resolve_execution_broker returned None
+      - execution broker object invalid
+      - place_order callable missing
+
+    Preconditions (fail-closed):
+      - File must exist and be valid v2 schema.
+      - status must be "submit_requested".
+      - error_code must be exactly "execution_broker_unavailable" or
+        "execution_broker_invalid".
+
+    Side effects:
+      - Sets payload["status"] = "submit_prepare_failed"
+      - Keeps submitted_at unchanged / null
+      - Keeps broker_order_id unchanged / null
+      - Updates the last submit_attempt entry: status="submit_prepare_failed", error_code set
+      - Appends status_transition entry
+
+    Returns the path to the updated file.
+    """
+    payload = load_pending_order(path)
+
+    if payload.get("status") != "submit_requested":
+        raise SubmitStateError("status must be submit_requested")
+
+    if error_code not in ("execution_broker_unavailable", "execution_broker_invalid"):
+        raise SubmitStateError("invalid submit attempt")
+
+    if now is None:
+        now = datetime.now(UTC)
+
+    new_payload = copy.deepcopy(payload)
+    new_payload["status"] = "submit_prepare_failed"
+
+    _update_last_attempt_status(
+        new_payload,
+        status="submit_prepare_failed",
+        error_code=error_code,
+    )
+
+    new_payload["status_transitions"] = list(new_payload.get("status_transitions", []))
+    new_payload["status_transitions"].append({
+        "status": "submit_prepare_failed",
+        "at": now.isoformat(),
+        "actor": "system",
+        "reason": "execution_broker_failed",
+        "code": error_code,
+    })
+
     _atomic_write_json(path, new_payload)
     return path
