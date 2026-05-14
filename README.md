@@ -53,15 +53,21 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Paper Workflow** | Usable | Deterministic local simulation with pricing. |
 | **Risk Gates** | Implemented | Hard-coded limits for position size, notional, and symbols. |
 | **Audit Logs** | Implemented | Tamper-evident hash-chain and run manifests. |
-| **Broker/API Model** | Beta | Alpaca read-only live sync available. Other adapters remain beta/deferred. |
-| **Live Trading** | Disabled | Strictly opt-in; designed to prevent orders without approval. |
+| **Broker/API Model** | Beta | Alpaca read-only live sync available. `AlpacaBrokerAdapter.get_order_by_client_order_id` supports reconciliation. Other adapters remain beta/deferred. |
+| **Live Trading** | Disabled | Strictly opt-in; `can_submit=false` enforced. `resolve_execution_broker("live")` returns `None`. No live execution broker exposed. |
 | **Broker Integrations** | Beta | Early-stage adapters for third-party broker APIs. |
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.6.dev1)
+## Current Status (v0.5.6.dev2)
 
 Atlas is currently in active development. The current status of major features is reflected in the System Status matrix above. **Live trading | disabled by default**.
+
+### What's New in v0.5.6.dev2
+- **`submit-approved-order --dry-run`**: Validate all live submit gates without executing — includes deterministic `client_order_id` preview and idempotency checks.
+- **`submit-approved-order --reconcile`**: Read-only broker reconciliation for approved orders. Queries the broker via `GET` only (`AlpacaBrokerAdapter.get_order_by_client_order_id`) to detect duplicate submits. Never calls `place_order`.
+- **Idempotency state machine**: Pending orders track `submit_uncertain` and `reconciliation_required` states to prevent accidental duplicate submissions.
+- **Live submit remains fully disabled**: `can_submit=false` for all live brokers. `resolve_execution_broker("live")` returns `None`. No live order execution path exists.
 
 ## Quickstart
 

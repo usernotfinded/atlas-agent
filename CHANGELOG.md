@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6.dev2] - 2026-05-14
+
+### Added
+- **Batch 4.4 — Approved-Order Reconciliation + Idempotency State Machine**:
+  - `submit-approved-order --dry-run` extended with deterministic `client_order_id_preview` and idempotency gates. Blocks `submit_uncertain` and `reconciliation_required` states; blocks orders with existing `client_order_id`.
+  - `submit-approved-order --reconcile` queries the broker read-only via `AlpacaBrokerAdapter.get_order_by_client_order_id`. Found orders update local state to `duplicate_reconciled`; not-found orders return controlled results without submitting.
+  - `src/atlas_agent/execution/submit_state.py` — deterministic `client_order_id` generator, atomic file writes, and state-machine helpers (`mark_reconciliation_required`, `mark_duplicate_reconciled`).
+  - `src/atlas_agent/execution/submit_reconcile.py` — `run_reconcile()` with full error sanitization, no raw value leakage, and short-circuit for already-reconciled orders.
+- **Alpaca Submit Adapter Hardening (Batch 4.3)**: `AlpacaBroker.place_order` requires `client_order_id`, validates input, sanitizes HTTP errors, and validates status against an allowlist. `AlpacaBrokerAdapter.get_order_by_client_order_id` performs read-only broker queries with full malformed-response sanitization.
+- **Dry-Run + Reconcile CLI Coverage**: End-to-end CLI tests prove `--dry-run` never mutates files or persists `client_order_id`; `--reconcile` never calls `place_order`, `resolve_execution_broker("live")`, or `OrderRouter.route`.
+
+### Security / Safety
+- **No live submit enabled**: `BrokerResolver.can_submit` remains `false` for all live brokers. `resolve_execution_broker("live")` returns `None`.
+- **Reconcile is read-only**: Uses `GET` only. Does not compute `client_order_id` when missing. Requires `enable_live_trading=true` before broker contact.
+- **Atomic file writes**: All pending order mutations use temp-file + rename for crash safety.
+
 ## [0.5.6.dev1] - 2026-05-14
 
 ### Added

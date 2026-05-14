@@ -46,3 +46,21 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Alpaca read-only sync is GET-only; `AlpacaBrokerAdapter` implements `BrokerProvider`, not `Broker`, and has no order submission methods.
 - Non-Alpaca broker sync (Binance, CCXT, IBKR) remains deferred.
 - Docs do not claim production-ready live trading or recommend any specific broker.
+
+## Broker Foundation 4.4 Release Assertions
+
+- `submit-approved-order` without `--dry-run` or `--reconcile` fails controlled (returns "not implemented" error).
+- `--dry-run` never mutates pending files.
+- `--dry-run` never persists `client_order_id`.
+- `--dry-run` never calls broker GET reconciliation (`get_order_by_client_order_id`).
+- `--dry-run` never calls `place_order`.
+- `--reconcile` never calls `place_order`.
+- `--reconcile` never calls `resolve_execution_broker("live")`.
+- `--reconcile` never calls `OrderRouter.route`.
+- `--reconcile` requires existing `client_order_id` in the pending file.
+- `--reconcile` does not compute `client_order_id` when missing (returns `reconcile_not_available`).
+- `--reconcile` requires `enable_live_trading=true` before broker query.
+- `--reconcile` uses `AlpacaBrokerAdapter.get_order_by_client_order_id` only (read-only GET).
+- `BrokerResolver.can_submit` remains `false` for all live brokers.
+- `resolve_execution_broker("live")` remains `None`.
+- No claims that live trading is ready for unattended deployment or without risk in release docs or README.
