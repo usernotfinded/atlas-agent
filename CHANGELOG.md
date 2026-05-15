@@ -91,6 +91,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tests cover: file existence, required sections, can_submit separation from execution-time gates, can_submit overclaim prevention, execution-time gate documentation, reconciliation contract, output safety bounded language, forbidden claims absence, README link presence, and release-checklist mention.
   - No runtime behavior changes.
 
+### Safety
+- **Batch 5.7 — Audit/Output Safety Sweep**:
+  - Added `tests/test_output_safety.py`: output/audit safety regression tests for CLI, JSON reports, submit/reconcile reports, and live-submit audit payloads.
+  - Hardened `_emit_config_error` and `atlas config check --json` to use static messages instead of printing raw exception text.
+  - Added broad exception catches to CLI `submit-approved-order` paths (`--reconcile`, `--dry-run`, no flags) with static safe messages to prevent unexpected exception text leakage.
+  - No live-trading behavior changes.
+
 ## [0.5.6.dev7] - 2026-05-14
 
 ### Added

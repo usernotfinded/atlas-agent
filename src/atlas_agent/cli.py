@@ -989,8 +989,8 @@ def _emit_json_error(
     return 2
 
 
-def _emit_config_error(exc: Exception) -> int:
-    print(f"Configuration error: {exc}", file=sys.stderr)
+def _emit_config_error(exc: Exception | None) -> int:
+    print("Configuration error. Check your config and try again.", file=sys.stderr)
     return 1
 
 
@@ -1873,14 +1873,14 @@ def main(argv: list[str] | None = None) -> int:
                         elif isinstance(k, str) and is_secret_key(k):
                             d[k] = "[REDACTED]"
                 redact_secrets_in_dict(payload)
-            except AtlasConfigError as exc:
+            except AtlasConfigError:
                 if getattr(args, "json", False):
                     return _emit_json_error(
                         "atlas config check",
                         code="config_load_failed",
-                        message=f"Configuration error: {exc}",
+                        message="Configuration check failed.",
                     )
-                return _emit_config_error(exc)
+                return _emit_config_error(None)
             except Exception:
                 if getattr(args, "json", False):
                     return _emit_json_error(
@@ -3578,6 +3578,15 @@ def main(argv: list[str] | None = None) -> int:
                     )
                 print("Pending order not found.")
                 return 2
+            except Exception:
+                if args.json:
+                    return _emit_json_error(
+                        "atlas submit-approved-order --reconcile",
+                        code="reconcile_failed",
+                        message="Reconciliation failed. Manual review required.",
+                    )
+                print("Reconciliation failed. Manual review required.")
+                return 2
 
             if args.json:
                 payload = report.to_dict()
@@ -3633,6 +3642,15 @@ def main(argv: list[str] | None = None) -> int:
                         message="Pending order not found.",
                     )
                 print("Pending order not found.")
+                return 2
+            except Exception:
+                if args.json:
+                    return _emit_json_error(
+                        "atlas submit-approved-order --dry-run",
+                        code="dry_run_failed",
+                        message="Dry-run failed. Manual review required.",
+                    )
+                print("Dry-run failed. Manual review required.")
                 return 2
 
             if args.json:
@@ -3709,6 +3727,15 @@ def main(argv: list[str] | None = None) -> int:
                     message="Pending order not found.",
                 )
             print("Pending order not found.")
+            return 2
+        except Exception:
+            if args.json:
+                return _emit_json_error(
+                    "atlas submit-approved-order",
+                    code="submit_failed",
+                    message="Submit failed. Manual review required.",
+                )
+            print("Submit failed. Manual review required.")
             return 2
 
         if args.json:

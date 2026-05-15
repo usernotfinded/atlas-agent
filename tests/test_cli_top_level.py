@@ -291,8 +291,7 @@ def test_model_current_invalid_schema_returns_controlled_error(workspace, capsys
     combined = captured.out + captured.err
 
     assert code == 1
-    assert "Configuration error:" in combined
-    assert "Invalid Atlas config schema" in combined
+    assert "Configuration error" in combined
     assert secret_like_value not in combined
     assert "provider: " not in combined
 
