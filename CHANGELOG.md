@@ -97,6 +97,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Hardened `_emit_config_error` and `atlas config check --json` to use static messages instead of printing raw exception text.
   - Added broad exception catches to CLI `submit-approved-order` paths (`--reconcile`, `--dry-run`, no flags) with static safe messages to prevent unexpected exception text leakage.
   - No live-trading behavior changes.
+- **Batch 5.8 — Broker-Neutral Reconcile Capability**:
+  - Replaced `isinstance(sync_provider, AlpacaBrokerAdapter)` in `run_reconcile()` with a capability check (`callable(getattr(provider, "get_order_by_client_order_id", None))`).
+  - Reconcile now requires a read-only broker lookup capability, not a specific broker adapter class.
+  - Added `tests/execution/test_submit_reconcile.py` tests proving reconcile remains read-only, does not submit, does not resolve execution brokers, and works with non-Alpaca capability providers.
+  - No live-submit behavior changes.
 
 ## [0.5.6.dev7] - 2026-05-14
 

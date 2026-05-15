@@ -82,7 +82,7 @@ These gates are evaluated after can_submit is already `true`. Failure at any exe
 |----------------------|----------|
 | `atlas run --mode live` | Analysis-only. There is no live submit path in this command. |
 | `atlas submit-approved-order --dry-run` | Read-only. Simulates validation and gate checks without sending an order to the broker. |
-| `atlas submit-approved-order --reconcile` | Read-only broker lookup. Retrieves broker state for comparison. It must never call `place_order` or any order-submission method. |
+| `atlas submit-approved-order --reconcile` | Read-only broker lookup via a provider capability (`get_order_by_client_order_id`), not a specific broker adapter class. Retrieves broker state for comparison. It must never call `place_order` or any order-submission method. |
 | `atlas submit-approved-order` (without flags) | The only intended live submit boundary. This path may attempt to submit an order **only after** all gates pass and all conditions in Section 4 are satisfied. |
 
 ---

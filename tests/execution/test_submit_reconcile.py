@@ -1571,3 +1571,345 @@ def test_reconcile_malformed_submit_attempt_missing_created_at_not_evidence(tmp_
 
     assert report.ok is False
     assert report.status == "reconcile_suspicious_origin"
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.8: Broker-neutral reconcile capability
+# ---------------------------------------------------------------------------
+
+class FakeCapabilityProvider:
+    """A non-Alpaca sync provider that implements the read-only lookup capability."""
+    def __init__(self, lookup_result=None, side_effect=None):
+        self._lookup_result = lookup_result
+        self._side_effect = side_effect
+        self.get_order_by_client_order_id_call_count = 0
+        self.last_cid = None
+
+    def get_order_by_client_order_id(self, client_order_id: str):
+        self.get_order_by_client_order_id_call_count += 1
+        self.last_cid = client_order_id
+        if self._side_effect is not None:
+            raise self._side_effect
+        return self._lookup_result
+
+
+class FakeNoCapabilityProvider:
+    """A sync provider with no lookup capability."""
+    pass
+
+
+class FakeNonCallableCapabilityProvider:
+    """A sync provider with a non-callable lookup attribute."""
+    get_order_by_client_order_id = "not-callable"
+
+
+class FakeCapabilityProviderWithPlaceOrder(FakeCapabilityProvider):
+    """A capability provider that also has place_order (must never be called)."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.place_order = MagicMock(side_effect=AssertionError("place_order must not be called"))
+
+
+# A. Capability-based provider accepted
+def test_reconcile_capability_provider_accepted(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-accepted")
+    cid = "atlas-cap-accepted-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-cap-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="filled",
+    )
+    fake = FakeCapabilityProvider(lookup_result=broker_order)
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    assert report.broker_order_id == "broker-cap-111"
+    assert fake.get_order_by_client_order_id_call_count == 1
+    assert fake.last_cid == cid
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "acknowledged"
+
+
+# B. Provider without capability is rejected safely
+def test_reconcile_provider_without_capability_rejected_safely(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-missing")
+    cid = "atlas-cap-missing-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    fake = FakeNoCapabilityProvider()
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_no_provider"
+    assert report.message == "Broker reconciliation provider is not available."
+    assert report.broker_order_id is None
+    # No raw provider repr or path leak
+    assert "FakeNoCapabilityProvider" not in report.message
+    assert "object at 0x" not in str(report.to_dict())
+
+
+# C. Capability method not callable is rejected safely
+def test_reconcile_noncallable_capability_rejected_safely(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-noncallable")
+    cid = "atlas-cap-noncallable-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    fake = FakeNonCallableCapabilityProvider()
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_no_provider"
+    assert report.message == "Broker reconciliation provider is not available."
+    assert report.broker_order_id is None
+    assert "not-callable" not in report.message
+
+
+# D. Capability provider never submits
+def test_reconcile_capability_provider_never_submits(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-no-submit")
+    cid = "atlas-cap-no-submit-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-cap-ns-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+    fake = FakeCapabilityProviderWithPlaceOrder(lookup_result=broker_order)
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    assert fake.get_order_by_client_order_id_call_count == 1
+    fake.place_order.assert_not_called()
+
+
+# E. Reconcile never calls resolve_execution_broker("live")
+def test_reconcile_capability_provider_never_resolves_execution_broker(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-no-exec")
+    cid = "atlas-cap-no-exec-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-cap-ne-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+    fake = FakeCapabilityProvider(lookup_result=broker_order)
+    with patch.object(BrokerResolver, "resolve_execution_broker", side_effect=AssertionError("resolve_execution_broker must not be called")) as mock_resolve, \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    mock_resolve.assert_not_called()
+
+
+# F. Broker lookup failure from capability provider is sanitized
+def test_reconcile_capability_provider_lookup_failure_sanitized(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-unsafe-fail")
+    cid = "atlas-cap-unsafe-fail-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    unsafe_msg = (
+        "https://broker.example.com/orders/raw-body "
+        "Authorization: Bearer abc123 "
+        '{"account_id":"ACCT_SECRET","secret":"abc"}'
+    )
+    fake = FakeCapabilityProvider(side_effect=BrokerOperationError(unsafe_msg))
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_failed"
+    assert fake.get_order_by_client_order_id_call_count == 1
+    d = report.to_dict()
+    assert "broker.example.com" not in d.get("message", "")
+    assert "Authorization:" not in d.get("message", "")
+    assert "Bearer abc123" not in d.get("message", "")
+    assert "ACCT_SECRET" not in d.get("message", "")
+    assert '"secret"' not in str(d)
+    assert "/Users/" not in str(d)
+    assert "/private/var/" not in str(d)
+
+
+# G. Approved-origin broker found remains suspicious
+def test_reconcile_capability_provider_approved_found_remains_suspicious(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-approved-suspicious")
+    cid = "atlas-cap-approved-suspicious-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="approved")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-cap-as-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+    fake = FakeCapabilityProvider(lookup_result=broker_order)
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious"
+    assert report.broker_order_id is None
+    assert "Manual review required" in report.message
+    assert fake.get_order_by_client_order_id_call_count == 1
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+
+# H. Missing submit evidence still blocks acknowledge
+def test_reconcile_capability_provider_missing_evidence_blocks_acknowledge(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-missing-evidence")
+    cid = "atlas-cap-missing-evidence-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-cap-me-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+    fake = FakeCapabilityProvider(lookup_result=broker_order)
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+    assert report.broker_order_id is None
+    assert "local submit evidence is missing" in report.message
+    assert fake.get_order_by_client_order_id_call_count == 1
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+
+# I. Malformed submit evidence still blocks acknowledge
+def test_reconcile_capability_provider_malformed_evidence_blocks_acknowledge(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-malformed-evidence")
+    cid = "atlas-cap-malformed-evidence-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    # Malformed: attempt_id is not a valid UUID4
+    payload["submit_attempts"] = [{
+        "attempt_id": "not-a-uuid",
+        "client_order_id": cid,
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-cap-mfe-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+    fake = FakeCapabilityProvider(lookup_result=broker_order)
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(fake)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+    assert report.broker_order_id is None
+    assert fake.get_order_by_client_order_id_call_count == 1
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+
+# J. Existing Alpaca path still works through capability
+def test_reconcile_alpaca_adapter_still_works_through_capability(tmp_path: Path) -> None:
+    """AlpacaBrokerAdapter passes the capability check, not isinstance."""
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.execution.submit_reconcile import _get_reconcile_lookup
+
+    adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    lookup = _get_reconcile_lookup(adapter)
+    assert lookup is not None
+    assert callable(lookup)
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="cap-alpaca-works")
+    cid = "atlas-cap-alpaca-works-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-alpaca-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="filled",
+    )
+    adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    assert report.broker_order_id == "broker-alpaca-111"
+    adapter.get_order_by_client_order_id.assert_called_once_with(cid)

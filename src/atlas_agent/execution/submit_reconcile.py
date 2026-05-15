@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
 from atlas_agent.brokers.base import BrokerConfigurationError, BrokerOperationError
 from atlas_agent.brokers.resolver import BrokerResolver
 from atlas_agent.execution.approval import (
@@ -40,6 +39,14 @@ class ReconcileReport:
             "broker_order_id": self.broker_order_id,
             "message": self.message,
         }
+
+
+def _get_reconcile_lookup(sync_provider: Any):
+    """Return a callable get_order_by_client_order_id if available, else None."""
+    lookup = getattr(sync_provider, "get_order_by_client_order_id", None)
+    if not callable(lookup):
+        return None
+    return lookup
 
 
 def _validate_client_order_id(client_order_id: str | None) -> None:
@@ -147,8 +154,8 @@ def run_reconcile(
 ) -> ReconcileReport:
     """Reconcile an approved pending order against the live broker.
 
-    Queries the broker read-only via AlpacaBrokerAdapter.get_order_by_client_order_id.
-    Never calls place_order. Never calls resolve_execution_broker.
+    Queries the broker read-only via the sync provider's get_order_by_client_order_id
+    capability. Never calls place_order. Never calls resolve_execution_broker.
     """
     # 1. Validate pending order id
     try:
@@ -269,20 +276,19 @@ def run_reconcile(
             message="Reconciliation failed. Manual review required.",
         )
 
-    # 9. Require AlpacaBrokerAdapter
-    if resolution.sync_provider is None or not isinstance(resolution.sync_provider, AlpacaBrokerAdapter):
+    # 9. Require read-only lookup capability
+    lookup = _get_reconcile_lookup(resolution.sync_provider)
+    if lookup is None:
         return ReconcileReport(
             ok=False,
             status="reconcile_no_provider",
             order_id=order_id,
-            message="Alpaca sync provider is not available.",
+            message="Broker reconciliation provider is not available.",
         )
-
-    adapter: AlpacaBrokerAdapter = resolution.sync_provider
 
     # 10. Query broker (read-only GET)
     try:
-        broker_order = adapter.get_order_by_client_order_id(client_order_id)
+        broker_order = lookup(client_order_id)
     except BrokerConfigurationError:
         return ReconcileReport(
             ok=False,
