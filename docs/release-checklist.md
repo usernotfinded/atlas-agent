@@ -196,6 +196,20 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Missing live broker credentials block opt-in before any opt-in record is written.
 - Protected untracked files (`AUDIT_ENHANCEMENTS_2026-05-13.md`, `BATCH2_PLAN.md`, `memory/kill_switch_state.json.lock`) must not be staged.
 
+## Post-Tag Verification
+
+After pushing a tag, verify it from a clean clone:
+
+```bash
+./scripts/smoke_release_tag.sh v0.5.7.dev2
+```
+
+Optional full mode (also runs `release_check.sh` inside the clean clone):
+
+```bash
+./scripts/smoke_release_tag.sh v0.5.7.dev2 --full
+```
+
 ## Tagging
 
 After all validations pass and the commit is ready:

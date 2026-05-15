@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit/output safety regression tests for CLI/JSON/report/audit payloads (`tests/test_output_safety.py`).
 - Broker-neutral reconcile capability based on `get_order_by_client_order_id`.
 - Pydantic V2 ConfigDict cleanup tests (`tests/config/test_schema.py`).
+- Clean-clone release tag smoke script (`scripts/smoke_release_tag.sh`) and tests (`tests/test_smoke_release_tag_script.py`).
 
 ### Changed
 - Reconcile now depends on a read-only lookup capability rather than a concrete Alpaca adapter type.
@@ -31,11 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Output/audit tests cover unsafe paths, headers, broker bodies, secrets, and raw exception text.
 
 ### Tests
-- Full pytest suite: 1752 passed.
+- Full pytest suite: 1753 passed.
 - `pip check`: passed (release environment).
 - `./scripts/demo_paper_workflow.sh`: passed.
 - `./scripts/release_check.sh`: all checks passed.
 - No Pydantic V2 deprecation warnings emitted.
+- `./scripts/smoke_release_tag.sh v0.5.7.dev2`: added for post-tag clean-clone verification. Tested with mocked/no-network tests. Real remote tag smoke is a post-tag verification command.
 
 ## [0.5.7.dev1] - 2026-05-14
 
