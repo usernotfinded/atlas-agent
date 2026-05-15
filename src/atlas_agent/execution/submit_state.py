@@ -27,6 +27,21 @@ class SubmitStateError(Exception):
 
 _MAX_CLIENT_ORDER_ID_LEN = 64
 _CLIENT_ORDER_ID_SAFE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+_BROKER_ORDER_ID_SAFE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+_FORBIDDEN_BROKER_ORDER_ID_SUBSTRINGS = frozenset({
+    "API_KEY",
+    "APIKEY",
+    "SECRET",
+    "TOKEN",
+    "PASSWORD",
+    "BEARER",
+    "AUTHORIZATION",
+    "CREDENTIAL",
+    "PRIVATE_KEY",
+    "APCA",
+    "ALPACA_SECRET",
+})
 
 
 def compute_client_order_id(order_id: str, order_hash: str) -> str:
@@ -388,6 +403,103 @@ def append_submit_attempt(
     return new_payload
 
 
+_SUBMIT_EVIDENCE_STATUSES = frozenset({
+    "submit_requested",
+    "submit_uncertain",
+    "acknowledged",
+})
+
+_SUBMIT_EVIDENCE_REQUIRED_KEYS = frozenset({
+    "attempt_id",
+    "client_order_id",
+    "status",
+    "created_at",
+    "actor",
+    "risk_revalidated",
+    "sync_revalidated",
+})
+
+
+def is_submit_attempt_valid_evidence(
+    attempt: Any,
+    expected_client_order_id: str,
+) -> bool:
+    """Return True if attempt is a fully valid submit_attempt suitable for evidence.
+
+    Performs all validation checks without raising. Returns False on any failure.
+    """
+    if not isinstance(attempt, dict):
+        return False
+
+    # No unknown extra fields
+    if set(attempt.keys()) - _SUBMIT_ATTEMPT_ALLOWED_KEYS:
+        return False
+
+    # Required fields present
+    if _SUBMIT_EVIDENCE_REQUIRED_KEYS - set(attempt.keys()):
+        return False
+
+    # attempt_id: canonical UUID4
+    attempt_id = attempt.get("attempt_id")
+    if not isinstance(attempt_id, str):
+        return False
+    try:
+        parsed = uuid.UUID(attempt_id, version=4)
+        if parsed.version != 4 or str(parsed) != attempt_id:
+            return False
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+    # client_order_id: must match expected and be Alpaca-compatible
+    cid = attempt.get("client_order_id")
+    if cid != expected_client_order_id:
+        return False
+    try:
+        _validate_client_order_id(cid)
+    except SubmitStateError:
+        return False
+
+    # status: evidence subset only
+    if attempt.get("status") not in _SUBMIT_EVIDENCE_STATUSES:
+        return False
+
+    # created_at: ISO datetime
+    created_at = attempt.get("created_at")
+    if not isinstance(created_at, str) or not created_at.strip():
+        return False
+    try:
+        datetime.fromisoformat(created_at)
+    except ValueError:
+        return False
+
+    # actor: safe submit-state actor only
+    if attempt.get("actor") not in _SUBMIT_ACTORS:
+        return False
+
+    # risk_revalidated: bool
+    if not isinstance(attempt.get("risk_revalidated"), bool):
+        return False
+
+    # sync_revalidated: bool
+    if not isinstance(attempt.get("sync_revalidated"), bool):
+        return False
+
+    # broker_order_id: None or strict validation
+    boid = attempt.get("broker_order_id")
+    if boid is not None:
+        try:
+            _validate_broker_order_id(boid)
+        except SubmitStateError:
+            return False
+
+    # error_code: None or explicit safe enum
+    error_code = attempt.get("error_code")
+    if error_code is not None and error_code not in _SUBMIT_ATTEMPT_ERROR_CODES:
+        return False
+
+    return True
+
+
 # ---------------------------------------------------------------------------
 # Build submit-requested payload (pure function)
 # ---------------------------------------------------------------------------
@@ -556,14 +668,19 @@ _BROKER_STATUS_ALLOWLIST = frozenset({
 def _validate_broker_order_id(broker_order_id: Any) -> None:
     """Validate a broker_order_id. Raises SubmitStateError with static message.
 
-    Rejects secret-shaped values to prevent accidental leakage.
+    Rejects path-like, URL-like, header-like, whitespace-containing,
+    traversal-like, secret-shaped, or raw broker-body strings.
+    Only accepts alphanumeric, underscore, and hyphen.
+    Also rejects forbidden secret-shaped uppercase substrings.
     """
     if not isinstance(broker_order_id, str) or not broker_order_id:
         raise SubmitStateError("invalid broker_order_id")
-    # Reject obvious secret-shaped values
-    upper = broker_order_id.upper()
-    if "API_KEY" in upper or "SECRET" in upper or "TOKEN" in upper or "PASSWORD" in upper:
+    if not _BROKER_ORDER_ID_SAFE_RE.fullmatch(broker_order_id):
         raise SubmitStateError("invalid broker_order_id")
+    upper = broker_order_id.upper()
+    for forbidden in _FORBIDDEN_BROKER_ORDER_ID_SUBSTRINGS:
+        if forbidden in upper:
+            raise SubmitStateError("invalid broker_order_id")
 
 
 def _validate_broker_status(broker_status: Any) -> None:
@@ -654,6 +771,78 @@ def mark_acknowledged(
         "at": now.isoformat(),
         "actor": "system",
         "reason": "broker_acknowledged",
+    })
+
+    _atomic_write_json(path, new_payload)
+    return path
+
+
+def mark_acknowledged_from_reconcile(
+    path: Path,
+    *,
+    broker_order_id: str,
+    broker_status: str,
+    now: datetime | None = None,
+) -> Path:
+    """Atomically update a post-submit pending order to acknowledged during reconcile.
+
+    Preconditions (fail-closed):
+      - File must exist and be valid v2 schema.
+      - status must be one of: submit_requested, submit_uncertain, reconciliation_required.
+      - broker_order_id must be a non-empty string.
+      - broker_status must be in the safe allowlist.
+
+    Side effects:
+      - Sets payload["status"] = "acknowledged"
+      - Sets payload["broker_order_id"] = broker_order_id
+      - Sets payload["broker_status"] = broker_status
+      - Sets payload["submitted_at"] if not already set
+      - Sets payload["reconciled_at"] = now.isoformat()
+      - Updates the last submit_attempt entry:
+          status="acknowledged", broker_order_id set, error_code unchanged
+      - Appends status_transition entry with static reason
+
+    Returns the path to the updated file.
+    """
+    payload = load_pending_order(path)
+
+    current_status = payload.get("status")
+    if current_status not in ("submit_requested", "submit_uncertain", "reconciliation_required"):
+        raise SubmitStateError("status must be a post-submit reconcile state")
+
+    client_order_id = payload.get("client_order_id")
+    attempts = payload.get("submit_attempts")
+    if isinstance(attempts, list) and attempts:
+        last_attempt = attempts[-1]
+        if last_attempt.get("client_order_id") != client_order_id:
+            raise SubmitStateError("client_order_id mismatch")
+
+    _validate_broker_order_id(broker_order_id)
+    _validate_broker_status(broker_status)
+
+    if now is None:
+        now = datetime.now(UTC)
+
+    new_payload = copy.deepcopy(payload)
+    new_payload["status"] = "acknowledged"
+    new_payload["broker_order_id"] = broker_order_id
+    new_payload["broker_status"] = broker_status
+    if not new_payload.get("submitted_at"):
+        new_payload["submitted_at"] = now.isoformat()
+    new_payload["reconciled_at"] = now.isoformat()
+
+    _update_last_attempt_status(
+        new_payload,
+        status="acknowledged",
+        broker_order_id=broker_order_id,
+    )
+
+    new_payload["status_transitions"] = list(new_payload.get("status_transitions", []))
+    new_payload["status_transitions"].append({
+        "status": "acknowledged",
+        "at": now.isoformat(),
+        "actor": "reconcile:cli",
+        "reason": "broker_found_during_reconcile",
     })
 
     _atomic_write_json(path, new_payload)

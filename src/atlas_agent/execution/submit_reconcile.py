@@ -15,8 +15,11 @@ from atlas_agent.execution.approval import (
     InvalidPendingOrderError,
 )
 from atlas_agent.execution.submit_state import (
+    SubmitStateError,
+    _validate_broker_order_id,
+    is_submit_attempt_valid_evidence,
     load_pending_order,
-    mark_duplicate_reconciled,
+    mark_acknowledged_from_reconcile,
     mark_reconciliation_required,
 )
 
@@ -73,6 +76,70 @@ def _check_expiry(payload: dict[str, Any]) -> tuple[bool, str]:
     return True, ""
 
 
+def _has_submit_evidence(payload: dict[str, Any]) -> bool:
+    """Return True if the payload contains at least one fully valid submit_attempt.
+
+    Delegates to is_submit_attempt_valid_evidence for full validation.
+    Malformed attempts are silently ignored.
+    """
+    client_order_id = payload.get("client_order_id")
+
+    attempts = payload.get("submit_attempts")
+    if isinstance(attempts, list):
+        for attempt in attempts:
+            if is_submit_attempt_valid_evidence(attempt, client_order_id):
+                return True
+
+    return False
+
+
+def _broker_error_code(exc: BrokerOperationError) -> str:
+    """Map BrokerOperationError static messages to safe internal error codes.
+
+    Exact matching only. No substring routing. Unknown messages become "unknown".
+    """
+    msg = str(exc)
+    if msg == "order not found":
+        return "order_not_found"
+    if msg == "broker unavailable":
+        return "broker_unavailable"
+    if msg == "broker transport request failed":
+        return "broker_transport_failed"
+    if msg == "malformed broker response":
+        return "malformed_broker_response"
+    if msg == "broker rejected order":
+        return "broker_rejected_order"
+    if msg == "client_order_id mismatch":
+        return "client_order_id_mismatch"
+    return "unknown"
+
+
+def _sanitize_broker_order_id(broker_order_id: Any) -> str | None:
+    """Validate and sanitize a broker_order_id for inclusion in reports.
+
+    Returns the broker_order_id if valid and safe, otherwise None.
+    """
+    try:
+        _validate_broker_order_id(broker_order_id)
+        return broker_order_id
+    except SubmitStateError:
+        return None
+
+
+def _safe_mark_reconciliation_required(path: Path, reason: str) -> bool:
+    """Safely mark a pending order as reconciliation_required.
+
+    Catches SubmitStateError, OSError, and all other exceptions.
+    Returns True on success, False on failure.
+    Never raises.
+    """
+    try:
+        mark_reconciliation_required(path, reason)
+        return True
+    except Exception:
+        return False
+
+
 def run_reconcile(
     order_id: str,
     config: Any,
@@ -94,12 +161,20 @@ def run_reconcile(
             message="Invalid pending order id.",
         )
 
-    if not path.exists():
+    try:
+        if not path.exists():
+            return ReconcileReport(
+                ok=False,
+                status="reconcile_not_found",
+                order_id=order_id,
+                message="Pending order not found.",
+            )
+    except OSError:
         return ReconcileReport(
             ok=False,
-            status="reconcile_not_found",
+            status="reconcile_failed",
             order_id=order_id,
-            message="Pending order not found.",
+            message="Reconciliation failed. Manual review required.",
         )
 
     # 2. Load and validate pending file
@@ -111,6 +186,13 @@ def run_reconcile(
             status="reconcile_invalid",
             order_id=order_id,
             message="Pending order file is invalid or corrupted.",
+        )
+    except OSError:
+        return ReconcileReport(
+            ok=False,
+            status="reconcile_failed",
+            order_id=order_id,
+            message="Reconciliation failed. Manual review required.",
         )
 
     # 3. Require allowed status
@@ -125,11 +207,12 @@ def run_reconcile(
 
     # 3a. Short-circuit if already duplicate_reconciled
     if current_status == "duplicate_reconciled":
+        stored_boid = _sanitize_broker_order_id(payload.get("broker_order_id"))
         return ReconcileReport(
             ok=True,
             status="duplicate_reconciled",
             order_id=order_id,
-            broker_order_id=payload.get("broker_order_id"),
+            broker_order_id=stored_boid,
             message="Order is already reconciled. No broker query needed.",
         )
 
@@ -175,8 +258,16 @@ def run_reconcile(
         )
 
     # 8. Resolve live sync provider
-    resolver = BrokerResolver(config)
-    resolution = resolver.resolve_sync_provider("live")
+    try:
+        resolver = BrokerResolver(config)
+        resolution = resolver.resolve_sync_provider("live")
+    except Exception:
+        return ReconcileReport(
+            ok=False,
+            status="reconcile_failed",
+            order_id=order_id,
+            message="Reconciliation failed. Manual review required.",
+        )
 
     # 9. Require AlpacaBrokerAdapter
     if resolution.sync_provider is None or not isinstance(resolution.sync_provider, AlpacaBrokerAdapter):
@@ -200,12 +291,11 @@ def run_reconcile(
             message="Broker not configured.",
         )
     except BrokerOperationError as exc:
-        error_msg = str(exc)
-        if "order not found" in error_msg:
+        code = _broker_error_code(exc)
+        if code == "order_not_found":
             # Not found — do not submit, do not mark submitted
             if current_status in ("submit_uncertain", "reconciliation_required", "submit_requested"):
-                # Keep or ensure reconciliation_required
-                mark_reconciliation_required(path, "broker order not found during reconcile")
+                _safe_mark_reconciliation_required(path, "broker order not found during reconcile")
                 return ReconcileReport(
                     ok=False,
                     status="reconcile_not_found",
@@ -220,7 +310,7 @@ def run_reconcile(
             )
         # Transport / malformed / other broker error
         if current_status in ("submit_uncertain", "reconciliation_required", "submit_requested", "approved"):
-            mark_reconciliation_required(path, "broker query failed during reconcile")
+            _safe_mark_reconciliation_required(path, "broker query failed during reconcile")
         return ReconcileReport(
             ok=False,
             status="reconcile_failed",
@@ -230,7 +320,7 @@ def run_reconcile(
     except Exception:
         # Catch-all for unexpected errors
         if current_status in ("submit_uncertain", "reconciliation_required", "submit_requested", "approved"):
-            mark_reconciliation_required(path, "unexpected error during reconcile")
+            _safe_mark_reconciliation_required(path, "unexpected error during reconcile")
         return ReconcileReport(
             ok=False,
             status="reconcile_failed",
@@ -239,24 +329,64 @@ def run_reconcile(
         )
 
     # 11. Broker order found
-    if current_status == "duplicate_reconciled" and payload.get("broker_order_id") == broker_order.order_id:
+    safe_boid = _sanitize_broker_order_id(broker_order.order_id)
+    if safe_boid is None:
         return ReconcileReport(
-            ok=True,
-            status="duplicate_reconciled",
+            ok=False,
+            status="reconcile_invalid_broker_order",
             order_id=order_id,
-            broker_order_id=broker_order.order_id,
-            message="Broker order found and reconciled. No duplicate submit needed.",
+            message="Broker order data was invalid. Manual review required.",
         )
 
-    mark_duplicate_reconciled(
-        path,
-        broker_order_id=broker_order.order_id,
-        broker_status=broker_order.status,
-    )
+    if current_status in ("submit_requested", "submit_uncertain", "reconciliation_required"):
+        if not _has_submit_evidence(payload):
+            return ReconcileReport(
+                ok=False,
+                status="reconcile_suspicious_origin",
+                order_id=order_id,
+                broker_order_id=None,
+                message="Broker order found, but local submit evidence is missing. Manual review required.",
+            )
+
+        try:
+            mark_acknowledged_from_reconcile(
+                path,
+                broker_order_id=broker_order.order_id,
+                broker_status=broker_order.status,
+            )
+        except Exception:
+            _safe_mark_reconciliation_required(path, "local reconcile state update failed after broker match")
+            return ReconcileReport(
+                ok=False,
+                status="reconcile_state_update_failed",
+                order_id=order_id,
+                broker_order_id=None,
+                message="Broker order found, but local reconcile state update failed. Manual review required.",
+            )
+
+        return ReconcileReport(
+            ok=True,
+            status="acknowledged",
+            order_id=order_id,
+            broker_order_id=safe_boid,
+            message="Broker order found during reconcile. Order acknowledged.",
+        )
+
+    if current_status == "approved":
+        _safe_mark_reconciliation_required(path, "broker order found for approved order; manual review required")
+        return ReconcileReport(
+            ok=False,
+            status="reconcile_suspicious",
+            order_id=order_id,
+            broker_order_id=None,
+            message="Broker order found for approved order. Manual review required.",
+        )
+
+    # Fallback — should not reach here because of _is_allowed_reconcile_status
+    _safe_mark_reconciliation_required(path, "unexpected reconcile state after broker query")
     return ReconcileReport(
-        ok=True,
-        status="duplicate_reconciled",
+        ok=False,
+        status="reconcile_failed",
         order_id=order_id,
-        broker_order_id=broker_order.order_id,
-        message="Broker order found and reconciled. No duplicate submit needed.",
+        message="Reconciliation failed. Unexpected state.",
     )

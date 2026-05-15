@@ -1598,6 +1598,25 @@ def _write_v2_pending_with_cid(tmp_path: Path, order_id: str, cid: str, status: 
         "fill_price": None,
         "submitted_at": None,
     }
+    # Add realistic submit_attempt for post-submit statuses
+    if status in ("submit_requested", "submit_uncertain", "reconciliation_required", "acknowledged", "failed", "submit_prepare_failed"):
+        payload["status_transitions"].insert(1, {
+            "status": "submit_requested",
+            "at": now.isoformat(),
+            "actor": "submit:cli",
+        })
+        attempt_status = status if status in ("submit_requested", "submit_uncertain", "acknowledged", "failed", "submit_prepare_failed") else "submit_requested"
+        payload["submit_attempts"] = [{
+            "attempt_id": "b1d7ed33-8092-4eca-beed-ddef20ae4319",
+            "client_order_id": cid,
+            "status": attempt_status,
+            "created_at": now.isoformat(),
+            "actor": "submit:cli",
+            "risk_revalidated": True,
+            "sync_revalidated": True,
+            "broker_order_id": None,
+            "error_code": None,
+        }]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return manager, path
@@ -1624,7 +1643,7 @@ def test_cli_submit_approved_order_reconcile_success_text(tmp_path, monkeypatch,
     main(["init", "."])
     capsys.readouterr()
 
-    _write_v2_pending_with_cid(tmp_path, "reconcile-ok", "atlas-ok-deadbeef")
+    _write_v2_pending_with_cid(tmp_path, "reconcile-ok", "atlas-ok-deadbeef", status="submit_requested")
 
     mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
     mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
@@ -1649,7 +1668,7 @@ def test_cli_submit_approved_order_reconcile_success_text(tmp_path, monkeypatch,
     assert code == 0
     assert "Reconcile Report" in captured.out
     assert "Broker order" in captured.out
-    assert "No duplicate submit" in captured.out or "reconciled" in captured.out.lower()
+    assert "acknowledged" in captured.out.lower()
 
 
 def test_cli_submit_approved_order_reconcile_success_json(tmp_path, monkeypatch, capsys) -> None:
@@ -1665,7 +1684,7 @@ def test_cli_submit_approved_order_reconcile_success_json(tmp_path, monkeypatch,
     main(["init", "."])
     capsys.readouterr()
 
-    _write_v2_pending_with_cid(tmp_path, "reconcile-json", "atlas-json-deadbeef")
+    _write_v2_pending_with_cid(tmp_path, "reconcile-json", "atlas-json-deadbeef", status="submit_requested")
 
     mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
     mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
@@ -1690,7 +1709,7 @@ def test_cli_submit_approved_order_reconcile_success_json(tmp_path, monkeypatch,
     payload = json.loads(captured.out)
     assert payload["ok"] is True
     data = payload["data"]
-    assert data["status"] == "duplicate_reconciled"
+    assert data["status"] == "acknowledged"
     assert data["broker_order_id"] == "broker-222"
 
 
@@ -1789,6 +1808,267 @@ def test_cli_submit_approved_order_reconcile_duplicate_reconciled_no_broker_quer
     assert code == 0
     assert "already reconciled" in captured.out.lower()
     mock_adapter.get_order_by_client_order_id.assert_not_called()
+
+
+def test_cli_reconcile_suspicious_origin_no_unsafe_boid_in_text(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.models import BrokerOrder
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    # No submit evidence -> hits reconcile_suspicious_origin
+    _write_v2_pending_with_cid(tmp_path, "reconcile-suspicious", "atlas-suspicious-deadbeef", status="reconciliation_required")
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
+        order_id="/etc/passwd",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )):
+        code = main(["submit-approved-order", "reconcile-suspicious", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Manual review required" in captured.out
+    assert "/etc/passwd" not in captured.out
+    assert "/etc/passwd" not in captured.err
+
+
+def test_cli_reconcile_suspicious_origin_no_unsafe_boid_in_json(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.models import BrokerOrder
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    _write_v2_pending_with_cid(tmp_path, "reconcile-suspicious-json", "atlas-suspicious-json-deadbeef", status="reconciliation_required")
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
+        order_id="../../broker-body",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )):
+        code = main(["submit-approved-order", "reconcile-suspicious-json", "--reconcile", "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    payload = json.loads(captured.out)
+    assert payload["error"]["code"] == "reconcile_blocked"
+    assert "../../broker-body" not in captured.out
+    assert "../../broker-body" not in captured.err
+
+
+def test_cli_reconcile_state_update_failed_no_unsafe_boid_in_text(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.models import BrokerOrder
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    _write_v2_pending_with_cid(tmp_path, "reconcile-state-fail", "atlas-state-fail-deadbeef", status="submit_requested")
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
+        order_id="https://evil.com/order",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )), \
+         patch("atlas_agent.execution.submit_reconcile.mark_acknowledged_from_reconcile", side_effect=OSError("disk full")):
+        code = main(["submit-approved-order", "reconcile-state-fail", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Manual review required" in captured.out
+    assert "https://evil.com/order" not in captured.out
+    assert "https://evil.com/order" not in captured.err
+    assert "disk full" not in captured.out
+    assert "disk full" not in captured.err
+
+
+def test_cli_reconcile_state_update_failed_no_unsafe_boid_in_json(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.brokers.alpaca import AlpacaBrokerAdapter
+    from atlas_agent.brokers.models import BrokerOrder
+    from atlas_agent.brokers.resolver import BrokerResolver, BrokerResolution
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    _write_v2_pending_with_cid(tmp_path, "reconcile-state-fail-json", "atlas-state-fail-json-deadbeef", status="submit_requested")
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
+        order_id="Authorization: Bearer abc123",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch.object(BrokerResolver, "resolve_sync_provider", return_value=BrokerResolution(
+             execution_broker=None,
+             sync_provider=mock_adapter,
+             status=MagicMock(),
+         )), \
+         patch("atlas_agent.execution.submit_reconcile.mark_acknowledged_from_reconcile", side_effect=OSError("disk full")):
+        code = main(["submit-approved-order", "reconcile-state-fail-json", "--reconcile", "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    payload = json.loads(captured.out)
+    assert payload["error"]["code"] == "reconcile_blocked"
+    assert "Authorization: Bearer abc123" not in captured.out
+    assert "Authorization: Bearer abc123" not in captured.err
+    assert "disk full" not in captured.out
+    assert "disk full" not in captured.err
+
+
+def test_cli_reconcile_approval_manager_oserror_text(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch("atlas_agent.cli.ApprovalManager", side_effect=OSError("/Users/natan/secret/path")):
+        code = main(["submit-approved-order", "some-id", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Reconciliation failed. Manual review required." in captured.out
+    assert "/Users/natan/secret/path" not in captured.out
+    assert "/Users/natan/secret/path" not in captured.err
+    assert "OSError" not in captured.out
+    assert "OSError" not in captured.err
+
+
+def test_cli_reconcile_approval_manager_oserror_json(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch("atlas_agent.cli.ApprovalManager", side_effect=OSError("/Users/natan/secret/path")):
+        code = main(["submit-approved-order", "some-id", "--reconcile", "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    payload = json.loads(captured.out)
+    assert payload["error"]["code"] == "reconcile_failed"
+    assert payload["error"]["message"] == "Reconciliation failed. Manual review required."
+    assert "/Users/natan/secret/path" not in captured.out
+    assert "/Users/natan/secret/path" not in captured.err
+
+
+def test_cli_reconcile_approval_manager_runtime_error_text(tmp_path, monkeypatch, capsys) -> None:
+    from atlas_agent.cli import main
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch("atlas_agent.cli.ApprovalManager", side_effect=RuntimeError("LEAKED_SECRET_TOKEN")):
+        code = main(["submit-approved-order", "some-id", "--reconcile"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Reconciliation failed. Manual review required." in captured.out
+    assert "LEAKED_SECRET_TOKEN" not in captured.out
+    assert "LEAKED_SECRET_TOKEN" not in captured.err
+    assert "RuntimeError" not in captured.out
+    assert "RuntimeError" not in captured.err
+
+
+def test_cli_reconcile_approval_manager_runtime_error_json(tmp_path, monkeypatch, capsys) -> None:
+    import json
+    from atlas_agent.cli import main
+    from atlas_agent.config import AtlasConfig
+    from unittest.mock import patch
+
+    monkeypatch.chdir(tmp_path)
+    main(["init", "."])
+    capsys.readouterr()
+
+    config = _configured_atlas_config(tmp_path)
+    with patch.object(AtlasConfig, "from_env", return_value=config), \
+         patch("atlas_agent.cli.ApprovalManager", side_effect=RuntimeError("LEAKED_SECRET_TOKEN")):
+        code = main(["submit-approved-order", "some-id", "--reconcile", "--json"])
+
+    captured = capsys.readouterr()
+    assert code == 2
+    payload = json.loads(captured.out)
+    assert payload["error"]["code"] == "reconcile_failed"
+    assert payload["error"]["message"] == "Reconciliation failed. Manual review required."
+    assert "LEAKED_SECRET_TOKEN" not in captured.out
+    assert "LEAKED_SECRET_TOKEN" not in captured.err
 
 
 # ---------------------------------------------------------------------------
@@ -2463,7 +2743,7 @@ def test_cli_reconcile_unchanged(tmp_path, monkeypatch, capsys) -> None:
     main(["init", "."])
     capsys.readouterr()
 
-    _write_v2_pending_with_cid(tmp_path, "reconcile-unchanged-47", "atlas-recon-47-deadbeef")
+    _write_v2_pending_with_cid(tmp_path, "reconcile-unchanged-47", "atlas-recon-47-deadbeef", status="submit_requested")
 
     mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
     mock_adapter.get_order_by_client_order_id.return_value = BrokerOrder(
@@ -2485,7 +2765,7 @@ def test_cli_reconcile_unchanged(tmp_path, monkeypatch, capsys) -> None:
 
     captured = capsys.readouterr()
     assert code == 0
-    assert "duplicate_reconciled" in captured.out.lower() or "reconciled" in captured.out.lower()
+    assert "acknowledged" in captured.out.lower()
 
 
 # ---------------------------------------------------------------------------

@@ -29,7 +29,9 @@ from atlas_agent.execution.submit_state import (
     mark_reconciliation_required,
     mark_duplicate_reconciled,
     _atomic_write_json,
+    _validate_broker_order_id,
     mark_acknowledged,
+    mark_acknowledged_from_reconcile,
     mark_submit_failed,
     mark_submit_uncertain,
     mark_submit_prepare_failed,
@@ -995,7 +997,7 @@ def test_mark_acknowledged_updates_last_attempt(tmp_path: Path) -> None:
     attempt = loaded["submit_attempts"][0]
     assert attempt["status"] == "acknowledged"
     assert attempt["broker_order_id"] == "broker-456"
-    assert attempt["error_code"] is None
+    assert attempt.get("error_code") is None
 
 
 def test_mark_acknowledged_appends_status_transition(tmp_path: Path) -> None:
@@ -1058,14 +1060,14 @@ def test_mark_acknowledged_rejects_unknown_broker_status(tmp_path: Path) -> None
         mark_acknowledged(path, broker_order_id="broker-123", broker_status="hacked")
 
 
-def test_mark_acknowledged_rejects_secret_shaped_broker_order_id(tmp_path: Path) -> None:
-    order = _make_order(id="ack-secret")
+def test_mark_acknowledged_rejects_path_like_broker_order_id(tmp_path: Path) -> None:
+    order = _make_order(id="ack-path")
     payload = _make_submit_requested_payload(order)
     path = tmp_path / "order.json"
     _write_payload(path, payload)
 
     with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
-        mark_acknowledged(path, broker_order_id="FAKE_SECRET_KEY_123", broker_status="new")
+        mark_acknowledged(path, broker_order_id="/Users/name/.config/alpaca", broker_status="new")
 
 
 def test_mark_acknowledged_preserves_original_on_write_failure(tmp_path: Path) -> None:
@@ -1081,6 +1083,175 @@ def test_mark_acknowledged_preserves_original_on_write_failure(tmp_path: Path) -
     with patch.object(Path, "write_text", _failing_write):
         with pytest.raises(OSError, match="disk full"):
             mark_acknowledged(path, broker_order_id="broker-999", broker_status="new")
+
+    after = path.read_text(encoding="utf-8")
+    assert after == original
+
+
+# ---------------------------------------------------------------------------
+# mark_acknowledged_from_reconcile
+# ---------------------------------------------------------------------------
+
+def _make_submit_uncertain_payload(order: Order, **overrides) -> dict:
+    payload = _make_v2_payload(order, status="submit_requested", **overrides)
+    payload["status"] = "submit_uncertain"
+    payload["status_transitions"].append({
+        "status": "submit_uncertain",
+        "at": payload["created_at"],
+        "actor": "system",
+        "reason": "broker_uncertain",
+        "code": "broker_transport_failed",
+    })
+    payload["submit_attempts"] = [{
+        "attempt_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "client_order_id": payload.get("client_order_id", "atlas-test-cid"),
+        "status": "submit_uncertain",
+        "created_at": payload["created_at"],
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": "broker_transport_failed",
+    }]
+    return payload
+
+
+def test_mark_acknowledged_from_reconcile_sets_status_and_fields(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-test")
+    payload = _make_submit_uncertain_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    now = datetime(2026, 5, 14, 13, 0, 0, tzinfo=UTC)
+
+    mark_acknowledged_from_reconcile(
+        path,
+        broker_order_id="broker-123",
+        broker_status="new",
+        now=now,
+    )
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "acknowledged"
+    assert loaded["submitted_at"] == "2026-05-14T13:00:00+00:00"
+    assert loaded["broker_order_id"] == "broker-123"
+    assert loaded["broker_status"] == "new"
+    assert loaded["reconciled_at"] == "2026-05-14T13:00:00+00:00"
+
+
+def test_mark_acknowledged_from_reconcile_preserves_existing_submitted_at(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-preserve")
+    payload = _make_submit_uncertain_payload(order)
+    payload["submitted_at"] = "2026-05-14T10:00:00+00:00"
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    now = datetime(2026, 5, 14, 13, 0, 0, tzinfo=UTC)
+
+    mark_acknowledged_from_reconcile(
+        path,
+        broker_order_id="broker-123",
+        broker_status="new",
+        now=now,
+    )
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "acknowledged"
+    assert loaded["submitted_at"] == "2026-05-14T10:00:00+00:00"
+
+
+def test_mark_acknowledged_from_reconcile_updates_last_attempt(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-attempt")
+    payload = _make_submit_uncertain_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_acknowledged_from_reconcile(
+        path,
+        broker_order_id="broker-456",
+        broker_status="filled",
+    )
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert len(loaded["submit_attempts"]) == 1
+    attempt = loaded["submit_attempts"][0]
+    assert attempt["status"] == "acknowledged"
+    assert attempt["broker_order_id"] == "broker-456"
+    assert attempt.get("error_code") == "broker_transport_failed"
+
+
+def test_mark_acknowledged_from_reconcile_appends_transition(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-transition")
+    payload = _make_submit_uncertain_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    mark_acknowledged_from_reconcile(
+        path,
+        broker_order_id="broker-789",
+        broker_status="accepted",
+    )
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    transition = loaded["status_transitions"][-1]
+    assert transition["status"] == "acknowledged"
+    assert transition["actor"] == "reconcile:cli"
+    assert transition["reason"] == "broker_found_during_reconcile"
+
+
+def test_mark_acknowledged_from_reconcile_rejects_approved_status(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-bad")
+    payload = _make_v2_payload(order, status="approved")
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="status must be a post-submit reconcile state"):
+        mark_acknowledged_from_reconcile(path, broker_order_id="broker-123", broker_status="new")
+
+
+def test_mark_acknowledged_from_reconcile_rejects_empty_broker_order_id(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-bad-boid")
+    payload = _make_submit_uncertain_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        mark_acknowledged_from_reconcile(path, broker_order_id="", broker_status="new")
+
+
+def test_mark_acknowledged_from_reconcile_rejects_unknown_broker_status(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-bad-status")
+    payload = _make_submit_uncertain_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="invalid broker_status"):
+        mark_acknowledged_from_reconcile(path, broker_order_id="broker-123", broker_status="hacked")
+
+
+def test_mark_acknowledged_from_reconcile_requires_matching_client_order_id(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-cid-mismatch")
+    payload = _make_submit_uncertain_payload(order)
+    payload["client_order_id"] = "payload-cid-123"
+    payload["submit_attempts"][0]["client_order_id"] = "attempt-cid-456"
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+
+    with pytest.raises(SubmitStateError, match="client_order_id mismatch"):
+        mark_acknowledged_from_reconcile(path, broker_order_id="broker-123", broker_status="new")
+
+
+def test_mark_acknowledged_from_reconcile_preserves_original_on_write_failure(tmp_path: Path) -> None:
+    order = _make_order(id="ack-rec-atomic")
+    payload = _make_submit_uncertain_payload(order)
+    path = tmp_path / "order.json"
+    _write_payload(path, payload)
+    original = path.read_text(encoding="utf-8")
+
+    def _failing_write(*args, **kwargs):
+        raise OSError("disk full")
+
+    with patch.object(Path, "write_text", _failing_write):
+        with pytest.raises(OSError, match="disk full"):
+            mark_acknowledged_from_reconcile(path, broker_order_id="broker-999", broker_status="new")
 
     after = path.read_text(encoding="utf-8")
     assert after == original
@@ -1400,3 +1571,75 @@ def test_mark_submit_prepare_failed_rejects_broker_unavailable(tmp_path: Path) -
     with pytest.raises(SubmitStateError) as exc:
         mark_submit_prepare_failed(path, error_code="broker_unavailable", now=now)
     assert str(exc.value) == "invalid submit attempt"
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.3: strict broker_order_id allowlist
+# ---------------------------------------------------------------------------
+
+def test_validate_broker_order_id_rejects_path() -> None:
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("/Users/name/.config/alpaca")
+
+
+def test_validate_broker_order_id_rejects_header_like() -> None:
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("Authorization: Bearer abc123")
+
+
+def test_validate_broker_order_id_rejects_traversal() -> None:
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("../../broker-body")
+
+
+def test_validate_broker_order_id_rejects_url() -> None:
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("https://example.com/order")
+
+
+def test_validate_broker_order_id_rejects_unsafe_characters() -> None:
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has space")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has:colon")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has/slash")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has\\backslash")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has.dot")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has..dots")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has@symbol")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("has#hash")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id(None)
+
+
+def test_validate_broker_order_id_accepts_safe_values() -> None:
+    _validate_broker_order_id("broker-123")
+    _validate_broker_order_id("abc123")
+    _validate_broker_order_id("ABC_123-xyz")
+
+
+def test_validate_broker_order_id_rejects_secret_shaped() -> None:
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("FAKE_API_KEY_123")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("LEAKED_PASSWORD_999")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("SECRET_TOKEN_ABC")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("AUTHORIZATION_BEARER_ABC")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("APCA_API_KEY_ID")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("ALPACA_SECRET_KEY")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("MY_CREDENTIAL_123")
+    with pytest.raises(SubmitStateError, match="invalid broker_order_id"):
+        _validate_broker_order_id("PRIVATE_KEY_XYZ")

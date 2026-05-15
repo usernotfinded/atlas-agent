@@ -20,6 +20,7 @@ from atlas_agent.execution.approval import (
 )
 from atlas_agent.execution.order import Order
 from atlas_agent.execution.submit_reconcile import run_reconcile
+from atlas_agent.execution.submit_state import SubmitStateError
 
 
 def _mock_resolution(adapter=None):
@@ -77,6 +78,31 @@ def _make_v2_payload(order: Order, **overrides) -> dict:
 
 def _write_payload(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _add_submit_evidence(payload: dict, attempt_status: str = "submit_requested") -> dict:
+    """Add a submit_requested transition and matching submit_attempt to payload."""
+    import copy
+    now = payload.get("created_at", datetime.now(UTC).isoformat())
+    cid = payload.get("client_order_id", "atlas-test-cid")
+    payload = copy.deepcopy(payload)
+    payload["status_transitions"].append({
+        "status": "submit_requested",
+        "at": now,
+        "actor": "submit:cli",
+    })
+    payload["submit_attempts"] = [{
+        "attempt_id": "b1d7ed33-8092-4eca-beed-ddef20ae4319",
+        "client_order_id": cid,
+        "status": attempt_status,
+        "created_at": now,
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    return payload
 
 
 class FakeConfig:
@@ -175,7 +201,9 @@ def test_reconcile_tampered_file_blocks_before_broker(tmp_path: Path) -> None:
 def test_reconcile_found_updates_local_state(tmp_path: Path) -> None:
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="found")
-    payload = _make_v2_payload(order, client_order_id="atlas-found-deadbeef")
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id="atlas-found-deadbeef", status="submit_requested")
+    )
     path = manager.path_for(order.id)
     _write_payload(path, payload)
 
@@ -193,21 +221,24 @@ def test_reconcile_found_updates_local_state(tmp_path: Path) -> None:
         report = run_reconcile(order.id, FakeConfig(), manager)
 
     assert report.ok is True
-    assert report.status == "duplicate_reconciled"
+    assert report.status == "acknowledged"
     assert report.broker_order_id == "broker-123"
 
     loaded = json.loads(path.read_text(encoding="utf-8"))
-    assert loaded["status"] == "duplicate_reconciled"
+    assert loaded["status"] == "acknowledged"
     assert loaded["broker_order_id"] == "broker-123"
     assert loaded["broker_status"] == "filled"
     assert "reconciled_at" in loaded
     assert loaded["status_transitions"][-1]["actor"] == "reconcile:cli"
+    assert loaded["status_transitions"][-1]["reason"] == "broker_found_during_reconcile"
 
 
 def test_reconcile_found_stores_broker_order_id_and_status(tmp_path: Path) -> None:
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="found-details")
-    payload = _make_v2_payload(order, client_order_id="atlas-details-deadbeef")
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id="atlas-details-deadbeef", status="submit_requested")
+    )
     path = manager.path_for(order.id)
     _write_payload(path, payload)
 
@@ -225,10 +256,12 @@ def test_reconcile_found_stores_broker_order_id_and_status(tmp_path: Path) -> No
         report = run_reconcile(order.id, FakeConfig(), manager)
 
     assert report.ok is True
+    assert report.status == "acknowledged"
     loaded = json.loads(path.read_text(encoding="utf-8"))
     assert loaded["broker_order_id"] == "broker-456"
     assert loaded["broker_status"] == "partially_filled"
     assert loaded["reconciled_at"] is not None
+    assert loaded["submitted_at"] is not None
 
 
 # ---------------------------------------------------------------------------
@@ -489,7 +522,9 @@ def test_reconcile_reuses_existing_client_order_id(tmp_path: Path) -> None:
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="reuse-cid")
     cid = "my-existing-cid-123"
-    payload = _make_v2_payload(order, client_order_id=cid)
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
     path = manager.path_for(order.id)
     _write_payload(path, payload)
 
@@ -507,15 +542,19 @@ def test_reconcile_reuses_existing_client_order_id(tmp_path: Path) -> None:
         report = run_reconcile(order.id, FakeConfig(), manager)
 
     assert report.ok is True
+    assert report.status == "acknowledged"
     mock_adapter.get_order_by_client_order_id.assert_called_once_with(cid)
 
 
 def test_reconcile_unchanged(tmp_path: Path) -> None:
-    """Confirm reconcile behavior is unchanged after Batch 4.6 helper additions."""
+    """Confirm reconcile behavior transitions post-submit states to acknowledged."""
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="reconcile-unchanged")
     cid = "reconcile-unchanged-cid"
-    payload = _make_v2_payload(order, client_order_id=cid, status="submit_uncertain")
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_uncertain"),
+        attempt_status="submit_uncertain",
+    )
     path = manager.path_for(order.id)
     _write_payload(path, payload)
     before = path.read_text(encoding="utf-8")
@@ -537,18 +576,20 @@ def test_reconcile_unchanged(tmp_path: Path) -> None:
     after = path.read_text(encoding="utf-8")
     assert before != after  # reconcile is allowed to mutate
     loaded = json.loads(after)
-    assert loaded["status"] == "duplicate_reconciled"
+    assert loaded["status"] == "acknowledged"
 
 
 # ---------------------------------------------------------------------------
 # Batch 4.7: Reconcile support for submit_requested status
 # ---------------------------------------------------------------------------
 
-def test_reconcile_submit_requested_found_marks_duplicate_reconciled(tmp_path: Path) -> None:
+def test_reconcile_submit_requested_found_becomes_acknowledged(tmp_path: Path) -> None:
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="sr-found")
     cid = "atlas-sr-found-deadbeef"
-    payload = _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
     path = manager.path_for(order.id)
     _write_payload(path, payload)
 
@@ -566,12 +607,13 @@ def test_reconcile_submit_requested_found_marks_duplicate_reconciled(tmp_path: P
         report = run_reconcile(order.id, FakeConfig(), manager)
 
     assert report.ok is True
-    assert report.status == "duplicate_reconciled"
+    assert report.status == "acknowledged"
     assert report.broker_order_id == "broker-sr-111"
 
     loaded = json.loads(path.read_text(encoding="utf-8"))
-    assert loaded["status"] == "duplicate_reconciled"
+    assert loaded["status"] == "acknowledged"
     assert loaded["broker_order_id"] == "broker-sr-111"
+    assert loaded["status_transitions"][-1]["reason"] == "broker_found_during_reconcile"
 
 
 def test_reconcile_submit_requested_not_found_marks_reconciliation_required(tmp_path: Path) -> None:
@@ -624,7 +666,9 @@ def test_reconcile_submit_requested_never_calls_place_order(tmp_path: Path) -> N
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="sr-no-place")
     cid = "atlas-sr-nop-deadbeef"
-    payload = _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
     path = manager.path_for(order.id)
     _write_payload(path, payload)
 
@@ -644,7 +688,9 @@ def test_reconcile_submit_requested_never_calls_resolve_execution_broker(tmp_pat
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="sr-no-exec")
     cid = "atlas-sr-noex-deadbeef"
-    payload = _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
     path = manager.path_for(order.id)
     _write_payload(path, payload)
 
@@ -658,3 +704,870 @@ def test_reconcile_submit_requested_never_calls_resolve_execution_broker(tmp_pat
 
     assert report.ok is True
     mock_resolve.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.3: Reconcile hardening
+# ---------------------------------------------------------------------------
+
+def test_reconcile_submit_uncertain_found_becomes_acknowledged(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="su-found")
+    cid = "atlas-su-found-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_uncertain"),
+        attempt_status="submit_uncertain",
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-su-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="filled",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    assert report.broker_order_id == "broker-su-111"
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "acknowledged"
+    assert loaded["broker_order_id"] == "broker-su-111"
+    assert loaded["status_transitions"][-1]["reason"] == "broker_found_during_reconcile"
+
+
+def test_reconcile_reconciliation_required_found_becomes_acknowledged(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="rr-found")
+    cid = "atlas-rr-found-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="reconciliation_required"),
+        attempt_status="submit_uncertain",
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-rr-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    assert report.broker_order_id == "broker-rr-111"
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "acknowledged"
+    assert loaded["broker_order_id"] == "broker-rr-111"
+
+
+def test_reconcile_approved_found_does_not_become_acknowledged(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="approved-found")
+    cid = "atlas-approved-found-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="approved")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-approved-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious"
+    assert report.broker_order_id is None
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+    assert loaded["status_transitions"][-1]["reason"] == "broker order found for approved order; manual review required"
+
+
+def test_reconcile_not_found_from_reconciliation_required_keeps_reconciliation_required(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="rr-notfound")
+    payload = _make_v2_payload(
+        order,
+        client_order_id="atlas-rr-nf-deadbeef",
+        status="reconciliation_required",
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    exc = BrokerOperationError("order not found")
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.side_effect = exc
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_not_found"
+    assert "Manual review required" in report.message
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+
+def test_reconcile_output_safety_for_acknowledged_path(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="safe-ack")
+    cid = "atlas-safe-ack-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-safe-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    # Message must not contain raw payload values
+    assert cid not in report.message
+    assert "TEST" not in report.message
+    assert "buy" not in report.message
+    # JSON must not contain raw exception text or secrets
+    payload_dict = report.to_dict()
+    assert "error" not in payload_dict
+    assert cid not in str(payload_dict)
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.3 blocking fixes: submit evidence and mutation safety
+# ---------------------------------------------------------------------------
+
+def test_reconcile_approved_then_transport_then_found_must_not_acknowledge(tmp_path: Path) -> None:
+    """Approved -> broker transport failure -> reconciliation_required -> broker found must NOT acknowledge."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="approved-then-found")
+    cid = "atlas-approved-then-found-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="approved")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    # First reconcile: broker transport error
+    exc = BrokerOperationError("broker transport request failed")
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.side_effect = exc
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report1 = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report1.ok is False
+    assert report1.status == "reconcile_failed"
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+    # Second reconcile: broker found
+    broker_order = BrokerOrder(
+        order_id="broker-approved-then-found-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+    mock_adapter2 = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter2.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter2)):
+        report2 = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report2.ok is False
+    assert report2.status == "reconcile_suspicious_origin"
+    assert "local submit evidence is missing" in report2.message
+
+    loaded2 = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded2["status"] == "reconciliation_required"
+
+
+def test_reconcile_reconciliation_required_no_evidence_must_not_acknowledge(tmp_path: Path) -> None:
+    """reconciliation_required with no submit_attempt and no submit_requested transition must NOT acknowledge."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="rr-no-evidence")
+    cid = "atlas-rr-no-evidence-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-rr-no-evidence-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+    assert "local submit evidence is missing" in report.message
+    assert report.broker_order_id is None
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+
+def test_reconcile_reconciliation_required_with_submit_attempt_can_acknowledge(tmp_path: Path) -> None:
+    """reconciliation_required with matching submit_attempt can acknowledge."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="rr-with-attempt")
+    cid = "atlas-rr-with-attempt-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="reconciliation_required"),
+        attempt_status="submit_uncertain",
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-rr-attempt-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "acknowledged"
+
+
+def test_reconcile_broker_found_mutation_submit_state_error_sanitized(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="mut-ss-error")
+    cid = "atlas-mut-ss-error-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-mut-ss-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)), \
+         patch("atlas_agent.execution.submit_reconcile.mark_acknowledged_from_reconcile", side_effect=SubmitStateError("bad state")):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_state_update_failed"
+    assert "local reconcile state update failed" in report.message
+    assert "bad state" not in report.message
+    assert "bad state" not in str(report.to_dict())
+
+
+def test_reconcile_broker_found_mutation_oserror_sanitized(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="mut-os-error")
+    cid = "atlas-mut-os-error-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-mut-os-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)), \
+         patch("atlas_agent.execution.submit_reconcile.mark_acknowledged_from_reconcile", side_effect=OSError("disk full")):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_state_update_failed"
+    assert "local reconcile state update failed" in report.message
+    assert "disk full" not in report.message
+    assert "disk full" not in str(report.to_dict())
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.3 blocking fixes: submit evidence, mutation safety, broker_order_id sanitization
+# ---------------------------------------------------------------------------
+
+def test_reconcile_reconciliation_required_transition_only_not_acknowledged(tmp_path: Path) -> None:
+    """reconciliation_required with only a submit_requested transition and NO matching submit_attempt must NOT acknowledge."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="rr-transition-only")
+    cid = "atlas-rr-transition-only-deadbeef"
+    now = datetime.now(UTC).isoformat()
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    payload["status_transitions"].append({"status": "submit_requested", "at": now, "actor": "submit:cli"})
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-rr-transition-only-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+    assert "local submit evidence is missing" in report.message
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+
+def test_reconcile_not_found_mark_reconciliation_raises_oserror_sanitized(tmp_path: Path) -> None:
+    """Broker not found + mark_reconciliation_required raises OSError returns sanitized report."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="not-found-oserror")
+    cid = "atlas-nf-oserror-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    exc = BrokerOperationError("order not found")
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.side_effect = exc
+
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)), \
+         patch("atlas_agent.execution.submit_reconcile._safe_mark_reconciliation_required", return_value=False):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_not_found"
+    assert "Manual review required" in report.message
+    assert "OSError" not in report.message
+    assert "disk full" not in str(report.to_dict())
+
+
+def test_reconcile_transport_mark_reconciliation_raises_submit_state_error_sanitized(tmp_path: Path) -> None:
+    """Broker query failure + mark_reconciliation_required raises SubmitStateError returns sanitized report."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="transport-sserror")
+    cid = "atlas-tr-sserror-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    exc = BrokerOperationError("broker transport request failed")
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.side_effect = exc
+
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)), \
+         patch("atlas_agent.execution.submit_reconcile._safe_mark_reconciliation_required", return_value=False):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_failed"
+    assert "Reconciliation required" in report.message
+    assert "SubmitStateError" not in report.message
+    assert "bad state" not in str(report.to_dict())
+
+
+def test_reconcile_unexpected_exception_mark_reconciliation_raises_sanitized(tmp_path: Path) -> None:
+    """Unexpected broker exception + mark_reconciliation_required raises returns sanitized report."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="unexpected-raise")
+    cid = "atlas-unexpected-raise-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.side_effect = RuntimeError("something went wrong")
+
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)), \
+         patch("atlas_agent.execution.submit_reconcile._safe_mark_reconciliation_required", return_value=False):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_failed"
+    assert "Reconciliation required" in report.message
+    assert "RuntimeError" not in report.message
+    assert "something went wrong" not in str(report.to_dict())
+
+
+def test_reconcile_approved_found_no_broker_order_id_leak(tmp_path: Path) -> None:
+    """approved + broker found must not leak unvalidated broker_order_id and cannot acknowledge."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="approved-no-leak")
+    cid = "atlas-approved-no-leak-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="approved")
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-approved-no-leak-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious"
+    assert report.broker_order_id is None
+    assert "Manual review required" in report.message
+    assert cid not in report.message
+    assert "TEST" not in report.message
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["status"] == "reconciliation_required"
+
+
+def test_reconcile_invalid_broker_order_secret_shaped_broker_order_id_filtered(tmp_path: Path) -> None:
+    """Secret-shaped broker_order_id must not appear in report or JSON."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="suspicious-secret")
+    cid = "atlas-suspicious-secret-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="FAKE_API_KEY_123",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_invalid_broker_order"
+    assert report.broker_order_id is None
+    assert "FAKE_API_KEY_123" not in report.message
+    assert "FAKE_API_KEY_123" not in str(report.to_dict())
+
+
+def test_reconcile_duplicate_reconciled_unsafe_broker_order_id_filtered(tmp_path: Path) -> None:
+    """Stored unsafe broker_order_id in duplicate_reconciled must not leak."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="dup-secret")
+    payload = _make_v2_payload(
+        order,
+        client_order_id="atlas-dup-secret-deadbeef",
+        status="duplicate_reconciled",
+        broker_order_id="/etc/passwd",
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is True
+    assert report.status == "duplicate_reconciled"
+    assert report.broker_order_id is None
+    assert "/etc/passwd" not in report.message
+    assert "/etc/passwd" not in str(report.to_dict())
+
+
+def test_reconcile_state_update_failed_secret_shaped_broker_order_id_filtered(tmp_path: Path) -> None:
+    """Secret-shaped broker_order_id must not leak in reconcile_state_update_failed report."""
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="state-fail-secret")
+    cid = "atlas-state-fail-secret-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-safe-123",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)), \
+         patch("atlas_agent.execution.submit_reconcile.mark_acknowledged_from_reconcile", side_effect=OSError("disk full")):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_state_update_failed"
+    assert report.broker_order_id is None
+    assert "disk full" not in report.message
+    assert "disk full" not in str(report.to_dict())
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.3 blocking fixes: strict broker_order_id allowlist
+# ---------------------------------------------------------------------------
+
+def test_sanitize_broker_order_id_rejects_path() -> None:
+    from atlas_agent.execution.submit_reconcile import _sanitize_broker_order_id
+    assert _sanitize_broker_order_id("/Users/name/.config/alpaca") is None
+
+
+def test_sanitize_broker_order_id_rejects_header_like() -> None:
+    from atlas_agent.execution.submit_reconcile import _sanitize_broker_order_id
+    assert _sanitize_broker_order_id("Authorization: Bearer abc123") is None
+
+
+def test_sanitize_broker_order_id_rejects_traversal() -> None:
+    from atlas_agent.execution.submit_reconcile import _sanitize_broker_order_id
+    assert _sanitize_broker_order_id("../../broker-body") is None
+
+
+def test_sanitize_broker_order_id_rejects_url() -> None:
+    from atlas_agent.execution.submit_reconcile import _sanitize_broker_order_id
+    assert _sanitize_broker_order_id("https://example.com/order") is None
+
+
+def test_sanitize_broker_order_id_rejects_unsafe_characters() -> None:
+    from atlas_agent.execution.submit_reconcile import _sanitize_broker_order_id
+    assert _sanitize_broker_order_id("has space") is None
+    assert _sanitize_broker_order_id("has:colon") is None
+    assert _sanitize_broker_order_id("has/slash") is None
+    assert _sanitize_broker_order_id("has\\backslash") is None
+    assert _sanitize_broker_order_id("has.dot") is None
+    assert _sanitize_broker_order_id("has..dots") is None
+    assert _sanitize_broker_order_id("has@symbol") is None
+    assert _sanitize_broker_order_id("has#hash") is None
+    assert _sanitize_broker_order_id("") is None
+    assert _sanitize_broker_order_id(None) is None
+
+
+def test_sanitize_broker_order_id_accepts_safe_values() -> None:
+    from atlas_agent.execution.submit_reconcile import _sanitize_broker_order_id
+    assert _sanitize_broker_order_id("broker-123") == "broker-123"
+    assert _sanitize_broker_order_id("abc123") == "abc123"
+    assert _sanitize_broker_order_id("ABC_123-xyz") == "ABC_123-xyz"
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.3 blocking fixes: early operation exception safety
+# ---------------------------------------------------------------------------
+
+def test_reconcile_oserror_during_path_exists_returns_sanitized(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="oserror-exists")
+    cid = "atlas-oserror-exists-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch.object(Path, "exists", side_effect=OSError("disk full")):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_failed"
+    assert "Manual review required" in report.message
+    assert "disk full" not in report.message
+    assert "disk full" not in str(report.to_dict())
+    assert report.broker_order_id is None
+
+
+def test_reconcile_oserror_during_load_pending_returns_sanitized(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="oserror-load")
+    cid = "atlas-oserror-load-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_reconcile.load_pending_order", side_effect=OSError("permission denied")):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_failed"
+    assert "Manual review required" in report.message
+    assert "permission denied" not in report.message
+    assert "permission denied" not in str(report.to_dict())
+    assert report.broker_order_id is None
+
+
+def test_reconcile_resolver_unexpected_failure_returns_sanitized(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="resolver-fail")
+    cid = "atlas-resolver-fail-deadbeef"
+    payload = _add_submit_evidence(
+        _make_v2_payload(order, client_order_id=cid, status="submit_requested")
+    )
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_reconcile.BrokerResolver", side_effect=RuntimeError("bad config")):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_failed"
+    assert "Manual review required" in report.message
+    assert "RuntimeError" not in report.message
+    assert "bad config" not in str(report.to_dict())
+    assert report.broker_order_id is None
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.3 blocking fixes: malformed submit_attempt entries
+# ---------------------------------------------------------------------------
+
+def test_reconcile_malformed_submit_attempt_missing_client_order_id_not_evidence(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="malformed-missing-cid")
+    cid = "atlas-malformed-missing-cid-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    payload["submit_attempts"] = [{
+        "attempt_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-malformed-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+
+
+def test_reconcile_malformed_submit_attempt_bad_actor_not_evidence(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="malformed-bad-actor")
+    cid = "atlas-malformed-bad-actor-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    payload["submit_attempts"] = [{
+        "attempt_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "client_order_id": cid,
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "hacker",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-malformed-222",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+
+
+def test_reconcile_malformed_submit_attempt_bad_status_not_evidence(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="malformed-bad-status")
+    cid = "atlas-malformed-bad-status-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    payload["submit_attempts"] = [{
+        "attempt_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "client_order_id": cid,
+        "status": "hacked",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-malformed-333",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+
+
+def test_sanitize_broker_order_id_rejects_secret_shaped() -> None:
+    from atlas_agent.execution.submit_reconcile import _sanitize_broker_order_id
+    assert _sanitize_broker_order_id("FAKE_API_KEY_123") is None
+    assert _sanitize_broker_order_id("LEAKED_PASSWORD_999") is None
+    assert _sanitize_broker_order_id("SECRET_TOKEN_ABC") is None
+    assert _sanitize_broker_order_id("AUTHORIZATION_BEARER_ABC") is None
+    assert _sanitize_broker_order_id("APCA_API_KEY_ID") is None
+    assert _sanitize_broker_order_id("ALPACA_SECRET_KEY") is None
+    assert _sanitize_broker_order_id("MY_CREDENTIAL_123") is None
+    assert _sanitize_broker_order_id("PRIVATE_KEY_XYZ") is None
+
+
+def test_reconcile_malformed_submit_attempt_missing_attempt_id_not_evidence(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="malformed-missing-aid")
+    cid = "atlas-malformed-missing-aid-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    payload["submit_attempts"] = [{
+        "client_order_id": cid,
+        "status": "submit_requested",
+        "created_at": datetime.now(UTC).isoformat(),
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-malformed-aid-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
+
+
+def test_reconcile_malformed_submit_attempt_missing_created_at_not_evidence(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="malformed-missing-cat")
+    cid = "atlas-malformed-missing-cat-deadbeef"
+    payload = _make_v2_payload(order, client_order_id=cid, status="reconciliation_required")
+    payload["submit_attempts"] = [{
+        "attempt_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "client_order_id": cid,
+        "status": "submit_requested",
+        "actor": "submit:cli",
+        "risk_revalidated": True,
+        "sync_revalidated": True,
+        "broker_order_id": None,
+        "error_code": None,
+    }]
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    broker_order = BrokerOrder(
+        order_id="broker-malformed-cat-111",
+        symbol="TEST",
+        side="buy",
+        quantity=1.0,
+        status="open",
+    )
+
+    mock_adapter = MagicMock(spec=AlpacaBrokerAdapter)
+    mock_adapter.get_order_by_client_order_id.return_value = broker_order
+    with patch.object(BrokerResolver, "resolve_sync_provider", return_value=_mock_resolution(mock_adapter)):
+        report = run_reconcile(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.status == "reconcile_suspicious_origin"
