@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Any, Literal, Optional, Set
 
-from pydantic import BaseModel, Field, SecretStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 
 TRUE_VALUES = {"1", "true", "t", "yes", "y", "on"}
@@ -317,8 +317,7 @@ class AtlasConfig(BaseModel):
     def audit_dir(self) -> Path:
         return self.audit.audit_dir
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @classmethod
     def from_env(cls) -> AtlasConfig:

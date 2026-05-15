@@ -102,6 +102,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reconcile now requires a read-only broker lookup capability, not a specific broker adapter class.
   - Added `tests/execution/test_submit_reconcile.py` tests proving reconcile remains read-only, does not submit, does not resolve execution brokers, and works with non-Alpaca capability providers.
   - No live-submit behavior changes.
+- **Batch 5.9 — Pydantic V2 Config Cleanup**:
+  - Replaced class-based Pydantic `Config` with `ConfigDict` in `AtlasConfig` to remove `PydanticDeprecatedSince20` warning.
+  - Added `tests/config/test_schema.py` tests to verify no deprecation warning, default values, legacy field mappings, and compatibility properties remain intact.
+  - No runtime behavior changes.
 
 ## [0.5.6.dev7] - 2026-05-14
 
