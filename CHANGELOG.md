@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broker-neutral reconcile capability based on `get_order_by_client_order_id`.
 - Pydantic V2 ConfigDict cleanup tests (`tests/config/test_schema.py`).
 - Clean-clone release tag smoke script (`scripts/smoke_release_tag.sh`) and tests (`tests/test_smoke_release_tag_script.py`).
+- Wheel/sdist package smoke script (`scripts/smoke_package_build.sh`) and tests (`tests/test_smoke_package_build_script.py`).
 
 ### Changed
 - Reconcile now depends on a read-only lookup capability rather than a concrete Alpaca adapter type.

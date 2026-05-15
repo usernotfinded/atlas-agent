@@ -196,6 +196,20 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Missing live broker credentials block opt-in before any opt-in record is written.
 - Protected untracked files (`AUDIT_ENHANCEMENTS_2026-05-13.md`, `BATCH2_PLAN.md`, `memory/kill_switch_state.json.lock`) must not be staged.
 
+## Package Artifact Verification
+
+Before publishing artifacts or tagging a release candidate, verify the package builds and installs from wheel in a clean environment:
+
+```bash
+./scripts/smoke_package_build.sh
+```
+
+This installs from the built wheel (not editable source) and runs a paper-only workspace smoke.
+
+Optional flags:
+- `--skip-sdist` to skip the source distribution check
+- `--keep-artifacts` to preserve the temporary build directory
+
 ## Post-Tag Verification
 
 After pushing a tag, verify it from a clean clone:
