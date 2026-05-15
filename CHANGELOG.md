@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7.dev2] - 2026-05-15
+
+### Added
+- Release-check automation:
+  - `scripts/release_check.sh`
+  - `scripts/check_version_consistency.py`
+  - `scripts/check_forbidden_claims.py`
+  - Tests for the release gate.
+- Live-submit safety contract documentation (`docs/live-submit-safety-contract.md`).
+- Docs-truth tests for the live-submit safety contract (`tests/test_live_submit_safety_contract_docs.py`).
+- Audit/output safety regression tests for CLI/JSON/report/audit payloads (`tests/test_output_safety.py`).
+- Broker-neutral reconcile capability based on `get_order_by_client_order_id`.
+- Pydantic V2 ConfigDict cleanup tests (`tests/config/test_schema.py`).
+
+### Changed
+- Reconcile now depends on a read-only lookup capability rather than a concrete Alpaca adapter type.
+- `AtlasConfig` now uses Pydantic V2 `ConfigDict` instead of class-based `Config`.
+
+### Safety
+- No live-submit behavior enabled by default.
+- No broker submit behavior changed.
+- No kill-switch, risk, or live-trading gate weakening.
+- Reconcile remains read-only and does not call `place_order` or `resolve_execution_broker("live")`.
+- Output/audit tests cover unsafe paths, headers, broker bodies, secrets, and raw exception text.
+
+### Tests
+- Full pytest suite: 1752 passed.
+- `pip check`: passed (release environment).
+- `./scripts/demo_paper_workflow.sh`: passed.
+- `./scripts/release_check.sh`: all checks passed.
+- No Pydantic V2 deprecation warnings emitted.
+
 ## [0.5.7.dev1] - 2026-05-14
 
 ### Added

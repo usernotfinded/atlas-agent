@@ -4,9 +4,12 @@ Run this before pushing a public GitHub release.
 
 ## Required Validation Commands
 
+- `./scripts/release_check.sh` (preferred: runs pytest, pip check, demo workflow, version consistency, and forbidden-claims scan)
 - `python3.11 -m pytest -q`
 - `python3.11 -m pip check`
 - `./scripts/demo_paper_workflow.sh`
+- `python3.11 scripts/check_version_consistency.py`
+- `python3.11 scripts/check_forbidden_claims.py`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 
 ## Validate Contract Checks
@@ -29,6 +32,9 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - No release docs include return guarantees, prohibited safety claims, autonomous income claims, live-readiness overstatements, or broker-preference marketing language.
 - Do not reference a demo GIF as present unless `assets/atlas-demo.gif` actually exists.
 - Confirm no private values or credential-like strings are committed in docs or scripts.
+- Verify `pyproject.toml` `project.version` matches `src/atlas_agent/__init__.py` `__version__`.
+- Verify `git status` does not include runtime files like `memory/`.
+- Verify `./scripts/check_forbidden_claims.py` passes.
 - If broker, submit, reconcile, approval, audit, risk, or kill-switch behavior changed, review `docs/live-submit-safety-contract.md` for accuracy and update it if necessary.
 
 ## Broker Foundation 3.x Release Assertions
@@ -61,7 +67,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - `--reconcile` requires existing `client_order_id` in the pending file.
 - `--reconcile` does not compute `client_order_id` when missing (returns `reconcile_not_available`).
 - `--reconcile` requires `enable_live_trading=true` before broker query.
-- `--reconcile` uses `AlpacaBrokerAdapter.get_order_by_client_order_id` only (read-only GET).
+- `--reconcile` uses the sync provider's `get_order_by_client_order_id` capability (read-only GET), not a concrete adapter type.
 - `BrokerResolver.can_submit` remains `false` for all live brokers.
 - `resolve_execution_broker("live")` remains `None`.
 - No claims that live trading is ready for unattended deployment or without risk in release docs or README.
@@ -189,6 +195,24 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Kill-switch unreadable opt-in output is a static sanitized message; no exception text, paths, or secrets leak to CLI output.
 - Missing live broker credentials block opt-in before any opt-in record is written.
 - Protected untracked files (`AUDIT_ENHANCEMENTS_2026-05-13.md`, `BATCH2_PLAN.md`, `memory/kill_switch_state.json.lock`) must not be staged.
+
+## Tagging
+
+After all validations pass and the commit is ready:
+
+```bash
+git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
+git commit -m "Bump version to v0.5.7.dev2"
+git push origin main
+git tag -a v0.5.7.dev2 -m "Atlas Agent v0.5.7.dev2"
+git push origin v0.5.7.dev2
+```
+
+Only create the tag after:
+- tests pass
+- `./scripts/release_check.sh` passes
+- the version-bump commit is created
+- `main` is pushed or ready to push
 
 ## Broker Foundation 4.7 Release Assertions
 
