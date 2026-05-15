@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Skips pip upgrade in the install venv.
   - Fails with a clear static message if `python -m build` is unavailable.
 - Offline package smoke tests proving no PyPI dependency installation, no pip upgrade, and strict wheel verification.
+- Release-candidate audit document (`docs/release-candidate-audit-v0.5.7.dev2.md`) with release gate results, smoke status, safety contracts, and known limitations.
+- Release-candidate audit document validation tests (`tests/test_release_candidate_audit_docs.py`).
 
 ### Changed
 - Reconcile now depends on a read-only lookup capability rather than a concrete Alpaca adapter type.
