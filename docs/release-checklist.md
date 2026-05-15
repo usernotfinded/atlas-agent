@@ -209,6 +209,7 @@ This installs from the built wheel (not editable source) and runs a paper-only w
 Optional flags:
 - `--skip-sdist` to skip the source distribution check
 - `--keep-artifacts` to preserve the temporary build directory
+- `--offline` (or `--skip-build-deps-install`) to skip installing build dependencies from PyPI. Use this in offline/no-network environments where `python -m build` already works. Offline mode skips pip/build dependency installation and does not upgrade pip, but still builds the wheel with the selected build Python and installs the locally built wheel into a fresh venv.
 
 ## Post-Tag Verification
 

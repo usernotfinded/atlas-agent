@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Wheel/sdist package smoke: verify atlas-agent builds and installs from artifacts.
-# Usage: ./scripts/smoke_package_build.sh [--keep-artifacts] [--skip-sdist]
+# Usage: ./scripts/smoke_package_build.sh [--offline] [--skip-build-deps-install] [--keep-artifacts] [--skip-sdist]
 # Example: ./scripts/smoke_package_build.sh
-# Example: ./scripts/smoke_package_build.sh --keep-artifacts
+# Example: ./scripts/smoke_package_build.sh --offline
 
 set -euo pipefail
 
@@ -34,13 +34,20 @@ trap cleanup EXIT
 
 usage() {
     cat <<'EOF'
-Usage: ./scripts/smoke_package_build.sh [--keep-artifacts] [--skip-sdist]
+Usage: ./scripts/smoke_package_build.sh [--offline] [--skip-build-deps-install] [--keep-artifacts] [--skip-sdist]
 
-  --keep-artifacts   Keep the temporary build directory on exit.
-  --skip-sdist       Do not require a source distribution tarball.
+  --offline                Do not install build dependencies from PyPI.
+                           Requires the 'build' package to be preinstalled
+                           for the selected build Python.
+  --skip-build-deps-install  Alias for --offline.
+  --keep-artifacts         Keep the temporary build directory on exit.
+  --skip-sdist             Do not require a source distribution tarball.
 
 Environment:
-  ATLAS_KEEP_PACKAGE_SMOKE_DIR=1   Keep the temporary directory on exit.
+  ATLAS_KEEP_PACKAGE_SMOKE_DIR=1       Keep the temporary directory on exit.
+  ATLAS_PACKAGE_SMOKE_BUILD_PYTHON     Path to Python with build available.
+                                       Used in offline mode instead of creating
+                                       a fresh build venv.
 EOF
 }
 
@@ -50,9 +57,14 @@ EOF
 
 SKIP_SDIST="0"
 KEEP_ARTIFACTS="0"
+OFFLINE="0"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --offline|--skip-build-deps-install)
+            OFFLINE="1"
+            shift
+            ;;
         --skip-sdist)
             SKIP_SDIST="1"
             shift
@@ -90,6 +102,12 @@ else
     PYTHON=python
 fi
 
+if [[ -n "${ATLAS_PACKAGE_SMOKE_BUILD_PYTHON:-}" ]]; then
+    BUILD_PYTHON="$ATLAS_PACKAGE_SMOKE_BUILD_PYTHON"
+else
+    BUILD_PYTHON="$PYTHON"
+fi
+
 TMP_DIR="$(mktemp -d -t atlas-package-smoke.XXXXXX)"
 DIST_DIR="${TMP_DIR}/dist"
 BUILD_VENV="${TMP_DIR}/build-venv"
@@ -110,6 +128,8 @@ print(data["project"]["version"])
 section "Package build smoke"
 echo "Version:      $EXPECTED_VERSION"
 echo "Python:       $PYTHON"
+echo "Build Python: $BUILD_PYTHON"
+echo "Offline:      $OFFLINE"
 echo "Skip sdist:   $SKIP_SDIST"
 echo "Keep artifacts: $KEEP_ARTIFACTS"
 
@@ -119,10 +139,21 @@ echo "Keep artifacts: $KEEP_ARTIFACTS"
 
 section "1. Build wheel/sdist"
 
-$PYTHON -m venv "$BUILD_VENV"
-
-"$BUILD_VENV/bin/python" -m pip install --quiet --upgrade pip build
-"$BUILD_VENV/bin/python" -m build --outdir "$DIST_DIR"
+if [[ "$OFFLINE" == "1" ]]; then
+    if ! "$BUILD_PYTHON" -m build --help >/dev/null 2>&1; then
+        echo "Offline package smoke requires the 'build' package to be installed for the selected build Python." >&2
+        exit 1
+    fi
+    "$BUILD_PYTHON" -m build --outdir "$DIST_DIR"
+else
+    $PYTHON -m venv "$BUILD_VENV"
+    if ! "$BUILD_VENV/bin/python" -m pip install --quiet --upgrade pip build; then
+        echo "Error: failed to install build dependencies." >&2
+        echo "If this environment is offline, install build dependencies ahead of time and rerun with --offline." >&2
+        exit 1
+    fi
+    "$BUILD_VENV/bin/python" -m build --outdir "$DIST_DIR"
+fi
 
 echo "OK: build completed"
 
@@ -161,7 +192,9 @@ section "3. Install wheel into fresh venv"
 
 $PYTHON -m venv "$INSTALL_VENV"
 
-"$INSTALLED_PYTHON" -m pip install --quiet --upgrade pip
+if [[ "$OFFLINE" != "1" ]]; then
+    "$INSTALLED_PYTHON" -m pip install --quiet --upgrade pip
+fi
 "$INSTALLED_PYTHON" -m pip install --quiet "$WHEEL_PATH"
 # Copy templates into expected location so atlas init works from wheel install
 PURELIB="$("$INSTALLED_PYTHON" -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"

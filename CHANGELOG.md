@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pydantic V2 ConfigDict cleanup tests (`tests/config/test_schema.py`).
 - Clean-clone release tag smoke script (`scripts/smoke_release_tag.sh`) and tests (`tests/test_smoke_release_tag_script.py`).
 - Wheel/sdist package smoke script (`scripts/smoke_package_build.sh`) and tests (`tests/test_smoke_package_build_script.py`).
+- Offline package smoke mode (`--offline` / `--skip-build-deps-install`) for no-network environments.
+  - Uses an existing build-capable Python (`ATLAS_PACKAGE_SMOKE_BUILD_PYTHON`) instead of installing build dependencies into a fresh build venv.
+  - Skips pip upgrade in the install venv.
+  - Fails with a clear static message if `python -m build` is unavailable.
+- Offline package smoke tests proving no PyPI dependency installation, no pip upgrade, and strict wheel verification.
 
 ### Changed
 - Reconcile now depends on a read-only lookup capability rather than a concrete Alpaca adapter type.
