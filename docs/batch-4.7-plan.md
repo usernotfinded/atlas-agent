@@ -255,7 +255,7 @@ When `can_submit=true` and all gates pass:
 4. **No file mutation.**
 5. **No new `submit_attempt`.**
 6. **No `client_order_id` recomputation.**
-7. **No sync, no risk, no can_submit check reached.**
+7. **No sync, no exposure, no can_submit check reached.**
 
 ### Why Not Auto-Revert to `approved`?
 
@@ -361,7 +361,7 @@ if current_status in ("submit_uncertain", "reconciliation_required", "submit_req
 | 8 | `test_submit_execution_mocked_can_submit_true_resolve_execution_broker_not_called` | `BrokerResolver.resolve_execution_broker` not called |
 | 9 | `test_submit_execution_mocked_can_submit_true_order_router_not_called` | `OrderRouter.route` not called |
 | 10 | `test_submit_execution_mocked_can_submit_true_returns_broker_submit_not_implemented` | `blocked_reason="broker_submit_not_implemented"`, message contains "not implemented" |
-| 11 | `test_submit_execution_rerun_on_submit_requested_blocks_before_sync` | Pre-seed file to `submit_requested` → blocked at idempotency, no sync, no risk, no mutation |
+| 11 | `test_submit_execution_rerun_on_submit_requested_blocks_before_sync` | Pre-seed file to `submit_requested` → blocked at idempotency, no sync, no exposure, no mutation |
 | 12 | `test_submit_execution_rerun_on_submit_requested_no_second_attempt` | `submit_attempts` length == 1 (from first run) |
 | 13 | `test_submit_execution_rerun_on_submit_requested_returns_reconciliation_required` | `blocked_reason="reconciliation_required"`, message mentions `--reconcile` |
 | 14 | `test_submit_execution_risk_failure_still_blocks_before_mutation` | Mock risk rejection → `blocked_reason="risk_revalidation_failed"`, `mark_submit_requested` not called |

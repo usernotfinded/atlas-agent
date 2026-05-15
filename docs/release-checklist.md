@@ -26,7 +26,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Positioning remains broker-neutral supervised workspace, not autonomous trading.
 - Demo flow is paper-only and reproducible via `./scripts/demo_paper_workflow.sh`.
 - Live trading remains disabled by default unless explicitly enabled by the user.
-- No release docs include return guarantees, zero-risk language, autonomous income claims, live-readiness overstatements, or broker-preference marketing language.
+- No release docs include return guarantees, prohibited safety claims, autonomous income claims, live-readiness overstatements, or broker-preference marketing language.
 - Do not reference a demo GIF as present unless `assets/atlas-demo.gif` actually exists.
 - Confirm no private values or credential-like strings are committed in docs or scripts.
 
@@ -160,7 +160,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Dry-run remains strictly read-only.
 - Reconcile remains read-only and never calls `place_order`.
 - Paper mode remains unchanged.
-- No profit claims, zero-risk language, or live-readiness overstatements exist in README or CHANGELOG.
+- No profit claims, prohibited safety claims, or live-readiness overstatements exist in README or CHANGELOG.
 
 ## Broker Foundation 5.1 Release Assertions
 

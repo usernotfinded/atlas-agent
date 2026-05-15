@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No production live submit enabled by default. Explicit multi-factor opt-in required.
 - Only `run_submit_execution()` is permitted to call `resolve_execution_broker("live")` for live submissions.
 - Kill switch still blocks live submit when active.
-- No profit claims or zero-risk language added.
+- No prohibited trading-safety or profit-promise claims added.
 - Paper mode untouched.
 
 ### Tests

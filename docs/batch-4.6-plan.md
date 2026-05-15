@@ -14,7 +14,7 @@ Batch 4.6 answers: *"What exact mutation would we perform if `can_submit` were t
 
 The answer is to implement **pure helper functions** that construct and perform the mutation, but keep them **unwired from the CLI execution path** until a future batch actually enables broker submission. This gives us:
 - A tested, auditable state-transition primitive ready for Batch 4.7/4.8.
-- No risk of accidental live submit because the helpers are not invoked by `run_submit_execution`.
+- Default configuration is designed to block accidental live submit paths because the helpers are not invoked by `run_submit_execution`.
 - A clear crash-recovery contract documented before any broker call exists.
 
 ---
