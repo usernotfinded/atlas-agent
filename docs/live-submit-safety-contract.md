@@ -37,7 +37,7 @@ This document is not financial advice. Atlas Agent does not guarantee safety, pr
 - The default workflow is **paper mode**, in which all orders are simulated locally and no broker submission occurs.
 - Live sync and live analysis-only are **separate capabilities** from live submit. Enabling live sync or running live analysis does not enable order submission.
 - Live submit requires **explicit multi-factor opt-in**, including configuration changes and a recorded opt-in event.
-- Documentation and system messages avoid absolute wording such as "impossible," "assured outcomes," "absence of risk," or "zero exposure." Controls are described as mechanisms designed to reduce risk, not as assurances of safety.
+- Documentation and system messages avoid absolute wording such as "certain outcomes," "assured outcomes," "absence of risk," or "zero exposure." Controls are described as mechanisms designed to reduce risk, not as assurances of safety.
 
 ---
 
@@ -72,7 +72,7 @@ Failure of any single condition causes `can_submit` to evaluate to `false`, whic
 - Final kill-switch check
 - Broker boundary checks
 
-These gates are evaluated **after** `can_submit` is already `true`. Failure at any execution-time gate blocks the order without calling `place_order`.
+These gates are evaluated after can_submit is already `true`. Failure at any execution-time gate blocks the order without calling `place_order`.
 
 ---
 

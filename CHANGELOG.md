@@ -85,6 +85,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `docs/release-checklist.md` to require review of the safety contract when broker, submit, reconcile, approval, audit, risk, or kill-switch behavior changes.
   - No runtime behavior changes.
 
+### Tests
+- **Batch 5.6 — Docs Truth Tests for Live-Submit Safety Contract**:
+  - Added `tests/test_live_submit_safety_contract_docs.py`: automated tests that keep `docs/live-submit-safety-contract.md` aligned with the live-submit safety model.
+  - Tests cover: file existence, required sections, can_submit separation from execution-time gates, can_submit overclaim prevention, execution-time gate documentation, reconciliation contract, output safety bounded language, forbidden claims absence, README link presence, and release-checklist mention.
+  - No runtime behavior changes.
+
 ## [0.5.6.dev7] - 2026-05-14
 
 ### Added
