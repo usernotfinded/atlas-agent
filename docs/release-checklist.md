@@ -29,6 +29,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - No release docs include return guarantees, prohibited safety claims, autonomous income claims, live-readiness overstatements, or broker-preference marketing language.
 - Do not reference a demo GIF as present unless `assets/atlas-demo.gif` actually exists.
 - Confirm no private values or credential-like strings are committed in docs or scripts.
+- If broker, submit, reconcile, approval, audit, risk, or kill-switch behavior changed, review `docs/live-submit-safety-contract.md` for accuracy and update it if necessary.
 
 ## Broker Foundation 3.x Release Assertions
 

@@ -78,6 +78,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 8 new config schema tests for new fields, defaults, legacy mapping, and isolation.
 - 7 new CLI tests for opt-in/opt-out commands (prerequisite checks, record writing, confirmation prompts).
 
+### Documentation
+- **Batch 5.5 — Live Submit Safety Contract**:
+  - Added `docs/live-submit-safety-contract.md`: authoritative documentation covering scope, definitions, default behavior, live-submit conditions, commands, state machine, reconciliation contract, audit contract, output safety contract, forbidden claims, and non-goals.
+  - Updated `README.md` to link to the safety contract in the Safety Model section.
+  - Updated `docs/release-checklist.md` to require review of the safety contract when broker, submit, reconcile, approval, audit, risk, or kill-switch behavior changes.
+  - No runtime behavior changes.
+
 ## [0.5.6.dev7] - 2026-05-14
 
 ### Added

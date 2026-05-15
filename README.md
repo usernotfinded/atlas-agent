@@ -127,6 +127,7 @@ See [Model Providers](docs/model-providers.md) for provider/model selection and 
 *   **Approval Gates**: Live orders can be configured to require manual approval via `atlas approve-order`. See [Pending Orders](docs/pending-orders.md) for details.
 *   **Kill Switch**: Advanced emergency stop with hierarchical modes. The **dead-man heartbeat** monitoring ensures the system fails closed if the process is interrupted.
 *   **Responsibility**: You are responsible for your API keys, broker permissions, and any financial outcomes. Atlas Agent provides the tools; you provide the oversight.
+*   **Live-Submit Safety Contract**: See [docs/live-submit-safety-contract.md](docs/live-submit-safety-contract.md) for the complete default-behavior, gating, state-machine, and audit rules that apply to live order submission.
 
 ## Backtesting
 
