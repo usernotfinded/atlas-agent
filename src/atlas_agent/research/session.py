@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from atlas_agent.events.log import EventLogger, generate_run_id
+from atlas_agent.research.providers import (
+    ResearchContext,
+    UnsupportedResearchProviderError,
+    resolve_research_provider,
+)
 
 if TYPE_CHECKING:
     from atlas_agent.learning.memory_index import MemoryIndexResult
@@ -25,10 +30,6 @@ class ResearchSessionError(RuntimeError):
 
 
 class InvalidResearchSymbolError(ResearchSessionError):
-    pass
-
-
-class UnsupportedResearchProviderError(ResearchSessionError):
     pass
 
 
@@ -59,6 +60,30 @@ class ResearchArtifact:
 
 class DeterministicResearchProvider:
     """A deterministic, local, network-free research provider."""
+
+    @property
+    def name(self) -> str:
+        return "deterministic"
+
+    def generate_research(self, symbol: str, context: ResearchContext) -> "ResearchProviderResult":
+        from atlas_agent.research.providers import ResearchProviderResult
+
+        return ResearchProviderResult(
+            provider="deterministic",
+            summary=f"Deterministic market context for {symbol.upper()}. No external data queried.",
+            thesis="No directional thesis generated. This is an analysis-only artifact.",
+            market_context="No live market data queried. Deterministic local context only.",
+            risks=[
+                "Research artifacts are not trading signals.",
+                "Deterministic provider does not query live prices.",
+            ],
+            invalidation_conditions=[
+                "Artifact becomes stale when market conditions change.",
+                "Deterministic provider does not adapt to news or events.",
+            ],
+            paper_only_plan="Review artifact before any paper or live workflow. Do not execute orders based solely on this artifact.",
+            metadata={"source": "deterministic"},
+        )
 
     def research_market(self, symbol: str) -> "ResearchReport":
         from atlas_agent.research.research_report import ResearchReport
@@ -100,13 +125,7 @@ def _safe_memory_hit(hit: "MemoryIndexResult") -> dict[str, str]:
 
 
 def _resolve_provider(provider_name: str | None) -> Any:
-    if provider_name is None or provider_name == "deterministic":
-        return DeterministicResearchProvider()
-    if provider_name not in SUPPORTED_RESEARCH_PROVIDERS:
-        raise UnsupportedResearchProviderError(
-            "Unsupported research provider."
-        )
-    return DeterministicResearchProvider()
+    return resolve_research_provider(provider_name)
 
 
 def run_research_session(
@@ -133,7 +152,10 @@ def run_research_session(
         research_provider = provider
     else:
         research_provider = _resolve_provider(provider_name)
-    report: ResearchReport = research_provider.research_market(safe_symbol)
+    result = research_provider.generate_research(
+        safe_symbol,
+        ResearchContext(symbol=safe_symbol, mode="paper"),
+    )
 
     # Optional memory search — never fails
     memory_hits: list[dict[str, str]] = []
@@ -156,26 +178,20 @@ def run_research_session(
     artifact = ResearchArtifact(
         symbol=safe_symbol,
         mode="paper",
-        provider=report.provider,
-        summary=report.summary,
-        thesis="No directional thesis generated. This is an analysis-only artifact.",
-        market_context="No live market data queried. Deterministic local context only.",
-        risks=[
-            "Research artifacts are not trading signals.",
-            "Deterministic provider does not query live prices.",
-        ],
-        invalidation_conditions=[
-            "Artifact becomes stale when market conditions change.",
-            "Deterministic provider does not adapt to news or events.",
-        ],
-        paper_only_plan="Review artifact before any paper or live workflow. Do not execute orders based solely on this artifact.",
-        citations=report.citations,
+        provider=result.provider,
+        summary=result.summary,
+        thesis=result.thesis,
+        market_context=result.market_context,
+        risks=result.risks,
+        invalidation_conditions=result.invalidation_conditions,
+        paper_only_plan=result.paper_only_plan,
+        citations=tuple(result.citations),
         memory_hits=memory_hits,
-        warnings=warnings,
+        warnings=warnings + result.warnings,
         run_id=run_id,
         created_at=created_at,
         artifact_path="",
-        metadata={"provider_requested": provider_name or "deterministic"},
+        metadata={"provider_requested": provider_name or "deterministic", **result.metadata},
     )
 
     # Persist JSON artifact
@@ -208,7 +224,7 @@ def run_research_session(
         payload = {
             "symbol": safe_symbol,
             "mode": "paper",
-            "provider": report.provider,
+            "provider": result.provider,
             "artifact_path": artifact.artifact_path,
             "status": "created",
             "schema_version": artifact.schema_version,

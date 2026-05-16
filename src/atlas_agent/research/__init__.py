@@ -4,6 +4,12 @@ from atlas_agent.research.perplexity import (
     PerplexityResearchProvider,
     ResearchConfigurationError,
 )
+from atlas_agent.research.providers import (
+    ResearchContext,
+    ResearchProvider,
+    ResearchProviderResult,
+    resolve_research_provider,
+)
 from atlas_agent.research.research_report import ResearchReport
 from atlas_agent.research.session import (
     DeterministicResearchProvider,
@@ -45,6 +51,9 @@ __all__ = [
     "RESEARCH_ARTIFACT_SCHEMA_VERSION",
     "ResearchArtifact",
     "ResearchConfigurationError",
+    "ResearchContext",
+    "ResearchProvider",
+    "ResearchProviderResult",
     "ResearchReport",
     "ResearchSessionError",
     "SUPPORTED_RESEARCH_PROVIDERS",
@@ -58,6 +67,7 @@ __all__ = [
     "get_research_provider",
     "iter_research_artifacts",
     "load_research_artifact",
+    "resolve_research_provider",
     "run_research_session",
     "sanitize_symbol",
     "validate_run_id",

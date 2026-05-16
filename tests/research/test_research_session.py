@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from atlas_agent.research.providers import ResearchProviderResult
 from atlas_agent.research.research_report import ResearchReport
 from atlas_agent.research.session import (
     DeterministicResearchProvider,
@@ -57,10 +58,14 @@ class TestDeterministicResearchProvider:
 class TestRunResearchSession:
     def test_basic_run_creates_artifact(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="AAPL",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="offline",
             summary="Test summary.",
+            thesis="Test thesis.",
+            market_context="Test context.",
+            risks=["Risk 1"],
+            invalidation_conditions=["Condition 1"],
+            paper_only_plan="Test plan.",
         )
         event_logger = MagicMock()
 
@@ -104,12 +109,11 @@ class TestRunResearchSession:
         assert "warnings" in data
         assert "metadata" in data
 
-        provider.research_market.assert_called_once_with("AAPL")
+        provider.generate_research.assert_called_once()
 
     def test_event_logged(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="TSLA",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="offline",
             summary="Tesla summary.",
         )
@@ -139,8 +143,7 @@ class TestRunResearchSession:
 
     def test_no_event_logger_does_not_crash(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="GOOG",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="offline",
             summary="Google summary.",
         )
@@ -157,8 +160,7 @@ class TestRunResearchSession:
 
     def test_memory_dir_missing_is_ok(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="META",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="offline",
             summary="Meta summary.",
         )
@@ -178,8 +180,7 @@ class TestRunResearchSession:
 
     def test_use_memory_false_skips_memory(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="MSFT",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="offline",
             summary="MSFT summary.",
         )
@@ -201,8 +202,7 @@ class TestRunResearchSession:
 
     def test_symbol_sanitized_before_use(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="AAPL",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="offline",
             summary="Summary.",
         )
@@ -217,15 +217,14 @@ class TestRunResearchSession:
         )
 
         assert artifact.symbol == "AAPL"
-        provider.research_market.assert_called_once_with("AAPL")
+        provider.generate_research.assert_called_once()
 
     def test_citations_preserved(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="NVDA",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="perplexity",
             summary="NVDA summary.",
-            citations=("https://example.com/1", "https://example.com/2"),
+            citations=["https://example.com/1", "https://example.com/2"],
         )
         event_logger = MagicMock()
 
@@ -288,8 +287,7 @@ class TestRunResearchSession:
 
     def test_event_payload_no_memory_snippets(self, tmp_path: Path) -> None:
         provider = MagicMock()
-        provider.research_market.return_value = ResearchReport(
-            symbol="AMZN",
+        provider.generate_research.return_value = ResearchProviderResult(
             provider="offline",
             summary="AMZN summary.",
         )
