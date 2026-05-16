@@ -238,7 +238,7 @@ class TestResearchPlanAmbiguous:
             code = main(["research", "plan", "sharedrunid"])
         assert code == 1
         out = capsys.readouterr().out
-        assert "ambiguous" in out.lower()
+        assert "invalid research identifier" in out.lower()
 
 
 class TestResearchPlanMalformedSource:

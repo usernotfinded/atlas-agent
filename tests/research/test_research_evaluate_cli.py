@@ -258,7 +258,7 @@ class TestResearchEvaluateAmbiguous:
             code = main(["research", "evaluate", "sharedplanid", "--data", str(csv_path)])
         assert code == 1
         out = capsys.readouterr().out
-        assert "ambiguous" in out.lower()
+        assert "invalid research identifier" in out.lower()
 
 
 class TestResearchEvaluateMalformedSource:

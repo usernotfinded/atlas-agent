@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added post-research-system audit documentation (`docs/audits/post-research-system-audit.md`).
 - Recorded validation results, safety boundaries, non-blocking findings, and follow-up areas.
 
+## [Unreleased]
+
+### Fixed
+- Sanitized generic research CLI error fallback output.
+- Added regression tests preventing raw exception/path/secret leakage in research CLI failures.
+
+### Safety / Compatibility
+- No live-trading behavior changes.
+
 ### Safety / Compatibility
 - No live-trading behavior changes.
 

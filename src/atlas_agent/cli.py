@@ -3681,12 +3681,41 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  - {w}")
         print(report.message)
         return 0 if report.ok else 2
+
+    def _research_error_json(status: str, message: str) -> None:
+        import json
+        print(json.dumps({"ok": False, "status": status, "message": message}, indent=2, sort_keys=True))
+
+    def _research_error_text(prefix: str, message: str) -> None:
+        print(f"{prefix} skipped safely: {message}")
+
+    def _safe_research_session_error(exc: Exception) -> tuple[str, str]:
+        """Map a research session exception to a safe static status and message."""
+        code = str(exc)
+        mapping: dict[str, tuple[str, str]] = {
+            "artifact_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "artifact_path_not_allowed": ("research_error", "Research command failed."),
+            "artifact_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "ambiguous_run_id": ("invalid_research_id", "Invalid research identifier."),
+            "ambiguous_plan_id": ("invalid_research_id", "Invalid research identifier."),
+            "plan_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "evaluation_data_invalid": ("evaluation_data_invalid", "Evaluation data is invalid."),
+            "limit_must_be_positive": ("research_error", "Research command failed."),
+            "run_id must not be empty": ("invalid_research_id", "Invalid research identifier."),
+            "run_id contains unsafe characters": ("invalid_research_id", "Invalid research identifier."),
+            "run_id exceeds maximum length": ("invalid_research_id", "Invalid research identifier."),
+        }
+        return mapping.get(code, ("research_error", "Research command failed."))
+
     if args.command == "research" and args.research_command == "market":
         try:
             report = get_research_provider().research_market(args.symbol)
-        except ResearchConfigurationError as exc:
-            print(f"research skipped safely: {exc}")
+        except ResearchConfigurationError:
+            _research_error_text("research", "configuration error")
             return 0
+        except Exception:
+            _research_error_text("research", "research command failed")
+            return 1
         print(report.summary)
         return 0
     if args.command == "research" and args.research_command == "run":
@@ -3733,19 +3762,24 @@ def main(argv: list[str] | None = None) -> int:
                 print("research run skipped safely: unsupported research provider")
             return 1
         except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json(status, message)
             else:
-                print(f"research run skipped safely: {exc}")
+                _research_error_text("research run", message.lower().rstrip("."))
             return 1
-        except ResearchConfigurationError as exc:
+        except ResearchConfigurationError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "configuration_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("configuration_error", "Configuration error.")
             else:
-                print(f"research run skipped safely: {exc}")
+                _research_error_text("research run", "configuration error")
             return 0
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research run", "research command failed")
+            return 1
         if args.json:
             import json
 
@@ -3827,16 +3861,23 @@ def main(argv: list[str] | None = None) -> int:
                 print("research list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json(status, message)
             else:
-                print(f"research list skipped safely: {exc}")
+                _research_error_text("research list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research list", "research command failed")
             return 1
     if args.command == "research" and args.research_command == "show":
         try:
             from atlas_agent.research.session import (
                 ResearchSessionError,
+                UnsupportedArtifactSchemaError,
                 find_research_artifact_by_run_id,
                 load_research_artifact,
                 validate_run_id,
@@ -3897,18 +3938,31 @@ def main(argv: list[str] | None = None) -> int:
                     print("  Warnings: 0")
                 print(f"  Artifact: {artifact.get('artifact_path', '')}")
             return 0
-        except ResearchSessionError as exc:
+        except UnsupportedArtifactSchemaError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
             else:
-                print(f"research show skipped safely: {exc}")
+                _research_error_text("research show", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research show", "research command failed")
             return 1
     if args.command == "research" and args.research_command == "plan":
         try:
             from atlas_agent.research.session import (
                 InvalidResearchSymbolError,
                 ResearchSessionError,
+                UnsupportedArtifactSchemaError,
                 UnsupportedResearchProviderError,
                 create_paper_plan,
             )
@@ -3945,12 +3999,24 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("research plan skipped safely: unsupported research provider")
             return 1
-        except ResearchSessionError as exc:
+        except UnsupportedArtifactSchemaError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
             else:
-                print(f"research plan skipped safely: {exc}")
+                _research_error_text("research plan", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research plan", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research plan", "research command failed")
             return 1
         if args.json:
             import json
@@ -3980,6 +4046,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             from atlas_agent.research.session import (
                 ResearchSessionError,
+                UnsupportedArtifactSchemaError,
                 summarize_research_workspace,
             )
             from atlas_agent.workspace import resolve_workspace_path
@@ -3994,12 +4061,24 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
 
             summary = summarize_research_workspace(ws)
-        except ResearchSessionError as exc:
+        except UnsupportedArtifactSchemaError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
             else:
-                print(f"research summary skipped safely: {exc}")
+                _research_error_text("research summary", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research summary", "research command failed")
             return 1
         if args.json:
             import json
@@ -4039,6 +4118,7 @@ def main(argv: list[str] | None = None) -> int:
             from atlas_agent.research.session import (
                 InvalidResearchSymbolError,
                 ResearchSessionError,
+                UnsupportedArtifactSchemaError,
                 UnsupportedResearchProviderError,
                 verify_paper_plan,
             )
@@ -4075,12 +4155,24 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("research verify skipped safely: unsupported research provider")
             return 1
-        except ResearchSessionError as exc:
+        except UnsupportedArtifactSchemaError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
             else:
-                print(f"research verify skipped safely: {exc}")
+                _research_error_text("research verify", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research verify", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research verify", "research command failed")
             return 1
         if args.json:
             import json
@@ -4117,6 +4209,7 @@ def main(argv: list[str] | None = None) -> int:
             from atlas_agent.research.session import (
                 InvalidResearchSymbolError,
                 ResearchSessionError,
+                UnsupportedArtifactSchemaError,
                 UnsupportedResearchProviderError,
                 evaluate_paper_plan,
             )
@@ -4154,12 +4247,24 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("research evaluate skipped safely: unsupported research provider")
             return 1
-        except ResearchSessionError as exc:
+        except UnsupportedArtifactSchemaError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
             else:
-                print(f"research evaluate skipped safely: {exc}")
+                _research_error_text("research evaluate", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research evaluate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research evaluate", "research command failed")
             return 1
         if args.json:
             import json
@@ -4196,6 +4301,7 @@ def main(argv: list[str] | None = None) -> int:
             from atlas_agent.research.session import (
                 InvalidResearchSymbolError,
                 ResearchSessionError,
+                UnsupportedArtifactSchemaError,
                 check_research_artifacts,
                 sanitize_symbol,
             )
@@ -4222,12 +4328,24 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("research check-artifacts skipped safely: invalid research symbol")
             return 1
-        except ResearchSessionError as exc:
+        except UnsupportedArtifactSchemaError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
             else:
-                print(f"research check-artifacts skipped safely: {exc}")
+                _research_error_text("research check-artifacts", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research check-artifacts", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research check-artifacts", "research command failed")
             return 1
         if args.json:
             import json
@@ -4260,6 +4378,7 @@ def main(argv: list[str] | None = None) -> int:
             from atlas_agent.research.session import (
                 InvalidResearchSymbolError,
                 ResearchSessionError,
+                UnsupportedArtifactSchemaError,
                 build_research_timeline,
                 sanitize_symbol,
                 validate_run_id,
@@ -4307,12 +4426,24 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("research timeline skipped safely: invalid research symbol")
             return 1
-        except ResearchSessionError as exc:
+        except UnsupportedArtifactSchemaError:
             if args.json:
-                import json
-                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
             else:
-                print(f"research timeline skipped safely: {exc}")
+                _research_error_text("research timeline", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research timeline", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research timeline", "research command failed")
             return 1
         if args.json:
             import json

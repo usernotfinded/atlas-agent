@@ -302,7 +302,7 @@ class TestResearchShow:
             code = main(["research", "show", shared_run_id])
         assert code == 1
         out = capsys.readouterr().out
-        assert "ambiguous" in out.lower()
+        assert "invalid research identifier" in out.lower()
 
     def test_show_malformed_artifact(self, tmp_path: Path, capsys, monkeypatch) -> None:
         config = _config(tmp_path)
