@@ -78,8 +78,8 @@ These gates are evaluated after can_submit is already `true`. Failure at any exe
 
 Market orders require a fresh validated quote before risk revalidation. This gate is **evaluated before** the live risk revalidation gate.
 
-- If no `quote_provider` is supplied, market orders are blocked.
-- If the quote provider returns `None`, raises an exception, or returns a stale, mismatched, or malformed quote, the market order is blocked with a safe static reason.
+- Market orders are **blocked by default** when no `quote_provider` is supplied.
+- If the quote provider returns `None`, raises an exception, or returns a missing, stale, symbol-mismatched, malformed, or invalid quote, the market order is blocked with a safe static reason.
 - Conservative pricing is used for risk revalidation:
   - **Buy orders** use the **ask** price.
   - **Sell orders** use the **bid** price.

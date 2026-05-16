@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Market orders remain blocked by default when no `quote_provider` is supplied.
   - Added tests for stale/malformed/mismatched quotes, conservative bid/ask pricing, output safety, and hard-limit interaction.
   - Updated `docs/live-submit-safety-contract.md` with market-order quote validation rules.
+- **Batch 5.20 — Quote Gate Docs-Truth Tests**:
+  - Added docs-truth tests in `tests/test_live_submit_safety_contract_docs.py` for the market-order safe quote gate.
+  - Tests ensure quote validation remains documented as an execution-time gate, not a `can_submit` resolver condition.
+  - Tightened safety contract wording for failure modes and default-blocked behavior.
 
 ### Validation
 - Full pytest passed in the latest validation run.

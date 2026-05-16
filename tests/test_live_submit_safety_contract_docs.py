@@ -334,3 +334,166 @@ class TestReleaseChecklist:
         assert "broker" in text and "live-submit-safety-contract" in text, (
             "release-checklist.md must require safety contract review when behavior changes"
         )
+
+
+# ---------------------------------------------------------------------------
+# 11. Quote gate docs-truth tests (Batch 5.20)
+# ---------------------------------------------------------------------------
+
+class TestQuoteGateDocumented:
+    @pytest.fixture
+    def contract(self) -> str:
+        return _read_contract()
+
+    def _quote_section(self, contract: str) -> str:
+        """Return the combined Submit Execution Gates + Market-Order Quote Validation text."""
+        gates = _extract_section(contract, "### B. Submit Execution Gates")
+        # The quote validation subsection is nested under the gates heading
+        quote = _extract_section(contract, "### Market-Order Quote Validation")
+        return gates + "\n" + quote
+
+    def test_execution_time_gates_section_contains_quote_gate(self, contract: str) -> None:
+        """The Submit Execution Gates section must document the market-order quote gate."""
+        section = self._quote_section(contract)
+        section_lower = section.lower()
+
+        required_phrases = [
+            "market orders",
+            "quote",
+            "fresh",
+            "risk revalidation",
+            "buy",
+            "ask",
+            "sell",
+            "bid",
+            "missing",
+            "stale",
+            "malformed",
+            "blocked",
+        ]
+
+        for phrase in required_phrases:
+            assert phrase.lower() in section_lower, (
+                f"Submit Execution Gates section must document quote gate concept: {phrase}"
+            )
+
+    def test_can_submit_section_excludes_quote_gate(self, contract: str) -> None:
+        """The can_submit section must NOT contain quote-provider or quote-gate concepts."""
+        section = _extract_section(contract, "### A. Resolver Readiness Gate: `can_submit`")
+        section_lower = section.lower()
+
+        forbidden_in_can_submit = [
+            "market quote",
+            "quote provider",
+            "fresh quote",
+            "market-order quote",
+            "buy uses ask",
+            "sell uses bid",
+            "stale quote",
+            "malformed quote",
+            "quote-derived notional",
+        ]
+
+        for phrase in forbidden_in_can_submit:
+            assert phrase.lower() not in section_lower, (
+                f"can_submit section must not contain quote gate concept: {phrase}"
+            )
+
+    def test_conservative_price_rule_in_same_section(self, contract: str) -> None:
+        """Buy->ask and sell->bid must appear in the same execution-time section."""
+        section = self._quote_section(contract)
+
+        buy_ask = re.search(r"buy.{0,80}ask", section, re.IGNORECASE)
+        sell_bid = re.search(r"sell.{0,80}bid", section, re.IGNORECASE)
+
+        assert buy_ask is not None, (
+            "Submit Execution Gates must state that buy orders use the ask price"
+        )
+        assert sell_bid is not None, (
+            "Submit Execution Gates must state that sell orders use the bid price"
+        )
+
+    def test_no_mid_or_last_price_claim(self, contract: str) -> None:
+        """The safety contract must not claim market orders can use mid/last/cached prices."""
+        section = self._quote_section(contract)
+        section_lower = section.lower()
+
+        prohibited_pricing = [
+            "mid price",
+            "midpoint",
+            "last price",
+            "previous close",
+            "cached price",
+        ]
+
+        for phrase in prohibited_pricing:
+            assert phrase.lower() not in section_lower, (
+                f"Quote gate section must not mention unsupported pricing: {phrase}"
+            )
+
+    def test_default_blocked_behavior_documented(self, contract: str) -> None:
+        """The doc must state that market orders are blocked by default without a quote provider."""
+        section = self._quote_section(contract)
+        section_lower = section.lower()
+
+        has_blocked_by_default = "blocked by default" in section_lower
+        has_no_quote_provider = "no quote provider" in section_lower
+        has_market_price_unavailable = "market_price_unavailable" in section_lower
+
+        assert has_blocked_by_default or has_no_quote_provider or has_market_price_unavailable, (
+            "Quote gate must document that market orders are blocked by default without a quote provider"
+        )
+
+    def test_quote_gate_does_not_imply_safety(self, contract: str) -> None:
+        """The quote gate must include a caution that it does not make market orders safe."""
+        section = self._quote_section(contract)
+        section_lower = section.lower()
+
+        caution_phrases = [
+            "does not make market orders safe",
+            "does not guarantee safe execution",
+            "bounded price for risk evaluation only",
+        ]
+
+        has_caution = any(phrase in section_lower for phrase in caution_phrases)
+        assert has_caution, (
+            "Quote gate must include a caution that it does not make market orders safe"
+        )
+
+        # Also ensure no forbidden overclaim phrases appear in the quote section
+        forbidden_overclaims = [
+            "safe live trading",
+            "risk-free",
+            "zero risk",
+            "guaranteed profit",
+            "no risk",
+            "production-ready live trading",
+            "market orders are safe",
+            "market order safety guaranteed",
+        ]
+
+        for phrase in forbidden_overclaims:
+            assert phrase.lower() not in section_lower, (
+                f"Quote gate section must not contain overclaim: {phrase}"
+            )
+
+    def test_quote_failure_modes_documented(self, contract: str) -> None:
+        """The quote gate must document the specific failure modes that block market orders."""
+        section = self._quote_section(contract)
+        section_lower = section.lower()
+
+        failure_modes = [
+            ("missing", "missing"),
+            ("stale", "stale"),
+            ("malformed", "malformed"),
+            ("symbol mismatch", "mismatched"),  # "symbol-mismatched" counts
+            ("invalid quote", "invalid"),
+        ]
+
+        matched = sum(
+            1 for _label, keyword in failure_modes if keyword in section_lower
+        )
+        # Require all 5 failure-mode indicators
+        assert matched >= 5, (
+            f"Quote gate must document failure modes (matched {matched}/5): {failure_modes}"
+        )
