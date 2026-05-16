@@ -53,6 +53,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added docs-truth tests in `tests/test_live_submit_safety_contract_docs.py` for the market-order safe quote gate.
   - Tests ensure quote validation remains documented as an execution-time gate, not a `can_submit` resolver condition.
   - Tightened safety contract wording for failure modes and default-blocked behavior.
+- **Batch 5.21 — Paper-Only Research Workflow**:
+  - Added `atlas research run --symbol SYMBOL` command for paper-only, analysis-only research sessions.
+  - Creates structured local artifacts at `.atlas/research/<SYMBOL>/<run_id>.json`.
+  - Integrates optional memory index lookup with safe output redaction.
+  - Emits `research_run_created` events with bounded, safe payloads.
+  - Blocks path traversal in symbol arguments.
+- **Batch 5.22 — Research Workflow CLI/Docs Polish**:
+  - Polished CLI help text and output for `atlas research run`.
+  - Added `--provider` flag (default `deterministic`, unsupported providers fail closed).
+  - Added `--no-memory` flag to skip memory index lookup.
+  - Standardized JSON output envelope with `ok`, `status`, `symbol`, `run_id`, `artifact_path`, `warnings`.
+  - Standardized text output with workspace-relative artifact paths and warning counts.
+  - Expanded artifact schema with `thesis`, `market_context`, `risks`, `invalidation_conditions`, `paper_only_plan`, `metadata`.
+  - Added deterministic research provider (`DeterministicResearchProvider`) that is network-free.
+  - Added CLI regression tests for help, JSON/text output, unsupported provider, symbol validation, event safety, artifact schema, and no-execution-path guarantees.
+  - Updated `README.md` and `docs/architecture.md` with research workflow documentation.
 
 ### Validation
 - Full pytest passed in the latest validation run.

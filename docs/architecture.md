@@ -17,6 +17,17 @@ Atlas Agent v0.5.7.dev2 is a tool-driven supervised system.
 
 AI providers and models never call broker adapters or execution modules directly. Every action is routed through the **ToolRegistry** and subject to **Risk** and **Audit** gates.
 
+## Research Workflow
+
+The `atlas research run --symbol SYMBOL` command is paper-only and analysis-only.
+
+- **Artifact path**: `.atlas/research/<SYMBOL>/<run_id>.json`
+- **Event type**: `research_run_created`
+- **Provider**: The default provider is `deterministic` (local, network-free). Unsupported providers fail closed with `unsupported_research_provider`.
+- **Memory**: Optional memory index lookup; `--no-memory` skips it. Markdown remains the source of truth.
+- **Paper-only boundary**: The artifact includes a `paper_only_plan` field that explicitly states the artifact must not be used to execute orders directly.
+- **No broker submit**: The research command never calls `OrderRouter`, `ApprovalManager`, or `BrokerResolver`.
+
 ## CLI Shape
 
 `atlas_agent.cli:main` remains the public entry point. Low-risk commands are routed through a small command registry and shared `CLIContext`; legacy wrappers remain in place for compatibility while command handlers move out of the entrypoint incrementally.

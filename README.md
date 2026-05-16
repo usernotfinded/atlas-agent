@@ -98,6 +98,10 @@ atlas run --mode paper
 1. **`atlas setup`**: Guided setup walks through provider/model/auth, discipline profile, symbol selection, and a final readiness summary.
 2. **`atlas run`**: Execution is explicit. Use `--mode paper` for safety and simulation. Live trading is designed to prevent orders without explicit configuration and multi-stage gates.
 
+### Paper research workflow
+
+`atlas research run --symbol AAPL` creates a local, paper-only research artifact. It does not submit orders, create approvals, or authorize live trading.
+
 ## Demos
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:

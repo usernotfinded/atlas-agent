@@ -399,13 +399,29 @@ Safety First:
     submit.add_argument("--reconcile", action="store_true")
     submit.add_argument("--json", action="store_true")
 
-    research = subparsers.add_parser("research")
+    research = subparsers.add_parser(
+        "research",
+        help="Paper-only research commands. Analysis-only. Does not submit orders.",
+    )
     research_sub = research.add_subparsers(dest="research_command")
     research_market = research_sub.add_parser("market")
     research_market.add_argument("--symbol", required=True)
-    research_run = research_sub.add_parser("run")
-    research_run.add_argument("--symbol", required=True)
-    research_run.add_argument("--json", action="store_true")
+    research_run = research_sub.add_parser(
+        "run",
+        help="Run a paper-only research session and create a local artifact. Does not submit orders.",
+    )
+    research_run.add_argument("--symbol", required=True, help="Symbol to research (alphanumeric, dash, underscore, dot).")
+    research_run.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_run.add_argument(
+        "--provider",
+        default="deterministic",
+        help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
+    )
+    research_run.add_argument(
+        "--no-memory",
+        action="store_true",
+        help="Skip memory index lookup.",
+    )
 
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
@@ -3597,13 +3613,18 @@ def main(argv: list[str] | None = None) -> int:
         try:
             from atlas_agent.research.session import (
                 ResearchSessionError,
+                UnsupportedResearchProviderError,
                 run_research_session,
             )
             from atlas_agent.workspace import resolve_workspace_path
 
             ws = resolve_workspace_path()
             if ws is None:
-                print("research run skipped safely: no workspace found")
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research run skipped safely: no workspace found")
                 return 1
             from atlas_agent.config import get_config
             config = get_config()
@@ -3613,30 +3634,54 @@ def main(argv: list[str] | None = None) -> int:
                 workspace_path=ws,
                 memory_dir=config.memory_dir,
                 event_logger=event_logger,
+                provider_name=args.provider,
+                use_memory=not args.no_memory,
             )
+        except UnsupportedResearchProviderError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research run skipped safely: {exc}")
+            return 1
         except ResearchSessionError as exc:
-            print(f"research run skipped safely: {exc}")
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research run skipped safely: {exc}")
             return 1
         except ResearchConfigurationError as exc:
-            print(f"research run skipped safely: {exc}")
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "configuration_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research run skipped safely: {exc}")
             return 0
         if args.json:
             import json
 
             out = {
+                "ok": True,
+                "status": "created",
                 "symbol": artifact.symbol,
                 "mode": artifact.mode,
                 "provider": artifact.provider,
                 "run_id": artifact.run_id,
-                "created_at": artifact.created_at.isoformat(),
                 "artifact_path": artifact.artifact_path,
+                "warnings": artifact.warnings,
             }
             print(json.dumps(out, indent=2, sort_keys=True))
         else:
-            print(f"Research run complete for {artifact.symbol}")
+            print("Research artifact created")
+            print(f"  Symbol: {artifact.symbol}")
+            print(f"  Mode: {artifact.mode}")
             print(f"  Provider: {artifact.provider}")
-            print(f"  Run ID: {artifact.run_id}")
             print(f"  Artifact: {artifact.artifact_path}")
+            if artifact.warnings:
+                print(f"  Warnings: {len(artifact.warnings)}")
+            else:
+                print("  Warnings: 0")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

@@ -6,8 +6,11 @@ from atlas_agent.research.perplexity import (
 )
 from atlas_agent.research.research_report import ResearchReport
 from atlas_agent.research.session import (
+    DeterministicResearchProvider,
     ResearchArtifact,
     ResearchSessionError,
+    SUPPORTED_RESEARCH_PROVIDERS,
+    UnsupportedResearchProviderError,
     run_research_session,
     sanitize_symbol,
 )
@@ -22,12 +25,15 @@ def get_research_provider() -> PerplexityResearchProvider | OfflineResearchProvi
 
 
 __all__ = [
+    "DeterministicResearchProvider",
     "OfflineResearchProvider",
     "PerplexityResearchProvider",
     "ResearchArtifact",
     "ResearchConfigurationError",
     "ResearchReport",
     "ResearchSessionError",
+    "SUPPORTED_RESEARCH_PROVIDERS",
+    "UnsupportedResearchProviderError",
     "get_research_provider",
     "run_research_session",
     "sanitize_symbol",
