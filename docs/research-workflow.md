@@ -6,6 +6,20 @@ The Atlas Agent research workflow is **paper-only** and **analysis-only**. It cr
 
 All commands operate on local data within the Atlas workspace. No external broker or live trading infrastructure is required.
 
+## Research Providers
+
+The enabled research provider is `deterministic`.
+
+- `deterministic` is a local provider and does not make network or API calls.
+- Unsupported providers fail closed; there is no silent fallback.
+- LLM and external research providers are not enabled in this tag.
+- The disabled LLM provider stub does not call APIs, read API keys, or use external services.
+- Provider selection does not authorize live trading.
+- Provider selection does not create approvals or pending orders.
+- Provider output remains paper-only and analysis-only.
+- Provider output is stored as local research artifacts only.
+- No broker credentials are required.
+
 ## Command Overview
 
 | Command | Purpose | Writes artifact | Read-only | Live trading |

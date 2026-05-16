@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.5.7.dev10] - 2026-05-16
+
+### Added
+- Research provider interface.
+- Deterministic/local research provider abstraction.
+- Disabled/fail-closed LLM provider stub.
+- Provider docs-truth tests.
+- Release notes for v0.5.7.dev10.
+
+### Changed
+- Research workflow documentation now describes the provider boundary.
+- Architecture docs now separate research provider selection from broker/live-submit execution.
+
+### Safety / Compatibility
+- Deterministic/local remains the default provider.
+- External/LLM providers are not enabled.
+- Unsupported providers fail closed.
+- No API keys are read by the research provider layer.
+- No network/API calls were added.
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- Research workflow remains paper-only and analysis-only.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed in latest validation.
+- pip check passed.
+- Demo paper workflow passed.
+- Demo research workflow passed.
+- release_check.sh passed.
+- Protected-staged check passed.
+
 ## [0.5.7.dev9] - 2026-05-16
 
 ### Added
@@ -44,8 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Demo research workflow passed.
 - release_check.sh passed.
 - Protected-staged check passed.
-
-## [Unreleased]
 
 ## [0.5.7.dev8] - 2026-05-16
 

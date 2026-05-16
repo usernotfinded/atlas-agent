@@ -414,6 +414,138 @@ class TestArchitecturePlanPaperOnly:
         assert "plan" in lower and "approval" in lower
 
 
+class TestArchitectureProviderLayer:
+    def test_provider_interface_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        lower = text.lower()
+        assert "research provider interface" in lower
+        assert "researchprovider" in lower or "protocol" in lower
+
+    def test_deterministic_provider_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        lower = text.lower()
+        assert "deterministic provider" in lower or "deterministic" in lower and "provider" in lower
+
+    def test_disabled_llm_stub_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        lower = text.lower()
+        assert "disabled" in lower and "llm" in lower
+        assert "fail-closed" in lower or "fail closed" in lower
+
+    def test_no_network_api_calls_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        lower = text.lower()
+        assert "no real llm" in lower or "no api" in lower or "no network" in lower
+
+    def test_no_broker_live_submit_coupling(self) -> None:
+        text = _read("docs/architecture.md")
+        lower = text.lower()
+        assert "separate from broker" in lower or "separate from" in lower and "live-submit" in lower
+
+
+class TestReadmeProviderNote:
+    def test_deterministic_local_provider_mentioned(self) -> None:
+        text = _read("README.md")
+        lower = text.lower()
+        assert "deterministic" in lower and "local" in lower and "provider" in lower
+
+    def test_llm_not_enabled_mentioned(self) -> None:
+        text = _read("README.md")
+        lower = text.lower()
+        assert "llm" in lower and "not enabled" in lower
+
+    def test_paper_only_analysis_only_mentioned(self) -> None:
+        text = _read("README.md")
+        lower = text.lower()
+        assert "paper-only" in lower or "paper only" in lower
+        assert "analysis-only" in lower or "analysis only" in lower
+
+
+class TestProviderDocsNoOverclaims:
+    DOCS = ["README.md", "docs/architecture.md", "docs/research-workflow.md"]
+    FORBIDDEN = [
+        "trading signal",
+        "buy recommendation",
+        "sell recommendation",
+        "financial advice",
+        "expected profit",
+        "guaranteed returns",
+        "risk-free",
+        "zero risk",
+        "no risk",
+        "safe live trading",
+        "production-ready live trading",
+        "autonomous live trading",
+        "live-trading authorization from provider",
+    ]
+
+    def test_no_overclaims_across_docs(self) -> None:
+        failures: list[tuple[str, str]] = []
+        for doc in self.DOCS:
+            text = _read(doc)
+            for phrase in self.FORBIDDEN:
+                if not _assert_absent_outside_negative_context(text, phrase):
+                    failures.append((doc, phrase))
+        assert not failures, f"Forbidden claims found: {failures}"
+
+
+class TestProviderDocsNoRealLLM:
+    DOCS = ["README.md", "docs/architecture.md", "docs/research-workflow.md"]
+
+    def test_no_openai_enabled_claim(self) -> None:
+        for doc in self.DOCS:
+            text = _read(doc)
+            lower = text.lower()
+            idx = lower.find("openai provider is enabled")
+            if idx != -1:
+                window = lower[max(0, idx - 60):idx + 80]
+                assert "not" in window, f"{doc} implies OpenAI provider is enabled"
+
+    def test_no_anthropic_enabled_claim(self) -> None:
+        for doc in self.DOCS:
+            text = _read(doc)
+            lower = text.lower()
+            idx = lower.find("anthropic provider is enabled")
+            if idx != -1:
+                window = lower[max(0, idx - 60):idx + 80]
+                assert "not" in window, f"{doc} implies Anthropic provider is enabled"
+
+    def test_no_google_enabled_claim(self) -> None:
+        for doc in self.DOCS:
+            text = _read(doc)
+            lower = text.lower()
+            idx = lower.find("google provider is enabled")
+            if idx != -1:
+                window = lower[max(0, idx - 60):idx + 80]
+                assert "not" in window, f"{doc} implies Google provider is enabled"
+
+    def test_no_llm_provider_enabled_claim(self) -> None:
+        for doc in self.DOCS:
+            text = _read(doc)
+            lower = text.lower()
+            idx = lower.find("llm provider is enabled")
+            if idx != -1:
+                window = lower[max(0, idx - 60):idx + 80]
+                assert "not" in window, f"{doc} implies LLM provider is enabled"
+
+    def test_no_external_provider_enabled_claim(self) -> None:
+        for doc in self.DOCS:
+            text = _read(doc)
+            lower = text.lower()
+            idx = lower.find("external provider is enabled")
+            if idx != -1:
+                window = lower[max(0, idx - 60):idx + 80]
+                assert "not" in window, f"{doc} implies external provider is enabled"
+
+
+class TestProviderDocsFailClosed:
+    def test_unsupported_providers_fail_closed(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "fail closed" in lower or "fail-closed" in lower
+        assert "no silent fallback" in lower or "does not silently fallback" in lower
+
+
 class TestForbiddenClaims:
     FORBIDDEN = [
         "zero risk",

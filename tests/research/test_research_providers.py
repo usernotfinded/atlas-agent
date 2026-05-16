@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import inspect
+from pathlib import Path
+
 import pytest
 
 from atlas_agent.research.providers import (
@@ -102,3 +105,65 @@ class TestResolveResearchProvider:
     def test_empty_string_raises(self) -> None:
         with pytest.raises(UnsupportedResearchProviderError, match="Unsupported research provider"):
             resolve_research_provider("")
+
+    def test_secret_like_name_does_not_leak(self) -> None:
+        with pytest.raises(UnsupportedResearchProviderError) as exc_info:
+            resolve_research_provider("sk-LEAKEDSECRET123456")
+        msg = str(exc_info.value)
+        assert "sk-LEAKEDSECRET123456" not in msg
+        assert "Unsupported research provider" in msg
+
+    def test_no_silent_fallback(self) -> None:
+        with pytest.raises(UnsupportedResearchProviderError):
+            resolve_research_provider("openai")
+
+
+class TestProviderCodeStatic:
+    """Static analysis of provider source code — no network/LLM SDK imports."""
+
+    PROVIDERS_PATH = Path(__file__).resolve().parents[2] / "src" / "atlas_agent" / "research" / "providers.py"
+
+    def _source(self) -> str:
+        return self.PROVIDERS_PATH.read_text(encoding="utf-8")
+
+    def test_no_openai_import(self) -> None:
+        src = self._source()
+        assert "openai" not in src.lower()
+
+    def test_no_anthropic_import(self) -> None:
+        src = self._source()
+        assert "anthropic" not in src.lower()
+
+    def test_no_google_generativeai_import(self) -> None:
+        src = self._source()
+        assert "google.generativeai" not in src.lower()
+        assert "genai" not in src.lower()
+
+    def test_no_requests_import(self) -> None:
+        src = self._source()
+        assert "import requests" not in src
+        assert "from requests" not in src
+
+    def test_no_httpx_import(self) -> None:
+        src = self._source()
+        assert "import httpx" not in src
+        assert "from httpx" not in src
+
+    def test_no_urllib_request_import(self) -> None:
+        src = self._source()
+        assert "urllib.request" not in src
+
+    def test_no_api_key_reads(self) -> None:
+        src = self._source()
+        lower = src.lower()
+        assert "api_key" not in lower
+        assert "apikey" not in lower
+        assert "getenv" not in lower
+        assert "environ" not in lower
+
+    def test_generate_research_has_no_network_calls(self) -> None:
+        """Inspect generate_research methods for banned call patterns."""
+        src = self._source()
+        banned = ["requests.get", "requests.post", "httpx.get", "httpx.post", "urllib.request.urlopen"]
+        for call in banned:
+            assert call not in src, f"Banned network call pattern found: {call}"

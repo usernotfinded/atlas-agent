@@ -1,6 +1,6 @@
 # Architecture
 
-Atlas Agent v0.5.7.dev4 is a tool-driven supervised system.
+Atlas Agent v0.5.7.dev10 is a tool-driven supervised system.
 
 ## High-Level Flow
 
@@ -117,6 +117,15 @@ Events:
 ### Summary/index output
 
 `summary` aggregates local research artifacts, paper plans, and verification artifacts per symbol. It reports counts, latest run/plan IDs, and workspace-relative paths. It is strictly read-only and does not create artifacts.
+
+## Research Provider Layer
+
+- A formal research provider interface exists (`ResearchProvider` protocol).
+- The deterministic provider is the only enabled provider.
+- A disabled LLM provider stub exists only as a fail-closed boundary.
+- No real LLM, API, or network behavior is enabled in the research provider layer.
+- No API keys are read by this provider layer.
+- The research provider layer is separate from broker/live-submit execution.
 
 ## CLI Shape
 

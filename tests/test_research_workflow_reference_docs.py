@@ -231,6 +231,54 @@ class TestReferenceDocCheckArtifacts:
         assert "malformed" in lower or "duplicate" in lower or "schema" in lower
 
 
+class TestReferenceDocProviders:
+    def test_providers_section_exists(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "research providers" in lower
+
+    def test_deterministic_mentioned(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "deterministic" in lower
+
+    def test_local_no_network_calls(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "local" in lower and "does not make network" in lower
+
+    def test_unsupported_fail_closed(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "unsupported providers fail closed" in lower
+
+    def test_llm_not_enabled(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "llm" in lower and "not enabled" in lower
+
+    def test_no_api_keys(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "no api keys" in lower or "does not call apis" in lower
+
+    def test_no_network_api_calls(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "network or api calls" in lower or "api calls" in lower
+
+    def test_paper_only_analysis_only(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "paper-only" in lower or "paper only" in lower
+        assert "analysis-only" in lower or "analysis only" in lower
+
+    def test_no_broker_credentials_required(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "no broker credentials are required" in lower
+
+
 class TestReadmeLinksToReferenceDoc:
     def test_readme_links_to_research_workflow_md(self) -> None:
         text = _read("README.md")
