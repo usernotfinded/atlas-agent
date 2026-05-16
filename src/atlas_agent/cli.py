@@ -3692,6 +3692,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "research" and args.research_command == "run":
         try:
             from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
                 ResearchSessionError,
                 UnsupportedResearchProviderError,
                 run_research_session,
@@ -3717,12 +3718,19 @@ def main(argv: list[str] | None = None) -> int:
                 provider_name=args.provider,
                 use_memory=not args.no_memory,
             )
-        except UnsupportedResearchProviderError as exc:
+        except InvalidResearchSymbolError:
             if args.json:
                 import json
-                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
             else:
-                print(f"research run skipped safely: {exc}")
+                print("research run skipped safely: invalid research symbol")
+            return 1
+        except UnsupportedResearchProviderError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."}, indent=2, sort_keys=True))
+            else:
+                print("research run skipped safely: unsupported research provider")
             return 1
         except ResearchSessionError as exc:
             if args.json:
@@ -3766,6 +3774,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "research" and args.research_command == "list":
         try:
             from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
                 ResearchSessionError,
                 iter_research_artifacts,
                 sanitize_symbol,
@@ -3810,6 +3819,13 @@ def main(argv: list[str] | None = None) -> int:
                         created = item.get("created_at", "")[:19]
                         print(f"{created:<24} {item['symbol']:<8} {item['run_id']:<34} {item['provider']:<14} {item['warnings_count']:<9} {item['artifact_path']}")
             return 0
+        except InvalidResearchSymbolError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
+            else:
+                print("research list skipped safely: invalid research symbol")
+            return 1
         except ResearchSessionError as exc:
             if args.json:
                 import json
@@ -3891,6 +3907,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "research" and args.research_command == "plan":
         try:
             from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
                 ResearchSessionError,
                 UnsupportedResearchProviderError,
                 create_paper_plan,
@@ -3914,12 +3931,19 @@ def main(argv: list[str] | None = None) -> int:
                 event_logger=event_logger,
                 provider_name=args.provider,
             )
-        except UnsupportedResearchProviderError as exc:
+        except InvalidResearchSymbolError:
             if args.json:
                 import json
-                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
             else:
-                print(f"research plan skipped safely: {exc}")
+                print("research plan skipped safely: invalid research symbol")
+            return 1
+        except UnsupportedResearchProviderError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."}, indent=2, sort_keys=True))
+            else:
+                print("research plan skipped safely: unsupported research provider")
             return 1
         except ResearchSessionError as exc:
             if args.json:
@@ -4013,6 +4037,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "research" and args.research_command == "verify":
         try:
             from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
                 ResearchSessionError,
                 UnsupportedResearchProviderError,
                 verify_paper_plan,
@@ -4036,12 +4061,19 @@ def main(argv: list[str] | None = None) -> int:
                 event_logger=event_logger,
                 provider_name=args.provider,
             )
-        except UnsupportedResearchProviderError as exc:
+        except InvalidResearchSymbolError:
             if args.json:
                 import json
-                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
             else:
-                print(f"research verify skipped safely: {exc}")
+                print("research verify skipped safely: invalid research symbol")
+            return 1
+        except UnsupportedResearchProviderError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."}, indent=2, sort_keys=True))
+            else:
+                print("research verify skipped safely: unsupported research provider")
             return 1
         except ResearchSessionError as exc:
             if args.json:
@@ -4083,6 +4115,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "research" and args.research_command == "evaluate":
         try:
             from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
                 ResearchSessionError,
                 UnsupportedResearchProviderError,
                 evaluate_paper_plan,
@@ -4107,12 +4140,19 @@ def main(argv: list[str] | None = None) -> int:
                 event_logger=event_logger,
                 provider_name=args.provider,
             )
-        except UnsupportedResearchProviderError as exc:
+        except InvalidResearchSymbolError:
             if args.json:
                 import json
-                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
             else:
-                print(f"research evaluate skipped safely: {exc}")
+                print("research evaluate skipped safely: invalid research symbol")
+            return 1
+        except UnsupportedResearchProviderError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."}, indent=2, sort_keys=True))
+            else:
+                print("research evaluate skipped safely: unsupported research provider")
             return 1
         except ResearchSessionError as exc:
             if args.json:
@@ -4154,6 +4194,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "research" and args.research_command == "check-artifacts":
         try:
             from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
                 ResearchSessionError,
                 check_research_artifacts,
                 sanitize_symbol,
@@ -4174,6 +4215,13 @@ def main(argv: list[str] | None = None) -> int:
                 symbol_filter = sanitize_symbol(args.symbol)
 
             result = check_research_artifacts(ws, symbol_filter=symbol_filter)
+        except InvalidResearchSymbolError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
+            else:
+                print("research check-artifacts skipped safely: invalid research symbol")
+            return 1
         except ResearchSessionError as exc:
             if args.json:
                 import json
@@ -4210,6 +4258,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "research" and args.research_command == "timeline":
         try:
             from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
                 ResearchSessionError,
                 build_research_timeline,
                 sanitize_symbol,
@@ -4251,6 +4300,13 @@ def main(argv: list[str] | None = None) -> int:
                 run_id_filter=run_id_filter,
                 limit=limit,
             )
+        except InvalidResearchSymbolError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
+            else:
+                print("research timeline skipped safely: invalid research symbol")
+            return 1
         except ResearchSessionError as exc:
             if args.json:
                 import json

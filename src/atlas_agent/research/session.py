@@ -24,6 +24,10 @@ class ResearchSessionError(RuntimeError):
     pass
 
 
+class InvalidResearchSymbolError(ResearchSessionError):
+    pass
+
+
 class UnsupportedResearchProviderError(ResearchSessionError):
     pass
 
@@ -69,9 +73,9 @@ class DeterministicResearchProvider:
 def sanitize_symbol(symbol: str) -> str:
     """Return a filesystem-safe sanitized symbol. Blocks path traversal."""
     if not symbol:
-        raise ResearchSessionError("symbol must not be empty")
+        raise InvalidResearchSymbolError("Invalid research symbol.")
     if "/" in symbol or "\\" in symbol or symbol.startswith(".") or ".." in symbol:
-        raise ResearchSessionError(f"symbol contains path traversal characters: {symbol}")
+        raise InvalidResearchSymbolError("Invalid research symbol.")
     sanitized = ""
     for ch in symbol:
         if ch.isalnum() or ch in "-_":
@@ -79,7 +83,7 @@ def sanitize_symbol(symbol: str) -> str:
         elif ch == "." and sanitized:
             sanitized += ch
     if not sanitized:
-        raise ResearchSessionError(f"symbol contains no safe characters: {symbol}")
+        raise InvalidResearchSymbolError("Invalid research symbol.")
     return sanitized.upper()
 
 
@@ -100,7 +104,7 @@ def _resolve_provider(provider_name: str | None) -> Any:
         return DeterministicResearchProvider()
     if provider_name not in SUPPORTED_RESEARCH_PROVIDERS:
         raise UnsupportedResearchProviderError(
-            f"unsupported_research_provider: {provider_name}"
+            "Unsupported research provider."
         )
     return DeterministicResearchProvider()
 

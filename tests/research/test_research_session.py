@@ -9,6 +9,7 @@ import pytest
 from atlas_agent.research.research_report import ResearchReport
 from atlas_agent.research.session import (
     DeterministicResearchProvider,
+    InvalidResearchSymbolError,
     ResearchArtifact,
     ResearchSessionError,
     UnsupportedResearchProviderError,
@@ -24,17 +25,17 @@ class TestSanitizeSymbol:
         assert sanitize_symbol("BRK.B") == "BRK.B"
 
     def test_empty_symbol_raises(self) -> None:
-        with pytest.raises(ResearchSessionError, match="empty"):
+        with pytest.raises(InvalidResearchSymbolError, match="Invalid research symbol"):
             sanitize_symbol("")
 
     def test_path_traversal_blocked(self) -> None:
-        with pytest.raises(ResearchSessionError, match="path traversal"):
+        with pytest.raises(InvalidResearchSymbolError, match="Invalid research symbol"):
             sanitize_symbol("../etc/passwd")
-        with pytest.raises(ResearchSessionError, match="path traversal"):
+        with pytest.raises(InvalidResearchSymbolError, match="Invalid research symbol"):
             sanitize_symbol("foo/bar")
-        with pytest.raises(ResearchSessionError, match="path traversal"):
+        with pytest.raises(InvalidResearchSymbolError, match="Invalid research symbol"):
             sanitize_symbol("foo\\\\bar")
-        with pytest.raises(ResearchSessionError, match="path traversal"):
+        with pytest.raises(InvalidResearchSymbolError, match="Invalid research symbol"):
             sanitize_symbol(".hidden")
 
     def test_weird_characters_stripped(self) -> None:
@@ -242,7 +243,7 @@ class TestRunResearchSession:
         assert data["citations"] == ["https://example.com/1", "https://example.com/2"]
 
     def test_unsupported_provider_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(UnsupportedResearchProviderError, match="unsupported_research_provider"):
+        with pytest.raises(UnsupportedResearchProviderError, match="Unsupported research provider"):
             run_research_session(
                 symbol="AAPL",
                 workspace_path=tmp_path,

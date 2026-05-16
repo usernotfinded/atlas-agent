@@ -131,7 +131,8 @@ class TestResearchRunUnsupportedProvider:
             code = main(["research", "run", "--symbol", "AAPL", "--provider", "openai"])
         assert code == 1
         out = capsys.readouterr().out
-        assert "unsupported_research_provider" in out
+        assert "unsupported research provider" in out.lower()
+        assert "openai" not in out.lower()
 
     def test_unsupported_provider_json(self, tmp_path: Path, capsys, monkeypatch) -> None:
         config = _config(tmp_path)
@@ -164,7 +165,9 @@ class TestResearchRunSymbolValidation:
             code = main(["research", "run", "--symbol", "foo/bar"])
         assert code == 1
         out = capsys.readouterr().out
-        assert "path traversal" in out.lower()
+        assert "invalid research symbol" in out.lower()
+        assert "foo" not in out
+        assert "/" not in out
 
     def test_backslash_rejected(self, tmp_path: Path, capsys, monkeypatch) -> None:
         config = _config(tmp_path)
@@ -174,7 +177,9 @@ class TestResearchRunSymbolValidation:
             code = main(["research", "run", "--symbol", "foo\\\\bar"])
         assert code == 1
         out = capsys.readouterr().out
-        assert "path traversal" in out.lower()
+        assert "invalid research symbol" in out.lower()
+        assert "foo" not in out
+        assert "\\" not in out
 
     def test_dotdot_rejected(self, tmp_path: Path, capsys, monkeypatch) -> None:
         config = _config(tmp_path)
@@ -184,7 +189,9 @@ class TestResearchRunSymbolValidation:
             code = main(["research", "run", "--symbol", "../etc/passwd"])
         assert code == 1
         out = capsys.readouterr().out
-        assert "path traversal" in out.lower()
+        assert "invalid research symbol" in out.lower()
+        assert "etc" not in out
+        assert "passwd" not in out
 
     def test_no_artifact_outside_workspace(self, tmp_path: Path, monkeypatch) -> None:
         config = _config(tmp_path)

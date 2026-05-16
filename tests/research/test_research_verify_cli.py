@@ -251,7 +251,8 @@ class TestResearchVerifyUnsupportedProvider:
             code = main(["research", "verify", plan_id, "--provider", "openai"])
         assert code == 1
         out = capsys.readouterr().out
-        assert "unsupported_research_provider" in out
+        assert "unsupported research provider" in out.lower()
+        assert "openai" not in out.lower()
 
     def test_unsupported_provider_no_artifact(self, tmp_path: Path, capsys, monkeypatch) -> None:
         run_id = _run_research(tmp_path, monkeypatch, capsys, "AAPL")

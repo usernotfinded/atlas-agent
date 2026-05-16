@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated research workflow demo to include lineage/timeline validation.
 - Added tests for timeline demo integration, unsafe timeline output, timeline failure behavior, missing lineage, and pending-order guard.
 
+### Fixed
+- Fixed stale v0.5.7.dev7 current-version references after v0.5.7.dev8.
+- Sanitized research CLI invalid-symbol and unsupported-provider error output.
+- Added regression tests for path/secret-like research CLI error leaks.
+
 ### Safety / Compatibility
 - No live-trading behavior changes.
 
