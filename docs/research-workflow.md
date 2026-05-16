@@ -222,6 +222,16 @@ The research workflow never:
 - enables live trading
 - requires broker credentials
 
+## Artifact Schema Versioning
+
+New research workflow artifacts include `schema_version`. The current schema version is `1`.
+
+- All newly written artifacts include `"schema_version": "1"` as a top-level field.
+- Older artifacts without `schema_version` are treated as legacy where possible; `show`, `plan`, `verify`, and `evaluate` continue to load them.
+- Unsupported future schema versions fail closed for commands that need to load full artifacts (`show`, `plan`, `verify`, `evaluate`).
+- `list` and `summary` skip artifacts with unsupported schema versions safely.
+- Atlas does not silently rewrite old artifacts in this batch.
+
 ## Known Limitations
 
 - Only the deterministic/local research provider is supported.

@@ -45,7 +45,7 @@ Required fields:
 - `run_id`, `symbol`, `mode`, `provider`
 - `summary`, `thesis`, `market_context`
 - `risks`, `invalidation_conditions`, `paper_only_plan`
-- `warnings`, `metadata`
+- `warnings`, `metadata`, `schema_version`
 
 Events:
 - `event_type`: `research_run_created`
@@ -62,7 +62,7 @@ Required fields:
 - `constraints` (includes paper-only, does not authorize live trading, does not create pending orders)
 - `risk_notes`, `invalidation_checks`
 - `paper_only_actions`, `verification_steps`
-- `warnings`, `metadata`
+- `warnings`, `metadata`, `schema_version`
 
 Events:
 - `event_type`: `research_plan_created`
@@ -83,7 +83,7 @@ Required fields:
 - `source_plan_path`
 - `checks`, `passed_checks`, `failed_checks`
 - `recommendation` (`paper_review_ready` or `manual_review_required`)
-- `warnings`, `metadata`
+- `warnings`, `metadata`, `schema_version`
 
 Events:
 - `event_type`: `research_verification_created`
@@ -106,7 +106,7 @@ Required fields:
 - `symbol`, `mode`, `provider`
 - `source_plan_path`, `data_source`, `data_summary`
 - `checks`, `metrics`, `recommendation` (`paper_evaluation_ready` or `manual_review_required`)
-- `warnings`, `metadata`
+- `warnings`, `metadata`, `schema_version`
 
 Events:
 - `event_type`: `research_evaluation_created`

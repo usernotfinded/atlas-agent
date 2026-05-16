@@ -318,6 +318,12 @@ class TestArchitectureArtifactSchema:
         assert "summary" in lower and "read-only" in lower
         assert "aggregate" in lower or "counts" in lower or "overview" in lower or "local" in lower
 
+    def test_schema_version_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "schema_version" in lower
+
 
 class TestArchitecturePathSafety:
     def test_workspace_relative_paths_documented(self) -> None:

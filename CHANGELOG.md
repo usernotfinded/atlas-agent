@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Schema versioning (`schema_version`) for all research workflow artifacts.
+- Compatibility behavior for legacy artifacts without `schema_version`.
+- Fail-closed handling for unsupported future schema versions.
+- Docs-truth tests for schema versioning boundaries.
+
+### Changed
+- New artifacts now include `"schema_version": "1"`.
+- `load_research_artifact` fails closed on unsupported schema versions.
+- `list` and `summary` skip artifacts with unsupported schema versions safely.
+- `docs/research-workflow.md` and `docs/architecture.md` now document schema versioning.
+
+### Safety / Compatibility
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- Research workflow remains paper-only and analysis-only.
+- Research commands do not create approvals or pending orders.
+- Evaluation does not generate trading signals, buy/sell recommendations, profit estimates, or live-trading authorization.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed in latest validation.
+- `pip check` passed.
+- `./scripts/demo_paper_workflow.sh` passed.
+- `./scripts/demo_research_workflow.sh` passed.
+- `./scripts/release_check.sh` passed.
+- `scripts/check_no_protected_staged.py` passed.
+
 ## [0.5.7.dev7] - 2026-05-16
 
 ### Added

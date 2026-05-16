@@ -177,6 +177,24 @@ class TestReferenceDocForbiddenClaims:
         assert not failures, f"Forbidden claims in docs/research-workflow.md: {failures}"
 
 
+class TestReferenceDocSchemaVersioning:
+    def test_schema_version_mentioned(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "schema_version" in lower
+        assert "current schema version" in lower
+
+    def test_legacy_compat_mentioned(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "legacy" in lower or "older artifacts" in lower
+
+    def test_no_rewrite_claim(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "does not silently rewrite" in lower or "does not rewrite" in lower
+
+
 class TestReadmeLinksToReferenceDoc:
     def test_readme_links_to_research_workflow_md(self) -> None:
         text = _read("README.md")

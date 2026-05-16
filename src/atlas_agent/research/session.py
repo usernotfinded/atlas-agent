@@ -17,12 +17,18 @@ RESEARCH_DIR = Path(".atlas") / "research"
 
 SUPPORTED_RESEARCH_PROVIDERS = {"deterministic"}
 
+RESEARCH_ARTIFACT_SCHEMA_VERSION = "1"
+
 
 class ResearchSessionError(RuntimeError):
     pass
 
 
 class UnsupportedResearchProviderError(ResearchSessionError):
+    pass
+
+
+class UnsupportedArtifactSchemaError(ResearchSessionError):
     pass
 
 
@@ -44,6 +50,7 @@ class ResearchArtifact:
     created_at: datetime
     artifact_path: str
     metadata: dict[str, Any] = field(default_factory=dict)
+    schema_version: str = RESEARCH_ARTIFACT_SCHEMA_VERSION
 
 
 class DeterministicResearchProvider:
@@ -200,6 +207,7 @@ def run_research_session(
             "provider": report.provider,
             "artifact_path": artifact.artifact_path,
             "status": "created",
+            "schema_version": artifact.schema_version,
         }
         event_logger.write(
             "research_run_created",
@@ -273,6 +281,10 @@ def iter_research_artifacts(
                     }
                 )
                 continue
+            # Skip unsupported schema versions safely in list mode
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+                continue
             # Only use computed workspace-relative path
             rel_path = path.relative_to(workspace_path).as_posix()
             items.append(
@@ -337,6 +349,10 @@ def iter_plan_artifacts(
                         "_malformed": True,
                     }
                 )
+                continue
+            # Skip unsupported schema versions safely in list mode
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
                 continue
             rel_path = path.relative_to(workspace_path).as_posix()
             items.append(
@@ -435,6 +451,15 @@ def summarize_research_workspace(
     }
 
 
+def _check_schema_version(data: dict[str, Any], artifact_type: str) -> None:
+    """Fail closed if schema_version is present and unsupported."""
+    sv = data.get("schema_version")
+    if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+        raise UnsupportedArtifactSchemaError(
+            f"unsupported_{artifact_type}_artifact_schema"
+        )
+
+
 def load_research_artifact(path: Path, workspace_path: Path) -> dict[str, Any]:
     """Load a research artifact JSON safely.
 
@@ -450,6 +475,10 @@ def load_research_artifact(path: Path, workspace_path: Path) -> dict[str, Any]:
         raise ResearchSessionError("artifact_malformed")
     # Enforce workspace-relative path in output
     data["artifact_path"] = path.relative_to(workspace_path).as_posix()
+    # Fail closed on unsupported schema versions when loading full artifacts
+    sv = data.get("schema_version")
+    if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+        raise UnsupportedArtifactSchemaError("unsupported_research_artifact_schema")
     return data
 
 
@@ -501,6 +530,7 @@ class PaperPlanArtifact:
     warnings: list[str]
     artifact_path: str
     metadata: dict[str, Any] = field(default_factory=dict)
+    schema_version: str = RESEARCH_ARTIFACT_SCHEMA_VERSION
 
 
 def create_paper_plan(
@@ -611,6 +641,7 @@ def create_paper_plan(
             "provider": "deterministic",
             "artifact_path": plan.artifact_path,
             "status": "created",
+            "schema_version": plan.schema_version,
         }
         event_logger.write(
             "research_plan_created",
@@ -641,6 +672,7 @@ def _write_plan_safe_json(path: Path, plan: PaperPlanArtifact) -> None:
         "warnings": plan.warnings,
         "artifact_path": plan.artifact_path,
         "metadata": plan.metadata,
+        "schema_version": plan.schema_version,
     }
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
 
@@ -695,6 +727,7 @@ class VerificationArtifact:
     recommendation: str
     artifact_path: str
     metadata: dict[str, Any] = field(default_factory=dict)
+    schema_version: str = RESEARCH_ARTIFACT_SCHEMA_VERSION
 
 
 _DANGEROUS_PHRASES = (
@@ -907,6 +940,7 @@ def verify_paper_plan(
             "failed_checks": failed_checks,
             "artifact_path": verification.artifact_path,
             "status": "created",
+            "schema_version": verification.schema_version,
         }
         event_logger.write(
             "research_verification_created",
@@ -936,6 +970,7 @@ def _write_verification_safe_json(path: Path, verification: VerificationArtifact
         "recommendation": verification.recommendation,
         "artifact_path": verification.artifact_path,
         "metadata": verification.metadata,
+        "schema_version": verification.schema_version,
     }
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
 
@@ -958,6 +993,7 @@ def _write_safe_json(path: Path, artifact: ResearchArtifact) -> None:
         "warnings": artifact.warnings,
         "artifact_path": artifact.artifact_path,
         "metadata": artifact.metadata,
+        "schema_version": artifact.schema_version,
     }
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
 
@@ -980,6 +1016,7 @@ class EvaluationArtifact:
     recommendation: str
     artifact_path: str
     metadata: dict[str, Any] = field(default_factory=dict)
+    schema_version: str = RESEARCH_ARTIFACT_SCHEMA_VERSION
 
 
 def _load_csv_data(data_path: Path) -> tuple[list[dict[str, str]], list[str]]:
@@ -1245,6 +1282,7 @@ def evaluate_paper_plan(
             "artifact_path": evaluation.artifact_path,
             "status": "created",
             "row_count": metrics.get("row_count", 0),
+            "schema_version": evaluation.schema_version,
         }
         event_logger.write(
             "research_evaluation_created",
@@ -1275,5 +1313,6 @@ def _write_evaluation_safe_json(path: Path, evaluation: EvaluationArtifact) -> N
         "recommendation": evaluation.recommendation,
         "artifact_path": evaluation.artifact_path,
         "metadata": evaluation.metadata,
+        "schema_version": evaluation.schema_version,
     }
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
