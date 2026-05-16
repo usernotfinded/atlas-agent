@@ -87,6 +87,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Emits `research_plan_created` event with bounded safe payload (no full plan body, no research body, no secrets).
   - Unsupported providers fail closed with `unsupported_research_provider`.
   - Added 21 CLI regression tests covering plan creation, JSON/text output, not-found, invalid run_id, ambiguous run_id, malformed source, unsupported provider, event safety, no-execution-path, no pending orders, no broker credentials required, and symlink containment.
+- **Batch 5.25 — Research Workflow Docs-Truth Tests**:
+  - Added `tests/test_research_workflow_docs.py` with 32 docs-truth tests protecting README.md and docs/architecture.md.
+  - Tests verify research command mentions, paper-only wording, forbidden claim absence, workflow progression, execution boundaries, artifact schemas, path/output safety, read-only list/show, and plan paper-only constraints.
+  - Expanded docs/architecture.md Research Workflow section with commands, safety boundaries, artifact schemas, and event safety.
+  - No runtime behavior changes.
 
 ### Validation
 - Full pytest passed in the latest validation run.

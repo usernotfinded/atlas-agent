@@ -19,16 +19,49 @@ AI providers and models never call broker adapters or execution modules directly
 
 ## Research Workflow
 
-The `atlas research run --symbol SYMBOL` command is paper-only and analysis-only.
+The research workflow is paper-only and analysis-only. It progresses from `run` (create a research artifact), to `list`/`show` (inspect existing artifacts), to `plan` (derive a paper-only plan artifact from an existing research artifact).
 
-- **Artifact path**: `.atlas/research/<SYMBOL>/<run_id>.json`
-- **Event type**: `research_run_created`
-- **Provider**: The default provider is `deterministic` (local, network-free). Unsupported providers fail closed with `unsupported_research_provider`.
-- **Memory**: Optional memory index lookup; `--no-memory` skips it. Markdown remains the source of truth.
-- **Paper-only boundary**: The artifact includes a `paper_only_plan` field that explicitly states the artifact must not be used to execute orders directly.
-- **No broker submit**: The research command never calls `OrderRouter`, `ApprovalManager`, or `BrokerResolver`.
-- **List/Show**: `atlas research list` and `atlas research show RUN_ID` are read-only commands for artifact discovery. They do not create files, call brokers, or invoke trading paths.
-- **Plan**: `atlas research plan RUN_ID` creates a deterministic paper-only plan artifact from an existing research artifact. It does not create pending orders, call brokers, or authorize live trading.
+### Commands
+
+- **`atlas research run --symbol SYMBOL`**: Creates a local research artifact.
+- **`atlas research list`**: Read-only discovery of existing artifacts. Does not create artifacts.
+- **`atlas research show RUN_ID`**: Read-only inspection of a single artifact. Does not create artifacts.
+- **`atlas research plan RUN_ID`**: Creates a deterministic paper-only plan from a research artifact.
+
+### Safety boundaries
+
+The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading.
+
+### Research artifact
+
+Saved at `.atlas/research/<SYMBOL>/<run_id>.json` with workspace-relative artifact paths and no absolute path output.
+
+Required fields:
+- `run_id`, `symbol`, `mode`, `provider`
+- `summary`, `thesis`, `market_context`
+- `risks`, `invalidation_conditions`, `paper_only_plan`
+- `warnings`, `metadata`
+
+Events:
+- `event_type`: `research_run_created`
+- Safe event metadata with bounded payload keys only; no full artifact body in event payload.
+
+### Plan artifact
+
+Saved at `.atlas/research/<SYMBOL>/plans/<plan_id>.json`.
+
+Required fields:
+- `plan_id`, `source_run_id`
+- `symbol`, `mode`, `provider`
+- `thesis_recap`
+- `constraints` (includes paper-only, does not authorize live trading, does not create pending orders)
+- `risk_notes`, `invalidation_checks`
+- `paper_only_actions`, `verification_steps`
+- `warnings`, `metadata`
+
+Events:
+- `event_type`: `research_plan_created`
+- Safe event metadata with bounded payload keys only.
 
 ## CLI Shape
 
