@@ -19,7 +19,7 @@ AI providers and models never call broker adapters or execution modules directly
 
 ## Research Workflow
 
-The research workflow is paper-only and analysis-only. It progresses from `run` (create a research artifact), to `list`/`show` (inspect existing artifacts), to `plan` (derive a paper-only plan artifact from an existing research artifact).
+The research workflow is paper-only and analysis-only. It progresses from `run` (create a research artifact), to `list`/`show` (inspect existing artifacts), to `plan` (derive a paper-only plan artifact), to `verify` (check a plan for completeness and paper-only constraints), to `summary` (overview all artifacts and plans).
 
 ### Commands
 
@@ -27,11 +27,12 @@ The research workflow is paper-only and analysis-only. It progresses from `run` 
 - **`atlas research list`**: Read-only discovery of existing artifacts. Does not create artifacts.
 - **`atlas research show RUN_ID`**: Read-only inspection of a single artifact. Does not create artifacts.
 - **`atlas research plan RUN_ID`**: Creates a deterministic paper-only plan from a research artifact.
+- **`atlas research verify PLAN_ID`**: Verifies a paper plan for completeness, paper-only constraints, and disallowed language. Creates a verification artifact.
 - **`atlas research summary`**: Read-only overview of all research artifacts and paper plans. Does not create artifacts.
 
 ### Safety boundaries
 
-The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading. The `summary` command is strictly read-only and does not create artifacts, pending orders, or approvals.
+The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading. The `verify` command is paper-only and does not create approvals, pending orders, or authorize live trading. The `summary` command is strictly read-only and does not create artifacts, pending orders, or approvals.
 
 ### Research artifact
 

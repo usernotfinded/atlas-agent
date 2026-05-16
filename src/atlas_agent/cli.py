@@ -457,6 +457,19 @@ Safety First:
     )
     research_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_verify = research_sub.add_parser(
+        "verify",
+        help="Verify a paper plan artifact and create a verification artifact. Paper-only. Does not submit orders.",
+        description="Verify a paper plan artifact and create a verification artifact. Paper-only. Does not create pending orders or approvals.",
+    )
+    research_verify.add_argument("plan_id", help="Plan ID to verify.")
+    research_verify.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_verify.add_argument(
+        "--provider",
+        default="deterministic",
+        help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
+    )
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -3963,6 +3976,76 @@ def main(argv: list[str] | None = None) -> int:
                 print()
                 for w in summary["warnings"]:
                     print(f"Warning: {w}")
+        return 0
+    if args.command == "research" and args.research_command == "verify":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                UnsupportedResearchProviderError,
+                verify_paper_plan,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research verify skipped safely: no workspace found")
+                return 1
+            from atlas_agent.config import get_config
+            config = get_config()
+            event_logger = EventLogger(config.events_dir)
+            verification = verify_paper_plan(
+                workspace_path=ws,
+                plan_id=args.plan_id,
+                event_logger=event_logger,
+                provider_name=args.provider,
+            )
+        except UnsupportedResearchProviderError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research verify skipped safely: {exc}")
+            return 1
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research verify skipped safely: {exc}")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_verification_created",
+                "symbol": verification.symbol,
+                "source_plan_id": verification.source_plan_id,
+                "verification_id": verification.verification_id,
+                "recommendation": verification.recommendation,
+                "passed_checks": verification.passed_checks,
+                "failed_checks": verification.failed_checks,
+                "artifact_path": verification.artifact_path,
+                "warnings": verification.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Paper plan verification created")
+            print(f"  Symbol: {verification.symbol}")
+            print(f"  Mode: {verification.mode}")
+            print(f"  Source Plan ID: {verification.source_plan_id}")
+            print(f"  Verification ID: {verification.verification_id}")
+            print(f"  Recommendation: {verification.recommendation}")
+            print(f"  Passed checks: {verification.passed_checks}")
+            print(f"  Failed checks: {verification.failed_checks}")
+            print(f"  Artifact: {verification.artifact_path}")
+            if verification.warnings:
+                print(f"  Warnings: {len(verification.warnings)}")
+            else:
+                print("  Warnings: 0")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

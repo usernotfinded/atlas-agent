@@ -23,6 +23,7 @@ KNOWN_EVENT_TYPES = {
     "research_completed",
     "research_plan_created",
     "research_run_created",
+    "research_verification_created",
     "model_guidance_loaded",
     "decision_proposed",
     "risk_approved",

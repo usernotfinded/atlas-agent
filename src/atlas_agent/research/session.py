@@ -645,6 +645,301 @@ def _write_plan_safe_json(path: Path, plan: PaperPlanArtifact) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def find_plan_artifact_by_plan_id(
+    workspace_path: Path, plan_id: str
+) -> Path | None:
+    """Find exactly one plan artifact by plan_id.
+
+    Returns the path, or None if not found.
+    Raises ResearchSessionError if ambiguous.
+    """
+    safe_plan_id = validate_run_id(plan_id)
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return None
+
+    matches: list[Path] = []
+    for sym_dir in research_dir.iterdir():
+        if not sym_dir.is_dir():
+            continue
+        plans_dir = sym_dir / "plans"
+        if not plans_dir.exists():
+            continue
+        candidate = plans_dir / f"{safe_plan_id}.json"
+        if candidate.exists() and candidate.is_file():
+            if candidate.is_symlink() and not _is_inside_workspace(candidate, workspace_path):
+                continue
+            matches.append(candidate)
+
+    if len(matches) == 0:
+        return None
+    if len(matches) > 1:
+        raise ResearchSessionError("ambiguous_plan_id")
+    return matches[0]
+
+
+@dataclass(frozen=True)
+class VerificationArtifact:
+    verification_id: str
+    source_plan_id: str
+    source_run_id: str
+    created_at: datetime
+    symbol: str
+    mode: str
+    provider: str
+    source_plan_path: str
+    checks: list[dict[str, str]]
+    passed_checks: int
+    failed_checks: int
+    warnings: list[str]
+    recommendation: str
+    artifact_path: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+_DANGEROUS_PHRASES = (
+    "live submit authorized",
+    "submit live order",
+    "create pending order",
+    "place order",
+    "execute trade",
+    "financial advice",
+    "guaranteed profit",
+    "risk-free",
+    "safe live trading",
+    "production-ready live trading",
+)
+
+_REQUIRED_PLAN_KEYS = (
+    "plan_id",
+    "source_run_id",
+    "symbol",
+    "mode",
+    "provider",
+    "thesis_recap",
+    "constraints",
+    "risk_notes",
+    "invalidation_checks",
+    "paper_only_actions",
+    "verification_steps",
+)
+
+
+def _check_plan_schema_complete(plan: dict[str, Any]) -> dict[str, str]:
+    missing = [k for k in _REQUIRED_PLAN_KEYS if k not in plan]
+    if missing:
+        return {"name": "plan_schema_complete", "status": "fail", "message": "Plan is missing required fields."}
+    return {"name": "plan_schema_complete", "status": "pass", "message": "Plan schema is complete."}
+
+
+def _check_paper_only_mode(plan: dict[str, Any]) -> dict[str, str]:
+    if plan.get("mode") == "paper":
+        return {"name": "paper_only_mode", "status": "pass", "message": "Mode is paper."}
+    return {"name": "paper_only_mode", "status": "fail", "message": "Mode is not paper."}
+
+
+def _check_no_live_authorization_language(plan: dict[str, Any]) -> dict[str, str]:
+    text = json.dumps(plan, sort_keys=True).lower()
+    for phrase in _DANGEROUS_PHRASES:
+        idx = text.find(phrase.lower())
+        if idx == -1:
+            continue
+        # Look for negative context immediately before the phrase
+        window_start = max(0, idx - 40)
+        context = text[window_start:idx]
+        negative_indicators = ("not ", "does not ", "never ", "no ", "without ")
+        if any(context.endswith(ind) or (" " + ind) in context for ind in negative_indicators):
+            continue
+        return {"name": "no_live_authorization_language", "status": "fail", "message": "Plan contains disallowed language."}
+    return {"name": "no_live_authorization_language", "status": "pass", "message": "No disallowed language found."}
+
+
+def _check_has_risk_notes(plan: dict[str, Any]) -> dict[str, str]:
+    notes = plan.get("risk_notes", [])
+    if isinstance(notes, list) and len(notes) > 0:
+        return {"name": "has_risk_notes", "status": "pass", "message": "Risk notes are present."}
+    return {"name": "has_risk_notes", "status": "fail", "message": "Risk notes are missing."}
+
+
+def _check_has_invalidation_checks(plan: dict[str, Any]) -> dict[str, str]:
+    checks = plan.get("invalidation_checks", [])
+    if isinstance(checks, list) and len(checks) > 0:
+        return {"name": "has_invalidation_checks", "status": "pass", "message": "Invalidation checks are present."}
+    return {"name": "has_invalidation_checks", "status": "fail", "message": "Invalidation checks are missing."}
+
+
+def _check_has_verification_steps(plan: dict[str, Any]) -> dict[str, str]:
+    steps = plan.get("verification_steps", [])
+    if isinstance(steps, list) and len(steps) > 0:
+        return {"name": "has_verification_steps", "status": "pass", "message": "Verification steps are present."}
+    return {"name": "has_verification_steps", "status": "fail", "message": "Verification steps are missing."}
+
+
+def _check_has_paper_only_constraints(plan: dict[str, Any]) -> dict[str, str]:
+    constraints = plan.get("constraints", [])
+    if not isinstance(constraints, list):
+        return {"name": "has_paper_only_constraints", "status": "fail", "message": "Constraints are missing."}
+    text = " ".join(str(c) for c in constraints).lower()
+    if "paper-only" in text or "paper only" in text or "does not authorize live trading" in text:
+        return {"name": "has_paper_only_constraints", "status": "pass", "message": "Paper-only constraints are present."}
+    return {"name": "has_paper_only_constraints", "status": "fail", "message": "Paper-only constraints are missing."}
+
+
+def _check_source_path_contained(plan: dict[str, Any], workspace_path: Path) -> dict[str, str]:
+    source_path = plan.get("source_artifact_path", "") or plan.get("artifact_path", "")
+    if not source_path:
+        return {"name": "source_path_contained", "status": "fail", "message": "Source path is missing."}
+    # Workspace-relative is safe; absolute paths outside workspace are not
+    if source_path.startswith("/"):
+        try:
+            p = Path(source_path).resolve()
+            ws = workspace_path.resolve()
+            p.relative_to(ws)
+        except ValueError:
+            return {"name": "source_path_contained", "status": "fail", "message": "Source path is outside workspace."}
+    return {"name": "source_path_contained", "status": "pass", "message": "Source path is contained."}
+
+
+def verify_paper_plan(
+    workspace_path: Path,
+    plan_id: str,
+    *,
+    event_logger: EventLogger | None = None,
+    provider_name: str | None = None,
+) -> VerificationArtifact:
+    """Create a deterministic paper-only verification artifact from a plan.
+
+    This never touches broker submit paths.
+    """
+    safe_plan_id = validate_run_id(plan_id)
+
+    # Resolve provider (only deterministic supported)
+    _resolve_provider(provider_name)
+
+    # Find and load source plan
+    plan_path = find_plan_artifact_by_plan_id(workspace_path, safe_plan_id)
+    if plan_path is None:
+        raise ResearchSessionError("plan_not_found")
+    plan = load_research_artifact(plan_path, workspace_path)
+
+    symbol = plan.get("symbol", "UNKNOWN")
+    source_run_id = plan.get("source_run_id", "")
+    verification_id = generate_run_id()
+    created_at = datetime.now(UTC)
+    warnings: list[str] = []
+
+    # Run checks
+    checks: list[dict[str, str]] = [
+        _check_plan_schema_complete(plan),
+        _check_paper_only_mode(plan),
+        _check_no_live_authorization_language(plan),
+        _check_has_risk_notes(plan),
+        _check_has_invalidation_checks(plan),
+        _check_has_verification_steps(plan),
+        _check_has_paper_only_constraints(plan),
+        _check_source_path_contained(plan, workspace_path),
+    ]
+
+    passed_checks = sum(1 for c in checks if c["status"] == "pass")
+    failed_checks = sum(1 for c in checks if c["status"] == "fail")
+
+    if failed_checks == 0:
+        recommendation = "paper_review_ready"
+    else:
+        recommendation = "manual_review_required"
+
+    verification = VerificationArtifact(
+        verification_id=verification_id,
+        source_plan_id=safe_plan_id,
+        source_run_id=source_run_id,
+        created_at=created_at,
+        symbol=symbol,
+        mode="paper",
+        provider="deterministic",
+        source_plan_path=plan_path.relative_to(workspace_path).as_posix(),
+        checks=checks,
+        passed_checks=passed_checks,
+        failed_checks=failed_checks,
+        warnings=warnings,
+        recommendation=recommendation,
+        artifact_path="",
+        metadata={
+            "provider_requested": provider_name or "deterministic",
+            "source_provider": plan.get("provider", "unknown"),
+        },
+    )
+
+    # Persist verification artifact
+    verification_dir = workspace_path / RESEARCH_DIR / symbol / "verifications"
+    verification_dir.mkdir(parents=True, exist_ok=True)
+    verification_file = verification_dir / f"{verification_id}.json"
+    _write_verification_safe_json(verification_file, verification)
+
+    verification = VerificationArtifact(
+        verification_id=verification.verification_id,
+        source_plan_id=verification.source_plan_id,
+        source_run_id=verification.source_run_id,
+        created_at=verification.created_at,
+        symbol=verification.symbol,
+        mode=verification.mode,
+        provider=verification.provider,
+        source_plan_path=verification.source_plan_path,
+        checks=verification.checks,
+        passed_checks=verification.passed_checks,
+        failed_checks=verification.failed_checks,
+        warnings=verification.warnings,
+        recommendation=verification.recommendation,
+        artifact_path=verification_file.relative_to(workspace_path).as_posix(),
+        metadata=verification.metadata,
+    )
+
+    # Log safe event
+    if event_logger is not None:
+        payload = {
+            "verification_id": verification_id,
+            "source_plan_id": safe_plan_id,
+            "source_run_id": source_run_id,
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "deterministic",
+            "recommendation": recommendation,
+            "passed_checks": passed_checks,
+            "failed_checks": failed_checks,
+            "artifact_path": verification.artifact_path,
+            "status": "created",
+        }
+        event_logger.write(
+            "research_verification_created",
+            run_id=verification_id,
+            command="atlas research verify",
+            mode="paper",
+            payload=payload,
+        )
+
+    return verification
+
+
+def _write_verification_safe_json(path: Path, verification: VerificationArtifact) -> None:
+    data: dict[str, Any] = {
+        "verification_id": verification.verification_id,
+        "source_plan_id": verification.source_plan_id,
+        "source_run_id": verification.source_run_id,
+        "created_at": verification.created_at.isoformat(),
+        "symbol": verification.symbol,
+        "mode": verification.mode,
+        "provider": verification.provider,
+        "source_plan_path": verification.source_plan_path,
+        "checks": verification.checks,
+        "passed_checks": verification.passed_checks,
+        "failed_checks": verification.failed_checks,
+        "warnings": verification.warnings,
+        "recommendation": verification.recommendation,
+        "artifact_path": verification.artifact_path,
+        "metadata": verification.metadata,
+    }
+    path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+
+
 def _write_safe_json(path: Path, artifact: ResearchArtifact) -> None:
     data: dict[str, Any] = {
         "run_id": artifact.run_id,

@@ -17,10 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Paper-only research plan command.
 - Research workflow docs-truth tests.
 - Research summary/index command (`atlas research summary`).
+- Paper-only research plan verification command (`atlas research verify PLAN_ID`).
+- Verification artifacts with deterministic checks: plan_schema_complete, paper_only_mode, no_live_authorization_language, has_risk_notes, has_invalidation_checks, has_verification_steps, has_paper_only_constraints, source_path_contained.
+- Verification event type `research_verification_created` with bounded safe payload.
+- Tests for safe output, failed checks, dangerous-language detection, no broker calls, no approvals, and no pending orders.
 
 ### Changed
 - Market orders remain blocked by default unless a fresh validated quote is explicitly supplied for risk revalidation.
-- Research workflow now supports run, list, show, plan, and summary.
+- Research workflow now supports run, list, show, plan, verify, and summary.
 - Release workflow now blocks protected staged artifacts.
 
 ### Safety / Compatibility
@@ -29,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reconcile remains read-only.
 - Research workflow remains paper-only and analysis-only.
 - Research commands do not create approvals or pending orders.
+- Research verify command does not create approvals, pending orders, or authorize live trading.
 - Quote gate is execution-time only, not part of BrokerResolver.can_submit.
 - No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
 

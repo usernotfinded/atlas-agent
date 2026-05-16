@@ -77,6 +77,10 @@ class TestReadmeResearchCommands:
         text = _read("README.md")
         assert "atlas research summary" in text.lower()
 
+    def test_readme_mentions_verify_command(self) -> None:
+        text = _read("README.md")
+        assert "atlas research verify" in text.lower()
+
 
 class TestReadmeResearchWording:
     def test_paper_only_mentioned(self) -> None:
@@ -147,14 +151,22 @@ class TestArchitectureResearchWorkflow:
         assert "summary" in lower
         assert "read-only" in lower or "read only" in lower
 
+    def test_verify_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "verify" in lower
+        assert "paper-only" in lower or "paper only" in lower
+
     def test_progression_described(self) -> None:
         text = _read("docs/architecture.md")
         section = _extract_section(text, "## Research Workflow")
         lower = section.lower()
-        # run creates, list/show inspect, plan derives, summary overviews
+        # run creates, list/show inspect, plan derives, verify checks, summary overviews
         assert "create" in lower or "creates" in lower
         assert "discover" in lower or "inspect" in lower
         assert "derive" in lower or "derives" in lower or "from" in lower
+        assert "verify" in lower or "check" in lower
         assert "overview" in lower or "summarize" in lower or "summary" in lower
 
 
@@ -183,6 +195,24 @@ class TestArchitectureNoExecutionBoundary:
         text = _read("docs/architecture.md")
         section = _extract_section(text, "## Research Workflow")
         assert "does not authorize live trading" in section.lower()
+
+    def test_verify_does_not_authorize_live_trading(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "verify" in lower and "does not authorize live trading" in lower
+
+    def test_verify_does_not_create_pending_orders(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "verify" in lower and "does not create pending orders" in lower
+
+    def test_verify_does_not_create_approvals(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "verify" in lower and "approval" in lower
 
 
 class TestArchitectureArtifactSchema:

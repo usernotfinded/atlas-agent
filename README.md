@@ -109,6 +109,9 @@ Discover and inspect existing artifacts:
 Create a paper-only plan from a research artifact:
 - `atlas research plan RUN_ID`
 
+Verify a paper plan for completeness and safety:
+- `atlas research verify PLAN_ID`
+
 Summarize all research artifacts and plans:
 - `atlas research summary`
 
