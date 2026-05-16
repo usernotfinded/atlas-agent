@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7.dev4] - 2026-05-16
+
+### Added
+- Workspace hygiene guard for protected staged artifacts.
+- Safe quote source boundary for market-order live-submit risk revalidation.
+- Quote gate docs-truth tests.
+- Paper-only research workflow.
+- Research CLI polish and safe JSON/text output.
+- Research artifact list/show commands.
+- Paper-only research plan command.
+- Research workflow docs-truth tests.
+- Research summary/index command (`atlas research summary`).
+
+### Changed
+- Market orders remain blocked by default unless a fresh validated quote is explicitly supplied for risk revalidation.
+- Research workflow now supports run, list, show, plan, and summary.
+- Release workflow now blocks protected staged artifacts.
+
+### Safety / Compatibility
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- Reconcile remains read-only.
+- Research workflow remains paper-only and analysis-only.
+- Research commands do not create approvals or pending orders.
+- Quote gate is execution-time only, not part of BrokerResolver.can_submit.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Full pytest passed in latest validation.
+- `pip check` passed.
+- `./scripts/demo_paper_workflow.sh` passed.
+- `./scripts/release_check.sh` passed.
+- `scripts/check_no_protected_staged.py` passed.
+
 ## [0.5.7.dev3] - 2026-05-16
 
 ### Added

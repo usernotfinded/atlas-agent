@@ -73,6 +73,10 @@ class TestReadmeResearchCommands:
         text = _read("README.md")
         assert "atlas research plan" in text.lower()
 
+    def test_readme_mentions_summary_command(self) -> None:
+        text = _read("README.md")
+        assert "atlas research summary" in text.lower()
+
 
 class TestReadmeResearchWording:
     def test_paper_only_mentioned(self) -> None:
@@ -136,14 +140,22 @@ class TestArchitectureResearchWorkflow:
         assert "plan" in lower
         assert "paper-only" in lower or "paper only" in lower
 
+    def test_summary_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "summary" in lower
+        assert "read-only" in lower or "read only" in lower
+
     def test_progression_described(self) -> None:
         text = _read("docs/architecture.md")
         section = _extract_section(text, "## Research Workflow")
         lower = section.lower()
-        # run creates, list/show inspect, plan derives
+        # run creates, list/show inspect, plan derives, summary overviews
         assert "create" in lower or "creates" in lower
         assert "discover" in lower or "inspect" in lower
         assert "derive" in lower or "derives" in lower or "from" in lower
+        assert "overview" in lower or "summarize" in lower or "summary" in lower
 
 
 class TestArchitectureNoExecutionBoundary:

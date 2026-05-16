@@ -1,6 +1,6 @@
 # Architecture
 
-Atlas Agent v0.5.7.dev2 is a tool-driven supervised system.
+Atlas Agent v0.5.7.dev4 is a tool-driven supervised system.
 
 ## High-Level Flow
 
@@ -27,10 +27,11 @@ The research workflow is paper-only and analysis-only. It progresses from `run` 
 - **`atlas research list`**: Read-only discovery of existing artifacts. Does not create artifacts.
 - **`atlas research show RUN_ID`**: Read-only inspection of a single artifact. Does not create artifacts.
 - **`atlas research plan RUN_ID`**: Creates a deterministic paper-only plan from a research artifact.
+- **`atlas research summary`**: Read-only overview of all research artifacts and paper plans. Does not create artifacts.
 
 ### Safety boundaries
 
-The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading.
+The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading. The `summary` command is strictly read-only and does not create artifacts, pending orders, or approvals.
 
 ### Research artifact
 

@@ -294,6 +294,147 @@ def iter_research_artifacts(
     return items
 
 
+def iter_plan_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return a list of plan artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe / "plans")
+    else:
+        for sym_dir in research_dir.iterdir():
+            if sym_dir.is_dir():
+                plans_dir = sym_dir / "plans"
+                if plans_dir.exists():
+                    search_dirs.append(plans_dir)
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                items.append(
+                    {
+                        "plan_id": path.stem,
+                        "symbol": directory.parent.name,
+                        "created_at": "",
+                        "artifact_path": path.relative_to(workspace_path).as_posix(),
+                        "provider": "unknown",
+                        "warnings_count": 1,
+                        "_malformed": True,
+                    }
+                )
+                continue
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "plan_id": data.get("plan_id", path.stem),
+                    "source_run_id": data.get("source_run_id", ""),
+                    "symbol": data.get("symbol", directory.parent.name),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                    "provider": data.get("provider", "unknown"),
+                    "warnings_count": len(data.get("warnings", [])),
+                }
+            )
+
+    def _sort_key(item: dict[str, Any]) -> str:
+        return item["created_at"] if not item.get("_malformed") else ""
+
+    items.sort(key=_sort_key, reverse=True)
+    return items
+
+
+def summarize_research_workspace(
+    workspace_path: Path,
+) -> dict[str, Any]:
+    """Return a compact read-only summary of research artifacts and plans.
+
+    No artifact creation. No broker calls. No execution paths.
+    """
+    research_items = iter_research_artifacts(workspace_path)
+    plan_items = iter_plan_artifacts(workspace_path)
+
+    research_count = sum(1 for r in research_items if not r.get("_malformed"))
+    plan_count = sum(1 for p in plan_items if not p.get("_malformed"))
+
+    # Group research by symbol
+    by_symbol: dict[str, dict[str, Any]] = {}
+    for item in research_items:
+        if item.get("_malformed"):
+            continue
+        sym = item["symbol"]
+        if sym not in by_symbol:
+            by_symbol[sym] = {
+                "symbol": sym,
+                "research_count": 0,
+                "plan_count": 0,
+                "latest_research_run_id": None,
+                "latest_research_path": None,
+                "latest_plan_id": None,
+                "latest_plan_path": None,
+            }
+        by_symbol[sym]["research_count"] += 1
+        if by_symbol[sym]["latest_research_run_id"] is None:
+            by_symbol[sym]["latest_research_run_id"] = item["run_id"]
+            by_symbol[sym]["latest_research_path"] = item["artifact_path"]
+
+    # Group plans by symbol
+    for item in plan_items:
+        if item.get("_malformed"):
+            continue
+        sym = item["symbol"]
+        if sym not in by_symbol:
+            by_symbol[sym] = {
+                "symbol": sym,
+                "research_count": 0,
+                "plan_count": 0,
+                "latest_research_run_id": None,
+                "latest_research_path": None,
+                "latest_plan_id": None,
+                "latest_plan_path": None,
+            }
+        by_symbol[sym]["plan_count"] += 1
+        if by_symbol[sym]["latest_plan_id"] is None:
+            by_symbol[sym]["latest_plan_id"] = item["plan_id"]
+            by_symbol[sym]["latest_plan_path"] = item["artifact_path"]
+
+    symbols = sorted(by_symbol.values(), key=lambda d: d["symbol"])
+
+    # Warnings: count malformed
+    malformed_warnings = 0
+    for item in research_items:
+        if item.get("_malformed"):
+            malformed_warnings += 1
+    for item in plan_items:
+        if item.get("_malformed"):
+            malformed_warnings += 1
+
+    warnings: list[str] = []
+    if malformed_warnings:
+        warnings.append(f"malformed artifacts skipped: {malformed_warnings}")
+
+    return {
+        "research_count": research_count,
+        "plan_count": plan_count,
+        "symbols": symbols,
+        "warnings": warnings,
+    }
+
+
 def load_research_artifact(path: Path, workspace_path: Path) -> dict[str, Any]:
     """Load a research artifact JSON safely.
 

@@ -450,6 +450,13 @@ Safety First:
         help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
     )
 
+    research_summary = research_sub.add_parser(
+        "summary",
+        help="Summarize local research artifacts and paper plans. Read-only. Does not submit orders.",
+        description="Summarize local research artifacts and paper plans. Read-only. Does not create artifacts, pending orders, or approvals.",
+    )
+    research_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -3898,6 +3905,64 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  Warnings: {len(plan.warnings)}")
             else:
                 print("  Warnings: 0")
+        return 0
+    if args.command == "research" and args.research_command == "summary":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                summarize_research_workspace,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research summary skipped safely: no workspace found")
+                return 1
+
+            summary = summarize_research_workspace(ws)
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research summary skipped safely: {exc}")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_summary",
+                "research_count": summary["research_count"],
+                "plan_count": summary["plan_count"],
+                "symbols": summary["symbols"],
+                "warnings": summary["warnings"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            if summary["research_count"] == 0 and summary["plan_count"] == 0:
+                print("No research artifacts found.")
+            else:
+                print("Research summary")
+                print(f"Research artifacts: {summary['research_count']}")
+                print(f"Paper plans: {summary['plan_count']}")
+                sym_names = [s["symbol"] for s in summary["symbols"]]
+                if sym_names:
+                    print(f"Symbols: {', '.join(sym_names)}")
+                for sym in summary["symbols"]:
+                    print()
+                    print(f"{sym['symbol']}")
+                    if sym["latest_research_run_id"]:
+                        print(f"  Latest research: {sym['latest_research_run_id']}")
+                    if sym["latest_plan_id"]:
+                        print(f"  Latest plan: {sym['latest_plan_id']}")
+            if summary["warnings"]:
+                print()
+                for w in summary["warnings"]:
+                    print(f"Warning: {w}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
