@@ -438,6 +438,18 @@ Safety First:
     research_show.add_argument("run_id", help="Artifact run_id.")
     research_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_plan = research_sub.add_parser(
+        "plan",
+        help="Create a paper-only plan from a research artifact. Does not submit orders.",
+    )
+    research_plan.add_argument("run_id", help="Source research artifact run_id.")
+    research_plan.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_plan.add_argument(
+        "--provider",
+        default="deterministic",
+        help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
+    )
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -3823,6 +3835,70 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(f"research show skipped safely: {exc}")
             return 1
+    if args.command == "research" and args.research_command == "plan":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                UnsupportedResearchProviderError,
+                create_paper_plan,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research plan skipped safely: no workspace found")
+                return 1
+            from atlas_agent.config import get_config
+            config = get_config()
+            event_logger = EventLogger(config.events_dir)
+            plan = create_paper_plan(
+                workspace_path=ws,
+                run_id=args.run_id,
+                event_logger=event_logger,
+                provider_name=args.provider,
+            )
+        except UnsupportedResearchProviderError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research plan skipped safely: {exc}")
+            return 1
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research plan skipped safely: {exc}")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "paper_plan_created",
+                "symbol": plan.symbol,
+                "source_run_id": plan.source_run_id,
+                "plan_id": plan.plan_id,
+                "artifact_path": plan.artifact_path,
+                "warnings": plan.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Paper plan created")
+            print(f"  Symbol: {plan.symbol}")
+            print(f"  Mode: {plan.mode}")
+            print(f"  Source Run ID: {plan.source_run_id}")
+            print(f"  Plan ID: {plan.plan_id}")
+            print(f"  Artifact: {plan.artifact_path}")
+            if plan.warnings:
+                print(f"  Warnings: {len(plan.warnings)}")
+            else:
+                print("  Warnings: 0")
+        return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
             print(f"notification skipped safely: file not found: {args.file}")

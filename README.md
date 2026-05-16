@@ -106,6 +106,9 @@ Discover and inspect existing artifacts:
 - `atlas research list`
 - `atlas research show RUN_ID`
 
+Create a paper-only plan from a research artifact:
+- `atlas research plan RUN_ID`
+
 ## Demos
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:

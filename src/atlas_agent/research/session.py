@@ -342,6 +342,168 @@ def find_research_artifact_by_run_id(
     return matches[0]
 
 
+@dataclass(frozen=True)
+class PaperPlanArtifact:
+    plan_id: str
+    source_run_id: str
+    created_at: datetime
+    symbol: str
+    mode: str
+    provider: str
+    source_artifact_path: str
+    thesis_recap: str
+    constraints: list[str]
+    risk_notes: list[str]
+    invalidation_checks: list[str]
+    paper_only_actions: list[str]
+    verification_steps: list[str]
+    warnings: list[str]
+    artifact_path: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+def create_paper_plan(
+    workspace_path: Path,
+    run_id: str,
+    *,
+    event_logger: EventLogger | None = None,
+    provider_name: str | None = None,
+) -> PaperPlanArtifact:
+    """Create a deterministic paper-only plan from an existing research artifact.
+
+    This never touches broker submit paths.
+    """
+    safe_run_id = validate_run_id(run_id)
+
+    # Resolve provider (only deterministic supported)
+    _resolve_provider(provider_name)
+
+    # Find and load source artifact
+    source_path = find_research_artifact_by_run_id(workspace_path, safe_run_id)
+    if source_path is None:
+        raise ResearchSessionError("artifact_not_found")
+    source = load_research_artifact(source_path, workspace_path)
+
+    symbol = source.get("symbol", "UNKNOWN")
+    plan_id = generate_run_id()
+    created_at = datetime.now(UTC)
+    warnings: list[str] = []
+
+    # Build deterministic plan content
+    thesis_recap = f"Recap of {symbol}: {source.get('thesis', 'No thesis available.')}"
+    constraints = [
+        "Paper-only plan.",
+        "Does not authorize live trading.",
+        "Does not create pending orders.",
+    ]
+    risk_notes = list(source.get("risks", []))
+    if not risk_notes:
+        risk_notes = ["No specific risks recorded in source artifact."]
+    invalidation_checks = list(source.get("invalidation_conditions", []))
+    if not invalidation_checks:
+        invalidation_checks = ["No specific invalidation conditions recorded."]
+    paper_only_actions = [
+        "Review the source research artifact.",
+        "Run a paper simulation or backtest before any approval workflow.",
+        "Check risk limits before considering any separate approval workflow.",
+    ]
+    verification_steps = [
+        "Review market data freshness.",
+        "Compare plan assumptions with latest available data.",
+        "Do not treat this plan as live-submit authorization.",
+    ]
+
+    plan = PaperPlanArtifact(
+        plan_id=plan_id,
+        source_run_id=safe_run_id,
+        created_at=created_at,
+        symbol=symbol,
+        mode="paper",
+        provider="deterministic",
+        source_artifact_path=source.get("artifact_path", ""),
+        thesis_recap=thesis_recap,
+        constraints=constraints,
+        risk_notes=risk_notes,
+        invalidation_checks=invalidation_checks,
+        paper_only_actions=paper_only_actions,
+        verification_steps=verification_steps,
+        warnings=warnings,
+        artifact_path="",
+        metadata={
+            "provider_requested": provider_name or "deterministic",
+            "source_provider": source.get("provider", "unknown"),
+        },
+    )
+
+    # Persist plan artifact
+    plan_dir = workspace_path / RESEARCH_DIR / symbol / "plans"
+    plan_dir.mkdir(parents=True, exist_ok=True)
+    plan_file = plan_dir / f"{plan_id}.json"
+    _write_plan_safe_json(plan_file, plan)
+
+    plan = PaperPlanArtifact(
+        plan_id=plan.plan_id,
+        source_run_id=plan.source_run_id,
+        created_at=plan.created_at,
+        symbol=plan.symbol,
+        mode=plan.mode,
+        provider=plan.provider,
+        source_artifact_path=plan.source_artifact_path,
+        thesis_recap=plan.thesis_recap,
+        constraints=plan.constraints,
+        risk_notes=plan.risk_notes,
+        invalidation_checks=plan.invalidation_checks,
+        paper_only_actions=plan.paper_only_actions,
+        verification_steps=plan.verification_steps,
+        warnings=plan.warnings,
+        artifact_path=plan_file.relative_to(workspace_path).as_posix(),
+        metadata=plan.metadata,
+    )
+
+    # Log safe event
+    if event_logger is not None:
+        payload = {
+            "plan_id": plan_id,
+            "source_run_id": safe_run_id,
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "deterministic",
+            "artifact_path": plan.artifact_path,
+            "status": "created",
+        }
+        event_logger.write(
+            "research_plan_created",
+            run_id=plan_id,
+            command="atlas research plan",
+            mode="paper",
+            payload=payload,
+        )
+
+    return plan
+
+
+def _write_plan_safe_json(path: Path, plan: PaperPlanArtifact) -> None:
+    data: dict[str, Any] = {
+        "plan_id": plan.plan_id,
+        "source_run_id": plan.source_run_id,
+        "created_at": plan.created_at.isoformat(),
+        "symbol": plan.symbol,
+        "mode": plan.mode,
+        "provider": plan.provider,
+        "source_artifact_path": plan.source_artifact_path,
+        "thesis_recap": plan.thesis_recap,
+        "constraints": plan.constraints,
+        "risk_notes": plan.risk_notes,
+        "invalidation_checks": plan.invalidation_checks,
+        "paper_only_actions": plan.paper_only_actions,
+        "verification_steps": plan.verification_steps,
+        "warnings": plan.warnings,
+        "artifact_path": plan.artifact_path,
+        "metadata": plan.metadata,
+    }
+    path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+
+
 def _write_safe_json(path: Path, artifact: ResearchArtifact) -> None:
     data: dict[str, Any] = {
         "run_id": artifact.run_id,

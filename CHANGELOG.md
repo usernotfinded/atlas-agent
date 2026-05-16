@@ -79,6 +79,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ambiguous run_id detection fails closed.
   - Added 23 CLI regression tests for list/show covering empty state, filtering, limits, malformed files, not-found, invalid run_id, ambiguity, symlink safety, read-only behavior, and no-execution-path guarantees.
   - Fixed a `UnboundLocalError` in `cli.py` where a local variable shadowed the `warnings` module.
+- **Batch 5.24 — Research-to-Paper-Plan Workflow**:
+  - Added `atlas research plan RUN_ID` to create a deterministic paper-only plan from an existing research artifact.
+  - Plan artifacts saved under `.atlas/research/<SYMBOL>/plans/<plan_id>.json` with stable schema.
+  - Plan fields: `plan_id`, `source_run_id`, `symbol`, `mode`, `provider`, `source_artifact_path`, `thesis_recap`, `constraints`, `risk_notes`, `invalidation_checks`, `paper_only_actions`, `verification_steps`, `warnings`, `metadata`.
+  - Constraints explicitly state: paper-only, does not authorize live trading, does not create pending orders.
+  - Emits `research_plan_created` event with bounded safe payload (no full plan body, no research body, no secrets).
+  - Unsupported providers fail closed with `unsupported_research_provider`.
+  - Added 21 CLI regression tests covering plan creation, JSON/text output, not-found, invalid run_id, ambiguous run_id, malformed source, unsupported provider, event safety, no-execution-path, no pending orders, no broker credentials required, and symlink containment.
 
 ### Validation
 - Full pytest passed in the latest validation run.
