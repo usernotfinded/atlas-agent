@@ -7,34 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev8] - 2026-05-16
+
 ### Added
-- Updated research workflow demo to include artifact health checking (`atlas research check-artifacts`).
-- Added tests for check-artifacts demo integration, unsafe output detection, failure behavior, and pending-order guard.
-- Schema versioning (`schema_version`) for all research workflow artifacts.
-- Compatibility behavior for legacy artifacts without `schema_version`.
-- Fail-closed handling for unsupported future schema versions.
+- Research artifact schema versioning with `schema_version`.
+- Legacy artifact compatibility for artifacts without `schema_version`.
+- Fail-closed handling for unsupported future research artifact schema versions.
 - Read-only research artifact health check command: `atlas research check-artifacts`.
-- Health checks for malformed JSON, unsupported/legacy schema versions, duplicate IDs, symbol mismatches, missing required fields, unsafe paths, and unexpected artifact locations.
-- Docs-truth tests for schema versioning and health check boundaries.
+- Health checks for malformed JSON, unsupported schema versions, legacy artifacts, duplicate IDs, symbol mismatches, missing required fields, and unsafe paths.
+- End-to-end research demo integration with `check-artifacts`.
 
 ### Changed
-- New artifacts now include `"schema_version": "1"`.
-- `load_research_artifact` fails closed on unsupported schema versions.
-- `list` and `summary` skip artifacts with unsupported schema versions safely.
-- `docs/research-workflow.md` and `docs/architecture.md` now document schema versioning and the `check-artifacts` command.
-
-### Changed
-- New artifacts now include `"schema_version": "1"`.
-- `load_research_artifact` fails closed on unsupported schema versions.
-- `list` and `summary` skip artifacts with unsupported schema versions safely.
-- `docs/research-workflow.md` and `docs/architecture.md` now document schema versioning.
+- Research workflow artifacts are now explicitly versioned.
+- Research demo now validates artifact health after run/list/show/plan/verify/evaluate/summary.
+- Research command reference now documents schema versioning and artifact health checks.
 
 ### Safety / Compatibility
 - No live-submit default enablement.
 - No broker submit behavior expansion.
 - Research workflow remains paper-only and analysis-only.
-- Research commands do not create approvals or pending orders.
-- Evaluation does not generate trading signals, buy/sell recommendations, profit estimates, or live-trading authorization.
+- `check-artifacts` is read-only and does not migrate, rewrite, delete, or repair artifacts.
+- Legacy artifacts are read where safe; unsupported future schema versions fail closed.
 - No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
 
 ### Validation
@@ -45,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `./scripts/demo_paper_workflow.sh` passed.
 - `./scripts/demo_research_workflow.sh` passed.
 - `./scripts/release_check.sh` passed.
-- `scripts/check_no_protected_staged.py` passed.
+- Protected-staged check passed.
 
 ## [0.5.7.dev7] - 2026-05-16
 
