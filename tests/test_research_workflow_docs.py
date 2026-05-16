@@ -331,6 +331,19 @@ class TestArchitectureArtifactSchema:
         assert "check-artifacts" in lower
         assert "read-only" in lower
 
+    def test_timeline_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "timeline" in lower
+        assert "read-only" in lower
+
+    def test_timeline_lineage_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "lineage" in lower or "relationship" in lower or "linking" in lower or "descendants" in lower
+
 
 class TestArchitecturePathSafety:
     def test_workspace_relative_paths_documented(self) -> None:

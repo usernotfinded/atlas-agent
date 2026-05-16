@@ -126,6 +126,9 @@ Overview all research artifacts and plans:
 Check local artifact health:
 - `atlas research check-artifacts`
 
+View artifact lineage/timeline:
+- `atlas research timeline`
+
 ## Demos
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:

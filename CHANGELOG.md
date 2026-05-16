@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added read-only research timeline command: `atlas research timeline`.
+- Added lineage view linking research artifacts to plans, verifications, and evaluations.
+- Added tests for filters, broken lineage, unsafe artifacts, and no execution path.
+
+### Safety / Compatibility
+- No live-trading behavior changes.
+
 ## [0.5.7.dev8] - 2026-05-16
 
 ### Added

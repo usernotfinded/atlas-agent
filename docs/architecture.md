@@ -33,6 +33,7 @@ For a dedicated command reference with full artifact schemas and safety boundari
 - **`atlas research evaluate PLAN_ID --data PATH`**: Evaluates a paper plan against local OHLCV data and creates an evaluation artifact. Paper-only; does not create orders, approvals, or pending orders.
 - **`atlas research summary`**: Read-only overview of all research artifacts and paper plans. Does not create artifacts.
 - **`atlas research check-artifacts`**: Read-only health check of local artifacts. Detects malformed JSON, unsupported/legacy schema versions, duplicate IDs, symbol mismatches, and unsafe paths. Does not modify artifacts.
+- **`atlas research timeline`**: Read-only lineage view linking research artifacts to plans, verifications, and evaluations. Does not modify artifacts, repair lineage, or call brokers.
 
 ### Safety boundaries
 

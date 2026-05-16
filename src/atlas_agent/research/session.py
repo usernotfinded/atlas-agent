@@ -1502,3 +1502,257 @@ def check_research_artifacts(
         "issues": issues,
         "warnings": warnings,
     }
+
+
+def _iter_verification_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return verification artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe / "verifications")
+    else:
+        for sym_dir in research_dir.iterdir():
+            if sym_dir.is_dir():
+                v_dir = sym_dir / "verifications"
+                if v_dir.exists():
+                    search_dirs.append(v_dir)
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+                continue
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "verification_id": data.get("verification_id", path.stem),
+                    "source_plan_id": data.get("source_plan_id", ""),
+                    "recommendation": data.get("recommendation", ""),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                }
+            )
+
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    return items
+
+
+def _iter_evaluation_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return evaluation artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe / "evaluations")
+    else:
+        for sym_dir in research_dir.iterdir():
+            if sym_dir.is_dir():
+                e_dir = sym_dir / "evaluations"
+                if e_dir.exists():
+                    search_dirs.append(e_dir)
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+                continue
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "evaluation_id": data.get("evaluation_id", path.stem),
+                    "source_plan_id": data.get("source_plan_id", ""),
+                    "recommendation": data.get("recommendation", ""),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                }
+            )
+
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    return items
+
+
+def build_research_timeline(
+    workspace_path: Path,
+    *,
+    symbol_filter: str | None = None,
+    run_id_filter: str | None = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """Build a read-only lineage timeline of research artifacts and their descendants.
+
+    Links research -> plans -> verifications and evaluations.
+    Never modifies artifacts.
+    """
+    if limit < 1:
+        raise ResearchSessionError("limit_must_be_positive")
+    if limit > 100:
+        limit = 100
+
+    warnings: list[dict[str, str]] = []
+
+    # Load all artifact types
+    research_items = iter_research_artifacts(workspace_path, symbol=symbol_filter)
+    plan_items = iter_plan_artifacts(workspace_path, symbol=symbol_filter)
+    verification_items = _iter_verification_artifacts(workspace_path, symbol=symbol_filter)
+    evaluation_items = _iter_evaluation_artifacts(workspace_path, symbol=symbol_filter)
+
+    # Index plans by source_run_id
+    plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
+    for plan in plan_items:
+        if plan.get("_malformed"):
+            continue
+        src = plan.get("source_run_id", "")
+        if src:
+            plans_by_run_id.setdefault(src, []).append(plan)
+        else:
+            warnings.append({"code": "orphan_plan", "path": plan.get("artifact_path", ""), "severity": "warning"})
+
+    # Index verifications by source_plan_id
+    verifications_by_plan_id: dict[str, list[dict[str, Any]]] = {}
+    for v in verification_items:
+        src = v.get("source_plan_id", "")
+        if src:
+            verifications_by_plan_id.setdefault(src, []).append(v)
+        else:
+            warnings.append({"code": "orphan_verification", "path": v.get("artifact_path", ""), "severity": "warning"})
+
+    # Index evaluations by source_plan_id
+    evaluations_by_plan_id: dict[str, list[dict[str, Any]]] = {}
+    for e in evaluation_items:
+        src = e.get("source_plan_id", "")
+        if src:
+            evaluations_by_plan_id.setdefault(src, []).append(e)
+        else:
+            warnings.append({"code": "orphan_evaluation", "path": e.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
+    seen_run_ids = set()
+    for r in research_items:
+        if not r.get("_malformed"):
+            seen_run_ids.add(r["run_id"])
+
+    for plan in plan_items:
+        if plan.get("_malformed"):
+            continue
+        src = plan.get("source_run_id", "")
+        if src and src not in seen_run_ids:
+            warnings.append({"code": "orphan_plan", "path": plan.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen plan IDs for orphan verification/evaluation detection
+    seen_plan_ids = set()
+    for plan in plan_items:
+        if not plan.get("_malformed"):
+            seen_plan_ids.add(plan.get("plan_id", ""))
+
+    for v in verification_items:
+        src = v.get("source_plan_id", "")
+        if src and src not in seen_plan_ids:
+            warnings.append({"code": "orphan_verification", "path": v.get("artifact_path", ""), "severity": "warning"})
+
+    for e in evaluation_items:
+        src = e.get("source_plan_id", "")
+        if src and src not in seen_plan_ids:
+            warnings.append({"code": "orphan_evaluation", "path": e.get("artifact_path", ""), "severity": "warning"})
+
+    # Build entries
+    entries: list[dict[str, Any]] = []
+    for research in research_items:
+        if research.get("_malformed"):
+            continue
+        run_id = research["run_id"]
+
+        if run_id_filter is not None and run_id != run_id_filter:
+            continue
+
+        plans: list[dict[str, Any]] = []
+        for plan in plans_by_run_id.get(run_id, []):
+            plan_id = plan.get("plan_id", "")
+            verifications = [
+                {
+                    "verification_id": v.get("verification_id", ""),
+                    "recommendation": v.get("recommendation", ""),
+                    "artifact_path": v.get("artifact_path", ""),
+                }
+                for v in verifications_by_plan_id.get(plan_id, [])
+            ]
+            evaluations = [
+                {
+                    "evaluation_id": e.get("evaluation_id", ""),
+                    "recommendation": e.get("recommendation", ""),
+                    "artifact_path": e.get("artifact_path", ""),
+                }
+                for e in evaluations_by_plan_id.get(plan_id, [])
+            ]
+            plans.append(
+                {
+                    "plan_id": plan_id,
+                    "created_at": plan.get("created_at", ""),
+                    "artifact_path": plan.get("artifact_path", ""),
+                    "verifications": verifications,
+                    "evaluations": evaluations,
+                }
+            )
+
+        entries.append(
+            {
+                "run_id": run_id,
+                "symbol": research.get("symbol", ""),
+                "created_at": research.get("created_at", ""),
+                "research_path": research.get("artifact_path", ""),
+                "plans": plans,
+            }
+        )
+
+    # Deduplicate warnings by code+path
+    seen_warnings = set()
+    deduped_warnings: list[dict[str, str]] = []
+    for w in warnings:
+        key = (w.get("code", ""), w.get("path", ""))
+        if key not in seen_warnings:
+            seen_warnings.add(key)
+            deduped_warnings.append(w)
+
+    # Apply limit
+    entries = entries[:limit]
+
+    return {
+        "ok": True,
+        "status": "research_timeline",
+        "entries": entries,
+        "warnings": deduped_warnings,
+    }

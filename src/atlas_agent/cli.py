@@ -493,6 +493,16 @@ Safety First:
     research_check.add_argument("--symbol", help="Filter by symbol.")
     research_check.add_argument("--strict", action="store_true", help="Exit with code 2 if any issue is found.")
 
+    research_timeline = research_sub.add_parser(
+        "timeline",
+        help="Show read-only research artifact lineage/timeline. Does not modify artifacts.",
+        description="Show read-only research artifact lineage/timeline. Reconstructs relationships between research artifacts, paper plans, verifications, and evaluations. Does not modify artifacts.",
+    )
+    research_timeline.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_timeline.add_argument("--symbol", help="Filter by symbol.")
+    research_timeline.add_argument("--run-id", help="Filter by research run_id.")
+    research_timeline.add_argument("--limit", type=int, default=20, help="Maximum entries. Default: 20, max: 100.")
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -4196,6 +4206,88 @@ def main(argv: list[str] | None = None) -> int:
                 print("\nNo artifact health issues found.")
         if args.strict and result["issues"]:
             return 2
+        return 0
+    if args.command == "research" and args.research_command == "timeline":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                build_research_timeline,
+                sanitize_symbol,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research timeline skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            run_id_filter = None
+            if args.run_id:
+                run_id_filter = validate_run_id(args.run_id)
+
+            limit = args.limit
+            if limit < 1:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "invalid_limit"}, indent=2, sort_keys=True))
+                else:
+                    print("research timeline skipped safely: limit must be positive")
+                return 1
+            if limit > 100:
+                limit = 100
+
+            result = build_research_timeline(
+                ws,
+                symbol_filter=symbol_filter,
+                run_id_filter=run_id_filter,
+                limit=limit,
+            )
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research timeline skipped safely: {exc}")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            entries = result.get("entries", [])
+            if not entries:
+                print("No research timeline entries found.")
+            else:
+                print("Research timeline")
+                for entry in entries:
+                    symbol = entry.get("symbol", "")
+                    run_id = entry.get("run_id", "")
+                    print(f"\n{symbol} — {run_id}")
+                    print(f"  Research: {entry.get('research_path', '')}")
+                    for plan in entry.get("plans", []):
+                        plan_id = plan.get("plan_id", "")
+                        print(f"  Plan: {plan_id}")
+                        for v in plan.get("verifications", []):
+                            vid = v.get("verification_id", "")
+                            rec = v.get("recommendation", "")
+                            print(f"    Verification: {vid} — {rec}")
+                        for e in plan.get("evaluations", []):
+                            eid = e.get("evaluation_id", "")
+                            rec = e.get("recommendation", "")
+                            print(f"    Evaluation: {eid} — {rec}")
+            timeline_warnings = result.get("warnings", [])
+            if timeline_warnings:
+                print("\nWarnings:")
+                for w in timeline_warnings:
+                    print(f"  - {w.get('code', '')}: {w.get('path', '')}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

@@ -19,6 +19,7 @@ All commands operate on local data within the Atlas workspace. No external broke
 | `atlas research summary` | Overview of all research artifacts and plans | No | Yes | No |
 | `./scripts/demo_research_workflow.sh` | End-to-end temporary-workspace demo of the full chain | Yes | No | No |
 | `atlas research check-artifacts` | Read-only health check of local artifacts | No | Yes | No |
+| `atlas research timeline` | Read-only lineage/timeline of artifact relationships | No | Yes | No |
 
 `list`, `show`, `summary`, and `check-artifacts` are read-only. `run`, `plan`, `verify`, and `evaluate` write local artifacts only. None of them touch live trading.
 
@@ -192,8 +193,8 @@ Read-only health check of local research artifacts.
 End-to-end temporary-workspace demo of the full research chain.
 
 - Creates a temporary workspace, runs `init`, `discipline setup`, and `config set`.
-- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts`.
-- Validates JSON outputs, artifact existence, workspace-relative paths, artifact health checks, and safety invariants.
+- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline`.
+- Validates JSON outputs, artifact existence, workspace-relative paths, artifact health checks, lineage/timeline reconstruction, and safety invariants.
 - Verifies no pending orders are created.
 - Does not require broker credentials.
 - Cleans up the temporary workspace unless `--keep-workspace` is used.

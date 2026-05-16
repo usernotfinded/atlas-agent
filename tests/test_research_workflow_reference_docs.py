@@ -72,6 +72,21 @@ class TestReferenceDocCommands:
         text = _read("docs/research-workflow.md")
         assert "atlas research check-artifacts" in text.lower()
 
+    def test_mentions_timeline_command(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert "atlas research timeline" in text.lower()
+
+    def test_mentions_timeline_read_only(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower_text = text.lower()
+        assert "timeline" in lower_text
+        assert "read-only" in lower_text or "read_only" in lower_text or "read only" in lower_text
+
+    def test_mentions_lineage_or_relationship(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower_text = text.lower()
+        assert "lineage" in lower_text or "relationship" in lower_text or "linking" in lower_text or "descendants" in lower_text
+
     def test_mentions_demo_script(self) -> None:
         text = _read("docs/research-workflow.md")
         assert "scripts/demo_research_workflow.sh" in text
