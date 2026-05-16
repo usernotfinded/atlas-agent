@@ -34,6 +34,26 @@ memory/*.md
 !memory/.gitkeep
 skills/proposed/*.md
 
+# Build/package artifacts
+build/
+dist/
+.eggs/
+*.whl
+*.tar.gz
+
+# Python caches
+*.py[cod]
+.mypy_cache/
+
+# Virtual environments
+.venv*/
+venv/
+env/
+
+# Local/private notes
+AUDIT_ENHANCEMENTS_2026-05-13.md
+BATCH2_PLAN.md
+
 # Local Atlas runtime artifacts
 .env.atlas
 .atlas/config.toml

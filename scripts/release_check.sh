@@ -32,13 +32,19 @@ git diff --check
 
 echo ""
 echo "========================================"
-echo "5. version consistency"
+echo "5. protected staged files"
+echo "========================================"
+$PYTHON_BIN scripts/check_no_protected_staged.py
+
+echo ""
+echo "========================================"
+echo "6. version consistency"
 echo "========================================"
 $PYTHON_BIN scripts/check_version_consistency.py
 
 echo ""
 echo "========================================"
-echo "6. forbidden claims scan"
+echo "7. forbidden claims scan"
 echo "========================================"
 $PYTHON_BIN scripts/check_forbidden_claims.py
 

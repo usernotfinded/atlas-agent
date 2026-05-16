@@ -10,6 +10,7 @@ Run this before pushing a public GitHub release.
 - `./scripts/demo_paper_workflow.sh`
 - `python3.11 scripts/check_version_consistency.py`
 - `python3.11 scripts/check_forbidden_claims.py`
+- `python3.11 scripts/check_no_protected_staged.py`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 
 ## Validate Contract Checks
@@ -34,6 +35,13 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Confirm no private values or credential-like strings are committed in docs or scripts.
 - Verify `pyproject.toml` `project.version` matches `src/atlas_agent/__init__.py` `__version__`.
 - Verify `git status` does not include runtime files like `memory/`.
+- Verify `./scripts/check_no_protected_staged.py` passes (no protected local artifacts staged):
+  - `AUDIT_ENHANCEMENTS_2026-05-13.md`
+  - `BATCH2_PLAN.md`
+  - `memory/`
+  - `build/`
+  - `dist/`
+  - `*.egg-info/`
 - Verify `./scripts/check_forbidden_claims.py` passes.
 - If broker, submit, reconcile, approval, audit, risk, or kill-switch behavior changed, review `docs/live-submit-safety-contract.md` for accuracy and update it if necessary.
 

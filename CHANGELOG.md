@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Broker sync parallelization and CSV cache invalidation.
   - Tool contract/runtime split and schema caching.
 - Redaction constant single-source cleanup (`src/atlas_agent/audit/redaction.py` imports `SECRET_MARKERS` from shared module).
+- **Batch 5.18 — Workspace Hygiene / Generated-Artifact Ignore Guard**:
+  - Added `scripts/check_no_protected_staged.py` to fail if protected local/runtime artifacts are staged.
+  - Wired protected-staged check into `scripts/release_check.sh`.
+  - Added `tests/test_worktree_hygiene.py` covering protected path detection, allowed path pass-through, CLI exit codes, and git-failure handling.
 
 ### Changed
 - Reconcile remains broker-neutral by lookup capability rather than a concrete Alpaca adapter type.
@@ -27,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AtlasConfig` uses Pydantic V2 `ConfigDict` instead of class-based `Config`.
 - Redaction compatibility wrapper now imports shared `SECRET_MARKERS` from `atlas_agent.redaction`.
 - Atlas internals are more modular while preserving the existing CLI entrypoint.
+- Hardened `.gitignore` for build, dist, wheel, sdist, Python cache, virtual environment, and local private-note patterns.
 
 ### Safety / Compatibility
 - No live-submit behavior enabled by default.
@@ -35,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No kill-switch, risk, or live-trading gate weakening.
 - Markdown memory remains the source of truth; SQLite remains an optional index.
 - AuditWriter remains separate for hash-chain/manifest safety.
+- No runtime trading behavior changes.
+- No broker, submit, reconcile, safety, risk, or config behavior changes.
 
 ### Validation
 - Full pytest passed in the latest validation run.
