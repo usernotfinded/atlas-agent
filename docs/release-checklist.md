@@ -216,13 +216,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev2
+./scripts/smoke_release_tag.sh v0.5.7.dev3
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev2 --full
+./scripts/smoke_release_tag.sh v0.5.7.dev3 --full
 ```
 
 ## Tagging
@@ -231,10 +231,10 @@ After all validations pass and the commit is ready:
 
 ```bash
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
-git commit -m "Bump version to v0.5.7.dev2"
+git commit -m "Bump version to v0.5.7.dev3"
 git push origin main
-git tag -a v0.5.7.dev2 -m "Atlas Agent v0.5.7.dev2"
-git push origin v0.5.7.dev2
+git tag -a v0.5.7.dev3 -m "Atlas Agent v0.5.7.dev3"
+git push origin v0.5.7.dev3
 ```
 
 Only create the tag after:

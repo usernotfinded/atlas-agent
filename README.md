@@ -11,7 +11,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev2)** — see [release notes](docs/releases/v0.5.7.dev2.md).
+> **Current Status (v0.5.7.dev3)** — see [release notes](docs/releases/v0.5.7.dev3.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 

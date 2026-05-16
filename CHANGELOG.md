@@ -7,11 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.7.dev3] - 2026-05-16
 
+### Added
+- Clean-clone release tag smoke script (`scripts/smoke_release_tag.sh`) and tests (`tests/test_smoke_release_tag_script.py`).
+- Wheel/sdist package smoke script (`scripts/smoke_package_build.sh`) and tests (`tests/test_smoke_package_build_script.py`).
+- Offline package smoke support (`--offline` / `--skip-build-deps-install`) for no-network environments.
+- Release candidate audit document (`docs/release-candidate-audit-v0.5.7.dev2.md`) with release gate results, smoke status, safety contracts, and known limitations.
+- Release candidate audit document validation tests (`tests/test_release_candidate_audit_docs.py`).
+- Architecture/performance hardening:
+  - CLI command extraction and shared JSONL helpers.
+  - Shared redaction engine (`src/atlas_agent/redaction.py`).
+  - Optional SQLite memory index (Markdown remains source of truth).
+  - Broker sync parallelization and CSV cache invalidation.
+  - Tool contract/runtime split and schema caching.
+- Redaction constant single-source cleanup (`src/atlas_agent/audit/redaction.py` imports `SECRET_MARKERS` from shared module).
+
 ### Changed
-- **Batch 5.16 — Redaction Constant Single-Source Cleanup**:
-  - Consolidated redaction secret marker constants into the shared redaction module (`src/atlas_agent/redaction.py`).
-  - Kept audit redaction imports backwards compatible (`from atlas_agent.audit.redaction import SECRET_MARKERS`).
-  - No runtime trading behavior changes.
+- Reconcile remains broker-neutral by lookup capability rather than a concrete Alpaca adapter type.
+- Release workflow now includes tag smoke and package smoke scripts.
+- `AtlasConfig` uses Pydantic V2 `ConfigDict` instead of class-based `Config`.
+- Redaction compatibility wrapper now imports shared `SECRET_MARKERS` from `atlas_agent.redaction`.
+- Atlas internals are more modular while preserving the existing CLI entrypoint.
+
+### Safety / Compatibility
+- No live-submit behavior enabled by default.
+- No broker submit behavior changed.
+- Reconcile remains read-only.
+- No kill-switch, risk, or live-trading gate weakening.
+- Markdown memory remains the source of truth; SQLite remains an optional index.
+- AuditWriter remains separate for hash-chain/manifest safety.
+
+### Validation
+- Full pytest passed in the latest validation run.
+- `pip check` passed.
+- `./scripts/demo_paper_workflow.sh` passed.
+- `./scripts/release_check.sh` passed.
+- Offline package smoke requires a Python where `python -m build` works.
 
 ## [0.5.7.dev2] - 2026-05-15
 
