@@ -4,6 +4,8 @@ import datetime
 import re
 from pathlib import Path
 
+from atlas_agent.learning.memory_index import rebuild_memory_index, search_memory_index
+
 
 SECRET_VALUE_RE = re.compile(
     r"(?P<name>[A-Z0-9_]*(?:API_KEY|API_SECRET|SECRET_KEY|TOKEN|PASSWORD)[A-Z0-9_]*)"
@@ -33,18 +35,27 @@ def search_memory(memory_dir: Path, query: str) -> list[tuple[Path, str]]:
     if not memory_dir.exists():
         return []
 
+    indexed = search_memory_index(
+        memory_dir,
+        query,
+        snippet_builder=_build_snippet,
+    )
+    if indexed is not None:
+        return [(item.path, item.snippet) for item in indexed]
+
     results: list[tuple[Path, str]] = []
     query_lower = query.lower()
     for path in _memory_markdown_files(memory_dir):
         content = path.read_text(encoding="utf-8", errors="replace")
         if query_lower in content.lower():
             idx = content.lower().find(query_lower)
-            start = max(0, idx - 80)
-            end = min(len(content), idx + MAX_SNIPPET_CHARS)
-            snippet = _redact_snippet(content[start:end])
-            results.append((path, " ".join(snippet.split())))
+            results.append((path, _build_snippet(content, idx, len(query))))
 
     return results
+
+
+def rebuild_search_index(memory_dir: Path) -> int:
+    return rebuild_memory_index(memory_dir)
 
 
 def _update_index(memory_dir: Path, conversation_path: Path) -> None:
@@ -74,3 +85,10 @@ def _memory_markdown_files(memory_dir: Path) -> list[Path]:
 
 def _redact_snippet(text: str) -> str:
     return SECRET_VALUE_RE.sub(r"\g<name>=[REDACTED]", text)
+
+
+def _build_snippet(content: str, index: int, query_length: int) -> str:
+    start = max(0, index - 80)
+    end = min(len(content), index + MAX_SNIPPET_CHARS)
+    snippet = _redact_snippet(content[start:end])
+    return " ".join(snippet.split())

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import logging
-from typing import Optional, List, Literal
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Callable, Optional, Literal
 
 from atlas_agent.audit import AuditWriter
 from atlas_agent.brokers.base import BrokerProvider
 from atlas_agent.brokers.errors import make_broker_error
-from atlas_agent.brokers.models import BrokerSyncResult, BrokerPosition, BrokerOrder
+from atlas_agent.brokers.models import BrokerSyncResult
 from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition, PendingOrder
 
 
@@ -32,56 +32,44 @@ class BrokerSyncService:
                 payload={"broker_type": type(self.broker).__name__}
             )
 
+        operations: list[tuple[str, str, Callable[[], Any]]] = [
+            ("account", "sync_account_state", self.broker.get_account_state),
+            ("positions", "sync_positions", self.broker.get_positions),
+            ("open_orders", "sync_open_orders", self.broker.get_open_orders),
+            ("balances", "sync_balances", self.broker.get_balances),
+        ]
+        operation_results: dict[str, Any] = {}
+        operation_errors: dict[str, Exception] = {}
+
+        with ThreadPoolExecutor(max_workers=len(operations), thread_name_prefix="broker-sync") as executor:
+            futures = {
+                name: executor.submit(call)
+                for name, _operation, call in operations
+            }
+            for name, future in futures.items():
+                try:
+                    operation_results[name] = future.result()
+                except Exception as exc:
+                    operation_errors[name] = exc
+
         errors = []
         broker_errors: list[dict[str, str]] = []
-        account = None
-        positions = []
-        open_orders = []
-        balances = []
-
-        try:
-            account = self.broker.get_account_state()
-        except Exception as exc:
+        for name, operation, _call in operations:
+            exc = operation_errors.get(name)
+            if exc is None:
+                continue
             broker_error = make_broker_error(
-                operation="sync_account_state",
+                operation=operation,
                 broker=self.broker,
                 exc=exc,
             )
             errors.append(broker_error.to_error_string())
             broker_errors.append(broker_error.to_dict())
 
-        try:
-            positions = self.broker.get_positions()
-        except Exception as exc:
-            broker_error = make_broker_error(
-                operation="sync_positions",
-                broker=self.broker,
-                exc=exc,
-            )
-            errors.append(broker_error.to_error_string())
-            broker_errors.append(broker_error.to_dict())
-
-        try:
-            open_orders = self.broker.get_open_orders()
-        except Exception as exc:
-            broker_error = make_broker_error(
-                operation="sync_open_orders",
-                broker=self.broker,
-                exc=exc,
-            )
-            errors.append(broker_error.to_error_string())
-            broker_errors.append(broker_error.to_dict())
-
-        try:
-            balances = self.broker.get_balances()
-        except Exception as exc:
-            broker_error = make_broker_error(
-                operation="sync_balances",
-                broker=self.broker,
-                exc=exc,
-            )
-            errors.append(broker_error.to_error_string())
-            broker_errors.append(broker_error.to_dict())
+        account = operation_results.get("account")
+        positions = operation_results.get("positions") or []
+        open_orders = operation_results.get("open_orders") or []
+        balances = operation_results.get("balances") or []
 
         status: Literal["success", "partial", "failed"] = "success"
         if errors:

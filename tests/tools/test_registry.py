@@ -1,12 +1,16 @@
 import pytest
-from typing import Any, Union
+from typing import Union
 from atlas_agent.tools.registry import ToolRegistry, CONTEXT_WINDOW_FULL_DESC_THRESHOLD
-from atlas_agent.tools.spec import ToolSpec, ModelCapabilities, ToolCall, ToolError, ToolResult, RateLimit
+from atlas_agent.tools.spec import ToolSpec, ModelCapabilities, ToolCall, ToolError, ToolResult, RateLimit, generate_input_schema
 from atlas_agent.core.types import Session
 import time
 
 def sample_func(req_arg: str, opt_arg: int = 5) -> str:
     return f"{req_arg}_{opt_arg}"
+
+
+def schema_sample_func(required: str, count: int = 1) -> str:
+    return required * count
 
 def test_registry_registration_and_validation():
     registry = ToolRegistry()
@@ -215,3 +219,13 @@ def test_execute_rate_limit():
     # Call 4: Success again
     res4 = registry.execute(call, EmptyGuardrailChain(), session)
     assert isinstance(res4, ToolResult)
+
+
+def test_generate_input_schema_returns_defensive_cached_copies():
+    schema = generate_input_schema(schema_sample_func)
+    schema["properties"]["required"]["type"] = "integer"
+
+    fresh_schema = generate_input_schema(schema_sample_func)
+
+    assert fresh_schema["properties"]["required"]["type"] == "string"
+    assert fresh_schema["required"] == ["required"]

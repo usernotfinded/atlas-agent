@@ -1,15 +1,15 @@
-from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel
-from datetime import date
-from pathlib import Path
+"""Builtin tool contracts wired to deterministic mock implementations.
+
+The specs in this module describe tool contracts. The imported callables are
+mock implementations from ``atlas_agent.tools.mock_impl`` and are not live
+market, broker, notification, shell, or research integrations.
+"""
+
 from atlas_agent.core.types import *
 from atlas_agent.tools.spec import ToolSpec, generate_input_schema
+from atlas_agent.tools.mock_impl import *
 
 BUILTIN_TOOLS = []
-
-def get_quote(symbols: list[str]) -> dict[str, QuoteData]:
-    """Mock implementation of get_quote"""
-    return {}
 
 get_quote_spec = ToolSpec(
     name="get_quote",
@@ -23,10 +23,6 @@ get_quote_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(get_quote_spec)
 
-def get_ohlcv(symbol: str, timeframe: str, start: date, end: date | None = None) -> list[Bar]:
-    """Mock implementation of get_ohlcv"""
-    return []
-
 get_ohlcv_spec = ToolSpec(
     name="get_ohlcv",
     description_full="Retrieve historical OHLCV bars for a symbol over a timeframe. Use this to compute indicators, identify levels, or back-test visual patterns. Do NOT use this for real-time tick data \u2014 use get_quote. Do NOT request more data than you need; large downloads slow your reasoning cycle.",
@@ -38,10 +34,6 @@ get_ohlcv_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(get_ohlcv_spec)
-
-def get_orderbook(symbol: str, depth: int = 10) -> OrderbookSnapshot:
-    """Mock implementation of get_orderbook"""
-    return OrderbookSnapshot.model_construct()
 
 get_orderbook_spec = ToolSpec(
     name="get_orderbook",
@@ -55,10 +47,6 @@ get_orderbook_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(get_orderbook_spec)
 
-def get_news(query: str, sources: list[str] | None = None, max_items: int = 10) -> list[NewsItem]:
-    """Mock implementation of get_news"""
-    return []
-
 get_news_spec = ToolSpec(
     name="get_news",
     description_full="Fetch recent news headlines and summaries for a symbol or topic. Use this to validate or invalidate a thesis based on new information. Do NOT use this to chase headlines for trade ideas \u2014 react to news only if it changes your existing thesis.",
@@ -70,10 +58,6 @@ get_news_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(get_news_spec)
-
-def get_economic_calendar(start: date, end: date, region: str = "US") -> list[EconomicEvent]:
-    """Mock implementation of get_economic_calendar"""
-    return []
 
 get_economic_calendar_spec = ToolSpec(
     name="get_economic_calendar",
@@ -87,10 +71,6 @@ get_economic_calendar_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(get_economic_calendar_spec)
 
-def get_earnings(symbols: list[str], lookback_days: int = 5, lookahead_days: int = 30) -> list[EarningsItem]:
-    """Mock implementation of get_earnings"""
-    return []
-
 get_earnings_spec = ToolSpec(
     name="get_earnings",
     description_full="Get upcoming and recent earnings dates, EPS estimates, and surprises for a symbol or universe. Use this for equity-specific timing decisions. Do NOT use this for non-equity assets.",
@@ -102,10 +82,6 @@ get_earnings_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(get_earnings_spec)
-
-def compute_indicators(ohlcv: list[Bar], indicators: list[IndicatorSpec]) -> dict[str, IndicatorResult]:
-    """Mock implementation of compute_indicators"""
-    return {}
 
 compute_indicators_spec = ToolSpec(
     name="compute_indicators",
@@ -119,10 +95,6 @@ compute_indicators_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(compute_indicators_spec)
 
-def run_quick_backtest(universe: list[str], timeframe: str, start: date, end: date, entry_rule: str, exit_rule: str, sizing: str, costs: CostModel) -> BacktestReport:
-    """Mock implementation of run_quick_backtest"""
-    return BacktestReport.model_construct()
-
 run_quick_backtest_spec = ToolSpec(
     name="run_quick_backtest",
     description_full="Run a fast, deterministic backtest on a rule set you define. Use this when you have a specific tactical idea and want to see how it would have performed historically. Do NOT use this for vague intuitions \u2014 formulate entry_rule and exit_rule as specific expressions. Do NOT use this to prove you are right; use it to discover how you would be wrong. If the backtest sharpe is below 0.5 or max drawdown exceeds your daily loss limit, the idea is likely not viable.",
@@ -134,10 +106,6 @@ run_quick_backtest_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(run_quick_backtest_spec)
-
-def monte_carlo_sim(backtest_report_id: str, simulations: int = 1000) -> MonteCarloResult:
-    """Mock implementation of monte_carlo_sim"""
-    return MonteCarloResult.model_construct()
 
 monte_carlo_sim_spec = ToolSpec(
     name="monte_carlo_sim",
@@ -151,10 +119,6 @@ monte_carlo_sim_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(monte_carlo_sim_spec)
 
-def correlation_matrix(symbols: list[str], timeframe: str, lookback_days: int = 60) -> CorrelationMatrix:
-    """Mock implementation of correlation_matrix"""
-    return CorrelationMatrix.model_construct()
-
 correlation_matrix_spec = ToolSpec(
     name="correlation_matrix",
     description_full="Compute the correlation matrix for a universe of symbols over a lookback window. Use this to check for hidden concentration risk before adding a new position. Do NOT use this to justify adding correlated positions.",
@@ -166,10 +130,6 @@ correlation_matrix_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(correlation_matrix_spec)
-
-def screen_universe(universe: list[str], filters: list[FilterSpec], max_results: int = 20) -> list[ScreenerResult]:
-    """Mock implementation of screen_universe"""
-    return []
 
 screen_universe_spec = ToolSpec(
     name="screen_universe",
@@ -183,10 +143,6 @@ screen_universe_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(screen_universe_spec)
 
-def propose_order(symbol: str, side: Literal["buy", "sell"], quantity: float, order_type: Literal["market", "limit"], thesis: TradeThesis, invalidation_price: float, limit_price: float | None = None, stop_loss: float | None = None, take_profit: float | None = None, time_in_force: str = "day") -> OrderProposalResult:
-    """Mock implementation of propose_order"""
-    return OrderProposalResult.model_construct()
-
 propose_order_spec = ToolSpec(
     name="propose_order",
     description_full="Propose a buy or sell order to the execution pipeline. This is your primary execution tool. Use this ONLY when you have a clear thesis, a named invalidation price, and you have checked your current exposure and risk limits. Do NOT use this to average down on a losing position. Do NOT use this because you are bored or because \"the market might move\". Every call MUST include a non-empty thesis object with all required fields filled thoughtfully. The RiskManager will validate size, exposure, and limits. The trust-mode policy may require human approval before the broker receives the order.",
@@ -198,10 +154,6 @@ propose_order_spec = ToolSpec(
     audit_logged=True,
 )
 BUILTIN_TOOLS.append(propose_order_spec)
-
-def cancel_order(order_id: str, replacement_order: OrderProposal | None = None) -> OrderResult:
-    """Mock implementation of cancel_order"""
-    return OrderResult.model_construct()
 
 cancel_order_spec = ToolSpec(
     name="cancel_order",
@@ -215,10 +167,6 @@ cancel_order_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(cancel_order_spec)
 
-def modify_order(order_id: str, quantity: float | None = None, limit_price: float | None = None) -> OrderResult:
-    """Mock implementation of modify_order"""
-    return OrderResult.model_construct()
-
 modify_order_spec = ToolSpec(
     name="modify_order",
     description_full="Modify the quantity or limit price of an open order. Use this to tighten or loosen a limit based on new market conditions. Do NOT use this to increase size beyond what the RiskManager would allow on a fresh order \u2014 the modification is re-validated.",
@@ -230,10 +178,6 @@ modify_order_spec = ToolSpec(
     audit_logged=True,
 )
 BUILTIN_TOOLS.append(modify_order_spec)
-
-def get_positions() -> list[Position]:
-    """Mock implementation of get_positions"""
-    return []
 
 get_positions_spec = ToolSpec(
     name="get_positions",
@@ -247,10 +191,6 @@ get_positions_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(get_positions_spec)
 
-def get_account() -> AccountSnapshot:
-    """Mock implementation of get_account"""
-    return AccountSnapshot.model_construct()
-
 get_account_spec = ToolSpec(
     name="get_account",
     description_full="Retrieve account snapshot (cash, equity, buying power, margin). Use this to verify you have sufficient capital before proposing an order. Do NOT rely on cached account values from the start of the session.",
@@ -262,10 +202,6 @@ get_account_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(get_account_spec)
-
-def flatten_position(symbol: str, reason: str, strategy: str = "market", bps: int = 25, urgency: Literal["normal", "protective", "emergency"] = "normal") -> FlattenResult:
-    """Mock implementation of flatten_position"""
-    return FlattenResult.model_construct()
 
 flatten_position_spec = ToolSpec(
     name="flatten_position",
@@ -279,10 +215,6 @@ flatten_position_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(flatten_position_spec)
 
-def request_user_approval( proposal: OrderProposal | str, context: str, timeout_seconds: int = 3600, options: list[str] = ["approve", "reject", "modify"] ) -> UserResponse:
-    """Mock implementation of request_user_approval"""
-    return UserResponse.model_construct()
-
 request_user_approval_spec = ToolSpec(
     name="request_user_approval",
     description_full="Present a proposal to the user and pause execution until they respond. Use this in MANUAL mode before every trade, and in SUPERVISED mode when a proposed order exceeds thresholds (size, symbol, timing, leverage). The user can approve, reject, or request modifications. Do NOT use this for informational updates \u2014 use notify_user for fire-and-forget messages. Do NOT use this in AUTONOMOUS mode unless an exceptional situation arises (e.g., an order that you believe violates your own style but the RiskManager approved).",
@@ -294,10 +226,6 @@ request_user_approval_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(request_user_approval_spec)
-
-def read_journal(symbol: str | None = None, start: date | None = None, end: date | None = None, limit: int = 50) -> list[JournalEntry]:
-    """Mock implementation of read_journal"""
-    return []
 
 read_journal_spec = ToolSpec(
     name="read_journal",
@@ -311,10 +239,6 @@ read_journal_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(read_journal_spec)
 
-def append_journal(entry_type: str, content: str, symbol: str | None = None, tags: list[str] | None = None) -> bool:
-    """Mock implementation of append_journal"""
-    return True
-
 append_journal_spec = ToolSpec(
     name="append_journal",
     description_full="Append a new entry to the trade journal. Use this immediately after every trade execution (win, loss, scratch), and after significant observations. The entry should include: what happened, why (thesis), what you learned, and what you will do differently. Do NOT skip this \u2014 the journal is your only mechanism to not repeat errors.",
@@ -326,10 +250,6 @@ append_journal_spec = ToolSpec(
     audit_logged=True,
 )
 BUILTIN_TOOLS.append(append_journal_spec)
-
-def read_skill(name: str, status: str = "active") -> SkillContent:
-    """Mock implementation of read_skill"""
-    return SkillContent.model_construct()
 
 read_skill_spec = ToolSpec(
     name="read_skill",
@@ -343,10 +263,6 @@ read_skill_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(read_skill_spec)
 
-def list_skills(status: str | None = None) -> list[SkillSummary]:
-    """Mock implementation of list_skills"""
-    return []
-
 list_skills_spec = ToolSpec(
     name="list_skills",
     description_full="List all skills by status (active, proposed, archived). Use this at session start to recall your operational playbook. Do NOT assume a proposed skill is valid \u2014 it is a hypothesis until promoted.",
@@ -358,10 +274,6 @@ list_skills_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(list_skills_spec)
-
-def write_skill_proposal(name: str, pattern: str, evidence: str, when_to_use: str, when_to_avoid: str, confidence: str = "low") -> Path:
-    """Mock implementation of write_skill_proposal"""
-    return Path('mock')
 
 write_skill_proposal_spec = ToolSpec(
     name="write_skill_proposal",
@@ -375,10 +287,6 @@ write_skill_proposal_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(write_skill_proposal_spec)
 
-def promote_skill(name: str, reason: str) -> bool:
-    """Mock implementation of promote_skill"""
-    return True
-
 promote_skill_spec = ToolSpec(
     name="promote_skill",
     description_full="Promote a proposed skill to active status. Use this when you have gathered additional evidence that confirms the proposed skill's validity. Do NOT promote a skill immediately after proposing it \u2014 let it sit in proposed for at least a few sessions to gather more data.",
@@ -390,10 +298,6 @@ promote_skill_spec = ToolSpec(
     audit_logged=True,
 )
 BUILTIN_TOOLS.append(promote_skill_spec)
-
-def archive_skill(name: str, reason: str) -> bool:
-    """Mock implementation of archive_skill"""
-    return True
 
 archive_skill_spec = ToolSpec(
     name="archive_skill",
@@ -407,10 +311,6 @@ archive_skill_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(archive_skill_spec)
 
-def read_user_profile() -> str:
-    """Mock implementation of read_user_profile"""
-    return 'mock'
-
 read_user_profile_spec = ToolSpec(
     name="read_user_profile",
     description_full="Read the user_profile.md file. Use this at session start to remember who you are trading for, their constraints, and their preferences. Do NOT modify this file.",
@@ -422,10 +322,6 @@ read_user_profile_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(read_user_profile_spec)
-
-def update_user_profile(section: str, content: str) -> bool:
-    """Mock implementation of update_user_profile"""
-    return True
 
 update_user_profile_spec = ToolSpec(
     name="update_user_profile",
@@ -439,10 +335,6 @@ update_user_profile_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(update_user_profile_spec)
 
-def read_trading_style() -> str:
-    """Mock implementation of read_trading_style"""
-    return 'mock'
-
 read_trading_style_spec = ToolSpec(
     name="read_trading_style",
     description_full="Read the trading_style.md file. Use this at session start to remember your binding constraints.",
@@ -454,10 +346,6 @@ read_trading_style_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(read_trading_style_spec)
-
-def read_open_positions() -> str:
-    """Mock implementation of read_open_positions"""
-    return 'mock'
 
 read_open_positions_spec = ToolSpec(
     name="read_open_positions",
@@ -471,10 +359,6 @@ read_open_positions_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(read_open_positions_spec)
 
-def update_open_positions(content: str) -> bool:
-    """Mock implementation of update_open_positions"""
-    return True
-
 update_open_positions_spec = ToolSpec(
     name="update_open_positions",
     description_full="Update the open_positions.md file with the latest snapshot.",
@@ -486,10 +370,6 @@ update_open_positions_spec = ToolSpec(
     audit_logged=True,
 )
 BUILTIN_TOOLS.append(update_open_positions_spec)
-
-def update_portfolio_summary(content: str) -> bool:
-    """Mock implementation of update_portfolio_summary"""
-    return True
 
 update_portfolio_summary_spec = ToolSpec(
     name="update_portfolio_summary",
@@ -503,10 +383,6 @@ update_portfolio_summary_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(update_portfolio_summary_spec)
 
-def read_mistakes(limit: int = 10) -> list[str]:
-    """Mock implementation of read_mistakes"""
-    return []
-
 read_mistakes_spec = ToolSpec(
     name="read_mistakes",
     description_full="Read the mistakes.md file.",
@@ -518,10 +394,6 @@ read_mistakes_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(read_mistakes_spec)
-
-def append_mistake(content: str) -> bool:
-    """Mock implementation of append_mistake"""
-    return True
 
 append_mistake_spec = ToolSpec(
     name="append_mistake",
@@ -535,10 +407,6 @@ append_mistake_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(append_mistake_spec)
 
-def append_daily_note(content: str) -> bool:
-    """Mock implementation of append_daily_note"""
-    return True
-
 append_daily_note_spec = ToolSpec(
     name="append_daily_note",
     description_full="Append an observation to daily_notes.md during the session.",
@@ -550,10 +418,6 @@ append_daily_note_spec = ToolSpec(
     audit_logged=True,
 )
 BUILTIN_TOOLS.append(append_daily_note_spec)
-
-def search_memory(query: str, mode: str = "hybrid", top_n: int = 10) -> list[SearchResult]:
-    """Mock implementation of search_memory"""
-    return []
 
 search_memory_spec = ToolSpec(
     name="search_memory",
@@ -567,10 +431,6 @@ search_memory_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(search_memory_spec)
 
-def read_lessons_learned(limit: int = 30) -> list[LessonEntry]:
-    """Mock implementation of read_lessons_learned"""
-    return []
-
 read_lessons_learned_spec = ToolSpec(
     name="read_lessons_learned",
     description_full="Read entries from lessons_learned.md. Use this at session start to recall what you have already learned and should not need to re-discover. Do NOT assume a lesson from six months ago still applies \u2014 market regimes change.",
@@ -582,10 +442,6 @@ read_lessons_learned_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(read_lessons_learned_spec)
-
-def append_lesson(content: str, category: str = "general", related_symbols: list[str] | None = None) -> bool:
-    """Mock implementation of append_lesson"""
-    return True
 
 append_lesson_spec = ToolSpec(
     name="append_lesson",
@@ -599,10 +455,6 @@ append_lesson_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(append_lesson_spec)
 
-def read_recent_trades(limit: int = 20) -> TradeSummary:
-    """Mock implementation of read_recent_trades"""
-    return TradeSummary.model_construct()
-
 read_recent_trades_spec = ToolSpec(
     name="read_recent_trades",
     description_full="Read the last N trades from the trade journal, formatted as a summary table with PnL and tags. Use this to review recent performance before making a new decision. Do NOT use this to cherry-pick a winning streak to justify a new trade.",
@@ -614,10 +466,6 @@ read_recent_trades_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(read_recent_trades_spec)
-
-def summarize_session(notes: str, trades: list[str], lessons: list[str], next_focus: str) -> bool:
-    """Mock implementation of summarize_session"""
-    return True
 
 summarize_session_spec = ToolSpec(
     name="summarize_session",
@@ -631,10 +479,6 @@ summarize_session_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(summarize_session_spec)
 
-def web_search(query: str, max_results: int = 5) -> list[SearchResultItem]:
-    """Mock implementation of web_search"""
-    return []
-
 web_search_spec = ToolSpec(
     name="web_search",
     description_full="Search the public web for information. Use this when you need context on a company, macro event, or sector narrative that is not in your memory. Do NOT use this for real-time prices \u2014 use get_quote. Do NOT use this to confirm your existing bias; use it to challenge your thesis.",
@@ -647,10 +491,6 @@ web_search_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(web_search_spec)
 
-def read_url(url: str, max_chars: int = 8000) -> str:
-    """Mock implementation of read_url"""
-    return 'mock'
-
 read_url_spec = ToolSpec(
     name="read_url",
     description_full="Fetch and read the text content of a specific URL. Use this when a web_search result points to a document you need to read in full. Do NOT use this to browse indiscriminately \u2014 have a specific question you need answered.",
@@ -662,10 +502,6 @@ read_url_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(read_url_spec)
-
-def market_research(query: str, depth: str = "standard") -> ResearchReport:
-    """Mock implementation of market_research"""
-    return ResearchReport.model_construct()
 
 market_research_spec = ToolSpec(
     name="market_research",
@@ -692,10 +528,6 @@ perplexity_research_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(perplexity_research_spec)
 
-def get_current_time() -> TimeInfo:
-    """Mock implementation of get_current_time"""
-    return TimeInfo.model_construct()
-
 get_current_time_spec = ToolSpec(
     name="get_current_time",
     description_full="Get the current UTC and local time. Use this to timestamp reasoning, check session boundaries, and verify market hours. Do NOT assume you know the time \u2014 you do not.",
@@ -707,10 +539,6 @@ get_current_time_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(get_current_time_spec)
-
-def get_market_status() -> dict[str, MarketStatus]:
-    """Mock implementation of get_market_status"""
-    return {}
 
 get_market_status_spec = ToolSpec(
     name="get_market_status",
@@ -724,10 +552,6 @@ get_market_status_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(get_market_status_spec)
 
-def get_my_limits() -> LimitsSnapshot:
-    """Mock implementation of get_my_limits"""
-    return LimitsSnapshot.model_construct()
-
 get_my_limits_spec = ToolSpec(
     name="get_my_limits",
     description_full="Read the current risk limits, trust mode, and portfolio guardrails. Use this before proposing any order to verify you are within bounds. Do NOT rely on memory of limits from a previous session \u2014 limits can change.",
@@ -739,10 +563,6 @@ get_my_limits_spec = ToolSpec(
     audit_logged=False,
 )
 BUILTIN_TOOLS.append(get_my_limits_spec)
-
-def get_my_trust_mode() -> TrustModeInfo:
-    """Mock implementation of get_my_trust_mode"""
-    return TrustModeInfo.model_construct()
 
 get_my_trust_mode_spec = ToolSpec(
     name="get_my_trust_mode",
@@ -756,10 +576,6 @@ get_my_trust_mode_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(get_my_trust_mode_spec)
 
-def run_shell_command(cmd: list[str], cwd: str = "workspace", timeout: int = 30) -> ShellResult:
-    """Mock implementation of run_shell_command"""
-    return ShellResult.model_construct()
-
 run_shell_command_spec = ToolSpec(
     name="run_shell_command",
     description_full="Execute a shell command inside the workspace directory. Use this ONLY when you need to run a local script, process a CSV, or perform a system operation that no other tool covers. Do NOT use this to bypass other tools. Do NOT use this to access files outside the workspace. Do NOT use this to read secrets or credentials. Do NOT use this to modify files in the forbidden paths list \u2014 these are protected by code-level sandbox, not by your intent. Every command is logged.",
@@ -772,10 +588,6 @@ run_shell_command_spec = ToolSpec(
 )
 BUILTIN_TOOLS.append(run_shell_command_spec)
 
-def git_commit_memory(message: str) -> str:
-    """Mock implementation of git_commit_memory"""
-    return 'mock'
-
 git_commit_memory_spec = ToolSpec(
     name="git_commit_memory",
     description_full="Commit the current state of memory/ and reports/ to git. Use this at the end of a session if you want to preserve your memory in version control. Do NOT use this after every small write \u2014 it is noisy and slow.",
@@ -787,10 +599,6 @@ git_commit_memory_spec = ToolSpec(
     audit_logged=True,
 )
 BUILTIN_TOOLS.append(git_commit_memory_spec)
-
-def notify_user(message: str, priority: str = "normal", channel: str = "default") -> bool:
-    """Mock implementation of notify_user"""
-    return True
 
 notify_user_spec = ToolSpec(
     name="notify_user",

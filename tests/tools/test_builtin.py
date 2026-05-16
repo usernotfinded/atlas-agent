@@ -2,6 +2,7 @@ import pytest
 from typing import Any
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.builtin import BUILTIN_TOOLS
+from atlas_agent.tools.mock_impl import MOCK_IMPLEMENTATION_NOTICE
 from atlas_agent.tools.spec import ToolSpec, ToolCall, ToolResult, ToolError
 from atlas_agent.core.types import Session
 from typing import Union
@@ -77,6 +78,11 @@ def registry():
 def test_registry_has_50_tools(registry):
     assert len(registry.list_tools()) == 50
     assert len(BUILTIN_TOOLS) == 50
+
+
+def test_builtin_specs_use_explicit_mock_implementations():
+    assert "not live market" in MOCK_IMPLEMENTATION_NOTICE
+    assert all(tool.execute.__module__ == "atlas_agent.tools.mock_impl" for tool in BUILTIN_TOOLS)
 
 
 @pytest.mark.parametrize("tool_spec", BUILTIN_TOOLS, ids=lambda x: x.name)

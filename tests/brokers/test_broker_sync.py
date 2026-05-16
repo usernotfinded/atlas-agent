@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import threading
+import time
+
 import pytest
 from atlas_agent.brokers.paper import PaperBroker, PaperBrokerAdapter
 from atlas_agent.brokers.sync import BrokerSyncService
@@ -78,3 +81,38 @@ def test_portfolio_snapshot_includes_sync_provenance(paper_adapter):
     assert snapshot.sync_status == "success"
     assert snapshot.sync_source == "broker_sync"
     assert snapshot.broker_id == "paper"
+
+
+def test_sync_service_parallelizes_independent_reads():
+    class SlowProvider:
+        def __init__(self):
+            self.active = 0
+            self.max_active = 0
+            self.lock = threading.Lock()
+
+        def _call(self, value):
+            with self.lock:
+                self.active += 1
+                self.max_active = max(self.max_active, self.active)
+            time.sleep(0.05)
+            with self.lock:
+                self.active -= 1
+            return value
+
+        def get_account_state(self):
+            return self._call(None)
+
+        def get_positions(self):
+            return self._call([])
+
+        def get_open_orders(self):
+            return self._call([])
+
+        def get_balances(self):
+            return self._call([])
+
+    provider = SlowProvider()
+    result = BrokerSyncService(broker=provider).sync()  # type: ignore[arg-type]
+
+    assert result.status == "success"
+    assert provider.max_active > 1

@@ -10,7 +10,6 @@ import subprocess
 import sys
 import urllib.request
 import warnings
-from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -25,6 +24,8 @@ from atlas_agent.brokers.base import BrokerConfigurationError
 from atlas_agent.brokers.binance import BinanceBroker
 from atlas_agent.brokers.ccxt_adapter import CCXTBroker
 from atlas_agent.brokers.paper import PaperBroker
+from atlas_agent.cli_commands import build_core_command_registry
+from atlas_agent.cli_context import CLIContext
 from atlas_agent.config import AtlasConfig
 from atlas_agent.config.errors import AtlasConfigError
 from atlas_agent.execution.approval import ApprovalManager
@@ -37,7 +38,6 @@ from atlas_agent.events import (
     generate_run_id,
     latest_event_file,
     read_event_file,
-    read_recent_events,
 )
 from atlas_agent.market_data.csv_provider import CSVMarketDataProvider
 from atlas_agent.market_data.sample_data import ensure_sample_data
@@ -63,7 +63,6 @@ from atlas_agent.notifications.clickup import (
     NotificationConfigurationError,
 )
 from atlas_agent.output import emit_json, error_envelope, success_envelope
-from atlas_agent.memory_doctor import run_memory_doctor
 from atlas_agent.replay import replay_from_path, replay_last_run
 from atlas_agent.demo import seed_demo_workspace
 from atlas_agent.safety import (
@@ -96,7 +95,6 @@ SECRET_ASSIGNMENT_RE = re.compile(
     re.IGNORECASE,
 )
 BEARER_TOKEN_RE = re.compile(r"\b(Bearer\s+)[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
-MAX_CLI_SNIPPET_CHARS = 220
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -282,6 +280,7 @@ Safety First:
     memory_search = memory_sub.add_parser("search")
     memory_search.add_argument("query")
     memory_search.add_argument("--json", action="store_true")
+    memory_sub.add_parser("rebuild-index")
     memory_sub.add_parser("summarize")
     memory_sub.add_parser("nudge")
     memory_doctor = memory_sub.add_parser("doctor")
@@ -832,66 +831,6 @@ def _run_once_live_analysis(
     )
 
 
-def _memory_search_matches(config: AtlasConfig, query: str) -> tuple[list[dict[str, str]], str | None]:
-    memory_dir = config.memory_dir
-    if not memory_dir.exists():
-        return [], f"No memory directory found at {memory_dir}."
-
-    files = _memory_markdown_files(memory_dir)
-    if not files:
-        return [], f"No Markdown memory files found under {memory_dir} or {memory_dir / 'conversations'}."
-
-    query_lower = query.lower()
-    matches: list[dict[str, str]] = []
-    for path in files:
-        content = path.read_text(encoding="utf-8", errors="replace")
-        index = content.lower().find(query_lower)
-        if index < 0:
-            continue
-        snippet = _snippet(content, index, len(query))
-        matches.append({"path": _display_path(path), "snippet": snippet})
-    return matches, None
-
-
-def _handle_memory_search(config: AtlasConfig, query: str) -> int:
-    matches, warning = _memory_search_matches(config, query)
-    if warning:
-        print(warning)
-        return 0
-    if not matches:
-        print(f"No memory matches found for: {query}")
-        return 0
-    for match in matches:
-        print(f"{match['path']}: {match['snippet']}")
-    return 0
-
-
-def _memory_markdown_files(memory_dir: Path) -> list[Path]:
-    files = [path for path in sorted(memory_dir.glob("*.md")) if path.is_file()]
-    conversations_dir = memory_dir / "conversations"
-    if conversations_dir.exists():
-        files.extend(
-            path
-            for path in sorted(conversations_dir.rglob("*.md"))
-            if path.is_file()
-        )
-    return files
-
-
-def _snippet(content: str, index: int, query_length: int) -> str:
-    start = max(0, index - 80)
-    end = min(len(content), index + max(query_length, 1) + 140)
-    snippet = " ".join(content[start:end].split())
-    if start > 0:
-        snippet = "... " + snippet
-    if end < len(content):
-        snippet += " ..."
-    snippet = _redact_sensitive_text(snippet)
-    if len(snippet) > MAX_CLI_SNIPPET_CHARS:
-        snippet = snippet[: MAX_CLI_SNIPPET_CHARS - 4].rstrip() + " ..."
-    return snippet
-
-
 def _redact_sensitive_text(text: str) -> str:
     redacted = SECRET_ASSIGNMENT_RE.sub(
         lambda match: (
@@ -1042,36 +981,6 @@ def _portfolio_payload(config: AtlasConfig) -> dict[str, Any]:
             "trade_journal": str(config.memory_dir / "trade_journal.md"),
         },
     }
-
-
-def _memory_doctor_payload(config: AtlasConfig) -> dict[str, Any]:
-    skills_dir = config.memory_dir.parent / "skills"
-    result = run_memory_doctor(
-        memory_dir=config.memory_dir,
-        pending_orders_dir=config.pending_orders_dir,
-        reports_dir=config.reports_dir,
-        skills_dir=skills_dir,
-        stale_hours=24,
-    )
-    return {
-        "ok": result.ok,
-        "checked_at": result.checked_at,
-        "errors": [asdict(item) for item in result.errors],
-        "warnings": [asdict(item) for item in result.warnings],
-        "finding_count": len(result.findings),
-    }
-
-
-def _print_memory_doctor_text(payload: dict[str, Any]) -> None:
-    print("Memory Doctor")
-    print(f"Checked at: {payload['checked_at']}")
-    if not payload["errors"] and not payload["warnings"]:
-        print("No issues found.")
-        return
-    for error in payload["errors"]:
-        print(f"[ERROR] {error['code']}: {error['message']} ({error.get('path') or 'n/a'})")
-    for warning in payload["warnings"]:
-        print(f"[WARN] {warning['code']}: {warning['message']} ({warning.get('path') or 'n/a'})")
 
 
 def _events_to_payload(events: list[dict[str, Any]]) -> dict[str, Any]:
@@ -2326,6 +2235,17 @@ def main(argv: list[str] | None = None) -> int:
             print("Setup cancelled. Atlas is not configured yet.")
             return 130
 
+    dispatched = build_core_command_registry().dispatch(
+        CLIContext(
+            args=args,
+            config=config,
+            resolution=resolution,
+            update_checker=_check_for_updates,
+        )
+    )
+    if dispatched is not None:
+        return dispatched
+
     if args.command == "update":
         manager = SafeUpdateManager(
             config=config,
@@ -2407,64 +2327,6 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         print("Use one of: atlas update check|status|apply|rollback|config")
         return 0
-
-    if args.command == "audit":
-        from atlas_agent.audit import verify_audit_log, verify_run_manifest
-
-        if args.audit_command == "verify":
-            if args.all:
-                manifest_dir = config.audit_dir / "manifests"
-                if not manifest_dir.exists():
-                    print("No manifests found.")
-                    return 0
-                manifests = list(manifest_dir.glob("*.json"))
-                if not manifests:
-                    print("No manifests found.")
-                    return 0
-                
-                print(f"Verifying {len(manifests)} manifests...")
-                all_valid = True
-                for manifest_path in sorted(manifests):
-                    result = verify_run_manifest(manifest_path)
-                    status_icon = "✅" if result.valid else "❌"
-                    print(f"{status_icon} {manifest_path.name}: {result.manifest_status}")
-                    if not result.valid:
-                        all_valid = False
-                        for error in result.errors:
-                            print(f"  - {error}")
-                return 0 if all_valid else 2
-
-            if args.manifest:
-                result = verify_run_manifest(args.manifest)
-                if result.valid:
-                    print(
-                        f"Audit manifest verification successful. Checked {result.events_checked} events."
-                    )
-                    print(f"Status: {result.manifest_status.upper()}")
-                    return 0
-                else:
-                    print(
-                        f"Audit manifest verification FAILED. Checked {result.events_checked} events."
-                    )
-                    print(f"Status: {result.manifest_status.upper()}")
-                    for error in result.errors:
-                        print(f"- {error}")
-                    return 2
-
-            path = args.path or (config.audit_dir / "events.jsonl")
-            result = verify_audit_log(path)
-            if result.valid:
-                print(
-                    f"Audit log verification successful. Checked {result.events_checked} events."
-                )
-                return 0
-            else:
-                print(
-                    f"Audit log verification FAILED. Checked {result.events_checked} events."
-                )
-                for error in result.errors:
-                    print(f"- {error}")
-                return 2
 
     if args.command == "risk":
         from atlas_agent.risk.limits import RiskLimits
@@ -2621,14 +2483,6 @@ def main(argv: list[str] | None = None) -> int:
             
             return 0 if result.status == "completed" else 2
 
-    if args.command == "status":
-        from atlas_agent.agent.status import get_agent_status
-        print(get_agent_status(config))
-        update = _check_for_updates()
-        if update:
-            print(f"\n[UPDATE] A newer version of Atlas Agent is available: {update} (current: {__version__})")
-            print("Run 'git pull' to update.")
-        return 0
     if args.command == "plan":
         from atlas_agent.agent.planner import get_agent_plan
         print(get_agent_plan(config))
@@ -3040,43 +2894,6 @@ def main(argv: list[str] | None = None) -> int:
                 print("No differences between active and proposed skill versions.")
                 return 0
             print("\n".join(lines))
-            return 0
-
-    if args.command == "memory":
-        from atlas_agent.learning import ingest_conversation
-        from atlas_agent.learning.nudges import generate_memory_nudge
-
-        if args.memory_command == "ingest":
-            if not args.file.exists():
-                print(f"memory ingest skipped: file not found: {args.file}")
-                return 0
-            path = ingest_conversation(config.memory_dir, args.file)
-            print(f"Conversation memory ingested: {path}")
-            return 0
-        if args.memory_command == "search":
-            if getattr(args, "json", False):
-                matches, warning = _memory_search_matches(config, args.query)
-                return _emit_json_success(
-                    "atlas memory search",
-                    {
-                        "query": args.query,
-                        "matches": matches,
-                        "warning": warning,
-                    },
-                )
-            return _handle_memory_search(config, args.query)
-        if args.memory_command == "doctor":
-            payload = _memory_doctor_payload(config)
-            if getattr(args, "json", False):
-                return _emit_json_success("atlas memory doctor", payload)
-            _print_memory_doctor_text(payload)
-            return 0
-        if args.memory_command == "summarize":
-            print("Memory summary is generated through agent learn/reflect cycles.")
-            return 0
-        if args.memory_command == "nudge":
-            nudge = generate_memory_nudge(config.memory_dir)
-            print(nudge or "No memory nudge available yet.")
             return 0
 
     if args.command == "user":

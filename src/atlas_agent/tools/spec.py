@@ -1,3 +1,4 @@
+import copy
 import inspect
 from datetime import date
 from pathlib import Path
@@ -93,6 +94,9 @@ class EmptyGuardrailChain:
         return None
 
 
+_INPUT_SCHEMA_CACHE: dict[tuple[str, str], dict] = {}
+
+
 def _type_to_schema(t: Any) -> dict:
     """Recursively convert a Python type annotation into a JSON Schema fragment."""
     origin = get_origin(t)
@@ -162,6 +166,13 @@ def _pydantic_model_to_schema(model_cls: type[BaseModel]) -> dict:
 
 def generate_input_schema(func: Callable[..., Any]) -> dict:
     """Generate a JSON Schema (input_schema) from a Python callable's signature."""
+    key = (getattr(func, "__module__", ""), getattr(func, "__qualname__", ""))
+    if key not in _INPUT_SCHEMA_CACHE:
+        _INPUT_SCHEMA_CACHE[key] = _generate_input_schema_uncached(func)
+    return copy.deepcopy(_INPUT_SCHEMA_CACHE[key])
+
+
+def _generate_input_schema_uncached(func: Callable[..., Any]) -> dict:
     sig = inspect.signature(func)
     try:
         hints = get_type_hints(func)

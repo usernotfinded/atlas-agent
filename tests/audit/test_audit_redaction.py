@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from atlas_agent.audit.redaction import redact_payload
+from atlas_agent.audit.redaction import redact_payload, refresh_redaction_secrets
 
 
 def test_redaction_removes_secrets_recursively():
@@ -37,8 +37,8 @@ def test_redaction_handles_various_markers():
         assert redact_payload(payload)[marker] == "[REDACTED]"
 
 def test_redact_payload_free_text_secrets(monkeypatch):
-    import os
-    monkeypatch.setattr(os, "environ", {"OPENAI_API_KEY": "super_secret_openai_key"})
+    monkeypatch.setenv("OPENAI_API_KEY", "super_secret_openai_key")
+    refresh_redaction_secrets()
     
     payload = "Here is a prompt containing super_secret_openai_key inside it."
     redacted = redact_payload(payload)
