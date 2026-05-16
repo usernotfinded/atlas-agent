@@ -21,6 +21,7 @@ KNOWN_EVENT_TYPES = {
     "market_state_detected",
     "memory_loaded",
     "research_completed",
+    "research_run_created",
     "model_guidance_loaded",
     "decision_proposed",
     "risk_approved",

@@ -403,6 +403,9 @@ Safety First:
     research_sub = research.add_subparsers(dest="research_command")
     research_market = research_sub.add_parser("market")
     research_market.add_argument("--symbol", required=True)
+    research_run = research_sub.add_parser("run")
+    research_run.add_argument("--symbol", required=True)
+    research_run.add_argument("--json", action="store_true")
 
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
@@ -3589,6 +3592,51 @@ def main(argv: list[str] | None = None) -> int:
             print(f"research skipped safely: {exc}")
             return 0
         print(report.summary)
+        return 0
+    if args.command == "research" and args.research_command == "run":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                run_research_session,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                print("research run skipped safely: no workspace found")
+                return 1
+            from atlas_agent.config import get_config
+            config = get_config()
+            event_logger = EventLogger(config.events_dir)
+            artifact = run_research_session(
+                symbol=args.symbol,
+                workspace_path=ws,
+                memory_dir=config.memory_dir,
+                event_logger=event_logger,
+            )
+        except ResearchSessionError as exc:
+            print(f"research run skipped safely: {exc}")
+            return 1
+        except ResearchConfigurationError as exc:
+            print(f"research run skipped safely: {exc}")
+            return 0
+        if args.json:
+            import json
+
+            out = {
+                "symbol": artifact.symbol,
+                "mode": artifact.mode,
+                "provider": artifact.provider,
+                "run_id": artifact.run_id,
+                "created_at": artifact.created_at.isoformat(),
+                "artifact_path": artifact.artifact_path,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Research run complete for {artifact.symbol}")
+            print(f"  Provider: {artifact.provider}")
+            print(f"  Run ID: {artifact.run_id}")
+            print(f"  Artifact: {artifact.artifact_path}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
