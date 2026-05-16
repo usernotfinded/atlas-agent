@@ -81,6 +81,10 @@ class TestReadmeResearchCommands:
         text = _read("README.md")
         assert "atlas research verify" in text.lower()
 
+    def test_readme_mentions_evaluate_command(self) -> None:
+        text = _read("README.md")
+        assert "atlas research evaluate" in text.lower()
+
 
 class TestReadmeResearchWording:
     def test_paper_only_mentioned(self) -> None:
@@ -158,6 +162,13 @@ class TestArchitectureResearchWorkflow:
         assert "verify" in lower
         assert "paper-only" in lower or "paper only" in lower
 
+    def test_evaluate_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "evaluate" in lower
+        assert "paper-only" in lower or "paper only" in lower
+
     def test_progression_described(self) -> None:
         text = _read("docs/architecture.md")
         section = _extract_section(text, "## Research Workflow")
@@ -214,6 +225,37 @@ class TestArchitectureNoExecutionBoundary:
         lower = section.lower()
         assert "verify" in lower and "approval" in lower
 
+    def test_evaluate_does_not_authorize_live_trading(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "evaluate" in lower and "does not authorize live trading" in lower
+
+    def test_evaluate_does_not_create_pending_orders(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "evaluate" in lower and "does not create pending orders" in lower
+
+    def test_evaluate_does_not_create_approvals(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "evaluate" in lower and "approval" in lower
+
+    def test_evaluate_uses_local_data(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "evaluate" in lower and "local" in lower
+
+    def test_evaluate_not_trading_signal(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "evaluate" in lower
+        assert "signal" not in lower or "no signal" in lower or "does not produce" in lower
+
 
 class TestArchitectureArtifactSchema:
     def test_research_artifact_fields_documented(self) -> None:
@@ -260,6 +302,14 @@ class TestArchitectureArtifactSchema:
         assert "verification artifact" in lower
         assert "verification_id" in lower
         assert "paper_review_ready" in lower or "manual_review_required" in lower
+
+    def test_evaluation_artifact_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "evaluation artifact" in lower
+        assert "evaluation_id" in lower
+        assert "paper_evaluation_ready" in lower or "manual_review_required" in lower
 
     def test_summary_index_output_documented(self) -> None:
         text = _read("docs/architecture.md")

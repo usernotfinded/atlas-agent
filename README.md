@@ -11,7 +11,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev6)** — see [release notes](docs/releases/v0.5.7.dev6.md).
+> **Current Status (v0.5.7.dev7)** — see [release notes](docs/releases/v0.5.7.dev7.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -61,7 +61,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7.dev6)
+## Current Status (v0.5.7.dev7)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit is disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
@@ -114,6 +114,9 @@ Create a paper-only plan from a research artifact:
 
 Verify a paper plan for completeness and safety:
 - `atlas research verify PLAN_ID`
+
+Evaluate a paper plan against local data:
+- `atlas research evaluate PLAN_ID --data PATH`
 
 Overview all research artifacts and plans:
 - `atlas research summary`

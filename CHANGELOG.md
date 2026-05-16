@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7.dev7] - 2026-05-16
+
+### Added
+- Paper-only research evaluation command: `atlas research evaluate PLAN_ID --data PATH`.
+- Evaluation artifacts with deterministic local checks and metrics.
+- Tests for safe output, malformed data, failed checks, dangerous-language detection, no broker calls, no approvals, and no pending orders.
+
+### Safety / Compatibility
+- Research workflow remains paper-only and analysis-only.
+- Evaluation does not create orders, approvals, or pending orders.
+- Evaluation does not authorize live trading.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Full pytest passed.
+- `pip check` passed.
+- `./scripts/demo_paper_workflow.sh` passed.
+- `./scripts/release_check.sh` passed.
+- `scripts/check_no_protected_staged.py` passed.
+
 ## [0.5.7.dev6] - 2026-05-16
 
 ### Added

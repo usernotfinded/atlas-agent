@@ -960,3 +960,320 @@ def _write_safe_json(path: Path, artifact: ResearchArtifact) -> None:
         "metadata": artifact.metadata,
     }
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+
+
+@dataclass(frozen=True)
+class EvaluationArtifact:
+    evaluation_id: str
+    source_plan_id: str
+    source_run_id: str
+    created_at: datetime
+    symbol: str
+    mode: str
+    provider: str
+    source_plan_path: str
+    data_source: str
+    data_summary: dict[str, Any]
+    checks: list[dict[str, str]]
+    metrics: dict[str, Any]
+    warnings: list[str]
+    recommendation: str
+    artifact_path: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+def _load_csv_data(data_path: Path) -> tuple[list[dict[str, str]], list[str]]:
+    """Load a local CSV file safely. Returns (rows, columns).
+
+    Raises ResearchSessionError on missing required columns or malformed data.
+    """
+    if not data_path.exists() or not data_path.is_file():
+        raise ResearchSessionError("evaluation_data_invalid")
+
+    import csv
+
+    try:
+        with data_path.open("r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            rows: list[dict[str, str]] = list(reader)
+    except Exception:
+        raise ResearchSessionError("evaluation_data_invalid")
+
+    if not rows:
+        raise ResearchSessionError("evaluation_data_invalid")
+
+    # Normalize column names (case-insensitive, strip whitespace)
+    if reader.fieldnames is None:
+        raise ResearchSessionError("evaluation_data_invalid")
+    columns = [c.strip().lower() for c in reader.fieldnames]
+
+    # Required: date or timestamp, close
+    has_date = any(c in columns for c in ("date", "timestamp"))
+    has_close = "close" in columns
+    if not has_date or not has_close:
+        raise ResearchSessionError("evaluation_data_invalid")
+
+    return rows, columns
+
+
+def _check_plan_loaded(plan: dict[str, Any]) -> dict[str, str]:
+    if plan.get("plan_id"):
+        return {"name": "plan_loaded", "status": "pass", "message": "Plan exists and parsed."}
+    return {"name": "plan_loaded", "status": "fail", "message": "Plan not loaded."}
+
+
+def _check_data_file_loaded(rows: list[dict[str, str]], columns: list[str]) -> dict[str, str]:
+    if rows and columns:
+        return {"name": "data_file_loaded", "status": "pass", "message": "Data CSV exists and parses."}
+    return {"name": "data_file_loaded", "status": "fail", "message": "Data CSV could not be loaded."}
+
+
+def _check_data_has_required_columns(columns: list[str]) -> dict[str, str]:
+    has_date = any(c in columns for c in ("date", "timestamp"))
+    has_close = "close" in columns
+    if has_date and has_close:
+        return {"name": "data_has_required_columns", "status": "pass", "message": "Required columns present."}
+    return {"name": "data_has_required_columns", "status": "fail", "message": "Missing required columns."}
+
+
+def _check_data_has_rows(rows: list[dict[str, str]]) -> dict[str, str]:
+    if len(rows) > 0:
+        return {"name": "data_has_rows", "status": "pass", "message": "Data has at least one row."}
+    return {"name": "data_has_rows", "status": "fail", "message": "Data has no rows."}
+
+
+def _check_data_symbol_context(rows: list[dict[str, str]], columns: list[str], symbol: str) -> dict[str, str]:
+    if "symbol" not in columns:
+        return {"name": "data_symbol_context", "status": "pass", "message": "No symbol column in data; skipping symbol match."}
+    sym_values = set(r.get("symbol", "").strip().upper() for r in rows if r.get("symbol", "").strip())
+    if not sym_values:
+        return {"name": "data_symbol_context", "status": "pass", "message": "No symbol values in data; skipping symbol match."}
+    if symbol.upper() in sym_values:
+        return {"name": "data_symbol_context", "status": "pass", "message": "Data symbol matches plan symbol."}
+    return {"name": "data_symbol_context", "status": "warn", "message": "Data symbol does not match plan symbol."}
+
+
+def _check_plan_has_verification_steps(plan: dict[str, Any]) -> dict[str, str]:
+    steps = plan.get("verification_steps", [])
+    if isinstance(steps, list) and len(steps) > 0:
+        return {"name": "plan_has_verification_steps", "status": "pass", "message": "Verification steps are present."}
+    return {"name": "plan_has_verification_steps", "status": "fail", "message": "Verification steps are missing."}
+
+
+def _check_plan_has_invalidation_checks(plan: dict[str, Any]) -> dict[str, str]:
+    checks = plan.get("invalidation_checks", [])
+    if isinstance(checks, list) and len(checks) > 0:
+        return {"name": "plan_has_invalidation_checks", "status": "pass", "message": "Invalidation checks are present."}
+    return {"name": "plan_has_invalidation_checks", "status": "fail", "message": "Invalidation checks are missing."}
+
+
+def _check_no_live_authorization_language_eval(plan: dict[str, Any]) -> dict[str, str]:
+    text = json.dumps(plan, sort_keys=True).lower()
+    for phrase in _DANGEROUS_PHRASES:
+        idx = text.find(phrase.lower())
+        if idx == -1:
+            continue
+        window_start = max(0, idx - 40)
+        context = text[window_start:idx]
+        negative_indicators = ("not ", "does not ", "never ", "no ", "without ")
+        if any(context.endswith(ind) or (" " + ind) in context for ind in negative_indicators):
+            continue
+        return {"name": "no_live_authorization_language", "status": "fail", "message": "Plan contains disallowed language."}
+    return {"name": "no_live_authorization_language", "status": "pass", "message": "No disallowed language found."}
+
+
+def _compute_data_metrics(rows: list[dict[str, str]], columns: list[str]) -> dict[str, Any]:
+    """Compute safe, deterministic metrics from CSV rows."""
+    metrics: dict[str, Any] = {"row_count": len(rows)}
+
+    # Find close column
+    close_col = None
+    for c in columns:
+        if c == "close":
+            close_col = c
+            break
+
+    if close_col:
+        close_values: list[float] = []
+        for r in rows:
+            try:
+                v = float(r.get(close_col, "").strip())
+                close_values.append(v)
+            except (ValueError, TypeError):
+                continue
+        if close_values:
+            metrics["latest_close"] = close_values[-1]
+            metrics["min_close"] = min(close_values)
+            metrics["max_close"] = max(close_values)
+
+    # Find date/timestamp column
+    date_col = None
+    for c in columns:
+        if c in ("date", "timestamp"):
+            date_col = c
+            break
+
+    if date_col:
+        first_val = rows[0].get(date_col, "")
+        last_val = rows[-1].get(date_col, "")
+        if first_val:
+            metrics["first_date"] = str(first_val).strip()
+        if last_val:
+            metrics["last_date"] = str(last_val).strip()
+
+    return metrics
+
+
+def evaluate_paper_plan(
+    workspace_path: Path,
+    plan_id: str,
+    data_path: Path,
+    *,
+    event_logger: EventLogger | None = None,
+    provider_name: str | None = None,
+) -> EvaluationArtifact:
+    """Create a deterministic paper-only evaluation artifact from a plan and local data.
+
+    This never touches broker submit paths.
+    """
+    safe_plan_id = validate_run_id(plan_id)
+
+    # Resolve provider (only deterministic supported)
+    _resolve_provider(provider_name)
+
+    # Find and load source plan
+    plan_path = find_plan_artifact_by_plan_id(workspace_path, safe_plan_id)
+    if plan_path is None:
+        raise ResearchSessionError("plan_not_found")
+    plan = load_research_artifact(plan_path, workspace_path)
+
+    symbol = plan.get("symbol", "UNKNOWN")
+    source_run_id = plan.get("source_run_id", "")
+    evaluation_id = generate_run_id()
+    created_at = datetime.now(UTC)
+    warnings: list[str] = []
+
+    # Load local data
+    rows, columns = _load_csv_data(data_path)
+
+    # Run checks
+    checks: list[dict[str, str]] = [
+        _check_plan_loaded(plan),
+        _check_paper_only_mode(plan),
+        _check_data_file_loaded(rows, columns),
+        _check_data_has_required_columns(columns),
+        _check_data_has_rows(rows),
+        _check_data_symbol_context(rows, columns, symbol),
+        _check_plan_has_verification_steps(plan),
+        _check_plan_has_invalidation_checks(plan),
+        _check_no_live_authorization_language_eval(plan),
+    ]
+
+    passed_checks = sum(1 for c in checks if c["status"] == "pass")
+    failed_checks = sum(1 for c in checks if c["status"] == "fail")
+
+    if failed_checks == 0:
+        recommendation = "paper_evaluation_ready"
+    else:
+        recommendation = "manual_review_required"
+
+    metrics = _compute_data_metrics(rows, columns) if rows else {"row_count": 0}
+
+    # Data source: workspace-relative if inside workspace, else filename only
+    try:
+        data_source_rel = data_path.relative_to(workspace_path).as_posix()
+    except ValueError:
+        data_source_rel = data_path.name
+
+    evaluation = EvaluationArtifact(
+        evaluation_id=evaluation_id,
+        source_plan_id=safe_plan_id,
+        source_run_id=source_run_id,
+        created_at=created_at,
+        symbol=symbol,
+        mode="paper",
+        provider="deterministic",
+        source_plan_path=plan_path.relative_to(workspace_path).as_posix(),
+        data_source=data_source_rel,
+        data_summary={"row_count": metrics.get("row_count", 0)},
+        checks=checks,
+        metrics=metrics,
+        warnings=warnings,
+        recommendation=recommendation,
+        artifact_path="",
+        metadata={
+            "provider_requested": provider_name or "deterministic",
+            "source_provider": plan.get("provider", "unknown"),
+        },
+    )
+
+    # Persist evaluation artifact
+    evaluation_dir = workspace_path / RESEARCH_DIR / symbol / "evaluations"
+    evaluation_dir.mkdir(parents=True, exist_ok=True)
+    evaluation_file = evaluation_dir / f"{evaluation_id}.json"
+    _write_evaluation_safe_json(evaluation_file, evaluation)
+
+    evaluation = EvaluationArtifact(
+        evaluation_id=evaluation.evaluation_id,
+        source_plan_id=evaluation.source_plan_id,
+        source_run_id=evaluation.source_run_id,
+        created_at=evaluation.created_at,
+        symbol=evaluation.symbol,
+        mode=evaluation.mode,
+        provider=evaluation.provider,
+        source_plan_path=evaluation.source_plan_path,
+        data_source=evaluation.data_source,
+        data_summary=evaluation.data_summary,
+        checks=evaluation.checks,
+        metrics=evaluation.metrics,
+        warnings=evaluation.warnings,
+        recommendation=evaluation.recommendation,
+        artifact_path=evaluation_file.relative_to(workspace_path).as_posix(),
+        metadata=evaluation.metadata,
+    )
+
+    # Log safe event
+    if event_logger is not None:
+        payload = {
+            "evaluation_id": evaluation_id,
+            "source_plan_id": safe_plan_id,
+            "source_run_id": source_run_id,
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "deterministic",
+            "recommendation": recommendation,
+            "artifact_path": evaluation.artifact_path,
+            "status": "created",
+            "row_count": metrics.get("row_count", 0),
+        }
+        event_logger.write(
+            "research_evaluation_created",
+            run_id=evaluation_id,
+            command="atlas research evaluate",
+            mode="paper",
+            payload=payload,
+        )
+
+    return evaluation
+
+
+def _write_evaluation_safe_json(path: Path, evaluation: EvaluationArtifact) -> None:
+    data: dict[str, Any] = {
+        "evaluation_id": evaluation.evaluation_id,
+        "source_plan_id": evaluation.source_plan_id,
+        "source_run_id": evaluation.source_run_id,
+        "created_at": evaluation.created_at.isoformat(),
+        "symbol": evaluation.symbol,
+        "mode": evaluation.mode,
+        "provider": evaluation.provider,
+        "source_plan_path": evaluation.source_plan_path,
+        "data_source": evaluation.data_source,
+        "data_summary": evaluation.data_summary,
+        "checks": evaluation.checks,
+        "metrics": evaluation.metrics,
+        "warnings": evaluation.warnings,
+        "recommendation": evaluation.recommendation,
+        "artifact_path": evaluation.artifact_path,
+        "metadata": evaluation.metadata,
+    }
+    path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")

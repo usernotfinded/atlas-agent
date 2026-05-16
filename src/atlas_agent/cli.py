@@ -470,6 +470,20 @@ Safety First:
         help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
     )
 
+    research_evaluate = research_sub.add_parser(
+        "evaluate",
+        help="Evaluate a paper plan against local data and create an evaluation artifact. Paper-only. Does not submit orders.",
+        description="Evaluate a paper plan against local data and create an evaluation artifact. Paper-only. Does not create pending orders or approvals.",
+    )
+    research_evaluate.add_argument("plan_id", help="Plan ID to evaluate.")
+    research_evaluate.add_argument("--data", required=True, type=Path, help="Path to local OHLCV CSV data file.")
+    research_evaluate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_evaluate.add_argument(
+        "--provider",
+        default="deterministic",
+        help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
+    )
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -4044,6 +4058,77 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Artifact: {verification.artifact_path}")
             if verification.warnings:
                 print(f"  Warnings: {len(verification.warnings)}")
+            else:
+                print("  Warnings: 0")
+        return 0
+    if args.command == "research" and args.research_command == "evaluate":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                UnsupportedResearchProviderError,
+                evaluate_paper_plan,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research evaluate skipped safely: no workspace found")
+                return 1
+            from atlas_agent.config import get_config
+            config = get_config()
+            event_logger = EventLogger(config.events_dir)
+            evaluation = evaluate_paper_plan(
+                workspace_path=ws,
+                plan_id=args.plan_id,
+                data_path=args.data,
+                event_logger=event_logger,
+                provider_name=args.provider,
+            )
+        except UnsupportedResearchProviderError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "unsupported_research_provider", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research evaluate skipped safely: {exc}")
+            return 1
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research evaluate skipped safely: {exc}")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_evaluation_created",
+                "symbol": evaluation.symbol,
+                "source_plan_id": evaluation.source_plan_id,
+                "evaluation_id": evaluation.evaluation_id,
+                "recommendation": evaluation.recommendation,
+                "artifact_path": evaluation.artifact_path,
+                "passed_checks": sum(1 for c in evaluation.checks if c["status"] == "pass"),
+                "failed_checks": sum(1 for c in evaluation.checks if c["status"] == "fail"),
+                "metrics": evaluation.metrics,
+                "warnings": evaluation.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Paper plan evaluation created")
+            print(f"  Symbol: {evaluation.symbol}")
+            print(f"  Mode: {evaluation.mode}")
+            print(f"  Source Plan ID: {evaluation.source_plan_id}")
+            print(f"  Evaluation ID: {evaluation.evaluation_id}")
+            print(f"  Recommendation: {evaluation.recommendation}")
+            print(f"  Rows: {evaluation.metrics.get('row_count', 0)}")
+            print(f"  Artifact: {evaluation.artifact_path}")
+            if evaluation.warnings:
+                print(f"  Warnings: {len(evaluation.warnings)}")
             else:
                 print("  Warnings: 0")
         return 0
