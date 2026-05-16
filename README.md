@@ -102,6 +102,10 @@ atlas run --mode paper
 
 `atlas research run --symbol AAPL` creates a local, paper-only research artifact. It does not submit orders, create approvals, or authorize live trading.
 
+Discover and inspect existing artifacts:
+- `atlas research list`
+- `atlas research show RUN_ID`
+
 ## Demos
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:

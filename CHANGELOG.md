@@ -69,6 +69,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added deterministic research provider (`DeterministicResearchProvider`) that is network-free.
   - Added CLI regression tests for help, JSON/text output, unsupported provider, symbol validation, event safety, artifact schema, and no-execution-path guarantees.
   - Updated `README.md` and `docs/architecture.md` with research workflow documentation.
+- **Batch 5.23 — Research Artifact Index/List/Show Commands**:
+  - Added `atlas research list` to discover local research artifacts with `--symbol`, `--limit`, and `--json` options.
+  - Added `atlas research show RUN_ID` to inspect a single artifact with `--json` option.
+  - Added read-only helpers: `iter_research_artifacts`, `load_research_artifact`, `find_research_artifact_by_run_id`, `validate_run_id`.
+  - Safe run_id validation (`[A-Za-z0-9_-]{1,80}`) with static errors for unsafe input.
+  - Path containment checks: symlinks outside workspace are ignored; absolute paths are never emitted.
+  - Malformed JSON artifacts are handled gracefully (skipped in list, safe error in show).
+  - Ambiguous run_id detection fails closed.
+  - Added 23 CLI regression tests for list/show covering empty state, filtering, limits, malformed files, not-found, invalid run_id, ambiguity, symlink safety, read-only behavior, and no-execution-path guarantees.
+  - Fixed a `UnboundLocalError` in `cli.py` where a local variable shadowed the `warnings` module.
 
 ### Validation
 - Full pytest passed in the latest validation run.

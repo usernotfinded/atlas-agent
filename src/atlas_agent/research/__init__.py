@@ -11,8 +11,12 @@ from atlas_agent.research.session import (
     ResearchSessionError,
     SUPPORTED_RESEARCH_PROVIDERS,
     UnsupportedResearchProviderError,
+    find_research_artifact_by_run_id,
+    iter_research_artifacts,
+    load_research_artifact,
     run_research_session,
     sanitize_symbol,
+    validate_run_id,
 )
 from atlas_agent.research.web_research import OfflineResearchProvider
 
@@ -34,8 +38,12 @@ __all__ = [
     "ResearchSessionError",
     "SUPPORTED_RESEARCH_PROVIDERS",
     "UnsupportedResearchProviderError",
+    "find_research_artifact_by_run_id",
     "get_research_provider",
+    "iter_research_artifacts",
+    "load_research_artifact",
     "run_research_session",
     "sanitize_symbol",
+    "validate_run_id",
 ]
 

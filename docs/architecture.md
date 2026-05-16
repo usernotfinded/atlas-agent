@@ -27,6 +27,7 @@ The `atlas research run --symbol SYMBOL` command is paper-only and analysis-only
 - **Memory**: Optional memory index lookup; `--no-memory` skips it. Markdown remains the source of truth.
 - **Paper-only boundary**: The artifact includes a `paper_only_plan` field that explicitly states the artifact must not be used to execute orders directly.
 - **No broker submit**: The research command never calls `OrderRouter`, `ApprovalManager`, or `BrokerResolver`.
+- **List/Show**: `atlas research list` and `atlas research show RUN_ID` are read-only commands for artifact discovery. They do not create files, call brokers, or invoke trading paths.
 
 ## CLI Shape
 

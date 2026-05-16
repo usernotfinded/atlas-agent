@@ -212,6 +212,136 @@ def run_research_session(
     return artifact
 
 
+def validate_run_id(run_id: str) -> str:
+    """Return a safe run_id or raise ResearchSessionError."""
+    if not run_id:
+        raise ResearchSessionError("run_id must not be empty")
+    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
+    if not all(ch in allowed for ch in run_id):
+        raise ResearchSessionError("run_id contains unsafe characters")
+    if len(run_id) > 80:
+        raise ResearchSessionError("run_id exceeds maximum length")
+    return run_id
+
+
+def _is_inside_workspace(path: Path, workspace: Path) -> bool:
+    try:
+        path.resolve().relative_to(workspace.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def iter_research_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return a list of artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe)
+    else:
+        search_dirs = [d for d in research_dir.iterdir() if d.is_dir()]
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                # Malformed JSON: skip in list mode with a safe sentinel
+                items.append(
+                    {
+                        "run_id": path.stem,
+                        "symbol": directory.name,
+                        "created_at": "",
+                        "artifact_path": path.relative_to(workspace_path).as_posix(),
+                        "provider": "unknown",
+                        "warnings_count": 1,
+                        "_malformed": True,
+                    }
+                )
+                continue
+            # Only use computed workspace-relative path
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "run_id": data.get("run_id", path.stem),
+                    "symbol": data.get("symbol", directory.name),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                    "provider": data.get("provider", "unknown"),
+                    "warnings_count": len(data.get("warnings", [])),
+                }
+            )
+
+    # Sort by created_at descending; malformed items sort to bottom
+    def _sort_key(item: dict[str, Any]) -> str:
+        return item["created_at"] if not item.get("_malformed") else ""
+
+    items.sort(key=_sort_key, reverse=True)
+    return items
+
+
+def load_research_artifact(path: Path, workspace_path: Path) -> dict[str, Any]:
+    """Load a research artifact JSON safely.
+
+    Returns a dict with a computed workspace-relative artifact_path.
+    """
+    if not path.exists() or not path.is_file():
+        raise ResearchSessionError("artifact_not_found")
+    if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+        raise ResearchSessionError("artifact_path_not_allowed")
+    try:
+        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        raise ResearchSessionError("artifact_malformed")
+    # Enforce workspace-relative path in output
+    data["artifact_path"] = path.relative_to(workspace_path).as_posix()
+    return data
+
+
+def find_research_artifact_by_run_id(
+    workspace_path: Path, run_id: str
+) -> Path | None:
+    """Find exactly one artifact by run_id.
+
+    Returns the path, or None if not found.
+    Raises ResearchSessionError if ambiguous.
+    """
+    safe_run_id = validate_run_id(run_id)
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return None
+
+    matches: list[Path] = []
+    for directory in research_dir.iterdir():
+        if not directory.is_dir():
+            continue
+        candidate = directory / f"{safe_run_id}.json"
+        if candidate.exists() and candidate.is_file():
+            if candidate.is_symlink() and not _is_inside_workspace(candidate, workspace_path):
+                continue
+            matches.append(candidate)
+
+    if len(matches) == 0:
+        return None
+    if len(matches) > 1:
+        raise ResearchSessionError("ambiguous_run_id")
+    return matches[0]
+
+
 def _write_safe_json(path: Path, artifact: ResearchArtifact) -> None:
     data: dict[str, Any] = {
         "run_id": artifact.run_id,

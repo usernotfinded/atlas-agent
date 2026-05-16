@@ -423,6 +423,21 @@ Safety First:
         help="Skip memory index lookup.",
     )
 
+    research_list = research_sub.add_parser(
+        "list",
+        help="List local research artifacts. Read-only. Does not submit orders.",
+    )
+    research_list.add_argument("--symbol", help="Filter by symbol.")
+    research_list.add_argument("--limit", type=int, default=20, help="Maximum items to show. Default: 20.")
+    research_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_show = research_sub.add_parser(
+        "show",
+        help="Show a research artifact by run_id. Read-only. Does not submit orders.",
+    )
+    research_show.add_argument("run_id", help="Artifact run_id.")
+    research_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -3683,6 +3698,131 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("  Warnings: 0")
         return 0
+    if args.command == "research" and args.research_command == "list":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                iter_research_artifacts,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = args.limit
+            if limit < 1:
+                limit = 1
+            if limit > 100:
+                limit = 100
+
+            items = iter_research_artifacts(ws, symbol=symbol_filter)[:limit]
+
+            if args.json:
+                import json
+                out = {
+                    "ok": True,
+                    "status": "research_listed",
+                    "items": items,
+                }
+                print(json.dumps(out, indent=2, sort_keys=True))
+            else:
+                if not items:
+                    print("No research artifacts found.")
+                else:
+                    print(f"{'Created At':<24} {'Symbol':<8} {'Run ID':<34} {'Provider':<14} {'Warnings':<9} {'Artifact'}")
+                    for item in items:
+                        created = item.get("created_at", "")[:19]
+                        print(f"{created:<24} {item['symbol']:<8} {item['run_id']:<34} {item['provider']:<14} {item['warnings_count']:<9} {item['artifact_path']}")
+            return 0
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research list skipped safely: {exc}")
+            return 1
+    if args.command == "research" and args.research_command == "show":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                find_research_artifact_by_run_id,
+                load_research_artifact,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research show skipped safely: no workspace found")
+                return 1
+
+            safe_run_id = validate_run_id(args.run_id)
+            artifact_path = find_research_artifact_by_run_id(ws, safe_run_id)
+            if artifact_path is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "artifact_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("research show skipped safely: artifact not found")
+                return 1
+
+            artifact = load_research_artifact(artifact_path, ws)
+            if args.json:
+                import json
+                out = {
+                    "ok": True,
+                    "status": "research_loaded",
+                    "artifact": artifact,
+                }
+                print(json.dumps(out, indent=2, sort_keys=True))
+            else:
+                print("Research Artifact")
+                print(f"  Run ID: {artifact.get('run_id', '')}")
+                print(f"  Symbol: {artifact.get('symbol', '')}")
+                print(f"  Created: {artifact.get('created_at', '')}")
+                print(f"  Provider: {artifact.get('provider', '')}")
+                print(f"  Summary: {artifact.get('summary', '')}")
+                print(f"  Thesis: {artifact.get('thesis', '')}")
+                risks = artifact.get("risks", [])
+                if risks:
+                    print("  Risks:")
+                    for r in risks:
+                        print(f"    - {r}")
+                inv = artifact.get("invalidation_conditions", [])
+                if inv:
+                    print("  Invalidation Conditions:")
+                    for i in inv:
+                        print(f"    - {i}")
+                print(f"  Paper-only Plan: {artifact.get('paper_only_plan', '')}")
+                artifact_warnings = artifact.get("warnings", [])
+                if artifact_warnings:
+                    print(f"  Warnings: {len(artifact_warnings)}")
+                else:
+                    print("  Warnings: 0")
+                print(f"  Artifact: {artifact.get('artifact_path', '')}")
+            return 0
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research show skipped safely: {exc}")
+            return 1
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
             print(f"notification skipped safely: file not found: {args.file}")
