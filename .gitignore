@@ -30,8 +30,7 @@ reports/*.json
 reports/*.md
 reports/*.csv
 !reports/.gitkeep
-memory/*.md
-!memory/.gitkeep
+memory/
 skills/proposed/*.md
 
 # Build/package artifacts

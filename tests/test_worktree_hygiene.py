@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -19,15 +20,24 @@ from scripts.check_no_protected_staged import (
         ("AUDIT_ENHANCEMENTS_2026-05-13.md", True),
         ("BATCH2_PLAN.md", True),
         ("memory/kill_switch_state.json.lock", True),
+        ("memory/foo.tmp", True),
+        ("memory/index.sqlite", True),
+        ("memory/index.sqlite3", True),
+        ("memory/cache.db", True),
+        ("memory/nested/cache.db", True),
         ("build/lib/file.py", True),
         ("dist/pkg.whl", True),
         ("atlas_agent.egg-info/PKG-INFO", True),
         (".pytest_cache/cache", True),
         ("src/module/__pycache__/x.pyc", True),
         ("docs/releases/v0.5.7.dev3.md", False),
+        ("docs/releases/v0.5.7.dev8.md", False),
+        ("docs/research-workflow.md", False),
         ("scripts/smoke_package_build.sh", False),
         ("tests/test_output_safety.py", False),
+        ("tests/research/test_research_output_safety.py", False),
         ("src/atlas_agent/redaction.py", False),
+        ("src/atlas_agent/research/session.py", False),
         ("data/sample/ohlcv.csv", False),
     ],
 )
@@ -87,6 +97,19 @@ def test_main_git_failure(monkeypatch: pytest.MonkeyPatch, capsys: pytest.Captur
     assert result == 2
     captured = capsys.readouterr()
     assert "unable to read staged files" in captured.err
+
+
+def test_gitignore_ignores_memory_runtime() -> None:
+    content = Path(".gitignore").read_text(encoding="utf-8")
+    assert "memory/" in content, ".gitignore should ignore memory/ directory"
+
+
+def test_main_protected_memory_lock(capsys: pytest.CaptureFixture[str]) -> None:
+    result = main(staged_paths=["memory/kill_switch_state.json.lock"])
+    assert result == 2
+    captured = capsys.readouterr()
+    assert "Protected staged files detected:" in captured.out
+    assert "memory/kill_switch_state.json.lock" in captured.out
 
 
 def test_release_check_includes_protected_staged_check() -> None:

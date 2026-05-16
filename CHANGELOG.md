@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sanitized generic research CLI error fallback output.
 - Added regression tests preventing raw exception/path/secret leakage in research CLI failures.
 
+### Fixed
+- Tightened workspace hygiene for memory runtime lock/cache artifacts.
+- Ensured memory runtime files remain ignored/protected from staging.
+- Added tests for memory lock/cache protection.
+
 ### Safety / Compatibility
 - No live-trading behavior changes.
 
