@@ -277,9 +277,55 @@ if [ -z "$CHECK_ISSUES_LEN" ] || [ -z "$CHECK_WARNINGS_LEN" ]; then
 fi
 assert_no_pending_orders
 
-# 9. Safety checks
+# 9. Research timeline
+printf '\n--- Research timeline ---\n'
+TIMELINE_OUTPUT="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT"
+assert_ok "$TIMELINE_OUTPUT" "research timeline"
+TIMELINE_STATUS="$(json_field "$TIMELINE_OUTPUT" status)"
+if [ "$TIMELINE_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status: %s\n' "$TIMELINE_STATUS" >&2
+  exit 1
+fi
+TIMELINE_ENTRIES_LEN="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+print(len(data.get('entries',[])))
+" <<<"$TIMELINE_OUTPUT" )"
+if [ "$TIMELINE_ENTRIES_LEN" -lt 1 ]; then
+  printf 'FAIL: timeline entries too low: %s\n' "$TIMELINE_ENTRIES_LEN" >&2
+  exit 1
+fi
+TIMELINE_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID' or e.get('symbol')!='$DEMO_SYMBOL':
+        continue
+    plans=e.get('plans',[])
+    for p in plans:
+        if p.get('plan_id')!='$PLAN_ID':
+            continue
+        vids=[v.get('verification_id') for v in p.get('verifications',[])]
+        eids=[ev.get('evaluation_id') for ev in p.get('evaluations',[])]
+        if '$VERIFY_ID' in vids and '$EVAL_ID' in eids:
+            print('valid')
+            break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT" )"
+if [ "$TIMELINE_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link run_id %s -> plan %s -> verification %s and evaluation %s\n' "$RUN_ID" "$PLAN_ID" "$VERIFY_ID" "$EVAL_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 10. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT"
 
 printf '\nResearch workflow demo complete.\n'
