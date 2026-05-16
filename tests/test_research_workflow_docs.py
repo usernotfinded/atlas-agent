@@ -253,6 +253,21 @@ class TestArchitectureArtifactSchema:
         missing = [f for f in required_fields if f not in lower]
         assert not missing, f"Missing plan artifact fields: {missing}"
 
+    def test_verification_artifact_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "verification artifact" in lower
+        assert "verification_id" in lower
+        assert "paper_review_ready" in lower or "manual_review_required" in lower
+
+    def test_summary_index_output_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "summary" in lower and "read-only" in lower
+        assert "aggregate" in lower or "counts" in lower or "overview" in lower or "local" in lower
+
 
 class TestArchitecturePathSafety:
     def test_workspace_relative_paths_documented(self) -> None:

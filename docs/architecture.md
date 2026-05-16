@@ -65,6 +65,31 @@ Events:
 - `event_type`: `research_plan_created`
 - Safe event metadata with bounded payload keys only.
 
+### Verification artifact
+
+Saved at `.atlas/research/<SYMBOL>/verifications/<verification_id>.json`.
+
+Created by `verify` from an existing paper plan. Contains deterministic local checks:
+- `plan_schema_complete`, `paper_only_mode`, `no_live_authorization_language`
+- `has_risk_notes`, `has_invalidation_checks`, `has_verification_steps`
+- `has_paper_only_constraints`, `source_path_contained`
+
+Required fields:
+- `verification_id`, `source_plan_id`, `source_run_id`
+- `symbol`, `mode`, `provider`
+- `source_plan_path`
+- `checks`, `passed_checks`, `failed_checks`
+- `recommendation` (`paper_review_ready` or `manual_review_required`)
+- `warnings`, `metadata`
+
+Events:
+- `event_type`: `research_verification_created`
+- Safe event metadata with bounded payload keys only; no full verification body in event payload.
+
+### Summary/index output
+
+`summary` aggregates local research artifacts, paper plans, and verification artifacts per symbol. It reports counts, latest run/plan IDs, and workspace-relative paths. It is strictly read-only and does not create artifacts.
+
 ## CLI Shape
 
 `atlas_agent.cli:main` remains the public entry point. Low-risk commands are routed through a small command registry and shared `CLIContext`; legacy wrappers remain in place for compatibility while command handlers move out of the entrypoint incrementally.

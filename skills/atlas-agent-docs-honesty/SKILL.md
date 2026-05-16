@@ -22,7 +22,7 @@
 1. **Distinguish mock contracts from live integrations.** If a broker adapter has only a mock/test implementation, docs must say "contract defined" or "test implementation available," not "integrated with Broker X."
 2. **No unsupported performance claims.** Do not claim "faster," "scalable," or "low latency" without benchmark artifacts. Use language like "local-first" or "deterministic" instead.
 3. **No live-trading readiness overstatements.** A development tag is not production live-trading readiness. Use "development tag," "paper-only," and "explicitly gated" language.
-4. **No profit or safety guarantees.** Avoid "zero risk," "risk-free," "guaranteed profit," "safe live trading," "autonomous income," or similar phrases.
+4. **No profit or safety guarantees.** Do not use language that implies returns are assured, trading is without danger, or live deployment is unconditionally safe.
 5. **Accuracy over marketing.** Prefer precise, boring language over aspirational copy. If a feature is partial, say so.
 6. **Release notes must list known limitations.** Every release note must include a "Known Limitations" section.
 7. **Docs must match code.** If a command no longer exists or behavior changed, update the docs in the same commit.

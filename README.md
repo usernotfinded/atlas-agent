@@ -11,7 +11,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev4)** — see [release notes](docs/releases/v0.5.7.dev4.md).
+> **Current Status (v0.5.7.dev5)** — see [release notes](docs/releases/v0.5.7.dev5.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -100,7 +100,10 @@ atlas run --mode paper
 
 ### Paper research workflow
 
-`atlas research run --symbol AAPL` creates a local, paper-only research artifact. It does not submit orders, create approvals, or authorize live trading.
+The research workflow is paper-only and analysis-only. All commands operate on local artifacts and do not submit orders, create approvals, or authorize live trading.
+
+Create a local research artifact:
+- `atlas research run --symbol AAPL`
 
 Discover and inspect existing artifacts:
 - `atlas research list`
@@ -112,7 +115,7 @@ Create a paper-only plan from a research artifact:
 Verify a paper plan for completeness and safety:
 - `atlas research verify PLAN_ID`
 
-Summarize all research artifacts and plans:
+Overview all research artifacts and plans:
 - `atlas research summary`
 
 ## Demos

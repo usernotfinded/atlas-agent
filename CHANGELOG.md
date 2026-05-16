@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7.dev5] - 2026-05-16
+
+### Added
+- Paper plan verification command: `atlas research verify PLAN_ID`.
+- Verification artifacts with deterministic local checks.
+- Docs-truth coverage requiring verify in the paper-only research workflow.
+- Final research workflow docs/index polish.
+
+### Changed
+- Research workflow now documents the complete chain: run -> list/show -> plan -> verify -> summary.
+- Research docs now describe research artifacts, paper plan artifacts, verification artifacts, and local summary output.
+
+### Safety / Compatibility
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- Research workflow remains paper-only and analysis-only.
+- Research commands do not create approvals or pending orders.
+- Verification does not authorize live trading.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Full pytest passed in latest validation.
+- `pip check` passed.
+- `./scripts/demo_paper_workflow.sh` passed.
+- `./scripts/release_check.sh` passed.
+- `scripts/check_no_protected_staged.py` passed.
+
 ## [0.5.7.dev4] - 2026-05-16
 
 ### Added
