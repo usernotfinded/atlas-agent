@@ -11,7 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Schema versioning (`schema_version`) for all research workflow artifacts.
 - Compatibility behavior for legacy artifacts without `schema_version`.
 - Fail-closed handling for unsupported future schema versions.
-- Docs-truth tests for schema versioning boundaries.
+- Read-only research artifact health check command: `atlas research check-artifacts`.
+- Health checks for malformed JSON, unsupported/legacy schema versions, duplicate IDs, symbol mismatches, missing required fields, unsafe paths, and unexpected artifact locations.
+- Docs-truth tests for schema versioning and health check boundaries.
+
+### Changed
+- New artifacts now include `"schema_version": "1"`.
+- `load_research_artifact` fails closed on unsupported schema versions.
+- `list` and `summary` skip artifacts with unsupported schema versions safely.
+- `docs/research-workflow.md` and `docs/architecture.md` now document schema versioning and the `check-artifacts` command.
 
 ### Changed
 - New artifacts now include `"schema_version": "1"`.

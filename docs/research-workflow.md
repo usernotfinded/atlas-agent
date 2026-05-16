@@ -18,8 +18,9 @@ All commands operate on local data within the Atlas workspace. No external broke
 | `atlas research evaluate PLAN_ID --data PATH` | Evaluate a paper plan against local data | Yes | No | No |
 | `atlas research summary` | Overview of all research artifacts and plans | No | Yes | No |
 | `./scripts/demo_research_workflow.sh` | End-to-end temporary-workspace demo of the full chain | Yes | No | No |
+| `atlas research check-artifacts` | Read-only health check of local artifacts | No | Yes | No |
 
-`list`, `show`, and `summary` are read-only. `run`, `plan`, `verify`, and `evaluate` write local artifacts only. None of them touch live trading.
+`list`, `show`, `summary`, and `check-artifacts` are read-only. `run`, `plan`, `verify`, and `evaluate` write local artifacts only. None of them touch live trading.
 
 ## Typical Flow
 
@@ -175,6 +176,16 @@ Read-only overview of all research artifacts and paper plans.
 - Aggregates counts and latest IDs per symbol.
 - Supports `--json`.
 - Does not create artifacts.
+
+### `atlas research check-artifacts`
+
+Read-only health check of local research artifacts.
+
+- Detects: malformed JSON, unsupported schema versions, legacy artifacts without `schema_version`, duplicate IDs, symbol mismatches, unsafe paths, missing required fields, and unexpected artifact locations.
+- Supports `--symbol` to filter by symbol.
+- Supports `--strict` to exit with code 2 when issues are found.
+- Does not modify, migrate, or rewrite artifacts.
+- Does not create pending orders or approvals.
 
 ### `./scripts/demo_research_workflow.sh`
 

@@ -324,6 +324,13 @@ class TestArchitectureArtifactSchema:
         lower = section.lower()
         assert "schema_version" in lower
 
+    def test_check_artifacts_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "check-artifacts" in lower
+        assert "read-only" in lower
+
 
 class TestArchitecturePathSafety:
     def test_workspace_relative_paths_documented(self) -> None:

@@ -484,6 +484,15 @@ Safety First:
         help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
     )
 
+    research_check = research_sub.add_parser(
+        "check-artifacts",
+        help="Check local research artifact health. Read-only. Does not modify artifacts.",
+        description="Check local research artifact health. Read-only. Does not modify artifacts, create pending orders, or approvals.",
+    )
+    research_check.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_check.add_argument("--symbol", help="Filter by symbol.")
+    research_check.add_argument("--strict", action="store_true", help="Exit with code 2 if any issue is found.")
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -4131,6 +4140,62 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  Warnings: {len(evaluation.warnings)}")
             else:
                 print("  Warnings: 0")
+        return 0
+    if args.command == "research" and args.research_command == "check-artifacts":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                check_research_artifacts,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research check-artifacts skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            result = check_research_artifacts(ws, symbol_filter=symbol_filter)
+        except ResearchSessionError as exc:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "research_session_error", "message": str(exc)}, indent=2, sort_keys=True))
+            else:
+                print(f"research check-artifacts skipped safely: {exc}")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Research artifact health check")
+            print(f"  Research artifacts: {result['counts']['research']}")
+            print(f"  Paper plans: {result['counts']['plans']}")
+            print(f"  Verifications: {result['counts']['verifications']}")
+            print(f"  Evaluations: {result['counts']['evaluations']}")
+            total_issues = len(result["issues"])
+            total_warnings = len(result["warnings"])
+            print(f"  Issues: {total_issues}")
+            print(f"  Warnings: {total_warnings}")
+            if result["issues"]:
+                print("\nIssues:")
+                for issue in result["issues"]:
+                    print(f"  - {issue['code']}: {issue['path']}")
+            if result["warnings"]:
+                print("\nWarnings:")
+                for warning in result["warnings"]:
+                    print(f"  - {warning['code']}: {warning['path']}")
+            if not result["issues"] and not result["warnings"]:
+                print("\nNo artifact health issues found.")
+        if args.strict and result["issues"]:
+            return 2
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

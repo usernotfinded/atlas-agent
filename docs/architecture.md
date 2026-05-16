@@ -32,6 +32,7 @@ For a dedicated command reference with full artifact schemas and safety boundari
 - **`atlas research verify PLAN_ID`**: Verifies a paper plan for completeness, paper-only constraints, and disallowed language. Creates a verification artifact.
 - **`atlas research evaluate PLAN_ID --data PATH`**: Evaluates a paper plan against local OHLCV data and creates an evaluation artifact. Paper-only; does not create orders, approvals, or pending orders.
 - **`atlas research summary`**: Read-only overview of all research artifacts and paper plans. Does not create artifacts.
+- **`atlas research check-artifacts`**: Read-only health check of local artifacts. Detects malformed JSON, unsupported/legacy schema versions, duplicate IDs, symbol mismatches, and unsafe paths. Does not modify artifacts.
 
 ### Safety boundaries
 

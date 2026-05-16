@@ -123,6 +123,9 @@ Evaluate a paper plan against local data:
 Overview all research artifacts and plans:
 - `atlas research summary`
 
+Check local artifact health:
+- `atlas research check-artifacts`
+
 ## Demos
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:

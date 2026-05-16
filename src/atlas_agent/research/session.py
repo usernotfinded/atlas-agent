@@ -1316,3 +1316,189 @@ def _write_evaluation_safe_json(path: Path, evaluation: EvaluationArtifact) -> N
         "schema_version": evaluation.schema_version,
     }
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def check_research_artifacts(
+    workspace_path: Path,
+    symbol_filter: str | None = None,
+) -> dict[str, Any]:
+    """Read-only health check of local research artifacts.
+
+    Returns counts, issues, and warnings. Never modifies artifacts.
+    """
+    issues: list[dict[str, str]] = []
+    warnings: list[dict[str, str]] = []
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0}
+
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return {
+            "ok": True,
+            "status": "research_artifacts_checked",
+            "counts": counts,
+            "issues": issues,
+            "warnings": warnings,
+        }
+
+    search_symbols: list[Path] = []
+    if symbol_filter is not None:
+        safe = sanitize_symbol(symbol_filter)
+        sym_dir = research_dir / safe
+        if sym_dir.exists():
+            search_symbols.append(sym_dir)
+    else:
+        search_symbols = [d for d in research_dir.iterdir() if d.is_dir()]
+
+    # Track IDs per type for duplicate detection
+    run_ids: dict[str, list[str]] = {}
+    plan_ids: dict[str, list[str]] = {}
+    verification_ids: dict[str, list[str]] = {}
+    evaluation_ids: dict[str, list[str]] = {}
+
+    def _rel(path: Path) -> str:
+        try:
+            return path.relative_to(workspace_path).as_posix()
+        except ValueError:
+            return path.name
+
+    def _inspect_file(path: Path, expected_type: str, expected_symbol: str) -> None:
+        rel = _rel(path)
+        # unsafe path check
+        if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+            issues.append({"code": "unsafe_path", "path": rel, "severity": "error"})
+            return
+        # malformed JSON
+        try:
+            data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            issues.append({"code": "malformed_json", "path": rel, "severity": "error"})
+            return
+        # unsupported schema version
+        sv = data.get("schema_version")
+        if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+            issues.append({"code": "unsupported_schema_version", "path": rel, "severity": "error"})
+            return
+        # legacy schema version
+        if sv is None:
+            warnings.append({"code": "legacy_schema_version", "path": rel, "severity": "warning"})
+        # missing required fields
+        id_field = {
+            "research": "run_id",
+            "plan": "plan_id",
+            "verification": "verification_id",
+            "evaluation": "evaluation_id",
+        }.get(expected_type)
+        if id_field and id_field not in data:
+            issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
+            return
+        # symbol mismatch
+        artifact_symbol = data.get("symbol", "")
+        if artifact_symbol and artifact_symbol != expected_symbol:
+            warnings.append(
+                {
+                    "code": "symbol_mismatch",
+                    "path": rel,
+                    "severity": "warning",
+                }
+            )
+        # unexpected location
+        if expected_type == "plan" and "plans" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "verification" and "verifications" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "evaluation" and "evaluations" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        # minimal required fields
+        if expected_type == "research":
+            for f in ("mode", "provider", "artifact_path"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+        elif expected_type in ("plan",):
+            for f in ("source_run_id", "symbol", "mode", "provider"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+        elif expected_type == "verification":
+            for f in ("source_plan_id", "symbol", "mode", "provider", "recommendation"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+        elif expected_type == "evaluation":
+            for f in ("source_plan_id", "symbol", "mode", "provider", "recommendation"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+        # Track ID for duplicate detection
+        if id_field:
+            raw_id = data.get(id_field, "")
+            if expected_type == "research":
+                run_ids.setdefault(raw_id, []).append(rel)
+            elif expected_type == "plan":
+                plan_ids.setdefault(raw_id, []).append(rel)
+            elif expected_type == "verification":
+                verification_ids.setdefault(raw_id, []).append(rel)
+            elif expected_type == "evaluation":
+                evaluation_ids.setdefault(raw_id, []).append(rel)
+        # Count
+        if expected_type == "research":
+            counts["research"] += 1
+        elif expected_type == "plan":
+            counts["plans"] += 1
+        elif expected_type == "verification":
+            counts["verifications"] += 1
+        elif expected_type == "evaluation":
+            counts["evaluations"] += 1
+
+    for sym_dir in search_symbols:
+        if not sym_dir.is_dir():
+            continue
+        expected_symbol = sym_dir.name
+        # Research artifacts directly under symbol dir
+        for path in sym_dir.glob("*.json"):
+            if path.is_file():
+                _inspect_file(path, "research", expected_symbol)
+        # Plans
+        plans_dir = sym_dir / "plans"
+        if plans_dir.exists():
+            for path in plans_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "plan", expected_symbol)
+        # Verifications
+        verifications_dir = sym_dir / "verifications"
+        if verifications_dir.exists():
+            for path in verifications_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "verification", expected_symbol)
+        # Evaluations
+        evaluations_dir = sym_dir / "evaluations"
+        if evaluations_dir.exists():
+            for path in evaluations_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "evaluation", expected_symbol)
+
+    # Duplicate detection
+    for rid, paths in run_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pid, paths in plan_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for vid, paths in verification_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for eid, paths in evaluation_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+
+    return {
+        "ok": True,
+        "status": "research_artifacts_checked",
+        "counts": counts,
+        "issues": issues,
+        "warnings": warnings,
+    }

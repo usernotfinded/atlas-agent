@@ -68,6 +68,10 @@ class TestReferenceDocCommands:
         text = _read("docs/research-workflow.md")
         assert "atlas research summary" in text.lower()
 
+    def test_mentions_check_artifacts_command(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert "atlas research check-artifacts" in text.lower()
+
     def test_mentions_demo_script(self) -> None:
         text = _read("docs/research-workflow.md")
         assert "scripts/demo_research_workflow.sh" in text
@@ -193,6 +197,23 @@ class TestReferenceDocSchemaVersioning:
         text = _read("docs/research-workflow.md")
         lower = text.lower()
         assert "does not silently rewrite" in lower or "does not rewrite" in lower
+
+
+class TestReferenceDocCheckArtifacts:
+    def test_check_artifacts_read_only(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "check-artifacts" in lower and "read-only" in lower
+
+    def test_check_artifacts_no_migration(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "does not modify" in lower or "does not migrate" in lower or "does not rewrite" in lower
+
+    def test_check_artifacts_detects_issues(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "malformed" in lower or "duplicate" in lower or "schema" in lower
 
 
 class TestReadmeLinksToReferenceDoc:
