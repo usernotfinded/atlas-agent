@@ -65,7 +65,7 @@ Failure of any single condition causes `can_submit` to evaluate to `false`, whic
 
 - Fresh live sync
 - Sync validation
-- Market-order handling
+- Market-order quote validation
 - Live risk revalidation
 - Live-submit hard limits (notional, symbol, side)
 - Submit-state mutation validation
@@ -73,6 +73,18 @@ Failure of any single condition causes `can_submit` to evaluate to `false`, whic
 - Broker boundary checks
 
 These gates are evaluated after can_submit is already `true`. Failure at any execution-time gate blocks the order without calling `place_order`.
+
+### Market-Order Quote Validation
+
+Market orders require a fresh validated quote before risk revalidation. This gate is **evaluated before** the live risk revalidation gate.
+
+- If no `quote_provider` is supplied, market orders are blocked.
+- If the quote provider returns `None`, raises an exception, or returns a stale, mismatched, or malformed quote, the market order is blocked with a safe static reason.
+- Conservative pricing is used for risk revalidation:
+  - **Buy orders** use the **ask** price.
+  - **Sell orders** use the **bid** price.
+- Quote freshness defaults to a conservative small window (e.g., 15 seconds). Stale quotes block submission.
+- This gate does **not** make market orders safe. It provides a bounded price for risk evaluation only. Market orders still carry execution risk, including slippage and price movement between quote and fill.
 
 ---
 

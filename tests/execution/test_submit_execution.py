@@ -3787,3 +3787,499 @@ def test_blocked_payload_contains_only_safe_fields(tmp_path: Path) -> None:
     assert "APCA" not in p_str
     assert "api_key" not in p_str.lower()
     assert "secret" not in p_str.lower()
+
+
+# ---------------------------------------------------------------------------
+# Batch 5.19: Safe quote source for market-order live-submit gating
+# ---------------------------------------------------------------------------
+
+from atlas_agent.execution.quotes import MarketQuote
+
+
+def _make_quote(**kwargs) -> MarketQuote:
+    defaults = {
+        "symbol": "TEST",
+        "bid": 99.0,
+        "ask": 101.0,
+        "timestamp": datetime.now(UTC),
+        "source": "test",
+    }
+    defaults.update(kwargs)
+    return MarketQuote(**defaults)
+
+
+class _FakeQuoteProvider:
+    def __init__(self, quote: MarketQuote | None = None, exc: Exception | None = None) -> None:
+        self.quote = quote
+        self.exc = exc
+
+    def get_quote(self, symbol: str) -> MarketQuote | None:
+        if self.exc is not None:
+            raise self.exc
+        return self.quote
+
+
+# A. Default market order remains blocked without quote_provider
+
+def test_market_order_blocks_without_quote_provider(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-no-quote", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_price_unavailable"
+    assert report.gates["market_price"] == "fail"
+
+
+# B. Market buy uses ask for risk revalidation
+
+def test_market_buy_uses_ask_for_risk_revalidation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-buy", order_type="market", limit_price=None, side="buy", quantity=2.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    captured_risk_inputs: list[Any] = []
+
+    def capture_evaluate(risk_input: Any, portfolio: Any, mode: str = "live") -> Any:
+        captured_risk_inputs.append(risk_input)
+        return RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+    quote_provider = _FakeQuoteProvider(_make_quote(bid=99.0, ask=101.0))
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk = _mock_risk_manager(allowed=True)
+        mock_risk.evaluate_order.side_effect = capture_evaluate
+        mock_risk_cls.return_value = mock_risk
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "can_submit_false"
+    assert report.gates["market_price"] == "pass"
+    assert len(captured_risk_inputs) == 1
+    risk_input = captured_risk_inputs[0]
+    assert risk_input.price == 101.0
+    assert risk_input.notional == 202.0
+
+
+# C. Market sell uses bid for risk revalidation
+
+def test_market_sell_uses_bid_for_risk_revalidation(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-sell", order_type="market", limit_price=None, side="sell", quantity=2.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    captured_risk_inputs: list[Any] = []
+
+    def capture_evaluate(risk_input: Any, portfolio: Any, mode: str = "live") -> Any:
+        captured_risk_inputs.append(risk_input)
+        return RiskDecision(
+            allowed=True,
+            status="allowed",
+            reason="All risk checks passed",
+            violations=[],
+            classification="opens_new_position",
+        )
+
+    quote_provider = _FakeQuoteProvider(_make_quote(bid=99.0, ask=101.0))
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk = _mock_risk_manager(allowed=True)
+        mock_risk.evaluate_order.side_effect = capture_evaluate
+        mock_risk_cls.return_value = mock_risk
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "can_submit_false"
+    assert report.gates["market_price"] == "pass"
+    assert len(captured_risk_inputs) == 1
+    risk_input = captured_risk_inputs[0]
+    assert risk_input.price == 99.0
+    assert risk_input.notional == 198.0
+
+
+# D. Quote provider None return blocks
+
+def test_market_order_blocks_when_quote_provider_returns_none(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-none", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = _FakeQuoteProvider(None)
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_quote_unavailable"
+    assert report.gates["market_price"] == "fail"
+
+
+# E. Quote provider exception blocks safely without leaking raw output
+
+def test_market_order_blocks_safely_when_quote_provider_raises(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-exc", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = _FakeQuoteProvider(
+        exc=RuntimeError("Authorization: Bearer abc123 /Users/natan/secret")
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_quote_unavailable"
+    assert report.gates["market_price"] == "fail"
+    report_dict = report.to_dict()
+    report_str = str(report_dict)
+    assert "Authorization:" not in report_str
+    assert "Bearer abc123" not in report_str
+    assert "/Users/" not in report_str
+    assert "secret" not in report_str.lower()
+
+
+# F. Stale quote blocks
+
+def test_market_order_blocks_when_quote_is_stale(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-stale", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    stale_ts = datetime.now(UTC) - timedelta(seconds=60)
+    quote_provider = _FakeQuoteProvider(_make_quote(timestamp=stale_ts))
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_quote_stale"
+    assert report.gates["market_price"] == "fail"
+
+
+# G. Symbol mismatch blocks
+
+def test_market_order_blocks_when_quote_symbol_mismatches(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-mismatch", order_type="market", limit_price=None, symbol="AAPL")
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = _FakeQuoteProvider(_make_quote(symbol="MSFT"))
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_quote_symbol_mismatch"
+    assert report.gates["market_price"] == "fail"
+
+
+# H. Invalid bid/ask blocks
+
+@pytest.mark.parametrize("bid,ask", [
+    (0.0, 101.0),
+    (-1.0, 101.0),
+    (99.0, 0.0),
+    (99.0, -1.0),
+    (101.0, 99.0),  # ask < bid
+    (float("nan"), 101.0),
+    (99.0, float("inf")),
+])
+def test_market_order_blocks_when_quote_bid_ask_invalid(tmp_path: Path, bid: float, ask: float) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-invalid", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = _FakeQuoteProvider(_make_quote(bid=bid, ask=ask))
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "market_quote_invalid"
+    assert report.gates["market_price"] == "fail"
+
+
+# I. Quote-derived notional is used for live-submit hard limits
+
+def test_quote_derived_notional_used_for_live_submit_hard_limits(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-hard-limit", order_type="market", limit_price=None, side="buy", quantity=20.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+    before = path.read_text(encoding="utf-8")
+
+    quote_provider = _FakeQuoteProvider(_make_quote(bid=99.0, ask=101.0))
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfigCanSubmit(), manager, quote_provider=quote_provider)
+
+    # notional = 20 * 101 = 2020, which exceeds live_submit_max_order_notional=1000
+    assert report.ok is False
+    assert report.blocked_reason == "live_submit_max_notional_exceeded"
+    assert report.gates["live_submit_limits"] == "fail"
+    after = path.read_text(encoding="utf-8")
+    assert before == after
+
+
+# J. Valid quote passes market-price gate but still blocks at can_submit false
+
+def test_valid_quote_passes_market_gate_then_blocks_at_can_submit_false(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-then-can-submit", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = _FakeQuoteProvider(_make_quote())
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "can_submit_false"
+    assert report.gates["market_price"] == "pass"
+    assert report.gates["risk_revalidation"] == "pass"
+
+
+# K. Valid quote with mocked can_submit true reaches broker boundary
+
+def test_valid_quote_market_order_reaches_broker_boundary(tmp_path: Path) -> None:
+    from atlas_agent.execution.order import OrderResult
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-broker", order_type="market", limit_price=None, side="buy", quantity=1.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = _FakeQuoteProvider(_make_quote(bid=99.0, ask=101.0))
+    mock_broker = _mock_execution_broker(
+        result=OrderResult(accepted=True, filled=False, order_id="b-123", status="new", message="ok")
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver = _mock_broker_resolver(can_sync=True, can_submit=True)
+        mock_exec_resolution = MagicMock()
+        mock_exec_resolution.execution_broker = mock_broker
+        mock_resolver.resolve_execution_broker.return_value = mock_exec_resolution
+        mock_resolver_cls.return_value = mock_resolver
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfigCanSubmit(), manager, quote_provider=quote_provider)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    mock_broker.place_order.assert_called_once()
+
+
+# L. Limit orders unaffected by quote_provider
+
+def test_limit_order_does_not_call_quote_provider(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="limit-no-quote", order_type="limit", limit_price=100.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = MagicMock()
+    quote_provider.get_quote.side_effect = AssertionError("get_quote must not be called for limit orders")
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == "can_submit_false"
+    quote_provider.get_quote.assert_not_called()
+
+
+# M. Output safety for quote failure reports
+
+def test_quote_failure_report_contains_no_forbidden_fragments(tmp_path: Path) -> None:
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="market-safety", order_type="market", limit_price=None)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    quote_provider = _FakeQuoteProvider(
+        exc=RuntimeError("broker.example.com returned {\"Authorization\": \"Bearer SECRET_TOKEN_APCA\"}")
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        mock_resolver_cls.return_value = _mock_broker_resolver(can_sync=True, can_submit=False)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfig(), manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    report_dict = report.to_dict()
+    report_str = str(report_dict)
+    assert "/Users/" not in report_str
+    assert "Authorization:" not in report_str
+    assert "Bearer" not in report_str
+    assert "APCA" not in report_str
+    assert "SECRET" not in report_str
+    assert "TOKEN" not in report_str
+    assert "broker.example.com" not in report_str
+    assert "raw JSON" not in report_str

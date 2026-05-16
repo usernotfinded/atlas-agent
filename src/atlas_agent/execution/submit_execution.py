@@ -16,6 +16,13 @@ from atlas_agent.execution.approval import (
     InvalidPendingOrderError,
 )
 from atlas_agent.execution.order import Order
+from atlas_agent.execution.quotes import (
+    DEFAULT_MAX_QUOTE_AGE_SECONDS,
+    MarketQuote,
+    QuoteProvider,
+    conservative_price_for_side,
+    validate_market_quote,
+)
 from atlas_agent.execution.submit_state import (
     compute_client_order_id,
     is_submit_blocked_by_state,
@@ -303,6 +310,7 @@ def run_submit_execution(
     config: Any,
     approval_manager: ApprovalManager,
     audit_writer: Any | None = None,
+    quote_provider: QuoteProvider | None = None,
 ) -> SubmitExecutionReport:
     """Execute the submit-approved-order skeleton through the broker boundary.
 
@@ -622,25 +630,53 @@ def run_submit_execution(
     order_type = order_dict.get("order_type", "market")
 
     if order_type == "market":
-        _emit_live_submit_blocked(
-            audit_writer, order_id, cid,
-            broker_status.broker_id,
-            "market_price_unavailable", "market_price",
-        )
-        return SubmitExecutionReport(
-            ok=False,
-            status="blocked",
-            order_id=order_id,
-            gates={**gates, "market_price": "fail"},
-            blocked_reason="market_price_unavailable",
-            message="Market order submit execution requires a safe quote source before risk revalidation.",
-            client_order_id=cid,
-            sync={"status": "success", "warnings": sync_warnings},
-            warnings=warnings,
-        )
+        quote_ok = False
+        quote_reason = "market_price_unavailable"
+        if quote_provider is not None:
+            try:
+                quote = quote_provider.get_quote(order_dict["symbol"])
+                quote_ok, quote_reason = validate_market_quote(
+                    quote,
+                    expected_symbol=order_dict["symbol"],
+                    max_age_seconds=getattr(
+                        config, "max_quote_age_seconds", DEFAULT_MAX_QUOTE_AGE_SECONDS
+                    ),
+                )
+                if quote_ok and quote is not None:
+                    try:
+                        price = conservative_price_for_side(quote, order_dict["side"])
+                    except ValueError:
+                        quote_ok = False
+                        quote_reason = "market_quote_invalid"
+            except Exception:
+                quote_ok = False
+                quote_reason = "market_quote_unavailable"
 
-    limit_price = order_dict.get("limit_price")
-    price = limit_price if limit_price is not None else 0.0
+        if not quote_ok:
+            _emit_live_submit_blocked(
+                audit_writer, order_id, cid,
+                broker_status.broker_id,
+                quote_reason, "market_price",
+            )
+            return SubmitExecutionReport(
+                ok=False,
+                status="blocked",
+                order_id=order_id,
+                gates={**gates, "market_price": "fail"},
+                blocked_reason=quote_reason,
+                message="Market order requires a fresh validated quote.",
+                client_order_id=cid,
+                sync={"status": "success", "warnings": sync_warnings},
+                warnings=warnings,
+            )
+
+        # quote_ok is True and price was set above
+        # type ignore because mypy does not see the quote assignment path
+        price = float(price)  # type: ignore[has-type]
+        gates["market_price"] = "pass"
+    else:
+        limit_price = order_dict.get("limit_price")
+        price = limit_price if limit_price is not None else 0.0
 
     risk_input = OrderRiskInput(
         symbol=order_dict["symbol"],

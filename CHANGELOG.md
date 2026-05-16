@@ -42,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AuditWriter remains separate for hash-chain/manifest safety.
 - No runtime trading behavior changes.
 - No broker, submit, reconcile, safety, risk, or config behavior changes.
+- **Batch 5.19 — Safe Quote Source for Market-Order Live-Submit Gating**:
+  - Added `MarketQuote` dataclass and `QuoteProvider` protocol in `src/atlas_agent/execution/quotes.py`.
+  - Added quote validation helper with conservative pricing (ask for buy, bid for sell) and freshness checking.
+  - Integrated optional `quote_provider` parameter into `run_submit_execution()`.
+  - Market orders remain blocked by default when no `quote_provider` is supplied.
+  - Added tests for stale/malformed/mismatched quotes, conservative bid/ask pricing, output safety, and hard-limit interaction.
+  - Updated `docs/live-submit-safety-contract.md` with market-order quote validation rules.
 
 ### Validation
 - Full pytest passed in the latest validation run.
