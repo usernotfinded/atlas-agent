@@ -5,40 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.7.dev9] - 2026-05-16
 
 ### Added
-- Added read-only research timeline command: `atlas research timeline`.
-- Added lineage view linking research artifacts to plans, verifications, and evaluations.
-- Added tests for filters, broken lineage, unsafe artifacts, and no execution path.
-- Updated research workflow demo to include lineage/timeline validation.
-- Added tests for timeline demo integration, unsafe timeline output, timeline failure behavior, missing lineage, and pending-order guard.
+- Post-research-system audit documentation.
+- Read-only research timeline command and lineage tests.
+- Timeline integration in the end-to-end research demo.
+- Research artifact health-check demo integration.
+- Memory runtime artifact ignore/protection tests.
 
-### Fixed
-- Fixed stale v0.5.7.dev7 current-version references after v0.5.7.dev8.
-- Sanitized research CLI invalid-symbol and unsupported-provider error output.
-- Added regression tests for path/secret-like research CLI error leaks.
-
-### Documentation
-- Added post-research-system audit documentation (`docs/audits/post-research-system-audit.md`).
-- Recorded validation results, safety boundaries, non-blocking findings, and follow-up areas.
-
-## [Unreleased]
+### Changed
+- Research demo now validates the complete local chain:
+  run -> list/show -> plan -> verify -> evaluate -> summary -> check-artifacts -> timeline.
+- Demo lineage validation now verifies:
+  run_id -> plan_id -> verification_id -> evaluation_id.
+- Workspace hygiene now ignores and protects memory runtime lock/cache artifacts.
 
 ### Fixed
 - Sanitized generic research CLI error fallback output.
-- Added regression tests preventing raw exception/path/secret leakage in research CLI failures.
-
-### Fixed
-- Tightened workspace hygiene for memory runtime lock/cache artifacts.
-- Ensured memory runtime files remain ignored/protected from staging.
-- Added tests for memory lock/cache protection.
+- Fixed invalid-symbol and unsupported-provider CLI error leaks for path-like and secret-like input.
+- Fixed stale current-version references after v0.5.7.dev8.
 
 ### Safety / Compatibility
-- No live-trading behavior changes.
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- Research workflow remains paper-only and analysis-only.
+- Research commands do not create approvals or pending orders.
+- Health checks and timeline commands are read-only.
+- Artifact health checks do not migrate, rewrite, repair, or delete artifacts.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
 
-### Safety / Compatibility
-- No live-trading behavior changes.
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed in latest validation.
+- pip check passed.
+- Demo paper workflow passed.
+- Demo research workflow passed.
+- release_check.sh passed.
+- Protected-staged check passed.
+
+## [Unreleased]
 
 ## [0.5.7.dev8] - 2026-05-16
 
