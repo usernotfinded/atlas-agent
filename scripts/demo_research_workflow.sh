@@ -238,9 +238,48 @@ if [ "$SUMMARY_RESEARCH_COUNT" -lt 1 ] || [ "$SUMMARY_PLAN_COUNT" -lt 1 ]; then
   exit 1
 fi
 
-# 8. Safety checks
+# 8. Research check-artifacts
+printf '\n--- Research check-artifacts ---\n'
+CHECK_OUTPUT="$(atlas research check-artifacts --json)"
+assert_no_absolute_paths "$CHECK_OUTPUT"
+assert_no_secrets_in_output "$CHECK_OUTPUT"
+assert_ok "$CHECK_OUTPUT" "research check-artifacts"
+CHECK_STATUS="$(json_field "$CHECK_OUTPUT" status)"
+if [ "$CHECK_STATUS" != "research_artifacts_checked" ]; then
+  printf 'FAIL: unexpected check-artifacts status: %s\n' "$CHECK_STATUS" >&2
+  exit 1
+fi
+CHECK_RESEARCH_COUNT="$(json_field "$CHECK_OUTPUT" counts.research)"
+CHECK_PLAN_COUNT="$(json_field "$CHECK_OUTPUT" counts.plans)"
+CHECK_VERIFY_COUNT="$(json_field "$CHECK_OUTPUT" counts.verifications)"
+CHECK_EVAL_COUNT="$(json_field "$CHECK_OUTPUT" counts.evaluations)"
+if [ "$CHECK_RESEARCH_COUNT" -lt 1 ] || [ "$CHECK_PLAN_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts counts too low (research=%s plans=%s)\n' "$CHECK_RESEARCH_COUNT" "$CHECK_PLAN_COUNT" >&2
+  exit 1
+fi
+if [ "$CHECK_VERIFY_COUNT" -lt 1 ] || [ "$CHECK_EVAL_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts verification/evaluation counts too low (verifications=%s evaluations=%s)\n' "$CHECK_VERIFY_COUNT" "$CHECK_EVAL_COUNT" >&2
+  exit 1
+fi
+CHECK_ISSUES_LEN="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+print(len(data.get('issues',[])))
+" <<<"$CHECK_OUTPUT" )"
+CHECK_WARNINGS_LEN="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+print(len(data.get('warnings',[])))
+" <<<"$CHECK_OUTPUT" )"
+if [ -z "$CHECK_ISSUES_LEN" ] || [ -z "$CHECK_WARNINGS_LEN" ]; then
+  printf 'FAIL: check-artifacts issues or warnings array missing\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 9. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT"
 
 printf '\nResearch workflow demo complete.\n'

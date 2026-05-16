@@ -8,7 +8,7 @@ Run this before pushing a public GitHub release.
 - `python3.11 -m pytest -q`
 - `python3.11 -m pip check`
 - `./scripts/demo_paper_workflow.sh`
-- `./scripts/demo_research_workflow.sh` (optional: validates the complete paper-only research chain including evaluation)
+- `./scripts/demo_research_workflow.sh` (optional: validates the complete paper-only research chain including evaluation and artifact health checking)
 - `python3.11 scripts/check_version_consistency.py`
 - `python3.11 scripts/check_forbidden_claims.py`
 - `python3.11 scripts/check_no_protected_staged.py`

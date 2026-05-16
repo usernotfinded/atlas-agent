@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Updated research workflow demo to include artifact health checking (`atlas research check-artifacts`).
+- Added tests for check-artifacts demo integration, unsafe output detection, failure behavior, and pending-order guard.
 - Schema versioning (`schema_version`) for all research workflow artifacts.
 - Compatibility behavior for legacy artifacts without `schema_version`.
 - Fail-closed handling for unsupported future schema versions.
