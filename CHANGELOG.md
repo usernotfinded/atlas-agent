@@ -11,9 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Paper-only research evaluation command: `atlas research evaluate PLAN_ID --data PATH`.
 - Evaluation artifacts with deterministic local checks and metrics.
 - Tests for safe output, malformed data, failed checks, dangerous-language detection, no broker calls, no approvals, and no pending orders.
+- Dedicated research workflow command reference: `docs/research-workflow.md`.
+- Docs tests for research command reference, artifact paths, read-only boundaries, and safety limits.
 
 ### Changed
 - Research workflow demo script now covers the complete chain: run → list → show → plan → verify → evaluate → summary.
+- README.md and docs/architecture.md now link to `docs/research-workflow.md`.
 
 ### Safety / Compatibility
 - Research workflow remains paper-only and analysis-only.

@@ -102,6 +102,8 @@ atlas run --mode paper
 
 The research workflow is paper-only and analysis-only. All commands operate on local artifacts and do not submit orders, create approvals, or authorize live trading.
 
+For detailed command behavior, artifact schemas, and safety boundaries, see [docs/research-workflow.md](docs/research-workflow.md).
+
 Create a local research artifact:
 - `atlas research run --symbol AAPL`
 

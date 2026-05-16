@@ -21,6 +21,8 @@ AI providers and models never call broker adapters or execution modules directly
 
 The research workflow is paper-only and analysis-only. It progresses from `run` (create a research artifact), to `list`/`show` (inspect existing artifacts), to `plan` (derive a paper-only plan artifact), to `verify` (check a plan for completeness and paper-only constraints), to `evaluate` (evaluate a plan against local data), to `summary` (overview all artifacts and plans).
 
+For a dedicated command reference with full artifact schemas and safety boundaries, see [docs/research-workflow.md](research-workflow.md).
+
 ### Commands
 
 - **`atlas research run --symbol SYMBOL`**: Creates a local research artifact.
