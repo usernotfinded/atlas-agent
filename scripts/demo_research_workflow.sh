@@ -127,6 +127,15 @@ cd "$WORKSPACE"
 run_step discipline setup --manual --yes
 run_step config set market.symbol "$DEMO_SYMBOL"
 
+# Create deterministic sample data for evaluation
+mkdir -p "$WORKSPACE/data"
+cat > "$WORKSPACE/data/ohlcv.csv" <<'CSV'
+timestamp,open,high,low,close,volume
+2026-01-01,100,105,99,104,1000
+2026-01-02,104,106,101,102,1200
+2026-01-03,102,108,101,107,1300
+CSV
+
 # 1. Research run
 printf '\n--- Research run ---\n'
 RUN_OUTPUT="$(atlas research run --symbol "$DEMO_SYMBOL" --json)"
@@ -191,7 +200,22 @@ if [ "$VERIFY_RECOMMENDATION" != "paper_review_ready" ] && [ "$VERIFY_RECOMMENDA
   exit 1
 fi
 
-# 6. Research summary
+# 6. Research evaluate
+printf '\n--- Research evaluate ---\n'
+EVAL_OUTPUT="$(atlas research evaluate "$PLAN_ID" --data "$WORKSPACE/data/ohlcv.csv" --json)"
+assert_no_absolute_paths "$EVAL_OUTPUT"
+assert_no_secrets_in_output "$EVAL_OUTPUT"
+assert_ok "$EVAL_OUTPUT" "research evaluate"
+EVAL_ID="$(json_field "$EVAL_OUTPUT" evaluation_id)"
+EVAL_RECOMMENDATION="$(json_field "$EVAL_OUTPUT" recommendation)"
+EVAL_ARTIFACT_PATH="$(json_field "$EVAL_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$EVAL_ARTIFACT_PATH" "evaluation artifact"
+if [ "$EVAL_RECOMMENDATION" != "paper_evaluation_ready" ] && [ "$EVAL_RECOMMENDATION" != "manual_review_required" ]; then
+  printf 'FAIL: unexpected evaluation recommendation: %s\n' "$EVAL_RECOMMENDATION" >&2
+  exit 1
+fi
+
+# 7. Research summary
 printf '\n--- Research summary ---\n'
 SUMMARY_OUTPUT="$(atlas research summary --json)"
 assert_no_absolute_paths "$SUMMARY_OUTPUT"
@@ -214,9 +238,9 @@ if [ "$SUMMARY_RESEARCH_COUNT" -lt 1 ] || [ "$SUMMARY_PLAN_COUNT" -lt 1 ]; then
   exit 1
 fi
 
-# 7. Safety checks
+# 8. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT"
 
 printf '\nResearch workflow demo complete.\n'

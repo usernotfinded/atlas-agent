@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Evaluation artifacts with deterministic local checks and metrics.
 - Tests for safe output, malformed data, failed checks, dangerous-language detection, no broker calls, no approvals, and no pending orders.
 
+### Changed
+- Research workflow demo script now covers the complete chain: run → list → show → plan → verify → evaluate → summary.
+
 ### Safety / Compatibility
 - Research workflow remains paper-only and analysis-only.
 - Evaluation does not create orders, approvals, or pending orders.
@@ -22,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full pytest passed.
 - `pip check` passed.
 - `./scripts/demo_paper_workflow.sh` passed.
+- `./scripts/demo_research_workflow.sh` passed.
 - `./scripts/release_check.sh` passed.
 - `scripts/check_no_protected_staged.py` passed.
 

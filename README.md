@@ -126,7 +126,7 @@ Overview all research artifacts and plans:
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:
 
 - **[Paper Workflow Script](scripts/demo_paper_workflow.sh)** — create a temporary workspace, validate config, run a paper dry-run, execute a deterministic sample-data backtest, and verify audit artifacts.
-- **[Research Workflow Script](scripts/demo_research_workflow.sh)** — create a temporary workspace, run the full paper-only research chain (run → list → show → plan → verify → summary), validate JSON artifacts, and verify safety invariants.
+- **[Research Workflow Script](scripts/demo_research_workflow.sh)** — create a temporary workspace, run the full paper-only research chain (run → list → show → plan → verify → evaluate → summary), validate JSON artifacts, and verify safety invariants.
 - **[Paper Workflow](docs/demo-paper-workflow.md)** — create a workspace, validate config, and run a safe paper cycle with no live broker orders.
 - **[Risk Rejection](docs/demo-risk-rejection.md)** — see how deterministic risk gates block unsafe orders before they reach a broker.
 - **[Audit Verification](docs/demo-audit.md)** — verify the tamper-evident hash-chain and run manifests.

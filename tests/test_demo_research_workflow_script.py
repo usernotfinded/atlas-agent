@@ -201,6 +201,58 @@ if ARGS[0] == "research" and ARGS[1] == "verify":
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "verify":
+    plan_id = ARGS[2]
+    verification_id = "demoverifyid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/verifications/{verification_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "verifications"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "verification_id": verification_id, "source_plan_id": plan_id,
+            "source_run_id": "demorunid12345", "symbol": symbol,
+            "mode": "paper", "provider": "deterministic",
+            "source_plan_path": f".atlas/research/{symbol}/plans/{plan_id}.json",
+            "checks": [], "passed_checks": 8, "failed_checks": 0,
+            "warnings": [], "recommendation": "paper_review_ready",
+            "artifact_path": artifact_path, "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_verification_created", "symbol": symbol,
+        "source_plan_id": plan_id, "verification_id": verification_id,
+        "recommendation": "paper_review_ready", "passed_checks": 8,
+        "failed_checks": 0, "artifact_path": artifact_path, "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "evaluate":
+    plan_id = ARGS[2]
+    evaluation_id = "demoevalid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/evaluations/{evaluation_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "evaluations"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "evaluation_id": evaluation_id, "source_plan_id": plan_id,
+            "source_run_id": "demorunid12345", "symbol": symbol,
+            "mode": "paper", "provider": "deterministic",
+            "source_plan_path": f".atlas/research/{symbol}/plans/{plan_id}.json",
+            "data_source": "data/ohlcv.csv", "data_summary": {"row_count": 3},
+            "checks": [], "metrics": {"row_count": 3, "latest_close": 107},
+            "warnings": [], "recommendation": "paper_evaluation_ready",
+            "artifact_path": artifact_path, "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_evaluation_created", "symbol": symbol,
+        "source_plan_id": plan_id, "evaluation_id": evaluation_id,
+        "recommendation": "paper_evaluation_ready", "passed_checks": 9,
+        "failed_checks": 0, "artifact_path": artifact_path,
+        "metrics": {"row_count": 3, "latest_close": 107}, "warnings": []
+    }))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "summary":
     print(json.dumps({
         "ok": True, "status": "research_summary",
@@ -253,6 +305,7 @@ def test_success_path_with_fake_atlas(fake_atlas_workspace: Path, tmp_path: Path
     assert "research show" in log_text
     assert "research plan" in log_text
     assert "research verify" in log_text
+    assert "research evaluate" in log_text
     assert "research summary" in log_text
 
 
@@ -341,6 +394,206 @@ print(json.dumps({
     )
     assert result.returncode != 0
     assert "file not found" in result.stderr.lower() or "not found" in result.stdout.lower()
+
+
+def test_missing_evaluation_artifact_fails(fake_atlas_workspace: Path, tmp_path: Path) -> None:
+    workspace = fake_atlas_workspace
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    log_path = tmp_path / "atlas_calls.log"
+
+    fake_atlas = bin_dir / "atlas"
+    fake_atlas.write_text(
+        f'''#!/usr/bin/env python3
+import json, os, sys
+ARGS = sys.argv[1:]
+with open("{log_path}", "a") as f:
+    f.write(" ".join(ARGS) + "\\n")
+
+if ARGS[0] == "init":
+    target = ARGS[1]
+    os.makedirs(target, exist_ok=True)
+    for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
+        os.makedirs(os.path.join(target, sub), exist_ok=True)
+    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    sys.exit(0)
+
+if ARGS[0] == "discipline" and ARGS[1] == "setup":
+    print("Discipline profile created at .atlas/discipline.md")
+    sys.exit(0)
+
+if ARGS[0] == "config" and ARGS[1] == "set":
+    print(f"Updated {{ARGS[2]}} in config.toml")
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "run":
+    symbol = ARGS[2].split("=")[1] if "=" in ARGS[2] else "ATLAS-DEMO"
+    run_id = "demorunid12345"
+    artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+    print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "list":
+    print(json.dumps({{"ok": True, "status": "research_listed", "items": [{{"run_id": "demorunid12345", "symbol": "ATLAS-DEMO", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "provider": "deterministic", "warnings_count": 0}}]}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "show":
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "plan":
+    plan_id = "demoplanid12345"
+    artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+    print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "verify":
+    vid = "demoverifyid12345"
+    artifact_path = ".atlas/research/ATLAS-DEMO/verifications/demoverifyid12345.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "verifications"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{"verification_id": vid, "artifact_path": artifact_path}}, f)
+    print(json.dumps({{"ok": True, "status": "research_verification_created", "verification_id": vid, "artifact_path": artifact_path, "recommendation": "paper_review_ready"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "evaluate":
+    # Return artifact_path but do NOT create the file
+    eid = "demoevalid12345"
+    artifact_path = ".atlas/research/ATLAS-DEMO/evaluations/demoevalid12345.json"
+    print(json.dumps({{"ok": True, "status": "research_evaluation_created", "evaluation_id": eid, "artifact_path": artifact_path, "recommendation": "paper_evaluation_ready", "metrics": {{"row_count": 3}}}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "summary":
+    print(json.dumps({{"ok": True, "status": "research_summary", "research_count": 1, "plan_count": 1, "symbols": [{{"symbol": "ATLAS-DEMO", "research_count": 1, "plan_count": 1, "latest_research_run_id": "demorunid12345", "latest_plan_id": "demoplanid12345", "latest_research_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "latest_plan_path": ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"}}]}}))
+    sys.exit(0)
+
+print("Unknown command", file=sys.stderr)
+sys.exit(1)
+''',
+        encoding="utf-8",
+    )
+    fake_atlas.chmod(0o755)
+
+    env = os.environ.copy()
+    env["ATLAS_BIN"] = str(fake_atlas)
+    env["PYTHONPATH"] = str(ROOT / "src")
+    env["DEMO_WORKSPACE"] = str(workspace)
+
+    result = subprocess.run(
+        ["bash", str(SCRIPT)],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(ROOT),
+    )
+    assert result.returncode != 0
+    assert "file not found" in result.stderr.lower() or "not found" in result.stdout.lower()
+
+
+def test_evaluation_unsafe_output_detection(fake_atlas_workspace: Path, tmp_path: Path) -> None:
+    workspace = fake_atlas_workspace
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    log_path = tmp_path / "atlas_calls.log"
+
+    fake_atlas = bin_dir / "atlas"
+    fake_atlas.write_text(
+        f'''#!/usr/bin/env python3
+import json, os, sys
+ARGS = sys.argv[1:]
+with open("{log_path}", "a") as f:
+    f.write(" ".join(ARGS) + "\\n")
+
+if ARGS[0] == "init":
+    target = ARGS[1]
+    os.makedirs(target, exist_ok=True)
+    for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
+        os.makedirs(os.path.join(target, sub), exist_ok=True)
+    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    sys.exit(0)
+
+if ARGS[0] == "discipline" and ARGS[1] == "setup":
+    print("Discipline profile created at .atlas/discipline.md")
+    sys.exit(0)
+
+if ARGS[0] == "config" and ARGS[1] == "set":
+    print(f"Updated {{ARGS[2]}} in config.toml")
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "run":
+    symbol = ARGS[2].split("=")[1] if "=" in ARGS[2] else "ATLAS-DEMO"
+    run_id = "demorunid12345"
+    artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+    print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "list":
+    print(json.dumps({{"ok": True, "status": "research_listed", "items": [{{"run_id": "demorunid12345", "symbol": "ATLAS-DEMO", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "provider": "deterministic", "warnings_count": 0}}]}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "show":
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "plan":
+    plan_id = "demoplanid12345"
+    artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+    print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "verify":
+    vid = "demoverifyid12345"
+    artifact_path = ".atlas/research/ATLAS-DEMO/verifications/demoverifyid12345.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "verifications"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{"verification_id": vid, "artifact_path": artifact_path}}, f)
+    print(json.dumps({{"ok": True, "status": "research_verification_created", "verification_id": vid, "artifact_path": artifact_path, "recommendation": "paper_review_ready"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "evaluate":
+    # Return unsafe absolute path in output
+    eid = "demoevalid12345"
+    artifact_path = "/Users/natan/secret.json"
+    print(json.dumps({{"ok": True, "status": "research_evaluation_created", "evaluation_id": eid, "artifact_path": artifact_path, "recommendation": "paper_evaluation_ready", "metrics": {{"row_count": 3}}}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "summary":
+    print(json.dumps({{"ok": True, "status": "research_summary", "research_count": 1, "plan_count": 1, "symbols": [{{"symbol": "ATLAS-DEMO", "research_count": 1, "plan_count": 1, "latest_research_run_id": "demorunid12345", "latest_plan_id": "demoplanid12345", "latest_research_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "latest_plan_path": ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"}}]}}))
+    sys.exit(0)
+
+print("Unknown command", file=sys.stderr)
+sys.exit(1)
+''',
+        encoding="utf-8",
+    )
+    fake_atlas.chmod(0o755)
+
+    env = os.environ.copy()
+    env["ATLAS_BIN"] = str(fake_atlas)
+    env["PYTHONPATH"] = str(ROOT / "src")
+    env["DEMO_WORKSPACE"] = str(workspace)
+
+    result = subprocess.run(
+        ["bash", str(SCRIPT)],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(ROOT),
+    )
+    assert result.returncode != 0
+    assert "absolute" in result.stderr.lower() or "absolute" in result.stdout.lower()
 
 
 def test_keep_workspace_flag(fake_atlas_workspace: Path, tmp_path: Path) -> None:
