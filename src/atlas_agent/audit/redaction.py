@@ -4,23 +4,10 @@ from typing import Any
 
 from atlas_agent.redaction import (
     REDACTED_VALUE,
+    SECRET_MARKERS,
     RedactionEngine,
     default_redaction_engine,
     refresh_redaction_secrets,
-)
-
-
-SECRET_MARKERS = (
-    "KEY",
-    "API_KEY",
-    "TOKEN",
-    "SECRET",
-    "PASSWORD",
-    "AUTHORIZATION",
-    "AUTH",
-    "BEARER",
-    "COOKIE",
-    "PRIVATE_KEY",
 )
 
 

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7.dev3] - 2026-05-16
+
+### Changed
+- **Batch 5.16 — Redaction Constant Single-Source Cleanup**:
+  - Consolidated redaction secret marker constants into the shared redaction module (`src/atlas_agent/redaction.py`).
+  - Kept audit redaction imports backwards compatible (`from atlas_agent.audit.redaction import SECRET_MARKERS`).
+  - No runtime trading behavior changes.
+
 ## [0.5.7.dev2] - 2026-05-15
 
 ### Added
