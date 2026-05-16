@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sanitized research CLI invalid-symbol and unsupported-provider error output.
 - Added regression tests for path/secret-like research CLI error leaks.
 
+### Documentation
+- Added post-research-system audit documentation (`docs/audits/post-research-system-audit.md`).
+- Recorded validation results, safety boundaries, non-blocking findings, and follow-up areas.
+
 ### Safety / Compatibility
 - No live-trading behavior changes.
 
