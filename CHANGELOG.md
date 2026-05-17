@@ -7,44 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev12] - 2026-05-16
+
 ### Added
 - Local research prompt packet command (`atlas research prompt RUN_ID`).
-- Simulated provider response command (`atlas research simulate-provider PROMPT_PACKET_ID`).
-- Provider response artifacts (`.atlas/research/<SYMBOL>/provider_responses/<id>.json`) with deterministic-mock provider.
-- Sanitized prompt packet artifacts (`.atlas/research/<SYMBOL>/prompts/<id>.json`) for future provider work.
-- Bounded context with `--max-context-chars` (default 8000, max 20000).
-- Static redaction of paths, secrets, Bearer tokens, auth headers, `sk-` tokens, APCA markers, and broker hosts.
-- Redaction summary with safe counts only (`redacted_fragments_count`, `truncated`).
-- `system_boundary` and `forbidden_uses` fields to constrain artifact usage.
-- Response safety checks with 12 deterministic validations and `manual_review_required` fallback.
-- Timeline now links prompts and provider responses, with orphan detection.
-- Artifact health checks now inspect provider response artifacts.
-- Tests for redaction, truncation, invalid max-context-chars, no API/network behavior, and no broker/approval paths.
-- Tests for simulate-provider safety, unsupported providers, secret-shaped provider rejection, forbidden fragment redaction, and live-trading language detection.
-- Event types `research_prompt_packet_created` and `research_provider_response_created` registered in event schema.
+- Prompt packet artifacts for bounded, sanitized future-provider context.
+- Local simulated provider response command (`atlas research simulate-provider PROMPT_PACKET_ID`).
+- Deterministic-mock provider response artifacts.
+- Provider response safety checks and recommendations.
+- Health-check and timeline coverage for prompt/provider-response artifacts.
+- End-to-end demo integration for prompt packets and simulated provider responses.
 
 ### Changed
-- Research workflow documentation now documents the `prompt` and `simulate-provider` commands.
-- Architecture docs now include prompt packet and provider response artifact sections.
+- Research demo now validates the extended local chain: run → list/show → plan → verify → evaluate → summary → check-artifacts → timeline → providers → prompt → simulate-provider → post-simulate-provider timeline validation.
+- Timeline now includes prompt → provider_response lineage.
+- Artifact health checks now include prompt/provider-response artifacts.
+- Prompt/provider-response outputs are bounded and redacted.
+
+### Fixed
+- Prompt packet generation now revalidates source artifact symbols before output/path construction.
+- Simulated provider response generation now revalidates prompt metadata before artifact/event output.
+- Prompt/provider-response artifacts omit path-like and secret-like unsafe fragments.
 
 ### Safety / Compatibility
-- Prompt packet command does not call LLMs.
-- Prompt packet command does not call network.
-- Prompt packet command does not read API keys.
-- Prompt packet command does not submit orders.
-- Prompt packet command does not create approvals or pending orders.
-- Prompt packet command does not authorize live trading.
-- Prompt packet command does not modify source research artifacts.
-- Simulate-provider command does not call LLMs.
-- Simulate-provider command does not call network.
-- Simulate-provider command does not read API keys.
-- Simulate-provider command does not submit orders.
-- Simulate-provider command does not create approvals or pending orders.
-- Simulate-provider command does not authorize live trading.
-- Unsupported providers and secret-shaped provider strings fail closed.
+- No LLM/API/network behavior was enabled.
+- `simulate-provider` uses local deterministic simulation only.
+- Prompt packets do not call providers.
+- Simulated provider responses do not call external providers.
+- No API keys are read by prompt/simulate-provider commands.
+- Research workflow remains paper-only and analysis-only.
+- Research commands do not create approvals or pending orders.
 - No live-submit default enablement.
 - No broker submit behavior expansion.
-- Research workflow remains paper-only and analysis-only.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed in latest validation.
+- pip check passed.
+- Demo paper workflow passed.
+- Demo research workflow passed.
+- release_check.sh passed.
+- Protected-staged check passed.
 
 ## [0.5.7.dev11] - 2026-05-16
 
