@@ -34,6 +34,7 @@ The enabled research provider is `deterministic`.
 | `./scripts/demo_research_workflow.sh` | End-to-end temporary-workspace demo of the full chain | Yes | No | No |
 | `atlas research check-artifacts` | Read-only health check of local artifacts | No | Yes | No |
 | `atlas research timeline` | Read-only lineage/timeline of artifact relationships | No | Yes | No |
+| `atlas research providers` | Read-only discovery of available research providers | No | Yes | No |
 
 `list`, `show`, `summary`, and `check-artifacts` are read-only. `run`, `plan`, `verify`, and `evaluate` write local artifacts only. None of them touch live trading.
 
@@ -202,12 +203,26 @@ Read-only health check of local research artifacts.
 - Does not modify, migrate, or rewrite artifacts.
 - Does not create pending orders or approvals.
 
+### `atlas research providers`
+
+Read-only discovery of available research providers.
+
+- Shows which providers are available, disabled, local, networked, and whether they require credentials.
+- `deterministic` is shown as available, enabled, default, local, and does not require an API key.
+- LLM/external providers are shown as disabled.
+- Does not call providers.
+- Does not read API keys.
+- Does not make network calls.
+- Does not modify config.
+- Does not authorize live trading.
+- Supports `--json`.
+
 ### `./scripts/demo_research_workflow.sh`
 
 End-to-end temporary-workspace demo of the full research chain.
 
 - Creates a temporary workspace, runs `init`, `discipline setup`, and `config set`.
-- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline`.
+- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers`.
 - Validates JSON outputs, artifact existence, workspace-relative paths, artifact health checks, lineage/timeline reconstruction, and safety invariants.
 - Verifies no pending orders are created.
 - Does not require broker credentials.

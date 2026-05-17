@@ -323,9 +323,52 @@ if [ "$TIMELINE_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 10. Safety checks
+# 10. Research providers
+printf '\n--- Research providers ---\n'
+PROVIDERS_OUTPUT="$(atlas research providers --json)"
+assert_no_absolute_paths "$PROVIDERS_OUTPUT"
+assert_no_secrets_in_output "$PROVIDERS_OUTPUT"
+assert_ok "$PROVIDERS_OUTPUT" "research providers"
+PROVIDERS_STATUS="$(json_field "$PROVIDERS_OUTPUT" status)"
+if [ "$PROVIDERS_STATUS" != "research_providers_listed" ]; then
+  printf 'FAIL: unexpected providers status: %s\n' "$PROVIDERS_STATUS" >&2
+  exit 1
+fi
+PROVIDERS_HAS_DET="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+providers=data.get('providers',[])
+for p in providers:
+    if p.get('name')=='deterministic' and p.get('enabled')==True and p.get('default')==True and p.get('local')==True and p.get('network')==False and p.get('requires_api_key')==False:
+        print('yes')
+        break
+else:
+    print('no')
+" <<<"$PROVIDERS_OUTPUT" )"
+if [ "$PROVIDERS_HAS_DET" != "yes" ]; then
+  printf 'FAIL: Provider discovery missing local deterministic provider.\n' >&2
+  exit 1
+fi
+PROVIDERS_HAS_LLM="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+providers=data.get('providers',[])
+for p in providers:
+    if p.get('name')=='llm' and p.get('enabled')==False and p.get('default')==False and p.get('network')==False and p.get('requires_api_key')==False:
+        print('yes')
+        break
+else:
+    print('no')
+" <<<"$PROVIDERS_OUTPUT" )"
+if [ "$PROVIDERS_HAS_LLM" != "yes" ]; then
+  printf 'FAIL: Provider discovery disabled LLM placeholder is unsafe.\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 11. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT"
 
 printf '\nResearch workflow demo complete.\n'

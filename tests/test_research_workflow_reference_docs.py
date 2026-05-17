@@ -87,6 +87,25 @@ class TestReferenceDocCommands:
         lower_text = text.lower()
         assert "lineage" in lower_text or "relationship" in lower_text or "linking" in lower_text or "descendants" in lower_text
 
+    def test_mentions_providers_command(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert "atlas research providers" in text.lower()
+
+    def test_providers_read_only(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "providers" in lower and "read-only" in lower
+
+    def test_providers_no_api_keys(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "providers" in lower and "does not read api keys" in lower
+
+    def test_providers_no_network(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "providers" in lower and "does not make network calls" in lower
+
     def test_mentions_demo_script(self) -> None:
         text = _read("docs/research-workflow.md")
         assert "scripts/demo_research_workflow.sh" in text

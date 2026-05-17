@@ -503,6 +503,13 @@ Safety First:
     research_timeline.add_argument("--run-id", help="Filter by research run_id.")
     research_timeline.add_argument("--limit", type=int, default=20, help="Maximum entries. Default: 20, max: 100.")
 
+    research_providers = research_sub.add_parser(
+        "providers",
+        help="List research providers. Read-only. Does not call providers or read API keys.",
+        description="List research providers. Read-only discovery. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_providers.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -4475,6 +4482,42 @@ def main(argv: list[str] | None = None) -> int:
                 print("\nWarnings:")
                 for w in timeline_warnings:
                     print(f"  - {w.get('code', '')}: {w.get('path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "providers":
+        from atlas_agent.research.providers import list_research_providers
+
+        providers = list_research_providers()
+        if args.json:
+            import json
+
+            payload = {
+                "ok": True,
+                "status": "research_providers_listed",
+                "providers": [
+                    {
+                        "name": p.name,
+                        "status": p.status,
+                        "enabled": p.enabled,
+                        "default": p.default,
+                        "local": p.local,
+                        "network": p.network,
+                        "requires_api_key": p.requires_api_key,
+                    }
+                    for p in providers
+                ],
+            }
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print("Research providers\n")
+            for p in providers:
+                print(p.name)
+                print(f"  Status: {p.status}")
+                print(f"  Default: {'yes' if p.default else 'no'}")
+                print(f"  Local: {'yes' if p.local else 'no'}")
+                print(f"  Network: {'yes' if p.network else 'no'}")
+                print(f"  Requires API key: {'yes' if p.requires_api_key else 'no'}")
+                print()
+            print("External LLM research providers are not enabled.")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

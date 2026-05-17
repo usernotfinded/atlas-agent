@@ -131,6 +131,9 @@ Check local artifact health:
 View artifact lineage/timeline:
 - `atlas research timeline`
 
+Show available research providers:
+- `atlas research providers`
+
 ## Demos
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:

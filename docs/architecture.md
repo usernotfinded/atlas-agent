@@ -126,6 +126,7 @@ Events:
 - No real LLM, API, or network behavior is enabled in the research provider layer.
 - No API keys are read by this provider layer.
 - The research provider layer is separate from broker/live-submit execution.
+- `atlas research providers` is a read-only discovery command that shows provider metadata without calling providers, reading API keys, or making network requests.
 
 ## CLI Shape
 

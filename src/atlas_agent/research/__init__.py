@@ -7,7 +7,9 @@ from atlas_agent.research.perplexity import (
 from atlas_agent.research.providers import (
     ResearchContext,
     ResearchProvider,
+    ResearchProviderInfo,
     ResearchProviderResult,
+    list_research_providers,
     resolve_research_provider,
 )
 from atlas_agent.research.research_report import ResearchReport
@@ -53,8 +55,10 @@ __all__ = [
     "ResearchConfigurationError",
     "ResearchContext",
     "ResearchProvider",
+    "ResearchProviderInfo",
     "ResearchProviderResult",
     "ResearchReport",
+    "list_research_providers",
     "ResearchSessionError",
     "SUPPORTED_RESEARCH_PROVIDERS",
     "UnsupportedArtifactSchemaError",

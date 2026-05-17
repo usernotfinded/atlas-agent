@@ -32,6 +32,20 @@ class ResearchProviderResult:
     metadata: dict[str, str] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class ResearchProviderInfo:
+    """Safe metadata for a research provider. No secrets or runtime state."""
+
+    name: str
+    status: str
+    enabled: bool
+    default: bool
+    local: bool
+    network: bool
+    requires_api_key: bool
+    description: str
+
+
 class ResearchProvider(Protocol):
     """Protocol for research providers. No network calls required."""
 
@@ -57,6 +71,39 @@ class DisabledLLMResearchProvider:
 
     def generate_research(self, symbol: str, context: ResearchContext) -> ResearchProviderResult:
         raise UnsupportedResearchProviderError("Unsupported research provider.")
+
+
+_RESEARCH_PROVIDERS: list[ResearchProviderInfo] = [
+    ResearchProviderInfo(
+        name="deterministic",
+        status="available",
+        enabled=True,
+        default=True,
+        local=True,
+        network=False,
+        requires_api_key=False,
+        description="Deterministic local paper-only research provider.",
+    ),
+    ResearchProviderInfo(
+        name="llm",
+        status="disabled",
+        enabled=False,
+        default=False,
+        local=False,
+        network=False,
+        requires_api_key=False,
+        description="Disabled placeholder; external LLM research providers are not enabled.",
+    ),
+]
+
+
+def list_research_providers() -> list[ResearchProviderInfo]:
+    """Return safe metadata for all known research providers.
+
+    This is a read-only discovery function. It does not call providers,
+    read API keys, or make network requests.
+    """
+    return list(_RESEARCH_PROVIDERS)
 
 
 def resolve_research_provider(name: str | None) -> ResearchProvider:

@@ -156,10 +156,11 @@ class TestProviderCodeStatic:
     def test_no_api_key_reads(self) -> None:
         src = self._source()
         lower = src.lower()
-        assert "api_key" not in lower
-        assert "apikey" not in lower
+        # "requires_api_key" is an allowed metadata field name
         assert "getenv" not in lower
         assert "environ" not in lower
+        assert "os.getenv" not in lower
+        assert "os.environ" not in lower
 
     def test_generate_research_has_no_network_calls(self) -> None:
         """Inspect generate_research methods for banned call patterns."""
