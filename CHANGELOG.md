@@ -7,17 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev13] - 2026-05-16
+
 ### Added
-- Local deterministic response review command (`atlas research review-response PROVIDER_RESPONSE_ID`).
-- Response review artifacts (`.atlas/research/<SYMBOL>/response_reviews/<response_review_id>.json`).
-- 18 deterministic review checks for provider response validity, safety, and boundedness.
-- Health-check and timeline coverage for response review artifacts.
-- End-to-end demo integration for response reviews with full lineage validation.
+- Local provider response review command: `atlas research review-response PROVIDER_RESPONSE_ID`.
+- Response review artifacts with deterministic safety/completeness checks.
+- Timeline support for provider response review lineage.
+- Health-check coverage for response review artifacts.
+- End-to-end demo integration for response review.
+- Duplicate response review ID detection in artifact health checks.
 
 ### Changed
-- Research demo now validates the full chain including `review-response` and post-review timeline lineage.
+- Research demo now validates the extended local chain: run → list/show → plan → verify → evaluate → summary → check-artifacts → timeline → providers → prompt → simulate-provider → review-response → post-review timeline validation.
 - Timeline now includes provider_response -> response_review lineage.
 - Artifact health checks now include response review artifacts.
+- Response review output is bounded and redacted.
+
+### Fixed
+- Response review generation now revalidates copied provider-response lineage fields before artifact/event/output construction.
+- Unsafe `source_run_id` and `source_prompt_packet_id` values in tampered provider-response artifacts fail closed or are sanitized before output.
+- Response review artifacts omit path-like and secret-like unsafe fragments.
+
+### Safety / Compatibility
+- No LLM/API/network behavior was enabled.
+- `review-response` uses local deterministic review only.
+- Response reviews do not call external providers.
+- No API keys are read by `review-response`.
+- Research workflow remains paper-only and analysis-only.
+- Research commands do not create approvals or pending orders.
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed in latest validation.
+- pip check passed.
+- Demo paper workflow passed.
+- Demo research workflow passed.
+- release_check.sh passed.
+- Protected-staged check passed.
 
 ## [0.5.7.dev12] - 2026-05-16
 
