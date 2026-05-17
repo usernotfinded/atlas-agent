@@ -67,13 +67,6 @@ Atlas is in active development. Paper workflows, deterministic backtesting, audi
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 
-### What's New in v0.5.7.dev1
-- **Live-submit audit hardening**: Blocked live-submit gates emit safe `live_submit_blocked` audit events.
-- **`live_submit_attempted`** is emitted exactly once immediately before `place_order()`.
-- **Audit payloads avoid raw order payloads, broker responses, exception text, paths, headers, and secrets.**
-- **Broker opt-in output is sanitized**, including unreadable kill-switch state failures.
-- **Typed broker-name confirmation remains mandatory**; `--yes` cannot bypass live-submit opt-in confirmation.
-- **Live submit remains disabled by default.**
 
 ## Quickstart
 
