@@ -314,6 +314,11 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                     }]
                 }]
             }],
+            "dossiers": [{
+                "dossier_id": "demodossierid12345",
+                "recommendation": "research_dossier_ready",
+                "artifact_path": ".atlas/research/ATLAS-DEMO/dossiers/demodossierid12345.json"
+            }],
             "warnings": []
         }],
         "warnings": []
@@ -406,6 +411,49 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
         "response_review_id": response_review_id,
         "provider": "deterministic-review",
         "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "dossier":
+    run_id = ARGS[2]
+    dossier_id = "demodossierid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/dossiers/{dossier_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "dossiers"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "dossier_id": dossier_id,
+            "source_run_id": run_id,
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-dossier",
+            "source_research_path": f".atlas/research/{symbol}/{run_id}.json",
+            "workflow_status": {
+                "research": True, "plans": True, "verifications": True,
+                "evaluations": True, "prompts": True,
+                "provider_responses": True, "response_reviews": True,
+            },
+            "artifact_counts": {
+                "research": 1, "plans": 1, "verifications": 1,
+                "evaluations": 1, "prompts": 1,
+                "provider_responses": 1, "response_reviews": 1,
+            },
+            "linked_artifacts": [],
+            "summaries": {},
+            "safety_summary": {"all_local": True, "no_network_calls": True, "no_api_keys_read": True, "paper_only": True},
+            "missing_links": [],
+            "warnings": [],
+            "recommendation": "research_dossier_ready",
+            "redaction_summary": {"redacted_fragments_count": 0},
+            "metadata": {}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_dossier_created",
+        "symbol": symbol, "source_run_id": run_id,
+        "dossier_id": dossier_id,
+        "provider": "deterministic-dossier",
+        "recommendation": "research_dossier_ready",
         "artifact_path": artifact_path, "warnings": []
     }))
     sys.exit(0)
@@ -4700,6 +4748,49 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "dossier":
+    run_id = ARGS[2]
+    dossier_id = "demodossierid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/dossiers/{{dossier_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "dossiers"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "dossier_id": dossier_id,
+            "source_run_id": run_id,
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-dossier",
+            "source_research_path": f".atlas/research/{{symbol}}/{{run_id}}.json",
+            "workflow_status": {{
+                "research": True, "plans": True, "verifications": True,
+                "evaluations": True, "prompts": True,
+                "provider_responses": True, "response_reviews": True,
+            }},
+            "artifact_counts": {{
+                "research": 1, "plans": 1, "verifications": 1,
+                "evaluations": 1, "prompts": 1,
+                "provider_responses": 1, "response_reviews": 1,
+            }},
+            "linked_artifacts": [],
+            "summaries": {{}},
+            "safety_summary": {{"all_local": True, "no_network_calls": True, "no_api_keys_read": True, "paper_only": True}},
+            "missing_links": [],
+            "warnings": [],
+            "recommendation": "research_dossier_ready",
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "metadata": {{}}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_dossier_created",
+        "symbol": symbol, "source_run_id": run_id,
+        "dossier_id": dossier_id,
+        "provider": "deterministic-dossier",
+        "recommendation": "research_dossier_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5035,6 +5126,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "evaluations": [{{"evaluation_id": "demoevalid12345"}}]
             }}],
             "prompts": [],
+            "dossiers": [],
             "warnings": []
         }}],
         "warnings": []
@@ -5253,6 +5345,11 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                     }}]
                 }}]
             }}],
+            "dossiers": [{{
+                "dossier_id": "demodossierid12345",
+                "recommendation": "research_dossier_ready",
+                "artifact_path": ".atlas/research/ATLAS-DEMO/dossiers/demodossierid12345.json"
+            }}],
             "warnings": []
         }}],
         "warnings": []
@@ -5361,6 +5458,49 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
         "response_review_id": response_review_id,
         "provider": "deterministic-review",
         "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "dossier":
+    run_id = ARGS[2]
+    dossier_id = "demodossierid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/dossiers/{{dossier_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "dossiers"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "dossier_id": dossier_id,
+            "source_run_id": run_id,
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-dossier",
+            "source_research_path": f".atlas/research/{{symbol}}/{{run_id}}.json",
+            "workflow_status": {{
+                "research": True, "plans": True, "verifications": True,
+                "evaluations": True, "prompts": True,
+                "provider_responses": True, "response_reviews": True,
+            }},
+            "artifact_counts": {{
+                "research": 1, "plans": 1, "verifications": 1,
+                "evaluations": 1, "prompts": 1,
+                "provider_responses": 1, "response_reviews": 1,
+            }},
+            "linked_artifacts": [],
+            "summaries": {{}},
+            "safety_summary": {{"all_local": True, "no_network_calls": True, "no_api_keys_read": True, "paper_only": True}},
+            "missing_links": [],
+            "warnings": [],
+            "recommendation": "research_dossier_ready",
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "metadata": {{}}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_dossier_created",
+        "symbol": symbol, "source_run_id": run_id,
+        "dossier_id": dossier_id,
+        "provider": "deterministic-dossier",
+        "recommendation": "research_dossier_ready",
         "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)

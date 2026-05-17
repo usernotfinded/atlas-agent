@@ -117,6 +117,15 @@ def _run_review(tmp_path: Path, monkeypatch, capsys, response_id: str) -> str:
     return out["response_review_id"]
 
 
+def _run_dossier(tmp_path: Path, monkeypatch, capsys, run_id: str) -> str:
+    config = _config(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        main(["research", "dossier", run_id, "--json"])
+    out = json.loads(capsys.readouterr().out.strip())
+    return out["dossier_id"]
+
+
 class TestTimelineEmptyWorkspace:
     def test_empty_workspace(self, tmp_path: Path, capsys, monkeypatch) -> None:
         config = _config(tmp_path)
@@ -185,6 +194,7 @@ class TestTimelineFullChain:
         prompt_id = _run_prompt(tmp_path, monkeypatch, capsys, run_id)
         response_id = _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
         review_id = _run_review(tmp_path, monkeypatch, capsys, response_id)
+        dossier_id = _run_dossier(tmp_path, monkeypatch, capsys, run_id)
 
         config = _config(tmp_path)
         monkeypatch.chdir(tmp_path)
@@ -214,6 +224,8 @@ class TestTimelineFullChain:
         assert prompt["provider_responses"][0]["provider_response_id"] == response_id
         assert len(prompt["provider_responses"][0].get("response_reviews", [])) == 1
         assert prompt["provider_responses"][0]["response_reviews"][0]["response_review_id"] == review_id
+        assert len(entry.get("dossiers", [])) == 1
+        assert entry["dossiers"][0]["dossier_id"] == dossier_id
         # No absolute paths
         json_str = json.dumps(out)
         assert "/Users/" not in json_str

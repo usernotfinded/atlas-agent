@@ -197,6 +197,35 @@ class TestReferenceDocCommands:
         lower = text.lower()
         assert "review-response" in lower and "paper-only" in lower
 
+    def test_mentions_dossier_command(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert "atlas research dossier" in text.lower()
+
+    def test_dossier_no_llm_call(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "dossier" in lower and "does not call llms" in lower
+
+    def test_dossier_no_api_keys(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "dossier" in lower and "does not read api keys" in lower
+
+    def test_dossier_no_network(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "dossier" in lower and "does not" in lower and "network" in lower
+
+    def test_dossier_no_orders(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "dossier" in lower and "does not submit orders" in lower
+
+    def test_dossier_paper_only(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "dossier" in lower and "paper-only" in lower
+
 
 class TestReferenceDocArtifactPaths:
     def test_research_artifact_path(self) -> None:
@@ -226,6 +255,10 @@ class TestReferenceDocArtifactPaths:
     def test_response_review_artifact_path(self) -> None:
         text = _read("docs/research-workflow.md")
         assert ".atlas/research/<SYMBOL>/response_reviews/<response_review_id>.json" in text
+
+    def test_dossier_artifact_path(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert ".atlas/research/<SYMBOL>/dossiers/<dossier_id>.json" in text
 
 
 class TestReferenceDocSafetyBoundaries:

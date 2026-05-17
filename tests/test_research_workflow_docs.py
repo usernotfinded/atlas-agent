@@ -97,6 +97,10 @@ class TestReadmeResearchCommands:
         text = _read("README.md")
         assert "atlas research review-response" in text.lower()
 
+    def test_readme_mentions_dossier_command(self) -> None:
+        text = _read("README.md")
+        assert "atlas research dossier" in text.lower()
+
 
 class TestReadmeResearchWording:
     def test_paper_only_mentioned(self) -> None:

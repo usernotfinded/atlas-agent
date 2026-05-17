@@ -1349,7 +1349,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1378,6 +1378,7 @@ def check_research_artifacts(
     prompt_ids: dict[str, list[str]] = {}
     provider_response_ids: dict[str, list[str]] = {}
     response_review_ids: dict[str, list[str]] = {}
+    dossier_ids: dict[str, list[str]] = {}
 
     def _rel(path: Path) -> str:
         try:
@@ -1414,6 +1415,7 @@ def check_research_artifacts(
             "prompt": "prompt_packet_id",
             "provider_response": "provider_response_id",
             "response_review": "response_review_id",
+            "dossier": "dossier_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1429,7 +1431,9 @@ def check_research_artifacts(
                 }
             )
         # unexpected location
-        if expected_type == "plan" and "plans" not in rel.split("/"):
+        if expected_type == "dossier" and "dossiers" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "plan" and "plans" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "verification" and "verifications" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
@@ -1475,6 +1479,11 @@ def check_research_artifacts(
                 if f not in data:
                     issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
                     return
+        elif expected_type == "dossier":
+            for f in ("dossier_id", "source_run_id", "symbol", "mode", "provider", "recommendation"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1492,6 +1501,8 @@ def check_research_artifacts(
                 provider_response_ids.setdefault(raw_id, []).append(rel)
             elif expected_type == "response_review":
                 response_review_ids.setdefault(raw_id, []).append(rel)
+            elif expected_type == "dossier":
+                dossier_ids.setdefault(raw_id, []).append(rel)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1507,6 +1518,8 @@ def check_research_artifacts(
             counts["provider_responses"] += 1
         elif expected_type == "response_review":
             counts["response_reviews"] += 1
+        elif expected_type == "dossier":
+            counts["dossiers"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1552,6 +1565,12 @@ def check_research_artifacts(
             for path in reviews_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "response_review", expected_symbol)
+        # Dossiers
+        dossiers_dir = sym_dir / "dossiers"
+        if dossiers_dir.exists():
+            for path in dossiers_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "dossier", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1579,6 +1598,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for rrid, paths in response_review_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for did, paths in dossier_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -1879,6 +1902,7 @@ def build_research_timeline(
     prompt_items = _iter_prompt_artifacts(workspace_path, symbol=symbol_filter)
     provider_response_items = _iter_provider_response_artifacts(workspace_path, symbol=symbol_filter)
     response_review_items = _iter_response_review_artifacts(workspace_path, symbol=symbol_filter)
+    dossier_items = _iter_dossier_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -1985,6 +2009,15 @@ def build_research_timeline(
         if src and src not in seen_provider_response_ids:
             warnings.append({"code": "orphan_response_review", "path": rr.get("artifact_path", ""), "severity": "warning"})
 
+    # Index dossiers by source_run_id
+    dossiers_by_run_id: dict[str, list[dict[str, Any]]] = {}
+    for d in dossier_items:
+        src = d.get("source_run_id", "")
+        if src:
+            dossiers_by_run_id.setdefault(src, []).append(d)
+        else:
+            warnings.append({"code": "orphan_dossier", "path": d.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen run IDs for orphan prompt detection
     for p in prompt_items:
         src = p.get("source_run_id", "")
@@ -2060,6 +2093,15 @@ def build_research_timeline(
                 }
             )
 
+        dossiers = [
+            {
+                "dossier_id": d.get("dossier_id", ""),
+                "recommendation": d.get("recommendation", ""),
+                "artifact_path": d.get("artifact_path", ""),
+            }
+            for d in dossiers_by_run_id.get(run_id, [])
+        ]
+
         entries.append(
             {
                 "run_id": run_id,
@@ -2068,6 +2110,7 @@ def build_research_timeline(
                 "research_path": research.get("artifact_path", ""),
                 "plans": plans,
                 "prompts": prompts,
+                "dossiers": dossiers,
             }
         )
 
@@ -3322,3 +3365,401 @@ def _write_response_review_safe_json(path: Path, artifact: ResponseReviewArtifac
     }
     safe_data, _ = _sanitize_prompt_value(data)
     path.write_text(json.dumps(safe_data, indent=2, sort_keys=True), encoding="utf-8")
+
+
+
+@dataclass(frozen=True)
+class DossierArtifact:
+    dossier_id: str
+    source_run_id: str
+    created_at: datetime
+    symbol: str
+    mode: str
+    provider: str
+    source_research_path: str
+    workflow_status: dict[str, bool]
+    artifact_counts: dict[str, int]
+    linked_artifacts: list[dict[str, Any]]
+    summaries: dict[str, Any]
+    safety_summary: dict[str, Any]
+    missing_links: list[str]
+    warnings: list[str]
+    recommendation: str
+    redaction_summary: dict[str, Any]
+    metadata: dict[str, Any] = field(default_factory=dict)
+    schema_version: str = RESEARCH_ARTIFACT_SCHEMA_VERSION
+    artifact_path: str = ""
+
+
+def build_dossier(
+    workspace_path: Path,
+    run_id: str,
+    event_logger: EventLogger | None = None,
+) -> dict[str, Any]:
+    """Build a local deterministic dossier that consolidates a research chain.
+
+    This never calls LLMs, networks, brokers, or reads API keys.
+    """
+    safe_run_id = validate_run_id(run_id)
+
+    # Load research artifact
+    research_path = find_research_artifact_by_run_id(workspace_path, safe_run_id)
+    if research_path is None:
+        raise ResearchSessionError("artifact_not_found")
+    research = load_research_artifact(research_path, workspace_path)
+
+    # Validate symbol
+    raw_symbol = research.get("symbol", "")
+    if not raw_symbol:
+        raise ResearchSessionError("invalid_research_symbol")
+    try:
+        symbol = sanitize_symbol(raw_symbol)
+    except InvalidResearchSymbolError:
+        raise ResearchSessionError("invalid_research_symbol")
+
+    dossier_id = generate_run_id()
+    created_at = datetime.now(UTC)
+    source_research_path = research.get("artifact_path", "")
+    if not source_research_path:
+        source_research_path = research_path.relative_to(workspace_path).as_posix()
+
+    # Find linked artifacts using existing safe iterators
+    plan_items = iter_plan_artifacts(workspace_path, symbol=symbol)
+    verification_items = _iter_verification_artifacts(workspace_path, symbol=symbol)
+    evaluation_items = _iter_evaluation_artifacts(workspace_path, symbol=symbol)
+    prompt_items = _iter_prompt_artifacts(workspace_path, symbol=symbol)
+    provider_response_items = _iter_provider_response_artifacts(workspace_path, symbol=symbol)
+    response_review_items = _iter_response_review_artifacts(workspace_path, symbol=symbol)
+
+    # Filter plans linked to this run
+    linked_plans = [p for p in plan_items if p.get("source_run_id") == safe_run_id]
+    linked_plan_ids = {p.get("plan_id", "") for p in linked_plans}
+
+    linked_verifications = [v for v in verification_items if v.get("source_plan_id") in linked_plan_ids]
+    linked_evaluations = [e for e in evaluation_items if e.get("source_plan_id") in linked_plan_ids]
+
+    linked_prompts = [p for p in prompt_items if p.get("source_run_id") == safe_run_id]
+    linked_prompt_ids = {p.get("prompt_packet_id", "") for p in linked_prompts}
+
+    linked_provider_responses = [pr for pr in provider_response_items if pr.get("source_prompt_packet_id") in linked_prompt_ids]
+    linked_provider_response_ids = {pr.get("provider_response_id", "") for pr in linked_provider_responses}
+
+    linked_response_reviews = [rr for rr in response_review_items if rr.get("source_provider_response_id") in linked_provider_response_ids]
+
+    # Build workflow status
+    workflow_status = {
+        "research": True,
+        "plans": len(linked_plans) > 0,
+        "verifications": len(linked_verifications) > 0,
+        "evaluations": len(linked_evaluations) > 0,
+        "prompts": len(linked_prompts) > 0,
+        "provider_responses": len(linked_provider_responses) > 0,
+        "response_reviews": len(linked_response_reviews) > 0,
+    }
+
+    artifact_counts = {
+        "research": 1,
+        "plans": len(linked_plans),
+        "verifications": len(linked_verifications),
+        "evaluations": len(linked_evaluations),
+        "prompts": len(linked_prompts),
+        "provider_responses": len(linked_provider_responses),
+        "response_reviews": len(linked_response_reviews),
+    }
+
+    # Build linked_artifacts with relative paths only
+    linked_artifacts: list[dict[str, Any]] = []
+    for p in linked_plans:
+        linked_artifacts.append({
+            "type": "plan",
+            "id": p.get("plan_id", ""),
+            "artifact_path": p.get("artifact_path", ""),
+        })
+    for v in linked_verifications:
+        linked_artifacts.append({
+            "type": "verification",
+            "id": v.get("verification_id", ""),
+            "recommendation": v.get("recommendation", ""),
+            "artifact_path": v.get("artifact_path", ""),
+        })
+    for e in linked_evaluations:
+        linked_artifacts.append({
+            "type": "evaluation",
+            "id": e.get("evaluation_id", ""),
+            "recommendation": e.get("recommendation", ""),
+            "artifact_path": e.get("artifact_path", ""),
+        })
+    for p in linked_prompts:
+        linked_artifacts.append({
+            "type": "prompt",
+            "id": p.get("prompt_packet_id", ""),
+            "artifact_path": p.get("artifact_path", ""),
+        })
+    for pr in linked_provider_responses:
+        linked_artifacts.append({
+            "type": "provider_response",
+            "id": pr.get("provider_response_id", ""),
+            "provider": pr.get("provider", "unknown"),
+            "recommendation": pr.get("recommendation", ""),
+            "artifact_path": pr.get("artifact_path", ""),
+        })
+    for rr in linked_response_reviews:
+        linked_artifacts.append({
+            "type": "response_review",
+            "id": rr.get("response_review_id", ""),
+            "provider": rr.get("provider", "unknown"),
+            "recommendation": rr.get("recommendation", ""),
+            "artifact_path": rr.get("artifact_path", ""),
+        })
+
+    # Build summaries (bounded, no full bodies)
+    summaries: dict[str, Any] = {
+        "research": {
+            "run_id": safe_run_id,
+            "symbol": symbol,
+            "mode": "paper",
+        },
+    }
+    if linked_plans:
+        summaries["plan"] = {
+            "plan_count": len(linked_plans),
+            "plan_ids": [p.get("plan_id", "") for p in linked_plans],
+        }
+    if linked_verifications:
+        passed = sum(1 for v in linked_verifications if "ready" in v.get("recommendation", ""))
+        summaries["verification"] = {
+            "verification_count": len(linked_verifications),
+            "recommendations": [v.get("recommendation", "") for v in linked_verifications],
+        }
+    if linked_evaluations:
+        summaries["evaluation"] = {
+            "evaluation_count": len(linked_evaluations),
+            "recommendations": [e.get("recommendation", "") for e in linked_evaluations],
+        }
+    if linked_provider_responses:
+        summaries["provider_response"] = {
+            "response_count": len(linked_provider_responses),
+            "recommendations": [pr.get("recommendation", "") for pr in linked_provider_responses],
+        }
+    if linked_response_reviews:
+        summaries["response_review"] = {
+            "review_count": len(linked_response_reviews),
+            "recommendations": [rr.get("recommendation", "") for rr in linked_response_reviews],
+        }
+
+    # Safety summary
+    safety_summary = {
+        "all_local": True,
+        "no_network_calls": True,
+        "no_api_keys_read": True,
+        "paper_only": True,
+    }
+
+    # Missing links
+    missing_links: list[str] = []
+    if not linked_plans:
+        missing_links.append("no_plan")
+    if not linked_verifications:
+        missing_links.append("no_verification")
+    if not linked_evaluations:
+        missing_links.append("no_evaluation")
+    if not linked_prompts:
+        missing_links.append("no_prompt_packet")
+    if not linked_provider_responses:
+        missing_links.append("no_provider_response")
+    if not linked_response_reviews:
+        missing_links.append("no_response_review")
+
+    warnings: list[str] = []
+    if missing_links:
+        warnings.append("incomplete_chain")
+
+    # Determine recommendation
+    core_present = linked_plans and linked_prompts and linked_provider_responses and linked_response_reviews
+    if core_present and not warnings:
+        recommendation = "research_dossier_ready"
+    else:
+        recommendation = "manual_review_required"
+
+    redaction_summary = {
+        "redacted_fragments_count": 0,
+    }
+
+    artifact_path_rel = f".atlas/research/{symbol}/dossiers/{dossier_id}.json"
+
+    artifact = DossierArtifact(
+        dossier_id=dossier_id,
+        source_run_id=safe_run_id,
+        created_at=created_at,
+        symbol=symbol,
+        mode="paper",
+        provider="deterministic-dossier",
+        source_research_path=source_research_path,
+        workflow_status=workflow_status,
+        artifact_counts=artifact_counts,
+        linked_artifacts=linked_artifacts,
+        summaries=summaries,
+        safety_summary=safety_summary,
+        missing_links=missing_links,
+        warnings=warnings,
+        recommendation=recommendation,
+        redaction_summary=redaction_summary,
+        artifact_path=artifact_path_rel,
+        metadata={
+            "dossier_provider": "deterministic-dossier",
+        },
+    )
+
+    # Persist
+    dossiers_dir = workspace_path / RESEARCH_DIR / symbol / "dossiers"
+    dossiers_dir.mkdir(parents=True, exist_ok=True)
+    dossier_file = dossiers_dir / f"{dossier_id}.json"
+    _write_dossier_safe_json(dossier_file, artifact)
+
+    # Rebuild with final artifact_path
+    artifact = DossierArtifact(
+        dossier_id=artifact.dossier_id,
+        source_run_id=artifact.source_run_id,
+        created_at=artifact.created_at,
+        symbol=artifact.symbol,
+        mode=artifact.mode,
+        provider=artifact.provider,
+        source_research_path=artifact.source_research_path,
+        workflow_status=artifact.workflow_status,
+        artifact_counts=artifact.artifact_counts,
+        linked_artifacts=artifact.linked_artifacts,
+        summaries=artifact.summaries,
+        safety_summary=artifact.safety_summary,
+        missing_links=artifact.missing_links,
+        warnings=artifact.warnings,
+        recommendation=artifact.recommendation,
+        redaction_summary=artifact.redaction_summary,
+        artifact_path=dossier_file.relative_to(workspace_path).as_posix(),
+        metadata=artifact.metadata,
+    )
+
+    result: dict[str, Any] = {
+        "schema_version": artifact.schema_version,
+        "dossier_id": artifact.dossier_id,
+        "source_run_id": artifact.source_run_id,
+        "created_at": artifact.created_at.isoformat(),
+        "symbol": artifact.symbol,
+        "mode": artifact.mode,
+        "provider": artifact.provider,
+        "source_research_path": artifact.source_research_path,
+        "workflow_status": artifact.workflow_status,
+        "artifact_counts": artifact.artifact_counts,
+        "linked_artifacts": artifact.linked_artifacts,
+        "summaries": artifact.summaries,
+        "safety_summary": artifact.safety_summary,
+        "missing_links": artifact.missing_links,
+        "warnings": artifact.warnings,
+        "recommendation": artifact.recommendation,
+        "redaction_summary": artifact.redaction_summary,
+        "metadata": artifact.metadata,
+        "artifact_path": artifact.artifact_path,
+    }
+    result, _ = _sanitize_prompt_value(result)
+
+    # Log safe event
+    if event_logger is not None:
+        payload = {
+            "dossier_id": dossier_id,
+            "source_run_id": safe_run_id,
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "deterministic-dossier",
+            "recommendation": recommendation,
+            "artifact_path": artifact.artifact_path,
+            "status": "created",
+            "schema_version": artifact.schema_version,
+            "artifact_counts": artifact_counts,
+        }
+        safe_payload, _ = _sanitize_prompt_value(payload)
+        event_logger.write(
+            "research_dossier_created",
+            run_id=dossier_id,
+            command="atlas research dossier",
+            mode="paper",
+            payload=safe_payload,
+        )
+
+    return result
+
+
+def _write_dossier_safe_json(path: Path, artifact: DossierArtifact) -> None:
+    data: dict[str, Any] = {
+        "schema_version": artifact.schema_version,
+        "dossier_id": artifact.dossier_id,
+        "source_run_id": artifact.source_run_id,
+        "created_at": artifact.created_at.isoformat(),
+        "symbol": artifact.symbol,
+        "mode": artifact.mode,
+        "provider": artifact.provider,
+        "source_research_path": artifact.source_research_path,
+        "workflow_status": artifact.workflow_status,
+        "artifact_counts": artifact.artifact_counts,
+        "linked_artifacts": artifact.linked_artifacts,
+        "summaries": artifact.summaries,
+        "safety_summary": artifact.safety_summary,
+        "missing_links": artifact.missing_links,
+        "warnings": artifact.warnings,
+        "recommendation": artifact.recommendation,
+        "redaction_summary": artifact.redaction_summary,
+        "metadata": artifact.metadata,
+        "artifact_path": artifact.artifact_path,
+    }
+    safe_data, _ = _sanitize_prompt_value(data)
+    path.write_text(json.dumps(safe_data, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _iter_dossier_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return dossier artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe / "dossiers")
+    else:
+        for sym_dir in research_dir.iterdir():
+            if sym_dir.is_dir():
+                d_dir = sym_dir / "dossiers"
+                if d_dir.exists():
+                    search_dirs.append(d_dir)
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+                continue
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "dossier_id": data.get("dossier_id", path.stem),
+                    "source_run_id": data.get("source_run_id", ""),
+                    "symbol": data.get("symbol", ""),
+                    "recommendation": data.get("recommendation", ""),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                }
+            )
+
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    return items

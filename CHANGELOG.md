@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Local research dossier command: `atlas research dossier RUN_ID`.
+- Dossier artifacts that consolidate the paper-only research chain into one bounded, safe summary artifact.
+- Timeline support for dossier lineage.
+- Health-check coverage for dossier artifacts.
+- End-to-end demo integration for dossiers.
+- Duplicate dossier ID detection in artifact health checks.
+
+### Changed
+- Research demo now validates the full chain including `dossier` and post-dossier timeline lineage.
+- Timeline now includes run -> dossier lineage.
+- Artifact health checks now include dossier artifacts.
+
+### Safety / Compatibility
+- `dossier` uses local deterministic consolidation only.
+- Dossiers do not call external providers.
+- No API keys are read by `dossier`.
+- Research workflow remains paper-only and analysis-only.
+
 ## [0.5.7.dev13] - 2026-05-16
 
 ### Added

@@ -70,6 +70,15 @@ def _run_review(tmp_path: Path, monkeypatch, capsys, response_id: str) -> str:
     return out["response_review_id"]
 
 
+def _run_dossier(tmp_path: Path, monkeypatch, capsys, run_id: str) -> str:
+    config = _config(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        main(["research", "dossier", run_id, "--json"])
+    out = json.loads(capsys.readouterr().out.strip())
+    return out["dossier_id"]
+
+
 def _default_csv(tmp_path: Path) -> Path:
     import csv
 
@@ -140,6 +149,37 @@ class TestCheckArtifactsHappyPath:
         assert out["counts"]["prompts"] == 1
         assert out["counts"]["provider_responses"] == 1
         assert out["counts"]["response_reviews"] == 1
+        assert out["counts"]["dossiers"] == 0
+        assert out["issues"] == []
+        assert out["warnings"] == []
+
+    def test_full_chain_with_dossier_counts(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        run_id = _run_research(tmp_path, monkeypatch, capsys, "AAPL")
+        plan_id = _run_plan(tmp_path, monkeypatch, capsys, run_id)
+        csv_path = _default_csv(tmp_path)
+        prompt_id = _run_prompt(tmp_path, monkeypatch, capsys, run_id)
+        response_id = _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
+        _run_review(tmp_path, monkeypatch, capsys, response_id)
+        _run_dossier(tmp_path, monkeypatch, capsys, run_id)
+        config = _config(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            main(["research", "verify", plan_id, "--json"])
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            main(["research", "evaluate", plan_id, "--data", str(csv_path), "--json"])
+        capsys.readouterr()  # clear capture
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            assert main(["research", "check-artifacts", "--json"]) == 0
+        out = json.loads(capsys.readouterr().out.strip())
+        assert out["ok"] is True
+        assert out["counts"]["research"] == 1
+        assert out["counts"]["plans"] == 1
+        assert out["counts"]["verifications"] == 1
+        assert out["counts"]["evaluations"] == 1
+        assert out["counts"]["prompts"] == 1
+        assert out["counts"]["provider_responses"] == 1
+        assert out["counts"]["response_reviews"] == 1
+        assert out["counts"]["dossiers"] == 1
         assert out["issues"] == []
         assert out["warnings"] == []
 

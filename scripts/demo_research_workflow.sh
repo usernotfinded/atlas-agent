@@ -538,9 +538,71 @@ if [ "$TIMELINE_FULL_LINEAGE_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 16. Safety checks
+# 16. Research dossier
+printf '\n--- Research dossier ---\n'
+DOSSIER_OUTPUT="$(atlas research dossier "$RUN_ID" --json)"
+assert_no_absolute_paths "$DOSSIER_OUTPUT"
+assert_no_secrets_in_output "$DOSSIER_OUTPUT"
+assert_no_forbidden_fragments "$DOSSIER_OUTPUT" "dossier CLI output"
+assert_ok "$DOSSIER_OUTPUT" "research dossier"
+DOSSIER_STATUS="$(json_field "$DOSSIER_OUTPUT" status)"
+if [ "$DOSSIER_STATUS" != "research_dossier_created" ]; then
+  printf 'FAIL: unexpected dossier status: %s\n' "$DOSSIER_STATUS" >&2
+  exit 1
+fi
+DOSSIER_ID="$(json_field "$DOSSIER_OUTPUT" dossier_id)"
+if [ -z "$DOSSIER_ID" ]; then
+  printf 'FAIL: dossier_id is empty\n' >&2
+  exit 1
+fi
+DOSSIER_RECOMMENDATION="$(json_field "$DOSSIER_OUTPUT" recommendation)"
+if [ "$DOSSIER_RECOMMENDATION" != "research_dossier_ready" ] && [ "$DOSSIER_RECOMMENDATION" != "manual_review_required" ]; then
+  printf 'FAIL: unexpected dossier recommendation: %s\n' "$DOSSIER_RECOMMENDATION" >&2
+  exit 1
+fi
+DOSSIER_ARTIFACT_PATH="$(json_field "$DOSSIER_OUTPUT" artifact_path)"
+if [ ! -f "$WORKSPACE/$DOSSIER_ARTIFACT_PATH" ]; then
+  printf 'FAIL: dossier artifact not found at %s\n' "$WORKSPACE/$DOSSIER_ARTIFACT_PATH" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 17. Research timeline after dossier (validate dossier lineage)
+printf '\n--- Research timeline (post dossier) ---\n'
+TIMELINE_OUTPUT4="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT4"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT4"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT4" "timeline CLI output after dossier"
+assert_ok "$TIMELINE_OUTPUT4" "research timeline after dossier"
+TIMELINE_STATUS4="$(json_field "$TIMELINE_OUTPUT4" status)"
+if [ "$TIMELINE_STATUS4" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after dossier: %s\n' "$TIMELINE_STATUS4" >&2
+  exit 1
+fi
+TIMELINE_DOSSIER_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    ds=[d.get('dossier_id') for d in e.get('dossiers',[])]
+    if '$DOSSIER_ID' in ds:
+        print('valid')
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT4" )"
+if [ "$TIMELINE_DOSSIER_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link run_id %s -> dossier %s\n' "$RUN_ID" "$DOSSIER_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 18. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
 
 printf '\nResearch workflow demo complete.\n'

@@ -545,6 +545,14 @@ Safety First:
     research_review.add_argument("provider_response_id", help="Source provider response ID.")
     research_review.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_dossier = research_sub.add_parser(
+        "dossier",
+        help="Build a deterministic dossier consolidating a research chain. Local-only. Does not call LLMs or network.",
+        description="Build a local deterministic dossier that consolidates the paper-only research chain into one bounded, safe summary artifact. Local-only. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_dossier.add_argument("run_id", help="Source research run ID.")
+    research_dossier.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -2287,51 +2295,74 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    require_workspace = _command_requires_workspace(args)
-    config, resolution, load_error = _load_config_for_command(
-        args,
-        require_workspace=require_workspace,
-    )
-    if load_error == "workspace_not_configured":
-        if args.command == "run":
-            print(
-                "No Atlas workspace configured. Run `atlas init <name>` first.",
-                file=sys.stderr,
+    # Configless local commands: resolve workspace only, never load secrets
+    if args.command == "research" and getattr(args, "research_command", None) == "dossier":
+        resolution = resolve_workspace(getattr(args, "workspace", None))
+        if resolution.path is not None:
+            os.chdir(resolution.path)
+        if resolution.path is None:
+            if getattr(args, "json", False):
+                return _emit_json_error(
+                    "atlas",
+                    code="workspace_not_configured",
+                    message="Atlas Agent needs a workspace before it can run.",
+                    details={
+                        "resolution_source": resolution.source,
+                        "warning": resolution.warning,
+                    },
+                )
+            _print_workspace_setup_guidance(
+                warning=resolution.warning,
+                stream=sys.stderr,
             )
             return 2
-        if getattr(args, "json", False):
-            return _emit_json_error(
-                "atlas",
-                code="workspace_not_configured",
-                message="Atlas Agent needs a workspace before it can run.",
-                details={
-                    "resolution_source": resolution.source,
-                    "warning": resolution.warning,
-                },
-            )
-        _print_workspace_setup_guidance(
-            warning=resolution.warning,
-            stream=sys.stderr,
+        config = None
+    else:
+        require_workspace = _command_requires_workspace(args)
+        config, resolution, load_error = _load_config_for_command(
+            args,
+            require_workspace=require_workspace,
         )
-        return 2
-    if load_error:
-        if args.command == "validate" and getattr(args, "json", False):
-            return _emit_json_error(
-                "atlas validate",
-                code="config_load_failed",
-                message=load_error,
+        if load_error == "workspace_not_configured":
+            if args.command == "run":
+                print(
+                    "No Atlas workspace configured. Run `atlas init <name>` first.",
+                    file=sys.stderr,
+                )
+                return 2
+            if getattr(args, "json", False):
+                return _emit_json_error(
+                    "atlas",
+                    code="workspace_not_configured",
+                    message="Atlas Agent needs a workspace before it can run.",
+                    details={
+                        "resolution_source": resolution.source,
+                        "warning": resolution.warning,
+                    },
+                )
+            _print_workspace_setup_guidance(
+                warning=resolution.warning,
+                stream=sys.stderr,
             )
-        print(load_error, file=sys.stderr)
-        return 1
-    if config is None:
-        if args.command == "validate" and getattr(args, "json", False):
-            return _emit_json_error(
-                "atlas validate",
-                code="config_load_failed",
-                message="Configuration error: unable to load AtlasConfig.",
-            )
-        print("Configuration error: unable to load AtlasConfig.", file=sys.stderr)
-        return 1
+            return 2
+        if load_error:
+            if args.command == "validate" and getattr(args, "json", False):
+                return _emit_json_error(
+                    "atlas validate",
+                    code="config_load_failed",
+                    message=load_error,
+                )
+            print(load_error, file=sys.stderr)
+            return 1
+        if config is None:
+            if args.command == "validate" and getattr(args, "json", False):
+                return _emit_json_error(
+                    "atlas validate",
+                    code="config_load_failed",
+                    message="Configuration error: unable to load AtlasConfig.",
+                )
+            print("Configuration error: unable to load AtlasConfig.", file=sys.stderr)
+            return 1
 
     if args.command == "setup":
         return _run_guided_setup(args=args)
@@ -4838,6 +4869,86 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Provider: {result['provider']}")
             print(f"  Source Provider Response ID: {result['source_provider_response_id']}")
             print(f"  Response Review ID: {result['response_review_id']}")
+            print(f"  Recommendation: {result['recommendation']}")
+            print(f"  Artifact: {result['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "dossier":
+        try:
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                UnsupportedArtifactSchemaError,
+                build_dossier,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research dossier skipped safely: no workspace found")
+                return 1
+
+            safe_run_id = validate_run_id(args.run_id)
+
+            events_dir = ws / "events"
+            event_logger = EventLogger(events_dir)
+
+            result = build_dossier(
+                workspace_path=ws,
+                run_id=safe_run_id,
+                event_logger=event_logger,
+            )
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                _research_error_text("research dossier", "invalid research symbol")
+            return 1
+        except UnsupportedArtifactSchemaError:
+            if args.json:
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
+            else:
+                _research_error_text("research dossier", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research dossier", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research dossier", "research command failed")
+            return 1
+        if args.json:
+            import json
+
+            out = {
+                "ok": True,
+                "status": "research_dossier_created",
+                "symbol": result["symbol"],
+                "source_run_id": result["source_run_id"],
+                "dossier_id": result["dossier_id"],
+                "provider": result["provider"],
+                "recommendation": result["recommendation"],
+                "artifact_path": result["artifact_path"],
+                "warnings": result.get("warnings", []),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Research dossier created")
+            print(f"  Symbol: {result['symbol']}")
+            print(f"  Mode: {result['mode']}")
+            print(f"  Source Run ID: {result['source_run_id']}")
+            print(f"  Dossier ID: {result['dossier_id']}")
             print(f"  Recommendation: {result['recommendation']}")
             print(f"  Artifact: {result['artifact_path']}")
         return 0
