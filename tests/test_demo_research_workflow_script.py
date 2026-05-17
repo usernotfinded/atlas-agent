@@ -271,7 +271,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -306,7 +306,12 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                     "provider_response_id": "demoresponseid12345",
                     "provider": "deterministic-mock",
                     "recommendation": "provider_response_review_ready",
-                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoresponseid12345.json"
+                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoresponseid12345.json",
+                    "response_reviews": [{
+                        "response_review_id": "demoreviewid12345",
+                        "recommendation": "provider_response_review_ready",
+                        "artifact_path": ".atlas/research/ATLAS-DEMO/response_reviews/demoreviewid12345.json"
+                    }]
                 }]
             }],
             "warnings": []
@@ -374,6 +379,37 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "review-response":
+    provider_response_id = ARGS[2]
+    response_review_id = "demoreviewid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/response_reviews/{response_review_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "response_reviews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "response_review_id": response_review_id,
+            "source_provider_response_id": provider_response_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-review", "review_status": "review_passed",
+            "source_provider_response_path": f".atlas/research/{symbol}/provider_responses/{provider_response_id}.json",
+            "checks": [], "passed_checks": 18, "failed_checks": 0,
+            "recommendation": "provider_response_review_ready",
+            "redaction_summary": {"redacted_fragments_count": 0},
+            "warnings": [], "metadata": {}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_response_review_created",
+        "symbol": symbol, "source_provider_response_id": provider_response_id,
+        "response_review_id": response_review_id,
+        "provider": "deterministic-review",
+        "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "providers":
     print(json.dumps({
         "ok": True, "status": "research_providers_listed",
@@ -436,6 +472,7 @@ def test_success_path_with_fake_atlas(fake_atlas_workspace: Path, tmp_path: Path
     assert "research providers" in log_text
     assert "research prompt" in log_text
     assert "research simulate-provider" in log_text
+    assert "research review-response" in log_text
 
 
 def test_failure_if_pending_orders_created(fake_atlas_workspace: Path, tmp_path: Path) -> None:
@@ -4632,6 +4669,37 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "review-response":
+    provider_response_id = ARGS[2]
+    response_review_id = "demoreviewid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/response_reviews/{{response_review_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "response_reviews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "response_review_id": response_review_id,
+            "source_provider_response_id": provider_response_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-review", "review_status": "review_passed",
+            "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
+            "checks": [], "passed_checks": 18, "failed_checks": 0,
+            "recommendation": "provider_response_review_ready",
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_response_review_created",
+        "symbol": symbol, "source_provider_response_id": provider_response_id,
+        "response_review_id": response_review_id,
+        "provider": "deterministic-review",
+        "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5177,7 +5245,12 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                     "provider_response_id": "demoresponseid12345",
                     "provider": "deterministic-mock",
                     "recommendation": "provider_response_review_ready",
-                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoresponseid12345.json"
+                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoresponseid12345.json",
+                    "response_reviews": [{{
+                        "response_review_id": "demoreviewid12345",
+                        "recommendation": "provider_response_review_ready",
+                        "artifact_path": ".atlas/research/ATLAS-DEMO/response_reviews/demoreviewid12345.json"
+                    }}]
                 }}]
             }}],
             "warnings": []
@@ -5257,6 +5330,37 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
         "ok": True, "status": "research_provider_response_created", "symbol": symbol,
         "source_prompt_packet_id": prompt_packet_id, "provider_response_id": provider_response_id,
         "provider": "deterministic-mock", "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "review-response":
+    provider_response_id = ARGS[2]
+    response_review_id = "demoreviewid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/response_reviews/{{response_review_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "response_reviews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "response_review_id": response_review_id,
+            "source_provider_response_id": provider_response_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-review", "review_status": "review_passed",
+            "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
+            "checks": [], "passed_checks": 18, "failed_checks": 0,
+            "recommendation": "provider_response_review_ready",
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_response_review_created",
+        "symbol": symbol, "source_provider_response_id": provider_response_id,
+        "response_review_id": response_review_id,
+        "provider": "deterministic-review",
+        "recommendation": "provider_response_review_ready",
         "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)

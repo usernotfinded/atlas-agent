@@ -37,8 +37,9 @@ The enabled research provider is `deterministic`.
 | `atlas research providers` | Read-only discovery of available research providers | No | Yes | No |
 | `atlas research prompt RUN_ID` | Generate a sanitized prompt packet from a research artifact | Yes | No | No |
 | `atlas research simulate-provider PROMPT_PACKET_ID` | Simulate a deterministic provider response from a prompt packet | Yes | No | No |
+| `atlas research review-response PROVIDER_RESPONSE_ID` | Review a provider response artifact deterministically | Yes | No | No |
 
-`list`, `show`, `summary`, `check-artifacts`, `timeline`, and `providers` are read-only. `run`, `plan`, `verify`, `evaluate`, `prompt`, and `simulate-provider` write local artifacts only. None of them touch live trading.
+`list`, `show`, `summary`, `check-artifacts`, `timeline`, and `providers` are read-only. `run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, and `review-response` write local artifacts only. None of them touch live trading.
 
 ## Typical Flow
 
@@ -76,6 +77,7 @@ What each step produces:
 - `summary` aggregates counts and latest IDs across all artifacts and plans.
 - `prompt` creates a sanitized, bounded prompt packet artifact for future provider work.
 - `simulate-provider` creates a deterministic mock provider response artifact from a prompt packet.
+- `review-response` creates a deterministic response review artifact from a provider response artifact.
 
 ## Artifacts
 
@@ -138,6 +140,19 @@ Saved at:
 ```
 .atlas/research/<SYMBOL>/provider_responses/<provider_response_id>.json
 ```
+
+### Response review artifact
+
+Saved at:
+
+```
+.atlas/research/<SYMBOL>/response_reviews/<response_review_id>.json
+```
+
+Created by `review-response` from an existing provider response artifact. Contains a deterministic local review:
+- `checks`: deterministic checks for provider response validity, schema support, paper-only mode, simulated provider, present source IDs, valid symbol, response sections/summary presence, safety checks presence, no disallowed language, no secret fragments, response boundedness, and source path containment.
+- `recommendation`: `provider_response_review_ready` or `manual_review_required`.
+- `redaction_summary`: safe counts only (`redacted_fragments_count`).
 
 Contains: `provider_response_id`, `source_prompt_packet_id`, `source_run_id`, `symbol`, `mode`, `provider`, `provider_status`, `source_prompt_packet_path`, `response_summary`, `response_sections`, `safety_checks`, `passed_checks`, `failed_checks`, `recommendation`, `redaction_summary`, `warnings`, `metadata`.
 
@@ -289,7 +304,7 @@ Simulate a deterministic provider response from an existing prompt packet artifa
 End-to-end temporary-workspace demo of the full research chain.
 
 - Creates a temporary workspace, runs `init`, `discipline setup`, and `config set`.
-- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers` -> `prompt` -> `simulate-provider`.
+- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers` -> `prompt` -> `simulate-provider` -> `review-response`.
 - Validates JSON outputs, artifact existence, workspace-relative paths, artifact health checks, lineage/timeline reconstruction, and safety invariants.
 - Verifies no pending orders are created.
 - Does not require broker credentials.

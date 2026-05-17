@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Local deterministic response review command (`atlas research review-response PROVIDER_RESPONSE_ID`).
+- Response review artifacts (`.atlas/research/<SYMBOL>/response_reviews/<response_review_id>.json`).
+- 18 deterministic review checks for provider response validity, safety, and boundedness.
+- Health-check and timeline coverage for response review artifacts.
+- End-to-end demo integration for response reviews with full lineage validation.
+
+### Changed
+- Research demo now validates the full chain including `review-response` and post-review timeline lineage.
+- Timeline now includes provider_response -> response_review lineage.
+- Artifact health checks now include response review artifacts.
+
 ## [0.5.7.dev12] - 2026-05-16
 
 ### Added

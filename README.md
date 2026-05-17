@@ -133,6 +133,9 @@ Generate a sanitized prompt packet from a research artifact:
 Simulate a deterministic provider response from a prompt packet:
 - `atlas research simulate-provider PROMPT_PACKET_ID`
 
+Review a provider response artifact deterministically:
+- `atlas research review-response PROVIDER_RESPONSE_ID`
+
 ## Demos
 
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:

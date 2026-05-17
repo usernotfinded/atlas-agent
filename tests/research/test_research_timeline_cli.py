@@ -108,6 +108,15 @@ def _run_simulate(tmp_path: Path, monkeypatch, capsys, prompt_id: str) -> str:
     return out["provider_response_id"]
 
 
+def _run_review(tmp_path: Path, monkeypatch, capsys, response_id: str) -> str:
+    config = _config(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        main(["research", "review-response", response_id, "--json"])
+    out = json.loads(capsys.readouterr().out.strip())
+    return out["response_review_id"]
+
+
 class TestTimelineEmptyWorkspace:
     def test_empty_workspace(self, tmp_path: Path, capsys, monkeypatch) -> None:
         config = _config(tmp_path)
@@ -150,6 +159,7 @@ class TestTimelineFullChain:
         evaluation_id = _run_evaluate(tmp_path, monkeypatch, capsys, plan_id)
         prompt_id = _run_prompt(tmp_path, monkeypatch, capsys, run_id)
         response_id = _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
+        review_id = _run_review(tmp_path, monkeypatch, capsys, response_id)
 
         config = _config(tmp_path)
         monkeypatch.chdir(tmp_path)
@@ -161,6 +171,7 @@ class TestTimelineFullChain:
         assert verification_id in out
         assert evaluation_id in out
         assert prompt_id in out
+        assert review_id in out
         assert response_id in out
         assert "AAPL" in out
         assert "/Users/" not in out
@@ -173,6 +184,7 @@ class TestTimelineFullChain:
         evaluation_id = _run_evaluate(tmp_path, monkeypatch, capsys, plan_id)
         prompt_id = _run_prompt(tmp_path, monkeypatch, capsys, run_id)
         response_id = _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
+        review_id = _run_review(tmp_path, monkeypatch, capsys, response_id)
 
         config = _config(tmp_path)
         monkeypatch.chdir(tmp_path)
@@ -200,6 +212,8 @@ class TestTimelineFullChain:
         assert prompt["artifact_path"].startswith(".atlas/research/")
         assert len(prompt["provider_responses"]) == 1
         assert prompt["provider_responses"][0]["provider_response_id"] == response_id
+        assert len(prompt["provider_responses"][0].get("response_reviews", [])) == 1
+        assert prompt["provider_responses"][0]["response_reviews"][0]["response_review_id"] == review_id
         # No absolute paths
         json_str = json.dumps(out)
         assert "/Users/" not in json_str

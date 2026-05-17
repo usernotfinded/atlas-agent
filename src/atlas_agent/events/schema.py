@@ -27,6 +27,7 @@ KNOWN_EVENT_TYPES = {
     "research_evaluation_created",
     "research_prompt_packet_created",
     "research_provider_response_created",
+    "research_response_review_created",
     "model_guidance_loaded",
     "decision_proposed",
     "risk_approved",

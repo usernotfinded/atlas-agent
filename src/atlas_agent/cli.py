@@ -537,6 +537,14 @@ Safety First:
         help="Simulation provider. Only 'deterministic-mock' is supported. Default: deterministic-mock.",
     )
 
+    research_review = research_sub.add_parser(
+        "review-response",
+        help="Review a provider response artifact deterministically. Local-only. Does not call LLMs or network.",
+        description="Review an existing provider response artifact with deterministic local checks. Local-only. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_review.add_argument("provider_response_id", help="Source provider response ID.")
+    research_review.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -3736,6 +3744,9 @@ def main(argv: list[str] | None = None) -> int:
             "plan_not_found": ("research_artifact_not_found", "Research artifact not found."),
             "prompt_packet_not_found": ("research_artifact_not_found", "Research artifact not found."),
             "prompt_packet_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "provider_response_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "provider_response_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "ambiguous_provider_response_id": ("invalid_research_id", "Invalid research identifier."),
             "evaluation_data_invalid": ("evaluation_data_invalid", "Evaluation data is invalid."),
             "limit_must_be_positive": ("research_error", "Research command failed."),
             "run_id must not be empty": ("invalid_research_id", "Invalid research identifier."),
@@ -3743,6 +3754,7 @@ def main(argv: list[str] | None = None) -> int:
             "run_id exceeds maximum length": ("invalid_research_id", "Invalid research identifier."),
             "invalid_max_context_chars": ("invalid_max_context_chars", "Invalid max-context-chars value."),
             "max_context_chars_exceeds_limit": ("invalid_max_context_chars", "Invalid max-context-chars value."),
+            "invalid_research_identifier": ("invalid_research_id", "Invalid research identifier."),
             "invalid_research_symbol": ("invalid_research_symbol", "Invalid research symbol."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
@@ -4518,6 +4530,10 @@ def main(argv: list[str] | None = None) -> int:
                             provider = pr.get("provider", "")
                             rec = pr.get("recommendation", "")
                             print(f"    Provider response: {pr_id} ({provider}) — {rec}")
+                            for rr in pr.get("response_reviews", []):
+                                rr_id = rr.get("response_review_id", "")
+                                rr_rec = rr.get("recommendation", "")
+                                print(f"      Response review: {rr_id} — {rr_rec}")
             timeline_warnings = result.get("warnings", [])
             if timeline_warnings:
                 print("\nWarnings:")
@@ -4741,6 +4757,87 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Provider: {result['provider']}")
             print(f"  Source Prompt Packet ID: {result['source_prompt_packet_id']}")
             print(f"  Provider Response ID: {result['provider_response_id']}")
+            print(f"  Recommendation: {result['recommendation']}")
+            print(f"  Artifact: {result['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "review-response":
+        try:
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                UnsupportedArtifactSchemaError,
+                review_provider_response,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research review-response skipped safely: no workspace found")
+                return 1
+
+            safe_response_id = validate_run_id(args.provider_response_id)
+
+            config = AtlasConfig.from_env()
+            event_logger = EventLogger(config.events_dir)
+
+            result = review_provider_response(
+                workspace_path=ws,
+                provider_response_id=safe_response_id,
+                event_logger=event_logger,
+            )
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                _research_error_text("research review-response", "invalid research symbol")
+            return 1
+        except UnsupportedArtifactSchemaError:
+            if args.json:
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
+            else:
+                _research_error_text("research review-response", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research review-response", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research review-response", "research command failed")
+            return 1
+        if args.json:
+            import json
+
+            out = {
+                "ok": True,
+                "status": "research_response_review_created",
+                "symbol": result["symbol"],
+                "source_provider_response_id": result["source_provider_response_id"],
+                "response_review_id": result["response_review_id"],
+                "provider": result["provider"],
+                "recommendation": result["recommendation"],
+                "artifact_path": result["artifact_path"],
+                "warnings": result.get("warnings", []),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Provider response review created")
+            print(f"  Symbol: {result['symbol']}")
+            print(f"  Mode: {result['mode']}")
+            print(f"  Provider: {result['provider']}")
+            print(f"  Source Provider Response ID: {result['source_provider_response_id']}")
+            print(f"  Response Review ID: {result['response_review_id']}")
             print(f"  Recommendation: {result['recommendation']}")
             print(f"  Artifact: {result['artifact_path']}")
         return 0

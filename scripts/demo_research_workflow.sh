@@ -470,9 +470,77 @@ if [ "$TIMELINE_LINEAGE_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 14. Safety checks
+# 14. Research review-response
+printf '\n--- Research review-response ---\n'
+REVIEW_OUTPUT="$(atlas research review-response "$SIM_RESPONSE_ID" --json)"
+assert_no_absolute_paths "$REVIEW_OUTPUT"
+assert_no_secrets_in_output "$REVIEW_OUTPUT"
+assert_no_forbidden_fragments "$REVIEW_OUTPUT" "review-response CLI output"
+assert_ok "$REVIEW_OUTPUT" "research review-response"
+REVIEW_STATUS="$(json_field "$REVIEW_OUTPUT" status)"
+if [ "$REVIEW_STATUS" != "research_response_review_created" ]; then
+  printf 'FAIL: unexpected review-response status: %s\n' "$REVIEW_STATUS" >&2
+  exit 1
+fi
+REVIEW_RECOMMENDATION="$(json_field "$REVIEW_OUTPUT" recommendation)"
+if [ "$REVIEW_RECOMMENDATION" != "provider_response_review_ready" ] && [ "$REVIEW_RECOMMENDATION" != "manual_review_required" ]; then
+  printf 'FAIL: unexpected review-response recommendation: %s\n' "$REVIEW_RECOMMENDATION" >&2
+  exit 1
+fi
+REVIEW_ID="$(json_field "$REVIEW_OUTPUT" response_review_id)"
+if [ -z "$REVIEW_ID" ]; then
+  printf 'FAIL: response_review_id is empty\n' >&2
+  exit 1
+fi
+REVIEW_ARTIFACT_PATH="$(json_field "$REVIEW_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$REVIEW_ARTIFACT_PATH" "response review artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$REVIEW_ARTIFACT_PATH")" "response review artifact"
+assert_no_pending_orders
+
+# 15. Research timeline after review-response (validate full lineage)
+printf '\n--- Research timeline (post review-response) ---\n'
+TIMELINE_OUTPUT3="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT3"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT3"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT3" "timeline CLI output after review-response"
+assert_ok "$TIMELINE_OUTPUT3" "research timeline after review-response"
+TIMELINE_STATUS3="$(json_field "$TIMELINE_OUTPUT3" status)"
+if [ "$TIMELINE_STATUS3" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after review-response: %s\n' "$TIMELINE_STATUS3" >&2
+  exit 1
+fi
+TIMELINE_FULL_LINEAGE_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for pr in p.get('provider_responses',[]):
+            if pr.get('provider_response_id')!='$SIM_RESPONSE_ID':
+                continue
+            rrs=[rr.get('response_review_id') for rr in pr.get('response_reviews',[])]
+            if '$REVIEW_ID' in rrs:
+                print('valid')
+                break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT3" )"
+if [ "$TIMELINE_FULL_LINEAGE_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> provider response %s -> response review %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$SIM_RESPONSE_ID" "$REVIEW_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 16. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3"
 
 printf '\nResearch workflow demo complete.\n'

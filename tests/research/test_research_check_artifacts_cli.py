@@ -61,6 +61,15 @@ def _run_simulate(tmp_path: Path, monkeypatch, capsys, prompt_id: str) -> str:
     return out["provider_response_id"]
 
 
+def _run_review(tmp_path: Path, monkeypatch, capsys, response_id: str) -> str:
+    config = _config(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        main(["research", "review-response", response_id, "--json"])
+    out = json.loads(capsys.readouterr().out.strip())
+    return out["response_review_id"]
+
+
 def _default_csv(tmp_path: Path) -> Path:
     import csv
 
@@ -111,7 +120,8 @@ class TestCheckArtifactsHappyPath:
         plan_id = _run_plan(tmp_path, monkeypatch, capsys, run_id)
         csv_path = _default_csv(tmp_path)
         prompt_id = _run_prompt(tmp_path, monkeypatch, capsys, run_id)
-        _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
+        response_id = _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
+        _run_review(tmp_path, monkeypatch, capsys, response_id)
         config = _config(tmp_path)
         monkeypatch.chdir(tmp_path)
         with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
@@ -129,6 +139,7 @@ class TestCheckArtifactsHappyPath:
         assert out["counts"]["evaluations"] == 1
         assert out["counts"]["prompts"] == 1
         assert out["counts"]["provider_responses"] == 1
+        assert out["counts"]["response_reviews"] == 1
         assert out["issues"] == []
         assert out["warnings"] == []
 
@@ -304,6 +315,70 @@ class TestCheckArtifactsDuplicateId:
         with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
             assert main(["research", "check-artifacts", "--json"]) == 0
         out = json.loads(capsys.readouterr().out.strip())
+        codes = {i["code"] for i in out["issues"]}
+        assert "duplicate_id" in codes
+
+    def test_duplicate_response_review_id_detected(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        config = _config(tmp_path)
+        config.ensure_dirs()
+        monkeypatch.chdir(tmp_path)
+        reviews_dir = tmp_path / ".atlas" / "research" / "AAPL" / "response_reviews"
+        reviews_dir.mkdir(parents=True)
+        base = {
+            "response_review_id": "duplicate-review-id",
+            "source_provider_response_id": "resp-a",
+            "source_prompt_packet_id": "prompt-a",
+            "source_run_id": "run-a",
+            "symbol": "AAPL",
+            "mode": "paper",
+            "provider": "deterministic-review",
+            "recommendation": "provider_response_review_ready",
+            "artifact_path": ".atlas/research/AAPL/response_reviews/duplicate-review-id.json",
+            "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+        }
+        (reviews_dir / "review-a.json").write_text(json.dumps(base), encoding="utf-8")
+        (reviews_dir / "review-b.json").write_text(json.dumps(base), encoding="utf-8")
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            assert main(["research", "check-artifacts", "--json"]) == 0
+        out = json.loads(capsys.readouterr().out.strip())
+        assert out["ok"] is True
+        codes = {i["code"] for i in out["issues"]}
+        assert "duplicate_id" in codes
+        # Issue paths should be relative, not absolute
+        for issue in out["issues"]:
+            if issue["code"] == "duplicate_id":
+                assert not issue["path"].startswith("/")
+                assert "/Users/" not in issue["path"]
+                assert "/private/var/" not in issue["path"]
+
+    def test_duplicate_response_review_id_strict_exits_2(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        config = _config(tmp_path)
+        config.ensure_dirs()
+        monkeypatch.chdir(tmp_path)
+        reviews_dir = tmp_path / ".atlas" / "research" / "AAPL" / "response_reviews"
+        reviews_dir.mkdir(parents=True)
+        base = {
+            "response_review_id": "duplicate-review-id",
+            "source_provider_response_id": "resp-a",
+            "source_prompt_packet_id": "prompt-a",
+            "source_run_id": "run-a",
+            "symbol": "AAPL",
+            "mode": "paper",
+            "provider": "deterministic-review",
+            "recommendation": "provider_response_review_ready",
+            "artifact_path": ".atlas/research/AAPL/response_reviews/duplicate-review-id.json",
+            "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+        }
+        (reviews_dir / "review-a.json").write_text(json.dumps(base), encoding="utf-8")
+        (reviews_dir / "review-b.json").write_text(json.dumps(base), encoding="utf-8")
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            assert main(["research", "check-artifacts", "--strict", "--json"]) == 2
+        out = json.loads(capsys.readouterr().out.strip())
+        assert out["ok"] is True
         codes = {i["code"] for i in out["issues"]}
         assert "duplicate_id" in codes
 
