@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev11] - 2026-05-16
+
 ### Added
 - Read-only research provider discovery command (`atlas research providers`).
 - Provider metadata model (`ResearchProviderInfo`) for deterministic and disabled LLM placeholder providers.
 - CLI tests proving no API key reads, no network imports, no broker path usage, and safe output.
+- Demo workflow now validates provider discovery (`deterministic.local=true`, disabled `llm` placeholder).
+- Failure tests for unsafe provider discovery output.
 
 ### Changed
 - Research workflow documentation now documents the `providers` discovery command.
@@ -29,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Validation
 - Version consistency passed.
 - Forbidden-claim scan passed.
-- Full pytest passed in latest validation.
+- Full pytest passed in the latest validation.
 - pip check passed.
 - Demo paper workflow passed.
 - Demo research workflow passed.
