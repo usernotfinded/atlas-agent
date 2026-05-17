@@ -90,6 +90,24 @@ def _run_evaluate(tmp_path: Path, monkeypatch, capsys, plan_id: str) -> str:
     return out["evaluation_id"]
 
 
+def _run_prompt(tmp_path: Path, monkeypatch, capsys, run_id: str) -> str:
+    config = _config(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        main(["research", "prompt", run_id, "--json"])
+    out = json.loads(capsys.readouterr().out.strip())
+    return out["prompt_packet_id"]
+
+
+def _run_simulate(tmp_path: Path, monkeypatch, capsys, prompt_id: str) -> str:
+    config = _config(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+        main(["research", "simulate-provider", prompt_id, "--json"])
+    out = json.loads(capsys.readouterr().out.strip())
+    return out["provider_response_id"]
+
+
 class TestTimelineEmptyWorkspace:
     def test_empty_workspace(self, tmp_path: Path, capsys, monkeypatch) -> None:
         config = _config(tmp_path)
@@ -130,6 +148,8 @@ class TestTimelineFullChain:
         plan_id = _run_plan(tmp_path, monkeypatch, capsys, run_id)
         verification_id = _run_verify(tmp_path, monkeypatch, capsys, plan_id)
         evaluation_id = _run_evaluate(tmp_path, monkeypatch, capsys, plan_id)
+        prompt_id = _run_prompt(tmp_path, monkeypatch, capsys, run_id)
+        response_id = _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
 
         config = _config(tmp_path)
         monkeypatch.chdir(tmp_path)
@@ -140,6 +160,8 @@ class TestTimelineFullChain:
         assert plan_id in out
         assert verification_id in out
         assert evaluation_id in out
+        assert prompt_id in out
+        assert response_id in out
         assert "AAPL" in out
         assert "/Users/" not in out
         assert "/private/var/" not in out
@@ -149,6 +171,8 @@ class TestTimelineFullChain:
         plan_id = _run_plan(tmp_path, monkeypatch, capsys, run_id)
         verification_id = _run_verify(tmp_path, monkeypatch, capsys, plan_id)
         evaluation_id = _run_evaluate(tmp_path, monkeypatch, capsys, plan_id)
+        prompt_id = _run_prompt(tmp_path, monkeypatch, capsys, run_id)
+        response_id = _run_simulate(tmp_path, monkeypatch, capsys, prompt_id)
 
         config = _config(tmp_path)
         monkeypatch.chdir(tmp_path)
@@ -170,6 +194,12 @@ class TestTimelineFullChain:
         assert plan["verifications"][0]["verification_id"] == verification_id
         assert len(plan["evaluations"]) == 1
         assert plan["evaluations"][0]["evaluation_id"] == evaluation_id
+        assert len(entry["prompts"]) == 1
+        prompt = entry["prompts"][0]
+        assert prompt["prompt_packet_id"] == prompt_id
+        assert prompt["artifact_path"].startswith(".atlas/research/")
+        assert len(prompt["provider_responses"]) == 1
+        assert prompt["provider_responses"][0]["provider_response_id"] == response_id
         # No absolute paths
         json_str = json.dumps(out)
         assert "/Users/" not in json_str

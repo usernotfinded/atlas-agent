@@ -139,6 +139,35 @@ class TestReferenceDocCommands:
         lower = text.lower()
         assert "prompt" in lower and "paper-only" in lower
 
+    def test_mentions_simulate_provider_command(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert "atlas research simulate-provider" in text.lower()
+
+    def test_simulate_provider_no_llm_call(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "simulate-provider" in lower and "does not call llms" in lower
+
+    def test_simulate_provider_no_api_keys(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "simulate-provider" in lower and "does not read api keys" in lower
+
+    def test_simulate_provider_no_network(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "simulate-provider" in lower and "does not" in lower and "network" in lower
+
+    def test_simulate_provider_no_orders(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "simulate-provider" in lower and "does not submit orders" in lower
+
+    def test_simulate_provider_paper_only(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "simulate-provider" in lower and "paper-only" in lower
+
 
 class TestReferenceDocArtifactPaths:
     def test_research_artifact_path(self) -> None:
@@ -156,6 +185,14 @@ class TestReferenceDocArtifactPaths:
     def test_evaluation_artifact_path(self) -> None:
         text = _read("docs/research-workflow.md")
         assert ".atlas/research/<SYMBOL>/evaluations/<evaluation_id>.json" in text
+
+    def test_prompt_artifact_path(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert ".atlas/research/<SYMBOL>/prompts/<prompt_packet_id>.json" in text
+
+    def test_provider_response_artifact_path(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert ".atlas/research/<SYMBOL>/provider_responses/<provider_response_id>.json" in text
 
 
 class TestReferenceDocSafetyBoundaries:

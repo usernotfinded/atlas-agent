@@ -401,9 +401,78 @@ assert_file_exists "$WORKSPACE/$PROMPT_ARTIFACT_PATH" "prompt packet artifact"
 assert_no_forbidden_fragments "$(cat "$WORKSPACE/$PROMPT_ARTIFACT_PATH")" "prompt packet artifact"
 assert_no_pending_orders
 
-# 12. Safety checks
+# 12. Research simulate-provider
+printf '\n--- Research simulate-provider ---\n'
+SIM_OUTPUT="$(atlas research simulate-provider "$PROMPT_PACKET_ID" --json)"
+assert_no_absolute_paths "$SIM_OUTPUT"
+assert_no_secrets_in_output "$SIM_OUTPUT"
+assert_no_forbidden_fragments "$SIM_OUTPUT" "simulate-provider CLI output"
+assert_ok "$SIM_OUTPUT" "research simulate-provider"
+SIM_STATUS="$(json_field "$SIM_OUTPUT" status)"
+if [ "$SIM_STATUS" != "research_provider_response_created" ]; then
+  printf 'FAIL: unexpected simulate-provider status: %s\n' "$SIM_STATUS" >&2
+  exit 1
+fi
+SIM_PROVIDER="$(json_field "$SIM_OUTPUT" provider)"
+if [ "$SIM_PROVIDER" != "deterministic-mock" ]; then
+  printf 'FAIL: unexpected provider: %s\n' "$SIM_PROVIDER" >&2
+  exit 1
+fi
+SIM_RECOMMENDATION="$(json_field "$SIM_OUTPUT" recommendation)"
+if [ "$SIM_RECOMMENDATION" != "provider_response_review_ready" ] && [ "$SIM_RECOMMENDATION" != "manual_review_required" ]; then
+  printf 'FAIL: unexpected recommendation: %s\n' "$SIM_RECOMMENDATION" >&2
+  exit 1
+fi
+SIM_RESPONSE_ID="$(json_field "$SIM_OUTPUT" provider_response_id)"
+if [ -z "$SIM_RESPONSE_ID" ]; then
+  printf 'FAIL: provider_response_id is empty\n' >&2
+  exit 1
+fi
+SIM_ARTIFACT_PATH="$(json_field "$SIM_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$SIM_ARTIFACT_PATH" "provider response artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$SIM_ARTIFACT_PATH")" "provider response artifact"
+assert_no_pending_orders
+
+# 13. Research timeline after simulate-provider (validate lineage)
+printf '\n--- Research timeline (post simulate-provider) ---\n'
+TIMELINE_OUTPUT2="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT2"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT2"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT2" "timeline CLI output after simulate-provider"
+assert_ok "$TIMELINE_OUTPUT2" "research timeline after simulate-provider"
+TIMELINE_STATUS2="$(json_field "$TIMELINE_OUTPUT2" status)"
+if [ "$TIMELINE_STATUS2" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after simulate-provider: %s\n' "$TIMELINE_STATUS2" >&2
+  exit 1
+fi
+TIMELINE_LINEAGE_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        prs=[pr.get('provider_response_id') for pr in p.get('provider_responses',[])]
+        if '$SIM_RESPONSE_ID' in prs:
+            print('valid')
+            break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT2" )"
+if [ "$TIMELINE_LINEAGE_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> provider response %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$SIM_RESPONSE_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 14. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2"
 
 printf '\nResearch workflow demo complete.\n'

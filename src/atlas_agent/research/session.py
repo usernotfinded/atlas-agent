@@ -1349,7 +1349,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1375,6 +1375,8 @@ def check_research_artifacts(
     plan_ids: dict[str, list[str]] = {}
     verification_ids: dict[str, list[str]] = {}
     evaluation_ids: dict[str, list[str]] = {}
+    prompt_ids: dict[str, list[str]] = {}
+    provider_response_ids: dict[str, list[str]] = {}
 
     def _rel(path: Path) -> str:
         try:
@@ -1408,6 +1410,8 @@ def check_research_artifacts(
             "plan": "plan_id",
             "verification": "verification_id",
             "evaluation": "evaluation_id",
+            "prompt": "prompt_packet_id",
+            "provider_response": "provider_response_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1428,6 +1432,10 @@ def check_research_artifacts(
         elif expected_type == "verification" and "verifications" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "evaluation" and "evaluations" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "prompt" and "prompts" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_response" and "provider_responses" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1450,6 +1458,16 @@ def check_research_artifacts(
                 if f not in data:
                     issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
                     return
+        elif expected_type == "prompt":
+            for f in ("prompt_packet_id", "source_run_id", "symbol", "mode", "provider"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+        elif expected_type == "provider_response":
+            for f in ("provider_response_id", "source_prompt_packet_id", "source_run_id", "symbol", "mode", "provider", "recommendation"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1461,6 +1479,10 @@ def check_research_artifacts(
                 verification_ids.setdefault(raw_id, []).append(rel)
             elif expected_type == "evaluation":
                 evaluation_ids.setdefault(raw_id, []).append(rel)
+            elif expected_type == "prompt":
+                prompt_ids.setdefault(raw_id, []).append(rel)
+            elif expected_type == "provider_response":
+                provider_response_ids.setdefault(raw_id, []).append(rel)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1470,6 +1492,10 @@ def check_research_artifacts(
             counts["verifications"] += 1
         elif expected_type == "evaluation":
             counts["evaluations"] += 1
+        elif expected_type == "prompt":
+            counts["prompts"] += 1
+        elif expected_type == "provider_response":
+            counts["provider_responses"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1497,6 +1523,18 @@ def check_research_artifacts(
             for path in evaluations_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "evaluation", expected_symbol)
+        # Prompts
+        prompts_dir = sym_dir / "prompts"
+        if prompts_dir.exists():
+            for path in prompts_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "prompt", expected_symbol)
+        # Provider responses
+        responses_dir = sym_dir / "provider_responses"
+        if responses_dir.exists():
+            for path in responses_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_response", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1512,6 +1550,14 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for eid, paths in evaluation_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pid, paths in prompt_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for prid, paths in provider_response_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -1627,6 +1673,110 @@ def _iter_evaluation_artifacts(
     return items
 
 
+def _iter_prompt_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return prompt packet artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe / "prompts")
+    else:
+        for sym_dir in research_dir.iterdir():
+            if sym_dir.is_dir():
+                p_dir = sym_dir / "prompts"
+                if p_dir.exists():
+                    search_dirs.append(p_dir)
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+                continue
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "prompt_packet_id": data.get("prompt_packet_id", path.stem),
+                    "source_run_id": data.get("source_run_id", ""),
+                    "symbol": data.get("symbol", ""),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                }
+            )
+
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    return items
+
+
+def _iter_provider_response_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return provider response artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe / "provider_responses")
+    else:
+        for sym_dir in research_dir.iterdir():
+            if sym_dir.is_dir():
+                r_dir = sym_dir / "provider_responses"
+                if r_dir.exists():
+                    search_dirs.append(r_dir)
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+                continue
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "provider_response_id": data.get("provider_response_id", path.stem),
+                    "source_prompt_packet_id": data.get("source_prompt_packet_id", ""),
+                    "source_run_id": data.get("source_run_id", ""),
+                    "provider": data.get("provider", "unknown"),
+                    "recommendation": data.get("recommendation", ""),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                }
+            )
+
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    return items
+
+
 def build_research_timeline(
     workspace_path: Path,
     *,
@@ -1651,6 +1801,8 @@ def build_research_timeline(
     plan_items = iter_plan_artifacts(workspace_path, symbol=symbol_filter)
     verification_items = _iter_verification_artifacts(workspace_path, symbol=symbol_filter)
     evaluation_items = _iter_evaluation_artifacts(workspace_path, symbol=symbol_filter)
+    prompt_items = _iter_prompt_artifacts(workspace_path, symbol=symbol_filter)
+    provider_response_items = _iter_provider_response_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -1681,6 +1833,24 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_evaluation", "path": e.get("artifact_path", ""), "severity": "warning"})
 
+    # Index prompts by source_run_id
+    prompts_by_run_id: dict[str, list[dict[str, Any]]] = {}
+    for p in prompt_items:
+        src = p.get("source_run_id", "")
+        if src:
+            prompts_by_run_id.setdefault(src, []).append(p)
+        else:
+            warnings.append({"code": "orphan_prompt", "path": p.get("artifact_path", ""), "severity": "warning"})
+
+    # Index provider responses by source_prompt_packet_id
+    provider_responses_by_prompt_id: dict[str, list[dict[str, Any]]] = {}
+    for pr in provider_response_items:
+        src = pr.get("source_prompt_packet_id", "")
+        if src:
+            provider_responses_by_prompt_id.setdefault(src, []).append(pr)
+        else:
+            warnings.append({"code": "orphan_provider_response", "path": pr.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -1709,6 +1879,22 @@ def build_research_timeline(
         src = e.get("source_plan_id", "")
         if src and src not in seen_plan_ids:
             warnings.append({"code": "orphan_evaluation", "path": e.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen prompt IDs for orphan provider response detection
+    seen_prompt_ids = set()
+    for p in prompt_items:
+        seen_prompt_ids.add(p.get("prompt_packet_id", ""))
+
+    for pr in provider_response_items:
+        src = pr.get("source_prompt_packet_id", "")
+        if src and src not in seen_prompt_ids:
+            warnings.append({"code": "orphan_provider_response", "path": pr.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen run IDs for orphan prompt detection
+    for p in prompt_items:
+        src = p.get("source_run_id", "")
+        if src and src not in seen_run_ids:
+            warnings.append({"code": "orphan_prompt", "path": p.get("artifact_path", ""), "severity": "warning"})
 
     # Build entries
     entries: list[dict[str, Any]] = []
@@ -1749,6 +1935,27 @@ def build_research_timeline(
                 }
             )
 
+        prompts: list[dict[str, Any]] = []
+        for prompt in prompts_by_run_id.get(run_id, []):
+            prompt_id = prompt.get("prompt_packet_id", "")
+            provider_responses = [
+                {
+                    "provider_response_id": pr.get("provider_response_id", ""),
+                    "provider": pr.get("provider", "unknown"),
+                    "recommendation": pr.get("recommendation", ""),
+                    "artifact_path": pr.get("artifact_path", ""),
+                }
+                for pr in provider_responses_by_prompt_id.get(prompt_id, [])
+            ]
+            prompts.append(
+                {
+                    "prompt_packet_id": prompt_id,
+                    "created_at": prompt.get("created_at", ""),
+                    "artifact_path": prompt.get("artifact_path", ""),
+                    "provider_responses": provider_responses,
+                }
+            )
+
         entries.append(
             {
                 "run_id": run_id,
@@ -1756,6 +1963,7 @@ def build_research_timeline(
                 "created_at": research.get("created_at", ""),
                 "research_path": research.get("artifact_path", ""),
                 "plans": plans,
+                "prompts": prompts,
             }
         )
 
@@ -1788,7 +1996,7 @@ def build_research_timeline(
 _PROMPT_ABS_PATH_RE = re.compile(r"/Users/[^\s\"']+|/private/var/[^\s\"']+|/home/[^\s\"']+|/tmp/[^\s\"']+", re.IGNORECASE)
 _PROMPT_BEARER_RE = re.compile(r"\bBearer\s+[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
 _PROMPT_AUTH_RE = re.compile(r"\b(Authorization|Proxy-Authorization|X-API-Key|API-Key|X-Auth-Token)\s*[:=]\s*[^\s,;]+", re.IGNORECASE)
-_PROMPT_SK_RE = re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b", re.IGNORECASE)
+_PROMPT_SK_RE = re.compile(r"\bsk-[A-Za-z0-9_-]+\b", re.IGNORECASE)
 _PROMPT_SECRET_ASSIGNMENT_RE = re.compile(
     r"\b([A-Z0-9_.-]*(?:API[_-]?KEY|API[_-]?SECRET|SECRET[_-]?KEY|SECRET|TOKEN|PASSWORD)[A-Z0-9_.-]*)"
     r"(\s*[:=]\s*)"
@@ -1799,6 +2007,11 @@ _PROMPT_SECRET_ASSIGNMENT_RE = re.compile(
 )
 _PROMPT_APCA_RE = re.compile(r"\bAPCA[A-Za-z0-9_-]*\b", re.IGNORECASE)
 _PROMPT_BROKER_HOST_RE = re.compile(r"\bbroker\.example\.com\b", re.IGNORECASE)
+# Standalone forbidden marker words that must be fully redacted even without surrounding context.
+_PROMPT_STANDALONE_FORBIDDEN_RE = re.compile(
+    r"(Authorization|Bearer|SECRET|TOKEN|PASSWORD|API_KEY|API-KEY|APIKEY)",
+    re.IGNORECASE,
+)
 
 
 def _sanitize_prompt_text(text: str) -> tuple[str, int]:
@@ -1846,6 +2059,11 @@ def _sanitize_prompt_text(text: str) -> tuple[str, int]:
     for _ in _PROMPT_BROKER_HOST_RE.finditer(sanitized):
         redacted_count += 1
     sanitized = _PROMPT_BROKER_HOST_RE.sub("[REDACTED]", sanitized)
+
+    # Standalone forbidden marker words (no prefix/suffix preserved)
+    for _ in _PROMPT_STANDALONE_FORBIDDEN_RE.finditer(sanitized):
+        redacted_count += 1
+    sanitized = _PROMPT_STANDALONE_FORBIDDEN_RE.sub("[REDACTED]", sanitized)
 
     return sanitized, redacted_count
 
@@ -2084,3 +2302,506 @@ def generate_prompt_packet(
         )
 
     return packet
+
+
+# ---------------------------------------------------------------------------
+# Simulated provider response generation
+# ---------------------------------------------------------------------------
+
+SUPPORTED_SIMULATION_PROVIDERS = {"deterministic-mock"}
+
+_PROVIDER_RESPONSE_DANGEROUS_PHRASES = (
+    "submit live order",
+    "live submit authorized",
+    "create pending order",
+    "create approval",
+    "place order",
+    "execute trade",
+    "buy recommendation",
+    "sell recommendation",
+    "trading signal",
+    "expected profit",
+    "guaranteed profit",
+    "guaranteed return",
+    "risk-free",
+    "zero risk",
+    "no risk",
+    "production-ready live trading",
+    "safe live trading",
+    "autonomous live trading",
+    "financial advice",
+)
+
+
+@dataclass(frozen=True)
+class ProviderResponseArtifact:
+    provider_response_id: str
+    source_prompt_packet_id: str
+    source_run_id: str
+    created_at: datetime
+    symbol: str
+    mode: str
+    provider: str
+    provider_status: str
+    source_prompt_packet_path: str
+    response_summary: str
+    response_sections: dict[str, Any]
+    safety_checks: list[dict[str, str]]
+    passed_checks: int
+    failed_checks: int
+    recommendation: str
+    redaction_summary: dict[str, Any]
+    warnings: list[str]
+    metadata: dict[str, Any] = field(default_factory=dict)
+    schema_version: str = RESEARCH_ARTIFACT_SCHEMA_VERSION
+    artifact_path: str = ""
+
+
+def find_prompt_packet_by_id(workspace_path: Path, prompt_packet_id: str) -> Path | None:
+    """Find exactly one prompt packet artifact by prompt_packet_id.
+
+    Returns the path, or None if not found.
+    Raises ResearchSessionError if ambiguous.
+    """
+    safe_id = validate_run_id(prompt_packet_id)
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return None
+
+    matches: list[Path] = []
+    for sym_dir in research_dir.iterdir():
+        if not sym_dir.is_dir():
+            continue
+        prompts_dir = sym_dir / "prompts"
+        if not prompts_dir.exists():
+            continue
+        candidate = prompts_dir / f"{safe_id}.json"
+        if candidate.exists() and candidate.is_file():
+            if candidate.is_symlink() and not _is_inside_workspace(candidate, workspace_path):
+                continue
+            matches.append(candidate)
+
+    if len(matches) == 0:
+        return None
+    if len(matches) > 1:
+        raise ResearchSessionError("ambiguous_prompt_packet_id")
+    return matches[0]
+
+
+def load_prompt_packet(path: Path, workspace_path: Path) -> dict[str, Any]:
+    """Load a prompt packet JSON safely."""
+    if not path.exists() or not path.is_file():
+        raise ResearchSessionError("prompt_packet_not_found")
+    if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+        raise ResearchSessionError("artifact_path_not_allowed")
+    try:
+        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        raise ResearchSessionError("prompt_packet_malformed")
+    data["artifact_path"] = path.relative_to(workspace_path).as_posix()
+    sv = data.get("schema_version")
+    if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+        raise UnsupportedArtifactSchemaError("unsupported_prompt_packet_schema")
+    return data
+
+
+def _check_prompt_packet_loaded(prompt: dict[str, Any]) -> dict[str, str]:
+    if prompt.get("prompt_packet_id"):
+        return {"name": "prompt_packet_loaded", "status": "pass", "message": "Prompt packet loaded."}
+    return {"name": "prompt_packet_loaded", "status": "fail", "message": "Prompt packet not loaded."}
+
+
+def _check_prompt_schema_supported(prompt: dict[str, Any]) -> dict[str, str]:
+    sv = prompt.get("schema_version")
+    if sv is None or sv == RESEARCH_ARTIFACT_SCHEMA_VERSION:
+        return {"name": "prompt_schema_supported", "status": "pass", "message": "Prompt schema is supported."}
+    return {"name": "prompt_schema_supported", "status": "fail", "message": "Prompt schema is unsupported."}
+
+
+def _check_paper_only_mode_response(prompt: dict[str, Any]) -> dict[str, str]:
+    if prompt.get("mode") == "paper":
+        return {"name": "paper_only_mode", "status": "pass", "message": "Mode is paper."}
+    return {"name": "paper_only_mode", "status": "fail", "message": "Mode is not paper."}
+
+
+def _check_provider_is_simulated(provider: str) -> dict[str, str]:
+    if provider in SUPPORTED_SIMULATION_PROVIDERS:
+        return {"name": "provider_is_simulated", "status": "pass", "message": "Provider is simulated."}
+    return {"name": "provider_is_simulated", "status": "fail", "message": "Provider is not simulated."}
+
+
+def _check_no_network_provider(provider: str) -> dict[str, str]:
+    if provider in SUPPORTED_SIMULATION_PROVIDERS:
+        return {"name": "no_network_provider", "status": "pass", "message": "No network provider used."}
+    return {"name": "no_network_provider", "status": "fail", "message": "Network provider detected."}
+
+
+def _check_no_api_key_required(provider: str) -> dict[str, str]:
+    if provider in SUPPORTED_SIMULATION_PROVIDERS:
+        return {"name": "no_api_key_required", "status": "pass", "message": "No API key required."}
+    return {"name": "no_api_key_required", "status": "fail", "message": "API key may be required."}
+
+
+def _check_no_live_authorization_language_response(text: str) -> dict[str, str]:
+    lower = text.lower()
+    for phrase in _PROVIDER_RESPONSE_DANGEROUS_PHRASES:
+        idx = lower.find(phrase.lower())
+        if idx == -1:
+            continue
+        window_start = max(0, idx - 40)
+        context = lower[window_start:idx]
+        negative_indicators = ("not ", "does not ", "never ", "no ", "without ")
+        if any(context.endswith(ind) or (" " + ind) in context for ind in negative_indicators):
+            continue
+        return {"name": "no_live_authorization_language", "status": "fail", "message": "Response contains disallowed language."}
+    return {"name": "no_live_authorization_language", "status": "pass", "message": "No disallowed language found."}
+
+
+def _check_no_order_language(text: str) -> dict[str, str]:
+    lower = text.lower()
+    order_phrases = ("place order", "execute trade", "create pending order", "submit live order")
+    for phrase in order_phrases:
+        if phrase.lower() in lower:
+            return {"name": "no_order_language", "status": "fail", "message": "Response contains order language."}
+    return {"name": "no_order_language", "status": "pass", "message": "No order language found."}
+
+
+def _check_no_financial_advice_language(text: str) -> dict[str, str]:
+    lower = text.lower()
+    advice_phrases = ("financial advice", "buy recommendation", "sell recommendation", "trading signal", "expected profit", "guaranteed profit", "guaranteed return")
+    for phrase in advice_phrases:
+        if phrase.lower() in lower:
+            return {"name": "no_financial_advice_language", "status": "fail", "message": "Response contains financial advice language."}
+    return {"name": "no_financial_advice_language", "status": "pass", "message": "No financial advice language found."}
+
+
+def _check_no_secret_fragments(text: str) -> dict[str, str]:
+    forbidden = ("Authorization", "Bearer", "APCA", "SECRET", "TOKEN", "PASSWORD", "API_KEY", "sk-", "/Users/", "/private/var/", "broker.example.com")
+    for frag in forbidden:
+        if frag in text:
+            return {"name": "no_secret_fragments", "status": "fail", "message": "Response contains forbidden fragments."}
+    return {"name": "no_secret_fragments", "status": "pass", "message": "No secret fragments found."}
+
+
+def _check_response_bounded(response_sections: dict[str, Any]) -> dict[str, str]:
+    total = len(json.dumps(response_sections))
+    if total <= 50000:
+        return {"name": "response_bounded", "status": "pass", "message": "Response is bounded."}
+    return {"name": "response_bounded", "status": "fail", "message": "Response exceeds size limit."}
+
+
+def _check_source_path_contained_response(prompt: dict[str, Any], workspace_path: Path) -> dict[str, str]:
+    source_path = prompt.get("source_artifact_path", "") or prompt.get("artifact_path", "")
+    if not source_path:
+        return {"name": "source_path_contained", "status": "fail", "message": "Source path is missing."}
+    if source_path.startswith("/"):
+        try:
+            p = Path(source_path).resolve()
+            ws = workspace_path.resolve()
+            p.relative_to(ws)
+        except ValueError:
+            return {"name": "source_path_contained", "status": "fail", "message": "Source path is outside workspace."}
+    return {"name": "source_path_contained", "status": "pass", "message": "Source path is contained."}
+
+
+def _redact_dangerous_phrases(text: str) -> str:
+    """Redact dangerous phrases from text. Returns sanitized text."""
+    if not isinstance(text, str):
+        return text
+    sanitized = text
+    for phrase in _PROVIDER_RESPONSE_DANGEROUS_PHRASES:
+        sanitized = re.sub(re.escape(phrase), "[REDACTED]", sanitized, flags=re.IGNORECASE)
+    return sanitized
+
+
+def _redact_dangerous_in_value(value: Any) -> Any:
+    """Recursively redact dangerous phrases from a value."""
+    if isinstance(value, str):
+        return _redact_dangerous_phrases(value)
+    if isinstance(value, list):
+        return [_redact_dangerous_in_value(item) for item in value]
+    if isinstance(value, dict):
+        return {k: _redact_dangerous_in_value(v) for k, v in value.items()}
+    return value
+
+
+def _generate_deterministic_mock_response(prompt: dict[str, Any]) -> dict[str, Any]:
+    """Generate a bounded, local, safe deterministic mock response."""
+    symbol = prompt.get("symbol", "UNKNOWN")
+    user_context = prompt.get("user_context", {})
+
+    summary = user_context.get("summary", "No summary available.")
+    thesis = user_context.get("thesis", "No thesis available.")
+    risks = user_context.get("risks", [])
+    invalidation = user_context.get("invalidation_conditions", [])
+
+    # Sanitize user-derived fields before interpolation to prevent forbidden fragments
+    # from leaking into response sections.
+    safe_summary, _ = _sanitize_prompt_text(str(summary))
+    safe_thesis, _ = _sanitize_prompt_text(str(thesis))
+    safe_risks = [_sanitize_prompt_text(str(r))[0] for r in risks]
+    safe_invalidation = [_sanitize_prompt_text(str(i))[0] for i in invalidation]
+
+    response_sections: dict[str, Any] = {
+        "scope_review": f"Scope: review local analysis artifact for {symbol}. This is a paper-only simulation.",
+        "context_summary": f"Context summary for {symbol}: {safe_summary[:500]}",
+        "risk_review": f"Identified risks: {len(safe_risks)}. Review each risk before any trading decision.",
+        "invalidation_review": f"Invalidation conditions: {len(safe_invalidation)}. Monitor for changes that invalidate assumptions.",
+        "paper_only_review": "This response is generated by a deterministic mock provider. It is paper-only and does not authorize live trading, create orders, or provide financial advice.",
+        "follow_up_questions": [
+            "What additional local data would strengthen this analysis?",
+            "What risk limits should be reviewed before any separate approval workflow?",
+        ],
+    }
+
+    if safe_risks:
+        response_sections["risk_review_details"] = [r[:300] for r in safe_risks[:10]]
+    if safe_invalidation:
+        response_sections["invalidation_review_details"] = [i[:300] for i in safe_invalidation[:10]]
+
+    return response_sections
+
+
+def simulate_provider_response(
+    workspace_path: Path,
+    prompt_packet_id: str,
+    provider: str = "deterministic-mock",
+    event_logger: EventLogger | None = None,
+) -> dict[str, Any]:
+    """Generate a local simulated provider response artifact from a prompt packet.
+
+    This never calls LLMs, networks, brokers, or reads API keys.
+    """
+    safe_prompt_id = validate_run_id(prompt_packet_id)
+
+    if provider not in SUPPORTED_SIMULATION_PROVIDERS:
+        raise UnsupportedResearchProviderError("unsupported_research_provider")
+
+    # Find and load prompt packet
+    prompt_path = find_prompt_packet_by_id(workspace_path, safe_prompt_id)
+    if prompt_path is None:
+        raise ResearchSessionError("prompt_packet_not_found")
+    prompt = load_prompt_packet(prompt_path, workspace_path)
+
+    # Validate symbol
+    raw_symbol = prompt.get("symbol", "")
+    if not raw_symbol:
+        raise ResearchSessionError("invalid_research_symbol")
+    try:
+        symbol = sanitize_symbol(raw_symbol)
+    except InvalidResearchSymbolError:
+        raise ResearchSessionError("invalid_research_symbol")
+
+    provider_response_id = generate_run_id()
+    created_at = datetime.now(UTC)
+
+    # Validate source_run_id from prompt packet — fail closed if missing/invalid/unsafe
+    raw_source_run_id = prompt.get("source_run_id", "")
+    if not raw_source_run_id:
+        raise ResearchSessionError("invalid_research_identifier")
+    try:
+        source_run_id = validate_run_id(raw_source_run_id)
+    except ResearchSessionError:
+        raise ResearchSessionError("invalid_research_identifier")
+    # Additional safety: reject forbidden fragments in source_run_id
+    _sanitized_run_id, _run_id_redacted = _sanitize_prompt_text(source_run_id)
+    if _run_id_redacted > 0:
+        raise ResearchSessionError("invalid_research_identifier")
+
+    # Sanitize source prompt packet path from prompt packet — never trust raw paths
+    raw_source_prompt_packet_path = prompt.get("artifact_path", "")
+    if raw_source_prompt_packet_path:
+        source_prompt_packet_path, _ = _sanitize_prompt_text(str(raw_source_prompt_packet_path))
+    else:
+        source_prompt_packet_path = prompt_path.relative_to(workspace_path).as_posix()
+
+    # Generate deterministic mock response (raw)
+    raw_response_sections = _generate_deterministic_mock_response(prompt)
+
+    # Build full text for safety checks on raw response
+    raw_full_text = json.dumps(raw_response_sections, sort_keys=True)
+
+    # Run safety checks on raw response before redaction
+    checks: list[dict[str, str]] = [
+        _check_prompt_packet_loaded(prompt),
+        _check_prompt_schema_supported(prompt),
+        _check_paper_only_mode_response(prompt),
+        _check_provider_is_simulated(provider),
+        _check_no_network_provider(provider),
+        _check_no_api_key_required(provider),
+        _check_no_live_authorization_language_response(raw_full_text),
+        _check_no_order_language(raw_full_text),
+        _check_no_financial_advice_language(raw_full_text),
+        _check_no_secret_fragments(raw_full_text),
+        _check_response_bounded(raw_response_sections),
+        _check_source_path_contained_response(prompt, workspace_path),
+    ]
+
+    passed_checks = sum(1 for c in checks if c["status"] == "pass")
+    failed_checks = sum(1 for c in checks if c["status"] == "fail")
+
+    if failed_checks == 0:
+        recommendation = "provider_response_review_ready"
+    else:
+        recommendation = "manual_review_required"
+
+    # Redact dangerous phrases from response if any safety checks failed
+    if failed_checks > 0:
+        response_sections = _redact_dangerous_in_value(raw_response_sections)
+    else:
+        response_sections = raw_response_sections
+
+    # Sanitize response sections for secrets/paths
+    sanitized_sections, redacted_count = _sanitize_prompt_value(response_sections)
+
+    # Also sanitize safety check messages to avoid leaking forbidden fragments in artifact
+    sanitized_checks, _ = _sanitize_prompt_value(checks)
+
+    warnings: list[str] = []
+    if redacted_count > 0:
+        warnings.append("response_content_redacted")
+    if failed_checks > 0:
+        warnings.append("safety_checks_failed")
+
+    response_summary = f"Deterministic mock provider response for {symbol}. Paper-only. No trading signals."
+    safe_response_summary, _ = _sanitize_prompt_text(response_summary)
+
+    redaction_summary = {
+        "redacted_fragments_count": redacted_count,
+    }
+
+    artifact_path_rel = f".atlas/research/{symbol}/provider_responses/{provider_response_id}.json"
+
+    # Sanitize source provider metadata to known safe values only
+    _KNOWN_SAFE_PROVIDERS = {"deterministic", "deterministic-mock", "unknown"}
+    raw_source_provider = prompt.get("provider", "unknown")
+    source_provider = raw_source_provider if raw_source_provider in _KNOWN_SAFE_PROVIDERS else "unknown"
+
+    artifact = ProviderResponseArtifact(
+        provider_response_id=provider_response_id,
+        source_prompt_packet_id=safe_prompt_id,
+        source_run_id=source_run_id,
+        created_at=created_at,
+        symbol=symbol,
+        mode="paper",
+        provider=provider,
+        provider_status="simulated",
+        source_prompt_packet_path=source_prompt_packet_path,
+        response_summary=safe_response_summary,
+        response_sections=sanitized_sections,
+        safety_checks=sanitized_checks,
+        passed_checks=passed_checks,
+        failed_checks=failed_checks,
+        recommendation=recommendation,
+        redaction_summary=redaction_summary,
+        warnings=warnings,
+        artifact_path=artifact_path_rel,
+        metadata={
+            "provider_requested": provider,
+            "source_provider": source_provider,
+        },
+    )
+
+    # Persist
+    responses_dir = workspace_path / RESEARCH_DIR / symbol / "provider_responses"
+    responses_dir.mkdir(parents=True, exist_ok=True)
+    response_file = responses_dir / f"{provider_response_id}.json"
+    _write_provider_response_safe_json(response_file, artifact)
+
+    # Rebuild with final artifact_path
+    artifact = ProviderResponseArtifact(
+        provider_response_id=artifact.provider_response_id,
+        source_prompt_packet_id=artifact.source_prompt_packet_id,
+        source_run_id=artifact.source_run_id,
+        created_at=artifact.created_at,
+        symbol=artifact.symbol,
+        mode=artifact.mode,
+        provider=artifact.provider,
+        provider_status=artifact.provider_status,
+        source_prompt_packet_path=artifact.source_prompt_packet_path,
+        response_summary=artifact.response_summary,
+        response_sections=artifact.response_sections,
+        safety_checks=artifact.safety_checks,
+        passed_checks=artifact.passed_checks,
+        failed_checks=artifact.failed_checks,
+        recommendation=artifact.recommendation,
+        redaction_summary=artifact.redaction_summary,
+        warnings=artifact.warnings,
+        artifact_path=response_file.relative_to(workspace_path).as_posix(),
+        metadata=artifact.metadata,
+    )
+
+    result: dict[str, Any] = {
+        "schema_version": artifact.schema_version,
+        "provider_response_id": artifact.provider_response_id,
+        "source_prompt_packet_id": artifact.source_prompt_packet_id,
+        "source_run_id": artifact.source_run_id,
+        "created_at": artifact.created_at.isoformat(),
+        "symbol": artifact.symbol,
+        "mode": artifact.mode,
+        "provider": artifact.provider,
+        "provider_status": artifact.provider_status,
+        "source_prompt_packet_path": artifact.source_prompt_packet_path,
+        "response_summary": artifact.response_summary,
+        "response_sections": artifact.response_sections,
+        "safety_checks": artifact.safety_checks,
+        "passed_checks": artifact.passed_checks,
+        "failed_checks": artifact.failed_checks,
+        "recommendation": artifact.recommendation,
+        "redaction_summary": artifact.redaction_summary,
+        "warnings": artifact.warnings,
+        "metadata": artifact.metadata,
+        "artifact_path": artifact.artifact_path,
+    }
+
+    # Log safe event — sanitize payload strings as defense-in-depth
+    if event_logger is not None:
+        payload = {
+            "provider_response_id": provider_response_id,
+            "source_prompt_packet_id": safe_prompt_id,
+            "source_run_id": source_run_id,
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": provider,
+            "provider_status": "simulated",
+            "recommendation": recommendation,
+            "artifact_path": artifact.artifact_path,
+            "status": "created",
+            "schema_version": artifact.schema_version,
+        }
+        safe_payload, _ = _sanitize_prompt_value(payload)
+        event_logger.write(
+            "research_provider_response_created",
+            run_id=provider_response_id,
+            command="atlas research simulate-provider",
+            mode="paper",
+            payload=safe_payload,
+        )
+
+    return result
+
+
+def _write_provider_response_safe_json(path: Path, artifact: ProviderResponseArtifact) -> None:
+    data: dict[str, Any] = {
+        "schema_version": artifact.schema_version,
+        "provider_response_id": artifact.provider_response_id,
+        "source_prompt_packet_id": artifact.source_prompt_packet_id,
+        "source_run_id": artifact.source_run_id,
+        "created_at": artifact.created_at.isoformat(),
+        "symbol": artifact.symbol,
+        "mode": artifact.mode,
+        "provider": artifact.provider,
+        "provider_status": artifact.provider_status,
+        "source_prompt_packet_path": artifact.source_prompt_packet_path,
+        "response_summary": artifact.response_summary,
+        "response_sections": artifact.response_sections,
+        "safety_checks": artifact.safety_checks,
+        "passed_checks": artifact.passed_checks,
+        "failed_checks": artifact.failed_checks,
+        "recommendation": artifact.recommendation,
+        "redaction_summary": artifact.redaction_summary,
+        "warnings": artifact.warnings,
+        "metadata": artifact.metadata,
+        "artifact_path": artifact.artifact_path,
+    }
+    path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")

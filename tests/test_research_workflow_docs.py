@@ -89,6 +89,10 @@ class TestReadmeResearchCommands:
         text = _read("README.md")
         assert "atlas research prompt" in text.lower()
 
+    def test_readme_mentions_simulate_provider_command(self) -> None:
+        text = _read("README.md")
+        assert "atlas research simulate-provider" in text.lower()
+
 
 class TestReadmeResearchWording:
     def test_paper_only_mentioned(self) -> None:
@@ -178,6 +182,13 @@ class TestArchitectureResearchWorkflow:
         section = _extract_section(text, "## Research Workflow")
         lower = section.lower()
         assert "prompt" in lower
+        assert "does not call llms" in lower or "does not call" in lower
+
+    def test_simulate_provider_documented(self) -> None:
+        text = _read("docs/architecture.md")
+        section = _extract_section(text, "## Research Workflow")
+        lower = section.lower()
+        assert "simulate-provider" in lower
         assert "does not call llms" in lower or "does not call" in lower
 
     def test_progression_described(self) -> None:

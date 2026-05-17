@@ -524,6 +524,19 @@ Safety First:
         help="Maximum characters for user context. Default: 8000, max: 20000.",
     )
 
+    research_simulate = research_sub.add_parser(
+        "simulate-provider",
+        help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
+        description="Simulate a deterministic provider response from an existing prompt packet artifact. Local-only. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_simulate.add_argument("prompt_packet_id", help="Source prompt packet ID.")
+    research_simulate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_simulate.add_argument(
+        "--provider",
+        default="deterministic-mock",
+        help="Simulation provider. Only 'deterministic-mock' is supported. Default: deterministic-mock.",
+    )
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -3719,7 +3732,10 @@ def main(argv: list[str] | None = None) -> int:
             "artifact_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
             "ambiguous_run_id": ("invalid_research_id", "Invalid research identifier."),
             "ambiguous_plan_id": ("invalid_research_id", "Invalid research identifier."),
+            "ambiguous_prompt_packet_id": ("invalid_research_id", "Invalid research identifier."),
             "plan_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "prompt_packet_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "prompt_packet_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
             "evaluation_data_invalid": ("evaluation_data_invalid", "Evaluation data is invalid."),
             "limit_must_be_positive": ("research_error", "Research command failed."),
             "run_id must not be empty": ("invalid_research_id", "Invalid research identifier."),
@@ -4494,6 +4510,14 @@ def main(argv: list[str] | None = None) -> int:
                             eid = e.get("evaluation_id", "")
                             rec = e.get("recommendation", "")
                             print(f"    Evaluation: {eid} — {rec}")
+                    for prompt in entry.get("prompts", []):
+                        prompt_id = prompt.get("prompt_packet_id", "")
+                        print(f"  Prompt: {prompt_id}")
+                        for pr in prompt.get("provider_responses", []):
+                            pr_id = pr.get("provider_response_id", "")
+                            provider = pr.get("provider", "")
+                            rec = pr.get("recommendation", "")
+                            print(f"    Provider response: {pr_id} ({provider}) — {rec}")
             timeline_warnings = result.get("warnings", [])
             if timeline_warnings:
                 print("\nWarnings:")
@@ -4623,6 +4647,103 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 _research_error_text("research prompt", "research command failed")
             return 1
+    if args.command == "research" and args.research_command == "simulate-provider":
+        try:
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                UnsupportedArtifactSchemaError,
+                UnsupportedResearchProviderError,
+                simulate_provider_response,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research simulate-provider skipped safely: no workspace found")
+                return 1
+
+            safe_prompt_id = validate_run_id(args.prompt_packet_id)
+
+            config = AtlasConfig.from_env()
+            event_logger = EventLogger(config.events_dir)
+
+            result = simulate_provider_response(
+                workspace_path=ws,
+                prompt_packet_id=safe_prompt_id,
+                provider=args.provider,
+                event_logger=event_logger,
+            )
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                _research_error_text("research simulate-provider", "invalid research symbol")
+            return 1
+        except UnsupportedResearchProviderError:
+            if args.json:
+                import json
+
+                print(
+                    json.dumps(
+                        {"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."},
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print("research simulate-provider skipped safely: unsupported research provider")
+            return 1
+        except UnsupportedArtifactSchemaError:
+            if args.json:
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
+            else:
+                _research_error_text("research simulate-provider", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research simulate-provider", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research simulate-provider", "research command failed")
+            return 1
+        if args.json:
+            import json
+
+            out = {
+                "ok": True,
+                "status": "research_provider_response_created",
+                "symbol": result["symbol"],
+                "source_prompt_packet_id": result["source_prompt_packet_id"],
+                "provider_response_id": result["provider_response_id"],
+                "provider": result["provider"],
+                "recommendation": result["recommendation"],
+                "artifact_path": result["artifact_path"],
+                "warnings": result.get("warnings", []),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Simulated provider response created")
+            print(f"  Symbol: {result['symbol']}")
+            print(f"  Mode: {result['mode']}")
+            print(f"  Provider: {result['provider']}")
+            print(f"  Source Prompt Packet ID: {result['source_prompt_packet_id']}")
+            print(f"  Provider Response ID: {result['provider_response_id']}")
+            print(f"  Recommendation: {result['recommendation']}")
+            print(f"  Artifact: {result['artifact_path']}")
+        return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
             print(f"notification skipped safely: file not found: {args.file}")

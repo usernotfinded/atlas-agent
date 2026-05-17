@@ -36,8 +36,9 @@ The enabled research provider is `deterministic`.
 | `atlas research timeline` | Read-only lineage/timeline of artifact relationships | No | Yes | No |
 | `atlas research providers` | Read-only discovery of available research providers | No | Yes | No |
 | `atlas research prompt RUN_ID` | Generate a sanitized prompt packet from a research artifact | Yes | No | No |
+| `atlas research simulate-provider PROMPT_PACKET_ID` | Simulate a deterministic provider response from a prompt packet | Yes | No | No |
 
-`list`, `show`, `summary`, `check-artifacts`, `timeline`, and `providers` are read-only. `run`, `plan`, `verify`, `evaluate`, and `prompt` write local artifacts only. None of them touch live trading.
+`list`, `show`, `summary`, `check-artifacts`, `timeline`, and `providers` are read-only. `run`, `plan`, `verify`, `evaluate`, `prompt`, and `simulate-provider` write local artifacts only. None of them touch live trading.
 
 ## Typical Flow
 
@@ -73,6 +74,8 @@ What each step produces:
 - `verify` runs deterministic checks on the plan and creates a verification artifact.
 - `evaluate` loads local CSV data and creates an evaluation artifact with data metrics.
 - `summary` aggregates counts and latest IDs across all artifacts and plans.
+- `prompt` creates a sanitized, bounded prompt packet artifact for future provider work.
+- `simulate-provider` creates a deterministic mock provider response artifact from a prompt packet.
 
 ## Artifacts
 
@@ -117,6 +120,26 @@ Saved at:
 ```
 
 Contains: `evaluation_id`, `source_plan_id`, `source_run_id`, `symbol`, `mode`, `provider`, `source_plan_path`, `data_source`, `data_summary`, `checks`, `metrics`, `recommendation`, `warnings`, `metadata`.
+
+### Prompt packet artifact
+
+Saved at:
+
+```
+.atlas/research/<SYMBOL>/prompts/<prompt_packet_id>.json
+```
+
+Contains: `prompt_packet_id`, `source_run_id`, `symbol`, `mode`, `provider`, `source_artifact_path`, `max_context_chars`, `system_boundary`, `user_context`, `allowed_uses`, `forbidden_uses`, `redaction_summary`, `warnings`, `metadata`.
+
+### Provider response artifact
+
+Saved at:
+
+```
+.atlas/research/<SYMBOL>/provider_responses/<provider_response_id>.json
+```
+
+Contains: `provider_response_id`, `source_prompt_packet_id`, `source_run_id`, `symbol`, `mode`, `provider`, `provider_status`, `source_prompt_packet_path`, `response_summary`, `response_sections`, `safety_checks`, `passed_checks`, `failed_checks`, `recommendation`, `redaction_summary`, `warnings`, `metadata`.
 
 ### Path and event safety
 
@@ -239,12 +262,34 @@ Generate a sanitized, bounded prompt packet artifact from an existing research a
 - Does not modify source research artifacts.
 - Supports `--json`.
 
+### `atlas research simulate-provider PROMPT_PACKET_ID`
+
+Simulate a deterministic provider response from an existing prompt packet artifact.
+
+- Loads an existing prompt packet by `prompt_packet_id`.
+- Produces a provider response artifact under `.atlas/research/<SYMBOL>/provider_responses/<provider_response_id>.json`.
+- Only `deterministic-mock` provider is supported. Unsupported providers fail closed.
+- Generates bounded response sections: `scope_review`, `context_summary`, `risk_review`, `invalidation_review`, `paper_only_review`, `follow_up_questions`.
+- Runs deterministic safety checks: `prompt_packet_loaded`, `prompt_schema_supported`, `paper_only_mode`, `provider_is_simulated`, `no_network_provider`, `no_api_key_required`, `no_live_authorization_language`, `no_order_language`, `no_financial_advice_language`, `no_secret_fragments`, `response_bounded`, `source_path_contained`.
+- Redacts unsafe fragments from response content if safety checks fail.
+- Recommendation values:
+  - `provider_response_review_ready`
+  - `manual_review_required`
+- Does not call LLMs.
+- Does not call APIs or network.
+- Does not read API keys.
+- Does not submit orders.
+- Does not create approvals or pending orders.
+- Does not authorize live trading.
+- Does not modify source prompt packet artifacts.
+- Supports `--json` and `--provider deterministic-mock`.
+
 ### `./scripts/demo_research_workflow.sh`
 
 End-to-end temporary-workspace demo of the full research chain.
 
 - Creates a temporary workspace, runs `init`, `discipline setup`, and `config set`.
-- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers` -> `prompt`.
+- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers` -> `prompt` -> `simulate-provider`.
 - Validates JSON outputs, artifact existence, workspace-relative paths, artifact health checks, lineage/timeline reconstruction, and safety invariants.
 - Verifies no pending orders are created.
 - Does not require broker credentials.

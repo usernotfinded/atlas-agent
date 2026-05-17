@@ -35,10 +35,11 @@ For a dedicated command reference with full artifact schemas and safety boundari
 - **`atlas research check-artifacts`**: Read-only health check of local artifacts. Detects malformed JSON, unsupported/legacy schema versions, duplicate IDs, symbol mismatches, and unsafe paths. Does not modify artifacts.
 - **`atlas research timeline`**: Read-only lineage view linking research artifacts to plans, verifications, and evaluations. Does not modify artifacts, repair lineage, or call brokers.
 - **`atlas research prompt RUN_ID`**: Generates a sanitized, bounded prompt packet artifact from an existing research artifact. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.
+- **`atlas research simulate-provider PROMPT_PACKET_ID`**: Simulates a deterministic provider response from an existing prompt packet artifact. Local-only. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.
 
 ### Safety boundaries
 
-The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading. The `verify` command is paper-only and does not create approvals, pending orders, or authorize live trading. The `evaluate` command is paper-only, uses local data, and does not create approvals, pending orders, or authorize live trading. The `summary` command is strictly read-only and does not create artifacts, pending orders, or approvals. The `prompt` command writes only a new prompt packet artifact and does not modify source research artifacts, create plans, verifications, evaluations, pending orders, or approvals.
+The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading. The `verify` command is paper-only and does not create approvals, pending orders, or authorize live trading. The `evaluate` command is paper-only, uses local data, and does not create approvals, pending orders, or authorize live trading. The `summary` command is strictly read-only and does not create artifacts, pending orders, or approvals. The `prompt` command writes only a new prompt packet artifact and does not modify source research artifacts, create plans, verifications, evaluations, pending orders, or approvals. The `simulate-provider` command writes only a new provider response artifact and does not modify source prompt packet artifacts, create plans, verifications, evaluations, pending orders, or approvals.
 
 ### Research artifact
 
@@ -136,6 +137,27 @@ Required fields:
 Events:
 - `event_type`: `research_prompt_packet_created`
 - Safe event metadata with bounded payload keys only; no prompt body, user_context, or source artifact body in event payload.
+
+### Provider response artifact
+
+Saved at `.atlas/research/<SYMBOL>/provider_responses/<provider_response_id>.json`.
+
+Created by `simulate-provider` from an existing prompt packet artifact. Contains a deterministic mock provider response:
+- `response_sections`: bounded sections including `scope_review`, `context_summary`, `risk_review`, `invalidation_review`, `paper_only_review`, `follow_up_questions`.
+- `safety_checks`: deterministic checks for prompt packet validity, paper-only mode, simulated provider, no network/API usage, no disallowed language, no secret fragments, response boundedness, and source path containment.
+- `redaction_summary`: safe counts only (`redacted_fragments_count`).
+
+Required fields:
+- `provider_response_id`, `source_prompt_packet_id`, `source_run_id`
+- `symbol`, `mode`, `provider`, `provider_status`
+- `source_prompt_packet_path`, `response_summary`, `response_sections`
+- `safety_checks`, `passed_checks`, `failed_checks`
+- `recommendation` (`provider_response_review_ready` or `manual_review_required`)
+- `redaction_summary`, `warnings`, `metadata`, `schema_version`
+
+Events:
+- `event_type`: `research_provider_response_created`
+- Safe event metadata with bounded payload keys only; no response body, prompt body, or source artifact body in event payload.
 
 ### Summary/index output
 
