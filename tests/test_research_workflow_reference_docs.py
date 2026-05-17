@@ -110,6 +110,35 @@ class TestReferenceDocCommands:
         text = _read("docs/research-workflow.md")
         assert "scripts/demo_research_workflow.sh" in text
 
+    def test_mentions_prompt_command(self) -> None:
+        text = _read("docs/research-workflow.md")
+        assert "atlas research prompt" in text.lower()
+
+    def test_prompt_no_llm_call(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "prompt" in lower and "does not call llms" in lower
+
+    def test_prompt_no_api_keys(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "prompt" in lower and "does not read api keys" in lower
+
+    def test_prompt_no_network(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "prompt" in lower and "does not" in lower and "network" in lower
+
+    def test_prompt_no_orders(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "prompt" in lower and "does not submit orders" in lower
+
+    def test_prompt_paper_only(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "prompt" in lower and "paper-only" in lower
+
 
 class TestReferenceDocArtifactPaths:
     def test_research_artifact_path(self) -> None:
@@ -296,6 +325,11 @@ class TestReferenceDocProviders:
         text = _read("docs/research-workflow.md")
         lower = text.lower()
         assert "no broker credentials are required" in lower
+
+    def test_prompt_artifact_path_documented(self) -> None:
+        text = _read("docs/research-workflow.md")
+        lower = text.lower()
+        assert "prompts" in lower and ".json" in lower
 
 
 class TestReadmeLinksToReferenceDoc:

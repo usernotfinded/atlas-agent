@@ -510,6 +510,20 @@ Safety First:
     )
     research_providers.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_prompt = research_sub.add_parser(
+        "prompt",
+        help="Generate a sanitized prompt packet from a research artifact. Local-only. Does not call LLMs or network.",
+        description="Generate a sanitized, bounded prompt packet artifact from an existing research artifact. Local-only. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_prompt.add_argument("run_id", help="Source research artifact run_id.")
+    research_prompt.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_prompt.add_argument(
+        "--max-context-chars",
+        type=int,
+        default=8000,
+        help="Maximum characters for user context. Default: 8000, max: 20000.",
+    )
+
     notify = subparsers.add_parser("notify")
     notify_sub = notify.add_subparsers(dest="notify_command")
     notify_clickup = notify_sub.add_parser("clickup")
@@ -3711,6 +3725,9 @@ def main(argv: list[str] | None = None) -> int:
             "run_id must not be empty": ("invalid_research_id", "Invalid research identifier."),
             "run_id contains unsafe characters": ("invalid_research_id", "Invalid research identifier."),
             "run_id exceeds maximum length": ("invalid_research_id", "Invalid research identifier."),
+            "invalid_max_context_chars": ("invalid_max_context_chars", "Invalid max-context-chars value."),
+            "max_context_chars_exceeds_limit": ("invalid_max_context_chars", "Invalid max-context-chars value."),
+            "invalid_research_symbol": ("invalid_research_symbol", "Invalid research symbol."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
 
@@ -4519,6 +4536,93 @@ def main(argv: list[str] | None = None) -> int:
                 print()
             print("External LLM research providers are not enabled.")
         return 0
+    if args.command == "research" and args.research_command == "prompt":
+        try:
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                UnsupportedArtifactSchemaError,
+                generate_prompt_packet,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research prompt skipped safely: no workspace found")
+                return 1
+
+            safe_run_id = validate_run_id(args.run_id)
+
+            max_chars = args.max_context_chars
+            if not isinstance(max_chars, int) or max_chars <= 0 or max_chars > 20000:
+                if args.json:
+                    _research_error_json("invalid_max_context_chars", "Invalid max-context-chars value.")
+                else:
+                    _research_error_text("research prompt", "invalid max-context-chars value")
+                return 1
+
+            config = AtlasConfig.from_env()
+            event_logger = EventLogger(config.events_dir)
+
+            packet = generate_prompt_packet(
+                ws,
+                safe_run_id,
+                max_context_chars=max_chars,
+                event_logger=event_logger,
+            )
+
+            if args.json:
+                import json
+
+                out = {
+                    "ok": True,
+                    "status": "research_prompt_packet_created",
+                    "symbol": packet["symbol"],
+                    "source_run_id": packet["source_run_id"],
+                    "prompt_packet_id": packet["prompt_packet_id"],
+                    "artifact_path": packet["artifact_path"],
+                    "warnings": packet.get("warnings", []),
+                }
+                print(json.dumps(out, indent=2, sort_keys=True))
+            else:
+                print("Research prompt packet created")
+                print(f"Symbol: {packet['symbol']}")
+                print(f"Mode: {packet['mode']}")
+                print(f"Source Run ID: {packet['source_run_id']}")
+                print(f"Prompt Packet ID: {packet['prompt_packet_id']}")
+                print(f"Artifact: {packet['artifact_path']}")
+            return 0
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                _research_error_text("research prompt", "invalid research symbol")
+            return 1
+        except UnsupportedArtifactSchemaError:
+            if args.json:
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
+            else:
+                _research_error_text("research prompt", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research prompt", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research prompt", "research command failed")
+            return 1
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
             print(f"notification skipped safely: file not found: {args.file}")

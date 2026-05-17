@@ -115,6 +115,18 @@ assert_no_secrets_in_output() {
   fi
 }
 
+assert_no_forbidden_fragments() {
+  local text="$1"
+  local label="$2"
+  local fragments=("Authorization" "Bearer" "APCA" "SECRET" "TOKEN" "PASSWORD" "API_KEY" "sk-" "/Users/" "/private/var/" "broker.example.com")
+  for frag in "${fragments[@]}"; do
+    if grep -qF "$frag" <<<"$text"; then
+      printf 'FAIL: %s contains forbidden fragment: %s\n' "$label" "$frag" >&2
+      exit 1
+    fi
+  done
+}
+
 printf 'Atlas Agent research workflow demo\n'
 printf 'Workspace: %s\n' "$WORKSPACE"
 printf 'Symbol: %s\n' "$DEMO_SYMBOL"
@@ -366,9 +378,32 @@ if [ "$PROVIDERS_HAS_LLM" != "yes" ]; then
 fi
 assert_no_pending_orders
 
-# 11. Safety checks
+# 11. Research prompt
+printf '\n--- Research prompt ---\n'
+PROMPT_OUTPUT="$(atlas research prompt "$RUN_ID" --json)"
+assert_no_absolute_paths "$PROMPT_OUTPUT"
+assert_no_secrets_in_output "$PROMPT_OUTPUT"
+assert_no_forbidden_fragments "$PROMPT_OUTPUT" "prompt CLI output"
+assert_ok "$PROMPT_OUTPUT" "research prompt"
+PROMPT_STATUS="$(json_field "$PROMPT_OUTPUT" status)"
+if [ "$PROMPT_STATUS" != "research_prompt_packet_created" ]; then
+  printf 'FAIL: unexpected prompt status: %s\n' "$PROMPT_STATUS" >&2
+  exit 1
+fi
+PROMPT_PACKET_ID="$(json_field "$PROMPT_OUTPUT" prompt_packet_id)"
+if [ -z "$PROMPT_PACKET_ID" ]; then
+  printf 'FAIL: prompt_packet_id is empty\n' >&2
+  exit 1
+fi
+PROMPT_ARTIFACT_PATH="$(json_field "$PROMPT_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$PROMPT_ARTIFACT_PATH" "prompt packet artifact"
+# Verify artifact has no forbidden fragments
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$PROMPT_ARTIFACT_PATH")" "prompt packet artifact"
+assert_no_pending_orders
+
+# 12. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT"
 
 printf '\nResearch workflow demo complete.\n'

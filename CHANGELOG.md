@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Local research prompt packet command (`atlas research prompt RUN_ID`).
+- Sanitized prompt packet artifacts (`.atlas/research/<SYMBOL>/prompts/<id>.json`) for future provider work.
+- Bounded context with `--max-context-chars` (default 8000, max 20000).
+- Static redaction of paths, secrets, Bearer tokens, auth headers, `sk-` tokens, APCA markers, and broker hosts.
+- Redaction summary with safe counts only (`redacted_fragments_count`, `truncated`).
+- `system_boundary` and `forbidden_uses` fields to constrain artifact usage.
+- Tests for redaction, truncation, invalid max-context-chars, no API/network behavior, and no broker/approval paths.
+- Event type `research_prompt_packet_created` registered in event schema.
+
+### Changed
+- Research workflow documentation now documents the `prompt` command.
+- Architecture docs now include prompt packet artifact section.
+
+### Safety / Compatibility
+- Prompt packet command does not call LLMs.
+- Prompt packet command does not call network.
+- Prompt packet command does not read API keys.
+- Prompt packet command does not submit orders.
+- Prompt packet command does not create approvals or pending orders.
+- Prompt packet command does not authorize live trading.
+- Prompt packet command does not modify source research artifacts.
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- Research workflow remains paper-only and analysis-only.
+
 ## [0.5.7.dev11] - 2026-05-16
 
 ### Added

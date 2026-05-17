@@ -63,7 +63,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 
 ## Current Status (v0.5.7.dev11)
 
-Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit is disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
+Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -126,6 +126,9 @@ View artifact lineage/timeline:
 
 Show available research providers:
 - `atlas research providers`
+
+Generate a sanitized prompt packet from a research artifact:
+- `atlas research prompt RUN_ID`
 
 ## Demos
 

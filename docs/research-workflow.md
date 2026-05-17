@@ -35,8 +35,9 @@ The enabled research provider is `deterministic`.
 | `atlas research check-artifacts` | Read-only health check of local artifacts | No | Yes | No |
 | `atlas research timeline` | Read-only lineage/timeline of artifact relationships | No | Yes | No |
 | `atlas research providers` | Read-only discovery of available research providers | No | Yes | No |
+| `atlas research prompt RUN_ID` | Generate a sanitized prompt packet from a research artifact | Yes | No | No |
 
-`list`, `show`, `summary`, and `check-artifacts` are read-only. `run`, `plan`, `verify`, and `evaluate` write local artifacts only. None of them touch live trading.
+`list`, `show`, `summary`, `check-artifacts`, `timeline`, and `providers` are read-only. `run`, `plan`, `verify`, `evaluate`, and `prompt` write local artifacts only. None of them touch live trading.
 
 ## Typical Flow
 
@@ -217,12 +218,33 @@ Read-only discovery of available research providers.
 - Does not authorize live trading.
 - Supports `--json`.
 
+### `atlas research prompt RUN_ID`
+
+Generate a sanitized, bounded prompt packet artifact from an existing research artifact.
+
+- Loads an existing research artifact by `run_id`.
+- Produces a prompt packet under `.atlas/research/<SYMBOL>/prompts/<prompt_packet_id>.json`.
+- Includes bounded `user_context` (symbol, summary, thesis, market context, risks, invalidation conditions, paper-only plan, citations) useful for future LLM research provider work.
+- `system_boundary` explicitly states: paper-only, analysis-only, no trading advice, no live trading authorization, no broker submit, no pending orders, no approvals, no API/network call required.
+- `allowed_uses` and `forbidden_uses` constrain how the packet may be used.
+- Redacts unsafe fragments: absolute paths, secrets, API keys, Bearer tokens, auth headers, `sk-` tokens, APCA markers, broker hosts.
+- `redaction_summary` reports safe counts only (`redacted_fragments_count`, `truncated`).
+- Supports `--max-context-chars` (default: 8000, maximum: 20000). Invalid values fail closed.
+- Does not call LLMs.
+- Does not call network.
+- Does not read API keys.
+- Does not submit orders.
+- Does not create approvals or pending orders.
+- Does not authorize live trading.
+- Does not modify source research artifacts.
+- Supports `--json`.
+
 ### `./scripts/demo_research_workflow.sh`
 
 End-to-end temporary-workspace demo of the full research chain.
 
 - Creates a temporary workspace, runs `init`, `discipline setup`, and `config set`.
-- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers`.
+- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers` -> `prompt`.
 - Validates JSON outputs, artifact existence, workspace-relative paths, artifact health checks, lineage/timeline reconstruction, and safety invariants.
 - Verifies no pending orders are created.
 - Does not require broker credentials.

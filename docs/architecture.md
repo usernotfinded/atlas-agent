@@ -34,10 +34,11 @@ For a dedicated command reference with full artifact schemas and safety boundari
 - **`atlas research summary`**: Read-only overview of all research artifacts and paper plans. Does not create artifacts.
 - **`atlas research check-artifacts`**: Read-only health check of local artifacts. Detects malformed JSON, unsupported/legacy schema versions, duplicate IDs, symbol mismatches, and unsafe paths. Does not modify artifacts.
 - **`atlas research timeline`**: Read-only lineage view linking research artifacts to plans, verifications, and evaluations. Does not modify artifacts, repair lineage, or call brokers.
+- **`atlas research prompt RUN_ID`**: Generates a sanitized, bounded prompt packet artifact from an existing research artifact. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.
 
 ### Safety boundaries
 
-The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading. The `verify` command is paper-only and does not create approvals, pending orders, or authorize live trading. The `evaluate` command is paper-only, uses local data, and does not create approvals, pending orders, or authorize live trading. The `summary` command is strictly read-only and does not create artifacts, pending orders, or approvals.
+The research workflow does not submit orders, does not create pending orders, does not create approvals, does not call brokers, and does not authorize live trading. The `verify` command is paper-only and does not create approvals, pending orders, or authorize live trading. The `evaluate` command is paper-only, uses local data, and does not create approvals, pending orders, or authorize live trading. The `summary` command is strictly read-only and does not create artifacts, pending orders, or approvals. The `prompt` command writes only a new prompt packet artifact and does not modify source research artifacts, create plans, verifications, evaluations, pending orders, or approvals.
 
 ### Research artifact
 
@@ -113,6 +114,28 @@ Required fields:
 Events:
 - `event_type`: `research_evaluation_created`
 - Safe event metadata with bounded payload keys only; no full evaluation body in event payload.
+
+### Prompt packet artifact
+
+Saved at `.atlas/research/<SYMBOL>/prompts/<prompt_packet_id>.json`.
+
+Created by `prompt` from an existing research artifact. Contains sanitized, bounded context for future provider work:
+- `system_boundary`: paper-only, analysis-only, no trading advice, no live trading authorization, no broker submit, no pending orders, no approvals, no API/network call required.
+- `user_context`: bounded symbol, summary, thesis, market_context, risks, invalidation_conditions, paper_only_plan, citations.
+- `allowed_uses` and `forbidden_uses`: constrain permitted usage.
+- `redaction_summary`: safe counts only (`redacted_fragments_count`, `truncated`).
+
+Required fields:
+- `prompt_packet_id`, `source_run_id`
+- `symbol`, `mode`, `provider`
+- `source_artifact_path`, `max_context_chars`
+- `system_boundary`, `user_context`
+- `allowed_uses`, `forbidden_uses`
+- `redaction_summary`, `warnings`, `metadata`, `schema_version`
+
+Events:
+- `event_type`: `research_prompt_packet_created`
+- Safe event metadata with bounded payload keys only; no prompt body, user_context, or source artifact body in event payload.
 
 ### Summary/index output
 
