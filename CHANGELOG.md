@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Made all local research CLI commands bypass global config/secret loading.
+- Removed handler-level `AtlasConfig.from_env` and `get_config` calls from `research run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, and `review-response`.
+
+### Added
+- Regression tests proving local research commands do not call `AtlasConfig.from_env` or load `.env.atlas`.
+
+### Changed
+- Updated `research timeline` help text to reflect the current full lineage including dossiers.
+
+### Safety / Compatibility
+- No broker/live-trading behavior changes.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+- `research market` remains config-loaded as a legacy command.
+
 ## [0.5.7.dev14] - 2026-05-16
 
 ### Added

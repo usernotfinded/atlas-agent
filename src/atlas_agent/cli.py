@@ -496,7 +496,7 @@ Safety First:
     research_timeline = research_sub.add_parser(
         "timeline",
         help="Show read-only research artifact lineage/timeline. Does not modify artifacts.",
-        description="Show read-only research artifact lineage/timeline. Reconstructs relationships between research artifacts, paper plans, verifications, and evaluations. Does not modify artifacts.",
+        description="Show read-only research artifact lineage/timeline. Reconstructs relationships between research artifacts, paper plans, verifications, evaluations, prompt packets, provider responses, response reviews, and dossiers. Does not modify artifacts.",
     )
     research_timeline.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
     research_timeline.add_argument("--symbol", help="Filter by symbol.")
@@ -2295,8 +2295,24 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    # Configless local commands: resolve workspace only, never load secrets
-    if args.command == "research" and getattr(args, "research_command", None) == "dossier":
+    # Configless local research commands: resolve workspace only, never load secrets
+    _CONFIGLESS_RESEARCH_COMMANDS = {
+        "run",
+        "list",
+        "show",
+        "plan",
+        "verify",
+        "evaluate",
+        "summary",
+        "check-artifacts",
+        "timeline",
+        "providers",
+        "prompt",
+        "simulate-provider",
+        "review-response",
+        "dossier",
+    }
+    if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
         if resolution.path is not None:
             os.chdir(resolution.path)
@@ -3819,13 +3835,11 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     print("research run skipped safely: no workspace found")
                 return 1
-            from atlas_agent.config import get_config
-            config = get_config()
-            event_logger = EventLogger(config.events_dir)
+            event_logger = EventLogger(ws / "events")
             artifact = run_research_session(
                 symbol=args.symbol,
                 workspace_path=ws,
-                memory_dir=config.memory_dir,
+                memory_dir=ws / "memory",
                 event_logger=event_logger,
                 provider_name=args.provider,
                 use_memory=not args.no_memory,
@@ -4059,9 +4073,7 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     print("research plan skipped safely: no workspace found")
                 return 1
-            from atlas_agent.config import get_config
-            config = get_config()
-            event_logger = EventLogger(config.events_dir)
+            event_logger = EventLogger(ws / "events")
             plan = create_paper_plan(
                 workspace_path=ws,
                 run_id=args.run_id,
@@ -4215,9 +4227,7 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     print("research verify skipped safely: no workspace found")
                 return 1
-            from atlas_agent.config import get_config
-            config = get_config()
-            event_logger = EventLogger(config.events_dir)
+            event_logger = EventLogger(ws / "events")
             verification = verify_paper_plan(
                 workspace_path=ws,
                 plan_id=args.plan_id,
@@ -4306,9 +4316,7 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     print("research evaluate skipped safely: no workspace found")
                 return 1
-            from atlas_agent.config import get_config
-            config = get_config()
-            event_logger = EventLogger(config.events_dir)
+            event_logger = EventLogger(ws / "events")
             evaluation = evaluate_paper_plan(
                 workspace_path=ws,
                 plan_id=args.plan_id,
@@ -4638,8 +4646,7 @@ def main(argv: list[str] | None = None) -> int:
                     _research_error_text("research prompt", "invalid max-context-chars value")
                 return 1
 
-            config = AtlasConfig.from_env()
-            event_logger = EventLogger(config.events_dir)
+            event_logger = EventLogger(ws / "events")
 
             packet = generate_prompt_packet(
                 ws,
@@ -4718,8 +4725,7 @@ def main(argv: list[str] | None = None) -> int:
 
             safe_prompt_id = validate_run_id(args.prompt_packet_id)
 
-            config = AtlasConfig.from_env()
-            event_logger = EventLogger(config.events_dir)
+            event_logger = EventLogger(ws / "events")
 
             result = simulate_provider_response(
                 workspace_path=ws,
@@ -4814,8 +4820,7 @@ def main(argv: list[str] | None = None) -> int:
 
             safe_response_id = validate_run_id(args.provider_response_id)
 
-            config = AtlasConfig.from_env()
-            event_logger = EventLogger(config.events_dir)
+            event_logger = EventLogger(ws / "events")
 
             result = review_provider_response(
                 workspace_path=ws,
