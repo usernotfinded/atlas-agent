@@ -2,16 +2,19 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PYTHON_BIN: python3.11
+  PYTHONUNBUFFERED: "1"
+  ATLAS_CI: "1"
 
 jobs:
-  test:
+  full-gate:
     runs-on: ubuntu-latest
-    env:
-      TRADING_MODE: paper
-      ENABLE_LIVE_TRADING: "false"
-      ALLOW_GIT_COMMIT: "false"
-      ALLOW_GIT_PUSH: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,21 +22,22 @@ jobs:
           python-version: "3.11"
       - name: Install package and test dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .
-          python -m pip install pytest
-      - run: python -m pytest
-      - run: atlas --help
-      - run: atlas init demo-workspace --template routine-trader
-      - run: atlas validate
-        working-directory: demo-workspace
-      - run: atlas discipline setup --manual --yes
-        working-directory: demo-workspace
-      - run: atlas config set market.symbol DEMO-SYMBOL
-        working-directory: demo-workspace
-      - run: atlas discipline doctor
-        working-directory: demo-workspace
-      - run: atlas routine run pre_market --mode paper
-        working-directory: demo-workspace
-      - run: atlas routine run market_open --mode paper
-        working-directory: demo-workspace
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install -e .
+          python3.11 -m pip install pytest
+      - name: Version consistency
+        run: python3.11 scripts/check_version_consistency.py
+      - name: Forbidden claims scan
+        run: python3.11 scripts/check_forbidden_claims.py
+      - name: pytest
+        run: python3.11 -m pytest -q
+      - name: pip check
+        run: python3.11 -m pip check
+      - name: Demo paper workflow
+        run: ./scripts/demo_paper_workflow.sh
+      - name: Demo research workflow
+        run: ./scripts/demo_research_workflow.sh
+      - name: git diff --check
+        run: git diff --check
+      - name: Protected staged files check
+        run: python3.11 scripts/check_no_protected_staged.py

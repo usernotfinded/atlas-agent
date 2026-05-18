@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev19] - 2026-05-18
+
+### Added
+- `.github/workflows/ci.yml`: full safety/test gate on push/PR to main, including pytest, pip check, demo workflows, version/claims checks.
+- `.github/workflows/research-ci.yml`: research/sandbox gate on path-filtered push/PR, running `./scripts/release_check.sh --research`.
+- `scripts/ci_check.sh`: local CI parity helper that mirrors the CI command sequence (no `git diff --cached --check`).
+- CI status badge in README.
+- Static tests verifying workflow contents, safety constraints, and absence of secrets.
+
+### Changed
+- `.github/workflows/ci.yml` updated to run the full release-equivalent gate remotely.
+- README updated with CI workflow documentation and recommended check loops.
+
+### Safety / Compatibility
+- CI does not require secrets, broker credentials, or `.env.atlas`.
+- CI does not call real LLM/API/network providers.
+- No changes to broker behavior, live trading gates, order routing, approval manager, risk manager, or config secret loading.
+
 ## [0.5.7.dev18] - 2026-05-18
 
 ### Added

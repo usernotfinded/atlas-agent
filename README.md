@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/usernotfinded/atlas-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
+  <a href="https://github.com/usernotfinded/atlas-agent/actions/workflows/ci.yml"><img src="https://github.com/usernotfinded/atlas-agent/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="#broker-neutral-model"><img src="https://img.shields.io/badge/Positioning-Broker%20Neutral-blue?style=for-the-badge" alt="Broker Neutral"></a>
   <a href="docs/model-providers.md"><img src="https://img.shields.io/badge/Providers-11%2B-orange?style=for-the-badge" alt="11+ Providers"></a>
   <a href="https://github.com/usernotfinded"><img src="https://img.shields.io/badge/Built%20by-Natan%20Mucelli-blueviolet?style=for-the-badge" alt="Built by Natan Mucelli"></a>
@@ -11,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev18)** — see [release notes](docs/releases/v0.5.7.dev18.md).
+> **Current Status (v0.5.7.dev19)** — see [release notes](docs/releases/v0.5.7.dev19.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -61,7 +62,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7.dev18)
+## Current Status (v0.5.7.dev19)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 

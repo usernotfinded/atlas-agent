@@ -1,0 +1,43 @@
+name: Research CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/atlas_agent/research/**"
+      - "tests/research/**"
+      - "scripts/demo_research_workflow.sh"
+      - "scripts/research_check.sh"
+      - "scripts/release_check.sh"
+      - "docs/research-workflow.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/atlas_agent/research/**"
+      - "tests/research/**"
+      - "scripts/demo_research_workflow.sh"
+      - "scripts/research_check.sh"
+      - "scripts/release_check.sh"
+      - "docs/research-workflow.md"
+  workflow_dispatch:
+
+env:
+  PYTHON_BIN: python3.11
+  PYTHONUNBUFFERED: "1"
+  ATLAS_CI: "1"
+
+jobs:
+  research-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test dependencies
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install -e .
+          python3.11 -m pip install pytest
+      - name: Research check
+        run: ./scripts/release_check.sh --research
