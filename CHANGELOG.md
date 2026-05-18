@@ -7,24 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev14] - 2026-05-16
+
 ### Added
 - Local research dossier command: `atlas research dossier RUN_ID`.
-- Dossier artifacts that consolidate the paper-only research chain into one bounded, safe summary artifact.
-- Timeline support for dossier lineage.
+- Dossier artifacts with bounded summaries of the local paper-only research chain.
 - Health-check coverage for dossier artifacts.
-- End-to-end demo integration for dossiers.
-- Duplicate dossier ID detection in artifact health checks.
+- Timeline support for run -> dossier lineage.
+- End-to-end demo integration for dossier creation and post-dossier timeline validation.
+- Regression tests proving dossier does not load config secrets or `.env.atlas`.
 
 ### Changed
-- Research demo now validates the full chain including `dossier` and post-dossier timeline lineage.
-- Timeline now includes run -> dossier lineage.
+- Research demo now validates the extended local chain through dossier creation.
 - Artifact health checks now include dossier artifacts.
+- Timeline now includes dossier lineage.
+- Dossier command uses workspace-only dispatch instead of loading AtlasConfig or config secrets.
+
+### Fixed
+- Dossier generation no longer loads AtlasConfig.from_env or `.env.atlas`.
+- Dossier output/artifacts omit path-like and secret-like unsafe fragments.
+- Dossier command avoids broker/config secret loading while preserving workspace validation.
 
 ### Safety / Compatibility
+- No LLM/API/network behavior was enabled.
 - `dossier` uses local deterministic consolidation only.
-- Dossiers do not call external providers.
 - No API keys are read by `dossier`.
 - Research workflow remains paper-only and analysis-only.
+- Research commands do not create approvals or pending orders.
+- No live-submit default enablement.
+- No broker submit behavior expansion.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed in latest validation.
+- pip check passed.
+- Demo paper workflow passed.
+- Demo research workflow passed.
+- release_check.sh passed.
+- Protected-staged check passed.
 
 ## [0.5.7.dev13] - 2026-05-16
 
