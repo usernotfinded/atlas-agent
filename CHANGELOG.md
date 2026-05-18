@@ -7,20 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- Made all local research CLI commands bypass global config/secret loading.
-- Removed handler-level `AtlasConfig.from_env` and `get_config` calls from `research run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, and `review-response`.
+## [0.5.7.dev15] - 2026-05-16
 
 ### Added
+- Research system freeze audit documentation:
+  `docs/audits/research-system-freeze-v0.5.7.dev14.md`
 - Regression tests proving local research commands do not call `AtlasConfig.from_env` or load `.env.atlas`.
 
 ### Changed
+- Release metadata now records the research system as frozen for development scope.
+- README/release checklist current-version references updated where applicable.
 - Updated `research timeline` help text to reflect the current full lineage including dossiers.
 
+### Fixed
+- Made all local research CLI commands bypass global config/secret loading.
+- Removed handler-level `AtlasConfig.from_env` and `get_config` calls from `research run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, and `review-response`.
+- Demo research workflow script stdout/stderr sanitized to prevent absolute temp path leaks (`/Users/`, `/private/var/`, etc.).
+
 ### Safety / Compatibility
-- No broker/live-trading behavior changes.
+- This is a documentation/release-prep tag.
+- No runtime research behavior changes beyond the already-reviewed freeze fixes.
+- No broker submit behavior expansion.
+- No live-submit default enablement.
+- No LLM/API/network provider enablement.
+- Frozen research scope remains paper-only and analysis-only.
+- Frozen local research commands remain configless and do not load `.env.atlas` or config secrets.
 - No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
-- `research market` remains config-loaded as a legacy command.
+
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed in latest validation.
+- pip check passed.
+- Demo paper workflow passed.
+- Demo research workflow passed.
+- release_check.sh passed.
+- Protected-staged check passed.
 
 ## [0.5.7.dev14] - 2026-05-16
 
