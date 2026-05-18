@@ -21,9 +21,12 @@ def _run_script(script_name: str, *args: str, cwd: Path | None = None, env: dict
     return result
 
 
-def _run_shell(script_path: Path, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
+def _run_shell(script_path: Path, cwd: Path | None = None, env: dict | None = None, args: list[str] | None = None) -> subprocess.CompletedProcess:
+    cmd = ["/bin/bash", str(script_path)]
+    if args:
+        cmd.extend(args)
     result = subprocess.run(
-        ["/bin/bash", str(script_path)],
+        cmd,
         capture_output=True,
         text=True,
         cwd=cwd,
@@ -250,7 +253,10 @@ class TestReleaseCheckSh:
             '#!/usr/bin/env bash\n'
             'set -euo pipefail\n'
             'MARKER_DIR="' + str(marker_dir) + '"\n'
-            'if [[ "$1" == "diff" && "$2" == "--check" ]]; then\n'
+            'if [[ "${1:-}" == "diff" && "${2:-}" == "--cached" && "${3:-}" == "--check" ]]; then\n'
+            '    touch "$MARKER_DIR/git_diff_cached.marker"\n'
+            '    exit "${GIT_DIFF_CACHED_EXIT:-${GIT_DIFF_EXIT:-0}}"\n'
+            'elif [[ "${1:-}" == "diff" && "${2:-}" == "--check" ]]; then\n'
             '    touch "$MARKER_DIR/git_diff.marker"\n'
             '    exit "${GIT_DIFF_EXIT:-0}"\n'
             'fi\n'
@@ -282,6 +288,30 @@ class TestReleaseCheckSh:
             encoding="utf-8",
         )
         fake_demo_research.chmod(0o755)
+
+        # Fake dev_check.sh
+        fake_dev = scripts_dir / "dev_check.sh"
+        fake_dev.write_text(
+            '#!/usr/bin/env bash\n'
+            'set -euo pipefail\n'
+            'MARKER_DIR="' + str(marker_dir) + '"\n'
+            'touch "$MARKER_DIR/dev_check.marker"\n'
+            'exit "${DEV_CHECK_EXIT:-0}"\n',
+            encoding="utf-8",
+        )
+        fake_dev.chmod(0o755)
+
+        # Fake research_check.sh
+        fake_research = scripts_dir / "research_check.sh"
+        fake_research.write_text(
+            '#!/usr/bin/env bash\n'
+            'set -euo pipefail\n'
+            'MARKER_DIR="' + str(marker_dir) + '"\n'
+            'touch "$MARKER_DIR/research_check.marker"\n'
+            'exit "${RESEARCH_CHECK_EXIT:-0}"\n',
+            encoding="utf-8",
+        )
+        fake_research.chmod(0o755)
 
         # Stub pyproject.toml and __init__.py so version check passes when called
         pyproject = tmp_path / "pyproject.toml"
@@ -357,6 +387,32 @@ class TestReleaseCheckSh:
         assert (marker_dir / "pip_check.marker").exists()
         assert (marker_dir / "demo.marker").exists()
         assert (marker_dir / "git_diff.marker").exists()
+        assert not (marker_dir / "git_diff_cached.marker").exists()
+        assert not (marker_dir / "version.marker").exists()
+        assert not (marker_dir / "claims.marker").exists()
+        assert "All release checks passed" not in result.stdout
+        assert "All release checks passed" not in result.stderr
+
+    def test_fail_fast_on_git_diff_cached_failure(self, tmp_path: Path) -> None:
+        marker_dir = self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+        env["PYTEST_EXIT"] = "0"
+        env["PIP_CHECK_EXIT"] = "0"
+        env["DEMO_EXIT"] = "0"
+        env["GIT_DIFF_EXIT"] = "0"
+        env["GIT_DIFF_CACHED_EXIT"] = "1"
+        env["VERSION_EXIT"] = "0"
+        env["CLAIMS_EXIT"] = "0"
+
+        result = _run_shell(tmp_path / "scripts" / "release_check.sh", cwd=tmp_path, env=env)
+
+        assert result.returncode != 0
+        assert (marker_dir / "pytest.marker").exists()
+        assert (marker_dir / "pip_check.marker").exists()
+        assert (marker_dir / "demo.marker").exists()
+        assert (marker_dir / "git_diff.marker").exists()
+        assert (marker_dir / "git_diff_cached.marker").exists()
         assert not (marker_dir / "version.marker").exists()
         assert not (marker_dir / "claims.marker").exists()
         assert "All release checks passed" not in result.stdout
@@ -380,6 +436,7 @@ class TestReleaseCheckSh:
         assert (marker_dir / "pip_check.marker").exists()
         assert (marker_dir / "demo.marker").exists()
         assert (marker_dir / "git_diff.marker").exists()
+        assert (marker_dir / "git_diff_cached.marker").exists()
         assert (marker_dir / "version.marker").exists()
         assert (marker_dir / "claims.marker").exists()
         assert "All release checks passed" in result.stdout
@@ -412,3 +469,292 @@ class TestReleaseCheckSh:
 
         # Verify the intended git diff --check is still present
         assert "git diff --check" in content
+
+
+    def test_quick_runs_dev_check(self, tmp_path: Path) -> None:
+        marker_dir = self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+        env["DEV_CHECK_EXIT"] = "0"
+
+        result = _run_shell(
+            tmp_path / "scripts" / "release_check.sh",
+            cwd=tmp_path,
+            env=env,
+            args=["--quick"],
+        )
+
+        assert result.returncode == 0
+        assert (marker_dir / "dev_check.marker").exists()
+        assert not (marker_dir / "pytest.marker").exists()
+        assert not (marker_dir / "pip_check.marker").exists()
+        assert not (marker_dir / "demo.marker").exists()
+        assert not (marker_dir / "demo_research.marker").exists()
+
+    def test_quick_fails_when_dev_check_fails(self, tmp_path: Path) -> None:
+        marker_dir = self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+        env["DEV_CHECK_EXIT"] = "1"
+
+        result = _run_shell(
+            tmp_path / "scripts" / "release_check.sh",
+            cwd=tmp_path,
+            env=env,
+            args=["--quick"],
+        )
+
+        assert result.returncode != 0
+        assert (marker_dir / "dev_check.marker").exists()
+
+    def test_research_runs_research_check(self, tmp_path: Path) -> None:
+        marker_dir = self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+        env["RESEARCH_CHECK_EXIT"] = "0"
+
+        result = _run_shell(
+            tmp_path / "scripts" / "release_check.sh",
+            cwd=tmp_path,
+            env=env,
+            args=["--research"],
+        )
+
+        assert result.returncode == 0
+        assert (marker_dir / "research_check.marker").exists()
+        assert not (marker_dir / "pytest.marker").exists()
+        assert not (marker_dir / "pip_check.marker").exists()
+        assert not (marker_dir / "demo.marker").exists()
+
+    def test_research_fails_when_research_check_fails(self, tmp_path: Path) -> None:
+        marker_dir = self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+        env["RESEARCH_CHECK_EXIT"] = "1"
+
+        result = _run_shell(
+            tmp_path / "scripts" / "release_check.sh",
+            cwd=tmp_path,
+            env=env,
+            args=["--research"],
+        )
+
+        assert result.returncode != 0
+        assert (marker_dir / "research_check.marker").exists()
+
+    def test_full_explicit_runs_full_gate(self, tmp_path: Path) -> None:
+        marker_dir = self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+        env["PYTEST_EXIT"] = "0"
+        env["PIP_CHECK_EXIT"] = "0"
+        env["DEMO_EXIT"] = "0"
+        env["GIT_DIFF_EXIT"] = "0"
+        env["VERSION_EXIT"] = "0"
+        env["CLAIMS_EXIT"] = "0"
+
+        result = _run_shell(
+            tmp_path / "scripts" / "release_check.sh",
+            cwd=tmp_path,
+            env=env,
+            args=["--full"],
+        )
+
+        assert result.returncode == 0
+        assert (marker_dir / "pytest.marker").exists()
+        assert (marker_dir / "pip_check.marker").exists()
+        assert (marker_dir / "demo.marker").exists()
+        assert (marker_dir / "git_diff.marker").exists()
+        assert (marker_dir / "version.marker").exists()
+        assert (marker_dir / "claims.marker").exists()
+
+    def test_unknown_flag_fails(self, tmp_path: Path) -> None:
+        self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+
+        result = _run_shell(
+            tmp_path / "scripts" / "release_check.sh",
+            cwd=tmp_path,
+            env=env,
+            args=["--unknown-flag"],
+        )
+
+        assert result.returncode != 0
+        assert "Unknown option" in (result.stdout + result.stderr)
+
+    def test_help_exits_zero(self, tmp_path: Path) -> None:
+        self._setup_fake_repo(tmp_path)
+        env = os.environ.copy()
+        env["PATH"] = f"{tmp_path / 'bin'}:{env.get('PATH', '')}"
+
+        result = _run_shell(
+            tmp_path / "scripts" / "release_check.sh",
+            cwd=tmp_path,
+            env=env,
+            args=["--help"],
+        )
+
+        assert result.returncode == 0
+        assert "Usage:" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# dev_check.sh
+# ---------------------------------------------------------------------------
+
+class TestDevCheckSh:
+    def test_exists_and_is_executable(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        script = repo_root / "scripts" / "dev_check.sh"
+        assert script.exists()
+        assert script.stat().st_mode & 0o111, "dev_check.sh should be executable"
+
+    def test_contains_expected_checks(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "dev_check.sh").read_text(encoding="utf-8")
+
+        assert "check_version_consistency.py" in content
+        assert "check_forbidden_claims.py" in content
+        assert "tests/research/test_research_sandbox_cli.py" in content
+        assert "tests/test_release_check_scripts.py" in content
+        assert "git diff --check" in content
+        assert "git diff --cached --check" in content
+        assert "check_no_protected_staged.py" in content
+
+    def test_does_not_run_expensive_checks(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "dev_check.sh").read_text(encoding="utf-8")
+
+        assert "demo_paper_workflow" not in content
+        assert "demo_research_workflow" not in content
+        assert "pip check" not in content
+        # Should not run full pytest without a test path
+        assert "pytest -q\n" not in content
+        assert "pytest -q \"" not in content
+
+    def test_static_mutation_guard(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "dev_check.sh").read_text(encoding="utf-8")
+
+        forbidden = [
+            "git add",
+            "git commit",
+            "git push",
+            "git checkout",
+            "git reset",
+            "git clean",
+            "git restore",
+            "git switch",
+            "gh release",
+            "rm -rf .git",
+            "sed -i",
+            "perl -pi",
+            "tee -a",
+        ]
+        for pattern in forbidden:
+            assert pattern not in content, f"dev_check.sh contains forbidden pattern: {pattern}"
+
+
+# ---------------------------------------------------------------------------
+# research_check.sh
+# ---------------------------------------------------------------------------
+
+class TestResearchCheckSh:
+    def test_exists_and_is_executable(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        script = repo_root / "scripts" / "research_check.sh"
+        assert script.exists()
+        assert script.stat().st_mode & 0o111, "research_check.sh should be executable"
+
+    def test_contains_expected_checks(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "research_check.sh").read_text(encoding="utf-8")
+
+        assert "check_version_consistency.py" in content
+        assert "check_forbidden_claims.py" in content
+        assert "tests/research" in content
+        assert "tests/test_demo_research_workflow_script.py" in content
+        assert "demo_research_workflow.sh" in content
+        assert "git diff --check" in content
+        assert "git diff --cached --check" in content
+        assert "check_no_protected_staged.py" in content
+
+    def test_does_not_run_full_pytest_or_paper_demo(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "research_check.sh").read_text(encoding="utf-8")
+
+        assert "demo_paper_workflow" not in content
+        assert "pip check" not in content
+        # Should not run full pytest without a test path
+        assert "pytest -q\n" not in content
+        assert "pytest -q \"" not in content
+
+    def test_static_mutation_guard(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "research_check.sh").read_text(encoding="utf-8")
+
+        forbidden = [
+            "git add",
+            "git commit",
+            "git push",
+            "git checkout",
+            "git reset",
+            "git clean",
+            "git restore",
+            "git switch",
+            "gh release",
+            "rm -rf .git",
+            "sed -i",
+            "perl -pi",
+            "tee -a",
+        ]
+        for pattern in forbidden:
+            assert pattern not in content, f"research_check.sh contains forbidden pattern: {pattern}"
+
+
+# ---------------------------------------------------------------------------
+# release_check.sh tiered mode guards
+# ---------------------------------------------------------------------------
+
+class TestReleaseCheckTieredModes:
+    def test_contains_mode_flags(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "--quick)" in content
+        assert "--research)" in content
+        assert "--full)" in content
+
+    def test_quick_delegates_to_dev_check(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "dev_check.sh" in content
+
+    def test_research_delegates_to_research_check(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "research_check.sh" in content
+
+    def test_full_contains_all_checks(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "pytest -q" in content
+        assert "pip check" in content
+        assert "demo_paper_workflow.sh" in content
+        assert "demo_research_workflow.sh" in content
+        assert "git diff --check" in content
+        assert "git diff --cached --check" in content
+        assert "check_version_consistency.py" in content
+        assert "check_forbidden_claims.py" in content
+        assert "check_no_protected_staged.py" in content
+
+    def test_no_git_add_dot(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "git add ." not in content
+        assert "git add" not in content

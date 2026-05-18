@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev18] - 2026-05-18
+
+### Added
+- `scripts/dev_check.sh`: fast local development gate (no full pytest, no demos, no pip check).
+- `scripts/research_check.sh`: medium-cost research/sandbox gate (research tests + research demo).
+- `scripts/release_check.sh` now supports `--quick`, `--research`, and `--full` modes.
+- Optional thermal-friendly environment variables: `ATLAS_CHECK_FAIL_FAST=1`, `ATLAS_CHECK_LAST_FAILED=1`, `ATLAS_CHECK_PYTEST_ARGS`.
+- Tests verifying tiered mode dispatch, static mutation guards, and script existence.
+
+### Changed
+- `scripts/release_check.sh` default behavior remains the full gate; `--quick` and `--research` are developer convenience only.
+- README updated with recommended local check loops.
+
+### Safety / Compatibility
+- No changes to broker behavior, live trading gates, order routing, approval manager, risk manager, or config secret loading.
+- Quick and research modes are not release gates; full mode remains required before push/tag.
+
 ## [0.5.7.dev17] - 2026-05-18
 
 ### Added

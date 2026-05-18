@@ -11,7 +11,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev17)** — see [release notes](docs/releases/v0.5.7.dev17.md).
+> **Current Status (v0.5.7.dev18)** — see [release notes](docs/releases/v0.5.7.dev18.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -61,7 +61,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7.dev17)
+## Current Status (v0.5.7.dev18)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
@@ -90,6 +90,23 @@ atlas run --mode paper
 
 1. **`atlas setup`**: Guided setup walks through provider/model/auth, discipline profile, symbol selection, and a final readiness summary.
 2. **`atlas run`**: Execution is explicit. Use `--mode paper` for safety and simulation. Live trading is designed to prevent orders without explicit configuration and multi-stage gates.
+
+### Development checks
+
+Tiered local check scripts help avoid running the full heavy gate on every iteration:
+
+```bash
+# Fast dev loop (no full pytest, no demos)
+./scripts/release_check.sh --quick
+
+# Research/sandbox gate (research tests + research demo)
+./scripts/release_check.sh --research
+
+# Full release gate (required before push/tag)
+./scripts/release_check.sh --full
+```
+
+Quick and research modes are developer convenience only. Full mode remains required before push/tag.
 
 ### Paper research workflow
 
