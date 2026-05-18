@@ -11,7 +11,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev15)** — see [release notes](docs/releases/v0.5.7.dev15.md).
+> **Current Status (v0.5.7.dev16)** — see [release notes](docs/releases/v0.5.7.dev16.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -61,7 +61,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7.dev15)
+## Current Status (v0.5.7.dev16)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
@@ -144,7 +144,7 @@ Build a deterministic dossier consolidating a research chain:
 Reproducible walkthroughs that show Atlas working as a broker-neutral supervised workspace:
 
 - **[Paper Workflow Script](scripts/demo_paper_workflow.sh)** — create a temporary workspace, validate config, run a paper dry-run, execute a deterministic sample-data backtest, and verify audit artifacts.
-- **[Research Workflow Script](scripts/demo_research_workflow.sh)** — create a temporary workspace, run the full paper-only research chain (run → list → show → plan → verify → evaluate → summary → check-artifacts → timeline → providers → prompt → simulate-provider → review-response → dossier), validate JSON artifacts, and verify safety invariants.
+- **[Research Workflow Script](scripts/demo_research_workflow.sh)** — create a temporary workspace, run the full paper-only research chain (run → list → show → plan → verify → evaluate → summary → check-artifacts → timeline → providers → prompt → sandbox → simulate-provider → review-response → dossier), validate JSON artifacts, and verify safety invariants.
 - **[Paper Workflow](docs/demo-paper-workflow.md)** — create a workspace, validate config, and run a safe paper cycle with no live broker orders.
 - **[Risk Rejection](docs/demo-risk-rejection.md)** — see how deterministic risk gates block unsafe orders before they reach a broker.
 - **[Audit Verification](docs/demo-audit.md)** — verify the tamper-evident hash-chain and run manifests.

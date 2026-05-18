@@ -406,6 +406,7 @@ Safety First:
     research_sub = research.add_subparsers(dest="research_command")
     research_market = research_sub.add_parser("market")
     research_market.add_argument("--symbol", required=True)
+    research_market.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
     research_run = research_sub.add_parser(
         "run",
         help="Run a paper-only research session and create a local artifact. Does not submit orders.",
@@ -523,6 +524,14 @@ Safety First:
         default=8000,
         help="Maximum characters for user context. Default: 8000, max: 20000.",
     )
+
+    research_sandbox = research_sub.add_parser(
+        "sandbox",
+        help="Build a local LLM sandbox request artifact from a prompt packet. Local-only. Does not call LLMs or network.",
+        description="Build a bounded, local, replayable LLM sandbox request artifact from an existing prompt packet. Local-only. Does not call LLMs, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_sandbox.add_argument("prompt_packet_id", help="Source prompt packet ID.")
+    research_sandbox.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
     research_simulate = research_sub.add_parser(
         "simulate-provider",
@@ -2311,6 +2320,7 @@ def main(argv: list[str] | None = None) -> int:
         "simulate-provider",
         "review-response",
         "dossier",
+        "sandbox",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -3803,20 +3813,18 @@ def main(argv: list[str] | None = None) -> int:
             "max_context_chars_exceeds_limit": ("invalid_max_context_chars", "Invalid max-context-chars value."),
             "invalid_research_identifier": ("invalid_research_id", "Invalid research identifier."),
             "invalid_research_symbol": ("invalid_research_symbol", "Invalid research symbol."),
+            "invalid_source_run_id": ("invalid_source_run_id", "Invalid sandbox lineage."),
+            "invalid_prompt_packet_id": ("invalid_prompt_packet_id", "Invalid sandbox lineage."),
+            "invalid_sandbox_lineage": ("invalid_sandbox_lineage", "Invalid sandbox lineage."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
 
     if args.command == "research" and args.research_command == "market":
-        try:
-            report = get_research_provider().research_market(args.symbol)
-        except ResearchConfigurationError:
-            _research_error_text("research", "configuration error")
-            return 0
-        except Exception:
-            _research_error_text("research", "research command failed")
-            return 1
-        print(report.summary)
-        return 0
+        if args.json:
+            _research_error_json("legacy_command_disabled", "research market is legacy and disabled in the frozen local research pipeline.")
+        else:
+            _research_error_text("research market", "legacy and disabled in the frozen local research pipeline")
+        return 1
     if args.command == "research" and args.research_command == "run":
         try:
             from atlas_agent.research.session import (
@@ -4956,6 +4964,88 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Dossier ID: {result['dossier_id']}")
             print(f"  Recommendation: {result['recommendation']}")
             print(f"  Artifact: {result['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "sandbox":
+        try:
+            from atlas_agent.research.llm_sandbox import build_llm_sandbox_request_from_prompt_packet
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                UnsupportedArtifactSchemaError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research sandbox skipped safely: no workspace found")
+                return 1
+
+            safe_prompt_packet_id = validate_run_id(args.prompt_packet_id)
+
+            result = build_llm_sandbox_request_from_prompt_packet(
+                workspace_path=ws,
+                prompt_packet_id=safe_prompt_packet_id,
+            )
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                _research_error_text("research sandbox", "invalid research symbol")
+            return 1
+        except UnsupportedArtifactSchemaError:
+            if args.json:
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
+            else:
+                _research_error_text("research sandbox", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research sandbox", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research sandbox", "research command failed")
+            return 1
+        if args.json:
+            import json
+
+            out = {
+                "ok": True,
+                "status": "research_sandbox_request_created",
+                "symbol": result["symbol"],
+                "prompt_packet_id": result["prompt_packet_id"],
+                "source_run_id": result["source_run_id"],
+                "sandbox_request_id": result["sandbox_request_id"],
+                "provider": result["provider"],
+                "recommendation": "sandbox_request_ready",
+                "artifact_path": result["artifact_path"],
+                "warnings": result.get("warnings", []),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Research sandbox request created")
+            print(f"  Symbol: {result['symbol']}")
+            print(f"  Prompt Packet ID: {result['prompt_packet_id']}")
+            print(f"  Source Run ID: {result['source_run_id']}")
+            print(f"  Sandbox Request ID: {result['sandbox_request_id']}")
+            print(f"  Provider: {result['provider']}")
+            print(f"  Recommendation: sandbox_request_ready")
+            print(f"  Artifact: {result['artifact_path']}")
+            if result.get("warnings"):
+                print(f"  Warnings: {len(result['warnings'])}")
+            else:
+                print("  Warnings: 0")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

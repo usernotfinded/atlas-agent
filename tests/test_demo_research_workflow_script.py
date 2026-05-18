@@ -302,6 +302,10 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
+                "sandbox_requests": [{
+                    "sandbox_request_id": "demosandboxid12345",
+                    "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"
+                }],
                 "provider_responses": [{
                     "provider_response_id": "demoresponseid12345",
                     "provider": "deterministic-mock",
@@ -473,6 +477,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
                 "network": False, "requires_api_key": False
             }
         ]
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/sandbox_requests/{sandbox_request_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {"paper_only": True},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {"redacted_fragments_count": 0, "truncated": False},
+            "warnings": [],
+            "metadata": {},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }))
     sys.exit(0)
 
@@ -705,6 +743,40 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
     print(json.dumps({{"ok": True, "status": "research_summary", "research_count": 1, "plan_count": 1, "symbols": [{{"symbol": "ATLAS-DEMO", "research_count": 1, "plan_count": 1, "latest_research_run_id": "demorunid12345", "latest_plan_id": "demoplanid12345", "latest_research_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "latest_plan_path": ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"}}]}}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -803,6 +875,40 @@ if ARGS[0] == "research" and ARGS[1] == "evaluate":
 
 if ARGS[0] == "research" and ARGS[1] == "summary":
     print(json.dumps({{"ok": True, "status": "research_summary", "research_count": 1, "plan_count": 1, "symbols": [{{"symbol": "ATLAS-DEMO", "research_count": 1, "plan_count": 1, "latest_research_run_id": "demorunid12345", "latest_plan_id": "demoplanid12345", "latest_research_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "latest_plan_path": ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"}}]}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -914,6 +1020,40 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
         "issues": [{{"code": "unsafe_path", "path": "/Users/natan/secret.json", "severity": "error"}}],
         "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -1029,6 +1169,40 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1141,6 +1315,40 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         "ok": True, "status": "research_artifacts_checked",
         "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
         "issues": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -1267,6 +1475,40 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1385,6 +1627,40 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1500,6 +1776,40 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
     print(json.dumps({{
         "ok": True, "status": "research_timeline",
         "entries": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -1635,6 +1945,40 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1758,6 +2102,40 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
             "warnings": []
         }}],
         "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -1887,6 +2265,40 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2004,6 +2416,40 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
         "entries": [], "warnings": []
     }}))
     sys.exit(2)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -2152,6 +2598,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2284,6 +2764,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
     print(json.dumps({{
         "ok": False, "status": "research_providers_listed",
         "providers": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -2425,6 +2939,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
                 "network": False, "requires_api_key": False
             }}
         ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -2571,6 +3119,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
                 "network": True, "requires_api_key": True
             }}
         ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -2724,6 +3306,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2866,6 +3482,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
                 "network": False, "requires_api_key": False
             }}
         ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -3014,6 +3664,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3156,6 +3840,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
                 "network": True, "requires_api_key": False
             }}
         ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -3303,6 +4021,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3440,6 +4192,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
                 "network": False, "requires_api_key": False
             }}
         ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -3599,6 +4385,40 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3752,6 +4572,40 @@ if ARGS[0] == "research" and ARGS[1] == "providers":
 if ARGS[0] == "research" and ARGS[1] == "prompt":
     print(json.dumps({{
         "ok": False, "status": "research_error", "message": "Prompt failed"
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -3930,6 +4784,40 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     os.makedirs(pending_dir, exist_ok=True)
     with open(os.path.join(pending_dir, "fake_order.json"), "w") as f:
         json.dump({{}}, f)
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -4116,6 +5004,40 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4296,6 +5218,40 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
 if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
     print(json.dumps({{
         "ok": False, "status": "research_error", "message": "Simulate-provider failed"
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
 
@@ -4506,6 +5462,40 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
         json.dump({{}}, f)
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4652,6 +5642,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -4809,6 +5800,40 @@ if ARGS[0] == "research" and ARGS[1] == "dossier":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4934,6 +5959,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -5018,6 +6044,40 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
         "ok": True, "status": "research_provider_response_created", "symbol": symbol,
         "source_prompt_packet_id": prompt_packet_id, "provider_response_id": provider_response_id,
         "provider": "deterministic-mock", "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
@@ -5226,6 +6286,40 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5351,6 +6445,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoresponseid12345",
                     "provider": "deterministic-mock",
@@ -5519,6 +6614,40 @@ if ARGS[0] == "research" and ARGS[1] == "dossier":
         "dossier_id": dossier_id,
         "provider": "deterministic-dossier",
         "recommendation": "research_dossier_ready",
+        "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox":
+    prompt_packet_id = ARGS[2]
+    sandbox_request_id = "demosandboxid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/sandbox_requests/{{sandbox_request_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "sandbox_request_id": sandbox_request_id,
+            "prompt_packet_id": prompt_packet_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "system_boundary": {{"paper_only": True}},
+            "explicit_boundaries": ["Local only"],
+            "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_request_created",
+        "symbol": symbol, "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "sandbox_request_id": sandbox_request_id,
+        "provider": "llm-sandbox",
+        "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)

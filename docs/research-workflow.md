@@ -36,6 +36,7 @@ The enabled research provider is `deterministic`.
 | `atlas research timeline` | Read-only lineage/timeline of artifact relationships | No | Yes | No |
 | `atlas research providers` | Read-only discovery of available research providers | No | Yes | No |
 | `atlas research prompt RUN_ID` | Generate a sanitized prompt packet from a research artifact | Yes | No | No |
+| `atlas research sandbox PROMPT_PACKET_ID` | Build a local LLM sandbox request artifact from a prompt packet | Yes | No | No |
 | `atlas research simulate-provider PROMPT_PACKET_ID` | Simulate a deterministic provider response from a prompt packet | Yes | No | No |
 | `atlas research review-response PROVIDER_RESPONSE_ID` | Review a provider response artifact deterministically | Yes | No | No |
 | `atlas research dossier RUN_ID` | Build a deterministic dossier consolidating a research chain | Yes | No | No |
@@ -77,6 +78,7 @@ What each step produces:
 - `evaluate` loads local CSV data and creates an evaluation artifact with data metrics.
 - `summary` aggregates counts and latest IDs across all artifacts and plans.
 - `prompt` creates a sanitized, bounded prompt packet artifact for future provider work.
+- `sandbox` creates a bounded, local, replayable LLM sandbox request artifact from a prompt packet. No LLM is called. No network request is made. No API key is read.
 - `simulate-provider` creates a deterministic mock provider response artifact from a prompt packet.
 - `review-response` creates a deterministic response review artifact from a provider response artifact.
 - `dossier` creates a deterministic summary artifact consolidating the full research chain.
@@ -134,6 +136,27 @@ Saved at:
 ```
 
 Contains: `prompt_packet_id`, `source_run_id`, `symbol`, `mode`, `provider`, `source_artifact_path`, `max_context_chars`, `system_boundary`, `user_context`, `allowed_uses`, `forbidden_uses`, `redaction_summary`, `warnings`, `metadata`.
+
+### Sandbox request artifact
+
+Saved at:
+
+```
+.atlas/research/<SYMBOL>/sandbox_requests/<sandbox_request_id>.json
+```
+
+Created by `sandbox` from an existing prompt packet artifact. Contains a bounded, local, replayable LLM sandbox request:
+- `request_payload`: sanitized, redacted, bounded input derived from the prompt packet.
+- `system_boundary`: explicit flags (`paper_only`, `analysis_only`, `no_trading_advice`, `no_live_trading_authorization`, `no_broker_submit`, `no_pending_orders`, `no_approvals`, `no_api_network_call`, `no_financial_advice`, `no_trading_signal_generation`).
+- `explicit_boundaries`: human-readable statements that no LLM provider is called, no network request is made, no API key is read, no broker is contacted, no order is generated, no approval is created, and no live trading is authorized.
+- `redaction_summary`: safe counts only (`redacted_fragments_count`, `truncated`).
+- Lineage fields (`sandbox_request_id`, `prompt_packet_id`, `source_run_id`) are validated before artifact creation. Tampered lineage causes the command to fail closed with no artifact written and no unsafe value leaked.
+- Does not call LLMs.
+- Does not call APIs or network.
+- Does not read API keys.
+- Does not submit orders.
+- Does not create approvals or pending orders.
+- Does not authorize live trading.
 
 ### Provider response artifact
 
@@ -303,6 +326,24 @@ Generate a sanitized, bounded prompt packet artifact from an existing research a
 - Does not modify source research artifacts.
 - Supports `--json`.
 
+### `atlas research sandbox PROMPT_PACKET_ID`
+
+Build a bounded, local, replayable LLM sandbox request artifact from an existing prompt packet.
+
+- Loads an existing prompt packet by `prompt_packet_id`.
+- Produces a sandbox request artifact under `.atlas/research/<SYMBOL>/sandbox_requests/<sandbox_request_id>.json`.
+- Validates copied lineage fields (`prompt_packet_id`, `source_run_id`, `symbol`) before constructing output or writing artifacts.
+- Tampered or unsafe lineage values fail closed; no artifact is written and no unsafe value is leaked in CLI output.
+- Redacts unsafe fragments: absolute paths, secrets, API keys, Bearer tokens, auth headers, `sk-` tokens, APCA markers, broker hosts.
+- `redaction_summary` reports safe counts only (`redacted_fragments_count`, `truncated`).
+- Does not call LLMs.
+- Does not call APIs or network.
+- Does not read API keys.
+- Does not submit orders.
+- Does not create approvals or pending orders.
+- Does not authorize live trading.
+- Supports `--json`.
+
 ### `atlas research simulate-provider PROMPT_PACKET_ID`
 
 Simulate a deterministic provider response from an existing prompt packet artifact.
@@ -355,7 +396,7 @@ Build a deterministic dossier consolidating a research chain.
 End-to-end temporary-workspace demo of the full research chain.
 
 - Creates a temporary workspace, runs `init`, `discipline setup`, and `config set`.
-- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers` -> `prompt` -> `simulate-provider` -> `review-response` -> `dossier`.
+- Executes: `run` -> `list` -> `show` -> `plan` -> `verify` -> `evaluate` -> `summary` -> `check-artifacts` -> `timeline` -> `providers` -> `prompt` -> `sandbox` -> `simulate-provider` -> `review-response` -> `dossier`.
 - Validates JSON outputs, artifact existence, workspace-relative paths, artifact health checks, lineage/timeline reconstruction, and safety invariants.
 - Verifies no pending orders are created.
 - Does not require broker credentials.

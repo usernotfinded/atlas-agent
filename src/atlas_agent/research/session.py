@@ -1349,7 +1349,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1379,6 +1379,7 @@ def check_research_artifacts(
     provider_response_ids: dict[str, list[str]] = {}
     response_review_ids: dict[str, list[str]] = {}
     dossier_ids: dict[str, list[str]] = {}
+    sandbox_request_ids: dict[str, list[str]] = {}
 
     def _rel(path: Path) -> str:
         try:
@@ -1416,6 +1417,7 @@ def check_research_artifacts(
             "provider_response": "provider_response_id",
             "response_review": "response_review_id",
             "dossier": "dossier_id",
+            "sandbox_request": "sandbox_request_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1442,6 +1444,8 @@ def check_research_artifacts(
         elif expected_type == "prompt" and "prompts" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_response" and "provider_responses" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "sandbox_request" and "sandbox_requests" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1484,6 +1488,11 @@ def check_research_artifacts(
                 if f not in data:
                     issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
                     return
+        elif expected_type == "sandbox_request":
+            for f in ("sandbox_request_id", "prompt_packet_id", "source_run_id", "symbol", "mode", "provider"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1503,6 +1512,8 @@ def check_research_artifacts(
                 response_review_ids.setdefault(raw_id, []).append(rel)
             elif expected_type == "dossier":
                 dossier_ids.setdefault(raw_id, []).append(rel)
+            elif expected_type == "sandbox_request":
+                sandbox_request_ids.setdefault(raw_id, []).append(rel)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1520,6 +1531,8 @@ def check_research_artifacts(
             counts["response_reviews"] += 1
         elif expected_type == "dossier":
             counts["dossiers"] += 1
+        elif expected_type == "sandbox_request":
+            counts["sandbox_requests"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1571,6 +1584,12 @@ def check_research_artifacts(
             for path in dossiers_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "dossier", expected_symbol)
+        # Sandbox requests
+        sandbox_requests_dir = sym_dir / "sandbox_requests"
+        if sandbox_requests_dir.exists():
+            for path in sandbox_requests_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "sandbox_request", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1602,6 +1621,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for did, paths in dossier_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for srid, paths in sandbox_request_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -1768,6 +1791,58 @@ def _iter_prompt_artifacts(
     return items
 
 
+def _iter_sandbox_request_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return sandbox request artifact metadata dicts, newest first."""
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return []
+
+    search_dirs: list[Path] = []
+    if symbol is not None:
+        safe = sanitize_symbol(symbol)
+        search_dirs.append(research_dir / safe / "sandbox_requests")
+    else:
+        for sym_dir in research_dir.iterdir():
+            if sym_dir.is_dir():
+                s_dir = sym_dir / "sandbox_requests"
+                if s_dir.exists():
+                    search_dirs.append(s_dir)
+
+    items: list[dict[str, Any]] = []
+    for directory in search_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            if not path.is_file():
+                continue
+            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            sv = data.get("schema_version")
+            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+                continue
+            rel_path = path.relative_to(workspace_path).as_posix()
+            items.append(
+                {
+                    "sandbox_request_id": data.get("sandbox_request_id", path.stem),
+                    "prompt_packet_id": data.get("prompt_packet_id", ""),
+                    "source_run_id": data.get("source_run_id", ""),
+                    "symbol": data.get("symbol", ""),
+                    "created_at": data.get("created_at", ""),
+                    "artifact_path": rel_path,
+                }
+            )
+
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    return items
+
+
 def _iter_provider_response_artifacts(
     workspace_path: Path,
     symbol: str | None = None,
@@ -1903,6 +1978,7 @@ def build_research_timeline(
     provider_response_items = _iter_provider_response_artifacts(workspace_path, symbol=symbol_filter)
     response_review_items = _iter_response_review_artifacts(workspace_path, symbol=symbol_filter)
     dossier_items = _iter_dossier_artifacts(workspace_path, symbol=symbol_filter)
+    sandbox_request_items = _iter_sandbox_request_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -1959,6 +2035,15 @@ def build_research_timeline(
             response_reviews_by_provider_id.setdefault(src, []).append(rr)
         else:
             warnings.append({"code": "orphan_response_review", "path": rr.get("artifact_path", ""), "severity": "warning"})
+
+    # Index sandbox requests by prompt_packet_id
+    sandbox_requests_by_prompt_id: dict[str, list[dict[str, Any]]] = {}
+    for sr in sandbox_request_items:
+        src = sr.get("prompt_packet_id", "")
+        if src:
+            sandbox_requests_by_prompt_id.setdefault(src, []).append(sr)
+        else:
+            warnings.append({"code": "orphan_sandbox_request", "path": sr.get("artifact_path", ""), "severity": "warning"})
 
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
@@ -2090,6 +2175,7 @@ def build_research_timeline(
                     "created_at": prompt.get("created_at", ""),
                     "artifact_path": prompt.get("artifact_path", ""),
                     "provider_responses": provider_responses,
+                    "sandbox_requests": sandbox_requests_by_prompt_id.get(prompt_id, []),
                 }
             )
 
@@ -3430,6 +3516,7 @@ def build_dossier(
     prompt_items = _iter_prompt_artifacts(workspace_path, symbol=symbol)
     provider_response_items = _iter_provider_response_artifacts(workspace_path, symbol=symbol)
     response_review_items = _iter_response_review_artifacts(workspace_path, symbol=symbol)
+    sandbox_request_items = _iter_sandbox_request_artifacts(workspace_path, symbol=symbol)
 
     # Filter plans linked to this run
     linked_plans = [p for p in plan_items if p.get("source_run_id") == safe_run_id]
@@ -3446,6 +3533,8 @@ def build_dossier(
 
     linked_response_reviews = [rr for rr in response_review_items if rr.get("source_provider_response_id") in linked_provider_response_ids]
 
+    linked_sandbox_requests = [sr for sr in sandbox_request_items if sr.get("source_run_id") == safe_run_id]
+
     # Build workflow status
     workflow_status = {
         "research": True,
@@ -3455,6 +3544,7 @@ def build_dossier(
         "prompts": len(linked_prompts) > 0,
         "provider_responses": len(linked_provider_responses) > 0,
         "response_reviews": len(linked_response_reviews) > 0,
+        "sandbox_requests": len(linked_sandbox_requests) > 0,
     }
 
     artifact_counts = {
@@ -3465,6 +3555,7 @@ def build_dossier(
         "prompts": len(linked_prompts),
         "provider_responses": len(linked_provider_responses),
         "response_reviews": len(linked_response_reviews),
+        "sandbox_requests": len(linked_sandbox_requests),
     }
 
     # Build linked_artifacts with relative paths only
@@ -3510,6 +3601,13 @@ def build_dossier(
             "provider": rr.get("provider", "unknown"),
             "recommendation": rr.get("recommendation", ""),
             "artifact_path": rr.get("artifact_path", ""),
+        })
+    for sr in linked_sandbox_requests:
+        linked_artifacts.append({
+            "type": "sandbox_request",
+            "id": sr.get("sandbox_request_id", ""),
+            "artifact_path": sr.get("artifact_path", ""),
+            "recommendation": sr.get("recommendation", ""),
         })
 
     # Build summaries (bounded, no full bodies)
@@ -3569,6 +3667,8 @@ def build_dossier(
         missing_links.append("no_provider_response")
     if not linked_response_reviews:
         missing_links.append("no_response_review")
+    if not linked_sandbox_requests:
+        missing_links.append("no_sandbox_request")
 
     warnings: list[str] = []
     if missing_links:

@@ -271,6 +271,18 @@ class TestReleaseCheckSh:
         )
         fake_demo.chmod(0o755)
 
+        # Fake demo_research_workflow.sh
+        fake_demo_research = scripts_dir / "demo_research_workflow.sh"
+        fake_demo_research.write_text(
+            '#!/usr/bin/env bash\n'
+            'set -euo pipefail\n'
+            'MARKER_DIR="' + str(marker_dir) + '"\n'
+            'touch "$MARKER_DIR/demo_research.marker"\n'
+            'exit "${DEMO_RESEARCH_EXIT:-0}"\n',
+            encoding="utf-8",
+        )
+        fake_demo_research.chmod(0o755)
+
         # Stub pyproject.toml and __init__.py so version check passes when called
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\nversion = "0.0.0"\n', encoding="utf-8")

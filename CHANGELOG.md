@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev16] - 2026-05-18
+
+### Added
+- `atlas research sandbox PROMPT_PACKET_ID` command: builds a local, bounded, replayable LLM sandbox request artifact from an existing prompt packet.
+- LLM sandbox request artifact with explicit system boundaries, safety checks, and redaction.
+- Sandbox request lineage validation: copied `source_run_id`, `prompt_packet_id`, and `symbol` are validated before artifact construction.
+- Regression tests proving tampered prompt packet lineage fails closed without leaking forbidden fragments.
+- Configless invariant tests proving sandbox command does not load `AtlasConfig.from_env` or `.env.atlas` secrets.
+- Documentation updates for sandbox step in research workflow chain.
+
+### Changed
+- `build_llm_sandbox_request_from_prompt_packet` now validates all copied lineage fields before writing artifacts or events.
+- CLI sandbox error output maps `ResearchSessionError` to static safe JSON/text with no leaked user-controlled values.
+- `scripts/release_check.sh` now includes `./scripts/demo_research_workflow.sh`.
+- `docs/research-workflow.md` and `README.md` updated to include `sandbox` in the research command chain.
+
+### Fixed
+- Tampered prompt packet `source_run_id` no longer leaks unsafe values into sandbox CLI output or artifacts.
+- Sandbox command now fails closed on invalid lineage with no partial artifact or event written.
+
+### Safety / Compatibility
+- No runtime broker submit behavior expansion.
+- No live-submit default enablement.
+- No LLM/API/network provider enablement.
+- Sandbox remains local-only: no API calls, no network, no secrets read.
+- Frozen research scope remains paper-only and analysis-only.
+- No kill-switch, risk, config, broker, submit, or live-trading gate weakening.
+
+### Validation
+- Version consistency passed.
+- Forbidden-claim scan passed.
+- Full pytest passed.
+- pip check passed.
+- Demo paper workflow passed.
+- Demo research workflow passed.
+- release_check.sh passed.
+- Protected-staged check passed.
+
 ## [0.5.7.dev15] - 2026-05-16
 
 ### Added

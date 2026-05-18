@@ -407,4 +407,56 @@ class TestResearchGenericFallbackSafety:
         assert data["status"] == "research_error"
         assert data["message"] == "Research command failed."
         _assert_no_forbidden_fragments(out)
+
+
+class TestResearchMarketLegacySafety:
+    """Ensure research market legacy command fails safely without leaking secrets."""
+
+    def test_market_legacy_json_static_error(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        config = _config(tmp_path)
+        config.ensure_dirs()
+        monkeypatch.chdir(tmp_path)
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            code = main(["research", "market", "--symbol", "AAPL", "--json"])
+        assert code == 1
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert data["ok"] is False
+        assert data["status"] == "legacy_command_disabled"
+        assert "legacy" in data["message"].lower()
+        _assert_no_forbidden_fragments(out)
+
+    def test_market_legacy_text_static_error(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        config = _config(tmp_path)
+        config.ensure_dirs()
+        monkeypatch.chdir(tmp_path)
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            code = main(["research", "market", "--symbol", "AAPL"])
+        assert code == 1
+        out = capsys.readouterr().out
+        assert "legacy" in out.lower()
+        _assert_no_forbidden_fragments(out)
+
+
+class TestResearchSandboxFallbackSafety:
+    """Ensure sandbox CLI failures do not leak raw exception text."""
+
+    def test_generic_sandbox_failure_json_no_leak(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        config = _config(tmp_path)
+        config.ensure_dirs()
+        monkeypatch.chdir(tmp_path)
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=config):
+            with patch(
+                "atlas_agent.research.llm_sandbox.build_llm_sandbox_request_from_prompt_packet",
+                side_effect=RuntimeError("Authorization: Bearer sk-LEAKEDSECRET /Users/natan/secret APCA_API_KEY_ID PASSWORD TOKEN broker.example.com"),
+            ):
+                code = main(["research", "sandbox", "fakepacket", "--json"])
+        assert code == 1
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert data["ok"] is False
+        assert data["status"] == "research_error"
+        assert data["message"] == "Research command failed."
+        _assert_no_forbidden_fragments(out)
+        assert "LEAKEDSECRET" not in out
         assert "LEAKEDSECRET" not in out

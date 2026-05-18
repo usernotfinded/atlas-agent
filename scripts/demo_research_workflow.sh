@@ -409,6 +409,28 @@ assert_file_exists "$WORKSPACE/$PROMPT_ARTIFACT_PATH" "prompt packet artifact"
 assert_no_forbidden_fragments "$(cat "$WORKSPACE/$PROMPT_ARTIFACT_PATH")" "prompt packet artifact"
 assert_no_pending_orders
 
+# 11.5 Research sandbox
+printf '\n--- Research sandbox ---\n'
+SANDBOX_OUTPUT="$(atlas research sandbox "$PROMPT_PACKET_ID" --json)"
+assert_no_absolute_paths "$SANDBOX_OUTPUT"
+assert_no_secrets_in_output "$SANDBOX_OUTPUT"
+assert_no_forbidden_fragments "$SANDBOX_OUTPUT" "sandbox CLI output"
+assert_ok "$SANDBOX_OUTPUT" "research sandbox"
+SANDBOX_STATUS="$(json_field "$SANDBOX_OUTPUT" status)"
+if [ "$SANDBOX_STATUS" != "research_sandbox_request_created" ]; then
+  printf 'FAIL: unexpected sandbox status: %s\n' "$SANDBOX_STATUS" >&2
+  exit 1
+fi
+SANDBOX_ID="$(json_field "$SANDBOX_OUTPUT" sandbox_request_id)"
+if [ -z "$SANDBOX_ID" ]; then
+  printf 'FAIL: sandbox_request_id is empty\n' >&2
+  exit 1
+fi
+SANDBOX_ARTIFACT_PATH="$(json_field "$SANDBOX_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$SANDBOX_ARTIFACT_PATH" "sandbox request artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$SANDBOX_ARTIFACT_PATH")" "sandbox request artifact"
+assert_no_pending_orders
+
 # 12. Research simulate-provider
 printf '\n--- Research simulate-provider ---\n'
 SIM_OUTPUT="$(atlas research simulate-provider "$PROMPT_PACKET_ID" --json)"
@@ -474,6 +496,29 @@ else:
 " <<<"$TIMELINE_OUTPUT2" )"
 if [ "$TIMELINE_LINEAGE_VALID" != "valid" ]; then
   printf 'FAIL: timeline does not link run_id %s -> prompt %s -> provider response %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$SIM_RESPONSE_ID" >&2
+  exit 1
+fi
+TIMELINE_SANDBOX_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        sbs=[s.get('sandbox_request_id') for s in p.get('sandbox_requests',[])]
+        if '$SANDBOX_ID' in sbs:
+            print('valid')
+            break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT2" )"
+if [ "$TIMELINE_SANDBOX_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link prompt %s -> sandbox request %s\n' "$PROMPT_PACKET_ID" "$SANDBOX_ID" >&2
   exit 1
 fi
 assert_no_pending_orders
@@ -611,7 +656,7 @@ assert_no_pending_orders
 # 18. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
-assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
+assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
 
 printf '\nResearch workflow demo complete.\n'
