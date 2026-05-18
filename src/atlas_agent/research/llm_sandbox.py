@@ -14,6 +14,16 @@ from pathlib import Path
 from typing import Any
 
 from atlas_agent.events.log import EventLogger, generate_run_id
+from atlas_agent.research.sandbox_contracts import (
+    CONTRACT_VERSION,
+    FORBIDDEN_FRAGMENTS,
+    MAX_CONTRACT_TEXT_CHARS,
+    artifact_sha256,
+    canonical_json_dumps,
+    sanitize_contract_text,
+    validate_contract_lineage_id,
+    validate_contract_symbol,
+)
 from atlas_agent.research.session import (
     RESEARCH_ARTIFACT_SCHEMA_VERSION,
     RESEARCH_DIR,
@@ -24,21 +34,7 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 
-FORBIDDEN_FRAGMENTS = (
-    "/Users/",
-    "/private/var/",
-    "Authorization",
-    "Bearer",
-    "APCA",
-    "SECRET",
-    "TOKEN",
-    "PASSWORD",
-    "API_KEY",
-    "sk-",
-    "broker.example.com",
-)
-
-MAX_SANDBOX_PAYLOAD_CHARS = 12000
+MAX_SANDBOX_PAYLOAD_CHARS = MAX_CONTRACT_TEXT_CHARS
 
 
 class LLMSandboxError(ResearchSessionError):
@@ -90,12 +86,8 @@ class LLMSandboxValidationResult:
 
 def _sanitize_sandbox_text(text: str) -> tuple[str, int]:
     """Redact forbidden fragments and return cleaned text plus redaction count."""
-    redacted_count = 0
-    cleaned = text
-    for frag in FORBIDDEN_FRAGMENTS:
-        if frag in cleaned:
-            cleaned = cleaned.replace(frag, "<redacted>")
-            redacted_count += 1
+    cleaned = sanitize_contract_text(text, MAX_SANDBOX_PAYLOAD_CHARS)
+    redacted_count = sum(1 for frag in FORBIDDEN_FRAGMENTS if frag in text)
     return cleaned, redacted_count
 
 
@@ -140,23 +132,12 @@ def _build_request_payload(prompt_packet: dict[str, Any]) -> tuple[str, int, boo
     return cleaned_payload, redacted_count, was_truncated
 
 
-def build_llm_sandbox_request_from_prompt_packet(
-    workspace_path: Path,
-    prompt_packet_id: str,
-    event_logger: EventLogger | None = None,
+def _build_sandbox_request_dict(
+    prompt_packet: dict[str, Any],
+    safe_prompt_packet_id: str,
+    sandbox_request_id: str,
 ) -> dict[str, Any]:
-    """Build a local LLM sandbox request artifact from an existing prompt packet.
-
-    No network. No API keys. No provider SDKs.
-    """
-    safe_prompt_packet_id = validate_run_id(prompt_packet_id)
-
-    packet_path = find_prompt_packet_by_id(workspace_path, safe_prompt_packet_id)
-    if packet_path is None:
-        raise ResearchSessionError("prompt_packet_not_found")
-
-    prompt_packet = load_prompt_packet(packet_path, workspace_path)
-
+    """Build the sandbox request artifact dict in memory without writing to disk."""
     raw_symbol = prompt_packet.get("symbol", "")
     if not raw_symbol:
         raise ResearchSessionError("invalid_research_symbol")
@@ -166,7 +147,6 @@ def build_llm_sandbox_request_from_prompt_packet(
         raise ResearchSessionError("invalid_research_symbol")
 
     # Validate copied lineage fields before constructing any output or artifacts.
-    # Tampered values must fail closed; the unsafe value is never echoed.
     loaded_prompt_packet_id = prompt_packet.get("prompt_packet_id", "")
     if not loaded_prompt_packet_id:
         raise ResearchSessionError("invalid_prompt_packet_id")
@@ -183,9 +163,7 @@ def build_llm_sandbox_request_from_prompt_packet(
     except ResearchSessionError:
         raise ResearchSessionError("invalid_source_run_id") from None
 
-    sandbox_request_id = generate_run_id()
     created_at = datetime.now(UTC)
-
     request_payload, redacted_count, was_truncated = _build_request_payload(prompt_packet)
 
     system_boundary = {
@@ -220,11 +198,7 @@ def build_llm_sandbox_request_from_prompt_packet(
     if was_truncated:
         warnings.append("Sandbox request payload was truncated to max length.")
 
-    sandbox_dir = workspace_path / RESEARCH_DIR / symbol / "sandbox_requests"
-    sandbox_dir.mkdir(parents=True, exist_ok=True)
-
     artifact_path_rel = f".atlas/research/{symbol}/sandbox_requests/{sandbox_request_id}.json"
-    artifact_path = workspace_path / artifact_path_rel
 
     redaction_summary = {
         "redacted_fragments_count": redacted_count,
@@ -233,6 +207,8 @@ def build_llm_sandbox_request_from_prompt_packet(
 
     artifact: dict[str, Any] = {
         "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+        "artifact_type": "sandbox_request",
+        "contract_version": CONTRACT_VERSION,
         "sandbox_request_id": sandbox_request_id,
         "prompt_packet_id": safe_prompt_packet_id,
         "source_run_id": source_run_id,
@@ -252,13 +228,43 @@ def build_llm_sandbox_request_from_prompt_packet(
         "artifact_path": artifact_path_rel,
     }
 
+    artifact["content_hash"] = artifact_sha256(artifact)
+    return artifact
+
+
+def build_llm_sandbox_request_from_prompt_packet(
+    workspace_path: Path,
+    prompt_packet_id: str,
+    event_logger: EventLogger | None = None,
+) -> dict[str, Any]:
+    """Build a local LLM sandbox request artifact from an existing prompt packet.
+
+    No network. No API keys. No provider SDKs.
+    """
+    safe_prompt_packet_id = validate_run_id(prompt_packet_id)
+
+    packet_path = find_prompt_packet_by_id(workspace_path, safe_prompt_packet_id)
+    if packet_path is None:
+        raise ResearchSessionError("prompt_packet_not_found")
+
+    prompt_packet = load_prompt_packet(packet_path, workspace_path)
+
+    sandbox_request_id = generate_run_id()
+    artifact = _build_sandbox_request_dict(prompt_packet, safe_prompt_packet_id, sandbox_request_id)
+
+    symbol = artifact["symbol"]
+    artifact_path_rel = artifact["artifact_path"]
+    artifact_path = workspace_path / artifact_path_rel
+    sandbox_dir = workspace_path / RESEARCH_DIR / symbol / "sandbox_requests"
+    sandbox_dir.mkdir(parents=True, exist_ok=True)
+
     artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
 
     if event_logger is not None:
         payload = {
             "sandbox_request_id": sandbox_request_id,
             "prompt_packet_id": safe_prompt_packet_id,
-            "source_run_id": source_run_id,
+            "source_run_id": artifact["source_run_id"],
             "symbol": symbol,
             "mode": "paper",
             "provider": "llm-sandbox",

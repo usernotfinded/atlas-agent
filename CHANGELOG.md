@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev17] - 2026-05-18
+
+### Added
+- `src/atlas_agent/research/sandbox_contracts.py`: deterministic canonical JSON hashing, artifact validation, and safe lineage/symbol validators.
+- `atlas research sandbox-list`, `sandbox-show`, `sandbox-validate`, `sandbox-replay`, and `import-provider-response` configless research subcommands.
+- `import-provider-response` validates local JSON fixtures against the sandbox contract before creating artifacts.
+- Sandbox request artifacts now include `artifact_type`, `content_hash` (SHA-256), and `contract_version` for deterministic replay.
+- `sandbox-replay` recomputes the artifact hash and verifies it matches the stored `content_hash`.
+- Timeline lineage now links `run_id -> prompt -> imported provider response` for full auditability.
+- Demo research workflow extended with sandbox inspection and import steps.
+
+### Changed
+- `build_llm_sandbox_request_from_prompt_packet` now uses `_build_sandbox_request_dict()` for deterministic artifact construction.
+- CLI error mapping expanded with sandbox-specific static error codes.
+
+### Fixed
+- Circular import between `sandbox_contracts.py` and `session.py` resolved.
+- JSON shadowing bug in `import-provider-response` handler fixed.
+- Demo script test fixtures updated to handle all new sandbox commands.
+
+### Safety / Compatibility
+- All new commands remain configless and do not load `AtlasConfig.from_env` or `.env.atlas` secrets.
+- No network calls, no API keys read, no orders submitted.
+
 ## [0.5.7.dev16] - 2026-05-18
 
 ### Added

@@ -533,6 +533,51 @@ Safety First:
     research_sandbox.add_argument("prompt_packet_id", help="Source prompt packet ID.")
     research_sandbox.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_sandbox_list = research_sub.add_parser(
+        "sandbox-list",
+        help="List sandbox request artifacts. Read-only. Does not call providers or network.",
+        description="List local sandbox request artifacts. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_sandbox_list.add_argument("--symbol", help="Filter by symbol.")
+    research_sandbox_list.add_argument("--limit", type=int, default=20, help="Maximum items to show. Default: 20, max: 100.")
+    research_sandbox_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_sandbox_show = research_sub.add_parser(
+        "sandbox-show",
+        help="Show a sandbox request artifact. Read-only. Does not call providers or network.",
+        description="Show one local sandbox request artifact by ID. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_sandbox_show.add_argument("sandbox_request_id", help="Sandbox request ID.")
+    research_sandbox_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_sandbox_validate = research_sub.add_parser(
+        "sandbox-validate",
+        help="Validate a sandbox request artifact against the local contract. Read-only.",
+        description="Validate a sandbox request artifact against the local contract. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_sandbox_validate.add_argument("sandbox_request_id", help="Sandbox request ID.")
+    research_sandbox_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_sandbox_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
+
+    research_sandbox_replay = research_sub.add_parser(
+        "sandbox-replay",
+        help="Replay a sandbox request from its source prompt packet and compare hashes. Read-only by default.",
+        description="Rebuild the sandbox request from its source prompt packet and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_sandbox_replay.add_argument("sandbox_request_id", help="Sandbox request ID.")
+    research_sandbox_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_sandbox_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+    research_sandbox_replay.add_argument("--write", action="store_true", help="Write a new artifact on replay. Default is read-only.")
+
+    research_import_provider = research_sub.add_parser(
+        "import-provider-response",
+        help="Import a local provider response JSON file. No network. No API keys.",
+        description="Import a local provider response JSON file produced externally. No network. No API keys. No provider SDK. Validates payload and creates a provider response artifact only if safe.",
+    )
+    research_import_provider.add_argument("sandbox_request_id", help="Source sandbox request ID.")
+    research_import_provider.add_argument("--file", type=Path, required=True, help="Path to local provider response JSON file.")
+    research_import_provider.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -2321,6 +2366,11 @@ def main(argv: list[str] | None = None) -> int:
         "review-response",
         "dossier",
         "sandbox",
+        "sandbox-list",
+        "sandbox-show",
+        "sandbox-validate",
+        "sandbox-replay",
+        "import-provider-response",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -3816,6 +3866,16 @@ def main(argv: list[str] | None = None) -> int:
             "invalid_source_run_id": ("invalid_source_run_id", "Invalid sandbox lineage."),
             "invalid_prompt_packet_id": ("invalid_prompt_packet_id", "Invalid sandbox lineage."),
             "invalid_sandbox_lineage": ("invalid_sandbox_lineage", "Invalid sandbox lineage."),
+            "sandbox_request_not_found": ("sandbox_request_not_found", "Sandbox request not found."),
+            "sandbox_request_malformed": ("sandbox_request_malformed", "Sandbox request is malformed."),
+            "unsupported_sandbox_schema": ("unsupported_sandbox_schema", "Unsupported sandbox schema."),
+            "ambiguous_sandbox_request_id": ("invalid_sandbox_request_id", "Invalid sandbox request ID."),
+            "sandbox_replay_mismatch": ("sandbox_replay_mismatch", "Sandbox replay mismatch."),
+            "provider_response_file_not_found": ("provider_response_file_not_found", "Provider response file not found."),
+            "provider_response_malformed": ("provider_response_malformed", "Provider response is malformed."),
+            "provider_response_unsafe": ("provider_response_unsafe", "Provider response is unsafe."),
+            "provider_response_import_failed": ("provider_response_import_failed", "Provider response import failed."),
+            "artifact_path_not_allowed": ("research_error", "Research command failed."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
 
@@ -5046,6 +5106,401 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  Warnings: {len(result['warnings'])}")
             else:
                 print("  Warnings: 0")
+        return 0
+    if args.command == "research" and args.research_command == "sandbox-list":
+        try:
+            from atlas_agent.research.session import _iter_sandbox_request_artifacts
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research sandbox-list skipped safely: no workspace found")
+                return 1
+
+            limit = args.limit
+            if limit < 1:
+                limit = 1
+            if limit > 100:
+                limit = 100
+
+            items = _iter_sandbox_request_artifacts(ws, symbol=args.symbol)
+            items = items[:limit]
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research sandbox-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research sandbox-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_sandbox_listed",
+                "items": items,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Sandbox requests: {len(items)}")
+            for item in items:
+                print(f"  {item['sandbox_request_id']}  {item['symbol']}  {item['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "sandbox-show":
+        try:
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                find_sandbox_request_by_id,
+                load_sandbox_request,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research sandbox-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.sandbox_request_id)
+            path = find_sandbox_request_by_id(ws, safe_id)
+            if path is None:
+                raise ResearchSessionError("sandbox_request_not_found")
+            artifact = load_sandbox_request(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research sandbox-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research sandbox-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_sandbox_loaded",
+                "artifact": artifact,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Sandbox request: {artifact['sandbox_request_id']}")
+            print(f"  Symbol: {artifact['symbol']}")
+            print(f"  Prompt Packet ID: {artifact['prompt_packet_id']}")
+            print(f"  Source Run ID: {artifact['source_run_id']}")
+            print(f"  Provider: {artifact['provider']}")
+            print(f"  Artifact: {artifact['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "sandbox-validate":
+        try:
+            from atlas_agent.research.sandbox_contracts import validate_sandbox_request_artifact
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                find_sandbox_request_by_id,
+                load_sandbox_request,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research sandbox-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.sandbox_request_id)
+            path = find_sandbox_request_by_id(ws, safe_id)
+            if path is None:
+                raise ResearchSessionError("sandbox_request_not_found")
+            artifact = load_sandbox_request(path, ws)
+            result = validate_sandbox_request_artifact(artifact)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research sandbox-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research sandbox-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_sandbox_validated",
+                "sandbox_request_id": artifact["sandbox_request_id"],
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+                "warnings": result.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "valid" if result.valid else "invalid"
+            print(f"Sandbox request {artifact['sandbox_request_id']}: {status_str}")
+            print(f"  Passed: {result.passed_checks}  Failed: {result.failed_checks}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "sandbox-replay":
+        try:
+            from atlas_agent.research.llm_sandbox import _build_sandbox_request_dict
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                find_prompt_packet_by_id,
+                find_sandbox_request_by_id,
+                load_prompt_packet,
+                load_sandbox_request,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research sandbox-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.sandbox_request_id)
+            sandbox_path = find_sandbox_request_by_id(ws, safe_id)
+            if sandbox_path is None:
+                raise ResearchSessionError("sandbox_request_not_found")
+            sandbox = load_sandbox_request(sandbox_path, ws)
+
+            prompt_packet_id = sandbox.get("prompt_packet_id", "")
+            if not prompt_packet_id:
+                raise ResearchSessionError("invalid_sandbox_lineage")
+
+            packet_path = find_prompt_packet_by_id(ws, prompt_packet_id)
+            if packet_path is None:
+                raise ResearchSessionError("prompt_packet_not_found")
+            prompt_packet = load_prompt_packet(packet_path, ws)
+
+            rebuilt = _build_sandbox_request_dict(prompt_packet, prompt_packet_id, safe_id)
+            actual_hash = sandbox.get("content_hash", "")
+            expected_hash = rebuilt.get("content_hash", "")
+            match = actual_hash == expected_hash
+
+            checks = [
+                {"name": "sandbox_request_loaded", "passed": True, "message": "Sandbox request loaded."},
+                {"name": "prompt_packet_loaded", "passed": True, "message": "Prompt packet loaded."},
+                {"name": "hash_matches", "passed": match, "message": "Hash matches." if match else "Hash mismatch detected."},
+            ]
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research sandbox-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research sandbox-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_sandbox_replayed",
+                "sandbox_request_id": safe_id,
+                "source_prompt_packet_id": prompt_packet_id,
+                "match": match,
+                "expected_hash": expected_hash,
+                "actual_hash": actual_hash,
+                "checks": checks,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "matches" if match else "mismatch"
+            print(f"Sandbox replay {safe_id}: {status_str}")
+        if args.strict and not match:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "import-provider-response":
+        try:
+            from atlas_agent.research.sandbox_contracts import (
+                artifact_sha256,
+                canonical_json_dumps,
+                sanitize_contract_text,
+                validate_contract_lineage_id,
+                validate_contract_symbol,
+                validate_external_provider_response_payload,
+            )
+            from atlas_agent.research.session import (
+                RESEARCH_ARTIFACT_SCHEMA_VERSION,
+                RESEARCH_DIR,
+                ResearchSessionError,
+                find_sandbox_request_by_id,
+                load_sandbox_request,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research import-provider-response skipped safely: no workspace found")
+                return 1
+
+            safe_sandbox_id = validate_run_id(args.sandbox_request_id)
+            sandbox_path = find_sandbox_request_by_id(ws, safe_sandbox_id)
+            if sandbox_path is None:
+                raise ResearchSessionError("sandbox_request_not_found")
+            sandbox = load_sandbox_request(sandbox_path, ws)
+
+            file_path = args.file
+            if not file_path.exists() or not file_path.is_file():
+                raise ResearchSessionError("provider_response_file_not_found")
+            if file_path.is_symlink():
+                try:
+                    resolved = file_path.resolve()
+                    ws_resolved = ws.resolve()
+                    resolved.relative_to(ws_resolved)
+                except ValueError:
+                    raise ResearchSessionError("artifact_path_not_allowed")
+
+            try:
+                import json
+                raw_data: dict[str, Any] = json.loads(file_path.read_text(encoding="utf-8"))
+            except Exception:
+                raise ResearchSessionError("provider_response_malformed")
+
+            summary = sanitize_contract_text(raw_data.get("summary", ""), 4000)
+            sections = raw_data.get("sections", [])
+            if not isinstance(sections, list):
+                sections = []
+            safe_sections = []
+            for sec in sections:
+                if isinstance(sec, dict):
+                    safe_sections.append({
+                        "title": sanitize_contract_text(str(sec.get("title", "")), 200),
+                        "content": sanitize_contract_text(str(sec.get("content", "")), 4000),
+                    })
+
+            safety_checks = raw_data.get("safety_checks", [])
+            if not isinstance(safety_checks, list):
+                safety_checks = []
+            safe_checks = []
+            for chk in safety_checks:
+                if isinstance(chk, dict):
+                    safe_checks.append({
+                        "name": sanitize_contract_text(str(chk.get("name", "")), 200),
+                        "status": str(chk.get("status", "warn")),
+                        "notes": sanitize_contract_text(str(chk.get("notes", "")), 1000),
+                    })
+
+            limitations = raw_data.get("limitations", [])
+            if not isinstance(limitations, list):
+                limitations = []
+            safe_limitations = [sanitize_contract_text(str(l), 500) for l in limitations]
+
+            symbol = validate_contract_symbol(sandbox.get("symbol", ""))
+            prompt_packet_id = validate_contract_lineage_id(sandbox.get("prompt_packet_id", ""), "prompt_packet_id")
+            source_run_id = validate_contract_lineage_id(sandbox.get("source_run_id", ""), "source_run_id")
+
+            provider_response_id = generate_run_id()
+            created_at = datetime.now(UTC)
+
+            artifact_path_rel = f".atlas/research/{symbol}/provider_responses/{provider_response_id}.json"
+            artifact_path = ws / artifact_path_rel
+
+            response_payload: dict[str, Any] = {
+                "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+                "artifact_type": "provider_response",
+                "provider_response_id": provider_response_id,
+                "source_sandbox_request_id": safe_sandbox_id,
+                "source_prompt_packet_id": prompt_packet_id,
+                "source_run_id": source_run_id,
+                "created_at": created_at.isoformat(),
+                "symbol": symbol,
+                "mode": "paper",
+                "provider": "external-local-import",
+                "provider_status": "imported_untrusted",
+                "response_summary": summary,
+                "response_sections": safe_sections,
+                "safety_checks": safe_checks,
+                "limitations": safe_limitations,
+                "artifact_path": artifact_path_rel,
+            }
+
+            validation = validate_external_provider_response_payload(response_payload)
+            if not validation.valid:
+                resp_warnings = validation.warnings + ["Imported provider response failed contract validation."]
+            else:
+                resp_warnings = validation.warnings
+
+            response_payload["recommendation"] = validation.recommendation
+            response_payload["redaction_summary"] = {"redacted_fragments_count": 0, "truncated": False}
+            response_payload["warnings"] = resp_warnings
+            response_payload["content_hash"] = artifact_sha256(response_payload)
+
+            responses_dir = ws / RESEARCH_DIR / symbol / "provider_responses"
+            responses_dir.mkdir(parents=True, exist_ok=True)
+
+            artifact_path.write_text(json.dumps(response_payload, indent=2, sort_keys=True), encoding="utf-8")
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research import-provider-response", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research import-provider-response", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_response_imported",
+                "provider_response_id": provider_response_id,
+                "source_sandbox_request_id": safe_sandbox_id,
+                "artifact_path": artifact_path_rel,
+                "recommendation": validation.recommendation,
+                "warnings": resp_warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider response imported: {provider_response_id}")
+            print(f"  Source Sandbox: {safe_sandbox_id}")
+            print(f"  Artifact: {artifact_path_rel}")
+            print(f"  Recommendation: {validation.recommendation}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

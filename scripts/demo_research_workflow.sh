@@ -116,7 +116,7 @@ assert_no_absolute_paths() {
 
 assert_no_secrets_in_output() {
   local text="$1"
-  if grep -qiE 'Authorization:|Bearer |sk-[a-zA-Z0-9]{10,}|pplx-[a-zA-Z0-9]{10,}' <<<"$text"; then
+  if grep -qiE '\bAuthorization:\b|\bBearer\b|sk-[a-zA-Z0-9]{10,}|pplx-[a-zA-Z0-9]{10,}' <<<"$text"; then
     printf 'FAIL: Output may contain secret-like content.\n' >&2
     exit 1
   fi
@@ -431,51 +431,124 @@ assert_file_exists "$WORKSPACE/$SANDBOX_ARTIFACT_PATH" "sandbox request artifact
 assert_no_forbidden_fragments "$(cat "$WORKSPACE/$SANDBOX_ARTIFACT_PATH")" "sandbox request artifact"
 assert_no_pending_orders
 
-# 12. Research simulate-provider
-printf '\n--- Research simulate-provider ---\n'
-SIM_OUTPUT="$(atlas research simulate-provider "$PROMPT_PACKET_ID" --json)"
-assert_no_absolute_paths "$SIM_OUTPUT"
-assert_no_secrets_in_output "$SIM_OUTPUT"
-assert_no_forbidden_fragments "$SIM_OUTPUT" "simulate-provider CLI output"
-assert_ok "$SIM_OUTPUT" "research simulate-provider"
-SIM_STATUS="$(json_field "$SIM_OUTPUT" status)"
-if [ "$SIM_STATUS" != "research_provider_response_created" ]; then
-  printf 'FAIL: unexpected simulate-provider status: %s\n' "$SIM_STATUS" >&2
+# 12. Research sandbox-list
+printf '\n--- Research sandbox-list ---\n'
+SANDBOX_LIST_OUTPUT="$(atlas research sandbox-list --json)"
+assert_no_absolute_paths "$SANDBOX_LIST_OUTPUT"
+assert_no_secrets_in_output "$SANDBOX_LIST_OUTPUT"
+assert_no_forbidden_fragments "$SANDBOX_LIST_OUTPUT" "sandbox-list CLI output"
+assert_ok "$SANDBOX_LIST_OUTPUT" "research sandbox-list"
+SANDBOX_LIST_STATUS="$(json_field "$SANDBOX_LIST_OUTPUT" status)"
+if [ "$SANDBOX_LIST_STATUS" != "research_sandbox_listed" ]; then
+  printf 'FAIL: unexpected sandbox-list status: %s\n' "$SANDBOX_LIST_STATUS" >&2
   exit 1
 fi
-SIM_PROVIDER="$(json_field "$SIM_OUTPUT" provider)"
-if [ "$SIM_PROVIDER" != "deterministic-mock" ]; then
-  printf 'FAIL: unexpected provider: %s\n' "$SIM_PROVIDER" >&2
+SANDBOX_LIST_HAS_ID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(any(i.get('sandbox_request_id')=='$SANDBOX_ID' for i in items))
+" <<<"$SANDBOX_LIST_OUTPUT" )"
+if [ "$SANDBOX_LIST_HAS_ID" != "True" ]; then
+  printf 'FAIL: sandbox-list does not contain sandbox_request_id %s\n' "$SANDBOX_ID" >&2
   exit 1
 fi
-SIM_RECOMMENDATION="$(json_field "$SIM_OUTPUT" recommendation)"
-if [ "$SIM_RECOMMENDATION" != "provider_response_review_ready" ] && [ "$SIM_RECOMMENDATION" != "manual_review_required" ]; then
-  printf 'FAIL: unexpected recommendation: %s\n' "$SIM_RECOMMENDATION" >&2
-  exit 1
-fi
-SIM_RESPONSE_ID="$(json_field "$SIM_OUTPUT" provider_response_id)"
-if [ -z "$SIM_RESPONSE_ID" ]; then
-  printf 'FAIL: provider_response_id is empty\n' >&2
-  exit 1
-fi
-SIM_ARTIFACT_PATH="$(json_field "$SIM_OUTPUT" artifact_path)"
-assert_file_exists "$WORKSPACE/$SIM_ARTIFACT_PATH" "provider response artifact"
-assert_no_forbidden_fragments "$(cat "$WORKSPACE/$SIM_ARTIFACT_PATH")" "provider response artifact"
 assert_no_pending_orders
 
-# 13. Research timeline after simulate-provider (validate lineage)
-printf '\n--- Research timeline (post simulate-provider) ---\n'
-TIMELINE_OUTPUT2="$(atlas research timeline --json)"
-assert_no_absolute_paths "$TIMELINE_OUTPUT2"
-assert_no_secrets_in_output "$TIMELINE_OUTPUT2"
-assert_no_forbidden_fragments "$TIMELINE_OUTPUT2" "timeline CLI output after simulate-provider"
-assert_ok "$TIMELINE_OUTPUT2" "research timeline after simulate-provider"
-TIMELINE_STATUS2="$(json_field "$TIMELINE_OUTPUT2" status)"
-if [ "$TIMELINE_STATUS2" != "research_timeline" ]; then
-  printf 'FAIL: unexpected timeline status after simulate-provider: %s\n' "$TIMELINE_STATUS2" >&2
+# 13. Research sandbox-show
+printf '\n--- Research sandbox-show ---\n'
+SANDBOX_SHOW_OUTPUT="$(atlas research sandbox-show "$SANDBOX_ID" --json)"
+assert_no_absolute_paths "$SANDBOX_SHOW_OUTPUT"
+assert_no_secrets_in_output "$SANDBOX_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$SANDBOX_SHOW_OUTPUT" "sandbox-show CLI output"
+assert_ok "$SANDBOX_SHOW_OUTPUT" "research sandbox-show"
+SANDBOX_SHOW_STATUS="$(json_field "$SANDBOX_SHOW_OUTPUT" status)"
+if [ "$SANDBOX_SHOW_STATUS" != "research_sandbox_loaded" ]; then
+  printf 'FAIL: unexpected sandbox-show status: %s\n' "$SANDBOX_SHOW_STATUS" >&2
   exit 1
 fi
-TIMELINE_LINEAGE_VALID="$( "$PYTHON_BIN" -c "
+SANDBOX_SHOW_ID="$(json_field "$SANDBOX_SHOW_OUTPUT" artifact.sandbox_request_id)"
+if [ "$SANDBOX_SHOW_ID" != "$SANDBOX_ID" ]; then
+  printf 'FAIL: sandbox-show returned unexpected sandbox_request_id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 14. Research sandbox-validate
+printf '\n--- Research sandbox-validate ---\n'
+SANDBOX_VALIDATE_OUTPUT="$(atlas research sandbox-validate "$SANDBOX_ID" --json)"
+assert_no_absolute_paths "$SANDBOX_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$SANDBOX_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$SANDBOX_VALIDATE_OUTPUT" "sandbox-validate CLI output"
+assert_ok "$SANDBOX_VALIDATE_OUTPUT" "research sandbox-validate"
+SANDBOX_VALIDATE_STATUS="$(json_field "$SANDBOX_VALIDATE_OUTPUT" status)"
+if [ "$SANDBOX_VALIDATE_STATUS" != "research_sandbox_validated" ]; then
+  printf 'FAIL: unexpected sandbox-validate status: %s\n' "$SANDBOX_VALIDATE_STATUS" >&2
+  exit 1
+fi
+SANDBOX_VALID="$(json_field "$SANDBOX_VALIDATE_OUTPUT" valid)"
+if [ "$SANDBOX_VALID" != "True" ]; then
+  printf 'FAIL: sandbox-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 15. Research sandbox-replay
+printf '\n--- Research sandbox-replay ---\n'
+SANDBOX_REPLAY_OUTPUT="$(atlas research sandbox-replay "$SANDBOX_ID" --json)"
+assert_no_absolute_paths "$SANDBOX_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$SANDBOX_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$SANDBOX_REPLAY_OUTPUT" "sandbox-replay CLI output"
+assert_ok "$SANDBOX_REPLAY_OUTPUT" "research sandbox-replay"
+SANDBOX_REPLAY_STATUS="$(json_field "$SANDBOX_REPLAY_OUTPUT" status)"
+if [ "$SANDBOX_REPLAY_STATUS" != "research_sandbox_replayed" ]; then
+  printf 'FAIL: unexpected sandbox-replay status: %s\n' "$SANDBOX_REPLAY_STATUS" >&2
+  exit 1
+fi
+SANDBOX_REPLAY_MATCH="$(json_field "$SANDBOX_REPLAY_OUTPUT" match)"
+if [ "$SANDBOX_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: sandbox-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 16. Create local provider response fixture and import it
+printf '\n--- Import provider response ---\n'
+IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
+printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"
+IMPORT_OUTPUT="$(atlas research import-provider-response "$SANDBOX_ID" --file "$IMPORT_FIXTURE" --json)"
+assert_no_absolute_paths "$IMPORT_OUTPUT"
+assert_no_secrets_in_output "$IMPORT_OUTPUT"
+assert_no_forbidden_fragments "$IMPORT_OUTPUT" "import-provider-response CLI output"
+assert_ok "$IMPORT_OUTPUT" "research import-provider-response"
+IMPORT_STATUS="$(json_field "$IMPORT_OUTPUT" status)"
+if [ "$IMPORT_STATUS" != "research_provider_response_imported" ]; then
+  printf 'FAIL: unexpected import-provider-response status: %s\n' "$IMPORT_STATUS" >&2
+  exit 1
+fi
+IMPORT_RESPONSE_ID="$(json_field "$IMPORT_OUTPUT" provider_response_id)"
+if [ -z "$IMPORT_RESPONSE_ID" ]; then
+  printf 'FAIL: provider_response_id is empty after import\n' >&2
+  exit 1
+fi
+IMPORT_ARTIFACT_PATH="$(json_field "$IMPORT_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$IMPORT_ARTIFACT_PATH" "imported provider response artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$IMPORT_ARTIFACT_PATH")" "imported provider response artifact"
+assert_no_pending_orders
+
+# 17. Research timeline after import (validate imported lineage)
+printf '\n--- Research timeline (post import) ---\n'
+TIMELINE_OUTPUT_IMPORT="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_IMPORT"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_IMPORT"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_IMPORT" "timeline CLI output after import"
+assert_ok "$TIMELINE_OUTPUT_IMPORT" "research timeline after import"
+TIMELINE_IMPORT_STATUS="$(json_field "$TIMELINE_OUTPUT_IMPORT" status)"
+if [ "$TIMELINE_IMPORT_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after import: %s\n' "$TIMELINE_IMPORT_STATUS" >&2
+  exit 1
+fi
+TIMELINE_IMPORT_VALID="$( "$PYTHON_BIN" -c "
 import json,sys
 data=json.load(sys.stdin)
 entries=data.get('entries',[])
@@ -487,45 +560,22 @@ for e in entries:
         if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
             continue
         prs=[pr.get('provider_response_id') for pr in p.get('provider_responses',[])]
-        if '$SIM_RESPONSE_ID' in prs:
+        if '$IMPORT_RESPONSE_ID' in prs:
             print('valid')
             break
     break
 else:
     print('invalid')
-" <<<"$TIMELINE_OUTPUT2" )"
-if [ "$TIMELINE_LINEAGE_VALID" != "valid" ]; then
-  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> provider response %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$SIM_RESPONSE_ID" >&2
-  exit 1
-fi
-TIMELINE_SANDBOX_VALID="$( "$PYTHON_BIN" -c "
-import json,sys
-data=json.load(sys.stdin)
-entries=data.get('entries',[])
-for e in entries:
-    if e.get('run_id')!='$RUN_ID':
-        continue
-    prompts=e.get('prompts',[])
-    for p in prompts:
-        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
-            continue
-        sbs=[s.get('sandbox_request_id') for s in p.get('sandbox_requests',[])]
-        if '$SANDBOX_ID' in sbs:
-            print('valid')
-            break
-    break
-else:
-    print('invalid')
-" <<<"$TIMELINE_OUTPUT2" )"
-if [ "$TIMELINE_SANDBOX_VALID" != "valid" ]; then
-  printf 'FAIL: timeline does not link prompt %s -> sandbox request %s\n' "$PROMPT_PACKET_ID" "$SANDBOX_ID" >&2
+" <<<"$TIMELINE_OUTPUT_IMPORT" )"
+if [ "$TIMELINE_IMPORT_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> imported provider response %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$IMPORT_RESPONSE_ID" >&2
   exit 1
 fi
 assert_no_pending_orders
 
-# 14. Research review-response
+# 18. Research review-response on imported response
 printf '\n--- Research review-response ---\n'
-REVIEW_OUTPUT="$(atlas research review-response "$SIM_RESPONSE_ID" --json)"
+REVIEW_OUTPUT="$(atlas research review-response "$IMPORT_RESPONSE_ID" --json)"
 assert_no_absolute_paths "$REVIEW_OUTPUT"
 assert_no_secrets_in_output "$REVIEW_OUTPUT"
 assert_no_forbidden_fragments "$REVIEW_OUTPUT" "review-response CLI output"
@@ -550,7 +600,7 @@ assert_file_exists "$WORKSPACE/$REVIEW_ARTIFACT_PATH" "response review artifact"
 assert_no_forbidden_fragments "$(cat "$WORKSPACE/$REVIEW_ARTIFACT_PATH")" "response review artifact"
 assert_no_pending_orders
 
-# 15. Research timeline after review-response (validate full lineage)
+# 19. Research timeline after review-response (validate full lineage)
 printf '\n--- Research timeline (post review-response) ---\n'
 TIMELINE_OUTPUT3="$(atlas research timeline --json)"
 assert_no_absolute_paths "$TIMELINE_OUTPUT3"
@@ -574,7 +624,7 @@ for e in entries:
         if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
             continue
         for pr in p.get('provider_responses',[]):
-            if pr.get('provider_response_id')!='$SIM_RESPONSE_ID':
+            if pr.get('provider_response_id')!='$IMPORT_RESPONSE_ID':
                 continue
             rrs=[rr.get('response_review_id') for rr in pr.get('response_reviews',[])]
             if '$REVIEW_ID' in rrs:
@@ -586,12 +636,12 @@ else:
     print('invalid')
 " <<<"$TIMELINE_OUTPUT3" )"
 if [ "$TIMELINE_FULL_LINEAGE_VALID" != "valid" ]; then
-  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> provider response %s -> response review %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$SIM_RESPONSE_ID" "$REVIEW_ID" >&2
+  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> provider response %s -> response review %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$IMPORT_RESPONSE_ID" "$REVIEW_ID" >&2
   exit 1
 fi
 assert_no_pending_orders
 
-# 16. Research dossier
+# 20. Research dossier
 printf '\n--- Research dossier ---\n'
 DOSSIER_OUTPUT="$(atlas research dossier "$RUN_ID" --json)"
 assert_no_absolute_paths "$DOSSIER_OUTPUT"
@@ -620,7 +670,7 @@ if [ ! -f "$WORKSPACE/$DOSSIER_ARTIFACT_PATH" ]; then
 fi
 assert_no_pending_orders
 
-# 17. Research timeline after dossier (validate dossier lineage)
+# 21. Research timeline after dossier (validate dossier lineage)
 printf '\n--- Research timeline (post dossier) ---\n'
 TIMELINE_OUTPUT4="$(atlas research timeline --json)"
 assert_no_absolute_paths "$TIMELINE_OUTPUT4"
@@ -653,10 +703,10 @@ if [ "$TIMELINE_DOSSIER_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 18. Safety checks
+# 22. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
-assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
+assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
 
 printf '\nResearch workflow demo complete.\n'

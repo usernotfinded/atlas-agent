@@ -346,3 +346,192 @@ class TestSandboxDossier:
         dossier = json.loads(artifact_path.read_text())
         assert dossier["workflow_status"]["sandbox_requests"] is True
         assert dossier["artifact_counts"]["sandbox_requests"] >= 1
+
+
+class TestImportProviderResponse:
+    """Regression tests for import-provider-response --json path."""
+
+    @staticmethod
+    def _valid_fixture() -> dict:
+        return {
+            "summary": "External analysis of market context.",
+            "sections": [
+                {"title": "Scope", "content": "Review local sandbox request only."},
+                {"title": "Risks", "content": "No live trading is authorized."},
+            ],
+            "safety_checks": [
+                {"name": "paper_only", "status": "pass", "notes": "Mode is paper."}
+            ],
+            "limitations": ["Not financial advice.", "No real market data queried."],
+        }
+
+    def test_successful_import_json(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id = _create_research_artifact(tmp_path, monkeypatch)
+        prompt_id = _create_prompt_packet(tmp_path, monkeypatch, run_id)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "sandbox", prompt_id, "--json"]) == 0
+
+        out = json.loads(capsys.readouterr().out)
+        sandbox_id = out["sandbox_request_id"]
+
+        fixture_path = tmp_path / "imported_response.json"
+        fixture_path.write_text(json.dumps(self._valid_fixture()), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(
+                [
+                    "research",
+                    "import-provider-response",
+                    sandbox_id,
+                    "--file",
+                    str(fixture_path),
+                    "--json",
+                ]
+            )
+
+        stdout = capsys.readouterr().out
+        data = json.loads(stdout)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_response_imported"
+        assert "provider_response_id" in data
+        assert data["source_sandbox_request_id"] == sandbox_id
+        assert "artifact_path" in data
+        assert isinstance(data["warnings"], list)
+
+        artifact_path = tmp_path / data["artifact_path"]
+        assert artifact_path.exists()
+        artifact = json.loads(artifact_path.read_text())
+        assert artifact["provider"] == "external-local-import"
+        assert artifact["provider_status"] == "imported_untrusted"
+        assert artifact["recommendation"] in (
+            "provider_response_review_required",
+            "manual_review_required",
+        )
+
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in stdout, f"Forbidden fragment in output: {frag}"
+            assert frag not in artifact_path.read_text(), f"Forbidden fragment in artifact: {frag}"
+
+    def test_missing_file_fails_safe(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id = _create_research_artifact(tmp_path, monkeypatch)
+        prompt_id = _create_prompt_packet(tmp_path, monkeypatch, run_id)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "sandbox", prompt_id, "--json"]) == 0
+
+        out = json.loads(capsys.readouterr().out)
+        sandbox_id = out["sandbox_request_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(
+                [
+                    "research",
+                    "import-provider-response",
+                    sandbox_id,
+                    "--file",
+                    str(tmp_path / "nonexistent.json"),
+                    "--json",
+                ]
+            )
+
+        stdout = capsys.readouterr().out
+        data = json.loads(stdout)
+        assert code == 1
+        assert data["ok"] is False
+        assert data["status"] == "provider_response_file_not_found"
+        assert "Traceback" not in stdout
+        assert "/Users/" not in stdout
+        assert "/private/var/" not in stdout
+
+    def test_malformed_json_fails_safe(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id = _create_research_artifact(tmp_path, monkeypatch)
+        prompt_id = _create_prompt_packet(tmp_path, monkeypatch, run_id)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "sandbox", prompt_id, "--json"]) == 0
+
+        out = json.loads(capsys.readouterr().out)
+        sandbox_id = out["sandbox_request_id"]
+
+        fixture_path = tmp_path / "bad.json"
+        fixture_path.write_text("{bad json", encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(
+                [
+                    "research",
+                    "import-provider-response",
+                    sandbox_id,
+                    "--file",
+                    str(fixture_path),
+                    "--json",
+                ]
+            )
+
+        stdout = capsys.readouterr().out
+        data = json.loads(stdout)
+        assert code == 1
+        assert data["ok"] is False
+        assert data["status"] == "provider_response_malformed"
+        assert "Traceback" not in stdout
+        assert "/Users/" not in stdout
+        assert "/private/var/" not in stdout
+
+    def test_unsafe_content_is_redacted(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id = _create_research_artifact(tmp_path, monkeypatch)
+        prompt_id = _create_prompt_packet(tmp_path, monkeypatch, run_id)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "sandbox", prompt_id, "--json"]) == 0
+
+        out = json.loads(capsys.readouterr().out)
+        sandbox_id = out["sandbox_request_id"]
+
+        fixture_path = tmp_path / "unsafe.json"
+        fixture_path.write_text(
+            json.dumps({
+                "summary": "Authorization: Bearer abc123",
+                "sections": [{"title": "T", "content": "Authorization: Bearer abc123"}],
+                "safety_checks": [],
+                "limitations": ["Authorization: Bearer abc123"],
+            }),
+            encoding="utf-8",
+        )
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(
+                [
+                    "research",
+                    "import-provider-response",
+                    sandbox_id,
+                    "--file",
+                    str(fixture_path),
+                    "--json",
+                ]
+            )
+
+        stdout = capsys.readouterr().out
+        data = json.loads(stdout)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_response_imported"
+
+        artifact_path = tmp_path / data["artifact_path"]
+        assert artifact_path.exists()
+        artifact_text = artifact_path.read_text()
+
+        for frag in ("Authorization", "Bearer"):
+            assert frag not in stdout, f"Forbidden fragment in output: {frag}"
+            assert frag not in artifact_text, f"Forbidden fragment in artifact: {frag}"
+
+        assert "<redacted>" in artifact_text

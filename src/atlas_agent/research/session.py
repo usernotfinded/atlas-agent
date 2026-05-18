@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from atlas_agent.events.log import EventLogger, generate_run_id
+from atlas_agent.research.sandbox_contracts import artifact_sha256
 from atlas_agent.research.providers import (
     ResearchContext,
     UnsupportedResearchProviderError,
@@ -1493,6 +1494,13 @@ def check_research_artifacts(
                 if f not in data:
                     issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
                     return
+            # Hash validation
+            stored_hash = data.get("content_hash", "")
+            if stored_hash:
+                computed = artifact_sha256(data)
+                if computed != stored_hash:
+                    issues.append({"code": "hash_mismatch", "path": rel, "severity": "error"})
+                    return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1841,6 +1849,54 @@ def _iter_sandbox_request_artifacts(
 
     items.sort(key=lambda i: i["created_at"], reverse=True)
     return items
+
+
+def find_sandbox_request_by_id(workspace_path: Path, sandbox_request_id: str) -> Path | None:
+    """Find exactly one sandbox request artifact by sandbox_request_id.
+
+    Returns the path, or None if not found.
+    Raises ResearchSessionError if ambiguous.
+    """
+    safe_id = validate_run_id(sandbox_request_id)
+    research_dir = workspace_path / RESEARCH_DIR
+    if not research_dir.exists():
+        return None
+
+    matches: list[Path] = []
+    for sym_dir in research_dir.iterdir():
+        if not sym_dir.is_dir():
+            continue
+        sandbox_dir = sym_dir / "sandbox_requests"
+        if not sandbox_dir.exists():
+            continue
+        candidate = sandbox_dir / f"{safe_id}.json"
+        if candidate.exists() and candidate.is_file():
+            if candidate.is_symlink() and not _is_inside_workspace(candidate, workspace_path):
+                continue
+            matches.append(candidate)
+
+    if len(matches) == 0:
+        return None
+    if len(matches) > 1:
+        raise ResearchSessionError("ambiguous_sandbox_request_id")
+    return matches[0]
+
+
+def load_sandbox_request(path: Path, workspace_path: Path) -> dict[str, Any]:
+    """Load a sandbox request JSON safely."""
+    if not path.exists() or not path.is_file():
+        raise ResearchSessionError("sandbox_request_not_found")
+    if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
+        raise ResearchSessionError("artifact_path_not_allowed")
+    try:
+        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        raise ResearchSessionError("sandbox_request_malformed")
+    data["artifact_path"] = path.relative_to(workspace_path).as_posix()
+    sv = data.get("schema_version")
+    if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
+        raise UnsupportedArtifactSchemaError("unsupported_sandbox_schema")
+    return data
 
 
 def _iter_provider_response_artifacts(

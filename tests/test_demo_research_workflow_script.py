@@ -307,10 +307,10 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                     "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"
                 }],
                 "provider_responses": [{
-                    "provider_response_id": "demoresponseid12345",
-                    "provider": "deterministic-mock",
-                    "recommendation": "provider_response_review_ready",
-                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoresponseid12345.json",
+                    "provider_response_id": "demoimportresponse12345",
+                    "provider": "external-local-import",
+                    "recommendation": "provider_response_review_required",
+                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoimportresponse12345.json",
                     "response_reviews": [{
                         "response_review_id": "demoreviewid12345",
                         "recommendation": "provider_response_review_ready",
@@ -486,23 +486,32 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     symbol = "ATLAS-DEMO"
     artifact_path = f".atlas/research/{symbol}/sandbox_requests/{sandbox_request_id}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol, "sandbox_requests"), exist_ok=True)
+    artifact = {
+        "schema_version": "1",
+        "artifact_type": "sandbox_request",
+        "contract_version": "research_sandbox_contract_v1",
+        "sandbox_request_id": sandbox_request_id,
+        "prompt_packet_id": prompt_packet_id,
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider": "llm-sandbox",
+        "request_payload": "payload",
+        "system_boundary": {
+            "paper_only": True, "analysis_only": True, "no_trading_advice": True,
+            "no_live_trading_authorization": True, "no_broker_submit": True,
+            "no_pending_orders": True, "no_approvals": True, "no_api_network_call": True,
+            "no_financial_advice": True, "no_trading_signal_generation": True,
+        },
+        "explicit_boundaries": ["Local only"],
+        "redaction_summary": {"redacted_fragments_count": 0, "truncated": False},
+        "warnings": [],
+        "metadata": {},
+        "artifact_path": artifact_path,
+    }
+    artifact["content_hash"] = "dummyhash12345"
     with open(artifact_path, "w") as f:
-        json.dump({
-            "sandbox_request_id": sandbox_request_id,
-            "prompt_packet_id": prompt_packet_id,
-            "source_run_id": "demorunid12345",
-            "symbol": symbol,
-            "mode": "paper",
-            "provider": "llm-sandbox",
-            "request_payload": "payload",
-            "system_boundary": {"paper_only": True},
-            "explicit_boundaries": ["Local only"],
-            "redaction_summary": {"redacted_fragments_count": 0, "truncated": False},
-            "warnings": [],
-            "metadata": {},
-            "schema_version": "1",
-            "artifact_path": artifact_path
-        }, f)
+        json.dump(artifact, f)
     print(json.dumps({
         "ok": True, "status": "research_sandbox_request_created",
         "symbol": symbol, "prompt_packet_id": prompt_packet_id,
@@ -511,6 +520,94 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
         "provider": "llm-sandbox",
         "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-list":
+    symbol = "ATLAS-DEMO"
+    print(json.dumps({
+        "ok": True, "status": "research_sandbox_listed",
+        "items": [{
+            "sandbox_request_id": "demosandboxid12345",
+            "prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"
+        }]
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-show":
+    sandbox_request_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/sandbox_requests/{sandbox_request_id}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({
+        "ok": True, "status": "research_sandbox_loaded",
+        "artifact": artifact
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-validate":
+    sandbox_request_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_sandbox_validated",
+        "sandbox_request_id": sandbox_request_id,
+        "valid": True, "passed_checks": 11, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-replay":
+    sandbox_request_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_sandbox_replayed",
+        "sandbox_request_id": sandbox_request_id,
+        "source_prompt_packet_id": "demopromptid12345",
+        "match": True,
+        "expected_hash": "dummyhash12345",
+        "actual_hash": "dummyhash12345",
+        "checks": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
+    sandbox_request_id = ARGS[2]
+    provider_response_id = "demoimportresponse12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/provider_responses/{provider_response_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_response",
+            "provider_response_id": provider_response_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider": "external-local-import",
+            "provider_status": "imported_untrusted",
+            "response_summary": "Imported summary",
+            "response_sections": [],
+            "safety_checks": [],
+            "limitations": [],
+            "recommendation": "provider_response_review_required",
+            "redaction_summary": {"redacted_fragments_count": 0, "truncated": False},
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "content_hash": "dummyhashimport12345",
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_imported",
+        "provider_response_id": provider_response_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "artifact_path": artifact_path,
+        "recommendation": "provider_response_review_required",
+        "warnings": []
     }))
     sys.exit(0)
 
@@ -575,8 +672,14 @@ def test_success_path_with_fake_atlas(fake_atlas_workspace: Path, tmp_path: Path
     assert "research timeline" in log_text
     assert "research providers" in log_text
     assert "research prompt" in log_text
-    assert "research simulate-provider" in log_text
+    assert "research sandbox" in log_text
+    assert "research sandbox-list" in log_text
+    assert "research sandbox-show" in log_text
+    assert "research sandbox-validate" in log_text
+    assert "research sandbox-replay" in log_text
+    assert "research import-provider-response" in log_text
     assert "research review-response" in log_text
+    assert "research dossier" in log_text
 
 
 def test_failure_if_pending_orders_created(fake_atlas_workspace: Path, tmp_path: Path) -> None:
@@ -4843,7 +4946,7 @@ sys.exit(1)
     assert "pending orders" in result.stderr.lower() or "pending orders" in result.stdout.lower()
 
 
-def test_simulate_provider_unsafe_output_fails(fake_atlas_workspace: Path, tmp_path: Path) -> None:
+def test_sandbox_show_unsafe_output_fails(fake_atlas_workspace: Path, tmp_path: Path) -> None:
     workspace = fake_atlas_workspace
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(exist_ok=True)
@@ -4992,18 +5095,6 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     }}))
     sys.exit(0)
 
-if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
-    # Return simulate-provider output with a forbidden fragment
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_response_created",
-        "symbol": "ATLAS-DEMO", "source_prompt_packet_id": ARGS[2],
-        "provider_response_id": "demoresponseid12345",
-        "provider": "deterministic-mock", "recommendation": "provider_response_review_ready",
-        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoresponseid12345.json",
-        "warnings": ["Authorization: Bearer abc123"]
-    }}))
-    sys.exit(0)
-
 if ARGS[0] == "research" and ARGS[1] == "sandbox":
     prompt_packet_id = ARGS[2]
     sandbox_request_id = "demosandboxid12345"
@@ -5035,6 +5126,144 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
         "provider": "llm-sandbox",
         "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_listed",
+        "items": [{{"sandbox_request_id": "demosandboxid12345", "symbol": "ATLAS-DEMO", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_loaded",
+        "artifact": {{
+            "sandbox_request_id": ARGS[2],
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "warnings": ["Authorization: Bearer abc123"]
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_validated",
+        "valid": True, "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_replayed",
+        "match": True, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
+    sandbox_request_id = ARGS[2]
+    provider_response_id = "demoimportresponse12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "provider_response_id": provider_response_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "external-local-import",
+            "provider_status": "imported_untrusted",
+            "recommendation": "provider_response_review_required",
+            "response_summary": "External analysis.",
+            "response_sections": {{}},
+            "safety_checks": [],
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_imported",
+        "symbol": symbol,
+        "sandbox_request_id": sandbox_request_id,
+        "provider_response_id": provider_response_id,
+        "provider": "external-local-import",
+        "recommendation": "provider_response_review_required",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "review-response":
+    provider_response_id = ARGS[2]
+    response_review_id = "demoreviewid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/response_reviews/{{response_review_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "response_reviews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "response_review_id": response_review_id,
+            "source_provider_response_id": provider_response_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-review", "review_status": "review_passed",
+            "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
+            "checks": [], "passed_checks": 18, "failed_checks": 0,
+            "recommendation": "provider_response_review_ready",
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_reviewed",
+        "symbol": symbol,
+        "source_provider_response_id": provider_response_id,
+        "response_review_id": response_review_id,
+        "review_status": "review_passed",
+        "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "dossier":
+    print(json.dumps({{
+        "ok": True, "status": "research_dossier_loaded",
+        "symbol": "ATLAS-DEMO",
+        "run_id": "demorunid12345",
+        "dossier": {{
+            "run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "plan_id": "demoplanid12345",
+            "verification_id": "demoverifyid12345",
+            "evaluation_id": "demoevalid12345",
+            "prompt_packet_id": "demopromptid12345",
+            "provider_response_id": "demoimportresponse12345",
+            "response_review_id": "demoreviewid12345",
+            "sandbox_request_id": "demosandboxid12345"
+        }},
+        "workflow_status": {{
+            "has_research": True,
+            "has_plan": True,
+            "has_verification": True,
+            "has_evaluation": True,
+            "has_prompt": True,
+            "has_provider_response": True,
+            "has_response_review": True,
+            "has_sandbox_request": True,
+            "all_ready": True
+        }},
+        "warnings": []
     }}))
     sys.exit(0)
 
@@ -5066,7 +5295,7 @@ sys.exit(1)
     )
 
 
-def test_simulate_provider_ok_false_fails(fake_atlas_workspace: Path, tmp_path: Path) -> None:
+def test_sandbox_show_ok_false_fails(fake_atlas_workspace: Path, tmp_path: Path) -> None:
     workspace = fake_atlas_workspace
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(exist_ok=True)
@@ -5215,12 +5444,6 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     }}))
     sys.exit(0)
 
-if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
-    print(json.dumps({{
-        "ok": False, "status": "research_error", "message": "Simulate-provider failed"
-    }}))
-    sys.exit(0)
-
 if ARGS[0] == "research" and ARGS[1] == "sandbox":
     prompt_packet_id = ARGS[2]
     sandbox_request_id = "demosandboxid12345"
@@ -5252,6 +5475,136 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
         "provider": "llm-sandbox",
         "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_listed",
+        "items": [{{"sandbox_request_id": "demosandboxid12345", "symbol": "ATLAS-DEMO", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-show":
+    print(json.dumps({{
+        "ok": False, "status": "research_error", "message": "sandbox-show failed"
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_validated",
+        "valid": True, "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_replayed",
+        "match": True, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
+    sandbox_request_id = ARGS[2]
+    provider_response_id = "demoimportresponse12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "provider_response_id": provider_response_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "external-local-import",
+            "provider_status": "imported_untrusted",
+            "recommendation": "provider_response_review_required",
+            "response_summary": "External analysis.",
+            "response_sections": {{}},
+            "safety_checks": [],
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_imported",
+        "symbol": symbol,
+        "sandbox_request_id": sandbox_request_id,
+        "provider_response_id": provider_response_id,
+        "provider": "external-local-import",
+        "recommendation": "provider_response_review_required",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "review-response":
+    provider_response_id = ARGS[2]
+    response_review_id = "demoreviewid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/response_reviews/{{response_review_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "response_reviews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "response_review_id": response_review_id,
+            "source_provider_response_id": provider_response_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-review", "review_status": "review_passed",
+            "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
+            "checks": [], "passed_checks": 18, "failed_checks": 0,
+            "recommendation": "provider_response_review_ready",
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_reviewed",
+        "symbol": symbol,
+        "source_provider_response_id": provider_response_id,
+        "response_review_id": response_review_id,
+        "review_status": "review_passed",
+        "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "dossier":
+    print(json.dumps({{
+        "ok": True, "status": "research_dossier_loaded",
+        "symbol": "ATLAS-DEMO",
+        "run_id": "demorunid12345",
+        "dossier": {{
+            "run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "plan_id": "demoplanid12345",
+            "verification_id": "demoverifyid12345",
+            "evaluation_id": "demoevalid12345",
+            "prompt_packet_id": "demopromptid12345",
+            "provider_response_id": "demoimportresponse12345",
+            "response_review_id": "demoreviewid12345",
+            "sandbox_request_id": "demosandboxid12345"
+        }},
+        "workflow_status": {{
+            "has_research": True,
+            "has_plan": True,
+            "has_verification": True,
+            "has_evaluation": True,
+            "has_prompt": True,
+            "has_provider_response": True,
+            "has_response_review": True,
+            "has_sandbox_request": True,
+            "all_ready": True
+        }},
+        "warnings": []
     }}))
     sys.exit(0)
 
@@ -5275,10 +5628,10 @@ sys.exit(1)
         cwd=str(ROOT),
     )
     assert result.returncode != 0
-    assert "ok=false" in result.stderr.lower() or "ok=false" in result.stdout.lower() or "simulate-provider" in result.stderr.lower()
+    assert "ok=false" in result.stderr.lower() or "ok=false" in result.stdout.lower() or "sandbox-show" in result.stderr.lower()
 
 
-def test_simulate_provider_pending_orders_after_fails(fake_atlas_workspace: Path, tmp_path: Path) -> None:
+def test_pending_orders_after_sandbox_fails(fake_atlas_workspace: Path, tmp_path: Path) -> None:
     workspace = fake_atlas_workspace
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(exist_ok=True)
@@ -5427,41 +5780,6 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     }}))
     sys.exit(0)
 
-if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
-    prompt_packet_id = ARGS[2]
-    provider_response_id = "demoresponseid12345"
-    symbol = "ATLAS-DEMO"
-    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
-    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
-    with open(artifact_path, "w") as f:
-        json.dump({{
-            "provider_response_id": provider_response_id,
-            "source_prompt_packet_id": prompt_packet_id,
-            "source_run_id": "demorunid12345",
-            "symbol": symbol, "mode": "paper",
-            "provider": "deterministic-mock", "provider_status": "simulated",
-            "source_prompt_packet_path": f".atlas/research/{{symbol}}/prompts/{{prompt_packet_id}}.json",
-            "response_summary": "Simulated response.",
-            "response_sections": {{}},
-            "recommendation": "provider_response_review_ready",
-            "safety_checks": [], "passed_checks": 0, "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
-            "artifact_path": artifact_path
-        }}, f)
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_response_created", "symbol": symbol,
-        "source_prompt_packet_id": prompt_packet_id, "provider_response_id": provider_response_id,
-        "provider": "deterministic-mock", "recommendation": "provider_response_review_ready",
-        "artifact_path": artifact_path, "warnings": []
-    }}))
-    # Create a pending order to trigger the safety guard
-    pending_dir = os.path.join(os.getcwd(), "pending_orders")
-    os.makedirs(pending_dir, exist_ok=True)
-    with open(os.path.join(pending_dir, "fake_order.json"), "w") as f:
-        json.dump({{}}, f)
-    sys.exit(0)
-
 if ARGS[0] == "research" and ARGS[1] == "sandbox":
     prompt_packet_id = ARGS[2]
     sandbox_request_id = "demosandboxid12345"
@@ -5485,6 +5803,11 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
+    # Create a pending order to trigger the safety guard
+    pending_dir = os.path.join(os.getcwd(), "pending_orders")
+    os.makedirs(pending_dir, exist_ok=True)
+    with open(os.path.join(pending_dir, "fake_order.json"), "w") as f:
+        json.dump({{}}, f)
     print(json.dumps({{
         "ok": True, "status": "research_sandbox_request_created",
         "symbol": symbol, "prompt_packet_id": prompt_packet_id,
@@ -5493,6 +5816,144 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
         "provider": "llm-sandbox",
         "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_listed",
+        "items": [{{"sandbox_request_id": "demosandboxid12345", "symbol": "ATLAS-DEMO", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_loaded",
+        "artifact": {{
+            "sandbox_request_id": ARGS[2],
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "warnings": []
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_validated",
+        "valid": True, "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_replayed",
+        "match": True, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
+    sandbox_request_id = ARGS[2]
+    provider_response_id = "demoimportresponse12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "provider_response_id": provider_response_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "external-local-import",
+            "provider_status": "imported_untrusted",
+            "recommendation": "provider_response_review_required",
+            "response_summary": "External analysis.",
+            "response_sections": {{}},
+            "safety_checks": [],
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_imported",
+        "symbol": symbol,
+        "sandbox_request_id": sandbox_request_id,
+        "provider_response_id": provider_response_id,
+        "provider": "external-local-import",
+        "recommendation": "provider_response_review_required",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "review-response":
+    provider_response_id = ARGS[2]
+    response_review_id = "demoreviewid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/response_reviews/{{response_review_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "response_reviews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "response_review_id": response_review_id,
+            "source_provider_response_id": provider_response_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "deterministic-review", "review_status": "review_passed",
+            "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
+            "checks": [], "passed_checks": 18, "failed_checks": 0,
+            "recommendation": "provider_response_review_ready",
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_reviewed",
+        "symbol": symbol,
+        "source_provider_response_id": provider_response_id,
+        "response_review_id": response_review_id,
+        "review_status": "review_passed",
+        "recommendation": "provider_response_review_ready",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "dossier":
+    print(json.dumps({{
+        "ok": True, "status": "research_dossier_loaded",
+        "symbol": "ATLAS-DEMO",
+        "run_id": "demorunid12345",
+        "dossier": {{
+            "run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "plan_id": "demoplanid12345",
+            "verification_id": "demoverifyid12345",
+            "evaluation_id": "demoevalid12345",
+            "prompt_packet_id": "demopromptid12345",
+            "provider_response_id": "demoimportresponse12345",
+            "response_review_id": "demoreviewid12345",
+            "sandbox_request_id": "demosandboxid12345"
+        }},
+        "workflow_status": {{
+            "has_research": True,
+            "has_plan": True,
+            "has_verification": True,
+            "has_evaluation": True,
+            "has_prompt": True,
+            "has_provider_response": True,
+            "has_response_review": True,
+            "has_sandbox_request": True,
+            "all_ready": True
+        }},
+        "warnings": []
     }}))
     sys.exit(0)
 
@@ -5696,36 +6157,6 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     }}))
     sys.exit(0)
 
-if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
-    prompt_packet_id = ARGS[2]
-    provider_response_id = "demoresponseid12345"
-    symbol = "ATLAS-DEMO"
-    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
-    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
-    with open(artifact_path, "w") as f:
-        json.dump({{
-            "provider_response_id": provider_response_id,
-            "source_prompt_packet_id": prompt_packet_id,
-            "source_run_id": "demorunid12345",
-            "symbol": symbol, "mode": "paper",
-            "provider": "deterministic-mock", "provider_status": "simulated",
-            "source_prompt_packet_path": f".atlas/research/{{symbol}}/prompts/{{prompt_packet_id}}.json",
-            "response_summary": "Simulated response.",
-            "response_sections": {{}},
-            "recommendation": "provider_response_review_ready",
-            "safety_checks": [], "passed_checks": 0, "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
-            "artifact_path": artifact_path
-        }}, f)
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_response_created", "symbol": symbol,
-        "source_prompt_packet_id": prompt_packet_id, "provider_response_id": provider_response_id,
-        "provider": "deterministic-mock", "recommendation": "provider_response_review_ready",
-        "artifact_path": artifact_path, "warnings": []
-    }}))
-    sys.exit(0)
-
 if ARGS[0] == "research" and ARGS[1] == "review-response":
     provider_response_id = ARGS[2]
     response_review_id = "demoreviewid12345"
@@ -5831,6 +6262,80 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
         "provider": "llm-sandbox",
         "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_listed",
+        "items": [{{"sandbox_request_id": "demosandboxid12345", "symbol": "ATLAS-DEMO", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_loaded",
+        "artifact": {{
+            "sandbox_request_id": ARGS[2],
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "warnings": []
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_validated",
+        "valid": True, "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_replayed",
+        "match": True, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
+    sandbox_request_id = ARGS[2]
+    provider_response_id = "demoimportresponse12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "provider_response_id": provider_response_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "external-local-import",
+            "provider_status": "imported_untrusted",
+            "recommendation": "provider_response_review_required",
+            "response_summary": "External analysis.",
+            "response_sections": {{}},
+            "safety_checks": [],
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_imported",
+        "symbol": symbol,
+        "sandbox_request_id": sandbox_request_id,
+        "provider_response_id": provider_response_id,
+        "provider": "external-local-import",
+        "recommendation": "provider_response_review_required",
+        "artifact_path": artifact_path,
+        "warnings": []
     }}))
     sys.exit(0)
 
@@ -6018,36 +6523,6 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     }}))
     sys.exit(0)
 
-if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
-    prompt_packet_id = ARGS[2]
-    provider_response_id = "demoresponseid12345"
-    symbol = "ATLAS-DEMO"
-    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
-    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
-    with open(artifact_path, "w") as f:
-        json.dump({{
-            "provider_response_id": provider_response_id,
-            "source_prompt_packet_id": prompt_packet_id,
-            "source_run_id": "demorunid12345",
-            "symbol": symbol, "mode": "paper",
-            "provider": "deterministic-mock", "provider_status": "simulated",
-            "source_prompt_packet_path": f".atlas/research/{{symbol}}/prompts/{{prompt_packet_id}}.json",
-            "response_summary": "Simulated response.",
-            "response_sections": {{}},
-            "recommendation": "provider_response_review_ready",
-            "safety_checks": [], "passed_checks": 0, "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
-            "artifact_path": artifact_path
-        }}, f)
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_response_created", "symbol": symbol,
-        "source_prompt_packet_id": prompt_packet_id, "provider_response_id": provider_response_id,
-        "provider": "deterministic-mock", "recommendation": "provider_response_review_ready",
-        "artifact_path": artifact_path, "warnings": []
-    }}))
-    sys.exit(0)
-
 if ARGS[0] == "research" and ARGS[1] == "sandbox":
     prompt_packet_id = ARGS[2]
     sandbox_request_id = "demosandboxid12345"
@@ -6079,6 +6554,80 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
         "provider": "llm-sandbox",
         "recommendation": "sandbox_request_ready",
         "artifact_path": artifact_path, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_listed",
+        "items": [{{"sandbox_request_id": "demosandboxid12345", "symbol": "ATLAS-DEMO", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_loaded",
+        "artifact": {{
+            "sandbox_request_id": ARGS[2],
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "warnings": []
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_validated",
+        "valid": True, "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_replayed",
+        "match": True, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
+    sandbox_request_id = ARGS[2]
+    provider_response_id = "demoimportresponse12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "provider_response_id": provider_response_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "external-local-import",
+            "provider_status": "imported_untrusted",
+            "recommendation": "provider_response_review_required",
+            "response_summary": "External analysis.",
+            "response_sections": {{}},
+            "safety_checks": [],
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_imported",
+        "symbol": symbol,
+        "sandbox_request_id": sandbox_request_id,
+        "provider_response_id": provider_response_id,
+        "provider": "external-local-import",
+        "recommendation": "provider_response_review_required",
+        "artifact_path": artifact_path,
+        "warnings": []
     }}))
     sys.exit(0)
 
@@ -6343,7 +6892,7 @@ sys.exit(1)
     assert "prompt" in result.stderr.lower() or "prompt" in result.stdout.lower()
 
 
-def test_timeline_checked_after_simulate_provider(fake_atlas_workspace: Path, tmp_path: Path) -> None:
+def test_timeline_checked_after_import_provider_response(fake_atlas_workspace: Path, tmp_path: Path) -> None:
     workspace = fake_atlas_workspace
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(exist_ok=True)
@@ -6447,10 +6996,10 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
                 "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}],
                 "provider_responses": [{{
-                    "provider_response_id": "demoresponseid12345",
-                    "provider": "deterministic-mock",
-                    "recommendation": "provider_response_review_ready",
-                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoresponseid12345.json",
+                    "provider_response_id": "demoimportresponse12345",
+                    "provider": "external-local-import",
+                    "recommendation": "provider_response_review_required",
+                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_responses/demoimportresponse12345.json",
                     "response_reviews": [{{
                         "response_review_id": "demoreviewid12345",
                         "recommendation": "provider_response_review_ready",
@@ -6510,36 +7059,6 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
     print(json.dumps({{
         "ok": True, "status": "research_prompt_packet_created", "symbol": symbol,
         "source_run_id": run_id, "prompt_packet_id": prompt_packet_id,
-        "artifact_path": artifact_path, "warnings": []
-    }}))
-    sys.exit(0)
-
-if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
-    prompt_packet_id = ARGS[2]
-    provider_response_id = "demoresponseid12345"
-    symbol = "ATLAS-DEMO"
-    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
-    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
-    with open(artifact_path, "w") as f:
-        json.dump({{
-            "provider_response_id": provider_response_id,
-            "source_prompt_packet_id": prompt_packet_id,
-            "source_run_id": "demorunid12345",
-            "symbol": symbol, "mode": "paper",
-            "provider": "deterministic-mock", "provider_status": "simulated",
-            "source_prompt_packet_path": f".atlas/research/{{symbol}}/prompts/{{prompt_packet_id}}.json",
-            "response_summary": "Simulated response.",
-            "response_sections": {{}},
-            "recommendation": "provider_response_review_ready",
-            "safety_checks": [], "passed_checks": 0, "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
-            "artifact_path": artifact_path
-        }}, f)
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_response_created", "symbol": symbol,
-        "source_prompt_packet_id": prompt_packet_id, "provider_response_id": provider_response_id,
-        "provider": "deterministic-mock", "recommendation": "provider_response_review_ready",
         "artifact_path": artifact_path, "warnings": []
     }}))
     sys.exit(0)
@@ -6652,6 +7171,80 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "sandbox-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_listed",
+        "items": [{{"sandbox_request_id": "demosandboxid12345", "symbol": "ATLAS-DEMO", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_loaded",
+        "artifact": {{
+            "sandbox_request_id": ARGS[2],
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider": "llm-sandbox",
+            "request_payload": "payload",
+            "warnings": []
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_validated",
+        "valid": True, "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "sandbox-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_sandbox_replayed",
+        "match": True, "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
+    sandbox_request_id = ARGS[2]
+    provider_response_id = "demoimportresponse12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_responses"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "provider_response_id": provider_response_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider": "external-local-import",
+            "provider_status": "imported_untrusted",
+            "recommendation": "provider_response_review_required",
+            "response_summary": "External analysis.",
+            "response_sections": {{}},
+            "safety_checks": [],
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "warnings": [],
+            "metadata": {{}},
+            "schema_version": "1",
+            "artifact_path": artifact_path
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_imported",
+        "symbol": symbol,
+        "sandbox_request_id": sandbox_request_id,
+        "provider_response_id": provider_response_id,
+        "provider": "external-local-import",
+        "recommendation": "provider_response_review_required",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6674,13 +7267,13 @@ sys.exit(1)
     assert result.returncode == 0, f"stdout: {{result.stdout}}\nstderr: {{result.stderr}}"
     assert "Research workflow demo complete" in result.stdout
 
-    # Verify command order: simulate-provider must happen before timeline lineage check
+    # Verify command order: import-provider-response must happen before timeline lineage check
     log_text = log_path.read_text()
-    sim_idx = log_text.find("research simulate-provider")
+    sim_idx = log_text.find("research import-provider-response")
     timeline_idx = log_text.rfind("research timeline")
-    assert sim_idx != -1, "simulate-provider not found in log"
+    assert sim_idx != -1, "import-provider-response not found in log"
     assert timeline_idx != -1, "timeline not found in log"
-    assert sim_idx < timeline_idx, "timeline lineage check must happen after simulate-provider"
+    assert sim_idx < timeline_idx, "timeline lineage check must happen after import-provider-response"
 
 
 def test_keep_workspace_flag(fake_atlas_workspace: Path, tmp_path: Path) -> None:
