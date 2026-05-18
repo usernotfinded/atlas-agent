@@ -26,7 +26,7 @@ cleanup() {
   if [ "$KEEP_WORKSPACE" -eq 0 ]; then
     rm -rf "$WORKSPACE"
   else
-    printf 'Workspace retained at: %s\n' "$WORKSPACE"
+    printf 'Workspace retained.\n'
   fi
 }
 trap cleanup EXIT
@@ -42,7 +42,14 @@ atlas() {
 }
 
 run_step() {
-  printf '\n$ atlas %s\n' "$*"
+  local cmd="$*"
+  if [ -n "${WORKSPACE:-}" ]; then
+    cmd="${cmd//$WORKSPACE/<workspace>}"
+  fi
+  if [ -n "${TMPDIR:-}" ]; then
+    cmd="${cmd//$TMPDIR/<tmpdir>}"
+  fi
+  printf '\n$ atlas %s\n' "$cmd"
   atlas "$@"
 }
 
@@ -79,7 +86,7 @@ assert_file_exists() {
   local path="$1"
   local label="$2"
   if [ ! -f "$path" ]; then
-    printf 'FAIL: %s file not found: %s\n' "$label" "$path" >&2
+    printf 'FAIL: %s file not found.\n' "$label" >&2
     exit 1
   fi
 }
@@ -128,12 +135,13 @@ assert_no_forbidden_fragments() {
 }
 
 printf 'Atlas Agent research workflow demo\n'
-printf 'Workspace: %s\n' "$WORKSPACE"
 printf 'Symbol: %s\n' "$DEMO_SYMBOL"
 printf 'This demo is paper-only and does not require broker credentials.\n'
 
 cd "$REPO_ROOT"
-run_step init "$WORKSPACE" --template routine-trader
+printf '\n$ atlas init <workspace> --template routine-trader\n'
+atlas init "$WORKSPACE" --template routine-trader >/dev/null
+printf 'Atlas Agent workspace created.\n'
 
 cd "$WORKSPACE"
 run_step discipline setup --manual --yes
@@ -562,7 +570,7 @@ if [ "$DOSSIER_RECOMMENDATION" != "research_dossier_ready" ] && [ "$DOSSIER_RECO
 fi
 DOSSIER_ARTIFACT_PATH="$(json_field "$DOSSIER_OUTPUT" artifact_path)"
 if [ ! -f "$WORKSPACE/$DOSSIER_ARTIFACT_PATH" ]; then
-  printf 'FAIL: dossier artifact not found at %s\n' "$WORKSPACE/$DOSSIER_ARTIFACT_PATH" >&2
+  printf 'FAIL: dossier artifact not found.\n' >&2
   exit 1
 fi
 assert_no_pending_orders
@@ -604,5 +612,6 @@ assert_no_pending_orders
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
 assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
+assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SIM_OUTPUT$TIMELINE_OUTPUT2$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
 
 printf '\nResearch workflow demo complete.\n'

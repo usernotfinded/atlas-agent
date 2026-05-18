@@ -93,7 +93,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {target} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -505,6 +505,24 @@ def test_success_path_with_fake_atlas(fake_atlas_workspace: Path, tmp_path: Path
     assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
     assert "Research workflow demo complete" in result.stdout
 
+    output = result.stdout + result.stderr
+    for frag in (
+        "/Users/",
+        "/private/var/",
+        "Authorization",
+        "Bearer",
+        "APCA",
+        "SECRET",
+        "TOKEN",
+        "PASSWORD",
+        "API_KEY",
+        "sk-",
+        "broker.example.com",
+    ):
+        assert frag not in output, f"Forbidden fragment in output: {frag}"
+    assert str(workspace) not in output, "Absolute workspace path leaked in output"
+    assert "Atlas Agent workspace created" in output
+
     log_path = tmp_path / "atlas_calls.log"
     assert log_path.exists()
     log_text = log_path.read_text()
@@ -629,7 +647,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -729,7 +747,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -829,7 +847,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -941,7 +959,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1053,7 +1071,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1168,7 +1186,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1291,7 +1309,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1409,7 +1427,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1527,7 +1545,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1659,7 +1677,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1785,7 +1803,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -1911,7 +1929,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -2029,7 +2047,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -2176,7 +2194,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -2311,7 +2329,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -2452,7 +2470,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -2598,7 +2616,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -2748,7 +2766,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -2893,7 +2911,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -3038,7 +3056,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -3182,7 +3200,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -3326,7 +3344,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -3467,7 +3485,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -3628,7 +3646,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -3779,7 +3797,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -3956,7 +3974,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -4145,7 +4163,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -4323,7 +4341,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -4551,7 +4569,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -4833,7 +4851,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -5046,7 +5064,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
@@ -5250,7 +5268,7 @@ if ARGS[0] == "init":
     os.makedirs(target, exist_ok=True)
     for sub in (".atlas", "memory", "audit", "pending_orders", "events", "reports", "data"):
         os.makedirs(os.path.join(target, sub), exist_ok=True)
-    print(f"Atlas Agent workspace created: {{target}} (template: routine-trader)")
+    print("Atlas Agent workspace created.")
     sys.exit(0)
 
 if ARGS[0] == "discipline" and ARGS[1] == "setup":
