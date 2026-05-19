@@ -1027,7 +1027,141 @@ if [ "$TIMELINE_STATE_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 37. Create local provider response fixture and import it
+# 37. Research provider execution audit
+printf '\n--- Research provider-execution-audit ---\n'
+AUDIT_OUTPUT="$(atlas research provider-execution-audit "$STATE_IMPL_ID" --json)"
+assert_no_absolute_paths "$AUDIT_OUTPUT"
+assert_no_secrets_in_output "$AUDIT_OUTPUT"
+assert_no_forbidden_fragments "$AUDIT_OUTPUT" "provider-execution-audit CLI output"
+assert_ok "$AUDIT_OUTPUT" "research provider-execution-audit"
+AUDIT_STATUS="$(json_field "$AUDIT_OUTPUT" status)"
+if [ "$AUDIT_STATUS" != "research_provider_execution_audit_packet_created" ]; then
+  printf 'FAIL: unexpected provider-execution-audit status: %s\n' "$AUDIT_STATUS" >&2
+  exit 1
+fi
+AUDIT_PACKET_ID="$(json_field "$AUDIT_OUTPUT" provider_execution_audit_packet_id)"
+if [ -z "$AUDIT_PACKET_ID" ]; then
+  printf 'FAIL: provider_execution_audit_packet_id is empty after audit\n' >&2
+  exit 1
+fi
+AUDIT_ARTIFACT_PATH="$(json_field "$AUDIT_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$AUDIT_ARTIFACT_PATH" "provider execution audit packet artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$AUDIT_ARTIFACT_PATH")" "provider execution audit packet artifact"
+assert_no_pending_orders
+
+# Verify audit packet contains required no-action attestations
+AUDIT_ARTIFACT_DATA="$(cat "$WORKSPACE/$AUDIT_ARTIFACT_PATH")"
+for field in provider_enabled network_enabled credentials_loaded provider_call_allowed actual_provider_call_made future_provider_execution_possible trading_signal_generated approval_created pending_order_created broker_touched; do
+  if ! echo "$AUDIT_ARTIFACT_DATA" | grep -q "\"$field\": false"; then
+    printf 'FAIL: audit packet missing or incorrect %s attestation\n' "$field" >&2
+    exit 1
+  fi
+done
+
+# 38. Research provider-execution-audit-list
+printf '\n--- Research provider-execution-audit-list ---\n'
+AUDIT_LIST_OUTPUT="$(atlas research provider-execution-audit-list --json)"
+assert_no_absolute_paths "$AUDIT_LIST_OUTPUT"
+assert_no_secrets_in_output "$AUDIT_LIST_OUTPUT"
+assert_no_forbidden_fragments "$AUDIT_LIST_OUTPUT" "provider-execution-audit-list CLI output"
+assert_ok "$AUDIT_LIST_OUTPUT" "research provider-execution-audit-list"
+
+# 39. Research provider-execution-audit-show
+printf '\n--- Research provider-execution-audit-show ---\n'
+AUDIT_SHOW_OUTPUT="$(atlas research provider-execution-audit-show "$AUDIT_PACKET_ID" --json)"
+assert_no_absolute_paths "$AUDIT_SHOW_OUTPUT"
+assert_no_secrets_in_output "$AUDIT_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$AUDIT_SHOW_OUTPUT" "provider-execution-audit-show CLI output"
+assert_ok "$AUDIT_SHOW_OUTPUT" "research provider-execution-audit-show"
+AUDIT_SHOW_ID="$(json_field "$AUDIT_SHOW_OUTPUT" 'artifact.provider_execution_audit_packet_id')"
+if [ "$AUDIT_SHOW_ID" != "$AUDIT_PACKET_ID" ]; then
+  printf 'FAIL: provider-execution-audit-show returned wrong ID: %s\n' "$AUDIT_SHOW_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 40. Research provider-execution-audit-validate
+printf '\n--- Research provider-execution-audit-validate ---\n'
+AUDIT_VALIDATE_OUTPUT="$(atlas research provider-execution-audit-validate "$AUDIT_PACKET_ID" --json)"
+assert_no_absolute_paths "$AUDIT_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$AUDIT_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$AUDIT_VALIDATE_OUTPUT" "provider-execution-audit-validate CLI output"
+assert_ok "$AUDIT_VALIDATE_OUTPUT" "research provider-execution-audit-validate"
+AUDIT_VALID="$(json_field "$AUDIT_VALIDATE_OUTPUT" valid)"
+if [ "$AUDIT_VALID" != "True" ]; then
+  printf 'FAIL: provider-execution-audit-validate returned invalid\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 41. Research provider-execution-audit-replay
+printf '\n--- Research provider-execution-audit-replay ---\n'
+AUDIT_REPLAY_OUTPUT="$(atlas research provider-execution-audit-replay "$AUDIT_PACKET_ID" --json)"
+assert_no_absolute_paths "$AUDIT_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$AUDIT_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$AUDIT_REPLAY_OUTPUT" "provider-execution-audit-replay CLI output"
+assert_ok "$AUDIT_REPLAY_OUTPUT" "research provider-execution-audit-replay"
+AUDIT_REPLAY_MATCH="$(json_field "$AUDIT_REPLAY_OUTPUT" match)"
+if [ "$AUDIT_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-execution-audit-replay mismatch\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 42. Research timeline after audit (validate audit packet lineage)
+printf '\n--- Research timeline (post audit) ---\n'
+TIMELINE_OUTPUT_AUDIT="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_AUDIT"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_AUDIT"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_AUDIT" "timeline CLI output after audit"
+assert_ok "$TIMELINE_OUTPUT_AUDIT" "research timeline after audit"
+TIMELINE_AUDIT_STATUS="$(json_field "$TIMELINE_OUTPUT_AUDIT" status)"
+if [ "$TIMELINE_AUDIT_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after audit: %s\n' "$TIMELINE_AUDIT_STATUS" >&2
+  exit 1
+fi
+TIMELINE_AUDIT_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        audits=[a.get('provider_execution_audit_packet_id') for a in s.get('provider_execution_audit_packets',[])]
+                        if '$AUDIT_PACKET_ID' in audits:
+                            print('valid')
+                            break
+                    break
+                break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_AUDIT" )"
+if [ "$TIMELINE_AUDIT_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link audit packet under state %s\n' "$STATE_IMPL_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 43. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

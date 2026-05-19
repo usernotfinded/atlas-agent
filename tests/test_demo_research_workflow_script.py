@@ -285,8 +285,32 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
             if fname.endswith(".json"):
                 with open(os.path.join(states_dir, fname)) as f:
                     st = json.load(f)
+                state_id = st.get("provider_execution_state_id", "")
+                # Build audit packets for this state
+                audits = []
+                audit_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+                if os.path.isdir(audit_dir):
+                    for afname in sorted(os.listdir(audit_dir)):
+                        if afname.endswith(".json"):
+                            with open(os.path.join(audit_dir, afname)) as af:
+                                a = json.load(af)
+                            if a.get("source_provider_execution_state_id") == state_id:
+                                audits.append({
+                                    "provider_execution_audit_packet_id": a.get("provider_execution_audit_packet_id", ""),
+                                    "source_provider_execution_state_id": a.get("source_provider_execution_state_id", ""),
+                                    "source_run_id": a.get("source_run_id", ""),
+                                    "symbol": a.get("symbol", ""),
+                                    "latest_state": a.get("latest_state", ""),
+                                    "audit_status": a.get("audit_status", ""),
+                                    "execution_status": a.get("execution_status", ""),
+                                    "created_at": a.get("created_at", ""),
+                                    "artifact_path": a.get("artifact_path", ""),
+                                    "provider_id": a.get("provider_id", ""),
+                                    "model_id": a.get("model_id", ""),
+                                    "warnings_count": len(a.get("warnings", []))
+                                })
                 states.append({
-                    "provider_execution_state_id": st.get("provider_execution_state_id", ""),
+                    "provider_execution_state_id": state_id,
                     "source_provider_execution_dry_run_id": st.get("source_provider_execution_dry_run_id", ""),
                     "source_run_id": st.get("source_run_id", ""),
                     "symbol": st.get("symbol", ""),
@@ -297,7 +321,8 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                     "artifact_path": st.get("artifact_path", ""),
                     "provider_id": st.get("provider_id", ""),
                     "model_id": st.get("model_id", ""),
-                    "warnings_count": len(st.get("warnings", []))
+                    "warnings_count": len(st.get("warnings", [])),
+                    "provider_execution_audit_packets": audits
                 })
     print(json.dumps({
         "ok": True, "status": "research_timeline",
@@ -1003,6 +1028,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 '''
@@ -1633,6 +1784,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2127,6 +2404,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -2635,6 +3038,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3141,6 +3670,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -3651,6 +4306,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -4170,6 +4951,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4683,6 +5590,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5195,6 +6228,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -5723,6 +6882,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6243,6 +7528,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -6765,6 +8176,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7277,6 +8814,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -7820,6 +9483,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8349,6 +10138,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -8885,6 +10800,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -9426,6 +11467,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -9972,6 +12139,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -10511,6 +12804,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -11052,6 +13471,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -11592,6 +14137,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -12131,6 +14802,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -12665,6 +15462,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -13217,6 +16140,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -13767,6 +16816,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -14339,6 +17514,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -15045,6 +18346,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -15746,6 +19173,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -16457,6 +20010,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -16603,7 +20282,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345"}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345"}}]}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -17200,6 +20879,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -17325,7 +21130,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345"}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345"}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -17852,6 +21657,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -18452,6 +22383,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -18577,7 +22634,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345"}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345"}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -19188,6 +23245,132 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
         checks=[], warnings=[]
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit":
+    state_id = ARGS[2]
+    audit_id = "audit" + state_id[5:]
+    audit_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets", audit_id + ".json")
+    os.makedirs(os.path.dirname(audit_path), exist_ok=True)
+    with open(audit_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_audit_packet",
+            contract_version="research_provider_execution_audit_packet_v1",
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id=state_id,
+            source_run_id="demorunid12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_chain_summary=dict(dry_run_count=1, state_count=1, audit_count=1),
+            no_action_attestations=["no_provider_call", "no_trading_signal", "no_order", "no_broker_touched"],
+            input_hash="dummyhash",
+            source_state_hash="dummyhashstate12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashaudit12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_created",
+        provider_execution_audit_packet_id=audit_id,
+        source_provider_execution_state_id=state_id,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-list":
+    items = []
+    audits_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_audit_packets")
+    if os.path.isdir(audits_dir):
+        for fname in os.listdir(audits_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(audits_dir, fname)
+                with open(fpath) as f:
+                    pkt = json.load(f)
+                items.append(dict(
+                    provider_execution_audit_packet_id=pkt.get("provider_execution_audit_packet_id", ""),
+                    source_provider_execution_state_id=pkt.get("source_provider_execution_state_id", ""),
+                    source_run_id=pkt.get("source_run_id", ""),
+                    symbol=pkt.get("symbol", ""),
+                    audit_status=pkt.get("audit_status", ""),
+                    execution_status=pkt.get("execution_status", ""),
+                    created_at=pkt.get("created_at", ""),
+                    artifact_path=pkt.get("artifact_path", ""),
+                    provider_id=pkt.get("provider_id", ""),
+                    model_id=pkt.get("model_id", ""),
+                    warnings_count=len(pkt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packets_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-show":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_loaded",
+        artifact=dict(
+            provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="statedemo12345",
+            symbol="ATLAS-DEMO",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_audit_packets/" + audit_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-validate":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_validated",
+        provider_execution_audit_packet_id=audit_id,
+        valid=True, passed_checks=20, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
+    audit_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_audit_packet_replayed",
+        provider_execution_audit_packet_id=audit_id,
+        match=True,
+        expected_hash="dummyhashaudit12345",
+        actual_hash="dummyhashaudit12345",
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)

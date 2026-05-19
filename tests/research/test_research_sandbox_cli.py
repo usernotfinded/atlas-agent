@@ -8,6 +8,7 @@ import pytest
 
 from atlas_agent.cli import main
 from atlas_agent.research.provider_call_plan import provider_call_plan_sha256
+from atlas_agent.research.provider_execution_audit_packet import provider_execution_audit_packet_sha256
 
 
 def _raise_if_called(*args, **kwargs):
@@ -2432,3 +2433,568 @@ class TestProviderExecutionStateIntegration:
         assert unsafe_value not in combined
         assert "invalid choice" not in combined.lower()
         assert "traceback" not in combined.lower()
+
+
+class TestProviderExecutionAuditPacketConfigless:
+    def test_audit_packet_creates_artifact(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-audit", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_audit_packet_created"
+        assert "provider_execution_audit_packet_id" in data
+        assert data["source_provider_execution_state_id"] == state_id
+        assert data["audit_status"] == "audit_packet_ready"
+        assert data["execution_status"] == "provider_execution_blocked"
+        assert "artifact_path" in data
+
+        artifact_path = tmp_path / data["artifact_path"]
+        assert artifact_path.exists()
+        artifact = json.loads(artifact_path.read_text())
+        assert artifact["artifact_type"] == "provider_execution_audit_packet"
+        assert artifact["mode"] == "paper"
+        assert artifact["audit_status"] == "audit_packet_ready"
+        assert artifact["execution_status"] == "provider_execution_blocked"
+        assert artifact["provider_enabled"] is False
+        assert artifact["network_enabled"] is False
+        assert artifact["credentials_loaded"] is False
+        assert artifact["provider_call_allowed"] is False
+        assert artifact["actual_provider_call_made"] is False
+        assert artifact["future_provider_execution_possible"] is False
+        assert artifact["trading_signal_generated"] is False
+        assert artifact["approval_created"] is False
+        assert artifact["pending_order_created"] is False
+        assert artifact["broker_touched"] is False
+        assert "artifact_chain" in artifact
+        assert "safety_gate_summary" in artifact
+        assert "no_action_attestations" in artifact
+        assert artifact["no_action_attestations"]["provider_called"] is False
+        assert artifact["no_action_attestations"]["network_request_made"] is False
+        assert artifact["no_action_attestations"]["api_key_read"] is False
+
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+            assert frag not in artifact_path.read_text(), f"Forbidden fragment in artifact: {frag}"
+
+    def test_audit_packet_list_show_validate_replay(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        audit_out = json.loads(capsys.readouterr().out)
+        audit_id = audit_out["provider_execution_audit_packet_id"]
+
+        # list
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-list", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert any(i.get("provider_execution_audit_packet_id") == audit_id for i in data.get("items", []))
+
+        # show
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-show", audit_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["artifact"]["provider_execution_audit_packet_id"] == audit_id
+
+        # validate
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-validate", audit_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is True
+
+        # replay
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-replay", audit_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is True
+
+    def test_audit_packet_replay_mismatch_after_tamper(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        audit_out = json.loads(capsys.readouterr().out)
+        audit_id = audit_out["provider_execution_audit_packet_id"]
+
+        # Tamper the source state artifact
+        state_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_states").glob("*.json"))[0]
+        artifact = json.loads(state_path.read_text())
+        artifact["model_id"] = "tampered-model"
+        state_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-replay", audit_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is False
+
+    def test_audit_packet_tampered_booleans_detected(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        audit_out = json.loads(capsys.readouterr().out)
+        audit_id = audit_out["provider_execution_audit_packet_id"]
+
+        # Tamper the audit packet artifact
+        audit_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_audit_packets").glob("*.json"))[0]
+        artifact = json.loads(audit_path.read_text())
+        artifact["provider_enabled"] = True
+        audit_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-validate", audit_id, "--strict", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2
+        assert data["ok"] is True
+        assert data["valid"] is False
+        issue_codes = {c["name"] for c in data.get("checks", [])}
+        assert "boolean_safety_flags_false" in issue_codes
+
+    def test_check_artifacts_counts_audit_packets(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["counts"]["provider_execution_audit_packets"] >= 1
+
+    def test_timeline_links_audit_packet(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        audit_out = json.loads(capsys.readouterr().out)
+        audit_id = audit_out["provider_execution_audit_packet_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found = False
+        for entry in data.get("entries", []):
+            for prompt in entry.get("prompts", []):
+                for sr in prompt.get("sandbox_requests", []):
+                    for pc in sr.get("provider_call_plans", []):
+                        for ped in pc.get("provider_execution_dry_runs", []):
+                            for s in ped.get("provider_execution_states", []):
+                                audits = s.get("provider_execution_audit_packets", [])
+                                if any(a.get("provider_execution_audit_packet_id") == audit_id for a in audits):
+                                    found = True
+                                    break
+        assert found, f"Audit packet {audit_id} not found in timeline"
+
+    def test_dossier_includes_audit_packet_summary(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "dossier", run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        dossier_path = tmp_path / data["artifact_path"]
+        dossier_data = json.loads(dossier_path.read_text())
+        assert dossier_data["artifact_counts"]["provider_execution_audit_packets"] >= 1
+
+    def test_tampered_audit_packet_id_does_not_leak_through_list(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        # Tamper the audit packet artifact ID with forbidden fragments
+        audit_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_audit_packets").glob("*.json"))[0]
+        artifact = json.loads(audit_path.read_text())
+        artifact["provider_execution_audit_packet_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact["artifact_hash"] = provider_execution_audit_packet_sha256(artifact)
+        audit_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-list", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        # Output must be denylist-clean
+        out_text = json.dumps(data)
+        assert "APCA" not in out_text
+        assert "SECRET" not in out_text
+        assert "TOKEN" not in out_text
+        assert "sk-" not in out_text
+        assert "broker.example.com" not in out_text
+        # Raw tampered value absent
+        assert "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com" not in out_text
+        # Invalid artifacts use safe static values
+        items = data.get("items", [])
+        assert len(items) >= 1
+        for item in items:
+            assert item.get("provider_execution_audit_packet_id") != "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+
+    def test_tampered_audit_packet_id_does_not_leak_through_timeline(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        # Tamper the audit packet artifact ID with forbidden fragments
+        audit_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_audit_packets").glob("*.json"))[0]
+        artifact = json.loads(audit_path.read_text())
+        artifact["provider_execution_audit_packet_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact["artifact_hash"] = provider_execution_audit_packet_sha256(artifact)
+        audit_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        # Output must be denylist-clean
+        out_text = json.dumps(data)
+        assert "APCA" not in out_text
+        assert "SECRET" not in out_text
+        assert "TOKEN" not in out_text
+        assert "sk-" not in out_text
+        assert "broker.example.com" not in out_text
+        # Raw tampered value absent
+        assert "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com" not in out_text
+
+    def test_tampered_model_id_does_not_leak_through_list_or_timeline(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        # Tamper model_id with forbidden fragment
+        audit_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_audit_packets").glob("*.json"))[0]
+        artifact = json.loads(audit_path.read_text())
+        artifact["model_id"] = "sk-LEAKEDSECRET"
+        artifact["artifact_hash"] = provider_execution_audit_packet_sha256(artifact)
+        audit_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-list", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        out_text = json.dumps(data)
+        assert "sk-" not in out_text
+        assert "LEAKEDSECRET" not in out_text
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        out_text = json.dumps(data)
+        assert "sk-" not in out_text
+        assert "LEAKEDSECRET" not in out_text
+
+    def test_nested_no_action_attestations_approval_created_true_is_invalid(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        audit_out = json.loads(capsys.readouterr().out)
+        audit_id = audit_out["provider_execution_audit_packet_id"]
+
+        # Tamper nested no_action_attestations
+        audit_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_audit_packets").glob("*.json"))[0]
+        artifact = json.loads(audit_path.read_text())
+        artifact["no_action_attestations"]["approval_created"] = True
+        artifact["artifact_hash"] = provider_execution_audit_packet_sha256(artifact)
+        audit_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        # show should fail safely (ok=false or raise)
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-show", audit_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        # Should return ok=False or not include raw tampered content
+        assert data.get("ok") is False or "artifact" not in data
+
+        # validate should return valid=False
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-audit-validate", audit_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is False
+        issue_codes = {c["name"] for c in data.get("checks", [])}
+        assert "boolean_safety_flags_false" in issue_codes
+
+        # check-artifacts should report an issue
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        issue_codes = {i["code"] for i in data.get("issues", [])}
+        assert "provider_execution_audit_packet_impossible_boolean" in issue_codes
+
+    def test_valid_chain_check_artifacts_no_missing_source_state(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        issue_codes = {i["code"] for i in data.get("issues", [])}
+        assert "missing_source_state" not in issue_codes
+        assert data["counts"]["provider_execution_states"] >= 1
+        assert data["counts"]["provider_execution_audit_packets"] >= 1
+
+    def test_audit_packet_list_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-audit-list", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_audit_packets_listed"
+        assert len(data.get("items", [])) >= 1
+
+    def test_audit_packet_timeline_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "timeline", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_timeline"

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev24] - 2026-05-18
+
+### Added
+- Provider Execution Audit Packet (`src/atlas_agent/research/provider_execution_audit_packet.py`).
+  - Consolidates the full research/provider-preflight chain into a single auditable artifact.
+  - 10 mandatory-false boolean flags: 6 from state + `trading_signal_generated`, `approval_created`, `pending_order_created`, `broker_touched`.
+  - SHA-256 hashing with excluded fields, lineage validation, forbidden-fragment scanning.
+  - `build_provider_execution_audit_packet_dict()`, `create_provider_execution_audit_packet()`, `safe_validate_provider_execution_audit_packet_data()`, `validate_provider_execution_audit_packet_artifact()`, `replay_provider_execution_audit_packet()`, `iter_provider_execution_audit_packet_artifacts()`.
+- CLI commands:
+  - `atlas research provider-execution-audit STATE_ID`
+  - `atlas research provider-execution-audit-list`
+  - `atlas research provider-execution-audit-show ID`
+  - `atlas research provider-execution-audit-validate ID [--strict]`
+  - `atlas research provider-execution-audit-replay ID [--strict]`
+- Session integration: `check-artifacts`, `timeline`, and `dossier` now support provider execution audit packet artifacts.
+- Timeline nesting: audit packets are indexed by `source_provider_execution_state_id` and nested under each state entry.
+- Demo workflow extended with audit packet creation, validation, replay, and timeline lineage checks.
+
+### Fixed
+- Demo script `provider-execution-audit-validate` and `provider-execution-audit-replay` checks now correctly compare against `"True"` (Python boolean string) instead of `"true"`.
+
 ## [0.5.7.dev23] - 2026-05-19
 
 ### Added

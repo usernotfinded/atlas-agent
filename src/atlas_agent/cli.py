@@ -717,6 +717,49 @@ Safety First:
     research_provider_execution_state_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
     research_provider_execution_state_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
 
+    research_provider_execution_audit = research_sub.add_parser(
+        "provider-execution-audit",
+        help="Create a provider execution audit packet from a state artifact. Local-only. No provider calls.",
+        description="Create a local provider execution audit packet artifact from a provider execution state. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_audit.add_argument("provider_execution_state_id", help="Source provider execution state ID.")
+    research_provider_execution_audit.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_audit_list = research_sub.add_parser(
+        "provider-execution-audit-list",
+        help="List provider execution audit packet artifacts. Read-only.",
+        description="List local provider execution audit packet artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_audit_list.add_argument("--symbol", help="Filter by symbol.")
+    research_provider_execution_audit_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
+    research_provider_execution_audit_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_audit_show = research_sub.add_parser(
+        "provider-execution-audit-show",
+        help="Show one provider execution audit packet artifact. Read-only.",
+        description="Show a single provider execution audit packet artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_audit_show.add_argument("provider_execution_audit_packet_id", help="Provider execution audit packet ID.")
+    research_provider_execution_audit_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_audit_validate = research_sub.add_parser(
+        "provider-execution-audit-validate",
+        help="Validate a provider execution audit packet artifact. Read-only.",
+        description="Validate a provider execution audit packet artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_audit_validate.add_argument("provider_execution_audit_packet_id", help="Provider execution audit packet ID.")
+    research_provider_execution_audit_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_audit_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
+
+    research_provider_execution_audit_replay = research_sub.add_parser(
+        "provider-execution-audit-replay",
+        help="Replay a provider execution audit packet from its source state and compare hashes. Read-only by default.",
+        description="Rebuild the provider execution audit packet from its source state and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_audit_replay.add_argument("provider_execution_audit_packet_id", help="Provider execution audit packet ID.")
+    research_provider_execution_audit_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_audit_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -2526,6 +2569,11 @@ def main(argv: list[str] | None = None) -> int:
         "provider-execution-state-show",
         "provider-execution-state-validate",
         "provider-execution-state-replay",
+        "provider-execution-audit",
+        "provider-execution-audit-list",
+        "provider-execution-audit-show",
+        "provider-execution-audit-validate",
+        "provider-execution-audit-replay",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -4065,6 +4113,18 @@ def main(argv: list[str] | None = None) -> int:
             "provider_execution_state_source_dry_run_missing": ("provider_execution_state_source_dry_run_missing", "Invalid provider execution state artifact."),
             "provider_execution_state_source_dry_run_hash_mismatch": ("provider_execution_state_source_dry_run_hash_mismatch", "Invalid provider execution state artifact."),
             "provider_execution_state_impossible_boolean": ("provider_execution_state_impossible_boolean", "Invalid provider execution state artifact."),
+            "invalid_provider_execution_audit_packet_status": ("invalid_provider_execution_audit_packet_status", "Invalid provider execution audit packet."),
+            "invalid_provider_execution_audit_packet_lineage": ("invalid_provider_execution_audit_packet_lineage", "Invalid provider execution audit packet artifact."),
+            "invalid_provider_execution_audit_packet_provider": ("invalid_provider_execution_audit_packet_provider", "Invalid provider execution audit packet artifact."),
+            "invalid_provider_execution_audit_packet_model": ("invalid_provider_execution_audit_packet_model", "Invalid provider execution audit packet artifact."),
+            "provider_execution_audit_packet_hash_mismatch": ("provider_execution_audit_packet_hash_mismatch", "Invalid provider execution audit packet artifact."),
+            "provider_execution_audit_packet_source_state_missing": ("provider_execution_audit_packet_source_state_missing", "Invalid provider execution audit packet artifact."),
+            "provider_execution_audit_packet_source_state_hash_mismatch": ("provider_execution_audit_packet_source_state_hash_mismatch", "Invalid provider execution audit packet artifact."),
+            "provider_execution_audit_packet_impossible_boolean": ("provider_execution_audit_packet_impossible_boolean", "Invalid provider execution audit packet artifact."),
+            "provider_execution_audit_packet_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "provider_execution_audit_packet_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "ambiguous_provider_execution_audit_packet_id": ("invalid_research_id", "Invalid research identifier."),
+            "unsupported_provider_execution_audit_packet_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
             "artifact_path_not_allowed": ("research_error", "Research command failed."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
@@ -6561,6 +6621,245 @@ def main(argv: list[str] | None = None) -> int:
         else:
             status_str = "matches" if replay_result["match"] else "mismatch"
             print(f"Provider execution state replay {safe_id}: {status_str}")
+        if args.strict and not replay_result["match"]:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-audit":
+        try:
+            from atlas_agent.research.provider_execution_audit_packet import create_provider_execution_audit_packet
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-audit skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_state_id)
+            result = create_provider_execution_audit_packet(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-audit", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-audit", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution audit packet {result.get('provider_execution_audit_packet_id')}: {result.get('audit_status')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-audit-list":
+        try:
+            from atlas_agent.research.provider_execution_audit_packet import iter_provider_execution_audit_packet_artifacts
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-audit-list skipped safely: no workspace found")
+                return 1
+
+            items = iter_provider_execution_audit_packet_artifacts(ws, symbol=args.symbol)
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-audit-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps({
+                "ok": True,
+                "status": "research_provider_execution_audit_packets_listed",
+                "items": list(items)[:args.limit],
+            }, indent=2, sort_keys=True))
+        else:
+            print("Provider execution audit packets:")
+            for item in list(items)[:args.limit]:
+                sid = item.get("provider_execution_audit_packet_id", "<invalid>")
+                st = item.get("audit_status", "<invalid>")
+                print(f"  {sid}: {st}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-audit-show":
+        try:
+            from atlas_agent.research.provider_execution_audit_packet import (
+                find_provider_execution_audit_packet_by_id,
+                load_and_validate_provider_execution_audit_packet,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-audit-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_audit_packet_id)
+            audit_path = find_provider_execution_audit_packet_by_id(ws, safe_id)
+            if audit_path is None:
+                raise ResearchSessionError("provider_execution_audit_packet_not_found")
+            artifact = load_and_validate_provider_execution_audit_packet(audit_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-audit-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-audit-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps({
+                "ok": True,
+                "status": "research_provider_execution_audit_packet_loaded",
+                "artifact": artifact,
+            }, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution audit packet {safe_id}:")
+            print(f"  audit_status: {artifact.get('audit_status')}")
+            print(f"  execution_status: {artifact.get('execution_status')}")
+            print(f"  latest_state: {artifact.get('latest_state')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-audit-validate":
+        try:
+            from atlas_agent.research.provider_execution_audit_packet import (
+                find_provider_execution_audit_packet_by_id,
+                validate_provider_execution_audit_packet_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-audit-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_audit_packet_id)
+            audit_path = find_provider_execution_audit_packet_by_id(ws, safe_id)
+            if audit_path is None:
+                raise ResearchSessionError("provider_execution_audit_packet_not_found")
+            import json
+            data = json.loads(audit_path.read_text(encoding="utf-8"))
+            result = validate_provider_execution_audit_packet_artifact(data, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-audit-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-audit-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_audit_packet_validated",
+                "provider_execution_audit_packet_id": safe_id,
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+                "warnings": result.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "valid" if result.valid else "invalid"
+            print(f"Provider execution audit packet {safe_id}: {status_str}")
+            print(f"  Passed: {result.passed_checks}  Failed: {result.failed_checks}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-audit-replay":
+        try:
+            from atlas_agent.research.provider_execution_audit_packet import replay_provider_execution_audit_packet
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-audit-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_audit_packet_id)
+            replay_result = replay_provider_execution_audit_packet(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-audit-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-audit-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_audit_packet_replayed",
+                "provider_execution_audit_packet_id": safe_id,
+                "match": replay_result["match"],
+                "expected_hash": replay_result["expected_hash"],
+                "actual_hash": replay_result["actual_hash"],
+                "checks": replay_result["checks"],
+                "warnings": replay_result["warnings"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "matches" if replay_result["match"] else "mismatch"
+            print(f"Provider execution audit packet replay {safe_id}: {status_str}")
         if args.strict and not replay_result["match"]:
             return 2
         return 0
