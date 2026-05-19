@@ -760,6 +760,57 @@ Safety First:
     research_provider_execution_audit_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
     research_provider_execution_audit_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
 
+    research_provider_execution_readiness = research_sub.add_parser(
+        "provider-execution-readiness",
+        help="Create a provider execution readiness report from an audit packet. Local-only. No provider calls.",
+        description="Create a local provider execution readiness report artifact from a provider execution audit packet. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_readiness.add_argument("provider_execution_audit_packet_id", help="Source provider execution audit packet ID.")
+    research_provider_execution_readiness.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_readiness_list = research_sub.add_parser(
+        "provider-execution-readiness-list",
+        help="List provider execution readiness report artifacts. Read-only.",
+        description="List local provider execution readiness report artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_readiness_list.add_argument("--symbol", help="Filter by symbol.")
+    research_provider_execution_readiness_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
+    research_provider_execution_readiness_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_readiness_show = research_sub.add_parser(
+        "provider-execution-readiness-show",
+        help="Show one provider execution readiness report artifact. Read-only.",
+        description="Show a single provider execution readiness report artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_readiness_show.add_argument("provider_execution_readiness_report_id", help="Provider execution readiness report ID.")
+    research_provider_execution_readiness_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_readiness_validate = research_sub.add_parser(
+        "provider-execution-readiness-validate",
+        help="Validate a provider execution readiness report artifact. Read-only.",
+        description="Validate a provider execution readiness report artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_readiness_validate.add_argument("provider_execution_readiness_report_id", help="Provider execution readiness report ID.")
+    research_provider_execution_readiness_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_readiness_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
+
+    research_provider_execution_readiness_replay = research_sub.add_parser(
+        "provider-execution-readiness-replay",
+        help="Replay a provider execution readiness report from its source audit packet and compare hashes. Read-only by default.",
+        description="Rebuild the provider execution readiness report from its source audit packet and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_readiness_replay.add_argument("provider_execution_readiness_report_id", help="Provider execution readiness report ID.")
+    research_provider_execution_readiness_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_readiness_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+
+    research_provider_execution_chain_doctor = research_sub.add_parser(
+        "provider-execution-chain-doctor",
+        help="Diagnose the full provider-preflight chain for a run. Read-only.",
+        description="Read-only diagnostic command for the full provider-preflight chain under one research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_chain_doctor.add_argument("run_id", help="Research run ID.")
+    research_provider_execution_chain_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -2574,6 +2625,12 @@ def main(argv: list[str] | None = None) -> int:
         "provider-execution-audit-show",
         "provider-execution-audit-validate",
         "provider-execution-audit-replay",
+        "provider-execution-readiness",
+        "provider-execution-readiness-list",
+        "provider-execution-readiness-show",
+        "provider-execution-readiness-validate",
+        "provider-execution-readiness-replay",
+        "provider-execution-chain-doctor",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -4125,6 +4182,18 @@ def main(argv: list[str] | None = None) -> int:
             "provider_execution_audit_packet_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
             "ambiguous_provider_execution_audit_packet_id": ("invalid_research_id", "Invalid research identifier."),
             "unsupported_provider_execution_audit_packet_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
+            "invalid_provider_execution_readiness_report_status": ("invalid_provider_execution_readiness_report_status", "Invalid provider execution readiness report."),
+            "invalid_provider_execution_readiness_report_lineage": ("invalid_provider_execution_readiness_report_lineage", "Invalid provider execution readiness report artifact."),
+            "invalid_provider_execution_readiness_report_provider": ("invalid_provider_execution_readiness_report_provider", "Invalid provider execution readiness report artifact."),
+            "invalid_provider_execution_readiness_report_model": ("invalid_provider_execution_readiness_report_model", "Invalid provider execution readiness report artifact."),
+            "provider_execution_readiness_report_hash_mismatch": ("provider_execution_readiness_report_hash_mismatch", "Invalid provider execution readiness report artifact."),
+            "provider_execution_readiness_report_source_audit_packet_missing": ("provider_execution_readiness_report_source_audit_packet_missing", "Invalid provider execution readiness report artifact."),
+            "provider_execution_readiness_report_source_audit_packet_hash_mismatch": ("provider_execution_readiness_report_source_audit_packet_hash_mismatch", "Invalid provider execution readiness report artifact."),
+            "provider_execution_readiness_report_impossible_boolean": ("provider_execution_readiness_report_impossible_boolean", "Invalid provider execution readiness report artifact."),
+            "provider_execution_readiness_report_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "provider_execution_readiness_report_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "ambiguous_provider_execution_readiness_report_id": ("invalid_research_id", "Invalid research identifier."),
+            "unsupported_provider_execution_readiness_report_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
             "artifact_path_not_allowed": ("research_error", "Research command failed."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
@@ -4767,6 +4836,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Evaluations: {result['counts']['evaluations']}")
             print(f"  Provider call plans: {result['counts']['provider_call_plans']}")
             print(f"  Provider execution dry-runs: {result['counts']['provider_execution_dry_runs']}")
+            print(f"  Provider execution readiness reports: {result['counts']['provider_execution_readiness_reports']}")
             total_issues = len(result["issues"])
             total_warnings = len(result["warnings"])
             print(f"  Issues: {total_issues}")
@@ -4902,6 +4972,18 @@ def main(argv: list[str] | None = None) -> int:
                                 for ped in pcp.get("provider_execution_dry_runs", []):
                                     ped_id = ped.get("provider_execution_dry_run_id", "")
                                     print(f"        Provider execution dry-run: {ped_id}")
+                                    for pes in ped.get("provider_execution_states", []):
+                                        pes_id = pes.get("provider_execution_state_id", "")
+                                        pes_state = pes.get("state", "")
+                                        print(f"          Provider execution state: {pes_id} ({pes_state})")
+                                        for peap in pes.get("provider_execution_audit_packets", []):
+                                            peap_id = peap.get("provider_execution_audit_packet_id", "")
+                                            print(f"            Provider execution audit packet: {peap_id}")
+                                            for perr in peap.get("provider_execution_readiness_reports", []):
+                                                perr_id = perr.get("provider_execution_readiness_report_id", "")
+                                                perr_status = perr.get("readiness_status", "")
+                                                perr_score = perr.get("readiness_score", 0)
+                                                print(f"              Provider execution readiness report: {perr_id} ({perr_status}, score: {perr_score})")
             timeline_warnings = result.get("warnings", [])
             if timeline_warnings:
                 print("\nWarnings:")
@@ -6862,6 +6944,332 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Provider execution audit packet replay {safe_id}: {status_str}")
         if args.strict and not replay_result["match"]:
             return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-readiness":
+        try:
+            from atlas_agent.research.provider_execution_readiness_report import create_provider_execution_readiness_report
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-readiness skipped safely: no workspace found")
+                return 1
+
+            result = create_provider_execution_readiness_report(ws, args.provider_execution_audit_packet_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-readiness", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-readiness", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution readiness report {result.get('provider_execution_readiness_report_id')}: {result.get('readiness_status')} (score: {result.get('readiness_score')})")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-readiness-list":
+        try:
+            from atlas_agent.research.provider_execution_readiness_report import iter_provider_execution_readiness_report_artifacts
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-readiness-list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = args.limit
+            if limit < 1:
+                limit = 1
+            if limit > 100:
+                limit = 100
+
+            items = iter_provider_execution_readiness_report_artifacts(ws, symbol=symbol_filter)[:limit]
+        except InvalidResearchSymbolError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
+            else:
+                print("research provider-execution-readiness-list skipped safely: invalid research symbol")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-readiness-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-readiness-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_readiness_reports_listed",
+                "items": items,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            if not items:
+                print("No provider execution readiness reports found.")
+            else:
+                print(f"{'Created At':<24} {'Symbol':<8} {'Report ID':<34} {'Status':<24} {'Score':<6} {'Artifact'}")
+                for item in items:
+                    created = item.get("created_at", "")[:19]
+                    print(f"{created:<24} {item['symbol']:<8} {item['provider_execution_readiness_report_id']:<34} {item['readiness_status']:<24} {item['readiness_score']:<6} {item['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-readiness-show":
+        try:
+            from atlas_agent.research.provider_execution_readiness_report import (
+                find_provider_execution_readiness_report_by_id,
+                load_and_validate_provider_execution_readiness_report,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-readiness-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_readiness_report_id)
+            report_path = find_provider_execution_readiness_report_by_id(ws, safe_id)
+            if report_path is None:
+                raise ResearchSessionError("provider_execution_readiness_report_not_found")
+            artifact = load_and_validate_provider_execution_readiness_report(report_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-readiness-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-readiness-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_readiness_report_loaded",
+                "artifact": artifact,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Provider execution readiness report")
+            print(f"  Report ID: {artifact.get('provider_execution_readiness_report_id', '')}")
+            print(f"  Symbol: {artifact.get('symbol', '')}")
+            print(f"  Readiness status: {artifact.get('readiness_status', '')}")
+            print(f"  Readiness score: {artifact.get('readiness_score', 0)}")
+            print(f"  Chain health: {artifact.get('chain_health', '')}")
+            print(f"  Execution status: {artifact.get('execution_status', '')}")
+            print(f"  Artifact: {artifact.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-readiness-validate":
+        try:
+            from atlas_agent.research.provider_execution_readiness_report import (
+                find_provider_execution_readiness_report_by_id,
+                validate_provider_execution_readiness_report_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-readiness-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_readiness_report_id)
+            report_path = find_provider_execution_readiness_report_by_id(ws, safe_id)
+            if report_path is None:
+                raise ResearchSessionError("provider_execution_readiness_report_not_found")
+            import json as _json
+            data = _json.loads(report_path.read_text(encoding="utf-8"))
+            result = validate_provider_execution_readiness_report_artifact(data, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-readiness-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-readiness-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_readiness_report_validated",
+                "provider_execution_readiness_report_id": safe_id,
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+                "warnings": result.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "valid" if result.valid else "invalid"
+            print(f"Provider execution readiness report validation {safe_id}: {status_str}")
+            print(f"  Passed: {result.passed_checks}")
+            print(f"  Failed: {result.failed_checks}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-readiness-replay":
+        try:
+            from atlas_agent.research.provider_execution_readiness_report import replay_provider_execution_readiness_report
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-readiness-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_readiness_report_id)
+            replay_result = replay_provider_execution_readiness_report(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-readiness-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-readiness-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_readiness_report_replayed",
+                "provider_execution_readiness_report_id": safe_id,
+                "match": replay_result["match"],
+                "expected_hash": replay_result["expected_hash"],
+                "actual_hash": replay_result["actual_hash"],
+                "checks": replay_result["checks"],
+                "warnings": replay_result["warnings"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "matches" if replay_result["match"] else "mismatch"
+            print(f"Provider execution readiness report replay {safe_id}: {status_str}")
+        if args.strict and not replay_result["match"]:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-chain-doctor":
+        try:
+            from atlas_agent.research.provider_execution_readiness_report import provider_execution_chain_doctor
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-chain-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = provider_execution_chain_doctor(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-chain-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-chain-doctor", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            if not result.get("ok"):
+                print(f"Chain doctor: {result.get('status', 'error')}")
+                print(f"  Run ID: {safe_id}")
+                print(f"  Warnings: {result.get('warnings', [])}")
+            else:
+                print(f"Chain doctor for run {safe_id}:")
+                print(f"  Symbol: {result.get('symbol', '')}")
+                print(f"  Chain health: {result.get('chain_health', '')}")
+                print(f"  Readiness status: {result.get('readiness_status', '')}")
+                if result.get("missing_artifacts"):
+                    print(f"  Missing: {', '.join(result['missing_artifacts'])}")
+                if result.get("invalid_artifacts"):
+                    print(f"  Invalid: {', '.join(result['invalid_artifacts'])}")
+                if result.get("blocking_reasons"):
+                    print(f"  Blocking: {', '.join(result['blocking_reasons'])}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

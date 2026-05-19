@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1385,11 +1385,13 @@ def check_research_artifacts(
     provider_execution_dry_run_ids: dict[str, list[str]] = {}
     provider_execution_state_ids: dict[str, list[str]] = {}
     provider_execution_audit_packet_ids: dict[str, list[str]] = {}
+    provider_execution_readiness_report_ids: dict[str, list[str]] = {}
 
     provider_call_plan_data: list[dict[str, Any]] = []
     provider_execution_dry_run_data: list[dict[str, Any]] = []
     provider_execution_state_data: list[dict[str, Any]] = []
     provider_execution_audit_packet_data: list[dict[str, Any]] = []
+    provider_execution_readiness_report_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1433,6 +1435,7 @@ def check_research_artifacts(
             "provider_execution_dry_run": "provider_execution_dry_run_id",
             "provider_execution_state": "provider_execution_state_id",
             "provider_execution_audit_packet": "provider_execution_audit_packet_id",
+            "provider_execution_readiness_report": "provider_execution_readiness_report_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1469,6 +1472,8 @@ def check_research_artifacts(
         elif expected_type == "provider_execution_state" and "provider_execution_states" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_execution_audit_packet" and "provider_execution_audit_packets" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_execution_readiness_report" and "provider_execution_readiness_reports" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1595,6 +1600,24 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_execution_readiness_report":
+            for f in ("provider_execution_readiness_report_id", "source_provider_execution_audit_packet_id", "symbol", "provider_id", "model_id", "readiness_status", "readiness_score", "chain_health"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            # Use provider_execution_readiness_report safe validation
+            from atlas_agent.research.provider_execution_readiness_report import (
+                safe_validate_provider_execution_readiness_report_data,
+            )
+            _cleaned, error = safe_validate_provider_execution_readiness_report_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1629,6 +1652,9 @@ def check_research_artifacts(
             elif expected_type == "provider_execution_audit_packet":
                 provider_execution_audit_packet_ids.setdefault(raw_id, []).append(rel)
                 provider_execution_audit_packet_data.append(data)
+            elif expected_type == "provider_execution_readiness_report":
+                provider_execution_readiness_report_ids.setdefault(raw_id, []).append(rel)
+                provider_execution_readiness_report_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1656,6 +1682,8 @@ def check_research_artifacts(
             counts["provider_execution_states"] += 1
         elif expected_type == "provider_execution_audit_packet":
             counts["provider_execution_audit_packets"] += 1
+        elif expected_type == "provider_execution_readiness_report":
+            counts["provider_execution_readiness_reports"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1737,6 +1765,12 @@ def check_research_artifacts(
             for path in provider_execution_audit_packets_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_execution_audit_packet", expected_symbol)
+        # Provider execution readiness reports
+        provider_execution_readiness_reports_dir = sym_dir / "provider_execution_readiness_reports"
+        if provider_execution_readiness_reports_dir.exists():
+            for path in provider_execution_readiness_reports_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_execution_readiness_report", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1788,6 +1822,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for peapid, paths in provider_execution_audit_packet_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for perrid, paths in provider_execution_readiness_report_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -1889,6 +1927,44 @@ def check_research_artifacts(
         error = _check_boolean_safety_flags(packet)
         if error:
             issues.append({"code": error, "path": rel, "severity": "error"})
+
+    # Provider execution readiness report lineage checks
+    provider_execution_audit_packet_data_by_id: dict[str, dict[str, Any]] = {}
+    for packet in provider_execution_audit_packet_data:
+        pkt_id = packet.get("provider_execution_audit_packet_id", "")
+        if pkt_id:
+            provider_execution_audit_packet_data_by_id[pkt_id] = packet
+
+    for report in provider_execution_readiness_report_data:
+        rel = report.get("artifact_path", "")
+        src_audit_id = report.get("source_provider_execution_audit_packet_id", "")
+        # Invalid lineage
+        try:
+            validate_run_id(src_audit_id)
+        except ResearchSessionError:
+            issues.append({"code": "invalid_lineage", "path": rel, "severity": "error"})
+            continue
+        # Missing source audit packet
+        if src_audit_id not in provider_execution_audit_packet_data_by_id:
+            issues.append({"code": "missing_source_audit_packet", "path": rel, "severity": "error"})
+            continue
+        # Source audit packet hash mismatch
+        stored_src_hash = report.get("source_audit_packet_hash", "")
+        if stored_src_hash:
+            src_audit = provider_execution_audit_packet_data_by_id[src_audit_id]
+            actual_audit_hash = src_audit.get("artifact_hash", "")
+            if actual_audit_hash != stored_src_hash:
+                issues.append({"code": "source_audit_packet_hash_mismatch", "path": rel, "severity": "error"})
+                continue
+        # Impossible booleans in readiness report
+        from atlas_agent.research.provider_execution_readiness_report import _check_boolean_safety_flags
+        error = _check_boolean_safety_flags(report)
+        if error:
+            issues.append({"code": error, "path": rel, "severity": "error"})
+        # readiness_score validation
+        score = report.get("readiness_score")
+        if not isinstance(score, int) or score < 0 or score > 100:
+            issues.append({"code": "invalid_readiness_score", "path": rel, "severity": "error"})
 
     return {
         "ok": True,
@@ -2296,6 +2372,8 @@ def build_research_timeline(
     provider_execution_state_items = iter_provider_execution_state_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_execution_audit_packet import iter_provider_execution_audit_packet_artifacts
     provider_execution_audit_packet_items = iter_provider_execution_audit_packet_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_execution_readiness_report import iter_provider_execution_readiness_report_artifacts
+    provider_execution_readiness_report_items = iter_provider_execution_readiness_report_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -2402,6 +2480,18 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_execution_audit_packet", "path": peap.get("artifact_path", ""), "severity": "warning"})
 
+    # Index provider execution readiness reports by source_provider_execution_audit_packet_id
+    provider_execution_readiness_reports_by_audit_id: dict[str, list[dict[str, Any]]] = {}
+    for perr in provider_execution_readiness_report_items:
+        if perr.get("_invalid"):
+            warnings.append({"code": "invalid_provider_execution_readiness_report_skipped", "path": perr.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = perr.get("source_provider_execution_audit_packet_id", "")
+        if src:
+            provider_execution_readiness_reports_by_audit_id.setdefault(src, []).append(perr)
+        else:
+            warnings.append({"code": "orphan_provider_execution_readiness_report", "path": perr.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -2475,6 +2565,17 @@ def build_research_timeline(
         src = peap.get("source_provider_execution_state_id", "")
         if src and src not in seen_state_ids:
             warnings.append({"code": "orphan_provider_execution_audit_packet", "path": peap.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen audit packet IDs for orphan readiness report detection
+    seen_audit_packet_ids = set()
+    for peap in provider_execution_audit_packet_items:
+        if not peap.get("_invalid"):
+            seen_audit_packet_ids.add(peap.get("provider_execution_audit_packet_id", ""))
+
+    for perr in provider_execution_readiness_report_items:
+        src = perr.get("source_provider_execution_audit_packet_id", "")
+        if src and src not in seen_audit_packet_ids:
+            warnings.append({"code": "orphan_provider_execution_readiness_report", "path": perr.get("artifact_path", ""), "severity": "warning"})
 
     # Build entries
     entries: list[dict[str, Any]] = []
@@ -2555,7 +2656,14 @@ def build_research_timeline(
                         for state in states:
                             state_copy = dict(state)
                             state_id = state_copy.get("provider_execution_state_id", "")
-                            state_copy["provider_execution_audit_packets"] = provider_execution_audit_packets_by_state_id.get(state_id, [])
+                            audit_packets = provider_execution_audit_packets_by_state_id.get(state_id, [])
+                            audit_packets_with_readiness = []
+                            for ap in audit_packets:
+                                ap_copy = dict(ap)
+                                ap_id = ap_copy.get("provider_execution_audit_packet_id", "")
+                                ap_copy["provider_execution_readiness_reports"] = provider_execution_readiness_reports_by_audit_id.get(ap_id, [])
+                                audit_packets_with_readiness.append(ap_copy)
+                            state_copy["provider_execution_audit_packets"] = audit_packets_with_readiness
                             states_with_audit_packets.append(state_copy)
                         dr_copy["provider_execution_states"] = states_with_audit_packets
                         dry_runs_with_states.append(dr_copy)
@@ -3949,6 +4057,11 @@ def build_dossier(
     from atlas_agent.research.provider_execution_audit_packet import iter_provider_execution_audit_packet_artifacts
     provider_execution_audit_packet_items = iter_provider_execution_audit_packet_artifacts(workspace_path, symbol=symbol)
     linked_provider_execution_audit_packets = [peap for peap in provider_execution_audit_packet_items if peap.get("source_provider_execution_state_id") in linked_provider_execution_state_ids]
+    linked_audit_packet_ids = {peap.get("provider_execution_audit_packet_id", "") for peap in linked_provider_execution_audit_packets}
+
+    from atlas_agent.research.provider_execution_readiness_report import iter_provider_execution_readiness_report_artifacts
+    provider_execution_readiness_report_items = iter_provider_execution_readiness_report_artifacts(workspace_path, symbol=symbol)
+    linked_provider_execution_readiness_reports = [perr for perr in provider_execution_readiness_report_items if perr.get("source_provider_execution_audit_packet_id") in linked_audit_packet_ids]
 
     # Build workflow status
     workflow_status = {
@@ -3964,6 +4077,7 @@ def build_dossier(
         "provider_execution_dry_runs": len(linked_provider_execution_dry_runs) > 0,
         "provider_execution_states": len(linked_provider_execution_states) > 0,
         "provider_execution_audit_packets": len(linked_provider_execution_audit_packets) > 0,
+        "provider_execution_readiness_reports": len(linked_provider_execution_readiness_reports) > 0,
     }
 
     artifact_counts = {
@@ -3979,6 +4093,7 @@ def build_dossier(
         "provider_execution_dry_runs": len(linked_provider_execution_dry_runs),
         "provider_execution_states": len(linked_provider_execution_states),
         "provider_execution_audit_packets": len(linked_provider_execution_audit_packets),
+        "provider_execution_readiness_reports": len(linked_provider_execution_readiness_reports),
     }
 
     # Build linked_artifacts with relative paths only
@@ -4065,6 +4180,15 @@ def build_dossier(
             "provider_id": peap.get("provider_id", ""),
             "model_id": peap.get("model_id", ""),
         })
+    for perr in linked_provider_execution_readiness_reports:
+        linked_artifacts.append({
+            "type": "provider_execution_readiness_report",
+            "id": perr.get("provider_execution_readiness_report_id", ""),
+            "artifact_path": perr.get("artifact_path", ""),
+            "readiness_status": perr.get("readiness_status", ""),
+            "readiness_score": perr.get("readiness_score", 0),
+            "chain_health": perr.get("chain_health", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -4127,6 +4251,13 @@ def build_dossier(
             "provider_ids": [peap.get("provider_id", "") for peap in linked_provider_execution_audit_packets],
             "model_ids": [peap.get("model_id", "") for peap in linked_provider_execution_audit_packets],
         }
+    if linked_provider_execution_readiness_reports:
+        summaries["provider_execution_readiness_report"] = {
+            "readiness_report_count": len(linked_provider_execution_readiness_reports),
+            "readiness_statuses": [perr.get("readiness_status", "") for perr in linked_provider_execution_readiness_reports],
+            "readiness_scores": [perr.get("readiness_score", 0) for perr in linked_provider_execution_readiness_reports],
+            "chain_health_values": [perr.get("chain_health", "") for perr in linked_provider_execution_readiness_reports],
+        }
 
     # Safety summary
     safety_summary = {
@@ -4160,6 +4291,8 @@ def build_dossier(
         missing_links.append("no_provider_execution_state")
     if not linked_provider_execution_audit_packets:
         missing_links.append("no_provider_execution_audit_packet")
+    if not linked_provider_execution_readiness_reports:
+        missing_links.append("no_provider_execution_readiness_report")
 
     warnings: list[str] = []
     if missing_links:

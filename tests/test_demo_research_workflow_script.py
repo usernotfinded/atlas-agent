@@ -295,6 +295,23 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                             with open(os.path.join(audit_dir, afname)) as af:
                                 a = json.load(af)
                             if a.get("source_provider_execution_state_id") == state_id:
+                                # Look up readiness reports for this audit packet
+                                readiness_reports = []
+                                readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+                                if os.path.isdir(readiness_dir):
+                                    for rfname in sorted(os.listdir(readiness_dir)):
+                                        if rfname.endswith(".json"):
+                                            with open(os.path.join(readiness_dir, rfname)) as rf:
+                                                r = json.load(rf)
+                                            if r.get("source_provider_execution_audit_packet_id") == a.get("provider_execution_audit_packet_id"):
+                                                readiness_reports.append({
+                                                    "provider_execution_readiness_report_id": r.get("provider_execution_readiness_report_id", ""),
+                                                    "source_provider_execution_audit_packet_id": r.get("source_provider_execution_audit_packet_id", ""),
+                                                    "readiness_status": r.get("readiness_status", ""),
+                                                    "readiness_score": r.get("readiness_score", 0),
+                                                    "chain_health": r.get("chain_health", ""),
+                                                    "artifact_path": r.get("artifact_path", ""),
+                                                })
                                 audits.append({
                                     "provider_execution_audit_packet_id": a.get("provider_execution_audit_packet_id", ""),
                                     "source_provider_execution_state_id": a.get("source_provider_execution_state_id", ""),
@@ -307,7 +324,8 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                     "artifact_path": a.get("artifact_path", ""),
                                     "provider_id": a.get("provider_id", ""),
                                     "model_id": a.get("model_id", ""),
-                                    "warnings_count": len(a.get("warnings", []))
+                                    "warnings_count": len(a.get("warnings", [])),
+                                    "provider_execution_readiness_reports": readiness_reports,
                                 })
                 states.append({
                     "provider_execution_state_id": state_id,
@@ -1154,6 +1172,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 '''
@@ -1910,6 +2083,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2530,6 +2858,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -3164,6 +3647,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3796,6 +4434,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -4432,6 +5225,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -5077,6 +6025,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5716,6 +6819,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6354,6 +7612,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -7008,6 +8421,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7654,6 +9222,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -8302,6 +10025,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8940,6 +10818,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -9609,6 +11642,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -10264,6 +12452,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -10926,6 +13269,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -11593,6 +14091,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -12265,6 +14918,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -12930,6 +15738,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -13597,6 +16560,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -14263,6 +17381,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -14928,6 +18201,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -15588,6 +19016,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -16266,6 +19849,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -16942,6 +20680,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -17640,6 +21533,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -18472,6 +22520,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -19299,6 +23502,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -20136,6 +24494,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -20282,7 +24795,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345"}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -21005,6 +25518,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -21130,7 +25798,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345"}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -21783,6 +26451,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -22509,6 +27332,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     sys.exit(0)
 
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -22634,7 +27612,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345"}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -23371,6 +28349,161 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-audit-replay":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness":
+    audit_id = ARGS[2]
+    readiness_id = "readiness-" + audit_id
+    readiness_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports", readiness_id + ".json")
+    os.makedirs(os.path.dirname(readiness_path), exist_ok=True)
+    with open(readiness_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_readiness_report",
+            contract_version="research_provider_execution_readiness_report_v1",
+            provider_execution_readiness_report_id=readiness_id,
+            source_provider_execution_audit_packet_id=audit_id,
+            source_provider_execution_state_id="stateimpldemo12345",
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            source_provider_call_plan_id="plancpcp12345",
+            source_sandbox_request_id="demosandbox12345",
+            source_prompt_packet_id="demoprompt12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            latest_state="disabled",
+            audit_status="audit_packet_ready",
+            execution_status="provider_execution_blocked",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            artifact_chain=[],
+            chain_diagnostics=dict(missing_artifacts=[], invalid_artifacts=[], hash_mismatches=[], unsafe_artifacts=[], orphan_artifacts=[], blocked_execution_reasons=["provider_execution_not_implemented"], manual_review_items=[]),
+            hash_diagnostics=dict(source_audit_packet_hash_present=True, source_audit_packet_hash_match=True, linked_artifact_hashes_present=True, linked_artifact_hash_mismatches=[], replay_match=True),
+            safety_gate_summary=dict(provider_enabled=False, network_enabled=False, credentials_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False),
+            blocking_reasons=["provider_execution_not_implemented"],
+            missing_requirements=[],
+            future_opt_in_requirements=[],
+            human_review_checklist=[],
+            machine_readiness_checks=[],
+            no_action_attestations=dict(provider_called=False, network_request_made=False, api_key_read=False, provider_sdk_imported=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False, live_trading_authorized=False),
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            source_audit_packet_hash="dummyhashaudit12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+            warnings=["This is a local readiness report. No provider was called."],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f, indent=2, sort_keys=True)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_created",
+        provider_execution_readiness_report_id=readiness_id,
+        source_provider_execution_audit_packet_id=audit_id,
+        readiness_status="chain_review_ready",
+        readiness_score=100,
+        chain_health="complete",
+        execution_status="provider_execution_blocked",
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-list":
+    items = []
+    readiness_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_readiness_reports")
+    if os.path.isdir(readiness_dir):
+        for fname in os.listdir(readiness_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(readiness_dir, fname)
+                with open(fpath) as f:
+                    rpt = json.load(f)
+                items.append(dict(
+                    provider_execution_readiness_report_id=rpt.get("provider_execution_readiness_report_id", ""),
+                    source_provider_execution_audit_packet_id=rpt.get("source_provider_execution_audit_packet_id", ""),
+                    source_run_id=rpt.get("source_run_id", ""),
+                    symbol=rpt.get("symbol", ""),
+                    readiness_status=rpt.get("readiness_status", ""),
+                    readiness_score=rpt.get("readiness_score", 0),
+                    chain_health=rpt.get("chain_health", ""),
+                    execution_status=rpt.get("execution_status", ""),
+                    created_at=rpt.get("created_at", ""),
+                    artifact_path=rpt.get("artifact_path", ""),
+                    provider_id=rpt.get("provider_id", ""),
+                    model_id=rpt.get("model_id", ""),
+                    warnings_count=len(rpt.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_reports_listed",
+        items=items,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-show":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_loaded",
+        artifact=dict(
+            provider_execution_readiness_report_id=readiness_id,
+            symbol="ATLAS-DEMO",
+            readiness_status="chain_review_ready",
+            readiness_score=100,
+            chain_health="complete",
+            execution_status="provider_execution_blocked",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_readiness_reports/" + readiness_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-validate":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_validated",
+        provider_execution_readiness_report_id=readiness_id,
+        valid=True,
+        passed_checks=17,
+        failed_checks=0,
+        checks=[dict(name="schema_version_supported", passed=True, message="Schema version is supported.")],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-readiness-replay":
+    readiness_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_readiness_report_replayed",
+        provider_execution_readiness_report_id=readiness_id,
+        match=True,
+        expected_hash="dummyhashreadiness12345",
+        actual_hash="dummyhashreadiness12345",
+        checks=[], warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_chain_doctor",
+        run_id=run_id,
+        symbol="ATLAS-DEMO",
+        chain_health="complete",
+        readiness_status="chain_review_ready",
+        missing_artifacts=[],
+        invalid_artifacts=[],
+        orphan_artifacts=[],
+        hash_mismatches=[],
+        blocking_reasons=["provider_execution_not_implemented"],
+        warnings=[],
+    )))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)

@@ -1161,7 +1161,163 @@ if [ "$TIMELINE_AUDIT_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 43. Create local provider response fixture and import it
+# 43. Research provider-execution-readiness
+printf '\n--- Research provider-execution-readiness ---\n'
+READINESS_OUTPUT="$(atlas research provider-execution-readiness "$AUDIT_PACKET_ID" --json)"
+assert_no_absolute_paths "$READINESS_OUTPUT"
+assert_no_secrets_in_output "$READINESS_OUTPUT"
+assert_no_forbidden_fragments "$READINESS_OUTPUT" "provider-execution-readiness CLI output"
+assert_ok "$READINESS_OUTPUT" "research provider-execution-readiness"
+READINESS_STATUS="$(json_field "$READINESS_OUTPUT" readiness_status)"
+READINESS_SCORE="$(json_field "$READINESS_OUTPUT" readiness_score)"
+READINESS_REPORT_ID="$(json_field "$READINESS_OUTPUT" provider_execution_readiness_report_id)"
+READINESS_ARTIFACT_PATH="$(json_field "$READINESS_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$READINESS_ARTIFACT_PATH" "provider execution readiness report artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$READINESS_ARTIFACT_PATH")" "provider execution readiness report artifact"
+# Validate key safety fields from artifact
+READINESS_ARTIFACT_JSON="$(cat "$WORKSPACE/$READINESS_ARTIFACT_PATH")"
+for field in provider_enabled network_enabled credentials_loaded provider_call_allowed actual_provider_call_made trading_signal_generated approval_created pending_order_created broker_touched; do
+  value="$(json_bool "$READINESS_ARTIFACT_JSON" "$field")"
+  if [ "$value" != "False" ]; then
+    printf 'FAIL: readiness report %s is not false\n' "$field" >&2
+    exit 1
+  fi
+done
+assert_no_pending_orders
+
+# 44. Research provider-execution-readiness-list
+printf '\n--- Research provider-execution-readiness-list ---\n'
+READINESS_LIST_OUTPUT="$(atlas research provider-execution-readiness-list --json)"
+assert_no_absolute_paths "$READINESS_LIST_OUTPUT"
+assert_no_secrets_in_output "$READINESS_LIST_OUTPUT"
+assert_no_forbidden_fragments "$READINESS_LIST_OUTPUT" "provider-execution-readiness-list CLI output"
+assert_ok "$READINESS_LIST_OUTPUT" "research provider-execution-readiness-list"
+READINESS_LISTED="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(any(i.get('provider_execution_readiness_report_id')=='$READINESS_REPORT_ID' for i in items))
+" <<<"$READINESS_LIST_OUTPUT" )"
+if [ "$READINESS_LISTED" != "True" ]; then
+  printf 'FAIL: readiness report not found in list\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 45. Research provider-execution-readiness-show
+printf '\n--- Research provider-execution-readiness-show ---\n'
+READINESS_SHOW_OUTPUT="$(atlas research provider-execution-readiness-show "$READINESS_REPORT_ID" --json)"
+assert_no_absolute_paths "$READINESS_SHOW_OUTPUT"
+assert_no_secrets_in_output "$READINESS_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$READINESS_SHOW_OUTPUT" "provider-execution-readiness-show CLI output"
+assert_ok "$READINESS_SHOW_OUTPUT" "research provider-execution-readiness-show"
+READINESS_SHOW_ID="$(json_field "$READINESS_SHOW_OUTPUT" artifact.provider_execution_readiness_report_id)"
+if [ "$READINESS_SHOW_ID" != "$READINESS_REPORT_ID" ]; then
+  printf 'FAIL: readiness show returned unexpected report id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 46. Research provider-execution-readiness-validate
+printf '\n--- Research provider-execution-readiness-validate ---\n'
+READINESS_VALIDATE_OUTPUT="$(atlas research provider-execution-readiness-validate "$READINESS_REPORT_ID" --json)"
+assert_no_absolute_paths "$READINESS_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$READINESS_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$READINESS_VALIDATE_OUTPUT" "provider-execution-readiness-validate CLI output"
+assert_ok "$READINESS_VALIDATE_OUTPUT" "research provider-execution-readiness-validate"
+READINESS_VALID="$(json_bool "$READINESS_VALIDATE_OUTPUT" valid)"
+if [ "$READINESS_VALID" != "True" ]; then
+  printf 'FAIL: readiness validation failed\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 47. Research provider-execution-readiness-replay
+printf '\n--- Research provider-execution-readiness-replay ---\n'
+READINESS_REPLAY_OUTPUT="$(atlas research provider-execution-readiness-replay "$READINESS_REPORT_ID" --json)"
+assert_no_absolute_paths "$READINESS_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$READINESS_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$READINESS_REPLAY_OUTPUT" "provider-execution-readiness-replay CLI output"
+assert_ok "$READINESS_REPLAY_OUTPUT" "research provider-execution-readiness-replay"
+READINESS_REPLAY_MATCH="$(json_field "$READINESS_REPLAY_OUTPUT" match)"
+if [ "$READINESS_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: readiness replay mismatch\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 48. Research provider-execution-chain-doctor
+printf '\n--- Research provider-execution-chain-doctor ---\n'
+DOCTOR_OUTPUT="$(atlas research provider-execution-chain-doctor "$RUN_ID" --json)"
+assert_no_absolute_paths "$DOCTOR_OUTPUT"
+assert_no_secrets_in_output "$DOCTOR_OUTPUT"
+assert_no_forbidden_fragments "$DOCTOR_OUTPUT" "provider-execution-chain-doctor CLI output"
+assert_ok "$DOCTOR_OUTPUT" "research provider-execution-chain-doctor"
+DOCTOR_CHAIN_HEALTH="$(json_field "$DOCTOR_OUTPUT" chain_health)"
+if [ "$DOCTOR_CHAIN_HEALTH" != "complete" ]; then
+  printf 'FAIL: chain doctor reported incomplete chain: %s\n' "$DOCTOR_CHAIN_HEALTH" >&2
+  exit 1
+fi
+DOCTOR_READINESS="$(json_field "$DOCTOR_OUTPUT" readiness_status)"
+if [ "$DOCTOR_READINESS" != "chain_review_ready" ]; then
+  printf 'FAIL: chain doctor unexpected readiness status: %s\n' "$DOCTOR_READINESS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 49. Research timeline after readiness (validate readiness report lineage)
+printf '\n--- Research timeline (post readiness) ---\n'
+TIMELINE_OUTPUT_READINESS="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_READINESS"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_READINESS"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_READINESS" "timeline CLI output after readiness"
+assert_ok "$TIMELINE_OUTPUT_READINESS" "research timeline after readiness"
+TIMELINE_READINESS_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets',[]):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            reports=[r.get('provider_execution_readiness_report_id') for r in a.get('provider_execution_readiness_reports',[])]
+                            if '$READINESS_REPORT_ID' in reports:
+                                print('valid')
+                                break
+                        break
+                    break
+                break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_READINESS" )"
+if [ "$TIMELINE_READINESS_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link readiness report under audit packet %s\n' "$AUDIT_PACKET_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 50. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

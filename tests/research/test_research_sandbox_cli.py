@@ -2998,3 +2998,587 @@ class TestProviderExecutionAuditPacketConfigless:
         assert code == 0
         assert data["ok"] is True
         assert data["status"] == "research_timeline"
+
+
+def _output_has_forbidden_fragments(text: str) -> list[str]:
+    found = []
+    for frag in FORBIDDEN_FRAGMENTS:
+        if frag in text:
+            found.append(frag)
+    return found
+
+
+def _create_full_chain_to_audit_packet(tmp_path: Path, monkeypatch, capsys) -> tuple[str, str, str, str, str, str]:
+    """Create full chain up to audit packet. Returns (run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id)."""
+    _ensure_workspace(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+        assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+    dry_run_out = json.loads(capsys.readouterr().out)
+    dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+        assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+    state_out = json.loads(capsys.readouterr().out)
+    state_id = state_out["provider_execution_state_id"]
+
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+        assert main(["research", "provider-execution-audit", state_id, "--json"]) == 0
+    audit_out = json.loads(capsys.readouterr().out)
+    audit_id = audit_out["provider_execution_audit_packet_id"]
+
+    return run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id
+
+
+class TestProviderExecutionReadinessReportConfigless:
+    def test_readiness_report_creates_artifact(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-readiness", audit_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_readiness_report_created"
+        assert "provider_execution_readiness_report_id" in data
+        assert data["source_provider_execution_audit_packet_id"] == audit_id
+        assert data["readiness_score"] >= 0 and data["readiness_score"] <= 100
+        assert data["execution_status"] == "provider_execution_blocked"
+        assert "artifact_path" in data
+
+        artifact_path = tmp_path / data["artifact_path"]
+        assert artifact_path.exists()
+        artifact = json.loads(artifact_path.read_text())
+        assert artifact["artifact_type"] == "provider_execution_readiness_report"
+        assert artifact["mode"] == "paper"
+        assert artifact["provider_enabled"] is False
+        assert artifact["network_enabled"] is False
+        assert artifact["credentials_loaded"] is False
+        assert artifact["provider_call_allowed"] is False
+        assert artifact["actual_provider_call_made"] is False
+        assert artifact["future_provider_execution_possible"] is False
+        assert artifact["trading_signal_generated"] is False
+        assert artifact["approval_created"] is False
+        assert artifact["pending_order_created"] is False
+        assert artifact["broker_touched"] is False
+        assert "artifact_chain" in artifact
+        assert "chain_diagnostics" in artifact
+        assert "hash_diagnostics" in artifact
+        assert "safety_gate_summary" in artifact
+        assert "no_action_attestations" in artifact
+        assert artifact["no_action_attestations"]["provider_called"] is False
+        assert artifact["no_action_attestations"]["network_request_made"] is False
+        assert artifact["no_action_attestations"]["api_key_read"] is False
+        assert "human_review_checklist" in artifact
+        assert "machine_readiness_checks" in artifact
+        assert "future_opt_in_requirements" in artifact
+
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+            assert frag not in artifact_path.read_text(), f"Forbidden fragment in artifact: {frag}"
+
+    def test_readiness_report_list_show_validate_replay(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+
+        # list
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-list", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert any(i.get("provider_execution_readiness_report_id") == readiness_id for i in data.get("items", []))
+
+        # show
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-show", readiness_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["artifact"]["provider_execution_readiness_report_id"] == readiness_id
+
+        # validate
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-validate", readiness_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is True
+        assert data["failed_checks"] == 0
+
+        # replay
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-replay", readiness_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is True
+
+    def test_readiness_report_list_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-readiness-list", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_readiness_reports_listed"
+
+    def test_readiness_report_timeline_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "timeline", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_timeline"
+
+    def test_chain_doctor_on_valid_run(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-chain-doctor", run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_chain_doctor"
+        assert data["run_id"] == run_id
+        assert data["chain_health"] == "complete"
+        assert data["readiness_status"] == "chain_review_ready"
+        assert "missing_artifacts" in data
+        assert "invalid_artifacts" in data
+        assert "blocking_reasons" in data
+        # Provider execution should be blocked
+        assert "provider_execution_not_implemented" in data["blocking_reasons"]
+
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_chain_doctor_on_missing_run(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-chain-doctor", "nonexistent_run_id", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is False
+        assert data["chain_health"] == "invalid"
+        assert "research_artifact_not_found" in data["blocking_reasons"]
+
+    def test_chain_doctor_does_not_write_artifacts(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id = _create_research_artifact(tmp_path, monkeypatch)
+
+        before = list((tmp_path / ".atlas" / "research").rglob("*"))
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-chain-doctor", run_id, "--json"])
+        after = list((tmp_path / ".atlas" / "research").rglob("*"))
+
+        assert code == 0
+        # Doctor must not create any new artifacts
+        assert set(after) == set(before), "Chain doctor created artifacts unexpectedly"
+
+    def test_check_artifacts_counts_readiness_reports(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["counts"]["provider_execution_readiness_reports"] >= 1
+
+    def test_dossier_includes_readiness_report(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "dossier", run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        dossier_path = tmp_path / data["artifact_path"]
+        dossier_data = json.loads(dossier_path.read_text())
+        assert dossier_data["artifact_counts"]["provider_execution_readiness_reports"] >= 1
+        linked_types = {a["type"] for a in dossier_data.get("linked_artifacts", [])}
+        assert "provider_execution_readiness_report" in linked_types
+        assert "provider_execution_readiness_report" in dossier_data.get("summaries", {})
+
+
+class TestProviderExecutionReadinessReportTamper:
+    def _create_readiness_report(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path]:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+        artifact_path = tmp_path / readiness_out["artifact_path"]
+        return readiness_id, artifact_path
+
+    def test_tampered_readiness_report_id_fails_closed(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_execution_readiness_report_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-show", readiness_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in output: {found}"
+
+    def test_tampered_model_id_does_not_leak(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["model_id"] = "sk-LEAKEDSECRET"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-show", readiness_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in output: {found}"
+
+    def test_tampered_provider_enabled_true_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_enabled"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-show", readiness_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_readiness_score_out_of_range_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["readiness_score"] = 150
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-validate", readiness_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is False
+        assert any(c["name"] == "readiness_score_in_range" and not c["passed"] for c in data["checks"])
+
+    def test_tampered_nested_no_action_attestations_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["no_action_attestations"]["approval_created"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-show", readiness_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_readiness_status_invalid_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["readiness_status"] = "approved_for_execution"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-show", readiness_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_source_audit_packet_hash_mismatch_detected(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["source_audit_packet_hash"] = "tampered_hash_12345"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-validate", readiness_id, "--strict", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2  # strict returns nonzero
+        assert data["ok"] is True
+        assert data["valid"] is False
+
+    def test_tampered_artifact_hash_mismatch_detected(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["readiness_score"] = 42
+        # Do not recompute hash — simulate tamper
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-validate", readiness_id, "--strict", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2
+        assert data["ok"] is True
+        assert data["valid"] is False
+        assert any(c["name"] == "artifact_hash_consistent" and not c["passed"] for c in data["checks"])
+
+    def test_tampered_id_does_not_leak_through_list(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        readiness_id, artifact_path = self._create_readiness_report(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_execution_readiness_report_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-list", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in list output: {found}"
+
+    def test_tampered_id_does_not_leak_through_timeline(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+
+        # Tamper the readiness report
+        readiness_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_readiness_reports").glob("*.json"))[0]
+        artifact = json.loads(readiness_path.read_text())
+        artifact["provider_execution_readiness_report_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        readiness_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in timeline output: {found}"
+
+
+class TestProviderExecutionReadinessReportReplay:
+    def test_replay_match_on_untouched(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-replay", readiness_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is True
+
+    def test_replay_mismatch_on_modified_source_audit_packet(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+
+        # Modify source audit packet
+        audit_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_audit_packets").glob("*.json"))[0]
+        artifact = json.loads(audit_path.read_text())
+        artifact["latest_state"] = "tampered_state"
+        audit_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-replay", readiness_id, "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is False
+
+    def test_replay_strict_returns_nonzero_on_mismatch(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+
+        # Modify source audit packet
+        audit_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_audit_packets").glob("*.json"))[0]
+        artifact = json.loads(audit_path.read_text())
+        artifact["latest_state"] = "tampered_state"
+        audit_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-readiness-replay", readiness_id, "--strict", "--json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2
+        assert data["ok"] is True
+        assert data["match"] is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in replay output: {found}"
+
+
+class TestProviderExecutionReadinessReportIntegration:
+    def test_timeline_links_readiness_report(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        # Find the readiness report nested in timeline
+        found = False
+        for entry in data.get("entries", []):
+            for prompt in entry.get("prompts", []):
+                for sr in prompt.get("sandbox_requests", []):
+                    for pcp in sr.get("provider_call_plans", []):
+                        for ped in pcp.get("provider_execution_dry_runs", []):
+                            for pes in ped.get("provider_execution_states", []):
+                                for peap in pes.get("provider_execution_audit_packets", []):
+                                    for perr in peap.get("provider_execution_readiness_reports", []):
+                                        found = True
+                                        assert "provider_execution_readiness_report_id" in perr
+        assert found, "Readiness report not found in timeline"
+
+    def test_check_artifacts_detects_readiness_report_tamper(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        # Tamper readiness report
+        readiness_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_readiness_reports").glob("*.json"))[0]
+        artifact = json.loads(readiness_path.read_text())
+        artifact["provider_call_allowed"] = True
+        readiness_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        issue_codes = [i["code"] for i in data["issues"]]
+        assert "provider_execution_readiness_report_impossible_boolean" in issue_codes
+
+    def test_valid_chain_no_missing_source_audit_packet(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        issue_codes = [i["code"] for i in data["issues"]]
+        assert "missing_source_audit_packet" not in issue_codes
+        assert "source_audit_packet_hash_mismatch" not in issue_codes
+
+    def test_dossier_missing_readiness_report_warning_only(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+        # Do NOT create readiness report
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "dossier", run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        dossier_path = tmp_path / data["artifact_path"]
+        dossier_data = json.loads(dossier_path.read_text())
+        # Missing readiness report should be in missing_links but not fail the dossier
+        assert "no_provider_execution_readiness_report" in dossier_data.get("missing_links", [])
+        # Dossier should still be created successfully
+        assert dossier_data["recommendation"] in ("research_dossier_ready", "manual_review_required")
