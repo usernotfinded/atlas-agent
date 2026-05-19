@@ -296,21 +296,14 @@ def _build_hash_diagnostics(
 
 
 def _build_safety_gate_summary(source_audit_packet: dict[str, Any]) -> dict[str, Any]:
-    """Build a summary of safety gate status from the source audit packet."""
-    safety = source_audit_packet.get("safety_gate_summary", {})
+    """Build a summary of safety gate status from the source audit packet.
+
+    Includes all mandatory boolean safety flags checked by scoring and validation.
+    Reads directly from the audit packet's top-level fields.
+    """
     return {
-        "provider_enabled": safety.get("provider_enabled", False),
-        "network_enabled": safety.get("network_enabled", False),
-        "credentials_loaded": safety.get("credentials_loaded", False),
-        "provider_call_allowed": safety.get("provider_call_allowed", False),
-        "actual_provider_call_made": safety.get("actual_provider_call_made", False),
-        "future_provider_execution_possible": safety.get("future_provider_execution_possible", False),
-        "requires_manual_unlock": safety.get("requires_manual_unlock", False),
-        "requires_credentials": safety.get("requires_credentials", False),
-        "requires_network": safety.get("requires_network", False),
-        "requires_provider_sdk": safety.get("requires_provider_sdk", False),
-        "state_gates_count": safety.get("state_gates_count", 0),
-        "forbidden_actions_count": safety.get("forbidden_actions_count", 0),
+        flag: source_audit_packet.get(flag, False)
+        for flag in _BOOLEAN_SAFETY_FLAGS
     }
 
 

@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev25] - 2026-05-19
+
+### Added
+- Provider Execution Readiness Report & Chain Doctor (`src/atlas_agent/research/provider_execution_readiness_report.py`).
+  - Deterministic readiness scoring (0–100) based on chain completeness, hash integrity, and mandatory-false boolean safety flags.
+  - `_build_safety_gate_summary()` covers all 10 mandatory flags: `provider_enabled`, `network_enabled`, `credentials_loaded`, `provider_call_allowed`, `actual_provider_call_made`, `future_provider_execution_possible`, `trading_signal_generated`, `approval_created`, `pending_order_created`, `broker_touched`.
+  - Read-only Chain Doctor (`provider-execution-chain-doctor`) diagnoses the full provider-preflight chain without creating artifacts or calling providers.
+  - Safe validation with invalid sentinels, forbidden-fragment scanning, and impossible-boolean detection.
+  - Nested `no_action_attestations` dict with 9 False-by-design flags.
+- CLI commands (all configless, local-only):
+  - `atlas research provider-execution-readiness AUDIT_PACKET_ID`
+  - `atlas research provider-execution-readiness-list`
+  - `atlas research provider-execution-readiness-show ID`
+  - `atlas research provider-execution-readiness-validate ID [--strict]`
+  - `atlas research provider-execution-readiness-replay ID [--strict]`
+  - `atlas research provider-execution-chain-doctor RUN_ID`
+- Session integration: `check-artifacts`, `timeline`, and `dossier` now support provider execution readiness report artifacts.
+- Timeline nesting: readiness reports are indexed by `source_provider_execution_audit_packet_id` and nested under each audit packet entry.
+- Demo workflow extended with readiness report creation, validation, replay, chain doctor, and timeline lineage checks.
+
+### Fixed
+- `_build_safety_gate_summary()` now sources all 10 mandatory boolean flags directly from the source audit packet top-level fields, fixing a bug where missing flags caused valid chains to score 0 and report `chain_invalid`.
+- `_compute_readiness_score()` safety gate check now correctly evaluates all 10 flags against the safety gate summary.
+
+### Safety / Compatibility
+- No real provider execution. No API/network calls. No API key loading. No provider SDK usage.
+- No trading signals generated. No approvals or pending orders created. No broker touched.
+- Readiness score reflects local chain integrity/completeness only; it is NOT trading confidence.
+- Even `readiness_score=100` does NOT imply provider execution is allowed.
+- All configless invariants preserved.
+
 ## [0.5.7.dev24] - 2026-05-18
 
 ### Added
