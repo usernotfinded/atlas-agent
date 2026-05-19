@@ -776,14 +776,14 @@ def replay_provider_execution_dry_run(
     source_plan_id = dry_run.get("source_provider_call_plan_id", "")
     from atlas_agent.research.provider_call_plan import (
         find_provider_call_plan_by_id,
-        load_and_validate_provider_call_plan,
+        load_provider_call_plan,
     )
 
     plan_path = find_provider_call_plan_by_id(workspace_path, source_plan_id)
     if plan_path is None:
         raise ResearchSessionError("provider_call_plan_not_found")
 
-    source_call_plan = load_and_validate_provider_call_plan(plan_path, workspace_path)
+    source_call_plan = load_provider_call_plan(plan_path, workspace_path)
 
     provider_id = dry_run.get("provider_id", "")
     model_id = dry_run.get("model_id", "")
