@@ -1791,3 +1791,644 @@ class TestProviderExecutionReplayEnvelopeConsistency:
         assert data["status"] != "research_provider_execution_dry_run_replayed"
         for frag in FORBIDDEN_FRAGMENTS:
             assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+
+class TestProviderExecutionStateConfigless:
+    def _create_state(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, str, Path]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+        artifact_path = tmp_path / state_out["artifact_path"]
+        return dry_run_id, state_id, artifact_path
+
+    def test_state_create_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        _write_env_atlas(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_state_created"
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_state_list_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, state_id, _artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-state-list", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_state_show_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, state_id, _artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-state-show", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_state_validate_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, state_id, _artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-state-validate", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_state_replay_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, state_id, _artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-state-replay", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+
+class TestProviderExecutionStateTransitions:
+    def _create_dry_run(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+        dry_run_path = tmp_path / dry_run_out["artifact_path"]
+        return dry_run_id, dry_run_path
+
+    def test_default_state_is_disabled(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+        from atlas_agent.research.provider_execution_state import _determine_current_state
+
+        current = _determine_current_state(tmp_path, dry_run_id)
+        assert current == "disabled"
+
+    def test_disabled_to_dry_run_only_allowed(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_state_created"
+        assert data["previous_state"] == "disabled"
+        assert data["state"] == "dry_run_only"
+        assert data["transition_allowed"] is True
+
+    def test_dry_run_only_to_manual_unlock_allowed(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", "manual_unlock_required", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["state"] == "manual_unlock_required"
+        assert data["previous_state"] == "dry_run_only"
+
+    def test_manual_unlock_to_provider_call_allowed_but_not_implemented_allowed(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        capsys.readouterr()
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "manual_unlock_required", "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", "provider_call_allowed_but_not_implemented", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["state"] == "provider_call_allowed_but_not_implemented"
+        assert data["previous_state"] == "manual_unlock_required"
+
+    def test_any_state_to_disabled_allowed(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", "disabled", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["state"] == "disabled"
+
+    def test_unknown_state_blocked(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+        from atlas_agent.research.provider_execution_state import evaluate_provider_execution_state_transition
+
+        allowed, blocking = evaluate_provider_execution_state_transition(
+            "disabled", "unknown_invalid_state", {"provider_enabled": False, "network_enabled": False, "credentials_loaded": False, "provider_call_allowed": False, "would_call_provider": False, "actual_provider_call_made": False, "execution_mode": "dry_run_only", "mode": "paper"}
+        )
+        assert allowed is False
+        assert "invalid_requested_state" in blocking
+
+    def test_provider_call_allowed_but_not_implemented_still_has_provider_call_allowed_false(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        capsys.readouterr()
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "manual_unlock_required", "--json"]) == 0
+        capsys.readouterr()
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "provider_call_allowed_but_not_implemented", "--json"]) == 0
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        state_id = data["provider_execution_state_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state-show", state_id, "--json"]) == 0
+
+        show_out = json.loads(capsys.readouterr().out)
+        artifact = show_out["artifact"]
+        assert artifact["provider_call_allowed"] is False
+        assert artifact["actual_provider_call_made"] is False
+        assert artifact["future_provider_execution_possible"] is False
+
+    def test_blocked_transition_writes_no_artifact(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        # Try to jump from disabled directly to provider_call_allowed_but_not_implemented (blocked)
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", "provider_call_allowed_but_not_implemented", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+        assert data["transition_allowed"] is False
+        assert "blocking_reasons" in data
+
+        # Verify no state artifact was written
+        states_dir = tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_states"
+        assert not states_dir.exists() or len(list(states_dir.glob("*.json"))) == 0
+
+
+class TestProviderExecutionStateTamper:
+    def _create_state(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+        artifact_path = tmp_path / state_out["artifact_path"]
+        return state_id, artifact_path
+
+    def _tamper_and_test_show(self, tmp_path: Path, monkeypatch, capsys, tamper_fn) -> tuple[int, str, dict]:
+        state_id, artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        tamper_fn(artifact)
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-show", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        try:
+            data = json.loads(out)
+        except Exception:
+            data = {}
+        return code, out, data
+
+    def test_tampered_state_id_fails_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["provider_execution_state_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment leaked: {frag}"
+
+    def test_tampered_provider_enabled_true_fails_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["provider_enabled"] = True
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_network_enabled_true_fails_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["network_enabled"] = True
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_credentials_loaded_true_fails_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["credentials_loaded"] = True
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_provider_call_allowed_true_fails_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["provider_call_allowed"] = True
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_actual_provider_call_made_true_fails_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["actual_provider_call_made"] = True
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_future_provider_execution_possible_true_fails_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["future_provider_execution_possible"] = True
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+
+    def test_tampered_fields_do_not_leak_through_list(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        state_id, artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_execution_state_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact["model_id"] = "sk-LEAKEDSECRET"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-list", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        for item in data["items"]:
+            if item.get("_invalid"):
+                assert item["provider_execution_state_id"] == "<invalid>"
+                assert "model_id" not in item or item["model_id"] == "unknown"
+
+    def test_tampered_state_name_fails_validation(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        def tamper(a):
+            a["state"] = "sk-LEAKEDSECRET_state"
+        code, out, data = self._tamper_and_test_show(tmp_path, monkeypatch, capsys, tamper)
+        assert code == 1
+        assert data["ok"] is False
+
+
+class TestProviderExecutionStateValidation:
+    def _create_state(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+        artifact_path = tmp_path / state_out["artifact_path"]
+        return state_id, artifact_path
+
+    def test_valid_state_validates(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        state_id, _artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-validate", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is True
+        assert data["failed_checks"] == 0
+
+    def test_hash_mismatch_detected(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        state_id, artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["model_id"] = "gpt-4o-changed"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-validate", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is False
+        assert any(c["name"] == "artifact_hash_consistent" and not c["passed"] for c in data["checks"])
+
+    def test_strict_validation_returns_nonzero_on_invalid(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        state_id, artifact_path = self._create_state(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_enabled"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-validate", state_id, "--json", "--strict"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2
+        assert data["ok"] is True
+        assert data["valid"] is False
+
+
+class TestProviderExecutionStateReplay:
+    def _create_state(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, str, Path, Path]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+        dry_run_path = tmp_path / dry_run_out["artifact_path"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+        state_path = tmp_path / state_out["artifact_path"]
+        return dry_run_id, state_id, dry_run_path, state_path
+
+    def test_replay_unchanged_returns_match_true(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _dry_run_id, state_id, _dry_run_path, _state_path = self._create_state(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-replay", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_state_replayed"
+        assert data["match"] is True
+
+    def test_replay_modified_source_dry_run_mismatch(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, state_id, dry_run_path, _state_path = self._create_state(tmp_path, monkeypatch, capsys)
+        from atlas_agent.research.provider_execution_dry_run import provider_execution_dry_run_sha256
+
+        dry_run = json.loads(dry_run_path.read_text())
+        dry_run["model_id"] = "gpt-4o-changed"
+        dry_run["artifact_hash"] = provider_execution_dry_run_sha256(dry_run)
+        dry_run_path.write_text(json.dumps(dry_run, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-replay", state_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is False
+
+    def test_replay_strict_mismatch_returns_nonzero(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, state_id, dry_run_path, _state_path = self._create_state(tmp_path, monkeypatch, capsys)
+        from atlas_agent.research.provider_execution_dry_run import provider_execution_dry_run_sha256
+
+        dry_run = json.loads(dry_run_path.read_text())
+        dry_run["model_id"] = "gpt-4o-changed"
+        dry_run["artifact_hash"] = provider_execution_dry_run_sha256(dry_run)
+        dry_run_path.write_text(json.dumps(dry_run, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state-replay", state_id, "--json", "--strict"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2
+        assert data["ok"] is True
+        assert data["match"] is False
+
+
+class TestProviderExecutionStateIntegration:
+    def _create_full_chain(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, str, str, str, str]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-state", dry_run_id, "--to", "dry_run_only", "--json"]) == 0
+        state_out = json.loads(capsys.readouterr().out)
+        state_id = state_out["provider_execution_state_id"]
+
+        return run_id, prompt_id, sandbox_id, dry_run_id, state_id
+
+    def test_check_artifacts_counts_states(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        self._create_full_chain(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["counts"]["provider_execution_states"] >= 1
+
+    def test_check_artifacts_detects_state_tamper(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _run_id, _prompt_id, _sandbox_id, dry_run_id, state_id = self._create_full_chain(tmp_path, monkeypatch, capsys)
+
+        # Tamper the state artifact
+        state_path = list((tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_states").glob("*.json"))[0]
+        artifact = json.loads(state_path.read_text())
+        artifact["provider_enabled"] = True
+        state_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        issue_codes = {i["code"] for i in data.get("issues", [])}
+        assert "provider_execution_state_impossible_boolean" in issue_codes
+
+    def test_timeline_links_state(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id = self._create_full_chain(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found = False
+        for entry in data.get("entries", []):
+            for prompt in entry.get("prompts", []):
+                for sr in prompt.get("sandbox_requests", []):
+                    for pc in sr.get("provider_call_plans", []):
+                        for ped in pc.get("provider_execution_dry_runs", []):
+                            states = ped.get("provider_execution_states", [])
+                            if any(s.get("provider_execution_state_id") == state_id for s in states):
+                                found = True
+                                break
+        assert found, f"State {state_id} not found in timeline"
+
+    def test_dossier_includes_state_summary(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        run_id, _prompt_id, _sandbox_id, _dry_run_id, _state_id = self._create_full_chain(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "dossier", run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        # Read dossier artifact from disk to verify internal counts
+        dossier_path = tmp_path / data["artifact_path"]
+        dossier_data = json.loads(dossier_path.read_text())
+        assert dossier_data["artifact_counts"]["provider_execution_states"] >= 1
+        summaries = dossier_data.get("summaries", {})
+        if "provider_execution_state" in summaries:
+            assert summaries["provider_execution_state"]["state_count"] >= 1
+
+    def test_invalid_state_name_does_not_leak_raw_value_json(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        unsafe_value = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", unsafe_value, "--json"])
+
+        assert code != 0
+        captured = capsys.readouterr()
+        combined = captured.out + captured.err
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in combined, f"Forbidden fragment leaked in output: {frag}"
+        assert unsafe_value not in combined
+        assert "invalid choice" not in combined.lower()
+        assert "traceback" not in combined.lower()
+        data = json.loads(captured.out)
+        assert data["ok"] is False
+        assert data["status"] == "invalid_provider_execution_state_name"
+        # No state artifact should have been written
+        states_dir = tmp_path / ".atlas" / "research" / "AAPL" / "provider_execution_states"
+        assert not any(states_dir.glob("*.json"))
+
+    def test_invalid_state_name_does_not_leak_raw_value_text(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+
+        unsafe_value = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-state", dry_run_id, "--to", unsafe_value])
+
+        assert code != 0
+        captured = capsys.readouterr()
+        combined = captured.out + captured.err
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in combined, f"Forbidden fragment leaked in output: {frag}"
+        assert unsafe_value not in combined
+        assert "invalid choice" not in combined.lower()
+        assert "traceback" not in combined.lower()

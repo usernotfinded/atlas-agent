@@ -228,13 +228,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev22
+./scripts/smoke_release_tag.sh v0.5.7.dev23
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev22 --full
+./scripts/smoke_release_tag.sh v0.5.7.dev23 --full
 ```
 
 ## Tagging

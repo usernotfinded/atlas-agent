@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev23] - 2026-05-19
+
+### Added
+- Provider Execution Opt-In State Machine Skeleton (`src/atlas_agent/research/provider_execution_state.py`).
+  - Four states: `disabled`, `dry_run_only`, `manual_unlock_required`, `provider_call_allowed_but_not_implemented`.
+  - Deterministic local-only transition evaluator (`evaluate_provider_execution_state_transition`).
+  - All 6 safety booleans hardcoded to `False` in every state, including `provider_call_allowed_but_not_implemented`.
+  - SHA-256 hashing, lineage validation, forbidden-fragment scanning, impossible-boolean detection.
+- CLI commands:
+  - `atlas research provider-execution-state DRY_RUN_ID --to STATE`
+  - `atlas research provider-execution-state-list`
+  - `atlas research provider-execution-state-show ID`
+  - `atlas research provider-execution-state-validate ID [--strict]`
+  - `atlas research provider-execution-state-replay ID [--strict]`
+- Session integration: `check-artifacts`, `timeline`, and `dossier` now support provider execution state artifacts.
+- Demo workflow extended with state transition chain and timeline lineage validation.
+
+### Fixed
+- Removed `choices=...` from `--to` argument in `provider-execution-state` to prevent argparse from leaking raw invalid values.
+- Invalid state names now fail safely with static `invalid_provider_execution_state_name` envelope; no forbidden fragments leaked.
+
+### Safety / Compatibility
+- No provider calls, no API keys, no network requests, no provider SDK imports.
+- No trading signals generated. No live trading authorization created.
+- Even `provider_call_allowed_but_not_implemented` does not allow real provider calls.
+- All configless invariants preserved.
+
 ## [0.5.7.dev22] - 2026-05-18
 
 ### Fixed

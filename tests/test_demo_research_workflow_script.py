@@ -277,6 +277,28 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "timeline":
+    # Build provider_execution_states dynamically from disk
+    states = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in sorted(os.listdir(states_dir)):
+            if fname.endswith(".json"):
+                with open(os.path.join(states_dir, fname)) as f:
+                    st = json.load(f)
+                states.append({
+                    "provider_execution_state_id": st.get("provider_execution_state_id", ""),
+                    "source_provider_execution_dry_run_id": st.get("source_provider_execution_dry_run_id", ""),
+                    "source_run_id": st.get("source_run_id", ""),
+                    "symbol": st.get("symbol", ""),
+                    "state": st.get("state", ""),
+                    "previous_state": st.get("previous_state", ""),
+                    "transition_allowed": st.get("transition_allowed", False),
+                    "created_at": st.get("created_at", ""),
+                    "artifact_path": st.get("artifact_path", ""),
+                    "provider_id": st.get("provider_id", ""),
+                    "model_id": st.get("model_id", ""),
+                    "warnings_count": len(st.get("warnings", []))
+                })
     print(json.dumps({
         "ok": True, "status": "research_timeline",
         "entries": [{
@@ -310,7 +332,8 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                         "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
                         "provider_execution_dry_runs": [{
                             "provider_execution_dry_run_id": "demodryrunid12345",
-                            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"
+                            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+                            "provider_execution_states": states
                         }]
                     }]
                 }],
@@ -850,6 +873,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_execution_state",
+            "contract_version": "research_provider_execution_state_v1",
+            "provider_execution_state_id": state_id,
+            "source_provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "plandemopcp12345",
+            "source_sandbox_request_id": "sandboxdemoid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "state": requested,
+            "previous_state": "disabled",
+            "requested_state": requested,
+            "transition_allowed": True,
+            "transition_reason": "test",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "future_provider_execution_possible": False,
+            "requires_manual_unlock": requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            "requires_credentials": requested == "provider_call_allowed_but_not_implemented",
+            "requires_network": requested == "provider_call_allowed_but_not_implemented",
+            "requires_provider_sdk": requested == "provider_call_allowed_but_not_implemented",
+            "blocking_reasons": ["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            "state_gates": [],
+            "forbidden_actions": [],
+            "input_hash": "dummyhash",
+            "source_dry_run_hash": "dummyhashdryrun12345",
+            "redaction_summary": {},
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            "warnings": [],
+            "metadata": {},
+            "artifact_hash": "dummyhashstate12345",
+            "created_at": "2026-05-18T00:00:00"
+        }, f, indent=2)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_state_created",
+        "provider_execution_state_id": state_id,
+        "source_provider_execution_dry_run_id": dry_run_id,
+        "previous_state": "disabled",
+        "state": requested,
+        "requested_state": requested,
+        "transition_allowed": True,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append({
+                    "provider_execution_state_id": st.get("provider_execution_state_id", ""),
+                    "source_provider_execution_dry_run_id": st.get("source_provider_execution_dry_run_id", ""),
+                    "source_run_id": st.get("source_run_id", ""),
+                    "symbol": st.get("symbol", ""),
+                    "state": st.get("state", ""),
+                    "previous_state": st.get("previous_state", ""),
+                    "transition_allowed": st.get("transition_allowed", False),
+                    "created_at": st.get("created_at", ""),
+                    "artifact_path": st.get("artifact_path", ""),
+                    "provider_id": st.get("provider_id", ""),
+                    "model_id": st.get("model_id", ""),
+                    "warnings_count": len(st.get("warnings", []))
+                })
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_states_listed",
+        "items": items
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_state_loaded",
+        "artifact": {
+            "provider_execution_state_id": state_id,
+            "source_provider_execution_dry_run_id": "dryrundemo12345",
+            "symbol": "ATLAS-DEMO",
+            "state": "dry_run_only",
+            "previous_state": "disabled",
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "future_provider_execution_possible": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        }
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_state_validated",
+        "provider_execution_state_id": state_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_state_replayed",
+        "provider_execution_state_id": state_id,
+        "match": True,
+        "expected_hash": "dummyhashstate12345",
+        "actual_hash": "dummyhashstate12345",
+        "checks": [], "warnings": []
+    }))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 '''
@@ -1340,14 +1493,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -1705,14 +1988,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -2082,14 +2495,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -2459,14 +3002,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -2839,14 +3512,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -3227,14 +4030,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -3610,14 +4543,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -3993,14 +5056,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -4390,14 +5583,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -4781,14 +6104,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -5172,14 +6625,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -5555,14 +7138,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -5967,14 +7680,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -6367,14 +8210,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -6773,14 +8746,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -7184,14 +9287,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -7599,14 +9832,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -8009,14 +10372,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -8419,14 +10912,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -8829,14 +11452,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -9238,14 +11991,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -9643,14 +12526,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -10064,14 +13077,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -10485,14 +13628,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -10927,14 +14200,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -11502,14 +14905,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -12074,14 +15607,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -12654,14 +16317,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -12810,7 +16603,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345"}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -13267,14 +17060,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -13402,7 +17325,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345"}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -13790,14 +17713,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -14259,14 +18312,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -14394,7 +18577,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345"}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -14866,14 +19049,144 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
 
 if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
     dry_run_id = ARGS[2]
-    print(json.dumps({{
-        "ok": True, "status": "research_provider_execution_dry_run_replayed",
-        "provider_execution_dry_run_id": dry_run_id,
-        "match": True,
-        "expected_hash": "dummyhashdryrun12345",
-        "actual_hash": "dummyhashdryrun12345",
-        "checks": []
-    }}))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_dry_run_replayed",
+        provider_execution_dry_run_id=dry_run_id,
+        match=True,
+        expected_hash="dummyhashdryrun12345",
+        actual_hash="dummyhashdryrun12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state":
+    dry_run_id = ARGS[2]
+    requested = ARGS[4] if len(ARGS) > 4 else "dry_run_only"
+    state_id = "state" + dry_run_id[3:]
+    state_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states", state_id + ".json")
+    os.makedirs(os.path.dirname(state_path), exist_ok=True)
+    with open(state_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_execution_state",
+            contract_version="research_provider_execution_state_v1",
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id=dry_run_id,
+            source_provider_call_plan_id="plandemopcp12345",
+            source_sandbox_request_id="sandboxdemoid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            mode="paper",
+            state=requested,
+            previous_state="disabled",
+            requested_state=requested,
+            transition_allowed=True,
+            transition_reason="test",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            requires_manual_unlock=requested in ("manual_unlock_required", "provider_call_allowed_but_not_implemented"),
+            requires_credentials=requested == "provider_call_allowed_but_not_implemented",
+            requires_network=requested == "provider_call_allowed_but_not_implemented",
+            requires_provider_sdk=requested == "provider_call_allowed_but_not_implemented",
+            blocking_reasons=["provider_execution_not_implemented"] if requested == "provider_call_allowed_but_not_implemented" else [],
+            state_gates=[],
+            forbidden_actions=[],
+            input_hash="dummyhash",
+            source_dry_run_hash="dummyhashdryrun12345",
+            redaction_summary=dict(),
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+            warnings=[],
+            metadata=dict(),
+            artifact_hash="dummyhashstate12345",
+            created_at="2026-05-18T00:00:00"
+        ), f, indent=2)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_created",
+        provider_execution_state_id=state_id,
+        source_provider_execution_dry_run_id=dry_run_id,
+        previous_state="disabled",
+        state=requested,
+        requested_state=requested,
+        transition_allowed=True,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json",
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-list":
+    items = []
+    states_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_execution_states")
+    if os.path.isdir(states_dir):
+        for fname in os.listdir(states_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(states_dir, fname)
+                with open(fpath) as f:
+                    st = json.load(f)
+                items.append(dict(
+                    provider_execution_state_id=st.get("provider_execution_state_id", ""),
+                    source_provider_execution_dry_run_id=st.get("source_provider_execution_dry_run_id", ""),
+                    source_run_id=st.get("source_run_id", ""),
+                    symbol=st.get("symbol", ""),
+                    state=st.get("state", ""),
+                    previous_state=st.get("previous_state", ""),
+                    transition_allowed=st.get("transition_allowed", False),
+                    created_at=st.get("created_at", ""),
+                    artifact_path=st.get("artifact_path", ""),
+                    provider_id=st.get("provider_id", ""),
+                    model_id=st.get("model_id", ""),
+                    warnings_count=len(st.get("warnings", []))
+                ))
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_states_listed",
+        items=items
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-show":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_loaded",
+        artifact=dict(
+            provider_execution_state_id=state_id,
+            source_provider_execution_dry_run_id="dryrundemo12345",
+            symbol="ATLAS-DEMO",
+            state="dry_run_only",
+            previous_state="disabled",
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_execution_states/" + state_id + ".json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-validate":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_validated",
+        provider_execution_state_id=state_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-state-replay":
+    state_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_execution_state_replayed",
+        provider_execution_state_id=state_id,
+        match=True,
+        expected_hash="dummyhashstate12345",
+        actual_hash="dummyhashstate12345",
+        checks=[], warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
