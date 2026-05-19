@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from atlas_agent.events.log import EventLogger, generate_run_id
-from atlas_agent.research.sandbox_contracts import artifact_sha256
+from atlas_agent.research.sandbox_contracts import FORBIDDEN_FRAGMENTS, artifact_sha256
 from atlas_agent.research.providers import (
     ResearchContext,
     UnsupportedResearchProviderError,
@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1381,6 +1381,10 @@ def check_research_artifacts(
     response_review_ids: dict[str, list[str]] = {}
     dossier_ids: dict[str, list[str]] = {}
     sandbox_request_ids: dict[str, list[str]] = {}
+    provider_call_plan_ids: dict[str, list[str]] = {}
+
+    provider_call_plan_data: list[dict[str, Any]] = []
+    sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
         try:
@@ -1419,6 +1423,7 @@ def check_research_artifacts(
             "response_review": "response_review_id",
             "dossier": "dossier_id",
             "sandbox_request": "sandbox_request_id",
+            "provider_call_plan": "provider_call_plan_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1447,6 +1452,8 @@ def check_research_artifacts(
         elif expected_type == "provider_response" and "provider_responses" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "sandbox_request" and "sandbox_requests" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_call_plan" and "provider_call_plans" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1501,6 +1508,24 @@ def check_research_artifacts(
                 if computed != stored_hash:
                     issues.append({"code": "hash_mismatch", "path": rel, "severity": "error"})
                     return
+        elif expected_type == "provider_call_plan":
+            for f in ("provider_call_plan_id", "source_sandbox_request_id", "symbol", "provider_id", "model_id"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            # Use provider_call_plan safe validation
+            from atlas_agent.research.provider_call_plan import (
+                safe_validate_provider_call_plan_data,
+            )
+            _cleaned, error = safe_validate_provider_call_plan_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1522,6 +1547,10 @@ def check_research_artifacts(
                 dossier_ids.setdefault(raw_id, []).append(rel)
             elif expected_type == "sandbox_request":
                 sandbox_request_ids.setdefault(raw_id, []).append(rel)
+                sandbox_request_data_by_id[raw_id] = data
+            elif expected_type == "provider_call_plan":
+                provider_call_plan_ids.setdefault(raw_id, []).append(rel)
+                provider_call_plan_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1541,6 +1570,8 @@ def check_research_artifacts(
             counts["dossiers"] += 1
         elif expected_type == "sandbox_request":
             counts["sandbox_requests"] += 1
+        elif expected_type == "provider_call_plan":
+            counts["provider_call_plans"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1598,6 +1629,12 @@ def check_research_artifacts(
             for path in sandbox_requests_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "sandbox_request", expected_symbol)
+        # Provider call plans
+        provider_call_plans_dir = sym_dir / "provider_call_plans"
+        if provider_call_plans_dir.exists():
+            for path in provider_call_plans_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_call_plan", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1636,6 +1673,39 @@ def check_research_artifacts(
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pcid, paths in provider_call_plan_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+
+    # Provider call plan lineage checks
+    for plan in provider_call_plan_data:
+        rel = plan.get("artifact_path", "")
+        src_sandbox_id = plan.get("source_sandbox_request_id", "")
+        # Invalid lineage
+        try:
+            validate_run_id(src_sandbox_id)
+        except ResearchSessionError:
+            issues.append({"code": "invalid_lineage", "path": rel, "severity": "error"})
+            continue
+        # Missing source sandbox
+        if src_sandbox_id not in sandbox_request_data_by_id:
+            issues.append({"code": "missing_source_sandbox", "path": rel, "severity": "error"})
+            continue
+        # Source sandbox hash mismatch
+        stored_src_hash = plan.get("source_sandbox_hash", "")
+        if stored_src_hash:
+            src_sandbox = sandbox_request_data_by_id[src_sandbox_id]
+            computed_src_hash = artifact_sha256(src_sandbox)
+            if computed_src_hash != stored_src_hash:
+                issues.append({"code": "source_sandbox_hash_mismatch", "path": rel, "severity": "error"})
+                continue
+        # Unknown provider target
+        provider_id = plan.get("provider_id", "")
+        if provider_id:
+            from atlas_agent.research.provider_call_plan import _get_disabled_provider_ids
+            if provider_id not in _get_disabled_provider_ids():
+                issues.append({"code": "unknown_provider_target", "path": rel, "severity": "error"})
 
     return {
         "ok": True,
@@ -2035,6 +2105,8 @@ def build_research_timeline(
     response_review_items = _iter_response_review_artifacts(workspace_path, symbol=symbol_filter)
     dossier_items = _iter_dossier_artifacts(workspace_path, symbol=symbol_filter)
     sandbox_request_items = _iter_sandbox_request_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_call_plan import iter_provider_call_plan_artifacts
+    provider_call_plan_items = iter_provider_call_plan_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -2100,6 +2172,15 @@ def build_research_timeline(
             sandbox_requests_by_prompt_id.setdefault(src, []).append(sr)
         else:
             warnings.append({"code": "orphan_sandbox_request", "path": sr.get("artifact_path", ""), "severity": "warning"})
+
+    # Index provider call plans by source_sandbox_request_id
+    provider_call_plans_by_sandbox_id: dict[str, list[dict[str, Any]]] = {}
+    for pcp in provider_call_plan_items:
+        src = pcp.get("source_sandbox_request_id", "")
+        if src:
+            provider_call_plans_by_sandbox_id.setdefault(src, []).append(pcp)
+        else:
+            warnings.append({"code": "orphan_provider_call_plan", "path": pcp.get("artifact_path", ""), "severity": "warning"})
 
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
@@ -2225,13 +2306,20 @@ def build_research_timeline(
                     "artifact_path": pr.get("artifact_path", ""),
                     "response_reviews": response_reviews,
                 })
+            sandbox_requests = []
+            for sr in sandbox_requests_by_prompt_id.get(prompt_id, []):
+                sr_id = sr.get("sandbox_request_id", "")
+                sr_copy = dict(sr)
+                sr_copy["provider_call_plans"] = provider_call_plans_by_sandbox_id.get(sr_id, [])
+                sandbox_requests.append(sr_copy)
+
             prompts.append(
                 {
                     "prompt_packet_id": prompt_id,
                     "created_at": prompt.get("created_at", ""),
                     "artifact_path": prompt.get("artifact_path", ""),
                     "provider_responses": provider_responses,
-                    "sandbox_requests": sandbox_requests_by_prompt_id.get(prompt_id, []),
+                    "sandbox_requests": sandbox_requests,
                 }
             )
 
@@ -3590,6 +3678,11 @@ def build_dossier(
     linked_response_reviews = [rr for rr in response_review_items if rr.get("source_provider_response_id") in linked_provider_response_ids]
 
     linked_sandbox_requests = [sr for sr in sandbox_request_items if sr.get("source_run_id") == safe_run_id]
+    linked_sandbox_request_ids = {sr.get("sandbox_request_id", "") for sr in linked_sandbox_requests}
+
+    from atlas_agent.research.provider_call_plan import iter_provider_call_plan_artifacts
+    provider_call_plan_items = iter_provider_call_plan_artifacts(workspace_path, symbol=symbol)
+    linked_provider_call_plans = [pcp for pcp in provider_call_plan_items if pcp.get("source_sandbox_request_id") in linked_sandbox_request_ids]
 
     # Build workflow status
     workflow_status = {
@@ -3601,6 +3694,7 @@ def build_dossier(
         "provider_responses": len(linked_provider_responses) > 0,
         "response_reviews": len(linked_response_reviews) > 0,
         "sandbox_requests": len(linked_sandbox_requests) > 0,
+        "provider_call_plans": len(linked_provider_call_plans) > 0,
     }
 
     artifact_counts = {
@@ -3612,6 +3706,7 @@ def build_dossier(
         "provider_responses": len(linked_provider_responses),
         "response_reviews": len(linked_response_reviews),
         "sandbox_requests": len(linked_sandbox_requests),
+        "provider_call_plans": len(linked_provider_call_plans),
     }
 
     # Build linked_artifacts with relative paths only
@@ -3665,6 +3760,14 @@ def build_dossier(
             "artifact_path": sr.get("artifact_path", ""),
             "recommendation": sr.get("recommendation", ""),
         })
+    for pcp in linked_provider_call_plans:
+        linked_artifacts.append({
+            "type": "provider_call_plan",
+            "id": pcp.get("provider_call_plan_id", ""),
+            "artifact_path": pcp.get("artifact_path", ""),
+            "provider_id": pcp.get("provider_id", ""),
+            "model_id": pcp.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -3700,6 +3803,12 @@ def build_dossier(
             "review_count": len(linked_response_reviews),
             "recommendations": [rr.get("recommendation", "") for rr in linked_response_reviews],
         }
+    if linked_provider_call_plans:
+        summaries["provider_call_plan"] = {
+            "plan_count": len(linked_provider_call_plans),
+            "provider_ids": [pcp.get("provider_id", "") for pcp in linked_provider_call_plans],
+            "model_ids": [pcp.get("model_id", "") for pcp in linked_provider_call_plans],
+        }
 
     # Safety summary
     safety_summary = {
@@ -3725,6 +3834,8 @@ def build_dossier(
         missing_links.append("no_response_review")
     if not linked_sandbox_requests:
         missing_links.append("no_sandbox_request")
+    if not linked_provider_call_plans:
+        missing_links.append("no_provider_call_plan")
 
     warnings: list[str] = []
     if missing_links:

@@ -578,6 +578,58 @@ Safety First:
     research_import_provider.add_argument("--file", type=Path, required=True, help="Path to local provider response JSON file.")
     research_import_provider.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_targets = research_sub.add_parser(
+        "provider-targets",
+        help="List disabled provider call targets. Read-only. No network.",
+        description="List disabled provider call targets. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_targets.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_plan = research_sub.add_parser(
+        "provider-plan",
+        help="Create a provider call plan artifact from a sandbox request. Local-only.",
+        description="Create a provider call plan artifact from an existing sandbox request. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_plan.add_argument("sandbox_request_id", help="Source sandbox request ID.")
+    research_provider_plan.add_argument("--provider", required=True, help="Provider ID.")
+    research_provider_plan.add_argument("--model", required=True, help="Model ID.")
+    research_provider_plan.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_plan_list = research_sub.add_parser(
+        "provider-plan-list",
+        help="List provider call plan artifacts. Read-only. Does not call providers or network.",
+        description="List local provider call plan artifacts. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_plan_list.add_argument("--symbol", help="Filter by symbol.")
+    research_provider_plan_list.add_argument("--limit", type=int, default=20, help="Maximum items to show. Default: 20, max: 100.")
+    research_provider_plan_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_plan_show = research_sub.add_parser(
+        "provider-plan-show",
+        help="Show a provider call plan artifact. Read-only. Does not call providers or network.",
+        description="Show one local provider call plan artifact by ID. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_plan_show.add_argument("provider_call_plan_id", help="Provider call plan ID.")
+    research_provider_plan_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_plan_validate = research_sub.add_parser(
+        "provider-plan-validate",
+        help="Validate a provider call plan artifact against the local contract. Read-only.",
+        description="Validate a provider call plan artifact against the local contract. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_plan_validate.add_argument("provider_call_plan_id", help="Provider call plan ID.")
+    research_provider_plan_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_plan_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
+
+    research_provider_plan_replay = research_sub.add_parser(
+        "provider-plan-replay",
+        help="Replay a provider call plan from its source sandbox request and compare hashes. Read-only by default.",
+        description="Rebuild the provider call plan from its source sandbox request and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_plan_replay.add_argument("provider_call_plan_id", help="Provider call plan ID.")
+    research_provider_plan_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_plan_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -2371,6 +2423,12 @@ def main(argv: list[str] | None = None) -> int:
         "sandbox-validate",
         "sandbox-replay",
         "import-provider-response",
+        "provider-targets",
+        "provider-plan",
+        "provider-plan-list",
+        "provider-plan-show",
+        "provider-plan-validate",
+        "provider-plan-replay",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -3875,6 +3933,18 @@ def main(argv: list[str] | None = None) -> int:
             "provider_response_malformed": ("provider_response_malformed", "Provider response is malformed."),
             "provider_response_unsafe": ("provider_response_unsafe", "Provider response is unsafe."),
             "provider_response_import_failed": ("provider_response_import_failed", "Provider response import failed."),
+            "invalid_provider_id": ("invalid_provider_id", "Invalid provider ID."),
+            "invalid_model_id": ("invalid_model_id", "Invalid model ID."),
+            "provider_call_plan_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "provider_call_plan_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "ambiguous_provider_call_plan_id": ("invalid_research_id", "Invalid research identifier."),
+            "unsupported_provider_call_plan_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
+            "invalid_provider_call_plan_lineage": ("invalid_provider_call_plan_lineage", "Invalid provider call-plan artifact."),
+            "invalid_provider_call_plan_provider": ("invalid_provider_call_plan_provider", "Invalid provider call-plan artifact."),
+            "invalid_provider_call_plan_model": ("invalid_provider_call_plan_model", "Invalid provider call-plan artifact."),
+            "provider_call_plan_hash_mismatch": ("provider_call_plan_hash_mismatch", "Invalid provider call-plan artifact."),
+            "provider_call_plan_source_missing": ("provider_call_plan_source_missing", "Invalid provider call-plan artifact."),
+            "provider_call_plan_source_hash_mismatch": ("provider_call_plan_source_hash_mismatch", "Invalid provider call-plan artifact."),
             "artifact_path_not_allowed": ("research_error", "Research command failed."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
@@ -4515,6 +4585,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Paper plans: {result['counts']['plans']}")
             print(f"  Verifications: {result['counts']['verifications']}")
             print(f"  Evaluations: {result['counts']['evaluations']}")
+            print(f"  Provider call plans: {result['counts']['provider_call_plans']}")
             total_issues = len(result["issues"])
             total_warnings = len(result["warnings"])
             print(f"  Issues: {total_issues}")
@@ -5501,6 +5572,332 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Source Sandbox: {safe_sandbox_id}")
             print(f"  Artifact: {artifact_path_rel}")
             print(f"  Recommendation: {validation.recommendation}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-targets":
+        try:
+            from atlas_agent.research.provider_call_plan import list_disabled_provider_call_targets
+            from atlas_agent.research.session import ResearchSessionError
+
+            targets = list_disabled_provider_call_targets()
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-targets", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-targets", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_targets_listed",
+                "targets": targets,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Provider call targets")
+            for t in targets:
+                print(f"  {t['provider_id']}")
+                print(f"    Status: {t['status']}")
+                print(f"    Enabled: {'yes' if t['enabled'] else 'no'}")
+                print(f"    Network: {'yes' if t['network'] else 'no'}")
+                print(f"    Description: {t['description']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-plan":
+        try:
+            from atlas_agent.research.provider_call_plan import (
+                create_provider_call_plan,
+                validate_model_id,
+                validate_provider_id,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-plan skipped safely: no workspace found")
+                return 1
+
+            safe_sandbox_request_id = validate_run_id(args.sandbox_request_id)
+            provider_id = validate_provider_id(args.provider)
+            model_id = validate_model_id(args.model)
+
+            artifact = create_provider_call_plan(ws, safe_sandbox_request_id, provider_id, model_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-plan", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-plan", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_call_plan_created",
+                "provider_call_plan_id": artifact["provider_call_plan_id"],
+                "source_sandbox_request_id": artifact["source_sandbox_request_id"],
+                "provider_id": artifact["provider_id"],
+                "model_id": artifact["model_id"],
+                "artifact_path": artifact["artifact_path"],
+                "warnings": artifact.get("warnings", []),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider call plan created: {artifact['provider_call_plan_id']}")
+            print(f"  Source Sandbox: {artifact['source_sandbox_request_id']}")
+            print(f"  Provider: {artifact['provider_id']}")
+            print(f"  Model: {artifact['model_id']}")
+            print(f"  Artifact: {artifact['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-plan-list":
+        try:
+            from atlas_agent.research.provider_call_plan import iter_provider_call_plan_artifacts
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-plan-list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = args.limit
+            if limit < 1:
+                limit = 1
+            if limit > 100:
+                limit = 100
+
+            items = iter_provider_call_plan_artifacts(ws, symbol=symbol_filter)
+            items = items[:limit]
+        except InvalidResearchSymbolError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
+            else:
+                print("research provider-plan-list skipped safely: invalid research symbol")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-plan-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-plan-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_call_plans_listed",
+                "items": items,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider call plans: {len(items)}")
+            for item in items:
+                print(f"  {item['provider_call_plan_id']}  {item['symbol']}  {item['provider_id']}  {item['model_id']}  {item['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-plan-show":
+        try:
+            from atlas_agent.research.provider_call_plan import (
+                find_provider_call_plan_by_id,
+                load_and_validate_provider_call_plan,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-plan-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_call_plan_id)
+            path = find_provider_call_plan_by_id(ws, safe_id)
+            if path is None:
+                raise ResearchSessionError("provider_call_plan_not_found")
+            artifact = load_and_validate_provider_call_plan(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-plan-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-plan-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_call_plan_loaded",
+                "artifact": artifact,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider call plan: {artifact['provider_call_plan_id']}")
+            print(f"  Symbol: {artifact['symbol']}")
+            print(f"  Provider: {artifact['provider_id']}")
+            print(f"  Model: {artifact['model_id']}")
+            print(f"  Source Sandbox: {artifact['source_sandbox_request_id']}")
+            print(f"  Artifact: {artifact['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-plan-validate":
+        try:
+            from atlas_agent.research.provider_call_plan import (
+                find_provider_call_plan_by_id,
+                load_provider_call_plan,
+                validate_provider_call_plan_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-plan-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_call_plan_id)
+            path = find_provider_call_plan_by_id(ws, safe_id)
+            if path is None:
+                raise ResearchSessionError("provider_call_plan_not_found")
+            plan_data = load_provider_call_plan(path, ws)
+            result = validate_provider_call_plan_artifact(plan_data, workspace_path=ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-plan-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-plan-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_call_plan_validated",
+                "provider_call_plan_id": safe_id,
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "valid" if result.valid else "invalid"
+            print(f"Provider call plan {safe_id}: {status_str}")
+            print(f"  Passed: {result.passed_checks}  Failed: {result.failed_checks}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-plan-replay":
+        try:
+            from atlas_agent.research.provider_call_plan import replay_provider_call_plan
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-plan-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_call_plan_id)
+            replay_result = replay_provider_call_plan(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-plan-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-plan-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_call_plan_replayed",
+                "provider_call_plan_id": safe_id,
+                "match": replay_result["match"],
+                "expected_hash": replay_result["expected_hash"],
+                "actual_hash": replay_result["actual_hash"],
+                "checks": replay_result["checks"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "matches" if replay_result["match"] else "mismatch"
+            print(f"Provider call plan replay {safe_id}: {status_str}")
+        if args.strict and not replay_result["match"]:
+            return 2
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

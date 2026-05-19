@@ -535,3 +535,454 @@ class TestImportProviderResponse:
             assert frag not in artifact_text, f"Forbidden fragment in artifact: {frag}"
 
         assert "<redacted>" in artifact_text
+
+
+def _create_sandbox_request(tmp_path: Path, monkeypatch, capsys) -> tuple[str, str, str]:
+    """Create research artifact, prompt packet, and sandbox request. Returns (run_id, prompt_id, sandbox_id)."""
+    _ensure_workspace(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    run_id = _create_research_artifact(tmp_path, monkeypatch)
+    prompt_id = _create_prompt_packet(tmp_path, monkeypatch, run_id)
+
+    with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+        assert main(["research", "sandbox", prompt_id, "--json"]) == 0
+
+    out = json.loads(capsys.readouterr().out)
+    return run_id, prompt_id, out["sandbox_request_id"]
+
+
+class TestProviderCallPlanConfigless:
+    def test_provider_targets_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        _write_env_atlas(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-targets", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_targets_listed"
+        assert len(data["targets"]) >= 1
+        target_ids = {t["provider_id"] for t in data["targets"]}
+        assert "custom-openai-compatible" in target_ids
+        for t in data["targets"]:
+            assert t["enabled"] is False
+            assert t["network"] is False
+
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_provider_plan_creates_artifact(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "custom-openai-compatible",
+                "--model", "gpt-4o",
+                "--json",
+            ])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_call_plan_created"
+        assert "provider_call_plan_id" in data
+        assert data["source_sandbox_request_id"] == sandbox_id
+        assert data["provider_id"] == "custom-openai-compatible"
+        assert data["model_id"] == "gpt-4o"
+        assert "artifact_path" in data
+
+        artifact_path = tmp_path / data["artifact_path"]
+        assert artifact_path.exists()
+        artifact = json.loads(artifact_path.read_text())
+        assert artifact["artifact_type"] == "provider_call_plan"
+        assert artifact["mode"] == "paper"
+        assert artifact["provider_enabled"] is False
+        assert artifact["network_enabled"] is False
+        assert artifact["credentials_loaded"] is False
+        assert artifact["provider_call_allowed"] is False
+        assert artifact["execution_mode"] == "plan_only"
+        assert artifact["source_sandbox_request_id"] == sandbox_id
+
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+            assert frag not in artifact_path.read_text(), f"Forbidden fragment in artifact: {frag}"
+
+    def test_provider_plan_list_show_validate_replay(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "custom-openai-compatible",
+                "--model", "gpt-4o",
+                "--json",
+            ]) == 0
+
+        plan_out = json.loads(capsys.readouterr().out)
+        plan_id = plan_out["provider_call_plan_id"]
+
+        # list
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-plan-list", "--json"]) == 0
+        list_out = json.loads(capsys.readouterr().out)
+        assert list_out["ok"] is True
+        assert any(i.get("provider_call_plan_id") == plan_id for i in list_out["items"])
+
+        # show
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-plan-show", plan_id, "--json"]) == 0
+        show_out = json.loads(capsys.readouterr().out)
+        assert show_out["ok"] is True
+        assert show_out["artifact"]["provider_call_plan_id"] == plan_id
+
+        # validate
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-plan-validate", plan_id, "--json"]) == 0
+        validate_out = json.loads(capsys.readouterr().out)
+        assert validate_out["ok"] is True
+        assert validate_out["valid"] is True
+        assert validate_out["failed_checks"] == 0
+
+        # replay
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-plan-replay", plan_id, "--json"]) == 0
+        replay_out = json.loads(capsys.readouterr().out)
+        assert replay_out["ok"] is True
+        assert replay_out["match"] is True
+
+    def test_provider_plan_invalid_provider_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "nonexistent-provider",
+                "--model", "gpt-4o",
+                "--json",
+            ])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+        assert "Traceback" not in out
+
+    def test_provider_plan_invalid_model_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "custom-openai-compatible",
+                "--model", "Bearer sk-leaked",
+                "--json",
+            ])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+        assert "Traceback" not in out
+
+    def test_provider_plan_validate_strict_fails_on_tampered(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "custom-openai-compatible",
+                "--model", "gpt-4o",
+                "--json",
+            ]) == 0
+
+        plan_out = json.loads(capsys.readouterr().out)
+        plan_id = plan_out["provider_call_plan_id"]
+
+        # Tamper artifact: change provider_enabled to True
+        artifact_path = tmp_path / plan_out["artifact_path"]
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_enabled"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-plan-validate", plan_id, "--strict", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2
+        assert data["ok"] is True
+        assert data["valid"] is False
+        assert data["failed_checks"] >= 1
+
+    def test_provider_plan_replay_strict_fails_on_tampered(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "custom-openai-compatible",
+                "--model", "gpt-4o",
+                "--json",
+            ]) == 0
+
+        plan_out = json.loads(capsys.readouterr().out)
+        plan_id = plan_out["provider_call_plan_id"]
+
+        # Tamper artifact: change model_id
+        artifact_path = tmp_path / plan_out["artifact_path"]
+        artifact = json.loads(artifact_path.read_text())
+        artifact["model_id"] = "tampered-model"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-plan-replay", plan_id, "--strict", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        # Tampered artifacts fail closed during validation before replay
+        assert code == 1
+        assert data["ok"] is False
+        assert "Traceback" not in out
+
+
+FORBIDDEN_FRAGMENTS = (
+    "/Users/",
+    "/private/var/",
+    "Authorization",
+    "Bearer",
+    "APCA",
+    "SECRET",
+    "TOKEN",
+    "PASSWORD",
+    "API_KEY",
+    "sk-",
+    "broker.example.com",
+)
+
+
+def _output_has_forbidden_fragments(text: str) -> list[str]:
+    found = []
+    for frag in FORBIDDEN_FRAGMENTS:
+        if frag in text:
+            found.append(frag)
+    return found
+
+
+class TestProviderCallPlanTamperLeakage:
+    def _create_plan(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "custom-openai-compatible",
+                "--model", "gpt-4o",
+                "--json",
+            ]) == 0
+
+        plan_out = json.loads(capsys.readouterr().out)
+        plan_id = plan_out["provider_call_plan_id"]
+        artifact_path = tmp_path / plan_out["artifact_path"]
+        return plan_id, artifact_path
+
+    def test_tampered_plan_id_does_not_leak_through_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        plan_id, artifact_path = self._create_plan(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_call_plan_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-plan-show", plan_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in output: {found}"
+
+    def test_tampered_model_id_does_not_leak_through_show(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        plan_id, artifact_path = self._create_plan(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["model_id"] = "sk-LEAKEDSECRET"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-plan-show", plan_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 1
+        assert data["ok"] is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in output: {found}"
+
+    def test_tampered_fields_do_not_leak_through_list(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        plan_id, artifact_path = self._create_plan(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_call_plan_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact["model_id"] = "sk-LEAKEDSECRET"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-plan-list", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in list output: {found}"
+        # Invalid item should be a safe sentinel
+        items = data["items"]
+        assert any(i.get("_invalid") for i in items)
+        for item in items:
+            if item.get("_invalid"):
+                assert item["provider_call_plan_id"] == "<invalid>"
+                assert item["symbol"] == "<invalid>"
+                assert item["provider_id"] == "unknown"
+                assert item["model_id"] == "unknown"
+
+    def test_tampered_fields_do_not_leak_through_timeline(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        plan_id, artifact_path = self._create_plan(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_call_plan_id"] = "APCA_SECRET_TOKEN_sk-LEAKEDSECRET_broker.example.com"
+        artifact["model_id"] = "sk-LEAKEDSECRET"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in timeline output: {found}"
+
+    def test_check_artifacts_detects_model_id_tamper(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        plan_id, artifact_path = self._create_plan(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["model_id"] = "tampered-model"
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in check-artifacts output: {found}"
+        # Should have an issue indicating tamper/hash/model problem
+        issue_codes = {i["code"] for i in data.get("issues", [])}
+        assert issue_codes, f"Expected issues for tampered artifact, got none. Output: {out}"
+        expected_codes = {
+            "provider_call_plan_hash_mismatch",
+            "invalid_provider_call_plan_model",
+            "invalid_provider_call_plan_lineage",
+        }
+        assert issue_codes & expected_codes, f"Expected one of {expected_codes}, got {issue_codes}"
+
+
+class TestProviderCallPlanConfiglessTraps:
+    def _create_plan(self, tmp_path: Path, monkeypatch, capsys) -> str:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id = _create_sandbox_request(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main([
+                "research", "provider-plan", sandbox_id,
+                "--provider", "custom-openai-compatible",
+                "--model", "gpt-4o",
+                "--json",
+            ]) == 0
+
+        plan_out = json.loads(capsys.readouterr().out)
+        return plan_out["provider_call_plan_id"]
+
+    def test_provider_plan_list_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        plan_id = self._create_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-plan-list", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+
+    def test_provider_plan_show_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        plan_id = self._create_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-plan-show", plan_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+
+    def test_provider_plan_validate_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        plan_id = self._create_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-plan-validate", plan_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+
+    def test_provider_plan_replay_does_not_load_config(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        plan_id = self._create_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-plan-replay", plan_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True

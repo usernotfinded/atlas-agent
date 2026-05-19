@@ -271,7 +271,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -304,7 +304,11 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
                 "sandbox_requests": [{
                     "sandbox_request_id": "demosandboxid12345",
-                    "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"
+                    "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json",
+                    "provider_call_plans": [{
+                        "provider_call_plan_id": "demopcpid12345",
+                        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"
+                    }]
                 }],
                 "provider_responses": [{
                     "provider_response_id": "demoimportresponse12345",
@@ -611,6 +615,106 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {"provider_id": "custom-openai-compatible", "enabled": False, "network": False},
+            {"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False},
+            {"provider_id": "custom-responses-compatible", "enabled": False, "network": False},
+            {"provider_id": "manual-external-provider", "enabled": False, "network": False}
+        ]
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/provider_call_plans/{provider_call_plan_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }]
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/provider_call_plans/{provider_call_plan_id}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 '''
@@ -880,6 +984,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1014,6 +1218,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1160,6 +1464,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1306,6 +1710,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1455,6 +1959,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1612,6 +2216,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1764,6 +2468,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1916,6 +2720,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2082,6 +2986,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2242,6 +3246,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2402,6 +3506,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2554,6 +3758,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2735,6 +4039,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2904,6 +4308,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3079,6 +4583,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3259,6 +4863,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3443,6 +5147,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3622,6 +5426,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3801,6 +5705,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3980,6 +5984,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4158,6 +6262,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4332,6 +6536,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4522,6 +6826,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4712,6 +7116,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4923,6 +7427,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5267,6 +7871,106 @@ if ARGS[0] == "research" and ARGS[1] == "dossier":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5608,6 +8312,106 @@ if ARGS[0] == "research" and ARGS[1] == "dossier":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5957,6 +8761,106 @@ if ARGS[0] == "research" and ARGS[1] == "dossier":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6103,7 +9007,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -6339,6 +9243,106 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6464,7 +9468,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -6631,6 +9635,106 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6869,6 +9973,106 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6994,7 +10198,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json"}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -7245,6 +10449,106 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-targets":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_targets_listed",
+        "targets": [
+            {{"provider_id": "custom-openai-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-chat-completions-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "custom-responses-compatible", "enabled": False, "network": False}},
+            {{"provider_id": "manual-external-provider", "enabled": False, "network": False}}
+        ]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan":
+    sandbox_request_id = ARGS[2]
+    provider_call_plan_id = "demopcpid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_call_plan",
+            "provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": sandbox_request_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "execution_mode": "plan_only",
+            "warnings": [],
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_created",
+        "provider_call_plan_id": provider_call_plan_id,
+        "source_sandbox_request_id": sandbox_request_id,
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "artifact_path": artifact_path,
+        "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plans_listed",
+        "items": [{{
+            "provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
+    provider_call_plan_id = ARGS[2]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{{symbol}}/provider_call_plans/{{provider_call_plan_id}}.json"
+    with open(artifact_path, "r") as f:
+        artifact = json.load(f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_loaded",
+        "artifact": artifact
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-validate":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_validated",
+        "provider_call_plan_id": provider_call_plan_id,
+        "valid": True, "passed_checks": 13, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
+    provider_call_plan_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_call_plan_replayed",
+        "provider_call_plan_id": provider_call_plan_id,
+        "match": True,
+        "expected_hash": "dummyhashpcp12345",
+        "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }}))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',

@@ -512,7 +512,180 @@ if [ "$SANDBOX_REPLAY_MATCH" != "True" ]; then
 fi
 assert_no_pending_orders
 
-# 16. Create local provider response fixture and import it
+# 16. Provider targets
+printf '\n--- Research provider-targets ---\n'
+TARGETS_OUTPUT="$(atlas research provider-targets --json)"
+assert_no_absolute_paths "$TARGETS_OUTPUT"
+assert_no_secrets_in_output "$TARGETS_OUTPUT"
+assert_no_forbidden_fragments "$TARGETS_OUTPUT" "provider-targets CLI output"
+assert_ok "$TARGETS_OUTPUT" "research provider-targets"
+TARGETS_STATUS="$(json_field "$TARGETS_OUTPUT" status)"
+if [ "$TARGETS_STATUS" != "research_provider_targets_listed" ]; then
+  printf 'FAIL: unexpected provider-targets status: %s\n' "$TARGETS_STATUS" >&2
+  exit 1
+fi
+TARGETS_HAS_DISABLED="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+targets=data.get('targets',[])
+for t in targets:
+    if t.get('provider_id')=='custom-openai-compatible' and t.get('enabled')==False and t.get('network')==False:
+        print('yes')
+        break
+else:
+    print('no')
+" <<<"$TARGETS_OUTPUT" )"
+if [ "$TARGETS_HAS_DISABLED" != "yes" ]; then
+  printf 'FAIL: provider-targets missing disabled custom-openai-compatible target.\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 17. Provider plan
+printf '\n--- Research provider-plan ---\n'
+PLAN_PCP_OUTPUT="$(atlas research provider-plan "$SANDBOX_ID" --provider custom-openai-compatible --model gpt-4o --json)"
+assert_no_absolute_paths "$PLAN_PCP_OUTPUT"
+assert_no_secrets_in_output "$PLAN_PCP_OUTPUT"
+assert_no_forbidden_fragments "$PLAN_PCP_OUTPUT" "provider-plan CLI output"
+assert_ok "$PLAN_PCP_OUTPUT" "research provider-plan"
+PLAN_PCP_STATUS="$(json_field "$PLAN_PCP_OUTPUT" status)"
+if [ "$PLAN_PCP_STATUS" != "research_provider_call_plan_created" ]; then
+  printf 'FAIL: unexpected provider-plan status: %s\n' "$PLAN_PCP_STATUS" >&2
+  exit 1
+fi
+PLAN_PCP_ID="$(json_field "$PLAN_PCP_OUTPUT" provider_call_plan_id)"
+if [ -z "$PLAN_PCP_ID" ]; then
+  printf 'FAIL: provider_call_plan_id is empty\n' >&2
+  exit 1
+fi
+PLAN_PCP_ARTIFACT_PATH="$(json_field "$PLAN_PCP_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$PLAN_PCP_ARTIFACT_PATH" "provider call plan artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$PLAN_PCP_ARTIFACT_PATH")" "provider call plan artifact"
+assert_no_pending_orders
+
+# 18. Provider plan list
+printf '\n--- Research provider-plan-list ---\n'
+PLAN_LIST_PCP_OUTPUT="$(atlas research provider-plan-list --json)"
+assert_no_absolute_paths "$PLAN_LIST_PCP_OUTPUT"
+assert_no_secrets_in_output "$PLAN_LIST_PCP_OUTPUT"
+assert_no_forbidden_fragments "$PLAN_LIST_PCP_OUTPUT" "provider-plan-list CLI output"
+assert_ok "$PLAN_LIST_PCP_OUTPUT" "research provider-plan-list"
+PLAN_LIST_PCP_STATUS="$(json_field "$PLAN_LIST_PCP_OUTPUT" status)"
+if [ "$PLAN_LIST_PCP_STATUS" != "research_provider_call_plans_listed" ]; then
+  printf 'FAIL: unexpected provider-plan-list status: %s\n' "$PLAN_LIST_PCP_STATUS" >&2
+  exit 1
+fi
+PLAN_LIST_HAS_ID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(any(i.get('provider_call_plan_id')=='$PLAN_PCP_ID' for i in items))
+" <<<"$PLAN_LIST_PCP_OUTPUT" )"
+if [ "$PLAN_LIST_HAS_ID" != "True" ]; then
+  printf 'FAIL: provider-plan-list does not contain provider_call_plan_id %s\n' "$PLAN_PCP_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 19. Provider plan show
+printf '\n--- Research provider-plan-show ---\n'
+PLAN_SHOW_PCP_OUTPUT="$(atlas research provider-plan-show "$PLAN_PCP_ID" --json)"
+assert_no_absolute_paths "$PLAN_SHOW_PCP_OUTPUT"
+assert_no_secrets_in_output "$PLAN_SHOW_PCP_OUTPUT"
+assert_no_forbidden_fragments "$PLAN_SHOW_PCP_OUTPUT" "provider-plan-show CLI output"
+assert_ok "$PLAN_SHOW_PCP_OUTPUT" "research provider-plan-show"
+PLAN_SHOW_PCP_STATUS="$(json_field "$PLAN_SHOW_PCP_OUTPUT" status)"
+if [ "$PLAN_SHOW_PCP_STATUS" != "research_provider_call_plan_loaded" ]; then
+  printf 'FAIL: unexpected provider-plan-show status: %s\n' "$PLAN_SHOW_PCP_STATUS" >&2
+  exit 1
+fi
+PLAN_SHOW_PCP_ID="$(json_field "$PLAN_SHOW_PCP_OUTPUT" artifact.provider_call_plan_id)"
+if [ "$PLAN_SHOW_PCP_ID" != "$PLAN_PCP_ID" ]; then
+  printf 'FAIL: provider-plan-show returned unexpected provider_call_plan_id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 20. Provider plan validate
+printf '\n--- Research provider-plan-validate ---\n'
+PLAN_VALIDATE_PCP_OUTPUT="$(atlas research provider-plan-validate "$PLAN_PCP_ID" --json)"
+assert_no_absolute_paths "$PLAN_VALIDATE_PCP_OUTPUT"
+assert_no_secrets_in_output "$PLAN_VALIDATE_PCP_OUTPUT"
+assert_no_forbidden_fragments "$PLAN_VALIDATE_PCP_OUTPUT" "provider-plan-validate CLI output"
+assert_ok "$PLAN_VALIDATE_PCP_OUTPUT" "research provider-plan-validate"
+PLAN_VALIDATE_PCP_STATUS="$(json_field "$PLAN_VALIDATE_PCP_OUTPUT" status)"
+if [ "$PLAN_VALIDATE_PCP_STATUS" != "research_provider_call_plan_validated" ]; then
+  printf 'FAIL: unexpected provider-plan-validate status: %s\n' "$PLAN_VALIDATE_PCP_STATUS" >&2
+  exit 1
+fi
+PLAN_VALIDATE_PCP_VALID="$(json_field "$PLAN_VALIDATE_PCP_OUTPUT" valid)"
+if [ "$PLAN_VALIDATE_PCP_VALID" != "True" ]; then
+  printf 'FAIL: provider-plan-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 21. Provider plan replay
+printf '\n--- Research provider-plan-replay ---\n'
+PLAN_REPLAY_PCP_OUTPUT="$(atlas research provider-plan-replay "$PLAN_PCP_ID" --json)"
+assert_no_absolute_paths "$PLAN_REPLAY_PCP_OUTPUT"
+assert_no_secrets_in_output "$PLAN_REPLAY_PCP_OUTPUT"
+assert_no_forbidden_fragments "$PLAN_REPLAY_PCP_OUTPUT" "provider-plan-replay CLI output"
+assert_ok "$PLAN_REPLAY_PCP_OUTPUT" "research provider-plan-replay"
+PLAN_REPLAY_PCP_STATUS="$(json_field "$PLAN_REPLAY_PCP_OUTPUT" status)"
+if [ "$PLAN_REPLAY_PCP_STATUS" != "research_provider_call_plan_replayed" ]; then
+  printf 'FAIL: unexpected provider-plan-replay status: %s\n' "$PLAN_REPLAY_PCP_STATUS" >&2
+  exit 1
+fi
+PLAN_REPLAY_PCP_MATCH="$(json_field "$PLAN_REPLAY_PCP_OUTPUT" match)"
+if [ "$PLAN_REPLAY_PCP_MATCH" != "True" ]; then
+  printf 'FAIL: provider-plan-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 22. Research timeline after provider-plan (validate provider call plan lineage)
+printf '\n--- Research timeline (post provider-plan) ---\n'
+TIMELINE_OUTPUT_PCP="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_PCP"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_PCP"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_PCP" "timeline CLI output after provider-plan"
+assert_ok "$TIMELINE_OUTPUT_PCP" "research timeline after provider-plan"
+TIMELINE_PCP_STATUS="$(json_field "$TIMELINE_OUTPUT_PCP" status)"
+if [ "$TIMELINE_PCP_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after provider-plan: %s\n' "$TIMELINE_PCP_STATUS" >&2
+  exit 1
+fi
+TIMELINE_PCP_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            pcps=[pc.get('provider_call_plan_id') for pc in sr.get('provider_call_plans',[])]
+            if '$PLAN_PCP_ID' in pcps:
+                print('valid')
+                break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_PCP" )"
+if [ "$TIMELINE_PCP_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> sandbox %s -> provider_call_plan %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$SANDBOX_ID" "$PLAN_PCP_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 23. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"
@@ -706,7 +879,7 @@ assert_no_pending_orders
 # 22. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
-assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
+assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
 
 printf '\nResearch workflow demo complete.\n'

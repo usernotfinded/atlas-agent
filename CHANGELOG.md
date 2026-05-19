@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev20] - 2026-05-18
+
+### Added
+- `src/atlas_agent/research/provider_call_plan.py`: local, auditable provider call-plan artifacts.
+- `list_disabled_provider_call_targets()`: metadata for disabled future provider targets.
+- `atlas research provider-targets`: list disabled provider targets.
+- `atlas research provider-plan SANDBOX_ID --provider ID --model ID`: create provider call-plan artifact.
+- `atlas research provider-plan-list`: list provider call-plan artifacts.
+- `atlas research provider-plan-show ID`: show one call-plan artifact.
+- `atlas research provider-plan-validate ID`: validate call-plan artifact with hash and lineage checks.
+- `atlas research provider-plan-replay ID`: replay and compare deterministic hashes.
+- Provider call-plan lineage linked in timeline and dossier.
+- `check-artifacts` now counts and validates provider call-plan artifacts.
+- Demo workflow extended with provider call-plan chain.
+
+### Safety / Compatibility
+- Provider call plans are plan-only: `provider_enabled=false`, `network_enabled=false`, `credentials_loaded=false`, `provider_call_allowed=false`.
+- No real provider calls, no API keys read, no network requests.
+- All new commands remain configless.
+- No changes to broker behavior, live trading gates, order routing, approval manager, risk manager, or config secret loading.
+
 ## [0.5.7.dev19] - 2026-05-18
 
 ### Added
