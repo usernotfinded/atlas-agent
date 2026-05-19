@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev22] - 2026-05-18
+
+### Fixed
+- `atlas research provider-execution-replay` now returns a consistent replay envelope when the source provider call plan has drifted.
+  - Non-strict mode: exit code 0, `ok=true`, `match=false`.
+  - Strict mode: exit code 2, `ok=true`, `match=false`.
+  - Previously returned a generic error envelope (`ok=false`) with `provider_execution_dry_run_source_hash_mismatch`.
+- `replay_provider_execution_dry_run()` skips source hash validation during load so it can detect drift and report it as a replay result.
+- Replay JSON output now includes `warnings` array.
+
+### Safety / Compatibility
+- No provider calls, no API keys, no network requests.
+- All configless invariants preserved.
+- Tampered artifacts (impossible booleans, forbidden fragments, unsafe lineage) still fail safely with generic error envelopes.
+
 ## [0.5.7.dev21] - 2026-05-18
 
 ### Added

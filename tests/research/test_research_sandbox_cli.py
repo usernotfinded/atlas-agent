@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from atlas_agent.cli import main
+from atlas_agent.research.provider_call_plan import provider_call_plan_sha256
 
 
 def _raise_if_called(*args, **kwargs):
@@ -1693,3 +1694,100 @@ class TestProviderExecutionDryRunNoRawDictSerialization:
                             assert "artifact_path" in ped
                             # No raw loaded artifact dict
                             assert "actual_provider_call_made" not in ped
+
+
+class TestProviderExecutionReplayEnvelopeConsistency:
+    def _create_dry_run(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path, Path]:
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+
+        dry_run_out = json.loads(capsys.readouterr().out)
+        dry_run_id = dry_run_out["provider_execution_dry_run_id"]
+        dry_run_path = tmp_path / dry_run_out["artifact_path"]
+        plan_path = tmp_path / ".atlas" / "research" / dry_run_out.get("symbol", "AAPL") / "provider_call_plans" / f"{plan_id}.json"
+        return dry_run_id, dry_run_path, plan_path
+
+    def _modify_source_plan_to_cause_mismatch(self, plan_path: Path) -> None:
+        plan_data = json.loads(plan_path.read_text(encoding="utf-8"))
+        plan_data["model_id"] = "gpt-4o-changed"
+        plan_data["artifact_hash"] = provider_call_plan_sha256(plan_data)
+        plan_path.write_text(json.dumps(plan_data, indent=2, sort_keys=True), encoding="utf-8")
+
+    def test_replay_unchanged_returns_match_true(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path, _plan_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-replay", dry_run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_dry_run_replayed"
+        assert data["match"] is True
+        assert data["provider_execution_dry_run_id"] == dry_run_id
+        assert "checks" in data
+        assert "warnings" in data
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_replay_nonstrict_source_hash_mismatch_match_false(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path, plan_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+        self._modify_source_plan_to_cause_mismatch(plan_path)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-replay", dry_run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_dry_run_replayed"
+        assert data["match"] is False
+        assert data["provider_execution_dry_run_id"] == dry_run_id
+        assert "checks" in data
+        assert "warnings" in data
+        assert any("changed" in w.lower() for w in data["warnings"])
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_replay_strict_source_hash_mismatch_exits_nonzero(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, _dry_run_path, plan_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+        self._modify_source_plan_to_cause_mismatch(plan_path)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-replay", dry_run_id, "--json", "--strict"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 2
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_execution_dry_run_replayed"
+        assert data["match"] is False
+        assert data["provider_execution_dry_run_id"] == dry_run_id
+        assert "checks" in data
+        assert "warnings" in data
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"
+
+    def test_replay_tampered_artifact_still_fails_safely(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        dry_run_id, dry_run_path, _plan_path = self._create_dry_run(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(dry_run_path.read_text())
+        artifact["actual_provider_call_made"] = True
+        dry_run_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-execution-replay", dry_run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code != 0
+        assert data["ok"] is False
+        assert "status" in data
+        assert data["status"] != "research_provider_execution_dry_run_replayed"
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in output: {frag}"

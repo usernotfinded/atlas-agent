@@ -311,11 +311,16 @@ def _check_impossible_boolean_combinations(data: dict[str, Any]) -> str | None:
 def safe_validate_provider_execution_dry_run_data(
     data: dict[str, Any],
     workspace_path: Path | None = None,
+    for_replay: bool = False,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Strictly validate a loaded provider execution dry-run artifact for read paths.
 
     Returns (cleaned_data, None) if valid, or (None, error_code) if invalid.
     Never includes raw tampered values in error codes.
+
+    When ``for_replay`` is True, the source call-plan hash match is skipped so
+    that replay can detect drift and report ``match=false`` instead of failing
+    with a generic error.
     """
     # 1. schema_version
     sv = data.get("schema_version")
@@ -397,7 +402,8 @@ def safe_validate_provider_execution_dry_run_data(
             return None, "provider_execution_dry_run_hash_mismatch"
 
     # 11. source call plan exists and hash matches (if workspace provided)
-    if workspace_path is not None:
+    # Skip hash match when validating for replay so drift is reported as match=false.
+    if workspace_path is not None and not for_replay:
         source_plan_id = data.get("source_provider_call_plan_id", "")
         if source_plan_id:
             try:
@@ -746,14 +752,26 @@ def replay_provider_execution_dry_run(
     workspace_path: Path,
     provider_execution_dry_run_id: str,
 ) -> dict[str, Any]:
-    """Replay a provider execution dry-run by rebuilding it and comparing hashes."""
+    """Replay a provider execution dry-run by rebuilding it and comparing hashes.
+
+    A source hash mismatch is reported as ``match=false`` in the replay envelope,
+    not as a generic error. This lets ``--strict`` exit nonzero while still
+    returning a consistent replay result.
+    """
     safe_dry_run_id = validate_run_id(provider_execution_dry_run_id)
 
     dry_run_path = find_provider_execution_dry_run_by_id(workspace_path, safe_dry_run_id)
     if dry_run_path is None:
         raise ResearchSessionError("provider_execution_dry_run_not_found")
 
-    dry_run = load_and_validate_provider_execution_dry_run(dry_run_path, workspace_path)
+    # Load without full validation so replay can detect source drift.
+    dry_run = load_provider_execution_dry_run(dry_run_path, workspace_path)
+    cleaned, error = safe_validate_provider_execution_dry_run_data(
+        dry_run, workspace_path, for_replay=True
+    )
+    if error:
+        raise ResearchSessionError(error)
+    dry_run = cleaned
 
     source_plan_id = dry_run.get("source_provider_call_plan_id", "")
     from atlas_agent.research.provider_call_plan import (
@@ -804,11 +822,21 @@ def replay_provider_execution_dry_run(
         ),
     ]
 
+    warnings = [
+        "This is a dry-run replay. No provider was called.",
+        "Provider is disabled. Enablement requires explicit configuration and approval.",
+    ]
+    if not match:
+        warnings.append(
+            "Replay hash mismatch: source provider call plan may have changed since dry-run creation."
+        )
+
     return {
         "match": match,
         "expected_hash": expected_hash,
         "actual_hash": actual_hash,
         "checks": checks,
+        "warnings": warnings,
     }
 
 

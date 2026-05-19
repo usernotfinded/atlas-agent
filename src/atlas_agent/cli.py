@@ -6247,6 +6247,7 @@ def main(argv: list[str] | None = None) -> int:
                 "expected_hash": replay_result["expected_hash"],
                 "actual_hash": replay_result["actual_hash"],
                 "checks": replay_result["checks"],
+                "warnings": replay_result["warnings"],
             }
             print(json.dumps(out, indent=2, sort_keys=True))
         else:
