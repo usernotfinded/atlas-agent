@@ -630,6 +630,49 @@ Safety First:
     research_provider_plan_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
     research_provider_plan_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
 
+    research_provider_execution_dry_run = research_sub.add_parser(
+        "provider-execution-dry-run",
+        help="Create a provider execution dry-run artifact from a provider call plan. Local-only.",
+        description="Create a provider execution dry-run artifact from an existing provider call plan. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_dry_run.add_argument("provider_call_plan_id", help="Source provider call plan ID.")
+    research_provider_execution_dry_run.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_list = research_sub.add_parser(
+        "provider-execution-list",
+        help="List provider execution dry-run artifacts. Read-only. Does not call providers or network.",
+        description="List local provider execution dry-run artifacts. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_list.add_argument("--symbol", help="Filter by symbol.")
+    research_provider_execution_list.add_argument("--limit", type=int, default=20, help="Maximum items to show. Default: 20, max: 100.")
+    research_provider_execution_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_show = research_sub.add_parser(
+        "provider-execution-show",
+        help="Show a provider execution dry-run artifact. Read-only. Does not call providers or network.",
+        description="Show one local provider execution dry-run artifact by ID. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_show.add_argument("provider_execution_dry_run_id", help="Provider execution dry-run ID.")
+    research_provider_execution_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_validate = research_sub.add_parser(
+        "provider-execution-validate",
+        help="Validate a provider execution dry-run artifact against the local contract. Read-only.",
+        description="Validate a provider execution dry-run artifact against the local contract. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_validate.add_argument("provider_execution_dry_run_id", help="Provider execution dry-run ID.")
+    research_provider_execution_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
+
+    research_provider_execution_replay = research_sub.add_parser(
+        "provider-execution-replay",
+        help="Replay a provider execution dry-run from its source call plan and compare hashes. Read-only by default.",
+        description="Rebuild the provider execution dry-run from its source provider call plan and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_replay.add_argument("provider_execution_dry_run_id", help="Provider execution dry-run ID.")
+    research_provider_execution_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -2429,6 +2472,11 @@ def main(argv: list[str] | None = None) -> int:
         "provider-plan-show",
         "provider-plan-validate",
         "provider-plan-replay",
+        "provider-execution-dry-run",
+        "provider-execution-list",
+        "provider-execution-show",
+        "provider-execution-validate",
+        "provider-execution-replay",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -3945,6 +3993,17 @@ def main(argv: list[str] | None = None) -> int:
             "provider_call_plan_hash_mismatch": ("provider_call_plan_hash_mismatch", "Invalid provider call-plan artifact."),
             "provider_call_plan_source_missing": ("provider_call_plan_source_missing", "Invalid provider call-plan artifact."),
             "provider_call_plan_source_hash_mismatch": ("provider_call_plan_source_hash_mismatch", "Invalid provider call-plan artifact."),
+            "provider_execution_dry_run_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "provider_execution_dry_run_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "ambiguous_provider_execution_dry_run_id": ("invalid_research_id", "Invalid research identifier."),
+            "unsupported_provider_execution_dry_run_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
+            "invalid_provider_execution_dry_run_lineage": ("invalid_provider_execution_dry_run_lineage", "Invalid provider execution dry-run artifact."),
+            "invalid_provider_execution_dry_run_provider": ("invalid_provider_execution_dry_run_provider", "Invalid provider execution dry-run artifact."),
+            "invalid_provider_execution_dry_run_model": ("invalid_provider_execution_dry_run_model", "Invalid provider execution dry-run artifact."),
+            "provider_execution_dry_run_hash_mismatch": ("provider_execution_dry_run_hash_mismatch", "Invalid provider execution dry-run artifact."),
+            "provider_execution_dry_run_source_missing": ("provider_execution_dry_run_source_missing", "Invalid provider execution dry-run artifact."),
+            "provider_execution_dry_run_source_hash_mismatch": ("provider_execution_dry_run_source_hash_mismatch", "Invalid provider execution dry-run artifact."),
+            "provider_execution_dry_run_impossible_boolean": ("provider_execution_dry_run_impossible_boolean", "Invalid provider execution dry-run artifact."),
             "artifact_path_not_allowed": ("research_error", "Research command failed."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
@@ -4586,6 +4645,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Verifications: {result['counts']['verifications']}")
             print(f"  Evaluations: {result['counts']['evaluations']}")
             print(f"  Provider call plans: {result['counts']['provider_call_plans']}")
+            print(f"  Provider execution dry-runs: {result['counts']['provider_execution_dry_runs']}")
             total_issues = len(result["issues"])
             total_warnings = len(result["warnings"])
             print(f"  Issues: {total_issues}")
@@ -4712,6 +4772,15 @@ def main(argv: list[str] | None = None) -> int:
                                 rr_id = rr.get("response_review_id", "")
                                 rr_rec = rr.get("recommendation", "")
                                 print(f"      Response review: {rr_id} — {rr_rec}")
+                        for sr in prompt.get("sandbox_requests", []):
+                            sr_id = sr.get("sandbox_request_id", "")
+                            print(f"    Sandbox request: {sr_id}")
+                            for pcp in sr.get("provider_call_plans", []):
+                                pcp_id = pcp.get("provider_call_plan_id", "")
+                                print(f"      Provider call plan: {pcp_id}")
+                                for ped in pcp.get("provider_execution_dry_runs", []):
+                                    ped_id = ped.get("provider_execution_dry_run_id", "")
+                                    print(f"        Provider execution dry-run: {ped_id}")
             timeline_warnings = result.get("warnings", [])
             if timeline_warnings:
                 print("\nWarnings:")
@@ -5896,6 +5965,293 @@ def main(argv: list[str] | None = None) -> int:
         else:
             status_str = "matches" if replay_result["match"] else "mismatch"
             print(f"Provider call plan replay {safe_id}: {status_str}")
+        if args.strict and not replay_result["match"]:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-dry-run":
+        try:
+            from atlas_agent.research.provider_execution_dry_run import (
+                create_provider_execution_dry_run,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-dry-run skipped safely: no workspace found")
+                return 1
+
+            safe_plan_id = validate_run_id(args.provider_call_plan_id)
+            artifact = create_provider_execution_dry_run(ws, safe_plan_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-dry-run", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-dry-run", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_dry_run_created",
+                "provider_execution_dry_run_id": artifact["provider_execution_dry_run_id"],
+                "source_provider_call_plan_id": artifact["source_provider_call_plan_id"],
+                "provider_id": artifact["provider_id"],
+                "model_id": artifact["model_id"],
+                "artifact_path": artifact["artifact_path"],
+                "warnings": artifact.get("warnings", []),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution dry-run created: {artifact['provider_execution_dry_run_id']}")
+            print(f"  Source Plan: {artifact['source_provider_call_plan_id']}")
+            print(f"  Provider: {artifact['provider_id']}")
+            print(f"  Model: {artifact['model_id']}")
+            print(f"  Artifact: {artifact['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-list":
+        try:
+            from atlas_agent.research.provider_execution_dry_run import (
+                iter_provider_execution_dry_run_artifacts,
+            )
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = args.limit
+            if limit < 1:
+                limit = 1
+            if limit > 100:
+                limit = 100
+
+            items = iter_provider_execution_dry_run_artifacts(ws, symbol=symbol_filter)
+            items = items[:limit]
+        except InvalidResearchSymbolError:
+            if args.json:
+                import json
+                print(json.dumps({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."}, indent=2, sort_keys=True))
+            else:
+                print("research provider-execution-list skipped safely: invalid research symbol")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_dry_runs_listed",
+                "items": items,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution dry-runs: {len(items)}")
+            for item in items:
+                print(f"  {item['provider_execution_dry_run_id']}  {item['symbol']}  {item['provider_id']}  {item['model_id']}  {item['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-show":
+        try:
+            from atlas_agent.research.provider_execution_dry_run import (
+                find_provider_execution_dry_run_by_id,
+                load_and_validate_provider_execution_dry_run,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_dry_run_id)
+            path = find_provider_execution_dry_run_by_id(ws, safe_id)
+            if path is None:
+                raise ResearchSessionError("provider_execution_dry_run_not_found")
+            artifact = load_and_validate_provider_execution_dry_run(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_dry_run_loaded",
+                "artifact": artifact,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution dry-run: {artifact['provider_execution_dry_run_id']}")
+            print(f"  Symbol: {artifact['symbol']}")
+            print(f"  Provider: {artifact['provider_id']}")
+            print(f"  Model: {artifact['model_id']}")
+            print(f"  Source Plan: {artifact['source_provider_call_plan_id']}")
+            print(f"  Artifact: {artifact['artifact_path']}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-validate":
+        try:
+            from atlas_agent.research.provider_execution_dry_run import (
+                find_provider_execution_dry_run_by_id,
+                load_provider_execution_dry_run,
+                validate_provider_execution_dry_run_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_dry_run_id)
+            path = find_provider_execution_dry_run_by_id(ws, safe_id)
+            if path is None:
+                raise ResearchSessionError("provider_execution_dry_run_not_found")
+            dry_run_data = load_provider_execution_dry_run(path, ws)
+            result = validate_provider_execution_dry_run_artifact(dry_run_data, workspace_path=ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_dry_run_validated",
+                "provider_execution_dry_run_id": safe_id,
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "valid" if result.valid else "invalid"
+            print(f"Provider execution dry-run {safe_id}: {status_str}")
+            print(f"  Passed: {result.passed_checks}  Failed: {result.failed_checks}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-replay":
+        try:
+            from atlas_agent.research.provider_execution_dry_run import replay_provider_execution_dry_run
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_execution_dry_run_id)
+            replay_result = replay_provider_execution_dry_run(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_dry_run_replayed",
+                "provider_execution_dry_run_id": safe_id,
+                "match": replay_result["match"],
+                "expected_hash": replay_result["expected_hash"],
+                "actual_hash": replay_result["actual_hash"],
+                "checks": replay_result["checks"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            status_str = "matches" if replay_result["match"] else "mismatch"
+            print(f"Provider execution dry-run replay {safe_id}: {status_str}")
         if args.strict and not replay_result["match"]:
             return 2
         return 0

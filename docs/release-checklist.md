@@ -15,6 +15,7 @@ Run this before pushing a public GitHub release.
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
+- `python3.11 -m pytest tests/test_demo_research_workflow_script.py -q`
 
 ## Validate Contract Checks
 
@@ -227,13 +228,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev20
+./scripts/smoke_release_tag.sh v0.5.7.dev21
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev20 --full
+./scripts/smoke_release_tag.sh v0.5.7.dev21 --full
 ```
 
 ## Tagging

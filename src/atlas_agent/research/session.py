@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1382,8 +1382,10 @@ def check_research_artifacts(
     dossier_ids: dict[str, list[str]] = {}
     sandbox_request_ids: dict[str, list[str]] = {}
     provider_call_plan_ids: dict[str, list[str]] = {}
+    provider_execution_dry_run_ids: dict[str, list[str]] = {}
 
     provider_call_plan_data: list[dict[str, Any]] = []
+    provider_execution_dry_run_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1424,6 +1426,7 @@ def check_research_artifacts(
             "dossier": "dossier_id",
             "sandbox_request": "sandbox_request_id",
             "provider_call_plan": "provider_call_plan_id",
+        "provider_execution_dry_run": "provider_execution_dry_run_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1454,6 +1457,8 @@ def check_research_artifacts(
         elif expected_type == "sandbox_request" and "sandbox_requests" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_call_plan" and "provider_call_plans" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_execution_dry_run" and "provider_execution_dry_runs" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1526,6 +1531,24 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_execution_dry_run":
+            for f in ("provider_execution_dry_run_id", "source_provider_call_plan_id", "symbol", "provider_id", "model_id"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            # Use provider_execution_dry_run safe validation
+            from atlas_agent.research.provider_execution_dry_run import (
+                safe_validate_provider_execution_dry_run_data,
+            )
+            _cleaned, error = safe_validate_provider_execution_dry_run_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1551,6 +1574,9 @@ def check_research_artifacts(
             elif expected_type == "provider_call_plan":
                 provider_call_plan_ids.setdefault(raw_id, []).append(rel)
                 provider_call_plan_data.append(data)
+            elif expected_type == "provider_execution_dry_run":
+                provider_execution_dry_run_ids.setdefault(raw_id, []).append(rel)
+                provider_execution_dry_run_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1572,6 +1598,8 @@ def check_research_artifacts(
             counts["sandbox_requests"] += 1
         elif expected_type == "provider_call_plan":
             counts["provider_call_plans"] += 1
+        elif expected_type == "provider_execution_dry_run":
+            counts["provider_execution_dry_runs"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1635,6 +1663,12 @@ def check_research_artifacts(
             for path in provider_call_plans_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_call_plan", expected_symbol)
+        # Provider execution dry-runs
+        provider_execution_dry_runs_dir = sym_dir / "provider_execution_dry_runs"
+        if provider_execution_dry_runs_dir.exists():
+            for path in provider_execution_dry_runs_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_execution_dry_run", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1674,6 +1708,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for pcid, paths in provider_call_plan_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pedid, paths in provider_execution_dry_run_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2107,6 +2145,8 @@ def build_research_timeline(
     sandbox_request_items = _iter_sandbox_request_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_call_plan import iter_provider_call_plan_artifacts
     provider_call_plan_items = iter_provider_call_plan_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_execution_dry_run import iter_provider_execution_dry_run_artifacts
+    provider_execution_dry_run_items = iter_provider_execution_dry_run_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -2181,6 +2221,15 @@ def build_research_timeline(
             provider_call_plans_by_sandbox_id.setdefault(src, []).append(pcp)
         else:
             warnings.append({"code": "orphan_provider_call_plan", "path": pcp.get("artifact_path", ""), "severity": "warning"})
+
+    # Index provider execution dry-runs by source_provider_call_plan_id
+    provider_execution_dry_runs_by_plan_id: dict[str, list[dict[str, Any]]] = {}
+    for ped in provider_execution_dry_run_items:
+        src = ped.get("source_provider_call_plan_id", "")
+        if src:
+            provider_execution_dry_runs_by_plan_id.setdefault(src, []).append(ped)
+        else:
+            warnings.append({"code": "orphan_provider_execution_dry_run", "path": ped.get("artifact_path", ""), "severity": "warning"})
 
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
@@ -2310,7 +2359,14 @@ def build_research_timeline(
             for sr in sandbox_requests_by_prompt_id.get(prompt_id, []):
                 sr_id = sr.get("sandbox_request_id", "")
                 sr_copy = dict(sr)
-                sr_copy["provider_call_plans"] = provider_call_plans_by_sandbox_id.get(sr_id, [])
+                pcp_list = provider_call_plans_by_sandbox_id.get(sr_id, [])
+                pcp_with_dry_runs = []
+                for pcp in pcp_list:
+                    pcp_copy = dict(pcp)
+                    pcp_id = pcp_copy.get("provider_call_plan_id", "")
+                    pcp_copy["provider_execution_dry_runs"] = provider_execution_dry_runs_by_plan_id.get(pcp_id, [])
+                    pcp_with_dry_runs.append(pcp_copy)
+                sr_copy["provider_call_plans"] = pcp_with_dry_runs
                 sandbox_requests.append(sr_copy)
 
             prompts.append(
@@ -3683,6 +3739,11 @@ def build_dossier(
     from atlas_agent.research.provider_call_plan import iter_provider_call_plan_artifacts
     provider_call_plan_items = iter_provider_call_plan_artifacts(workspace_path, symbol=symbol)
     linked_provider_call_plans = [pcp for pcp in provider_call_plan_items if pcp.get("source_sandbox_request_id") in linked_sandbox_request_ids]
+    linked_provider_call_plan_ids = {pcp.get("provider_call_plan_id", "") for pcp in linked_provider_call_plans}
+
+    from atlas_agent.research.provider_execution_dry_run import iter_provider_execution_dry_run_artifacts
+    provider_execution_dry_run_items = iter_provider_execution_dry_run_artifacts(workspace_path, symbol=symbol)
+    linked_provider_execution_dry_runs = [ped for ped in provider_execution_dry_run_items if ped.get("source_provider_call_plan_id") in linked_provider_call_plan_ids]
 
     # Build workflow status
     workflow_status = {
@@ -3695,6 +3756,7 @@ def build_dossier(
         "response_reviews": len(linked_response_reviews) > 0,
         "sandbox_requests": len(linked_sandbox_requests) > 0,
         "provider_call_plans": len(linked_provider_call_plans) > 0,
+        "provider_execution_dry_runs": len(linked_provider_execution_dry_runs) > 0,
     }
 
     artifact_counts = {
@@ -3707,6 +3769,7 @@ def build_dossier(
         "response_reviews": len(linked_response_reviews),
         "sandbox_requests": len(linked_sandbox_requests),
         "provider_call_plans": len(linked_provider_call_plans),
+        "provider_execution_dry_runs": len(linked_provider_execution_dry_runs),
     }
 
     # Build linked_artifacts with relative paths only
@@ -3768,6 +3831,14 @@ def build_dossier(
             "provider_id": pcp.get("provider_id", ""),
             "model_id": pcp.get("model_id", ""),
         })
+    for ped in linked_provider_execution_dry_runs:
+        linked_artifacts.append({
+            "type": "provider_execution_dry_run",
+            "id": ped.get("provider_execution_dry_run_id", ""),
+            "artifact_path": ped.get("artifact_path", ""),
+            "provider_id": ped.get("provider_id", ""),
+            "model_id": ped.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -3809,6 +3880,12 @@ def build_dossier(
             "provider_ids": [pcp.get("provider_id", "") for pcp in linked_provider_call_plans],
             "model_ids": [pcp.get("model_id", "") for pcp in linked_provider_call_plans],
         }
+    if linked_provider_execution_dry_runs:
+        summaries["provider_execution_dry_run"] = {
+            "dry_run_count": len(linked_provider_execution_dry_runs),
+            "provider_ids": [ped.get("provider_id", "") for ped in linked_provider_execution_dry_runs],
+            "model_ids": [ped.get("model_id", "") for ped in linked_provider_execution_dry_runs],
+        }
 
     # Safety summary
     safety_summary = {
@@ -3836,6 +3913,8 @@ def build_dossier(
         missing_links.append("no_sandbox_request")
     if not linked_provider_call_plans:
         missing_links.append("no_provider_call_plan")
+    if not linked_provider_execution_dry_runs:
+        missing_links.append("no_provider_execution_dry_run")
 
     warnings: list[str] = []
     if missing_links:

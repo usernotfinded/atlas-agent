@@ -644,7 +644,155 @@ if [ "$PLAN_REPLAY_PCP_MATCH" != "True" ]; then
 fi
 assert_no_pending_orders
 
-# 22. Research timeline after provider-plan (validate provider call plan lineage)
+# 22. Provider execution dry-run
+printf '\n--- Research provider-execution-dry-run ---\n'
+DRY_RUN_OUTPUT="$(atlas research provider-execution-dry-run "$PLAN_PCP_ID" --json)"
+assert_no_absolute_paths "$DRY_RUN_OUTPUT"
+assert_no_secrets_in_output "$DRY_RUN_OUTPUT"
+assert_no_forbidden_fragments "$DRY_RUN_OUTPUT" "provider-execution-dry-run CLI output"
+assert_ok "$DRY_RUN_OUTPUT" "research provider-execution-dry-run"
+DRY_RUN_STATUS="$(json_field "$DRY_RUN_OUTPUT" status)"
+if [ "$DRY_RUN_STATUS" != "research_provider_execution_dry_run_created" ]; then
+  printf 'FAIL: unexpected provider-execution-dry-run status: %s\n' "$DRY_RUN_STATUS" >&2
+  exit 1
+fi
+DRY_RUN_ID="$(json_field "$DRY_RUN_OUTPUT" provider_execution_dry_run_id)"
+if [ -z "$DRY_RUN_ID" ]; then
+  printf 'FAIL: provider_execution_dry_run_id is empty\n' >&2
+  exit 1
+fi
+DRY_RUN_ARTIFACT_PATH="$(json_field "$DRY_RUN_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$DRY_RUN_ARTIFACT_PATH" "provider execution dry-run artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$DRY_RUN_ARTIFACT_PATH")" "provider execution dry-run artifact"
+assert_no_pending_orders
+
+# 23. Provider execution list
+printf '\n--- Research provider-execution-list ---\n'
+DRY_RUN_LIST_OUTPUT="$(atlas research provider-execution-list --json)"
+assert_no_absolute_paths "$DRY_RUN_LIST_OUTPUT"
+assert_no_secrets_in_output "$DRY_RUN_LIST_OUTPUT"
+assert_no_forbidden_fragments "$DRY_RUN_LIST_OUTPUT" "provider-execution-list CLI output"
+assert_ok "$DRY_RUN_LIST_OUTPUT" "research provider-execution-list"
+DRY_RUN_LIST_STATUS="$(json_field "$DRY_RUN_LIST_OUTPUT" status)"
+if [ "$DRY_RUN_LIST_STATUS" != "research_provider_execution_dry_runs_listed" ]; then
+  printf 'FAIL: unexpected provider-execution-list status: %s\n' "$DRY_RUN_LIST_STATUS" >&2
+  exit 1
+fi
+DRY_RUN_LIST_HAS_ID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(any(i.get('provider_execution_dry_run_id')=='$DRY_RUN_ID' for i in items))
+" <<<"$DRY_RUN_LIST_OUTPUT" )"
+if [ "$DRY_RUN_LIST_HAS_ID" != "True" ]; then
+  printf 'FAIL: provider-execution-list does not contain provider_execution_dry_run_id %s\n' "$DRY_RUN_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 24. Provider execution show
+printf '\n--- Research provider-execution-show ---\n'
+DRY_RUN_SHOW_OUTPUT="$(atlas research provider-execution-show "$DRY_RUN_ID" --json)"
+assert_no_absolute_paths "$DRY_RUN_SHOW_OUTPUT"
+assert_no_secrets_in_output "$DRY_RUN_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$DRY_RUN_SHOW_OUTPUT" "provider-execution-show CLI output"
+assert_ok "$DRY_RUN_SHOW_OUTPUT" "research provider-execution-show"
+DRY_RUN_SHOW_STATUS="$(json_field "$DRY_RUN_SHOW_OUTPUT" status)"
+if [ "$DRY_RUN_SHOW_STATUS" != "research_provider_execution_dry_run_loaded" ]; then
+  printf 'FAIL: unexpected provider-execution-show status: %s\n' "$DRY_RUN_SHOW_STATUS" >&2
+  exit 1
+fi
+DRY_RUN_SHOW_ID="$(json_field "$DRY_RUN_SHOW_OUTPUT" artifact.provider_execution_dry_run_id)"
+if [ "$DRY_RUN_SHOW_ID" != "$DRY_RUN_ID" ]; then
+  printf 'FAIL: provider-execution-show returned unexpected provider_execution_dry_run_id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 25. Provider execution validate
+printf '\n--- Research provider-execution-validate ---\n'
+DRY_RUN_VALIDATE_OUTPUT="$(atlas research provider-execution-validate "$DRY_RUN_ID" --json)"
+assert_no_absolute_paths "$DRY_RUN_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$DRY_RUN_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$DRY_RUN_VALIDATE_OUTPUT" "provider-execution-validate CLI output"
+assert_ok "$DRY_RUN_VALIDATE_OUTPUT" "research provider-execution-validate"
+DRY_RUN_VALIDATE_STATUS="$(json_field "$DRY_RUN_VALIDATE_OUTPUT" status)"
+if [ "$DRY_RUN_VALIDATE_STATUS" != "research_provider_execution_dry_run_validated" ]; then
+  printf 'FAIL: unexpected provider-execution-validate status: %s\n' "$DRY_RUN_VALIDATE_STATUS" >&2
+  exit 1
+fi
+DRY_RUN_VALIDATE_VALID="$(json_field "$DRY_RUN_VALIDATE_OUTPUT" valid)"
+if [ "$DRY_RUN_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: provider-execution-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 26. Provider execution replay
+printf '\n--- Research provider-execution-replay ---\n'
+DRY_RUN_REPLAY_OUTPUT="$(atlas research provider-execution-replay "$DRY_RUN_ID" --json)"
+assert_no_absolute_paths "$DRY_RUN_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$DRY_RUN_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$DRY_RUN_REPLAY_OUTPUT" "provider-execution-replay CLI output"
+assert_ok "$DRY_RUN_REPLAY_OUTPUT" "research provider-execution-replay"
+DRY_RUN_REPLAY_STATUS="$(json_field "$DRY_RUN_REPLAY_OUTPUT" status)"
+if [ "$DRY_RUN_REPLAY_STATUS" != "research_provider_execution_dry_run_replayed" ]; then
+  printf 'FAIL: unexpected provider-execution-replay status: %s\n' "$DRY_RUN_REPLAY_STATUS" >&2
+  exit 1
+fi
+DRY_RUN_REPLAY_MATCH="$(json_field "$DRY_RUN_REPLAY_OUTPUT" match)"
+if [ "$DRY_RUN_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-execution-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 27. Research timeline after provider-execution-dry-run (validate full lineage)
+printf '\n--- Research timeline (post provider-execution-dry-run) ---\n'
+TIMELINE_OUTPUT_PED="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_PED"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_PED"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_PED" "timeline CLI output after provider-execution-dry-run"
+assert_ok "$TIMELINE_OUTPUT_PED" "research timeline after provider-execution-dry-run"
+TIMELINE_PED_STATUS="$(json_field "$TIMELINE_OUTPUT_PED" status)"
+if [ "$TIMELINE_PED_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after provider-execution-dry-run: %s\n' "$TIMELINE_PED_STATUS" >&2
+  exit 1
+fi
+TIMELINE_PED_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                peds=[ped.get('provider_execution_dry_run_id') for ped in pc.get('provider_execution_dry_runs',[])]
+                if '$DRY_RUN_ID' in peds:
+                    print('valid')
+                    break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_PED" )"
+if [ "$TIMELINE_PED_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link run_id %s -> prompt %s -> sandbox %s -> provider_call_plan %s -> provider_execution_dry_run %s\n' "$RUN_ID" "$PROMPT_PACKET_ID" "$SANDBOX_ID" "$PLAN_PCP_ID" "$DRY_RUN_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 28. Research timeline after provider-plan (validate provider call plan lineage)
 printf '\n--- Research timeline (post provider-plan) ---\n'
 TIMELINE_OUTPUT_PCP="$(atlas research timeline --json)"
 assert_no_absolute_paths "$TIMELINE_OUTPUT_PCP"
@@ -685,7 +833,7 @@ if [ "$TIMELINE_PCP_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 23. Create local provider response fixture and import it
+# 29. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"
@@ -709,7 +857,7 @@ assert_file_exists "$WORKSPACE/$IMPORT_ARTIFACT_PATH" "imported provider respons
 assert_no_forbidden_fragments "$(cat "$WORKSPACE/$IMPORT_ARTIFACT_PATH")" "imported provider response artifact"
 assert_no_pending_orders
 
-# 17. Research timeline after import (validate imported lineage)
+# 30. Research timeline after import (validate imported lineage)
 printf '\n--- Research timeline (post import) ---\n'
 TIMELINE_OUTPUT_IMPORT="$(atlas research timeline --json)"
 assert_no_absolute_paths "$TIMELINE_OUTPUT_IMPORT"
@@ -746,7 +894,7 @@ if [ "$TIMELINE_IMPORT_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 18. Research review-response on imported response
+# 31. Research review-response on imported response
 printf '\n--- Research review-response ---\n'
 REVIEW_OUTPUT="$(atlas research review-response "$IMPORT_RESPONSE_ID" --json)"
 assert_no_absolute_paths "$REVIEW_OUTPUT"
@@ -773,7 +921,7 @@ assert_file_exists "$WORKSPACE/$REVIEW_ARTIFACT_PATH" "response review artifact"
 assert_no_forbidden_fragments "$(cat "$WORKSPACE/$REVIEW_ARTIFACT_PATH")" "response review artifact"
 assert_no_pending_orders
 
-# 19. Research timeline after review-response (validate full lineage)
+# 32. Research timeline after review-response (validate full lineage)
 printf '\n--- Research timeline (post review-response) ---\n'
 TIMELINE_OUTPUT3="$(atlas research timeline --json)"
 assert_no_absolute_paths "$TIMELINE_OUTPUT3"
@@ -814,7 +962,7 @@ if [ "$TIMELINE_FULL_LINEAGE_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 20. Research dossier
+# 33. Research dossier
 printf '\n--- Research dossier ---\n'
 DOSSIER_OUTPUT="$(atlas research dossier "$RUN_ID" --json)"
 assert_no_absolute_paths "$DOSSIER_OUTPUT"
@@ -843,7 +991,7 @@ if [ ! -f "$WORKSPACE/$DOSSIER_ARTIFACT_PATH" ]; then
 fi
 assert_no_pending_orders
 
-# 21. Research timeline after dossier (validate dossier lineage)
+# 34. Research timeline after dossier (validate dossier lineage)
 printf '\n--- Research timeline (post dossier) ---\n'
 TIMELINE_OUTPUT4="$(atlas research timeline --json)"
 assert_no_absolute_paths "$TIMELINE_OUTPUT4"
@@ -876,10 +1024,10 @@ if [ "$TIMELINE_DOSSIER_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 22. Safety checks
+# 35. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
-assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$DRY_RUN_OUTPUT$DRY_RUN_LIST_OUTPUT$DRY_RUN_SHOW_OUTPUT$DRY_RUN_VALIDATE_OUTPUT$DRY_RUN_REPLAY_OUTPUT$TIMELINE_OUTPUT_PED$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
+assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$DRY_RUN_OUTPUT$DRY_RUN_LIST_OUTPUT$DRY_RUN_SHOW_OUTPUT$DRY_RUN_VALIDATE_OUTPUT$DRY_RUN_REPLAY_OUTPUT$TIMELINE_OUTPUT_PED$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
 
 printf '\nResearch workflow demo complete.\n'

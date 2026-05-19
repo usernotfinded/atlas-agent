@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev21] - 2026-05-18
+
+### Added
+- `src/atlas_agent/research/provider_execution_dry_run.py`: local, auditable provider execution dry-run artifacts.
+- `provider_execution_dry_run_sha256()` with centralized `PROVIDER_EXECUTION_DRY_RUN_HASH_EXCLUDED_FIELDS`.
+- 6 boolean safety flags: `provider_enabled=false`, `network_enabled=false`, `credentials_loaded=false`, `provider_call_allowed=false`, `would_call_provider=false`, `actual_provider_call_made=false`.
+- Impossible boolean combination detection (e.g. `actual_provider_call_made=true` when `provider_call_allowed=false`).
+- `atlas research provider-execution-dry-run PLAN_ID`: create dry-run artifact from provider call plan.
+- `atlas research provider-execution-list`: list dry-run artifacts with safe sentinels for tampered items.
+- `atlas research provider-execution-show ID`: show one dry-run artifact (fail-closed on tamper).
+- `atlas research provider-execution-validate ID`: validate dry-run artifact with 15+ checks.
+- `atlas research provider-execution-replay ID`: replay and compare deterministic hashes.
+- Provider execution dry-run lineage linked in timeline (nested under provider_call_plans) and dossier.
+- `check-artifacts` now counts and validates provider execution dry-run artifacts (hash, lineage, impossible booleans).
+- Demo workflow extended with provider execution dry-run chain.
+- Comprehensive tamper tests: boolean flag tests, artifact path test, raw-dict serialization test, actual_call_made=true detection across all read paths.
+
+### Safety / Compatibility
+- Provider execution dry-runs are dry-run-only: all 6 boolean flags are False by design.
+- No real provider calls, no API keys read, no network requests.
+- All new commands remain configless.
+- No changes to broker behavior, live trading gates, order routing, approval manager, risk manager, or config secret loading.
+
 ## [0.5.7.dev20] - 2026-05-18
 
 ### Added

@@ -307,7 +307,11 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                     "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json",
                     "provider_call_plans": [{
                         "provider_call_plan_id": "demopcpid12345",
-                        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"
+                        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json",
+                        "provider_execution_dry_runs": [{
+                            "provider_execution_dry_run_id": "demodryrunid12345",
+                            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"
+                        }]
                     }]
                 }],
                 "provider_responses": [{
@@ -631,14 +635,16 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
     sandbox_request_id = ARGS[2]
     provider_call_plan_id = "demopcpid12345"
     symbol = "ATLAS-DEMO"
-    artifact_path = f".atlas/research/{symbol}/provider_call_plans/{provider_call_plan_id}.json"
+    artifact_path = ".atlas/research/" + symbol + "/provider_call_plans/" + provider_call_plan_id + ".json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_call_plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
         json.dump({
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -649,6 +655,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -684,7 +691,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-list":
 if ARGS[0] == "research" and ARGS[1] == "provider-plan-show":
     provider_call_plan_id = ARGS[2]
     symbol = "ATLAS-DEMO"
-    artifact_path = f".atlas/research/{symbol}/provider_call_plans/{provider_call_plan_id}.json"
+    artifact_path = ".atlas/research/" + symbol + "/provider_call_plans/" + provider_call_plan_id + ".json"
     with open(artifact_path, "r") as f:
         artifact = json.load(f)
     print(json.dumps({
@@ -711,6 +718,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "match": True,
         "expected_hash": "dummyhashpcp12345",
         "actual_hash": "dummyhashpcp12345",
+        "checks": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }, f)
+    print(json.dumps({
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }]
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
         "checks": []
     }))
     sys.exit(0)
@@ -909,7 +1044,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -918,7 +1053,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -926,7 +1061,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -969,7 +1104,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -1007,8 +1142,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -1019,6 +1156,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -1084,6 +1222,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1143,7 +1409,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1152,7 +1418,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -1160,7 +1426,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1203,7 +1469,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -1241,8 +1507,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -1253,6 +1521,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -1318,6 +1587,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1377,7 +1774,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1386,7 +1783,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -1394,7 +1791,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1449,7 +1846,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -1487,8 +1884,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -1499,6 +1898,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -1564,6 +1964,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1623,7 +2151,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1632,7 +2160,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -1640,7 +2168,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1695,7 +2223,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -1733,8 +2261,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -1745,6 +2275,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -1810,6 +2341,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -1869,7 +2528,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1878,7 +2537,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -1886,7 +2545,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -1944,7 +2603,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -1982,8 +2641,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -1994,6 +2655,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -2059,6 +2721,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2118,7 +2908,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2127,7 +2917,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -2135,7 +2925,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2201,7 +2991,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -2239,8 +3029,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -2251,6 +3043,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -2316,6 +3109,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2375,7 +3296,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2384,7 +3305,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -2392,7 +3313,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2453,7 +3374,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -2491,8 +3412,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -2503,6 +3426,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -2568,6 +3492,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2627,7 +3679,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2636,7 +3688,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -2644,7 +3696,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2705,7 +3757,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -2743,8 +3795,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -2755,6 +3809,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -2820,6 +3875,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -2879,7 +4062,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2888,7 +4071,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -2896,7 +4079,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -2971,7 +4154,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -3009,8 +4192,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -3021,6 +4206,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -3086,6 +4272,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3145,7 +4459,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -3154,7 +4468,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -3162,7 +4476,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -3231,7 +4545,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -3269,8 +4583,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -3281,6 +4597,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -3346,6 +4663,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3405,7 +4850,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -3414,7 +4859,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -3422,7 +4867,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -3491,7 +4936,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -3529,8 +4974,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -3541,6 +4988,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -3606,6 +5054,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3665,7 +5241,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -3674,7 +5250,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -3682,7 +5258,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -3743,7 +5319,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -3781,8 +5357,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -3793,6 +5371,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -3858,6 +5437,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3917,7 +5624,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -3926,7 +5633,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -3934,7 +5641,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -4024,7 +5731,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -4062,8 +5769,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -4074,6 +5783,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -4139,6 +5849,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4198,7 +6036,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -4207,7 +6045,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -4215,7 +6053,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -4293,7 +6131,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -4331,8 +6169,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -4343,6 +6183,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -4408,6 +6249,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4467,7 +6436,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -4476,7 +6445,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -4484,7 +6453,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -4568,7 +6537,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -4606,8 +6575,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -4618,6 +6589,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -4683,6 +6655,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4742,7 +6842,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -4751,7 +6851,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -4759,7 +6859,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -4848,7 +6948,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -4886,8 +6986,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -4898,6 +7000,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -4963,6 +7066,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5022,7 +7253,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5031,7 +7262,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -5039,7 +7270,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5132,7 +7363,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -5170,8 +7401,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -5182,6 +7415,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -5247,6 +7481,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5306,7 +7668,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5315,7 +7677,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -5323,7 +7685,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5411,7 +7773,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -5449,8 +7811,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -5461,6 +7825,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -5526,6 +7891,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5585,7 +8078,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5594,7 +8087,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -5602,7 +8095,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5690,7 +8183,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -5728,8 +8221,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -5740,6 +8235,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -5805,6 +8301,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5864,7 +8488,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5873,7 +8497,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -5881,7 +8505,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -5969,7 +8593,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -6007,8 +8631,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -6019,6 +8645,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -6084,6 +8711,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6142,7 +8897,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -6151,7 +8906,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -6159,7 +8914,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -6247,7 +9002,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -6285,8 +9040,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -6297,6 +9054,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -6362,6 +9120,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6420,7 +9306,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -6429,7 +9315,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -6437,7 +9323,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -6521,7 +9407,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -6559,8 +9445,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -6571,6 +9459,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -6636,6 +9525,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6695,7 +9712,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -6704,7 +9721,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -6712,7 +9729,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -6811,7 +9828,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -6849,8 +9866,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -6861,6 +9880,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -6926,6 +9946,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6990,7 +10138,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -6999,7 +10147,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -7007,7 +10155,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -7101,7 +10249,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -7139,8 +10287,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -7151,6 +10301,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -7216,6 +10367,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7275,7 +10554,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -7284,7 +10563,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -7292,7 +10571,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -7378,7 +10657,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -7412,7 +10691,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -7450,8 +10729,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -7462,6 +10743,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -7527,6 +10809,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7586,7 +10996,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -7595,7 +11005,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -7603,7 +11013,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -7689,7 +11099,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -7718,7 +11128,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -7789,9 +11199,9 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
             "safety_checks": [],
             "passed_checks": 0,
             "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "redaction_summary": dict(redacted_fragments_count=0),
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -7824,8 +11234,8 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
             "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
             "checks": [], "passed_checks": 18, "failed_checks": 0,
             "recommendation": "provider_response_review_ready",
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
         }}, f)
     print(json.dumps({{
@@ -7894,8 +11304,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -7906,6 +11318,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -7971,6 +11384,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8035,7 +11576,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -8044,7 +11585,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -8052,7 +11593,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -8138,7 +11679,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -8167,7 +11708,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -8230,9 +11771,9 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
             "safety_checks": [],
             "passed_checks": 0,
             "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "redaction_summary": dict(redacted_fragments_count=0),
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -8265,8 +11806,8 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
             "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
             "checks": [], "passed_checks": 18, "failed_checks": 0,
             "recommendation": "provider_response_review_ready",
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
         }}, f)
     print(json.dumps({{
@@ -8335,8 +11876,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -8347,6 +11890,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -8412,6 +11956,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8471,7 +12143,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -8480,7 +12152,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -8488,7 +12160,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -8574,7 +12246,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -8603,7 +12275,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -8679,9 +12351,9 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
             "safety_checks": [],
             "passed_checks": 0,
             "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "redaction_summary": dict(redacted_fragments_count=0),
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -8714,8 +12386,8 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
             "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
             "checks": [], "passed_checks": 18, "failed_checks": 0,
             "recommendation": "provider_response_review_ready",
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
         }}, f)
     print(json.dumps({{
@@ -8784,8 +12456,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -8796,6 +12470,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -8861,6 +12536,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8941,7 +12744,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -8950,7 +12753,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -8958,7 +12761,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -9007,7 +12810,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -9051,7 +12854,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -9078,8 +12881,8 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
             "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
             "checks": [], "passed_checks": 18, "failed_checks": 0,
             "recommendation": "provider_response_review_ready",
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
         }}, f)
     print(json.dumps({{
@@ -9121,8 +12924,8 @@ if ARGS[0] == "research" and ARGS[1] == "dossier":
             "missing_links": [],
             "warnings": [],
             "recommendation": "research_dossier_ready",
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
         }}, f)
     print(json.dumps({{
@@ -9154,7 +12957,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -9225,9 +13028,9 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
             "safety_checks": [],
             "passed_checks": 0,
             "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "redaction_summary": dict(redacted_fragments_count=0),
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -9266,8 +13069,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -9278,6 +13083,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -9343,6 +13149,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -9402,7 +13336,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -9411,7 +13345,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -9419,7 +13353,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -9468,7 +13402,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -9517,7 +13451,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -9546,7 +13480,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -9617,9 +13551,9 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
             "safety_checks": [],
             "passed_checks": 0,
             "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "redaction_summary": dict(redacted_fragments_count=0),
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -9658,8 +13592,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -9670,6 +13606,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -9735,6 +13672,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -9794,7 +13859,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -9803,7 +13868,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -9811,7 +13876,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -9899,7 +13964,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -9927,8 +13992,8 @@ if ARGS[0] == "research" and ARGS[1] == "simulate-provider":
             "response_sections": {{}},
             "recommendation": "provider_response_review_ready",
             "safety_checks": [], "passed_checks": 0, "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -9958,7 +14023,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -9996,8 +14061,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -10008,6 +14075,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -10073,6 +14141,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -10132,7 +14328,7 @@ if ARGS[0] == "research" and ARGS[1] == "run":
     artifact_path = f".atlas/research/{{symbol}}/{{run_id}}.json"
     os.makedirs(os.path.join(".", ".atlas", "research", symbol), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": {{}}, "created_at": "2026-01-01T00:00:00+00:00"}}, f)
+        json.dump({{"run_id": run_id, "symbol": symbol, "mode": "paper", "artifact_path": artifact_path, "metadata": dict(), "created_at": "2026-01-01T00:00:00+00:00"}}, f)
     print(json.dumps({{"ok": True, "status": "created", "run_id": run_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -10141,7 +14337,7 @@ if ARGS[0] == "research" and ARGS[1] == "list":
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "show":
-    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": {{}}}}}}))
+    print(json.dumps({{"ok": True, "status": "research_loaded", "artifact": {{"run_id": ARGS[2], "symbol": "ATLAS-DEMO", "mode": "paper", "provider": "deterministic", "summary": "s", "thesis": "t", "market_context": "m", "risks": [], "invalidation_conditions": [], "paper_only_plan": "p", "memory_hits": [], "citations": [], "warnings": [], "artifact_path": ".atlas/research/ATLAS-DEMO/demorunid12345.json", "metadata": dict()}}}}))
     sys.exit(0)
 
 if ARGS[0] == "research" and ARGS[1] == "plan":
@@ -10149,7 +14345,7 @@ if ARGS[0] == "research" and ARGS[1] == "plan":
     artifact_path = ".atlas/research/ATLAS-DEMO/plans/demoplanid12345.json"
     os.makedirs(os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "plans"), exist_ok=True)
     with open(artifact_path, "w") as f:
-        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": {{}}}}, f)
+        json.dump({{"plan_id": plan_id, "artifact_path": artifact_path, "metadata": dict()}}, f)
     print(json.dumps({{"ok": True, "status": "paper_plan_created", "plan_id": plan_id, "artifact_path": artifact_path}}))
     sys.exit(0)
 
@@ -10198,7 +14394,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json"}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json"}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -10257,7 +14453,7 @@ if ARGS[0] == "research" and ARGS[1] == "prompt":
             "allowed_uses": ["Local analysis"],
             "forbidden_uses": ["Live trading"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
     print(json.dumps({{
@@ -10284,8 +14480,8 @@ if ARGS[0] == "research" and ARGS[1] == "review-response":
             "source_provider_response_path": f".atlas/research/{{symbol}}/provider_responses/{{provider_response_id}}.json",
             "checks": [], "passed_checks": 18, "failed_checks": 0,
             "recommendation": "provider_response_review_ready",
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "warnings": [], "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "warnings": [], "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
         }}, f)
     print(json.dumps({{
@@ -10327,8 +14523,8 @@ if ARGS[0] == "research" and ARGS[1] == "dossier":
             "missing_links": [],
             "warnings": [],
             "recommendation": "research_dossier_ready",
-            "redaction_summary": {{"redacted_fragments_count": 0}},
-            "metadata": {{}}, "schema_version": "1",
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "metadata": dict(), "schema_version": "1",
             "artifact_path": artifact_path, "created_at": "2026-01-01T00:00:00+00:00"
         }}, f)
     print(json.dumps({{
@@ -10360,7 +14556,7 @@ if ARGS[0] == "research" and ARGS[1] == "sandbox":
             "explicit_boundaries": ["Local only"],
             "redaction_summary": {{"redacted_fragments_count": 0, "truncated": False}},
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -10431,9 +14627,9 @@ if ARGS[0] == "research" and ARGS[1] == "import-provider-response":
             "safety_checks": [],
             "passed_checks": 0,
             "failed_checks": 0,
-            "redaction_summary": {{"redacted_fragments_count": 0}},
+            "redaction_summary": dict(redacted_fragments_count=0),
             "warnings": [],
-            "metadata": {{}},
+            "metadata": dict(),
             "schema_version": "1",
             "artifact_path": artifact_path
         }}, f)
@@ -10472,8 +14668,10 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
         json.dump({{
             "schema_version": "1",
             "artifact_type": "provider_call_plan",
+            "contract_version": "research_provider_call_plan_v1",
             "provider_call_plan_id": provider_call_plan_id,
             "source_sandbox_request_id": sandbox_request_id,
+            "source_prompt_packet_id": "demopromptid12345",
             "source_run_id": "demorunid12345",
             "symbol": symbol,
             "mode": "paper",
@@ -10484,6 +14682,7 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan":
             "credentials_loaded": False,
             "provider_call_allowed": False,
             "execution_mode": "plan_only",
+            "sandbox_request_hash": "dummyhash12345",
             "warnings": [],
             "artifact_path": artifact_path,
             "created_at": "2026-01-01T00:00:00+00:00"
@@ -10549,6 +14748,134 @@ if ARGS[0] == "research" and ARGS[1] == "provider-plan-replay":
         "checks": []
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-dry-run":
+    provider_call_plan_id = ARGS[2]
+    dry_run_id = "demodryrunid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_execution_dry_runs/" + dry_run_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_execution_dry_runs"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": artifact_path,
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}, f)
+    print(json.dumps({{
+            "ok": True, "status": "research_provider_execution_dry_run_created",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": provider_call_plan_id,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "artifact_path": artifact_path,
+            "warnings": []
+        }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_runs_listed",
+        "items": [{{
+            "provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }}]
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-show":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_loaded",
+        "artifact": {{
+            "schema_version": "1",
+            "artifact_type": "provider_execution_dry_run",
+            "contract_version": "research_provider_execution_dry_run_v1",
+            "provider_execution_dry_run_id": dry_run_id,
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "would_call_provider": False,
+            "actual_provider_call_made": False,
+            "execution_mode": "dry_run_only",
+            "request_shape": "chat_completions",
+            "dry_run_summary": "Dry-run preflight.",
+            "input_hash": "dummyhash",
+            "source_call_plan_hash": "dummyhashpcp12345",
+            "constraints": [],
+            "forbidden_actions": [],
+            "redaction_summary": dict(redacted_fragments_count=0),
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json",
+            "warnings": [],
+            "metadata": dict(),
+            "artifact_hash": "dummyhashdryrun12345",
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }}
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-validate":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_validated",
+        "provider_execution_dry_run_id": dry_run_id,
+        "valid": True, "passed_checks": 15, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-replay":
+    dry_run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_dry_run_replayed",
+        "provider_execution_dry_run_id": dry_run_id,
+        "match": True,
+        "expected_hash": "dummyhashdryrun12345",
+        "actual_hash": "dummyhashdryrun12345",
+        "checks": []
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
