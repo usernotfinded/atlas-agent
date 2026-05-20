@@ -1480,7 +1480,159 @@ if [ "$TIMELINE_FREEZE_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 57. Create local provider response fixture and import it
+# 57. Research provider-opt-in-policy
+printf '\n--- Research provider-opt-in-policy ---\n'
+POLICY_OUTPUT="$(atlas research provider-opt-in-policy "$FREEZE_ID" --json)"
+assert_no_absolute_paths "$POLICY_OUTPUT"
+assert_no_secrets_in_output "$POLICY_OUTPUT"
+assert_no_forbidden_fragments "$POLICY_OUTPUT" "provider-opt-in-policy CLI output"
+assert_ok "$POLICY_OUTPUT" "research provider-opt-in-policy"
+POLICY_STATUS="$(json_field "$POLICY_OUTPUT" status)"
+if [ "$POLICY_STATUS" != "research_provider_opt_in_policy_created" ]; then
+  printf 'FAIL: unexpected provider-opt-in-policy status: %s\n' "$POLICY_STATUS" >&2
+  exit 1
+fi
+POLICY_ID="$(json_field "$POLICY_OUTPUT" provider_opt_in_policy_id)"
+if [ -z "$POLICY_ID" ]; then
+  printf 'FAIL: provider_opt_in_policy_id is empty\n' >&2
+  exit 1
+fi
+POLICY_ARTIFACT_PATH="$(json_field "$POLICY_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$POLICY_ARTIFACT_PATH" "provider opt-in policy artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$POLICY_ARTIFACT_PATH")" "provider opt-in policy artifact"
+assert_no_pending_orders
+
+# 58. Research provider-opt-in-policy-list
+printf '\n--- Research provider-opt-in-policy-list ---\n'
+POLICY_LIST_OUTPUT="$(atlas research provider-opt-in-policy-list --json)"
+assert_no_absolute_paths "$POLICY_LIST_OUTPUT"
+assert_no_secrets_in_output "$POLICY_LIST_OUTPUT"
+assert_no_forbidden_fragments "$POLICY_LIST_OUTPUT" "provider-opt-in-policy-list CLI output"
+assert_ok "$POLICY_LIST_OUTPUT" "research provider-opt-in-policy-list"
+POLICY_LIST_HAS_ITEM="$( "$PYTHON_BIN" -c "import json,sys; d=json.load(sys.stdin); items=d.get('items',[]); print('yes' if any(i.get('provider_opt_in_policy_id')=='$POLICY_ID' for i in items) else 'no')" <<<"$POLICY_LIST_OUTPUT" )"
+if [ "$POLICY_LIST_HAS_ITEM" != "yes" ]; then
+  printf 'FAIL: policy %s not found in list output\n' "$POLICY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 59. Research provider-opt-in-policy-show
+printf '\n--- Research provider-opt-in-policy-show ---\n'
+POLICY_SHOW_OUTPUT="$(atlas research provider-opt-in-policy-show "$POLICY_ID" --json)"
+assert_no_absolute_paths "$POLICY_SHOW_OUTPUT"
+assert_no_secrets_in_output "$POLICY_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$POLICY_SHOW_OUTPUT" "provider-opt-in-policy-show CLI output"
+assert_ok "$POLICY_SHOW_OUTPUT" "research provider-opt-in-policy-show"
+POLICY_SHOW_STATUS="$(json_field "$POLICY_SHOW_OUTPUT" status)"
+if [ "$POLICY_SHOW_STATUS" != "research_provider_opt_in_policy_loaded" ]; then
+  printf 'FAIL: unexpected provider-opt-in-policy-show status: %s\n' "$POLICY_SHOW_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 60. Research provider-opt-in-policy-validate
+printf '\n--- Research provider-opt-in-policy-validate ---\n'
+POLICY_VALIDATE_OUTPUT="$(atlas research provider-opt-in-policy-validate "$POLICY_ID" --json)"
+assert_no_absolute_paths "$POLICY_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$POLICY_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$POLICY_VALIDATE_OUTPUT" "provider-opt-in-policy-validate CLI output"
+assert_ok "$POLICY_VALIDATE_OUTPUT" "research provider-opt-in-policy-validate"
+POLICY_VALID="$(json_field "$POLICY_VALIDATE_OUTPUT" valid)"
+if [ "$POLICY_VALID" != "True" ]; then
+  printf 'FAIL: policy validation failed for %s\n' "$POLICY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 61. Research provider-opt-in-policy-replay
+printf '\n--- Research provider-opt-in-policy-replay ---\n'
+POLICY_REPLAY_OUTPUT="$(atlas research provider-opt-in-policy-replay "$POLICY_ID" --json)"
+assert_no_absolute_paths "$POLICY_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$POLICY_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$POLICY_REPLAY_OUTPUT" "provider-opt-in-policy-replay CLI output"
+assert_ok "$POLICY_REPLAY_OUTPUT" "research provider-opt-in-policy-replay"
+POLICY_REPLAY_MATCH="$(json_field "$POLICY_REPLAY_OUTPUT" match)"
+if [ "$POLICY_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: policy replay mismatch for %s\n' "$POLICY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 62. Research provider-opt-in-policy-summary
+printf '\n--- Research provider-opt-in-policy-summary ---\n'
+POLICY_SUMMARY_OUTPUT="$(atlas research provider-opt-in-policy-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$POLICY_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$POLICY_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$POLICY_SUMMARY_OUTPUT" "provider-opt-in-policy-summary CLI output"
+assert_ok "$POLICY_SUMMARY_OUTPUT" "research provider-opt-in-policy-summary"
+POLICY_SUMMARY_EXEC_ALLOWED="$(json_field "$POLICY_SUMMARY_OUTPUT" provider_execution_allowed)"
+if [ "$POLICY_SUMMARY_EXEC_ALLOWED" != "False" ]; then
+  printf 'FAIL: policy summary provider_execution_allowed is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 63. Research timeline after policy (validate policy lineage)
+printf '\n--- Research timeline (post policy) ---\n'
+TIMELINE_OUTPUT_POLICY="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_POLICY"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_POLICY"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_POLICY" "timeline CLI output after policy"
+assert_ok "$TIMELINE_OUTPUT_POLICY" "research timeline after policy"
+TIMELINE_POLICY_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets',[]):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            for r in a.get('provider_execution_readiness_reports',[]):
+                                if r.get('provider_execution_readiness_report_id')!='$READINESS_REPORT_ID':
+                                    continue
+                                for f in r.get('provider_preflight_freezes',[]):
+                                    if f.get('provider_preflight_freeze_id')!='$FREEZE_ID':
+                                        continue
+                                    policies=[p.get('provider_opt_in_policy_id') for p in f.get('provider_opt_in_policies',[])]
+                                    if '$POLICY_ID' in policies:
+                                        print('valid')
+                                        break
+                                break
+                            break
+                        break
+                    break
+                break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_POLICY" )"
+if [ "$TIMELINE_POLICY_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link policy under freeze %s\n' "$FREEZE_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 64. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

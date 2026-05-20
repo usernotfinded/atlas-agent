@@ -3926,3 +3926,242 @@ class TestProviderPreflightFreezeConfigless:
         assert code == 0
         assert data["ok"] is True
         assert len(data.get("items", [])) >= 1
+
+
+class TestProviderOptInPolicyConfigless:
+    def _create_freeze(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path]:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-preflight-freeze", readiness_id, "--json"]) == 0
+        freeze_out = json.loads(capsys.readouterr().out)
+        freeze_id = freeze_out["provider_preflight_freeze_id"]
+        freeze_path = tmp_path / freeze_out["artifact_path"]
+        return freeze_id, freeze_path
+
+    def _create_policy(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, str, Path]:
+        freeze_id, freeze_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-opt-in-policy", freeze_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_opt_in_policy_created"
+        policy_id = data["provider_opt_in_policy_id"]
+        artifact_path = tmp_path / data["artifact_path"]
+        return freeze_id, policy_id, artifact_path
+
+    def test_policy_creates_artifact_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+        assert artifact_path.exists()
+        artifact = json.loads(artifact_path.read_text())
+        assert artifact["artifact_type"] == "provider_opt_in_policy"
+        assert artifact["mode"] == "paper"
+        assert artifact["policy_status"] == "policy_recorded"
+        assert artifact["policy_scope"] == "future_provider_execution_opt_in"
+        assert artifact["opt_in_state"] == "manual_unlock_required"
+        assert artifact["manual_unlock_required"] is True
+        assert artifact["provider_enabled"] is False
+        assert artifact["network_enabled"] is False
+        assert artifact["credentials_loaded"] is False
+        assert artifact["provider_call_allowed"] is False
+        assert artifact["actual_provider_call_made"] is False
+        assert artifact["future_provider_execution_possible"] is False
+        assert artifact["trading_signal_generated"] is False
+        assert artifact["approval_created"] is False
+        assert artifact["pending_order_created"] is False
+        assert artifact["broker_touched"] is False
+        assert "credential_policy" in artifact
+        assert "outbound_payload_policy" in artifact
+        assert "provider_response_policy" in artifact
+        assert "trading_separation_policy" in artifact
+        assert "audit_policy" in artifact
+        assert "failure_policy" in artifact
+        assert "rollback_policy" in artifact
+
+    def test_policy_artifact_denylist_clean(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+        artifact_text = artifact_path.read_text()
+        found = _output_has_forbidden_fragments(artifact_text)
+        assert not found, f"Forbidden fragments found in policy artifact: {found}"
+
+    def test_policy_denylist_manifest_safe(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        denylist = artifact.get("denylist_manifest", {})
+        assert denylist.get("denylist_profile") == "atlas_standard_forbidden_fragments_v1"
+        assert denylist.get("forbidden_fragments_raw_stored") is False
+        denylist_text = json.dumps(denylist)
+        raw_found = _output_has_forbidden_fragments(denylist_text)
+        assert not raw_found, f"Raw forbidden fragments found in denylist_manifest: {raw_found}"
+
+    def test_policy_show_exits_zero(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-opt-in-policy-show", policy_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_opt_in_policy_loaded"
+        assert "artifact" in data
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in show output: {found}"
+
+    def test_policy_validate_returns_valid(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-opt-in-policy-validate", policy_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is True
+        assert data["failed_checks"] == 0
+        check_names = [c["name"] for c in data.get("checks", [])]
+        assert "denylist_manifest_safe" in check_names
+        denylist_check = next(c for c in data["checks"] if c["name"] == "denylist_manifest_safe")
+        assert denylist_check["passed"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in validate output: {found}"
+
+    def test_policy_replay_returns_match(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-opt-in-policy-replay", policy_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in replay output: {found}"
+
+    def test_check_artifacts_counts_policy(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        counts = data.get("counts", {})
+        assert counts.get("provider_opt_in_policies", 0) >= 1
+        issue_codes = [i["code"] for i in data.get("issues", [])]
+        assert "provider_opt_in_policy_malformed" not in issue_codes
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in check-artifacts output: {found}"
+
+    def test_policy_tampered_boolean_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_call_allowed"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-opt-in-policy-validate", policy_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is False
+        check_names = {c["name"]: c["passed"] for c in data.get("checks", [])}
+        assert check_names.get("boolean_safety_flags_false") is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in tamper output: {found}"
+
+    def test_policy_tampered_denylist_raw_stored_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["denylist_manifest"]["forbidden_fragments_raw_stored"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-opt-in-policy-validate", policy_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is False
+        check_names = {c["name"]: c["passed"] for c in data.get("checks", [])}
+        assert check_names.get("denylist_manifest_safe") is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in tamper output: {found}"
+
+    def test_policy_list_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        self._create_policy(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-opt-in-policy-list", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert len(data.get("items", [])) >= 1
+
+    def test_policy_summary_read_only(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+        run_id = json.loads(artifact_path.read_text()).get("source_run_id", "")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-opt-in-policy-summary", run_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_opt_in_policy_summary"
+        assert data["provider_execution_allowed"] is False
+        assert data["provider_call_made"] is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in summary output: {found}"
+
+    def test_timeline_links_policy(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, policy_id, artifact_path = self._create_policy(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "timeline", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        found_policy = False
+        for entry in data.get("entries", []):
+            for prompt in entry.get("prompts", []):
+                for sr in prompt.get("sandbox_requests", []):
+                    for pcp in sr.get("provider_call_plans", []):
+                        for ped in pcp.get("provider_execution_dry_runs", []):
+                            for pes in ped.get("provider_execution_states", []):
+                                for peap in pes.get("provider_execution_audit_packets", []):
+                                    for perr in peap.get("provider_execution_readiness_reports", []):
+                                        for ppf in perr.get("provider_preflight_freezes", []):
+                                            for pop in ppf.get("provider_opt_in_policies", []):
+                                                if pop.get("provider_opt_in_policy_id") == policy_id:
+                                                    found_policy = True
+        assert found_policy, "Policy not found in timeline"

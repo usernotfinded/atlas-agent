@@ -314,14 +314,33 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                             with open(os.path.join(freeze_dir, ffname)) as ff:
                                                                 frz = json.load(ff)
                                                             if frz.get("source_provider_execution_readiness_report_id") == readiness_report_id:
+                                                                freeze_id = frz.get("provider_preflight_freeze_id", "")
+                                                                policies = []
+                                                                policy_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies")
+                                                                if os.path.isdir(policy_dir):
+                                                                    for pfname in sorted(os.listdir(policy_dir)):
+                                                                        if pfname.endswith(".json"):
+                                                                            with open(os.path.join(policy_dir, pfname)) as pf:
+                                                                                pol = json.load(pf)
+                                                                            if pol.get("source_provider_preflight_freeze_id") == freeze_id:
+                                                                                policies.append({
+                                                                                    "provider_opt_in_policy_id": pol.get("provider_opt_in_policy_id", ""),
+                                                                                    "source_provider_preflight_freeze_id": pol.get("source_provider_preflight_freeze_id", ""),
+                                                                                    "policy_status": pol.get("policy_status", ""),
+                                                                                    "policy_scope": pol.get("policy_scope", ""),
+                                                                                    "opt_in_state": pol.get("opt_in_state", ""),
+                                                                                    "created_at": pol.get("created_at", ""),
+                                                                                    "artifact_path": pol.get("artifact_path", ""),
+                                                                                })
                                                                 freezes.append({
-                                                                    "provider_preflight_freeze_id": frz.get("provider_preflight_freeze_id", ""),
+                                                                    "provider_preflight_freeze_id": freeze_id,
                                                                     "source_provider_execution_readiness_report_id": frz.get("source_provider_execution_readiness_report_id", ""),
                                                                     "freeze_status": frz.get("freeze_status", ""),
                                                                     "freeze_recommendation": frz.get("freeze_recommendation", ""),
                                                                     "readiness_score": frz.get("readiness_score", 0),
                                                                     "chain_health": frz.get("chain_health", ""),
                                                                     "artifact_path": frz.get("artifact_path", ""),
+                                                                    "provider_opt_in_policies": policies,
                                                                 })
                                                 readiness_reports.append({
                                                     "provider_execution_readiness_report_id": readiness_report_id,
@@ -1496,6 +1515,165 @@ if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
         "provider_call_made": False,
         "blocking_reasons": ["provider_execution_not_implemented"],
         "known_limitations": ["No real provider execution."],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy":
+    freeze_id = ARGS[2]
+    policy_id = "policy" + freeze_id
+    policy_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies", policy_id + ".json")
+    os.makedirs(os.path.dirname(policy_path), exist_ok=True)
+    with open(policy_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_opt_in_policy",
+            "contract_version": "research_provider_opt_in_policy_v1",
+            "provider_opt_in_policy_id": policy_id,
+            "source_provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": "readiness-auditodryrunid12345",
+            "source_provider_execution_audit_packet_id": "auditodryrunid12345",
+            "source_provider_execution_state_id": "stateodryrunid12345",
+            "source_provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "manual_unlock_required": True,
+            "credential_policy": {"api_keys_stored_in_artifacts": False},
+            "outbound_payload_policy": {"payload_minimization_required": True},
+            "provider_response_policy": {"provider_response_trusted": False},
+            "trading_separation_policy": {"provider_output_is_trade_signal": False},
+            "audit_policy": {"request_hash_required": True},
+            "failure_policy": {"missing_credential_behavior": "fail_closed"},
+            "rollback_policy": {"provider_opt_in_revocable": True},
+            "required_future_controls": [],
+            "forbidden_actions": [],
+            "blocking_reasons": [],
+            "source_freeze_hash": "dummyhashfreeze12345",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "denylist_manifest": {
+                "denylist_profile": "atlas_standard_forbidden_fragments_v1",
+                "forbidden_fragment_count": 11,
+                "forbidden_fragments_raw_stored": False,
+                "output_safety_expected": True,
+                "artifact_safety_expected": True,
+                "raw_exception_output_allowed": False,
+                "absolute_path_output_allowed": False,
+                "unsafe_value_echo_allowed": False,
+            },
+            "safety_gate_summary": {},
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+            "warnings": [],
+            "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhashpolicy12345",
+        }, f, indent=2, sort_keys=True)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_opt_in_policy_created",
+        "provider_opt_in_policy_id": policy_id,
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-list":
+    items = []
+    policy_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies")
+    if os.path.isdir(policy_dir):
+        for fname in os.listdir(policy_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(policy_dir, fname)
+                with open(fpath) as f:
+                    pol = json.load(f)
+                items.append({
+                    "provider_opt_in_policy_id": pol.get("provider_opt_in_policy_id", ""),
+                    "source_provider_preflight_freeze_id": pol.get("source_provider_preflight_freeze_id", ""),
+                    "symbol": pol.get("symbol", ""),
+                    "policy_status": pol.get("policy_status", ""),
+                    "policy_scope": pol.get("policy_scope", ""),
+                    "opt_in_state": pol.get("opt_in_state", ""),
+                    "created_at": pol.get("created_at", ""),
+                    "artifact_path": pol.get("artifact_path", ""),
+                    "provider_id": pol.get("provider_id", ""),
+                    "model_id": pol.get("model_id", ""),
+                    "warnings_count": len(pol.get("warnings", [])),
+                })
+    print(json.dumps({
+        "ok": True, "status": "research_provider_opt_in_policies_listed",
+        "items": items,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_opt_in_policy_loaded",
+        "artifact": {
+            "provider_opt_in_policy_id": policy_id,
+            "symbol": "ATLAS-DEMO",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        },
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_opt_in_policy_validated",
+        "provider_opt_in_policy_id": policy_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_opt_in_policy_replayed",
+        "provider_opt_in_policy_id": policy_id,
+        "match": True,
+        "expected_hash": "dummyhashpolicy12345",
+        "actual_hash": "dummyhashpolicy12345",
+        "checks": [], "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_opt_in_policy_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "future_requirements": [],
         "warnings": [],
     }))
     sys.exit(0)
@@ -24968,7 +25146,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -25980,6 +26158,165 @@ if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy":
+    freeze_id = ARGS[2]
+    policy_id = "policy" + freeze_id
+    policy_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies", policy_id + ".json")
+    os.makedirs(os.path.dirname(policy_path), exist_ok=True)
+    with open(policy_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_opt_in_policy",
+            "contract_version": "research_provider_opt_in_policy_v1",
+            "provider_opt_in_policy_id": policy_id,
+            "source_provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": "readiness-auditodryrunid12345",
+            "source_provider_execution_audit_packet_id": "auditodryrunid12345",
+            "source_provider_execution_state_id": "stateodryrunid12345",
+            "source_provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "manual_unlock_required": True,
+            "credential_policy": {{"api_keys_stored_in_artifacts": False}},
+            "outbound_payload_policy": {{"payload_minimization_required": True}},
+            "provider_response_policy": {{"provider_response_trusted": False}},
+            "trading_separation_policy": {{"provider_output_is_trade_signal": False}},
+            "audit_policy": {{"request_hash_required": True}},
+            "failure_policy": {{"missing_credential_behavior": "fail_closed"}},
+            "rollback_policy": {{"provider_opt_in_revocable": True}},
+            "required_future_controls": [],
+            "forbidden_actions": [],
+            "blocking_reasons": [],
+            "source_freeze_hash": "dummyhashfreeze12345",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "denylist_manifest": {{
+                "denylist_profile": "atlas_standard_forbidden_fragments_v1",
+                "forbidden_fragment_count": 11,
+                "forbidden_fragments_raw_stored": False,
+                "output_safety_expected": True,
+                "artifact_safety_expected": True,
+                "raw_exception_output_allowed": False,
+                "absolute_path_output_allowed": False,
+                "unsafe_value_echo_allowed": False,
+            }},
+            "safety_gate_summary": {{}},
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+            "warnings": [],
+            "metadata": {{}},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhashpolicy12345",
+        }}, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_created",
+        "provider_opt_in_policy_id": policy_id,
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-list":
+    items = []
+    policy_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies")
+    if os.path.isdir(policy_dir):
+        for fname in os.listdir(policy_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(policy_dir, fname)
+                with open(fpath) as f:
+                    pol = json.load(f)
+                items.append({{
+                    "provider_opt_in_policy_id": pol.get("provider_opt_in_policy_id", ""),
+                    "source_provider_preflight_freeze_id": pol.get("source_provider_preflight_freeze_id", ""),
+                    "symbol": pol.get("symbol", ""),
+                    "policy_status": pol.get("policy_status", ""),
+                    "policy_scope": pol.get("policy_scope", ""),
+                    "opt_in_state": pol.get("opt_in_state", ""),
+                    "created_at": pol.get("created_at", ""),
+                    "artifact_path": pol.get("artifact_path", ""),
+                    "provider_id": pol.get("provider_id", ""),
+                    "model_id": pol.get("model_id", ""),
+                    "warnings_count": len(pol.get("warnings", [])),
+                }})
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policies_listed",
+        "items": items,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_loaded",
+        "artifact": {{
+            "provider_opt_in_policy_id": policy_id,
+            "symbol": "ATLAS-DEMO",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_validated",
+        "provider_opt_in_policy_id": policy_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_replayed",
+        "provider_opt_in_policy_id": policy_id,
+        "match": True,
+        "expected_hash": "dummyhashpolicy12345",
+        "actual_hash": "dummyhashpolicy12345",
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "future_requirements": [],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -26105,7 +26442,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -27044,6 +27381,165 @@ if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
         "provider_call_made": False,
         "blocking_reasons": ["provider_execution_not_implemented"],
         "known_limitations": ["No real provider execution."],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy":
+    freeze_id = ARGS[2]
+    policy_id = "policy" + freeze_id
+    policy_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies", policy_id + ".json")
+    os.makedirs(os.path.dirname(policy_path), exist_ok=True)
+    with open(policy_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_opt_in_policy",
+            "contract_version": "research_provider_opt_in_policy_v1",
+            "provider_opt_in_policy_id": policy_id,
+            "source_provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": "readiness-auditodryrunid12345",
+            "source_provider_execution_audit_packet_id": "auditodryrunid12345",
+            "source_provider_execution_state_id": "stateodryrunid12345",
+            "source_provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "manual_unlock_required": True,
+            "credential_policy": {{"api_keys_stored_in_artifacts": False}},
+            "outbound_payload_policy": {{"payload_minimization_required": True}},
+            "provider_response_policy": {{"provider_response_trusted": False}},
+            "trading_separation_policy": {{"provider_output_is_trade_signal": False}},
+            "audit_policy": {{"request_hash_required": True}},
+            "failure_policy": {{"missing_credential_behavior": "fail_closed"}},
+            "rollback_policy": {{"provider_opt_in_revocable": True}},
+            "required_future_controls": [],
+            "forbidden_actions": [],
+            "blocking_reasons": [],
+            "source_freeze_hash": "dummyhashfreeze12345",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "denylist_manifest": {{
+                "denylist_profile": "atlas_standard_forbidden_fragments_v1",
+                "forbidden_fragment_count": 11,
+                "forbidden_fragments_raw_stored": False,
+                "output_safety_expected": True,
+                "artifact_safety_expected": True,
+                "raw_exception_output_allowed": False,
+                "absolute_path_output_allowed": False,
+                "unsafe_value_echo_allowed": False,
+            }},
+            "safety_gate_summary": {{}},
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+            "warnings": [],
+            "metadata": {{}},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhashpolicy12345",
+        }}, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_created",
+        "provider_opt_in_policy_id": policy_id,
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-list":
+    items = []
+    policy_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies")
+    if os.path.isdir(policy_dir):
+        for fname in os.listdir(policy_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(policy_dir, fname)
+                with open(fpath) as f:
+                    pol = json.load(f)
+                items.append({{
+                    "provider_opt_in_policy_id": pol.get("provider_opt_in_policy_id", ""),
+                    "source_provider_preflight_freeze_id": pol.get("source_provider_preflight_freeze_id", ""),
+                    "symbol": pol.get("symbol", ""),
+                    "policy_status": pol.get("policy_status", ""),
+                    "policy_scope": pol.get("policy_scope", ""),
+                    "opt_in_state": pol.get("opt_in_state", ""),
+                    "created_at": pol.get("created_at", ""),
+                    "artifact_path": pol.get("artifact_path", ""),
+                    "provider_id": pol.get("provider_id", ""),
+                    "model_id": pol.get("model_id", ""),
+                    "warnings_count": len(pol.get("warnings", [])),
+                }})
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policies_listed",
+        "items": items,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_loaded",
+        "artifact": {{
+            "provider_opt_in_policy_id": policy_id,
+            "symbol": "ATLAS-DEMO",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_validated",
+        "provider_opt_in_policy_id": policy_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_replayed",
+        "provider_opt_in_policy_id": policy_id,
+        "match": True,
+        "expected_hash": "dummyhashpolicy12345",
+        "actual_hash": "dummyhashpolicy12345",
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "future_requirements": [],
         "warnings": [],
     }}))
     sys.exit(0)
@@ -28053,7 +28549,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -29076,6 +29572,165 @@ if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
         "provider_call_made": False,
         "blocking_reasons": ["provider_execution_not_implemented"],
         "known_limitations": ["No real provider execution."],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy":
+    freeze_id = ARGS[2]
+    policy_id = "policy" + freeze_id
+    policy_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies", policy_id + ".json")
+    os.makedirs(os.path.dirname(policy_path), exist_ok=True)
+    with open(policy_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_opt_in_policy",
+            "contract_version": "research_provider_opt_in_policy_v1",
+            "provider_opt_in_policy_id": policy_id,
+            "source_provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": "readiness-auditodryrunid12345",
+            "source_provider_execution_audit_packet_id": "auditodryrunid12345",
+            "source_provider_execution_state_id": "stateodryrunid12345",
+            "source_provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "manual_unlock_required": True,
+            "credential_policy": {{"api_keys_stored_in_artifacts": False}},
+            "outbound_payload_policy": {{"payload_minimization_required": True}},
+            "provider_response_policy": {{"provider_response_trusted": False}},
+            "trading_separation_policy": {{"provider_output_is_trade_signal": False}},
+            "audit_policy": {{"request_hash_required": True}},
+            "failure_policy": {{"missing_credential_behavior": "fail_closed"}},
+            "rollback_policy": {{"provider_opt_in_revocable": True}},
+            "required_future_controls": [],
+            "forbidden_actions": [],
+            "blocking_reasons": [],
+            "source_freeze_hash": "dummyhashfreeze12345",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "denylist_manifest": {{
+                "denylist_profile": "atlas_standard_forbidden_fragments_v1",
+                "forbidden_fragment_count": 11,
+                "forbidden_fragments_raw_stored": False,
+                "output_safety_expected": True,
+                "artifact_safety_expected": True,
+                "raw_exception_output_allowed": False,
+                "absolute_path_output_allowed": False,
+                "unsafe_value_echo_allowed": False,
+            }},
+            "safety_gate_summary": {{}},
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+            "warnings": [],
+            "metadata": {{}},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhashpolicy12345",
+        }}, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_created",
+        "provider_opt_in_policy_id": policy_id,
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-list":
+    items = []
+    policy_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_opt_in_policies")
+    if os.path.isdir(policy_dir):
+        for fname in os.listdir(policy_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(policy_dir, fname)
+                with open(fpath) as f:
+                    pol = json.load(f)
+                items.append({{
+                    "provider_opt_in_policy_id": pol.get("provider_opt_in_policy_id", ""),
+                    "source_provider_preflight_freeze_id": pol.get("source_provider_preflight_freeze_id", ""),
+                    "symbol": pol.get("symbol", ""),
+                    "policy_status": pol.get("policy_status", ""),
+                    "policy_scope": pol.get("policy_scope", ""),
+                    "opt_in_state": pol.get("opt_in_state", ""),
+                    "created_at": pol.get("created_at", ""),
+                    "artifact_path": pol.get("artifact_path", ""),
+                    "provider_id": pol.get("provider_id", ""),
+                    "model_id": pol.get("model_id", ""),
+                    "warnings_count": len(pol.get("warnings", [])),
+                }})
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policies_listed",
+        "items": items,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_loaded",
+        "artifact": {{
+            "provider_opt_in_policy_id": policy_id,
+            "symbol": "ATLAS-DEMO",
+            "policy_status": "policy_recorded",
+            "policy_scope": "future_provider_execution_opt_in",
+            "opt_in_state": "manual_unlock_required",
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_opt_in_policies/" + policy_id + ".json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_validated",
+        "provider_opt_in_policy_id": policy_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_replayed",
+        "provider_opt_in_policy_id": policy_id,
+        "match": True,
+        "expected_hash": "dummyhashpolicy12345",
+        "actual_hash": "dummyhashpolicy12345",
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_opt_in_policy_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "policy_status": "policy_recorded",
+        "opt_in_state": "manual_unlock_required",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "future_requirements": [],
         "warnings": [],
     }}))
     sys.exit(0)

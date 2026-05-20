@@ -862,6 +862,57 @@ Safety First:
     research_provider_preflight_freeze_summary.add_argument("run_id", help="Research run ID.")
     research_provider_preflight_freeze_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_opt_in_policy = research_sub.add_parser(
+        "provider-opt-in-policy",
+        help="Create a provider opt-in policy artifact from a preflight freeze. Local-only.",
+        description="Create a local provider opt-in policy artifact from a provider preflight freeze. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_opt_in_policy.add_argument("provider_preflight_freeze_id", help="Source provider preflight freeze ID.")
+    research_provider_opt_in_policy.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_opt_in_policy_list = research_sub.add_parser(
+        "provider-opt-in-policy-list",
+        help="List provider opt-in policy artifacts. Read-only.",
+        description="List local provider opt-in policy artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_opt_in_policy_list.add_argument("--symbol", help="Filter by symbol.")
+    research_provider_opt_in_policy_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
+    research_provider_opt_in_policy_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_opt_in_policy_show = research_sub.add_parser(
+        "provider-opt-in-policy-show",
+        help="Show one provider opt-in policy artifact. Read-only.",
+        description="Show a single provider opt-in policy artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_opt_in_policy_show.add_argument("provider_opt_in_policy_id", help="Provider opt-in policy ID.")
+    research_provider_opt_in_policy_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_opt_in_policy_validate = research_sub.add_parser(
+        "provider-opt-in-policy-validate",
+        help="Validate a provider opt-in policy artifact. Read-only.",
+        description="Validate a provider opt-in policy artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_opt_in_policy_validate.add_argument("provider_opt_in_policy_id", help="Provider opt-in policy ID.")
+    research_provider_opt_in_policy_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_opt_in_policy_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
+
+    research_provider_opt_in_policy_replay = research_sub.add_parser(
+        "provider-opt-in-policy-replay",
+        help="Replay a provider opt-in policy artifact from its source freeze and compare hashes. Read-only by default.",
+        description="Rebuild the provider opt-in policy artifact from its source preflight freeze and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_opt_in_policy_replay.add_argument("provider_opt_in_policy_id", help="Provider opt-in policy ID.")
+    research_provider_opt_in_policy_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_opt_in_policy_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+
+    research_provider_opt_in_policy_summary = research_sub.add_parser(
+        "provider-opt-in-policy-summary",
+        help="Summarize the provider opt-in policy state for a research run. Read-only.",
+        description="Read-only summary of the provider opt-in policy state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_opt_in_policy_summary.add_argument("run_id", help="Research run ID.")
+    research_provider_opt_in_policy_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -2688,6 +2739,12 @@ def main(argv: list[str] | None = None) -> int:
         "provider-preflight-freeze-validate",
         "provider-preflight-freeze-replay",
         "provider-preflight-freeze-summary",
+        "provider-opt-in-policy",
+        "provider-opt-in-policy-list",
+        "provider-opt-in-policy-show",
+        "provider-opt-in-policy-validate",
+        "provider-opt-in-policy-replay",
+        "provider-opt-in-policy-summary",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -4265,6 +4322,20 @@ def main(argv: list[str] | None = None) -> int:
             "provider_preflight_freeze_impossible_attestation": ("provider_preflight_freeze_impossible_boolean", "Invalid provider preflight freeze artifact."),
             "provider_preflight_freeze_not_found": ("research_artifact_not_found", "Research artifact not found."),
             "ambiguous_provider_preflight_freeze_id": ("invalid_research_id", "Invalid research identifier."),
+            "invalid_provider_opt_in_policy_id": ("invalid_research_id", "Invalid research identifier."),
+            "invalid_provider_opt_in_policy_lineage": ("invalid_research_id", "Invalid research identifier."),
+            "invalid_provider_opt_in_policy_status": ("invalid_provider_opt_in_policy_status", "Invalid provider opt-in policy artifact."),
+            "invalid_provider_opt_in_policy_model": ("invalid_provider_opt_in_policy_model", "Invalid provider opt-in policy artifact."),
+            "invalid_provider_opt_in_policy_provider": ("invalid_provider_opt_in_policy_provider", "Invalid provider opt-in policy artifact."),
+            "provider_opt_in_policy_hash_mismatch": ("provider_opt_in_policy_hash_mismatch", "Invalid provider opt-in policy artifact."),
+            "provider_opt_in_policy_source_freeze_missing": ("provider_opt_in_policy_source_freeze_missing", "Invalid provider opt-in policy artifact."),
+            "provider_opt_in_policy_source_freeze_hash_mismatch": ("provider_opt_in_policy_source_freeze_hash_mismatch", "Invalid provider opt-in policy artifact."),
+            "provider_opt_in_policy_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
+            "unsupported_provider_opt_in_policy_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
+            "provider_opt_in_policy_impossible_boolean": ("provider_opt_in_policy_impossible_boolean", "Invalid provider opt-in policy artifact."),
+            "provider_opt_in_policy_forbidden_claim": ("provider_opt_in_policy_forbidden_claim", "Invalid provider opt-in policy artifact."),
+            "provider_opt_in_policy_not_found": ("research_artifact_not_found", "Research artifact not found."),
+            "ambiguous_provider_opt_in_policy_id": ("invalid_research_id", "Invalid research identifier."),
             "artifact_path_not_allowed": ("research_error", "Research command failed."),
         }
         return mapping.get(code, ("research_error", "Research command failed."))
@@ -7656,6 +7727,314 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  Symbol: {result.get('symbol', '')}")
                 print(f"  Freeze status: {result.get('freeze_status', '')}")
                 print(f"  Freeze recommendation: {result.get('freeze_recommendation', '')}")
+                print(f"  Provider execution allowed: {result.get('provider_execution_allowed', False)}")
+                if result.get("blocking_reasons"):
+                    print(f"  Blocking: {', '.join(result['blocking_reasons'])}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-opt-in-policy":
+        try:
+            from atlas_agent.research.provider_opt_in_policy import create_provider_opt_in_policy
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-opt-in-policy skipped safely: no workspace found")
+                return 1
+
+            result = create_provider_opt_in_policy(ws, args.provider_preflight_freeze_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-opt-in-policy", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-opt-in-policy", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider opt-in policy {result.get('provider_opt_in_policy_id')}: {result.get('policy_status')} ({result.get('opt_in_state')})")
+        return 0
+    if args.command == "research" and args.research_command == "provider-opt-in-policy-list":
+        try:
+            from atlas_agent.research.provider_opt_in_policy import iter_provider_opt_in_policy_artifacts
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-opt-in-policy-list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = max(1, min(args.limit, 100))
+            items = iter_provider_opt_in_policy_artifacts(ws, symbol=symbol_filter)[:limit]
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                print("research provider-opt-in-policy-list skipped safely: invalid research symbol")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-opt-in-policy-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-opt-in-policy-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_opt_in_policies_listed",
+                "items": items,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"{'Created At':<24} {'Symbol':<8} {'Policy ID':<34} {'Status':<24} {'Artifact'}")
+            for item in items:
+                print(f"{item.get('created_at', ''):<24} {item.get('symbol', ''):<8} {item.get('provider_opt_in_policy_id', ''):<34} {item.get('policy_status', ''):<24} {item.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-opt-in-policy-show":
+        try:
+            from atlas_agent.research.provider_opt_in_policy import (
+                find_provider_opt_in_policy_by_id,
+                load_provider_opt_in_policy,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-opt-in-policy-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_opt_in_policy_id)
+            policy_path = find_provider_opt_in_policy_by_id(ws, safe_id)
+            if policy_path is None:
+                raise ResearchSessionError("provider_opt_in_policy_not_found")
+            artifact = load_provider_opt_in_policy(policy_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-opt-in-policy-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-opt-in-policy-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_opt_in_policy_loaded",
+                "artifact": artifact,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider opt-in policy {artifact.get('provider_opt_in_policy_id')}:")
+            print(f"  Symbol: {artifact.get('symbol', '')}")
+            print(f"  Policy status: {artifact.get('policy_status', '')}")
+            print(f"  Opt-in state: {artifact.get('opt_in_state', '')}")
+            print(f"  Provider execution allowed: {artifact.get('provider_call_allowed', False)}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-opt-in-policy-validate":
+        try:
+            from atlas_agent.research.provider_opt_in_policy import (
+                find_provider_opt_in_policy_by_id,
+                validate_provider_opt_in_policy_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-opt-in-policy-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_opt_in_policy_id)
+            policy_path = find_provider_opt_in_policy_by_id(ws, safe_id)
+            if policy_path is None:
+                raise ResearchSessionError("provider_opt_in_policy_not_found")
+            validation = validate_provider_opt_in_policy_artifact(policy_path, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-opt-in-policy-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-opt-in-policy-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_opt_in_policy_validated",
+                "provider_opt_in_policy_id": safe_id,
+                "valid": validation.valid,
+                "passed_checks": validation.passed_checks,
+                "failed_checks": validation.failed_checks,
+                "checks": validation.checks,
+                "warnings": validation.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider opt-in policy {safe_id}: {'valid' if validation.valid else 'invalid'}")
+            print(f"  Passed: {validation.passed_checks}")
+            print(f"  Failed: {validation.failed_checks}")
+        if args.strict and not validation.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-opt-in-policy-replay":
+        try:
+            from atlas_agent.research.provider_opt_in_policy import replay_provider_opt_in_policy
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-opt-in-policy-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_opt_in_policy_id)
+            replay_result = replay_provider_opt_in_policy(safe_id, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-opt-in-policy-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-opt-in-policy-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_opt_in_policy_replayed",
+                "provider_opt_in_policy_id": safe_id,
+                "match": replay_result["match"],
+                "expected_hash": replay_result["expected_hash"],
+                "actual_hash": replay_result["actual_hash"],
+                "checks": replay_result["checks"],
+                "warnings": replay_result["warnings"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider opt-in policy {safe_id}: {'match' if replay_result['match'] else 'mismatch'}")
+            print(f"  Expected hash: {replay_result['expected_hash']}")
+            print(f"  Actual hash: {replay_result['actual_hash']}")
+        if args.strict and not replay_result["match"]:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-opt-in-policy-summary":
+        try:
+            from atlas_agent.research.provider_opt_in_policy import summarize_provider_opt_in_policy_for_run
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-opt-in-policy-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_opt_in_policy_for_run(safe_id, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-opt-in-policy-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-opt-in-policy-summary", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            if not result.get("ok"):
+                print(f"Opt-in policy summary: {result.get('status', 'error')}")
+                print(f"  Run ID: {safe_id}")
+                print(f"  Warnings: {result.get('warnings', [])}")
+            else:
+                print(f"Opt-in policy summary for run {safe_id}:")
+                print(f"  Symbol: {result.get('symbol', '')}")
+                print(f"  Policy status: {result.get('policy_status', '')}")
+                print(f"  Opt-in state: {result.get('opt_in_state', '')}")
                 print(f"  Provider execution allowed: {result.get('provider_execution_allowed', False)}")
                 if result.get("blocking_reasons"):
                     print(f"  Blocking: {', '.join(result['blocking_reasons'])}")

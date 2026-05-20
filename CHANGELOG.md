@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev28] - 2026-05-20
+
+### Added
+- Batch 8.1 — Provider Opt-In Policy Artifact.
+  - `src/atlas_agent/research/provider_opt_in_policy.py`: local provider opt-in policy artifacts.
+  - `build_provider_opt_in_policy_dict()`: deterministic policy artifact construction.
+  - `create_provider_opt_in_policy()`: safe creation with validation, lineage, and hash.
+  - `safe_validate_provider_opt_in_policy_data()`: strict validation with invalid sentinel returns.
+  - `validate_provider_opt_in_policy_artifact()`: detailed per-check validation.
+  - `replay_provider_opt_in_policy()`: deterministic hash replay.
+  - `iter_provider_opt_in_policy_artifacts()`: safe listing with invalid sentinels.
+  - `summarize_provider_opt_in_policy_for_run()`: read-only summary without writing artifacts.
+  - Impossible boolean detection: `provider_opt_in_policy_impossible_boolean` for tampered flags.
+  - denylist-clean manifest: stores only safe metadata; never stores raw forbidden fragments.
+- CLI commands (all configless, local-only):
+  - `atlas research provider-opt-in-policy READINESS_REPORT_ID`
+  - `atlas research provider-opt-in-policy-list`
+  - `atlas research provider-opt-in-policy-show POLICY_ID`
+  - `atlas research provider-opt-in-policy-validate POLICY_ID`
+  - `atlas research provider-opt-in-policy-replay POLICY_ID`
+  - `atlas research provider-opt-in-policy-summary RUN_ID`
+- Session integration: `check-artifacts`, `timeline`, and `dossier` now support provider opt-in policy artifacts.
+- Timeline nesting: policy artifacts indexed by `source_provider_execution_readiness_report_id` under readiness report entries.
+- Demo workflow extended with provider opt-in policy creation, validation, replay, summary, and timeline lineage checks.
+
+### Safety / Compatibility
+- No real provider execution added. No network calls. No API keys. No provider SDKs.
+- No broker execution changes. No trading signals. No approvals or pending orders.
+- Boundary diff clean under `src/atlas_agent/config`, `brokers`, `execution`, `safety`, `risk`.
+- Provider execution remains disabled.
+- All configless invariants preserved.
+
 ## [0.5.7.dev27] - 2026-05-20
 
 ### Added
