@@ -2138,7 +2138,234 @@ if [ "$TIMELINE_PAYLOAD_PREVIEW_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 78. Create local provider response fixture and import it
+# 83.5. Research provider-request-response-pairing
+printf '\n--- Research provider-request-response-pairing ---\n'
+PAIRING_OUTPUT="$(atlas research provider-request-response-pairing "$INTAKE_POLICY_ID" --json)"
+assert_no_absolute_paths "$PAIRING_OUTPUT"
+assert_no_secrets_in_output "$PAIRING_OUTPUT"
+assert_no_forbidden_fragments "$PAIRING_OUTPUT" "provider-request-response-pairing CLI output"
+assert_ok "$PAIRING_OUTPUT" "research provider-request-response-pairing"
+PAIRING_STATUS="$(json_field "$PAIRING_OUTPUT" status)"
+if [ "$PAIRING_STATUS" != "research_provider_request_response_pairing_created" ]; then
+  printf 'FAIL: unexpected provider-request-response-pairing status: %s\n' "$PAIRING_STATUS" >&2
+  exit 1
+fi
+PAIRING_ID="$(json_field "$PAIRING_OUTPUT" provider_request_response_pairing_id)"
+if [ -z "$PAIRING_ID" ]; then
+  printf 'FAIL: provider_request_response_pairing_id is empty\n' >&2
+  exit 1
+fi
+PAIRING_ARTIFACT_PATH="$(json_field "$PAIRING_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$PAIRING_ARTIFACT_PATH" "provider request/response pairing artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$PAIRING_ARTIFACT_PATH")" "provider request/response pairing artifact"
+PAIRING_COMPLETED="$(json_field "$PAIRING_OUTPUT" request_response_pair_completed)"
+if [ "$PAIRING_COMPLETED" != "False" ]; then
+  printf 'FAIL: provider-request-response-pairing request_response_pair_completed is not False\n' >&2
+  exit 1
+fi
+PAIRING_TRUSTED="$(json_field "$PAIRING_OUTPUT" provider_response_trusted)"
+if [ "$PAIRING_TRUSTED" != "False" ]; then
+  printf 'FAIL: provider-request-response-pairing provider_response_trusted is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83.6. Research provider-request-response-pairing-list
+printf '\n--- Research provider-request-response-pairing-list ---\n'
+PAIRING_LIST_OUTPUT="$(atlas research provider-request-response-pairing-list --json)"
+assert_no_absolute_paths "$PAIRING_LIST_OUTPUT"
+assert_no_secrets_in_output "$PAIRING_LIST_OUTPUT"
+assert_no_forbidden_fragments "$PAIRING_LIST_OUTPUT" "provider-request-response-pairing-list CLI output"
+assert_ok "$PAIRING_LIST_OUTPUT" "research provider-request-response-pairing-list"
+PAIRING_LIST_STATUS="$(json_field "$PAIRING_LIST_OUTPUT" status)"
+if [ "$PAIRING_LIST_STATUS" != "research_provider_request_response_pairing_list" ]; then
+  printf 'FAIL: unexpected provider-request-response-pairing-list status: %s\n' "$PAIRING_LIST_STATUS" >&2
+  exit 1
+fi
+PAIRING_LIST_HAS_ID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(any(i.get('provider_request_response_pairing_id')=='$PAIRING_ID' for i in items))
+" <<<"$PAIRING_LIST_OUTPUT" )"
+if [ "$PAIRING_LIST_HAS_ID" != "True" ]; then
+  printf 'FAIL: provider-request-response-pairing-list does not contain provider_request_response_pairing_id %s\n' "$PAIRING_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83.7. Research provider-request-response-pairing-show
+printf '\n--- Research provider-request-response-pairing-show ---\n'
+PAIRING_SHOW_OUTPUT="$(atlas research provider-request-response-pairing-show "$PAIRING_ID" --json)"
+assert_no_absolute_paths "$PAIRING_SHOW_OUTPUT"
+assert_no_secrets_in_output "$PAIRING_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$PAIRING_SHOW_OUTPUT" "provider-request-response-pairing-show CLI output"
+assert_ok "$PAIRING_SHOW_OUTPUT" "research provider-request-response-pairing-show"
+PAIRING_SHOW_STATUS="$(json_field "$PAIRING_SHOW_OUTPUT" status)"
+if [ "$PAIRING_SHOW_STATUS" != "research_provider_request_response_pairing_shown" ]; then
+  printf 'FAIL: unexpected provider-request-response-pairing-show status: %s\n' "$PAIRING_SHOW_STATUS" >&2
+  exit 1
+fi
+PAIRING_SHOW_ID="$(json_field "$PAIRING_SHOW_OUTPUT" provider_request_response_pairing_id)"
+if [ "$PAIRING_SHOW_ID" != "$PAIRING_ID" ]; then
+  printf 'FAIL: provider-request-response-pairing-show returned unexpected provider_request_response_pairing_id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83.8. Research provider-request-response-pairing-validate
+printf '\n--- Research provider-request-response-pairing-validate ---\n'
+PAIRING_VALIDATE_OUTPUT="$(atlas research provider-request-response-pairing-validate "$PAIRING_ID" --json)"
+assert_no_absolute_paths "$PAIRING_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$PAIRING_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$PAIRING_VALIDATE_OUTPUT" "provider-request-response-pairing-validate CLI output"
+assert_ok "$PAIRING_VALIDATE_OUTPUT" "research provider-request-response-pairing-validate"
+PAIRING_VALIDATE_STATUS="$(json_field "$PAIRING_VALIDATE_OUTPUT" status)"
+if [ "$PAIRING_VALIDATE_STATUS" != "research_provider_request_response_pairing_validated" ]; then
+  printf 'FAIL: unexpected provider-request-response-pairing-validate status: %s\n' "$PAIRING_VALIDATE_STATUS" >&2
+  exit 1
+fi
+PAIRING_VALIDATE_VALID="$(json_field "$PAIRING_VALIDATE_OUTPUT" valid)"
+if [ "$PAIRING_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: provider-request-response-pairing-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83.9. Research provider-request-response-pairing-replay
+printf '\n--- Research provider-request-response-pairing-replay ---\n'
+PAIRING_REPLAY_OUTPUT="$(atlas research provider-request-response-pairing-replay "$PAIRING_ID" --json)"
+assert_no_absolute_paths "$PAIRING_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$PAIRING_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$PAIRING_REPLAY_OUTPUT" "provider-request-response-pairing-replay CLI output"
+assert_ok "$PAIRING_REPLAY_OUTPUT" "research provider-request-response-pairing-replay"
+PAIRING_REPLAY_STATUS="$(json_field "$PAIRING_REPLAY_OUTPUT" status)"
+if [ "$PAIRING_REPLAY_STATUS" != "research_provider_request_response_pairing_replayed" ]; then
+  printf 'FAIL: unexpected provider-request-response-pairing-replay status: %s\n' "$PAIRING_REPLAY_STATUS" >&2
+  exit 1
+fi
+PAIRING_REPLAY_MATCH="$(json_field "$PAIRING_REPLAY_OUTPUT" match)"
+if [ "$PAIRING_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-request-response-pairing-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83.10. Research provider-request-response-pairing-summary
+printf '\n--- Research provider-request-response-pairing-summary ---\n'
+PAIRING_SUMMARY_OUTPUT="$(atlas research provider-request-response-pairing-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$PAIRING_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$PAIRING_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$PAIRING_SUMMARY_OUTPUT" "provider-request-response-pairing-summary CLI output"
+assert_ok "$PAIRING_SUMMARY_OUTPUT" "research provider-request-response-pairing-summary"
+PAIRING_SUMMARY_COMPLETED="$(json_field "$PAIRING_SUMMARY_OUTPUT" request_response_pair_completed)"
+if [ "$PAIRING_SUMMARY_COMPLETED" != "False" ]; then
+  printf 'FAIL: provider-request-response-pairing-summary request_response_pair_completed is not False\n' >&2
+  exit 1
+fi
+PAIRING_SUMMARY_FUTURE="$(json_field "$PAIRING_SUMMARY_OUTPUT" future_response_artifact_present)"
+if [ "$PAIRING_SUMMARY_FUTURE" != "False" ]; then
+  printf 'FAIL: provider-request-response-pairing-summary future_response_artifact_present is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83.11. Research provider-request-response-pairing-doctor
+printf '\n--- Research provider-request-response-pairing-doctor ---\n'
+PAIRING_DOCTOR_OUTPUT="$(atlas research provider-request-response-pairing-doctor --json)"
+assert_no_absolute_paths "$PAIRING_DOCTOR_OUTPUT"
+assert_no_secrets_in_output "$PAIRING_DOCTOR_OUTPUT"
+assert_no_forbidden_fragments "$PAIRING_DOCTOR_OUTPUT" "provider-request-response-pairing-doctor CLI output"
+assert_ok "$PAIRING_DOCTOR_OUTPUT" "research provider-request-response-pairing-doctor"
+PAIRING_DOCTOR_STATUS="$(json_field "$PAIRING_DOCTOR_OUTPUT" status)"
+if [ "$PAIRING_DOCTOR_STATUS" != "research_provider_request_response_pairing_doctor" ]; then
+  printf 'FAIL: unexpected provider-request-response-pairing-doctor status: %s\n' "$PAIRING_DOCTOR_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83.12. Research timeline after pairing (validate pairing nesting)
+printf '\n--- Research timeline (post pairing) ---\n'
+TIMELINE_OUTPUT_PAIRING="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_PAIRING"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_PAIRING"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_PAIRING" "timeline CLI output after pairing"
+assert_ok "$TIMELINE_OUTPUT_PAIRING" "research timeline after pairing"
+TIMELINE_PAIRING_STATUS="$(json_field "$TIMELINE_OUTPUT_PAIRING" status)"
+if [ "$TIMELINE_PAIRING_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after pairing: %s\n' "$TIMELINE_PAIRING_STATUS" >&2
+  exit 1
+fi
+TIMELINE_PAIRING_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets',[]):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            for r in a.get('provider_execution_readiness_reports',[]):
+                                if r.get('provider_execution_readiness_report_id')!='$READINESS_REPORT_ID':
+                                    continue
+                                for f in r.get('provider_preflight_freezes',[]):
+                                    if f.get('provider_preflight_freeze_id')!='$FREEZE_ID':
+                                        continue
+                                    for pol in f.get('provider_opt_in_policies',[]):
+                                        if pol.get('provider_opt_in_policy_id')!='$POLICY_ID':
+                                            continue
+                                        for b in pol.get('provider_credential_boundaries',[]):
+                                            if b.get('provider_credential_boundary_id')!='$BOUNDARY_ID':
+                                                continue
+                                            for pr in b.get('provider_outbound_payload_previews',[]):
+                                                if pr.get('provider_outbound_payload_preview_id')!='$PAYLOAD_PREVIEW_ID':
+                                                    continue
+                                                for ip in pr.get('provider_response_intake_policies',[]):
+                                                    if ip.get('provider_response_intake_policy_id')!='$INTAKE_POLICY_ID':
+                                                        continue
+                                                    pairings=[pp.get('provider_request_response_pairing_id') for pp in ip.get('provider_request_response_pairings',[])]
+                                                    if '$PAIRING_ID' in pairings:
+                                                        print('valid')
+                                                        break
+                                                break
+                                            break
+                                        break
+                                    break
+                                break
+                            break
+                        break
+                    break
+                break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_PAIRING" )"
+if [ "$TIMELINE_PAIRING_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link pairing under intake policy %s\n' "$INTAKE_POLICY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

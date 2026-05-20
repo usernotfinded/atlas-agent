@@ -352,6 +352,23 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                                                                                 with open(os.path.join(intake_dir, ifname)) as inf:
                                                                                                                                     ipol = json.load(inf)
                                                                                                                                 if ipol.get("source_provider_outbound_payload_preview_id") == pr.get("provider_outbound_payload_preview_id", ""):
+                                                                                                                                    # Look up pairings for this intake policy
+                                                                                                                                    pairings = []
+                                                                                                                                    pairing_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_request_response_pairings")
+                                                                                                                                    if os.path.isdir(pairing_dir):
+                                                                                                                                        for pfname in sorted(os.listdir(pairing_dir)):
+                                                                                                                                            if pfname.endswith(".json"):
+                                                                                                                                                with open(os.path.join(pairing_dir, pfname)) as pnf:
+                                                                                                                                                    pn = json.load(pnf)
+                                                                                                                                                if pn.get("source_provider_response_intake_policy_id") == ipol.get("provider_response_intake_policy_id", ""):
+                                                                                                                                                    pairings.append({
+                                                                                                                                                        "provider_request_response_pairing_id": pn.get("provider_request_response_pairing_id", ""),
+                                                                                                                                                        "source_provider_response_intake_policy_id": pn.get("source_provider_response_intake_policy_id", ""),
+                                                                                                                                                        "pairing_status": pn.get("pairing_status", ""),
+                                                                                                                                                        "pairing_state": pn.get("pairing_state", ""),
+                                                                                                                                                        "created_at": pn.get("created_at", ""),
+                                                                                                                                                        "artifact_path": pn.get("artifact_path", ""),
+                                                                                                                                                    })
                                                                                                                                     intake_policies.append({
                                                                                                                                         "provider_response_intake_policy_id": ipol.get("provider_response_intake_policy_id", ""),
                                                                                                                                         "source_provider_outbound_payload_preview_id": ipol.get("source_provider_outbound_payload_preview_id", ""),
@@ -359,6 +376,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                                                                                         "response_intake_policy_scope": ipol.get("response_intake_policy_scope", ""),
                                                                                                                                         "created_at": ipol.get("created_at", ""),
                                                                                                                                         "artifact_path": ipol.get("artifact_path", ""),
+                                                                                                                                        "provider_request_response_pairings": pairings,
                                                                                                                                     })
                                                                                                                     previews.append({
                                                                                                                         "provider_outbound_payload_preview_id": pr.get("provider_outbound_payload_preview_id", ""),
@@ -2189,6 +2207,138 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-summary
         "provider_response_received": False,
         "provider_response_can_create_orders": False,
         "artifact_path": None,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-request-response-pairing":
+    intake_policy_id = ARGS[2]
+    pairing_id = "demopairingid" + intake_policy_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/provider_request_response_pairings/{pairing_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_request_response_pairings"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_request_response_pairing",
+            "contract_version": "research_provider_request_response_pairing_v1",
+            "provider_request_response_pairing_id": pairing_id,
+            "source_provider_response_intake_policy_id": intake_policy_id,
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "pairing_status": "pairing_contract_recorded",
+            "pairing_state": "request_preview_only",
+            "pairing_scope": "future_provider_request_response_pairing_only",
+            "request_response_pair_completed": False,
+            "future_response_artifact_present": False,
+            "future_response_hash_present": False,
+            "provider_response_trusted": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": artifact_path,
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+        }, f)
+    print(json.dumps({
+        "ok": True,
+        "status": "research_provider_request_response_pairing_created",
+        "provider_request_response_pairing_id": pairing_id,
+        "source_provider_response_intake_policy_id": intake_policy_id,
+        "request_response_pair_completed": False,
+        "future_response_artifact_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": artifact_path,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-request-response-pairing-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_request_response_pairing_list",
+        "items": [{
+            "provider_request_response_pairing_id": "demopairingidaryid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "pairing_status": "pairing_contract_recorded",
+            "pairing_state": "request_preview_only",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_request_response_pairings/demopairingidaryid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+        }],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-request-response-pairing-show":
+    pairing_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_request_response_pairing_shown",
+        "provider_request_response_pairing_id": pairing_id,
+        "pairing_status": "pairing_contract_recorded",
+        "pairing_state": "request_preview_only",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "request_response_pair_completed": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_request_response_pairings/" + pairing_id + ".json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-request-response-pairing-validate":
+    pairing_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_request_response_pairing_validated",
+        "provider_request_response_pairing_id": pairing_id,
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-request-response-pairing-replay":
+    pairing_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_request_response_pairing_replayed",
+        "provider_request_response_pairing_id": pairing_id,
+        "match": True,
+        "original_hash": "abc",
+        "replayed_hash": "abc",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-request-response-pairing-summary":
+    run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_request_response_pairing_summary",
+        "run_id": run_id,
+        "provider_request_response_pairing_id": "demopairingidaryid12345",
+        "pairing_status": "pairing_contract_recorded",
+        "request_response_pair_completed": False,
+        "future_response_artifact_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": None,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-request-response-pairing-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_request_response_pairing_doctor",
+        "total_pairings": 1,
+        "valid_pairings": 1,
+        "invalid_pairings": 0,
+        "issues": [],
+        "warnings": [],
     }))
     sys.exit(0)
 

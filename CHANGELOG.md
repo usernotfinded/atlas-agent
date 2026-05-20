@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev32] - 2026-05-20
+
+### Added
+- Batch 8.5 — Provider Request/Response Pairing Contract Artifact.
+  - `src/atlas_agent/research/provider_request_response_pairing.py`: local provider request/response pairing contract artifacts.
+  - `build_provider_request_response_pairing_dict()`: deterministic pairing contract artifact construction from intake policy.
+  - `create_provider_request_response_pairing()`: safe creation with validation, lineage, hash, and denylist scanning.
+  - `safe_validate_provider_request_response_pairing_data()`: strict validation with invalid sentinel returns.
+  - `validate_provider_request_response_pairing_artifact()`: detailed per-check validation.
+  - `replay_provider_request_response_pairing()`: deterministic hash replay from source intake policy.
+  - `iter_provider_request_response_pairing_artifacts()`: safe listing with invalid sentinels for tampered items.
+  - `summarize_provider_request_response_pairing_state()`: read-only summary without writing artifacts.
+  - `doctor_provider_request_response_pairing_state()`: read-only chain diagnostic.
+  - `provider_request_response_pairing_sha256()`: deterministic canonical hash excluding volatile fields.
+  - 12 policy substructures: `request_side`, `response_side`, `correlation_policy`, `provider_trace_policy`, `request_hash_policy`, `response_hash_policy`, `pairing_validation_policy`, `pairing_replay_policy`, `mismatch_policy`, `trust_boundary_policy`, `manual_review_policy`, `future_response_requirements`.
+  - 30 boolean safety flags including `request_response_pair_completed`, `future_response_artifact_present`, `future_response_hash_present`, `provider_trace_id_present`, `external_correlation_id_present`, `raw_request_body_stored`, `raw_response_body_stored`.
+  - 7 new CLI commands: `provider-request-response-pairing`, `provider-request-response-pairing-list`, `provider-request-response-pairing-show`, `provider-request-response-pairing-validate`, `provider-request-response-pairing-replay`, `provider-request-response-pairing-summary`, `provider-request-response-pairing-doctor`.
+  - Integration into `check-artifacts`, `timeline`, and `dossier`.
+  - Tests in `tests/research/test_research_provider_request_response_pairing.py`.
+  - Demo workflow extended with pairing creation, list, show, validate, replay, summary, doctor, and timeline lineage checks.
+
 ## [0.5.7.dev31] - 2026-05-20
 
 ### Added

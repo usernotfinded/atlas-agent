@@ -1,3 +1,3 @@
 """Atlas Agent: safe-by-default AI trading framework."""
 
-__version__ = "0.5.7.dev31"
+__version__ = "0.5.7.dev32"
