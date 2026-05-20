@@ -47,7 +47,16 @@ This document defines the policy for future LLM/API provider execution within At
 - No broker credentials in outbound payloads.
 - No unbounded prompt bodies; max context chars must be enforced.
 - No hidden live-trading instructions embedded in prompts.
-- A **payload preview artifact** must exist before any future network call.
+- A **provider outbound payload preview artifact** must exist before any future network call.
+- The payload preview artifact must contain:
+  - `payload_shape`: safe metadata about request family, message count estimate, and policy flags.
+  - `payload_minimization_summary`: confirmation that raw text is omitted and hashes are used.
+  - `payload_redaction_summary`: confirmation that secrets, paths, and broker credentials are redacted.
+  - `payload_hash`: a deterministic hash of the preview (not the raw payload).
+  - `blocked_fields`: safe category labels only, never raw fragments.
+- The payload preview artifact must have all safety flags set to `False`, including:
+  - `provider_enabled`, `network_enabled`, `credentials_loaded`, `outbound_request_sent`, `payload_body_stored`.
+- No raw prompt body, raw request body, or raw response body may be stored in the preview artifact.
 - The preview artifact must be denylist-clean and hash-validated.
 
 ## 5. Provider Response Policy

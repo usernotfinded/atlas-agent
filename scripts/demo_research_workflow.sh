@@ -1798,7 +1798,217 @@ if [ "$TIMELINE_BOUNDARY_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 71. Create local provider response fixture and import it
+# 71. Research provider-payload-preview
+printf '\n--- Research provider-payload-preview ---\n'
+PAYLOAD_PREVIEW_OUTPUT="$(atlas research provider-payload-preview "$BOUNDARY_ID" --json)"
+assert_no_absolute_paths "$PAYLOAD_PREVIEW_OUTPUT"
+assert_no_secrets_in_output "$PAYLOAD_PREVIEW_OUTPUT"
+assert_no_forbidden_fragments "$PAYLOAD_PREVIEW_OUTPUT" "provider-payload-preview CLI output"
+assert_ok "$PAYLOAD_PREVIEW_OUTPUT" "research provider-payload-preview"
+PAYLOAD_PREVIEW_STATUS="$(json_field "$PAYLOAD_PREVIEW_OUTPUT" status)"
+if [ "$PAYLOAD_PREVIEW_STATUS" != "research_provider_outbound_payload_preview_created" ]; then
+  printf 'FAIL: unexpected provider-payload-preview status: %s\n' "$PAYLOAD_PREVIEW_STATUS" >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_ID="$(json_field "$PAYLOAD_PREVIEW_OUTPUT" provider_outbound_payload_preview_id)"
+if [ -z "$PAYLOAD_PREVIEW_ID" ]; then
+  printf 'FAIL: provider_outbound_payload_preview_id is empty\n' >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_ARTIFACT_PATH="$(json_field "$PAYLOAD_PREVIEW_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$PAYLOAD_PREVIEW_ARTIFACT_PATH" "provider outbound payload preview artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$PAYLOAD_PREVIEW_ARTIFACT_PATH")" "provider outbound payload preview artifact"
+PAYLOAD_PREVIEW_BODY_STORED="$(json_field "$PAYLOAD_PREVIEW_OUTPUT" payload_body_stored)"
+if [ "$PAYLOAD_PREVIEW_BODY_STORED" != "False" ]; then
+  printf 'FAIL: provider-payload-preview payload_body_stored is not False\n' >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_OUTBOUND_SENT="$(json_field "$PAYLOAD_PREVIEW_OUTPUT" outbound_request_sent)"
+if [ "$PAYLOAD_PREVIEW_OUTBOUND_SENT" != "False" ]; then
+  printf 'FAIL: provider-payload-preview outbound_request_sent is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 72. Research provider-payload-preview-list
+printf '\n--- Research provider-payload-preview-list ---\n'
+PAYLOAD_PREVIEW_LIST_OUTPUT="$(atlas research provider-payload-preview-list --json)"
+assert_no_absolute_paths "$PAYLOAD_PREVIEW_LIST_OUTPUT"
+assert_no_secrets_in_output "$PAYLOAD_PREVIEW_LIST_OUTPUT"
+assert_no_forbidden_fragments "$PAYLOAD_PREVIEW_LIST_OUTPUT" "provider-payload-preview-list CLI output"
+assert_ok "$PAYLOAD_PREVIEW_LIST_OUTPUT" "research provider-payload-preview-list"
+PAYLOAD_PREVIEW_LIST_STATUS="$(json_field "$PAYLOAD_PREVIEW_LIST_OUTPUT" status)"
+if [ "$PAYLOAD_PREVIEW_LIST_STATUS" != "research_provider_outbound_payload_previews_listed" ]; then
+  printf 'FAIL: unexpected provider-payload-preview-list status: %s\n' "$PAYLOAD_PREVIEW_LIST_STATUS" >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_LIST_HAS_ID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(any(i.get('provider_outbound_payload_preview_id')=='$PAYLOAD_PREVIEW_ID' for i in items))
+" <<<"$PAYLOAD_PREVIEW_LIST_OUTPUT" )"
+if [ "$PAYLOAD_PREVIEW_LIST_HAS_ID" != "True" ]; then
+  printf 'FAIL: provider-payload-preview-list does not contain provider_outbound_payload_preview_id %s\n' "$PAYLOAD_PREVIEW_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 73. Research provider-payload-preview-show
+printf '\n--- Research provider-payload-preview-show ---\n'
+PAYLOAD_PREVIEW_SHOW_OUTPUT="$(atlas research provider-payload-preview-show "$PAYLOAD_PREVIEW_ID" --json)"
+assert_no_absolute_paths "$PAYLOAD_PREVIEW_SHOW_OUTPUT"
+assert_no_secrets_in_output "$PAYLOAD_PREVIEW_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$PAYLOAD_PREVIEW_SHOW_OUTPUT" "provider-payload-preview-show CLI output"
+assert_ok "$PAYLOAD_PREVIEW_SHOW_OUTPUT" "research provider-payload-preview-show"
+PAYLOAD_PREVIEW_SHOW_STATUS="$(json_field "$PAYLOAD_PREVIEW_SHOW_OUTPUT" status)"
+if [ "$PAYLOAD_PREVIEW_SHOW_STATUS" != "research_provider_outbound_payload_preview_loaded" ]; then
+  printf 'FAIL: unexpected provider-payload-preview-show status: %s\n' "$PAYLOAD_PREVIEW_SHOW_STATUS" >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_SHOW_ID="$(json_field "$PAYLOAD_PREVIEW_SHOW_OUTPUT" 'artifact.provider_outbound_payload_preview_id')"
+if [ "$PAYLOAD_PREVIEW_SHOW_ID" != "$PAYLOAD_PREVIEW_ID" ]; then
+  printf 'FAIL: provider-payload-preview-show returned unexpected provider_outbound_payload_preview_id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 74. Research provider-payload-preview-validate
+printf '\n--- Research provider-payload-preview-validate ---\n'
+PAYLOAD_PREVIEW_VALIDATE_OUTPUT="$(atlas research provider-payload-preview-validate "$PAYLOAD_PREVIEW_ID" --json)"
+assert_no_absolute_paths "$PAYLOAD_PREVIEW_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$PAYLOAD_PREVIEW_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$PAYLOAD_PREVIEW_VALIDATE_OUTPUT" "provider-payload-preview-validate CLI output"
+assert_ok "$PAYLOAD_PREVIEW_VALIDATE_OUTPUT" "research provider-payload-preview-validate"
+PAYLOAD_PREVIEW_VALIDATE_STATUS="$(json_field "$PAYLOAD_PREVIEW_VALIDATE_OUTPUT" status)"
+if [ "$PAYLOAD_PREVIEW_VALIDATE_STATUS" != "research_provider_outbound_payload_preview_validated" ]; then
+  printf 'FAIL: unexpected provider-payload-preview-validate status: %s\n' "$PAYLOAD_PREVIEW_VALIDATE_STATUS" >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_VALIDATE_VALID="$(json_field "$PAYLOAD_PREVIEW_VALIDATE_OUTPUT" valid)"
+if [ "$PAYLOAD_PREVIEW_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: provider-payload-preview-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 75. Research provider-payload-preview-replay
+printf '\n--- Research provider-payload-preview-replay ---\n'
+PAYLOAD_PREVIEW_REPLAY_OUTPUT="$(atlas research provider-payload-preview-replay "$PAYLOAD_PREVIEW_ID" --json)"
+assert_no_absolute_paths "$PAYLOAD_PREVIEW_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$PAYLOAD_PREVIEW_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$PAYLOAD_PREVIEW_REPLAY_OUTPUT" "provider-payload-preview-replay CLI output"
+assert_ok "$PAYLOAD_PREVIEW_REPLAY_OUTPUT" "research provider-payload-preview-replay"
+PAYLOAD_PREVIEW_REPLAY_STATUS="$(json_field "$PAYLOAD_PREVIEW_REPLAY_OUTPUT" status)"
+if [ "$PAYLOAD_PREVIEW_REPLAY_STATUS" != "research_provider_outbound_payload_preview_replayed" ]; then
+  printf 'FAIL: unexpected provider-payload-preview-replay status: %s\n' "$PAYLOAD_PREVIEW_REPLAY_STATUS" >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_REPLAY_MATCH="$(json_field "$PAYLOAD_PREVIEW_REPLAY_OUTPUT" match)"
+if [ "$PAYLOAD_PREVIEW_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-payload-preview-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 76. Research provider-payload-preview-summary
+printf '\n--- Research provider-payload-preview-summary ---\n'
+PAYLOAD_PREVIEW_SUMMARY_OUTPUT="$(atlas research provider-payload-preview-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$PAYLOAD_PREVIEW_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$PAYLOAD_PREVIEW_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$PAYLOAD_PREVIEW_SUMMARY_OUTPUT" "provider-payload-preview-summary CLI output"
+assert_ok "$PAYLOAD_PREVIEW_SUMMARY_OUTPUT" "research provider-payload-preview-summary"
+PAYLOAD_PREVIEW_SUMMARY_BODY="$(json_field "$PAYLOAD_PREVIEW_SUMMARY_OUTPUT" payload_body_stored)"
+if [ "$PAYLOAD_PREVIEW_SUMMARY_BODY" != "False" ]; then
+  printf 'FAIL: payload preview summary payload_body_stored is not False\n' >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_SUMMARY_OUTBOUND="$(json_field "$PAYLOAD_PREVIEW_SUMMARY_OUTPUT" outbound_request_sent)"
+if [ "$PAYLOAD_PREVIEW_SUMMARY_OUTBOUND" != "False" ]; then
+  printf 'FAIL: payload preview summary outbound_request_sent is not False\n' >&2
+  exit 1
+fi
+PAYLOAD_PREVIEW_SUMMARY_CREDS="$(json_field "$PAYLOAD_PREVIEW_SUMMARY_OUTPUT" credentials_loaded)"
+if [ "$PAYLOAD_PREVIEW_SUMMARY_CREDS" != "False" ]; then
+  printf 'FAIL: payload preview summary credentials_loaded is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 77. Research timeline after payload preview
+printf '\n--- Research timeline (post payload preview) ---\n'
+TIMELINE_OUTPUT_PAYLOAD_PREVIEW="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_PAYLOAD_PREVIEW"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_PAYLOAD_PREVIEW"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_PAYLOAD_PREVIEW" "timeline CLI output after payload preview"
+assert_ok "$TIMELINE_OUTPUT_PAYLOAD_PREVIEW" "research timeline after payload preview"
+TIMELINE_PAYLOAD_PREVIEW_STATUS="$(json_field "$TIMELINE_OUTPUT_PAYLOAD_PREVIEW" status)"
+if [ "$TIMELINE_PAYLOAD_PREVIEW_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after payload preview: %s\n' "$TIMELINE_PAYLOAD_PREVIEW_STATUS" >&2
+  exit 1
+fi
+TIMELINE_PAYLOAD_PREVIEW_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets',[]):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            for r in a.get('provider_execution_readiness_reports',[]):
+                                if r.get('provider_execution_readiness_report_id')!='$READINESS_REPORT_ID':
+                                    continue
+                                for f in r.get('provider_preflight_freezes',[]):
+                                    if f.get('provider_preflight_freeze_id')!='$FREEZE_ID':
+                                        continue
+                                    for pol in f.get('provider_opt_in_policies',[]):
+                                        if pol.get('provider_opt_in_policy_id')!='$POLICY_ID':
+                                            continue
+                                        for b in pol.get('provider_credential_boundaries',[]):
+                                            if b.get('provider_credential_boundary_id')!='$BOUNDARY_ID':
+                                                continue
+                                            previews=[pr.get('provider_outbound_payload_preview_id') for pr in b.get('provider_outbound_payload_previews',[])]
+                                            if '$PAYLOAD_PREVIEW_ID' in previews:
+                                                print('valid')
+                                                break
+                                        break
+                                    break
+                                break
+                            break
+                        break
+                    break
+                break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_PAYLOAD_PREVIEW" )"
+if [ "$TIMELINE_PAYLOAD_PREVIEW_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link payload preview under boundary %s\n' "$BOUNDARY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 78. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

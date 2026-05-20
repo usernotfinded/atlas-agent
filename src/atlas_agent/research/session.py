@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1398,6 +1398,8 @@ def check_research_artifacts(
     provider_preflight_freeze_data: list[dict[str, Any]] = []
     provider_opt_in_policy_data: list[dict[str, Any]] = []
     provider_credential_boundary_data: list[dict[str, Any]] = []
+    provider_outbound_payload_preview_ids: dict[str, list[str]] = {}
+    provider_outbound_payload_preview_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1445,6 +1447,7 @@ def check_research_artifacts(
             "provider_preflight_freeze": "provider_preflight_freeze_id",
             "provider_opt_in_policy": "provider_opt_in_policy_id",
             "provider_credential_boundary": "provider_credential_boundary_id",
+            "provider_outbound_payload_preview": "provider_outbound_payload_preview_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1489,6 +1492,8 @@ def check_research_artifacts(
         elif expected_type == "provider_opt_in_policy" and "provider_opt_in_policies" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_credential_boundary" and "provider_credential_boundaries" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_outbound_payload_preview" and "provider_outbound_payload_previews" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1680,6 +1685,23 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_outbound_payload_preview":
+            for f in ("provider_outbound_payload_preview_id", "source_provider_credential_boundary_id", "symbol", "provider_id", "model_id", "payload_preview_status", "payload_preview_scope"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_outbound_payload_preview import (
+                safe_validate_provider_outbound_payload_preview_data,
+            )
+            _cleaned, error = safe_validate_provider_outbound_payload_preview_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1726,6 +1748,9 @@ def check_research_artifacts(
             elif expected_type == "provider_credential_boundary":
                 provider_credential_boundary_ids.setdefault(raw_id, []).append(rel)
                 provider_credential_boundary_data.append(data)
+            elif expected_type == "provider_outbound_payload_preview":
+                provider_outbound_payload_preview_ids.setdefault(raw_id, []).append(rel)
+                provider_outbound_payload_preview_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1761,6 +1786,8 @@ def check_research_artifacts(
             counts["provider_opt_in_policies"] += 1
         elif expected_type == "provider_credential_boundary":
             counts["provider_credential_boundaries"] += 1
+        elif expected_type == "provider_outbound_payload_preview":
+            counts["provider_outbound_payload_previews"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1866,6 +1893,12 @@ def check_research_artifacts(
             for path in provider_credential_boundaries_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_credential_boundary", expected_symbol)
+        # Provider outbound payload previews
+        provider_outbound_payload_previews_dir = sym_dir / "provider_outbound_payload_previews"
+        if provider_outbound_payload_previews_dir.exists():
+            for path in provider_outbound_payload_previews_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_outbound_payload_preview", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1933,6 +1966,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for pcbid, paths in provider_credential_boundary_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for ppid, paths in provider_outbound_payload_preview_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2176,6 +2213,40 @@ def check_research_artifacts(
         # Impossible booleans in boundary
         from atlas_agent.research.provider_credential_boundary import _check_boolean_safety_flags
         error = _check_boolean_safety_flags(boundary)
+        if error:
+            issues.append({"code": error, "path": rel, "severity": "error"})
+
+    # Provider outbound payload preview lineage checks
+    provider_credential_boundary_data_by_id: dict[str, dict[str, Any]] = {}
+    for boundary in provider_credential_boundary_data:
+        bid = boundary.get("provider_credential_boundary_id", "")
+        if bid:
+            provider_credential_boundary_data_by_id[bid] = boundary
+
+    for preview in provider_outbound_payload_preview_data:
+        rel = preview.get("artifact_path", "")
+        src_boundary_id = preview.get("source_provider_credential_boundary_id", "")
+        # Invalid lineage
+        try:
+            validate_run_id(src_boundary_id)
+        except ResearchSessionError:
+            issues.append({"code": "invalid_lineage", "path": rel, "severity": "error"})
+            continue
+        # Missing source credential boundary
+        if src_boundary_id not in provider_credential_boundary_data_by_id:
+            issues.append({"code": "missing_source_credential_boundary", "path": rel, "severity": "error"})
+            continue
+        # Source credential boundary hash mismatch
+        stored_boundary_hash = preview.get("source_credential_boundary_hash", "")
+        if stored_boundary_hash:
+            src_boundary = provider_credential_boundary_data_by_id[src_boundary_id]
+            actual_boundary_hash = src_boundary.get("artifact_hash", "")
+            if actual_boundary_hash != stored_boundary_hash:
+                issues.append({"code": "source_credential_boundary_hash_mismatch", "path": rel, "severity": "error"})
+                continue
+        # Impossible booleans in payload preview
+        from atlas_agent.research.provider_outbound_payload_preview import _check_boolean_safety_flags
+        error = _check_boolean_safety_flags(preview)
         if error:
             issues.append({"code": error, "path": rel, "severity": "error"})
 
@@ -2593,6 +2664,8 @@ def build_research_timeline(
     provider_opt_in_policy_items = iter_provider_opt_in_policy_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_credential_boundary import iter_provider_credential_boundary_artifacts
     provider_credential_boundary_items = iter_provider_credential_boundary_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_outbound_payload_preview import iter_provider_outbound_payload_preview_artifacts
+    provider_outbound_payload_preview_items = iter_provider_outbound_payload_preview_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -2745,6 +2818,17 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_credential_boundary", "path": pcb.get("artifact_path", ""), "severity": "warning"})
 
+    provider_outbound_payload_previews_by_boundary_id: dict[str, list[dict[str, Any]]] = {}
+    for pp in provider_outbound_payload_preview_items:
+        if pp.get("_invalid"):
+            warnings.append({"code": "invalid_provider_outbound_payload_preview_skipped", "path": pp.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = pp.get("source_provider_credential_boundary_id", "")
+        if src:
+            provider_outbound_payload_previews_by_boundary_id.setdefault(src, []).append(pp)
+        else:
+            warnings.append({"code": "orphan_provider_outbound_payload_preview", "path": pp.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -2863,6 +2947,17 @@ def build_research_timeline(
         if src and src not in seen_policy_ids:
             warnings.append({"code": "orphan_provider_credential_boundary", "path": pcb.get("artifact_path", ""), "severity": "warning"})
 
+    # Track seen credential boundary IDs for orphan payload preview detection
+    seen_boundary_ids = set()
+    for pcb in provider_credential_boundary_items:
+        if not pcb.get("_invalid"):
+            seen_boundary_ids.add(pcb.get("provider_credential_boundary_id", ""))
+
+    for pp in provider_outbound_payload_preview_items:
+        src = pp.get("source_provider_credential_boundary_id", "")
+        if src and src not in seen_boundary_ids:
+            warnings.append({"code": "orphan_provider_outbound_payload_preview", "path": pp.get("artifact_path", ""), "severity": "warning"})
+
     # Build entries
     entries: list[dict[str, Any]] = []
     for research in research_items:
@@ -2962,7 +3057,14 @@ def build_research_timeline(
                                         for policy in freeze_copy["provider_opt_in_policies"]:
                                             policy_copy = dict(policy)
                                             policy_id = policy_copy.get("provider_opt_in_policy_id", "")
-                                            policy_copy["provider_credential_boundaries"] = provider_credential_boundaries_by_policy_id.get(policy_id, [])
+                                            boundaries = provider_credential_boundaries_by_policy_id.get(policy_id, [])
+                                            boundaries_with_previews = []
+                                            for boundary in boundaries:
+                                                boundary_copy = dict(boundary)
+                                                boundary_id = boundary_copy.get("provider_credential_boundary_id", "")
+                                                boundary_copy["provider_outbound_payload_previews"] = provider_outbound_payload_previews_by_boundary_id.get(boundary_id, [])
+                                                boundaries_with_previews.append(boundary_copy)
+                                            policy_copy["provider_credential_boundaries"] = boundaries_with_previews
                                             policies_with_boundaries.append(policy_copy)
                                         freeze_copy["provider_opt_in_policies"] = policies_with_boundaries
                                         freezes_with_policies.append(freeze_copy)
@@ -4384,6 +4486,11 @@ def build_dossier(
     from atlas_agent.research.provider_credential_boundary import iter_provider_credential_boundary_artifacts
     provider_credential_boundary_items = iter_provider_credential_boundary_artifacts(workspace_path, symbol=symbol)
     linked_provider_credential_boundaries = [pcb for pcb in provider_credential_boundary_items if pcb.get("source_provider_opt_in_policy_id") in linked_policy_ids]
+    linked_credential_boundary_ids = {pcb.get("provider_credential_boundary_id", "") for pcb in linked_provider_credential_boundaries}
+
+    from atlas_agent.research.provider_outbound_payload_preview import iter_provider_outbound_payload_preview_artifacts
+    provider_outbound_payload_preview_items = iter_provider_outbound_payload_preview_artifacts(workspace_path, symbol=symbol)
+    linked_provider_outbound_payload_previews = [pp for pp in provider_outbound_payload_preview_items if pp.get("source_provider_credential_boundary_id") in linked_credential_boundary_ids]
 
     # Build workflow status
     workflow_status = {
@@ -4403,6 +4510,7 @@ def build_dossier(
         "provider_preflight_freezes": len(linked_provider_preflight_freezes) > 0,
         "provider_opt_in_policies": len(linked_provider_opt_in_policies) > 0,
         "provider_credential_boundaries": len(linked_provider_credential_boundaries) > 0,
+        "provider_outbound_payload_previews": len(linked_provider_outbound_payload_previews) > 0,
     }
 
     artifact_counts = {
@@ -4422,6 +4530,7 @@ def build_dossier(
         "provider_preflight_freezes": len(linked_provider_preflight_freezes),
         "provider_opt_in_policies": len(linked_provider_opt_in_policies),
         "provider_credential_boundaries": len(linked_provider_credential_boundaries),
+        "provider_outbound_payload_previews": len(linked_provider_outbound_payload_previews),
     }
 
     # Build linked_artifacts with relative paths only
@@ -4545,6 +4654,16 @@ def build_dossier(
             "credential_boundary_scope": pcb.get("credential_boundary_scope", ""),
             "credential_loading_state": pcb.get("credential_loading_state", ""),
         })
+    for pp in linked_provider_outbound_payload_previews:
+        linked_artifacts.append({
+            "type": "provider_outbound_payload_preview",
+            "id": pp.get("provider_outbound_payload_preview_id", ""),
+            "artifact_path": pp.get("artifact_path", ""),
+            "payload_preview_status": pp.get("payload_preview_status", ""),
+            "payload_preview_scope": pp.get("payload_preview_scope", ""),
+            "provider_id": pp.get("provider_id", ""),
+            "model_id": pp.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -4636,6 +4755,14 @@ def build_dossier(
             "boundary_scopes": [pcb.get("credential_boundary_scope", "") for pcb in linked_provider_credential_boundaries],
             "credential_loading_states": [pcb.get("credential_loading_state", "") for pcb in linked_provider_credential_boundaries],
         }
+    if linked_provider_outbound_payload_previews:
+        summaries["provider_outbound_payload_preview"] = {
+            "preview_count": len(linked_provider_outbound_payload_previews),
+            "payload_preview_statuses": [pp.get("payload_preview_status", "") for pp in linked_provider_outbound_payload_previews],
+            "payload_preview_scopes": [pp.get("payload_preview_scope", "") for pp in linked_provider_outbound_payload_previews],
+            "provider_ids": [pp.get("provider_id", "") for pp in linked_provider_outbound_payload_previews],
+            "model_ids": [pp.get("model_id", "") for pp in linked_provider_outbound_payload_previews],
+        }
 
     # Safety summary
     safety_summary = {
@@ -4681,6 +4808,8 @@ def build_dossier(
     warnings: list[str] = []
     if missing_links:
         warnings.append("incomplete_chain")
+    if not linked_provider_outbound_payload_previews:
+        warnings.append("no_provider_outbound_payload_preview")
 
     # Determine recommendation
     core_present = linked_plans and linked_prompts and linked_provider_responses and linked_response_reviews

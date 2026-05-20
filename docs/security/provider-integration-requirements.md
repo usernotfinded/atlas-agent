@@ -24,9 +24,11 @@ This checklist defines the requirements that must be met before real LLM/API pro
 
 ## Required Before First Real Network Call
 
-- [ ] Outbound payload is generated as an artifact before the network call.
-- [ ] Payload artifact is denylist-clean.
-- [ ] Payload artifact hash is computed and stored.
+- [x] Outbound payload is generated as an artifact before the network call.
+- [x] Payload artifact is denylist-clean.
+- [x] Payload artifact hash is computed and stored.
+- [x] Payload preview artifact contains `payload_shape`, `payload_minimization_summary`, `payload_redaction_summary`, `blocked_fields`, and safe category labels only.
+- [x] Payload preview artifact confirms all 25 safety flags are `False`.
 - [ ] Dry-run artifact hash matches the real payload hash (parity check).
 - [ ] Explicit opt-in artifact or manual unlock command has been executed.
 - [ ] Provider execution state artifact documents the transition to `provider_call_allowed`.

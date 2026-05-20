@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev30] - 2026-05-20
+
+### Added
+- Batch 8.3 — Provider Outbound Payload Preview Artifact.
+  - `src/atlas_agent/research/provider_outbound_payload_preview.py`: local provider outbound payload preview artifacts.
+  - `build_provider_outbound_payload_preview_dict()`: deterministic payload preview artifact construction.
+  - `create_provider_outbound_payload_preview()`: safe creation with validation, lineage, and hash.
+  - `safe_validate_provider_outbound_payload_preview_data()`: strict validation with invalid sentinel returns.
+  - `validate_provider_outbound_payload_preview_artifact()`: detailed per-check validation.
+  - `replay_provider_outbound_payload_preview()`: deterministic hash replay from source boundary.
+  - `iter_provider_outbound_payload_preview_artifacts()`: safe listing with invalid sentinels.
+  - `summarize_provider_outbound_payload_preview_state()`: read-only summary without writing artifacts.
+  - Payload shape metadata, minimization summary, redaction summary, blocked fields, and safe category labels.
+  - 25 boolean safety flags including `provider_enabled`, `network_enabled`, `credentials_loaded`, `outbound_request_sent`, `payload_body_stored`.
+  - Impossible boolean detection: `provider_outbound_payload_preview_impossible_boolean`.
+  - denylist-clean manifest: stores only safe metadata; never stores raw forbidden fragments.
+- CLI commands (all configless, local-only):
+  - `atlas research provider-payload-preview PROVIDER_CREDENTIAL_BOUNDARY_ID`
+  - `atlas research provider-payload-preview-list`
+  - `atlas research provider-payload-preview-show PREVIEW_ID`
+  - `atlas research provider-payload-preview-validate PREVIEW_ID`
+  - `atlas research provider-payload-preview-replay PREVIEW_ID`
+  - `atlas research provider-payload-preview-summary RUN_ID`
+- Session integration: `check-artifacts`, `timeline`, and `dossier` now support provider outbound payload preview artifacts.
+- Timeline nesting: payload preview artifacts indexed by `source_provider_credential_boundary_id` under credential boundary entries.
+- Demo workflow extended with payload preview creation, validation, replay, summary, and timeline lineage checks.
+
+### Safety / Compatibility
+- No real provider execution added. No network calls. No API keys. No provider SDKs.
+- No credential loading. No `.env.atlas` loading. No `os.environ` lookup.
+- No broker execution changes. No trading signals. No approvals or pending orders.
+- Boundary diff clean under `src/atlas_agent/config`, `brokers`, `execution`, `safety`, `risk`.
+- Provider execution remains disabled.
+- All configless invariants preserved.
+
 ## [0.5.7.dev29] - 2026-05-20
 
 ### Added

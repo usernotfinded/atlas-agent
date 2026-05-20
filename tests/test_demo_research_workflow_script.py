@@ -333,11 +333,30 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                                             with open(os.path.join(boundary_dir, bfname)) as bf:
                                                                                                 bnd = json.load(bf)
                                                                                             if bnd.get("source_provider_opt_in_policy_id") == policy_id:
+                                                                                                boundary_id = bnd.get("provider_credential_boundary_id", "")
+                                                                                                # Look up payload previews for this boundary
+                                                                                                previews = []
+                                                                                                preview_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_outbound_payload_previews")
+                                                                                                if os.path.isdir(preview_dir):
+                                                                                                    for prfname in sorted(os.listdir(preview_dir)):
+                                                                                                        if prfname.endswith(".json"):
+                                                                                                            with open(os.path.join(preview_dir, prfname)) as prf:
+                                                                                                                pr = json.load(prf)
+                                                                                                            if pr.get("source_provider_credential_boundary_id") == boundary_id:
+                                                                                                                previews.append({
+                                                                                                                    "provider_outbound_payload_preview_id": pr.get("provider_outbound_payload_preview_id", ""),
+                                                                                                                    "source_provider_credential_boundary_id": pr.get("source_provider_credential_boundary_id", ""),
+                                                                                                                    "payload_preview_status": pr.get("payload_preview_status", ""),
+                                                                                                                    "payload_preview_scope": pr.get("payload_preview_scope", ""),
+                                                                                                                    "created_at": pr.get("created_at", ""),
+                                                                                                                    "artifact_path": pr.get("artifact_path", ""),
+                                                                                                                })
                                                                                                 boundaries.append({
-                                                                                                    "provider_credential_boundary_id": bnd.get("provider_credential_boundary_id", ""),
+                                                                                                    "provider_credential_boundary_id": boundary_id,
                                                                                                     "source_provider_opt_in_policy_id": bnd.get("source_provider_opt_in_policy_id", ""),
                                                                                                     "created_at": bnd.get("created_at", ""),
                                                                                                     "artifact_path": bnd.get("artifact_path", ""),
+                                                                                                    "provider_outbound_payload_previews": previews,
                                                                                                 })
                                                                                 policies.append({
                                                                                     "provider_opt_in_policy_id": policy_id,
@@ -1803,6 +1822,187 @@ if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
         "provider_execution_allowed": False,
         "blocking_reasons": ["provider_execution_not_implemented"],
         "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview":
+    boundary_id = ARGS[2]
+    preview_id = "demopayloadpreviewid" + boundary_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/provider_outbound_payload_previews/{preview_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_outbound_payload_previews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_outbound_payload_preview",
+            "contract_version": "research_provider_outbound_payload_preview_v1",
+            "provider_outbound_payload_preview_id": preview_id,
+            "source_provider_credential_boundary_id": boundary_id,
+            "source_provider_opt_in_policy_id": "demopolicyid12345",
+            "source_provider_preflight_freeze_id": "demofreezeid12345",
+            "source_provider_execution_readiness_report_id": "demoreadinessid12345",
+            "source_provider_execution_audit_packet_id": "demoauditid12345",
+            "source_provider_execution_state_id": "demostateid12345",
+            "source_provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demoplanid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "payload_preview_status": "payload_preview_recorded",
+            "payload_preview_scope": "future_provider_request_preview_only",
+            "payload_shape": {
+                "request_family": "chat_like_preview",
+                "message_count_estimate": 0,
+                "max_output_tokens_policy": "bounded_by_model",
+                "temperature_policy": "deterministic",
+                "tool_calls_allowed": False,
+                "streaming_allowed": False,
+                "system_prompt_included": False,
+                "user_prompt_included": False,
+                "raw_body_included": False,
+            },
+            "payload_minimization_summary": {
+                "minimization_required": True,
+                "raw_prompt_omitted": True,
+                "artifact_links_used_instead_of_raw_text": True,
+                "hashes_used_instead_of_raw_content": True,
+                "only_bounded_summaries_allowed": True,
+                "broker_data_omitted": True,
+                "absolute_paths_omitted": True,
+            },
+            "payload_redaction_summary": {
+                "redaction_required": True,
+                "redaction_applied": True,
+                "secrets_redacted": True,
+                "absolute_paths_redacted": True,
+                "broker_credentials_redacted": True,
+                "raw_exception_text_redacted": True,
+                "redaction_profile": "atlas_provider_payload_preview_v1",
+                "raw_denylist_fragments_stored": False,
+            },
+            "payload_hash": "dummypayloadhash12345",
+            "payload_hash_algorithm": "sha256",
+            "payload_body_stored": False,
+            "raw_prompt_stored": False,
+            "raw_provider_request_stored": False,
+            "raw_provider_response_stored": False,
+            "absolute_paths_included": False,
+            "secrets_included": False,
+            "broker_credentials_included": False,
+            "trading_instruction_included": False,
+            "blocked_fields": ["credentials", "authorization_headers", "absolute_paths", "broker_credentials", "raw_prompt_body", "raw_provider_request_body", "raw_provider_response_body", "live_trading_instructions", "order_submission_fields"],
+            "omitted_fields": [],
+            "allowed_field_summary": ["model", "messages", "temperature", "max_tokens"],
+            "source_credential_boundary_hash": "dummyboundaryhash12345",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "forbidden_fragments_raw_stored": False,
+            "artifact_path": artifact_path,
+            "warnings": ["This is a local payload preview. No provider was called."],
+            "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhashpreview12345",
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_outbound_payload_preview_created",
+        "provider_outbound_payload_preview_id": preview_id,
+        "source_provider_credential_boundary_id": boundary_id,
+        "payload_preview_status": "payload_preview_recorded",
+        "payload_body_stored": False,
+        "outbound_request_sent": False,
+        "artifact_path": artifact_path,
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_outbound_payload_previews_listed",
+        "items": [{
+            "provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_provider_credential_boundary_id": "demoboundaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "payload_preview_status": "payload_preview_recorded",
+            "payload_preview_scope": "future_provider_request_preview_only",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+        }],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-show":
+    preview_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_outbound_payload_preview_loaded",
+        "artifact": {
+            "provider_outbound_payload_preview_id": preview_id,
+            "payload_preview_status": "payload_preview_recorded",
+            "payload_preview_scope": "future_provider_request_preview_only",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "payload_body_stored": False,
+            "outbound_request_sent": False,
+            "credentials_loaded": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/" + preview_id + ".json",
+        },
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-validate":
+    preview_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_outbound_payload_preview_validated",
+        "provider_outbound_payload_preview_id": preview_id,
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-replay":
+    preview_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_outbound_payload_preview_replayed",
+        "provider_outbound_payload_preview_id": preview_id,
+        "match": True,
+        "original_hash": "abc",
+        "replayed_hash": "abc",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
+    run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_outbound_payload_preview_summary",
+        "run_id": run_id,
+        "provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "payload_preview_status": "payload_preview_recorded",
+        "payload_body_stored": False,
+        "outbound_request_sent": False,
+        "credentials_loaded": False,
+        "artifact_path": None,
     }))
     sys.exit(0)
 
@@ -29390,7 +29590,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -30708,6 +30908,187 @@ if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview":
+    boundary_id = ARGS[2]
+    preview_id = "demopayloadpreviewid" + boundary_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_outbound_payload_previews/" + preview_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_outbound_payload_previews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_outbound_payload_preview",
+            contract_version="research_provider_outbound_payload_preview_v1",
+            provider_outbound_payload_preview_id=preview_id,
+            source_provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            source_provider_preflight_freeze_id="freezereadiness-auditodryrunid12345",
+            source_provider_execution_readiness_report_id="readiness-auditodryrunid12345",
+            source_provider_execution_audit_packet_id="auditodryrunid12345",
+            source_provider_execution_state_id="stateodryrunid12345",
+            source_provider_execution_dry_run_id="demodryrunid12345",
+            source_provider_call_plan_id="demopcpid12345",
+            source_sandbox_request_id="demosandboxid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            payload_shape=dict(
+                request_family="chat_like_preview",
+                message_count_estimate=0,
+                max_output_tokens_policy="bounded_by_model",
+                temperature_policy="deterministic",
+                tool_calls_allowed=False,
+                streaming_allowed=False,
+                system_prompt_included=False,
+                user_prompt_included=False,
+                raw_body_included=False,
+            ),
+            payload_minimization_summary=dict(
+                minimization_required=True,
+                raw_prompt_omitted=True,
+                artifact_links_used_instead_of_raw_text=True,
+                hashes_used_instead_of_raw_content=True,
+                only_bounded_summaries_allowed=True,
+                broker_data_omitted=True,
+                absolute_paths_omitted=True,
+            ),
+            payload_redaction_summary=dict(
+                redaction_required=True,
+                redaction_applied=True,
+                secrets_redacted=True,
+                absolute_paths_redacted=True,
+                broker_credentials_redacted=True,
+                raw_exception_text_redacted=True,
+                redaction_profile="atlas_provider_payload_preview_v1",
+                raw_denylist_fragments_stored=False,
+            ),
+            payload_hash="dummypayloadhash12345",
+            payload_hash_algorithm="sha256",
+            payload_body_stored=False,
+            raw_prompt_stored=False,
+            raw_provider_request_stored=False,
+            raw_provider_response_stored=False,
+            absolute_paths_included=False,
+            secrets_included=False,
+            broker_credentials_included=False,
+            trading_instruction_included=False,
+            blocked_fields=["credentials", "authorization_headers", "absolute_paths", "broker_credentials", "raw_prompt_body", "raw_provider_request_body", "raw_provider_response_body", "live_trading_instructions", "order_submission_fields"],
+            omitted_fields=[],
+            allowed_field_summary=["model", "messages", "temperature", "max_tokens"],
+            source_credential_boundary_hash="dummyboundaryhash12345",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            outbound_request_sent=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            forbidden_fragments_raw_stored=False,
+            artifact_path=artifact_path,
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_hash="dummyhashpreview12345",
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_created",
+        provider_outbound_payload_preview_id=preview_id,
+        source_provider_credential_boundary_id=boundary_id,
+        payload_preview_status="payload_preview_recorded",
+        payload_body_stored=False,
+        outbound_request_sent=False,
+        artifact_path=artifact_path,
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_previews_listed",
+        items=[dict(
+            provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+            source_provider_credential_boundary_id="demoboundaryid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+        )],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-show":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_loaded",
+        artifact=dict(
+            provider_outbound_payload_preview_id=preview_id,
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            payload_body_stored=False,
+            outbound_request_sent=False,
+            credentials_loaded=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/" + preview_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-validate":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_validated",
+        provider_outbound_payload_preview_id=preview_id,
+        valid=True,
+        passed_checks=5,
+        failed_checks=0,
+        checks=[],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-replay":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_replayed",
+        provider_outbound_payload_preview_id=preview_id,
+        match=True,
+        original_hash="abc",
+        replayed_hash="abc",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_summary",
+        run_id=run_id,
+        provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+        payload_preview_status="payload_preview_recorded",
+        payload_body_stored=False,
+        outbound_request_sent=False,
+        credentials_loaded=False,
+        artifact_path=None,
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -30833,7 +31214,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -32082,6 +32463,187 @@ if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview":
+    boundary_id = ARGS[2]
+    preview_id = "demopayloadpreviewid" + boundary_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_outbound_payload_previews/" + preview_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_outbound_payload_previews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_outbound_payload_preview",
+            contract_version="research_provider_outbound_payload_preview_v1",
+            provider_outbound_payload_preview_id=preview_id,
+            source_provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            source_provider_preflight_freeze_id="freezereadiness-auditodryrunid12345",
+            source_provider_execution_readiness_report_id="readiness-auditodryrunid12345",
+            source_provider_execution_audit_packet_id="auditodryrunid12345",
+            source_provider_execution_state_id="stateodryrunid12345",
+            source_provider_execution_dry_run_id="demodryrunid12345",
+            source_provider_call_plan_id="demopcpid12345",
+            source_sandbox_request_id="demosandboxid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            payload_shape=dict(
+                request_family="chat_like_preview",
+                message_count_estimate=0,
+                max_output_tokens_policy="bounded_by_model",
+                temperature_policy="deterministic",
+                tool_calls_allowed=False,
+                streaming_allowed=False,
+                system_prompt_included=False,
+                user_prompt_included=False,
+                raw_body_included=False,
+            ),
+            payload_minimization_summary=dict(
+                minimization_required=True,
+                raw_prompt_omitted=True,
+                artifact_links_used_instead_of_raw_text=True,
+                hashes_used_instead_of_raw_content=True,
+                only_bounded_summaries_allowed=True,
+                broker_data_omitted=True,
+                absolute_paths_omitted=True,
+            ),
+            payload_redaction_summary=dict(
+                redaction_required=True,
+                redaction_applied=True,
+                secrets_redacted=True,
+                absolute_paths_redacted=True,
+                broker_credentials_redacted=True,
+                raw_exception_text_redacted=True,
+                redaction_profile="atlas_provider_payload_preview_v1",
+                raw_denylist_fragments_stored=False,
+            ),
+            payload_hash="dummypayloadhash12345",
+            payload_hash_algorithm="sha256",
+            payload_body_stored=False,
+            raw_prompt_stored=False,
+            raw_provider_request_stored=False,
+            raw_provider_response_stored=False,
+            absolute_paths_included=False,
+            secrets_included=False,
+            broker_credentials_included=False,
+            trading_instruction_included=False,
+            blocked_fields=["credentials", "authorization_headers", "absolute_paths", "broker_credentials", "raw_prompt_body", "raw_provider_request_body", "raw_provider_response_body", "live_trading_instructions", "order_submission_fields"],
+            omitted_fields=[],
+            allowed_field_summary=["model", "messages", "temperature", "max_tokens"],
+            source_credential_boundary_hash="dummyboundaryhash12345",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            outbound_request_sent=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            forbidden_fragments_raw_stored=False,
+            artifact_path=artifact_path,
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_hash="dummyhashpreview12345",
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_created",
+        provider_outbound_payload_preview_id=preview_id,
+        source_provider_credential_boundary_id=boundary_id,
+        payload_preview_status="payload_preview_recorded",
+        payload_body_stored=False,
+        outbound_request_sent=False,
+        artifact_path=artifact_path,
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_previews_listed",
+        items=[dict(
+            provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+            source_provider_credential_boundary_id="demoboundaryid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+        )],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-show":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_loaded",
+        artifact=dict(
+            provider_outbound_payload_preview_id=preview_id,
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            payload_body_stored=False,
+            outbound_request_sent=False,
+            credentials_loaded=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/" + preview_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-validate":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_validated",
+        provider_outbound_payload_preview_id=preview_id,
+        valid=True,
+        passed_checks=5,
+        failed_checks=0,
+        checks=[],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-replay":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_replayed",
+        provider_outbound_payload_preview_id=preview_id,
+        match=True,
+        original_hash="abc",
+        replayed_hash="abc",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_summary",
+        run_id=run_id,
+        provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+        payload_preview_status="payload_preview_recorded",
+        payload_body_stored=False,
+        outbound_request_sent=False,
+        credentials_loaded=False,
+        artifact_path=None,
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -33234,7 +33796,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -34564,6 +35126,187 @@ if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
             safe=True
         )],
         warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview":
+    boundary_id = ARGS[2]
+    preview_id = "demopayloadpreviewid" + boundary_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_outbound_payload_previews/" + preview_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_outbound_payload_previews"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_outbound_payload_preview",
+            contract_version="research_provider_outbound_payload_preview_v1",
+            provider_outbound_payload_preview_id=preview_id,
+            source_provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            source_provider_preflight_freeze_id="freezereadiness-auditodryrunid12345",
+            source_provider_execution_readiness_report_id="readiness-auditodryrunid12345",
+            source_provider_execution_audit_packet_id="auditodryrunid12345",
+            source_provider_execution_state_id="stateodryrunid12345",
+            source_provider_execution_dry_run_id="demodryrunid12345",
+            source_provider_call_plan_id="demopcpid12345",
+            source_sandbox_request_id="demosandboxid12345",
+            source_prompt_packet_id="demopromptid12345",
+            source_run_id="demorunid12345",
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            payload_shape=dict(
+                request_family="chat_like_preview",
+                message_count_estimate=0,
+                max_output_tokens_policy="bounded_by_model",
+                temperature_policy="deterministic",
+                tool_calls_allowed=False,
+                streaming_allowed=False,
+                system_prompt_included=False,
+                user_prompt_included=False,
+                raw_body_included=False,
+            ),
+            payload_minimization_summary=dict(
+                minimization_required=True,
+                raw_prompt_omitted=True,
+                artifact_links_used_instead_of_raw_text=True,
+                hashes_used_instead_of_raw_content=True,
+                only_bounded_summaries_allowed=True,
+                broker_data_omitted=True,
+                absolute_paths_omitted=True,
+            ),
+            payload_redaction_summary=dict(
+                redaction_required=True,
+                redaction_applied=True,
+                secrets_redacted=True,
+                absolute_paths_redacted=True,
+                broker_credentials_redacted=True,
+                raw_exception_text_redacted=True,
+                redaction_profile="atlas_provider_payload_preview_v1",
+                raw_denylist_fragments_stored=False,
+            ),
+            payload_hash="dummypayloadhash12345",
+            payload_hash_algorithm="sha256",
+            payload_body_stored=False,
+            raw_prompt_stored=False,
+            raw_provider_request_stored=False,
+            raw_provider_response_stored=False,
+            absolute_paths_included=False,
+            secrets_included=False,
+            broker_credentials_included=False,
+            trading_instruction_included=False,
+            blocked_fields=["credentials", "authorization_headers", "absolute_paths", "broker_credentials", "raw_prompt_body", "raw_provider_request_body", "raw_provider_response_body", "live_trading_instructions", "order_submission_fields"],
+            omitted_fields=[],
+            allowed_field_summary=["model", "messages", "temperature", "max_tokens"],
+            source_credential_boundary_hash="dummyboundaryhash12345",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            outbound_request_sent=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            forbidden_fragments_raw_stored=False,
+            artifact_path=artifact_path,
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_hash="dummyhashpreview12345",
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_created",
+        provider_outbound_payload_preview_id=preview_id,
+        source_provider_credential_boundary_id=boundary_id,
+        payload_preview_status="payload_preview_recorded",
+        payload_body_stored=False,
+        outbound_request_sent=False,
+        artifact_path=artifact_path,
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_previews_listed",
+        items=[dict(
+            provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+            source_provider_credential_boundary_id="demoboundaryid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+        )],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-show":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_loaded",
+        artifact=dict(
+            provider_outbound_payload_preview_id=preview_id,
+            payload_preview_status="payload_preview_recorded",
+            payload_preview_scope="future_provider_request_preview_only",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            payload_body_stored=False,
+            outbound_request_sent=False,
+            credentials_loaded=False,
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/" + preview_id + ".json",
+        ),
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-validate":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_validated",
+        provider_outbound_payload_preview_id=preview_id,
+        valid=True,
+        passed_checks=5,
+        failed_checks=0,
+        checks=[],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-replay":
+    preview_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_replayed",
+        provider_outbound_payload_preview_id=preview_id,
+        match=True,
+        original_hash="abc",
+        replayed_hash="abc",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_outbound_payload_preview_summary",
+        run_id=run_id,
+        provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+        payload_preview_status="payload_preview_recorded",
+        payload_body_stored=False,
+        outbound_request_sent=False,
+        credentials_loaded=False,
+        artifact_path=None,
     )))
     sys.exit(0)
 

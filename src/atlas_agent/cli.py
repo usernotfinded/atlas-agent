@@ -964,6 +964,57 @@ Safety First:
     research_provider_credential_boundary_summary.add_argument("run_id", help="Research run ID.")
     research_provider_credential_boundary_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+
+    research_provider_payload_preview = research_sub.add_parser(
+        "provider-payload-preview",
+        help="Create a provider outbound payload preview artifact from a credential boundary. Local-only.",
+        description="Create a local provider outbound payload preview artifact from a provider credential boundary. Local-only. Does not call providers, read API keys, load .env.atlas, read os.environ, modify config, or authorize live trading.",
+    )
+    research_provider_payload_preview.add_argument("provider_credential_boundary_id", help="Source provider credential boundary ID.")
+    research_provider_payload_preview.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_payload_preview_list = research_sub.add_parser(
+        "provider-payload-preview-list",
+        help="List provider outbound payload preview artifacts. Read-only.",
+        description="List local provider outbound payload preview artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_payload_preview_list.add_argument("--symbol", help="Filter by symbol.")
+    research_provider_payload_preview_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
+    research_provider_payload_preview_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_payload_preview_show = research_sub.add_parser(
+        "provider-payload-preview-show",
+        help="Show one provider outbound payload preview artifact. Read-only.",
+        description="Show a single provider outbound payload preview artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_payload_preview_show.add_argument("provider_outbound_payload_preview_id", help="Provider outbound payload preview ID.")
+    research_provider_payload_preview_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_payload_preview_validate = research_sub.add_parser(
+        "provider-payload-preview-validate",
+        help="Validate a provider outbound payload preview artifact. Read-only.",
+        description="Validate a provider outbound payload preview artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_payload_preview_validate.add_argument("provider_outbound_payload_preview_id", help="Provider outbound payload preview ID.")
+    research_provider_payload_preview_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_payload_preview_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
+
+    research_provider_payload_preview_replay = research_sub.add_parser(
+        "provider-payload-preview-replay",
+        help="Replay a provider outbound payload preview artifact from its source boundary and compare hashes. Read-only by default.",
+        description="Rebuild the provider outbound payload preview artifact from its source credential boundary and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_payload_preview_replay.add_argument("provider_outbound_payload_preview_id", help="Provider outbound payload preview ID.")
+    research_provider_payload_preview_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_payload_preview_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+
+    research_provider_payload_preview_summary = research_sub.add_parser(
+        "provider-payload-preview-summary",
+        help="Summarize the provider outbound payload preview state for a research run. Read-only.",
+        description="Read-only summary of the provider outbound payload preview state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_payload_preview_summary.add_argument("run_id", help="Research run ID.")
+    research_provider_payload_preview_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -2802,6 +2853,12 @@ def main(argv: list[str] | None = None) -> int:
         "provider-credential-boundary-validate",
         "provider-credential-boundary-replay",
         "provider-credential-boundary-summary",
+        "provider-payload-preview",
+        "provider-payload-preview-list",
+        "provider-payload-preview-show",
+        "provider-payload-preview-validate",
+        "provider-payload-preview-replay",
+        "provider-payload-preview-summary",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -5036,6 +5093,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Provider call plans: {result['counts']['provider_call_plans']}")
             print(f"  Provider execution dry-runs: {result['counts']['provider_execution_dry_runs']}")
             print(f"  Provider execution readiness reports: {result['counts']['provider_execution_readiness_reports']}")
+            print(f"  Provider outbound payload previews: {result['counts']['provider_outbound_payload_previews']}")
             total_issues = len(result["issues"])
             total_warnings = len(result["warnings"])
             print(f"  Issues: {total_issues}")
@@ -8406,6 +8464,317 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  Provider execution allowed: {result.get('provider_execution_allowed', False)}")
                 if result.get("blocking_reasons"):
                     print(f"  Blocking: {', '.join(result['blocking_reasons'])}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-payload-preview":
+        try:
+            from atlas_agent.research.provider_outbound_payload_preview import create_provider_outbound_payload_preview
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-payload-preview skipped safely: no workspace found")
+                return 1
+
+            result = create_provider_outbound_payload_preview(ws, args.provider_credential_boundary_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-payload-preview", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-payload-preview", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider outbound payload preview {result.get('provider_outbound_payload_preview_id')}: {result.get('payload_preview_status')}")
+            print(f"  Payload body stored: {result.get('payload_body_stored', False)}")
+            print(f"  Outbound request sent: {result.get('outbound_request_sent', False)}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-payload-preview-list":
+        try:
+            from atlas_agent.research.provider_outbound_payload_preview import iter_provider_outbound_payload_preview_artifacts
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-payload-preview-list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = max(1, min(args.limit, 100))
+            items = iter_provider_outbound_payload_preview_artifacts(ws, symbol=symbol_filter)[:limit]
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                print("research provider-payload-preview-list skipped safely: invalid research symbol")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-payload-preview-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-payload-preview-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_outbound_payload_previews_listed",
+                "items": items,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"{'Created At':<24} {'Symbol':<8} {'Preview ID':<34} {'Status':<24} {'Artifact'}")
+            for item in items:
+                print(f"{item.get('created_at', ''):<24} {item.get('symbol', ''):<8} {item.get('provider_outbound_payload_preview_id', ''):<34} {item.get('payload_preview_status', ''):<24} {item.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-payload-preview-show":
+        try:
+            from atlas_agent.research.provider_outbound_payload_preview import (
+                find_provider_outbound_payload_preview_by_id,
+                load_provider_outbound_payload_preview,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-payload-preview-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_outbound_payload_preview_id)
+            preview_path = find_provider_outbound_payload_preview_by_id(ws, safe_id)
+            if preview_path is None:
+                raise ResearchSessionError("provider_outbound_payload_preview_not_found")
+            artifact = load_provider_outbound_payload_preview(preview_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-payload-preview-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-payload-preview-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_outbound_payload_preview_loaded",
+                "artifact": artifact,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider outbound payload preview {safe_id}:")
+            print(f"  Status: {artifact.get('payload_preview_status', '')}")
+            print(f"  Scope: {artifact.get('payload_preview_scope', '')}")
+            print(f"  Provider: {artifact.get('provider_id', '')}")
+            print(f"  Model: {artifact.get('model_id', '')}")
+            print(f"  Payload body stored: {artifact.get('payload_body_stored', False)}")
+            print(f"  Outbound request sent: {artifact.get('outbound_request_sent', False)}")
+            print(f"  Artifact: {artifact.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-payload-preview-validate":
+        try:
+            from atlas_agent.research.provider_outbound_payload_preview import (
+                find_provider_outbound_payload_preview_by_id,
+                validate_provider_outbound_payload_preview_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-payload-preview-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_outbound_payload_preview_id)
+            preview_path = find_provider_outbound_payload_preview_by_id(ws, safe_id)
+            if preview_path is None:
+                raise ResearchSessionError("provider_outbound_payload_preview_not_found")
+            validation = validate_provider_outbound_payload_preview_artifact(preview_path, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-payload-preview-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-payload-preview-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_outbound_payload_preview_validated",
+                "provider_outbound_payload_preview_id": safe_id,
+                "valid": validation.valid,
+                "passed_checks": validation.passed_checks,
+                "failed_checks": validation.failed_checks,
+                "checks": validation.checks,
+                "warnings": validation.warnings,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider outbound payload preview {safe_id}: {'valid' if validation.valid else 'invalid'}")
+            print(f"  Passed: {validation.passed_checks}")
+            print(f"  Failed: {validation.failed_checks}")
+        if args.strict and not validation.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-payload-preview-replay":
+        try:
+            from atlas_agent.research.provider_outbound_payload_preview import replay_provider_outbound_payload_preview
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-payload-preview-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.provider_outbound_payload_preview_id)
+            replay_result = replay_provider_outbound_payload_preview(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-payload-preview-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-payload-preview-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_outbound_payload_preview_replayed",
+                "provider_outbound_payload_preview_id": safe_id,
+                "match": replay_result["match"],
+                "original_hash": replay_result["original_hash"],
+                "replayed_hash": replay_result["replayed_hash"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider outbound payload preview {safe_id}: {'match' if replay_result['match'] else 'mismatch'}")
+            print(f"  Original hash: {replay_result['original_hash']}")
+            print(f"  Replayed hash: {replay_result['replayed_hash']}")
+        if args.strict and not replay_result["match"]:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-payload-preview-summary":
+        try:
+            from atlas_agent.research.provider_outbound_payload_preview import summarize_provider_outbound_payload_preview_state
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-payload-preview-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_outbound_payload_preview_state(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-payload-preview-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-payload-preview-summary", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            if not result.get("ok"):
+                print(f"Payload preview summary: {result.get('status', 'error')}")
+                print(f"  Run ID: {safe_id}")
+                print(f"  Warnings: {result.get('warnings', [])}")
+            else:
+                print(f"Payload preview summary for run {safe_id}:")
+                print(f"  Preview ID: {result.get('provider_outbound_payload_preview_id') or 'none'}")
+                print(f"  Status: {result.get('payload_preview_status', '')}")
+                print(f"  Payload body stored: {result.get('payload_body_stored', False)}")
+                print(f"  Outbound request sent: {result.get('outbound_request_sent', False)}")
+                print(f"  Credentials loaded: {result.get('credentials_loaded', False)}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
