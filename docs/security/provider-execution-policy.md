@@ -37,6 +37,7 @@ This document defines the policy for future LLM/API provider execution within At
 - Credential loading must be **isolated** from research and provider-preflight commands.
 - `.env.atlas` must **not** be loaded by any configless research command.
 - If credentials are loaded for future provider execution, the loading path must be separate, audited, and gated.
+- A **provider credential boundary artifact** must exist before any future credential loading, documenting the required secret policies and confirming all safety flags are `False`.
 
 ## 4. Outbound Payload Policy
 

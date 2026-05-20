@@ -1632,7 +1632,173 @@ if [ "$TIMELINE_POLICY_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 64. Create local provider response fixture and import it
+# 64. Research provider-credential-boundary
+printf '\n--- Research provider-credential-boundary ---\n'
+BOUNDARY_OUTPUT="$(atlas research provider-credential-boundary "$POLICY_ID" --json)"
+assert_no_absolute_paths "$BOUNDARY_OUTPUT"
+assert_no_secrets_in_output "$BOUNDARY_OUTPUT"
+assert_no_forbidden_fragments "$BOUNDARY_OUTPUT" "provider-credential-boundary CLI output"
+assert_ok "$BOUNDARY_OUTPUT" "research provider-credential-boundary"
+BOUNDARY_STATUS="$(json_field "$BOUNDARY_OUTPUT" status)"
+if [ "$BOUNDARY_STATUS" != "research_provider_credential_boundary_created" ]; then
+  printf 'FAIL: unexpected provider-credential-boundary status: %s\n' "$BOUNDARY_STATUS" >&2
+  exit 1
+fi
+BOUNDARY_ID="$(json_field "$BOUNDARY_OUTPUT" provider_credential_boundary_id)"
+if [ -z "$BOUNDARY_ID" ]; then
+  printf 'FAIL: provider_credential_boundary_id is empty\n' >&2
+  exit 1
+fi
+BOUNDARY_ARTIFACT_PATH="$(json_field "$BOUNDARY_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$BOUNDARY_ARTIFACT_PATH" "provider credential boundary artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$BOUNDARY_ARTIFACT_PATH")" "provider credential boundary artifact"
+assert_no_pending_orders
+
+# 65. Research provider-credential-boundary-list
+printf '\n--- Research provider-credential-boundary-list ---\n'
+BOUNDARY_LIST_OUTPUT="$(atlas research provider-credential-boundary-list --json)"
+assert_no_absolute_paths "$BOUNDARY_LIST_OUTPUT"
+assert_no_secrets_in_output "$BOUNDARY_LIST_OUTPUT"
+assert_no_forbidden_fragments "$BOUNDARY_LIST_OUTPUT" "provider-credential-boundary-list CLI output"
+assert_ok "$BOUNDARY_LIST_OUTPUT" "research provider-credential-boundary-list"
+BOUNDARY_LIST_HAS_ITEM="$( "$PYTHON_BIN" -c "import json,sys; d=json.load(sys.stdin); items=d.get('items',[]); print('yes' if any(i.get('provider_credential_boundary_id')=='$BOUNDARY_ID' for i in items) else 'no')" <<<"$BOUNDARY_LIST_OUTPUT" )"
+if [ "$BOUNDARY_LIST_HAS_ITEM" != "yes" ]; then
+  printf 'FAIL: boundary %s not found in list output\n' "$BOUNDARY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 66. Research provider-credential-boundary-show
+printf '\n--- Research provider-credential-boundary-show ---\n'
+BOUNDARY_SHOW_OUTPUT="$(atlas research provider-credential-boundary-show "$BOUNDARY_ID" --json)"
+assert_no_absolute_paths "$BOUNDARY_SHOW_OUTPUT"
+assert_no_secrets_in_output "$BOUNDARY_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$BOUNDARY_SHOW_OUTPUT" "provider-credential-boundary-show CLI output"
+assert_ok "$BOUNDARY_SHOW_OUTPUT" "research provider-credential-boundary-show"
+BOUNDARY_SHOW_STATUS="$(json_field "$BOUNDARY_SHOW_OUTPUT" status)"
+if [ "$BOUNDARY_SHOW_STATUS" != "research_provider_credential_boundary_loaded" ]; then
+  printf 'FAIL: unexpected provider-credential-boundary-show status: %s\n' "$BOUNDARY_SHOW_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 67. Research provider-credential-boundary-validate
+printf '\n--- Research provider-credential-boundary-validate ---\n'
+BOUNDARY_VALIDATE_OUTPUT="$(atlas research provider-credential-boundary-validate "$BOUNDARY_ID" --json)"
+assert_no_absolute_paths "$BOUNDARY_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$BOUNDARY_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$BOUNDARY_VALIDATE_OUTPUT" "provider-credential-boundary-validate CLI output"
+assert_ok "$BOUNDARY_VALIDATE_OUTPUT" "research provider-credential-boundary-validate"
+BOUNDARY_VALID="$(json_field "$BOUNDARY_VALIDATE_OUTPUT" valid)"
+if [ "$BOUNDARY_VALID" != "True" ]; then
+  printf 'FAIL: boundary validation failed for %s\n' "$BOUNDARY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 68. Research provider-credential-boundary-replay
+printf '\n--- Research provider-credential-boundary-replay ---\n'
+BOUNDARY_REPLAY_OUTPUT="$(atlas research provider-credential-boundary-replay "$BOUNDARY_ID" --json)"
+assert_no_absolute_paths "$BOUNDARY_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$BOUNDARY_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$BOUNDARY_REPLAY_OUTPUT" "provider-credential-boundary-replay CLI output"
+assert_ok "$BOUNDARY_REPLAY_OUTPUT" "research provider-credential-boundary-replay"
+BOUNDARY_REPLAY_MATCH="$(json_field "$BOUNDARY_REPLAY_OUTPUT" match)"
+if [ "$BOUNDARY_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: boundary replay mismatch for %s\n' "$BOUNDARY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 69. Research provider-credential-boundary-summary
+printf '\n--- Research provider-credential-boundary-summary ---\n'
+BOUNDARY_SUMMARY_OUTPUT="$(atlas research provider-credential-boundary-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$BOUNDARY_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$BOUNDARY_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$BOUNDARY_SUMMARY_OUTPUT" "provider-credential-boundary-summary CLI output"
+assert_ok "$BOUNDARY_SUMMARY_OUTPUT" "research provider-credential-boundary-summary"
+BOUNDARY_SUMMARY_CREDS_LOADED="$(json_field "$BOUNDARY_SUMMARY_OUTPUT" credentials_loaded)"
+if [ "$BOUNDARY_SUMMARY_CREDS_LOADED" != "False" ]; then
+  printf 'FAIL: boundary summary credentials_loaded is not False\n' >&2
+  exit 1
+fi
+BOUNDARY_SUMMARY_ENV_READ="$(json_field "$BOUNDARY_SUMMARY_OUTPUT" env_read_attempted)"
+if [ "$BOUNDARY_SUMMARY_ENV_READ" != "False" ]; then
+  printf 'FAIL: boundary summary env_read_attempted is not False\n' >&2
+  exit 1
+fi
+BOUNDARY_SUMMARY_DOTENV="$(json_field "$BOUNDARY_SUMMARY_OUTPUT" dotenv_loaded)"
+if [ "$BOUNDARY_SUMMARY_DOTENV" != "False" ]; then
+  printf 'FAIL: boundary summary dotenv_loaded is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 70. Research timeline after credential boundary
+printf '\n--- Research timeline (post credential boundary) ---\n'
+TIMELINE_OUTPUT_BOUNDARY="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_BOUNDARY"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_BOUNDARY"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_BOUNDARY" "timeline CLI output after credential boundary"
+assert_ok "$TIMELINE_OUTPUT_BOUNDARY" "research timeline after credential boundary"
+TIMELINE_BOUNDARY_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets',[]):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            for r in a.get('provider_execution_readiness_reports',[]):
+                                if r.get('provider_execution_readiness_report_id')!='$READINESS_REPORT_ID':
+                                    continue
+                                for f in r.get('provider_preflight_freezes',[]):
+                                    if f.get('provider_preflight_freeze_id')!='$FREEZE_ID':
+                                        continue
+                                    for pol in f.get('provider_opt_in_policies',[]):
+                                        if pol.get('provider_opt_in_policy_id')!='$POLICY_ID':
+                                            continue
+                                        boundaries=[b.get('provider_credential_boundary_id') for b in pol.get('provider_credential_boundaries',[])]
+                                        if '$BOUNDARY_ID' in boundaries:
+                                            print('valid')
+                                            break
+                                    break
+                                break
+                            break
+                        break
+                    break
+                break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_BOUNDARY" )"
+if [ "$TIMELINE_BOUNDARY_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link boundary under policy %s\n' "$POLICY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 71. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

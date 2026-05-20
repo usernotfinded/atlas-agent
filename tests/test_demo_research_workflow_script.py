@@ -323,14 +323,31 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                             with open(os.path.join(policy_dir, pfname)) as pf:
                                                                                 pol = json.load(pf)
                                                                             if pol.get("source_provider_preflight_freeze_id") == freeze_id:
+                                                                                policy_id = pol.get("provider_opt_in_policy_id", "")
+                                                                                # Look up credential boundaries for this policy
+                                                                                boundaries = []
+                                                                                boundary_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_credential_boundaries")
+                                                                                if os.path.isdir(boundary_dir):
+                                                                                    for bfname in sorted(os.listdir(boundary_dir)):
+                                                                                        if bfname.endswith(".json"):
+                                                                                            with open(os.path.join(boundary_dir, bfname)) as bf:
+                                                                                                bnd = json.load(bf)
+                                                                                            if bnd.get("source_provider_opt_in_policy_id") == policy_id:
+                                                                                                boundaries.append({
+                                                                                                    "provider_credential_boundary_id": bnd.get("provider_credential_boundary_id", ""),
+                                                                                                    "source_provider_opt_in_policy_id": bnd.get("source_provider_opt_in_policy_id", ""),
+                                                                                                    "created_at": bnd.get("created_at", ""),
+                                                                                                    "artifact_path": bnd.get("artifact_path", ""),
+                                                                                                })
                                                                                 policies.append({
-                                                                                    "provider_opt_in_policy_id": pol.get("provider_opt_in_policy_id", ""),
+                                                                                    "provider_opt_in_policy_id": policy_id,
                                                                                     "source_provider_preflight_freeze_id": pol.get("source_provider_preflight_freeze_id", ""),
                                                                                     "policy_status": pol.get("policy_status", ""),
                                                                                     "policy_scope": pol.get("policy_scope", ""),
                                                                                     "opt_in_state": pol.get("opt_in_state", ""),
                                                                                     "created_at": pol.get("created_at", ""),
                                                                                     "artifact_path": pol.get("artifact_path", ""),
+                                                                                    "provider_credential_boundaries": boundaries,
                                                                                 })
                                                                 freezes.append({
                                                                     "provider_preflight_freeze_id": freeze_id,
@@ -1678,6 +1695,117 @@ if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/provider_credential_boundaries/{boundary_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "provider_credential_boundary_id": boundary_id,
+            "source_provider_opt_in_policy_id": policy_id,
+            "source_run_id": "demorunid12345",
+            "symbol": symbol, "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "credential_boundary_status": "credential_boundary_recorded",
+            "credential_boundary_scope": "future_provider_credentials_only",
+            "credential_loading_state": "not_implemented",
+            "artifact_path": artifact_path,
+            "warnings": [], "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00"
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_credential_boundary_created",
+        "provider_credential_boundary_id": boundary_id,
+        "source_provider_opt_in_policy_id": policy_id,
+        "credential_boundary_status": "credential_boundary_recorded",
+        "credential_loading_state": "not_implemented",
+        "credentials_loaded": False,
+        "artifact_path": artifact_path,
+        "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_credential_boundaries_listed",
+        "items": [{
+            "provider_credential_boundary_id": "demoboundaryid12345",
+            "source_provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "credential_boundary_status": "credential_boundary_recorded",
+            "credential_boundary_scope": "future_provider_credentials_only",
+            "credential_loading_state": "not_implemented",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "warnings_count": 0
+        }]
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_credential_boundary_loaded",
+        "artifact": {
+            "provider_credential_boundary_id": boundary_id,
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "credential_boundary_status": "credential_boundary_recorded",
+            "credential_boundary_scope": "future_provider_credentials_only",
+            "credential_loading_state": "not_implemented",
+            "warnings": []
+        }
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_credential_boundary_validated",
+        "provider_credential_boundary_id": boundary_id,
+        "valid": True, "passed_checks": 17, "failed_checks": 0,
+        "checks": [], "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_credential_boundary_replayed",
+        "provider_credential_boundary_id": boundary_id,
+        "match": True,
+        "expected_hash": "dummyhashboundary12345",
+        "actual_hash": "dummyhashboundary12345",
+        "checks": [], "warnings": []
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_credential_boundary_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "credential_boundary_status": "credential_boundary_recorded",
+        "credential_loading_state": "not_implemented",
+        "credentials_loaded": False,
+        "credential_value_present": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_allowed": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 '''
@@ -2589,6 +2717,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -3362,6 +3637,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -4153,6 +4575,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -4938,6 +5507,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -5729,6 +6445,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -6531,6 +7394,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7325,6 +8335,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8116,6 +9273,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -8927,6 +10231,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -9726,6 +11177,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -10531,6 +12129,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -11322,6 +13067,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -12148,6 +14040,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -12956,6 +14995,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -13773,6 +15959,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -14595,6 +16928,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -15424,6 +17904,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -16242,6 +18869,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -17066,6 +19840,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -17884,6 +20805,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -18707,6 +21775,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -19520,6 +22735,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -20355,6 +23717,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -21184,6 +24693,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -22037,6 +25693,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -23026,6 +26829,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -24006,6 +27956,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         hash_mismatches=[],
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
+    )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
     )))
     sys.exit(0)
 
@@ -25000,6 +29097,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -25146,7 +29390,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -26317,6 +30561,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -26442,7 +30833,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -27544,6 +31935,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
     }}))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -28424,6 +32962,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -28549,7 +33234,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -29733,6 +34418,153 @@ if ARGS[0] == "research" and ARGS[1] == "provider-opt-in-policy-summary":
         "future_requirements": [],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary":
+    policy_id = ARGS[2]
+    boundary_id = "demoboundaryid12345"
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_credential_boundaries/" + boundary_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_credential_boundaries"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_credential_boundary",
+            contract_version="research_provider_credential_boundary_v1",
+            provider_credential_boundary_id=boundary_id,
+            source_provider_opt_in_policy_id=policy_id,
+            symbol=symbol,
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=artifact_path,
+        ), f)
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_created",
+        provider_credential_boundary_id=boundary_id,
+        source_provider_opt_in_policy_id=policy_id,
+        symbol=symbol,
+        artifact_path=artifact_path,
+        warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundaries_listed",
+        items=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            warnings_count=0
+        )]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-show":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_loaded",
+        artifact=dict(
+            provider_credential_boundary_id=boundary_id,
+            symbol="ATLAS-DEMO",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            mode="paper",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+            provider_enabled=False,
+            network_enabled=False,
+            credentials_loaded=False,
+            credential_value_present=False,
+            credential_lookup_attempted=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            future_provider_execution_possible=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            secret_policies=dict(),
+            artifact_denylist_manifest=dict(profile_name="default", forbidden_fragment_count=0, provider_enabled=False, network_enabled=False, credentials_loaded=False, credential_value_present=False, credential_lookup_attempted=False, env_read_attempted=False, dotenv_loaded=False, provider_call_allowed=False, actual_provider_call_made=False, future_provider_execution_possible=False, trading_signal_generated=False, approval_created=False, pending_order_created=False, broker_touched=False),
+            warnings=[],
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json"
+        )
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-validate":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_validated",
+        provider_credential_boundary_id=boundary_id,
+        valid=True, passed_checks=15, failed_checks=0,
+        checks=[], warnings=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-replay":
+    boundary_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_credential_boundary_replayed",
+        provider_credential_boundary_id=boundary_id,
+        match=True,
+        expected_hash="dummyhashboundary12345",
+        actual_hash="dummyhashboundary12345",
+        checks=[]
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-credential-boundary-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+            ok=True, status="research_provider_credential_boundary_summary",
+            run_id=run_id,
+            symbol="ATLAS-DEMO",
+            credential_boundary_status="credential_boundary_recorded",
+            credential_loading_state="not_implemented",
+            credentials_loaded=False,
+            credential_value_present=False,
+            env_read_attempted=False,
+            dotenv_loaded=False,
+            provider_execution_allowed=False,
+            provider_credential_boundary_count=1,
+        all_boundaries_valid=True,
+        overall_safe=True,
+        boundaries=[dict(
+            provider_credential_boundary_id="demoboundaryid12345",
+            source_provider_opt_in_policy_id="policyfreezereadiness-auditodryrunid12345",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_credential_boundaries/demoboundaryid12345.json",
+            valid=True,
+            safe=True
+        )],
+        warnings=[]
+    )))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)

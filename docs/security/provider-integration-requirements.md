@@ -19,6 +19,8 @@ This checklist defines the requirements that must be met before real LLM/API pro
 - [ ] API keys are never printed to stdout, stderr, logs, or events.
 - [ ] API keys are never serialized into JSON envelopes.
 - [ ] Tests prove credential loader is not called when provider is disabled.
+- [ ] Provider credential boundary artifact exists documenting secret policies.
+- [ ] Provider credential boundary artifact confirms all safety flags are `False`.
 
 ## Required Before First Real Network Call
 

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev29] - 2026-05-20
+
+### Added
+- Batch 8.2 — Provider Credential Boundary Record & Secret-Handling Contract.
+  - `src/atlas_agent/research/provider_credential_boundary.py`: local provider credential boundary artifacts.
+  - `build_provider_credential_boundary_dict()`: deterministic boundary artifact construction.
+  - `create_provider_credential_boundary()`: safe creation with validation, lineage, and hash.
+  - `safe_validate_provider_credential_boundary_data()`: strict validation with invalid sentinel returns.
+  - `validate_provider_credential_boundary_artifact()`: detailed per-check validation.
+  - `replay_provider_credential_boundary()`: deterministic hash replay.
+  - `iter_provider_credential_boundary_artifacts()`: safe listing with invalid sentinels.
+  - `summarize_provider_credential_boundary_for_run()`: read-only summary without writing artifacts.
+  - Secret policy sections: `secret_storage_policy`, `secret_input_policy`, `secret_output_policy`, `secret_logging_policy`, `secret_redaction_policy`, `secret_rotation_policy`, `secret_revocation_policy`, `ci_secret_policy`.
+  - 14 boolean safety flags including `credential_value_present`, `credential_lookup_attempted`, `env_read_attempted`, `dotenv_loaded`.
+  - Impossible boolean detection: `provider_credential_boundary_impossible_boolean`.
+  - denylist-clean manifest: stores only safe metadata; never stores raw forbidden fragments.
+- CLI commands (all configless, local-only):
+  - `atlas research provider-credential-boundary PROVIDER_OPT_IN_POLICY_ID`
+  - `atlas research provider-credential-boundary-list`
+  - `atlas research provider-credential-boundary-show BOUNDARY_ID`
+  - `atlas research provider-credential-boundary-validate BOUNDARY_ID`
+  - `atlas research provider-credential-boundary-replay BOUNDARY_ID`
+  - `atlas research provider-credential-boundary-summary RUN_ID`
+- Session integration: `check-artifacts`, `timeline`, and `dossier` now support provider credential boundary artifacts.
+- Timeline nesting: boundary artifacts indexed by `source_provider_opt_in_policy_id` under policy entries.
+- Demo workflow extended with credential boundary creation, validation, replay, summary, and timeline lineage checks.
+
+### Safety / Compatibility
+- No real provider execution added. No network calls. No API keys. No provider SDKs.
+- No credential loading. No `.env.atlas` loading. No `os.environ` lookup.
+- No broker execution changes. No trading signals. No approvals or pending orders.
+- Boundary diff clean under `src/atlas_agent/config`, `brokers`, `execution`, `safety`, `risk`.
+- Provider execution remains disabled.
+- All configless invariants preserved.
+
 ## [0.5.7.dev28] - 2026-05-20
 
 ### Added

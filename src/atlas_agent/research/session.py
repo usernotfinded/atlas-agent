@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1388,6 +1388,7 @@ def check_research_artifacts(
     provider_execution_readiness_report_ids: dict[str, list[str]] = {}
     provider_preflight_freeze_ids: dict[str, list[str]] = {}
     provider_opt_in_policy_ids: dict[str, list[str]] = {}
+    provider_credential_boundary_ids: dict[str, list[str]] = {}
 
     provider_call_plan_data: list[dict[str, Any]] = []
     provider_execution_dry_run_data: list[dict[str, Any]] = []
@@ -1396,6 +1397,7 @@ def check_research_artifacts(
     provider_execution_readiness_report_data: list[dict[str, Any]] = []
     provider_preflight_freeze_data: list[dict[str, Any]] = []
     provider_opt_in_policy_data: list[dict[str, Any]] = []
+    provider_credential_boundary_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1442,6 +1444,7 @@ def check_research_artifacts(
             "provider_execution_readiness_report": "provider_execution_readiness_report_id",
             "provider_preflight_freeze": "provider_preflight_freeze_id",
             "provider_opt_in_policy": "provider_opt_in_policy_id",
+            "provider_credential_boundary": "provider_credential_boundary_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1484,6 +1487,8 @@ def check_research_artifacts(
         elif expected_type == "provider_preflight_freeze" and "provider_preflight_freezes" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_opt_in_policy" and "provider_opt_in_policies" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_credential_boundary" and "provider_credential_boundaries" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1658,6 +1663,23 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_credential_boundary":
+            for f in ("provider_credential_boundary_id", "source_provider_opt_in_policy_id", "symbol", "provider_id", "model_id", "credential_boundary_status", "credential_boundary_scope", "credential_loading_state"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_credential_boundary import (
+                safe_validate_provider_credential_boundary_data,
+            )
+            _cleaned, error = safe_validate_provider_credential_boundary_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1701,6 +1723,9 @@ def check_research_artifacts(
             elif expected_type == "provider_opt_in_policy":
                 provider_opt_in_policy_ids.setdefault(raw_id, []).append(rel)
                 provider_opt_in_policy_data.append(data)
+            elif expected_type == "provider_credential_boundary":
+                provider_credential_boundary_ids.setdefault(raw_id, []).append(rel)
+                provider_credential_boundary_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1734,6 +1759,8 @@ def check_research_artifacts(
             counts["provider_preflight_freezes"] += 1
         elif expected_type == "provider_opt_in_policy":
             counts["provider_opt_in_policies"] += 1
+        elif expected_type == "provider_credential_boundary":
+            counts["provider_credential_boundaries"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1833,6 +1860,12 @@ def check_research_artifacts(
             for path in provider_opt_in_policies_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_opt_in_policy", expected_symbol)
+        # Provider credential boundaries
+        provider_credential_boundaries_dir = sym_dir / "provider_credential_boundaries"
+        if provider_credential_boundaries_dir.exists():
+            for path in provider_credential_boundaries_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_credential_boundary", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1896,6 +1929,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for popid, paths in provider_opt_in_policy_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pcbid, paths in provider_credential_boundary_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2105,6 +2142,40 @@ def check_research_artifacts(
         # Impossible booleans in policy
         from atlas_agent.research.provider_opt_in_policy import _check_boolean_safety_flags
         error = _check_boolean_safety_flags(policy)
+        if error:
+            issues.append({"code": error, "path": rel, "severity": "error"})
+
+    # Provider credential boundary lineage checks
+    provider_opt_in_policy_data_by_id: dict[str, dict[str, Any]] = {}
+    for policy in provider_opt_in_policy_data:
+        pid = policy.get("provider_opt_in_policy_id", "")
+        if pid:
+            provider_opt_in_policy_data_by_id[pid] = policy
+
+    for boundary in provider_credential_boundary_data:
+        rel = boundary.get("artifact_path", "")
+        src_policy_id = boundary.get("source_provider_opt_in_policy_id", "")
+        # Invalid lineage
+        try:
+            validate_run_id(src_policy_id)
+        except ResearchSessionError:
+            issues.append({"code": "invalid_lineage", "path": rel, "severity": "error"})
+            continue
+        # Missing source policy
+        if src_policy_id not in provider_opt_in_policy_data_by_id:
+            issues.append({"code": "missing_source_policy", "path": rel, "severity": "error"})
+            continue
+        # Source policy hash mismatch
+        stored_policy_hash = boundary.get("source_opt_in_policy_hash", "")
+        if stored_policy_hash:
+            src_policy = provider_opt_in_policy_data_by_id[src_policy_id]
+            actual_policy_hash = src_policy.get("artifact_hash", "")
+            if actual_policy_hash != stored_policy_hash:
+                issues.append({"code": "source_policy_hash_mismatch", "path": rel, "severity": "error"})
+                continue
+        # Impossible booleans in boundary
+        from atlas_agent.research.provider_credential_boundary import _check_boolean_safety_flags
+        error = _check_boolean_safety_flags(boundary)
         if error:
             issues.append({"code": error, "path": rel, "severity": "error"})
 
@@ -2520,6 +2591,8 @@ def build_research_timeline(
     provider_preflight_freeze_items = iter_provider_preflight_freeze_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_opt_in_policy import iter_provider_opt_in_policy_artifacts
     provider_opt_in_policy_items = iter_provider_opt_in_policy_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_credential_boundary import iter_provider_credential_boundary_artifacts
+    provider_credential_boundary_items = iter_provider_credential_boundary_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -2661,6 +2734,17 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_opt_in_policy", "path": pop.get("artifact_path", ""), "severity": "warning"})
 
+    provider_credential_boundaries_by_policy_id: dict[str, list[dict[str, Any]]] = {}
+    for pcb in provider_credential_boundary_items:
+        if pcb.get("_invalid"):
+            warnings.append({"code": "invalid_provider_credential_boundary_skipped", "path": pcb.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = pcb.get("source_provider_opt_in_policy_id", "")
+        if src:
+            provider_credential_boundaries_by_policy_id.setdefault(src, []).append(pcb)
+        else:
+            warnings.append({"code": "orphan_provider_credential_boundary", "path": pcb.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -2768,6 +2852,17 @@ def build_research_timeline(
         if src and src not in seen_freeze_ids:
             warnings.append({"code": "orphan_provider_opt_in_policy", "path": pop.get("artifact_path", ""), "severity": "warning"})
 
+    # Track seen policy IDs for orphan credential boundary detection
+    seen_policy_ids = set()
+    for pop in provider_opt_in_policy_items:
+        if not pop.get("_invalid"):
+            seen_policy_ids.add(pop.get("provider_opt_in_policy_id", ""))
+
+    for pcb in provider_credential_boundary_items:
+        src = pcb.get("source_provider_opt_in_policy_id", "")
+        if src and src not in seen_policy_ids:
+            warnings.append({"code": "orphan_provider_credential_boundary", "path": pcb.get("artifact_path", ""), "severity": "warning"})
+
     # Build entries
     entries: list[dict[str, Any]] = []
     for research in research_items:
@@ -2863,6 +2958,13 @@ def build_research_timeline(
                                         freeze_copy = dict(freeze)
                                         freeze_id = freeze_copy.get("provider_preflight_freeze_id", "")
                                         freeze_copy["provider_opt_in_policies"] = provider_opt_in_policies_by_freeze_id.get(freeze_id, [])
+                                        policies_with_boundaries = []
+                                        for policy in freeze_copy["provider_opt_in_policies"]:
+                                            policy_copy = dict(policy)
+                                            policy_id = policy_copy.get("provider_opt_in_policy_id", "")
+                                            policy_copy["provider_credential_boundaries"] = provider_credential_boundaries_by_policy_id.get(policy_id, [])
+                                            policies_with_boundaries.append(policy_copy)
+                                        freeze_copy["provider_opt_in_policies"] = policies_with_boundaries
                                         freezes_with_policies.append(freeze_copy)
                                     rpt_copy["provider_preflight_freezes"] = freezes_with_policies
                                     readiness_reports_with_freezes.append(rpt_copy)
@@ -4277,6 +4379,11 @@ def build_dossier(
     from atlas_agent.research.provider_opt_in_policy import iter_provider_opt_in_policy_artifacts
     provider_opt_in_policy_items = iter_provider_opt_in_policy_artifacts(workspace_path, symbol=symbol)
     linked_provider_opt_in_policies = [pop for pop in provider_opt_in_policy_items if pop.get("source_provider_preflight_freeze_id") in linked_freeze_ids]
+    linked_policy_ids = {pop.get("provider_opt_in_policy_id", "") for pop in linked_provider_opt_in_policies}
+
+    from atlas_agent.research.provider_credential_boundary import iter_provider_credential_boundary_artifacts
+    provider_credential_boundary_items = iter_provider_credential_boundary_artifacts(workspace_path, symbol=symbol)
+    linked_provider_credential_boundaries = [pcb for pcb in provider_credential_boundary_items if pcb.get("source_provider_opt_in_policy_id") in linked_policy_ids]
 
     # Build workflow status
     workflow_status = {
@@ -4295,6 +4402,7 @@ def build_dossier(
         "provider_execution_readiness_reports": len(linked_provider_execution_readiness_reports) > 0,
         "provider_preflight_freezes": len(linked_provider_preflight_freezes) > 0,
         "provider_opt_in_policies": len(linked_provider_opt_in_policies) > 0,
+        "provider_credential_boundaries": len(linked_provider_credential_boundaries) > 0,
     }
 
     artifact_counts = {
@@ -4313,6 +4421,7 @@ def build_dossier(
         "provider_execution_readiness_reports": len(linked_provider_execution_readiness_reports),
         "provider_preflight_freezes": len(linked_provider_preflight_freezes),
         "provider_opt_in_policies": len(linked_provider_opt_in_policies),
+        "provider_credential_boundaries": len(linked_provider_credential_boundaries),
     }
 
     # Build linked_artifacts with relative paths only
@@ -4427,6 +4536,15 @@ def build_dossier(
             "policy_scope": pop.get("policy_scope", ""),
             "opt_in_state": pop.get("opt_in_state", ""),
         })
+    for pcb in linked_provider_credential_boundaries:
+        linked_artifacts.append({
+            "type": "provider_credential_boundary",
+            "id": pcb.get("provider_credential_boundary_id", ""),
+            "artifact_path": pcb.get("artifact_path", ""),
+            "credential_boundary_status": pcb.get("credential_boundary_status", ""),
+            "credential_boundary_scope": pcb.get("credential_boundary_scope", ""),
+            "credential_loading_state": pcb.get("credential_loading_state", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -4511,6 +4629,13 @@ def build_dossier(
             "policy_scopes": [pop.get("policy_scope", "") for pop in linked_provider_opt_in_policies],
             "opt_in_states": [pop.get("opt_in_state", "") for pop in linked_provider_opt_in_policies],
         }
+    if linked_provider_credential_boundaries:
+        summaries["provider_credential_boundary"] = {
+            "boundary_count": len(linked_provider_credential_boundaries),
+            "boundary_statuses": [pcb.get("credential_boundary_status", "") for pcb in linked_provider_credential_boundaries],
+            "boundary_scopes": [pcb.get("credential_boundary_scope", "") for pcb in linked_provider_credential_boundaries],
+            "credential_loading_states": [pcb.get("credential_loading_state", "") for pcb in linked_provider_credential_boundaries],
+        }
 
     # Safety summary
     safety_summary = {
@@ -4550,6 +4675,8 @@ def build_dossier(
         missing_links.append("no_provider_preflight_freeze")
     if not linked_provider_opt_in_policies:
         missing_links.append("no_provider_opt_in_policy")
+    if not linked_provider_credential_boundaries:
+        missing_links.append("no_provider_credential_boundary")
 
     warnings: list[str] = []
     if missing_links:

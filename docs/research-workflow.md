@@ -40,8 +40,14 @@ The enabled research provider is `deterministic`.
 | `atlas research simulate-provider PROMPT_PACKET_ID` | Simulate a deterministic provider response from a prompt packet | Yes | No | No |
 | `atlas research review-response PROVIDER_RESPONSE_ID` | Review a provider response artifact deterministically | Yes | No | No |
 | `atlas research dossier RUN_ID` | Build a deterministic dossier consolidating a research chain | Yes | No | No |
+| `atlas research provider-credential-boundary PROVIDER_OPT_IN_POLICY_ID` | Create a credential boundary artifact from an opt-in policy | Yes | No | No |
+| `atlas research provider-credential-boundary-list` | List credential boundary artifacts | No | Yes | No |
+| `atlas research provider-credential-boundary-show BOUNDARY_ID` | Show a credential boundary artifact | No | Yes | No |
+| `atlas research provider-credential-boundary-validate BOUNDARY_ID` | Validate a credential boundary artifact | No | Yes | No |
+| `atlas research provider-credential-boundary-replay BOUNDARY_ID` | Replay a credential boundary artifact | No | Yes | No |
+| `atlas research provider-credential-boundary-summary RUN_ID` | Summarize credential boundary state for a run | No | Yes | No |
 
-`list`, `show`, `summary`, `check-artifacts`, `timeline`, and `providers` are read-only. `run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, `review-response`, and `dossier` write local artifacts only. None of them touch live trading.
+`list`, `show`, `summary`, `check-artifacts`, `timeline`, `providers`, `provider-credential-boundary-list`, `provider-credential-boundary-show`, `provider-credential-boundary-validate`, `provider-credential-boundary-replay`, and `provider-credential-boundary-summary` are read-only. `run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, `review-response`, `dossier`, and `provider-credential-boundary` write local artifacts only. None of them touch live trading.
 
 ## Typical Flow
 
@@ -390,6 +396,28 @@ Build a deterministic dossier consolidating a research chain.
 - Does not authorize live trading.
 - Does not modify source research artifacts.
 - Supports `--json` and `--include-artifact-index`.
+
+### `atlas research provider-credential-boundary PROVIDER_OPT_IN_POLICY_ID`
+
+Create a local provider credential boundary artifact from an existing provider opt-in policy artifact.
+
+- Validates the source opt-in policy and its linked chain.
+- Produces a credential boundary artifact under `.atlas/research/<SYMBOL>/provider_credential_boundaries/<boundary_id>.json`.
+- Documents secret storage, input, output, logging, redaction, rotation, revocation, and CI policies.
+- All 14 boolean safety flags are `False` by design.
+- `credentials_loaded` is `False`.
+- `credential_value_present` is `False`.
+- `env_read_attempted` is `False`.
+- `dotenv_loaded` is `False`.
+- Does not call providers.
+- Does not call APIs or network.
+- Does not read API keys.
+- Does not load `.env.atlas`.
+- Does not read `os.environ`.
+- Does not submit orders.
+- Does not create approvals or pending orders.
+- Does not authorize live trading.
+- Supports `--json`.
 
 ### `./scripts/demo_research_workflow.sh`
 
