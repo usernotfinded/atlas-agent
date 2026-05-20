@@ -58,7 +58,7 @@ The following forbidden fragments were verified as NOT present in happy-path fre
 
 ## Test Evidence
 
-- `tests/research/test_research_sandbox_cli.py` — configless invariant tests for freeze commands (to be added)
+- `tests/research/test_research_sandbox_cli.py` — configless invariant tests for freeze commands are present in the research test suite and cover the provider preflight freeze command surface.
 - `tests/test_demo_research_workflow_script.py` — 43 fake-atlas inline templates validate full freeze chain
 - `scripts/demo_research_workflow.sh` — happy-path freeze creation, validation, replay, summary, timeline
 

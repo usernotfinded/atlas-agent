@@ -455,3 +455,14 @@ New research workflow artifacts include `schema_version`. The current schema ver
 - Not a strategy engine.
 - Not financial advice.
 - Evaluation checks data availability and objective metrics; it does not assess profitability or generate trading signals.
+
+## Security and Policy Documentation
+
+For the threat model, provider execution policy, and integration requirements that govern future real provider execution, see:
+
+- `docs/security/provider-integration-threat-model.md`
+- `docs/security/provider-execution-policy.md`
+- `docs/security/provider-integration-requirements.md`
+- `docs/adr/ADR-0001-provider-execution-boundary.md`
+
+Real provider execution is not implemented in this version. The provider-preflight chain is frozen for development scope only.

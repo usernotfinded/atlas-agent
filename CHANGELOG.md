@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev27] - 2026-05-20
+
+### Added
+- Batch 8.0 — Real Provider Integration Threat Model & Policy Draft.
+  - `docs/security/provider-integration-threat-model.md`: formal threat model for future provider execution.
+  - `docs/security/provider-execution-policy.md`: policy draft covering default deny, human opt-in, credential isolation, outbound payload, response handling, trading separation, audit, failure, allowlist, and release gate policies.
+  - `docs/security/provider-integration-requirements.md`: checkbox checklist for future provider integration phases.
+  - `docs/adr/ADR-0001-provider-execution-boundary.md`: architecture decision record isolating provider execution from trading execution.
+  - `docs/releases/v0.5.7.dev27.md`: release notes for Batch 8.0.
+
+### Changed
+- `docs/audits/provider-preflight-freeze-v0.5.7.dev26.md`: fixed stale wording about configless invariant tests.
+- `README.md`: updated current status to v0.5.7.dev27; added note that real provider execution is not implemented.
+- `docs/research-workflow.md`: added cross-reference to new security documentation.
+
+### Safety / Compatibility
+- No real provider execution added. No network calls. No API keys. No provider SDKs.
+- No broker execution changes. No trading signals. No approvals or pending orders.
+- Boundary diff clean under `src/atlas_agent/config`, `brokers`, `execution`, `safety`, `risk`.
+- This batch is documentation, policy, and tests only.
+
 ## [0.5.7.dev26] - 2026-05-20
 
 ### Added
