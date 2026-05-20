@@ -1935,7 +1935,132 @@ if [ "$PAYLOAD_PREVIEW_SUMMARY_CREDS" != "False" ]; then
 fi
 assert_no_pending_orders
 
-# 77. Research timeline after payload preview
+# 77. Research provider-response-intake-policy
+printf '\n--- Research provider-response-intake-policy ---\n'
+INTAKE_POLICY_OUTPUT="$(atlas research provider-response-intake-policy "$PAYLOAD_PREVIEW_ID" --json)"
+assert_no_absolute_paths "$INTAKE_POLICY_OUTPUT"
+assert_no_secrets_in_output "$INTAKE_POLICY_OUTPUT"
+assert_no_forbidden_fragments "$INTAKE_POLICY_OUTPUT" "provider-response-intake-policy CLI output"
+assert_ok "$INTAKE_POLICY_OUTPUT" "research provider-response-intake-policy"
+INTAKE_POLICY_STATUS="$(json_field "$INTAKE_POLICY_OUTPUT" status)"
+if [ "$INTAKE_POLICY_STATUS" != "research_provider_response_intake_policy_created" ]; then
+  printf 'FAIL: unexpected provider-response-intake-policy status: %s\n' "$INTAKE_POLICY_STATUS" >&2
+  exit 1
+fi
+INTAKE_POLICY_ID="$(json_field "$INTAKE_POLICY_OUTPUT" provider_response_intake_policy_id)"
+if [ -z "$INTAKE_POLICY_ID" ]; then
+  printf 'FAIL: provider_response_intake_policy_id is empty\n' >&2
+  exit 1
+fi
+INTAKE_POLICY_TRUSTED="$(json_field "$INTAKE_POLICY_OUTPUT" provider_response_trusted)"
+if [ "$INTAKE_POLICY_TRUSTED" != "False" ]; then
+  printf 'FAIL: provider-response-intake-policy provider_response_trusted is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 78. Research provider-response-intake-policy-list
+printf '\n--- Research provider-response-intake-policy-list ---\n'
+INTAKE_POLICY_LIST_OUTPUT="$(atlas research provider-response-intake-policy-list --json)"
+assert_no_absolute_paths "$INTAKE_POLICY_LIST_OUTPUT"
+assert_no_secrets_in_output "$INTAKE_POLICY_LIST_OUTPUT"
+assert_no_forbidden_fragments "$INTAKE_POLICY_LIST_OUTPUT" "provider-response-intake-policy-list CLI output"
+assert_ok "$INTAKE_POLICY_LIST_OUTPUT" "research provider-response-intake-policy-list"
+INTAKE_POLICY_LIST_STATUS="$(json_field "$INTAKE_POLICY_LIST_OUTPUT" status)"
+if [ "$INTAKE_POLICY_LIST_STATUS" != "research_provider_response_intake_policy_list" ]; then
+  printf 'FAIL: unexpected provider-response-intake-policy-list status: %s\n' "$INTAKE_POLICY_LIST_STATUS" >&2
+  exit 1
+fi
+INTAKE_POLICY_LIST_HAS_ID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+ids=[i.get('provider_response_intake_policy_id') for i in items if not i.get('_invalid')]
+print('$INTAKE_POLICY_ID' in ids)
+" <<<"$INTAKE_POLICY_LIST_OUTPUT" )"
+if [ "$INTAKE_POLICY_LIST_HAS_ID" != "True" ]; then
+  printf 'FAIL: provider-response-intake-policy-list does not contain provider_response_intake_policy_id %s\n' "$INTAKE_POLICY_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 79. Research provider-response-intake-policy-show
+printf '\n--- Research provider-response-intake-policy-show ---\n'
+INTAKE_POLICY_SHOW_OUTPUT="$(atlas research provider-response-intake-policy-show "$INTAKE_POLICY_ID" --json)"
+assert_no_absolute_paths "$INTAKE_POLICY_SHOW_OUTPUT"
+assert_no_secrets_in_output "$INTAKE_POLICY_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$INTAKE_POLICY_SHOW_OUTPUT" "provider-response-intake-policy-show CLI output"
+assert_ok "$INTAKE_POLICY_SHOW_OUTPUT" "research provider-response-intake-policy-show"
+INTAKE_POLICY_SHOW_STATUS="$(json_field "$INTAKE_POLICY_SHOW_OUTPUT" status)"
+if [ "$INTAKE_POLICY_SHOW_STATUS" != "research_provider_response_intake_policy_shown" ]; then
+  printf 'FAIL: unexpected provider-response-intake-policy-show status: %s\n' "$INTAKE_POLICY_SHOW_STATUS" >&2
+  exit 1
+fi
+INTAKE_POLICY_SHOW_ID="$(json_field "$INTAKE_POLICY_SHOW_OUTPUT" provider_response_intake_policy_id)"
+if [ "$INTAKE_POLICY_SHOW_ID" != "$INTAKE_POLICY_ID" ]; then
+  printf 'FAIL: provider-response-intake-policy-show returned unexpected provider_response_intake_policy_id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 80. Research provider-response-intake-policy-validate
+printf '\n--- Research provider-response-intake-policy-validate ---\n'
+INTAKE_POLICY_VALIDATE_OUTPUT="$(atlas research provider-response-intake-policy-validate "$INTAKE_POLICY_ID" --json)"
+assert_no_absolute_paths "$INTAKE_POLICY_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$INTAKE_POLICY_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$INTAKE_POLICY_VALIDATE_OUTPUT" "provider-response-intake-policy-validate CLI output"
+assert_ok "$INTAKE_POLICY_VALIDATE_OUTPUT" "research provider-response-intake-policy-validate"
+INTAKE_POLICY_VALIDATE_STATUS="$(json_field "$INTAKE_POLICY_VALIDATE_OUTPUT" status)"
+if [ "$INTAKE_POLICY_VALIDATE_STATUS" != "research_provider_response_intake_policy_validated" ]; then
+  printf 'FAIL: unexpected provider-response-intake-policy-validate status: %s\n' "$INTAKE_POLICY_VALIDATE_STATUS" >&2
+  exit 1
+fi
+INTAKE_POLICY_VALIDATE_VALID="$(json_field "$INTAKE_POLICY_VALIDATE_OUTPUT" valid)"
+if [ "$INTAKE_POLICY_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: provider-response-intake-policy-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 81. Research provider-response-intake-policy-replay
+printf '\n--- Research provider-response-intake-policy-replay ---\n'
+INTAKE_POLICY_REPLAY_OUTPUT="$(atlas research provider-response-intake-policy-replay "$INTAKE_POLICY_ID" --json)"
+assert_no_absolute_paths "$INTAKE_POLICY_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$INTAKE_POLICY_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$INTAKE_POLICY_REPLAY_OUTPUT" "provider-response-intake-policy-replay CLI output"
+assert_ok "$INTAKE_POLICY_REPLAY_OUTPUT" "research provider-response-intake-policy-replay"
+INTAKE_POLICY_REPLAY_STATUS="$(json_field "$INTAKE_POLICY_REPLAY_OUTPUT" status)"
+if [ "$INTAKE_POLICY_REPLAY_STATUS" != "research_provider_response_intake_policy_replayed" ]; then
+  printf 'FAIL: unexpected provider-response-intake-policy-replay status: %s\n' "$INTAKE_POLICY_REPLAY_STATUS" >&2
+  exit 1
+fi
+INTAKE_POLICY_REPLAY_MATCH="$(json_field "$INTAKE_POLICY_REPLAY_OUTPUT" match)"
+if [ "$INTAKE_POLICY_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-response-intake-policy-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 82. Research provider-response-intake-policy-summary
+printf '\n--- Research provider-response-intake-policy-summary ---\n'
+INTAKE_POLICY_SUMMARY_OUTPUT="$(atlas research provider-response-intake-policy-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$INTAKE_POLICY_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$INTAKE_POLICY_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$INTAKE_POLICY_SUMMARY_OUTPUT" "provider-response-intake-policy-summary CLI output"
+assert_ok "$INTAKE_POLICY_SUMMARY_OUTPUT" "research provider-response-intake-policy-summary"
+INTAKE_POLICY_SUMMARY_TRUSTED="$(json_field "$INTAKE_POLICY_SUMMARY_OUTPUT" provider_response_trusted)"
+if [ "$INTAKE_POLICY_SUMMARY_TRUSTED" != "False" ]; then
+  printf 'FAIL: response intake policy summary provider_response_trusted is not False\n' >&2
+  exit 1
+fi
+INTAKE_POLICY_SUMMARY_RECEIVED="$(json_field "$INTAKE_POLICY_SUMMARY_OUTPUT" provider_response_received)"
+if [ "$INTAKE_POLICY_SUMMARY_RECEIVED" != "False" ]; then
+  printf 'FAIL: response intake policy summary provider_response_received is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 83. Research timeline after payload preview
 printf '\n--- Research timeline (post payload preview) ---\n'
 TIMELINE_OUTPUT_PAYLOAD_PREVIEW="$(atlas research timeline --json)"
 assert_no_absolute_paths "$TIMELINE_OUTPUT_PAYLOAD_PREVIEW"
@@ -1987,7 +2112,12 @@ for e in entries:
                                                 continue
                                             previews=[pr.get('provider_outbound_payload_preview_id') for pr in b.get('provider_outbound_payload_previews',[])]
                                             if '$PAYLOAD_PREVIEW_ID' in previews:
-                                                print('valid')
+                                                for pr in b.get('provider_outbound_payload_previews',[]):
+                                                    if pr.get('provider_outbound_payload_preview_id')=='$PAYLOAD_PREVIEW_ID':
+                                                        pips=[pip.get('provider_response_intake_policy_id') for pip in pr.get('provider_response_intake_policies',[])]
+                                                        if '$INTAKE_POLICY_ID' in pips:
+                                                            print('valid')
+                                                            break
                                                 break
                                         break
                                     break
@@ -2202,7 +2332,7 @@ assert_no_pending_orders
 # 43. Safety checks
 printf '\n--- Safety checks ---\n'
 assert_no_pending_orders
-assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$DRY_RUN_OUTPUT$DRY_RUN_LIST_OUTPUT$DRY_RUN_SHOW_OUTPUT$DRY_RUN_VALIDATE_OUTPUT$DRY_RUN_REPLAY_OUTPUT$TIMELINE_OUTPUT_PED$STATE_DRY_OUTPUT$STATE_LIST_OUTPUT$STATE_SHOW_OUTPUT$STATE_VALIDATE_OUTPUT$STATE_REPLAY_OUTPUT$STATE_MANUAL_OUTPUT$STATE_IMPL_OUTPUT$TIMELINE_OUTPUT_STATE$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4"
-assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$DRY_RUN_OUTPUT$DRY_RUN_LIST_OUTPUT$DRY_RUN_SHOW_OUTPUT$DRY_RUN_VALIDATE_OUTPUT$DRY_RUN_REPLAY_OUTPUT$TIMELINE_OUTPUT_PED$STATE_DRY_OUTPUT$STATE_LIST_OUTPUT$STATE_SHOW_OUTPUT$STATE_VALIDATE_OUTPUT$STATE_REPLAY_OUTPUT$STATE_MANUAL_OUTPUT$STATE_IMPL_OUTPUT$TIMELINE_OUTPUT_STATE$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4" "aggregated outputs"
+assert_no_secrets_in_output "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$DRY_RUN_OUTPUT$DRY_RUN_LIST_OUTPUT$DRY_RUN_SHOW_OUTPUT$DRY_RUN_VALIDATE_OUTPUT$DRY_RUN_REPLAY_OUTPUT$TIMELINE_OUTPUT_PED$STATE_DRY_OUTPUT$STATE_LIST_OUTPUT$STATE_SHOW_OUTPUT$STATE_VALIDATE_OUTPUT$STATE_REPLAY_OUTPUT$STATE_MANUAL_OUTPUT$STATE_IMPL_OUTPUT$TIMELINE_OUTPUT_STATE$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4$INTAKE_POLICY_OUTPUT$INTAKE_POLICY_LIST_OUTPUT$INTAKE_POLICY_SHOW_OUTPUT$INTAKE_POLICY_VALIDATE_OUTPUT$INTAKE_POLICY_REPLAY_OUTPUT$INTAKE_POLICY_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$RUN_OUTPUT$LIST_OUTPUT$SHOW_OUTPUT$PLAN_OUTPUT$VERIFY_OUTPUT$EVAL_OUTPUT$SUMMARY_OUTPUT$CHECK_OUTPUT$TIMELINE_OUTPUT$PROVIDERS_OUTPUT$PROMPT_OUTPUT$SANDBOX_OUTPUT$SANDBOX_LIST_OUTPUT$SANDBOX_SHOW_OUTPUT$SANDBOX_VALIDATE_OUTPUT$SANDBOX_REPLAY_OUTPUT$TARGETS_OUTPUT$PLAN_PCP_OUTPUT$PLAN_LIST_PCP_OUTPUT$PLAN_SHOW_PCP_OUTPUT$PLAN_VALIDATE_PCP_OUTPUT$PLAN_REPLAY_PCP_OUTPUT$TIMELINE_OUTPUT_PCP$DRY_RUN_OUTPUT$DRY_RUN_LIST_OUTPUT$DRY_RUN_SHOW_OUTPUT$DRY_RUN_VALIDATE_OUTPUT$DRY_RUN_REPLAY_OUTPUT$TIMELINE_OUTPUT_PED$STATE_DRY_OUTPUT$STATE_LIST_OUTPUT$STATE_SHOW_OUTPUT$STATE_VALIDATE_OUTPUT$STATE_REPLAY_OUTPUT$STATE_MANUAL_OUTPUT$STATE_IMPL_OUTPUT$TIMELINE_OUTPUT_STATE$IMPORT_OUTPUT$TIMELINE_OUTPUT_IMPORT$REVIEW_OUTPUT$TIMELINE_OUTPUT3$DOSSIER_OUTPUT$TIMELINE_OUTPUT4$INTAKE_POLICY_OUTPUT$INTAKE_POLICY_LIST_OUTPUT$INTAKE_POLICY_SHOW_OUTPUT$INTAKE_POLICY_VALIDATE_OUTPUT$INTAKE_POLICY_REPLAY_OUTPUT$INTAKE_POLICY_SUMMARY_OUTPUT" "aggregated outputs"
 
 printf '\nResearch workflow demo complete.\n'

@@ -52,8 +52,14 @@ The enabled research provider is `deterministic`.
 | `atlas research provider-payload-preview-validate PREVIEW_ID` | Validate a payload preview artifact | No | Yes | No |
 | `atlas research provider-payload-preview-replay PREVIEW_ID` | Replay a payload preview artifact | No | Yes | No |
 | `atlas research provider-payload-preview-summary RUN_ID` | Summarize payload preview state for a run | No | Yes | No |
+| `atlas research provider-response-intake-policy PROVIDER_OUTBOUND_PAYLOAD_PREVIEW_ID` | Create a response intake policy artifact from a payload preview | Yes | No | No |
+| `atlas research provider-response-intake-policy-list` | List response intake policy artifacts | No | Yes | No |
+| `atlas research provider-response-intake-policy-show POLICY_ID` | Show a response intake policy artifact | No | Yes | No |
+| `atlas research provider-response-intake-policy-validate POLICY_ID` | Validate a response intake policy artifact | No | Yes | No |
+| `atlas research provider-response-intake-policy-replay POLICY_ID` | Replay a response intake policy artifact | No | Yes | No |
+| `atlas research provider-response-intake-policy-summary RUN_ID` | Summarize response intake policy state for a run | No | Yes | No |
 
-`list`, `show`, `summary`, `check-artifacts`, `timeline`, `providers`, `provider-credential-boundary-list`, `provider-credential-boundary-show`, `provider-credential-boundary-validate`, `provider-credential-boundary-replay`, `provider-credential-boundary-summary`, `provider-payload-preview-list`, `provider-payload-preview-show`, `provider-payload-preview-validate`, `provider-payload-preview-replay`, and `provider-payload-preview-summary` are read-only. `run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, `review-response`, `dossier`, `provider-credential-boundary`, and `provider-payload-preview` write local artifacts only. None of them touch live trading.
+`list`, `show`, `summary`, `check-artifacts`, `timeline`, `providers`, `provider-credential-boundary-list`, `provider-credential-boundary-show`, `provider-credential-boundary-validate`, `provider-credential-boundary-replay`, `provider-credential-boundary-summary`, `provider-payload-preview-list`, `provider-payload-preview-show`, `provider-payload-preview-validate`, `provider-payload-preview-replay`, `provider-payload-preview-summary`, `provider-response-intake-policy-list`, `provider-response-intake-policy-show`, `provider-response-intake-policy-validate`, `provider-response-intake-policy-replay`, and `provider-response-intake-policy-summary` are read-only. `run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, `review-response`, `dossier`, `provider-credential-boundary`, `provider-payload-preview`, and `provider-response-intake-policy` write local artifacts only. None of them touch live trading.
 
 ## Typical Flow
 

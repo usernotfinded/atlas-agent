@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1400,6 +1400,8 @@ def check_research_artifacts(
     provider_credential_boundary_data: list[dict[str, Any]] = []
     provider_outbound_payload_preview_ids: dict[str, list[str]] = {}
     provider_outbound_payload_preview_data: list[dict[str, Any]] = []
+    provider_response_intake_policy_ids: dict[str, list[str]] = {}
+    provider_response_intake_policy_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1448,6 +1450,7 @@ def check_research_artifacts(
             "provider_opt_in_policy": "provider_opt_in_policy_id",
             "provider_credential_boundary": "provider_credential_boundary_id",
             "provider_outbound_payload_preview": "provider_outbound_payload_preview_id",
+            "provider_response_intake_policy": "provider_response_intake_policy_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1494,6 +1497,8 @@ def check_research_artifacts(
         elif expected_type == "provider_credential_boundary" and "provider_credential_boundaries" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_outbound_payload_preview" and "provider_outbound_payload_previews" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_response_intake_policy" and "provider_response_intake_policies" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1702,6 +1707,23 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_response_intake_policy":
+            for f in ("provider_response_intake_policy_id", "source_provider_outbound_payload_preview_id", "symbol", "provider_id", "model_id", "response_intake_policy_status", "response_intake_policy_scope"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_response_intake_policy import (
+                safe_validate_provider_response_intake_policy_data,
+            )
+            _cleaned, error = safe_validate_provider_response_intake_policy_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1751,6 +1773,9 @@ def check_research_artifacts(
             elif expected_type == "provider_outbound_payload_preview":
                 provider_outbound_payload_preview_ids.setdefault(raw_id, []).append(rel)
                 provider_outbound_payload_preview_data.append(data)
+            elif expected_type == "provider_response_intake_policy":
+                provider_response_intake_policy_ids.setdefault(raw_id, []).append(rel)
+                provider_response_intake_policy_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1788,6 +1813,8 @@ def check_research_artifacts(
             counts["provider_credential_boundaries"] += 1
         elif expected_type == "provider_outbound_payload_preview":
             counts["provider_outbound_payload_previews"] += 1
+        elif expected_type == "provider_response_intake_policy":
+            counts["provider_response_intake_policies"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1899,6 +1926,12 @@ def check_research_artifacts(
             for path in provider_outbound_payload_previews_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_outbound_payload_preview", expected_symbol)
+        # Provider response intake policies
+        provider_response_intake_policies_dir = sym_dir / "provider_response_intake_policies"
+        if provider_response_intake_policies_dir.exists():
+            for path in provider_response_intake_policies_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_response_intake_policy", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1970,6 +2003,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for ppid, paths in provider_outbound_payload_preview_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pipid, paths in provider_response_intake_policy_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2247,6 +2284,40 @@ def check_research_artifacts(
         # Impossible booleans in payload preview
         from atlas_agent.research.provider_outbound_payload_preview import _check_boolean_safety_flags
         error = _check_boolean_safety_flags(preview)
+        if error:
+            issues.append({"code": error, "path": rel, "severity": "error"})
+
+    # Provider response intake policy lineage checks
+    provider_outbound_payload_preview_data_by_id: dict[str, dict[str, Any]] = {}
+    for preview in provider_outbound_payload_preview_data:
+        pid = preview.get("provider_outbound_payload_preview_id", "")
+        if pid:
+            provider_outbound_payload_preview_data_by_id[pid] = preview
+
+    for policy in provider_response_intake_policy_data:
+        rel = policy.get("artifact_path", "")
+        src_preview_id = policy.get("source_provider_outbound_payload_preview_id", "")
+        # Invalid lineage
+        try:
+            validate_run_id(src_preview_id)
+        except ResearchSessionError:
+            issues.append({"code": "invalid_lineage", "path": rel, "severity": "error"})
+            continue
+        # Missing source payload preview
+        if src_preview_id not in provider_outbound_payload_preview_data_by_id:
+            issues.append({"code": "missing_source_payload_preview", "path": rel, "severity": "error"})
+            continue
+        # Source payload preview hash mismatch
+        stored_preview_hash = policy.get("source_payload_preview_hash", "")
+        if stored_preview_hash:
+            src_preview = provider_outbound_payload_preview_data_by_id[src_preview_id]
+            actual_preview_hash = src_preview.get("artifact_hash", "")
+            if actual_preview_hash != stored_preview_hash:
+                issues.append({"code": "source_payload_preview_hash_mismatch", "path": rel, "severity": "error"})
+                continue
+        # Impossible booleans in intake policy
+        from atlas_agent.research.provider_response_intake_policy import _check_boolean_safety_flags
+        error = _check_boolean_safety_flags(policy)
         if error:
             issues.append({"code": error, "path": rel, "severity": "error"})
 
@@ -2666,6 +2737,8 @@ def build_research_timeline(
     provider_credential_boundary_items = iter_provider_credential_boundary_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_outbound_payload_preview import iter_provider_outbound_payload_preview_artifacts
     provider_outbound_payload_preview_items = iter_provider_outbound_payload_preview_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_response_intake_policy import iter_provider_response_intake_policy_artifacts
+    provider_response_intake_policy_items = iter_provider_response_intake_policy_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -2829,6 +2902,17 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_outbound_payload_preview", "path": pp.get("artifact_path", ""), "severity": "warning"})
 
+    provider_response_intake_policies_by_preview_id: dict[str, list[dict[str, Any]]] = {}
+    for pip in provider_response_intake_policy_items:
+        if pip.get("_invalid"):
+            warnings.append({"code": "invalid_provider_response_intake_policy_skipped", "path": pip.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = pip.get("source_provider_outbound_payload_preview_id", "")
+        if src:
+            provider_response_intake_policies_by_preview_id.setdefault(src, []).append(pip)
+        else:
+            warnings.append({"code": "orphan_provider_response_intake_policy", "path": pip.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -2958,6 +3042,17 @@ def build_research_timeline(
         if src and src not in seen_boundary_ids:
             warnings.append({"code": "orphan_provider_outbound_payload_preview", "path": pp.get("artifact_path", ""), "severity": "warning"})
 
+    # Track seen payload preview IDs for orphan intake policy detection
+    seen_payload_preview_ids = set()
+    for pp in provider_outbound_payload_preview_items:
+        if not pp.get("_invalid"):
+            seen_payload_preview_ids.add(pp.get("provider_outbound_payload_preview_id", ""))
+
+    for pip in provider_response_intake_policy_items:
+        src = pip.get("source_provider_outbound_payload_preview_id", "")
+        if src and src not in seen_payload_preview_ids:
+            warnings.append({"code": "orphan_provider_response_intake_policy", "path": pip.get("artifact_path", ""), "severity": "warning"})
+
     # Build entries
     entries: list[dict[str, Any]] = []
     for research in research_items:
@@ -3062,7 +3157,14 @@ def build_research_timeline(
                                             for boundary in boundaries:
                                                 boundary_copy = dict(boundary)
                                                 boundary_id = boundary_copy.get("provider_credential_boundary_id", "")
-                                                boundary_copy["provider_outbound_payload_previews"] = provider_outbound_payload_previews_by_boundary_id.get(boundary_id, [])
+                                                previews = provider_outbound_payload_previews_by_boundary_id.get(boundary_id, [])
+                                                previews_with_policies = []
+                                                for preview in previews:
+                                                    preview_copy = dict(preview)
+                                                    preview_id = preview_copy.get("provider_outbound_payload_preview_id", "")
+                                                    preview_copy["provider_response_intake_policies"] = provider_response_intake_policies_by_preview_id.get(preview_id, [])
+                                                    previews_with_policies.append(preview_copy)
+                                                boundary_copy["provider_outbound_payload_previews"] = previews_with_policies
                                                 boundaries_with_previews.append(boundary_copy)
                                             policy_copy["provider_credential_boundaries"] = boundaries_with_previews
                                             policies_with_boundaries.append(policy_copy)
@@ -4491,6 +4593,11 @@ def build_dossier(
     from atlas_agent.research.provider_outbound_payload_preview import iter_provider_outbound_payload_preview_artifacts
     provider_outbound_payload_preview_items = iter_provider_outbound_payload_preview_artifacts(workspace_path, symbol=symbol)
     linked_provider_outbound_payload_previews = [pp for pp in provider_outbound_payload_preview_items if pp.get("source_provider_credential_boundary_id") in linked_credential_boundary_ids]
+    linked_payload_preview_ids = {pp.get("provider_outbound_payload_preview_id", "") for pp in linked_provider_outbound_payload_previews}
+
+    from atlas_agent.research.provider_response_intake_policy import iter_provider_response_intake_policy_artifacts
+    provider_response_intake_policy_items = iter_provider_response_intake_policy_artifacts(workspace_path, symbol=symbol)
+    linked_provider_response_intake_policies = [pip for pip in provider_response_intake_policy_items if pip.get("source_provider_outbound_payload_preview_id") in linked_payload_preview_ids]
 
     # Build workflow status
     workflow_status = {
@@ -4511,6 +4618,7 @@ def build_dossier(
         "provider_opt_in_policies": len(linked_provider_opt_in_policies) > 0,
         "provider_credential_boundaries": len(linked_provider_credential_boundaries) > 0,
         "provider_outbound_payload_previews": len(linked_provider_outbound_payload_previews) > 0,
+        "provider_response_intake_policies": len(linked_provider_response_intake_policies) > 0,
     }
 
     artifact_counts = {
@@ -4531,6 +4639,7 @@ def build_dossier(
         "provider_opt_in_policies": len(linked_provider_opt_in_policies),
         "provider_credential_boundaries": len(linked_provider_credential_boundaries),
         "provider_outbound_payload_previews": len(linked_provider_outbound_payload_previews),
+        "provider_response_intake_policies": len(linked_provider_response_intake_policies),
     }
 
     # Build linked_artifacts with relative paths only
@@ -4664,6 +4773,16 @@ def build_dossier(
             "provider_id": pp.get("provider_id", ""),
             "model_id": pp.get("model_id", ""),
         })
+    for pip in linked_provider_response_intake_policies:
+        linked_artifacts.append({
+            "type": "provider_response_intake_policy",
+            "id": pip.get("provider_response_intake_policy_id", ""),
+            "artifact_path": pip.get("artifact_path", ""),
+            "response_intake_policy_status": pip.get("response_intake_policy_status", ""),
+            "response_intake_policy_scope": pip.get("response_intake_policy_scope", ""),
+            "provider_id": pip.get("provider_id", ""),
+            "model_id": pip.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -4763,6 +4882,14 @@ def build_dossier(
             "provider_ids": [pp.get("provider_id", "") for pp in linked_provider_outbound_payload_previews],
             "model_ids": [pp.get("model_id", "") for pp in linked_provider_outbound_payload_previews],
         }
+    if linked_provider_response_intake_policies:
+        summaries["provider_response_intake_policy"] = {
+            "policy_count": len(linked_provider_response_intake_policies),
+            "response_intake_policy_statuses": [pip.get("response_intake_policy_status", "") for pip in linked_provider_response_intake_policies],
+            "response_intake_policy_scopes": [pip.get("response_intake_policy_scope", "") for pip in linked_provider_response_intake_policies],
+            "provider_ids": [pip.get("provider_id", "") for pip in linked_provider_response_intake_policies],
+            "model_ids": [pip.get("model_id", "") for pip in linked_provider_response_intake_policies],
+        }
 
     # Safety summary
     safety_summary = {
@@ -4810,6 +4937,8 @@ def build_dossier(
         warnings.append("incomplete_chain")
     if not linked_provider_outbound_payload_previews:
         warnings.append("no_provider_outbound_payload_preview")
+    if not linked_provider_response_intake_policies:
+        warnings.append("no_provider_response_intake_policy")
 
     # Determine recommendation
     core_present = linked_plans and linked_prompts and linked_provider_responses and linked_response_reviews

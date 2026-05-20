@@ -343,14 +343,32 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                                                             with open(os.path.join(preview_dir, prfname)) as prf:
                                                                                                                 pr = json.load(prf)
                                                                                                             if pr.get("source_provider_credential_boundary_id") == boundary_id:
-                                                                                                                previews.append({
-                                                                                                                    "provider_outbound_payload_preview_id": pr.get("provider_outbound_payload_preview_id", ""),
-                                                                                                                    "source_provider_credential_boundary_id": pr.get("source_provider_credential_boundary_id", ""),
-                                                                                                                    "payload_preview_status": pr.get("payload_preview_status", ""),
-                                                                                                                    "payload_preview_scope": pr.get("payload_preview_scope", ""),
-                                                                                                                    "created_at": pr.get("created_at", ""),
-                                                                                                                    "artifact_path": pr.get("artifact_path", ""),
-                                                                                                                })
+                                                                                                                    # Look up intake policies for this preview
+                                                                                                                    intake_policies = []
+                                                                                                                    intake_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_response_intake_policies")
+                                                                                                                    if os.path.isdir(intake_dir):
+                                                                                                                        for ifname in sorted(os.listdir(intake_dir)):
+                                                                                                                            if ifname.endswith(".json"):
+                                                                                                                                with open(os.path.join(intake_dir, ifname)) as inf:
+                                                                                                                                    ipol = json.load(inf)
+                                                                                                                                if ipol.get("source_provider_outbound_payload_preview_id") == pr.get("provider_outbound_payload_preview_id", ""):
+                                                                                                                                    intake_policies.append({
+                                                                                                                                        "provider_response_intake_policy_id": ipol.get("provider_response_intake_policy_id", ""),
+                                                                                                                                        "source_provider_outbound_payload_preview_id": ipol.get("source_provider_outbound_payload_preview_id", ""),
+                                                                                                                                        "response_intake_policy_status": ipol.get("response_intake_policy_status", ""),
+                                                                                                                                        "response_intake_policy_scope": ipol.get("response_intake_policy_scope", ""),
+                                                                                                                                        "created_at": ipol.get("created_at", ""),
+                                                                                                                                        "artifact_path": ipol.get("artifact_path", ""),
+                                                                                                                                    })
+                                                                                                                    previews.append({
+                                                                                                                        "provider_outbound_payload_preview_id": pr.get("provider_outbound_payload_preview_id", ""),
+                                                                                                                        "source_provider_credential_boundary_id": pr.get("source_provider_credential_boundary_id", ""),
+                                                                                                                        "payload_preview_status": pr.get("payload_preview_status", ""),
+                                                                                                                        "payload_preview_scope": pr.get("payload_preview_scope", ""),
+                                                                                                                        "created_at": pr.get("created_at", ""),
+                                                                                                                        "artifact_path": pr.get("artifact_path", ""),
+                                                                                                                        "provider_response_intake_policies": intake_policies,
+                                                                                                                    })
                                                                                                 boundaries.append({
                                                                                                     "provider_credential_boundary_id": boundary_id,
                                                                                                     "source_provider_opt_in_policy_id": bnd.get("source_provider_opt_in_policy_id", ""),
@@ -2002,6 +2020,174 @@ if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
         "payload_body_stored": False,
         "outbound_request_sent": False,
         "credentials_loaded": False,
+        "artifact_path": None,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy":
+    preview_id = ARGS[2]
+    policy_id = "demointakepolicyid" + preview_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = f".atlas/research/{symbol}/provider_response_intake_policies/{policy_id}.json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_response_intake_policies"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_response_intake_policy",
+            "contract_version": "research_provider_response_intake_policy_v1",
+            "provider_response_intake_policy_id": policy_id,
+            "source_provider_outbound_payload_preview_id": preview_id,
+            "source_provider_credential_boundary_id": "demoboundaryid12345",
+            "source_provider_opt_in_policy_id": "demopolicyid12345",
+            "source_provider_preflight_freeze_id": "demofreezeid12345",
+            "source_provider_execution_readiness_report_id": "demoreadinessid12345",
+            "source_provider_execution_audit_packet_id": "demoauditid12345",
+            "source_provider_execution_state_id": "demostateid12345",
+            "source_provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demoplanid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "response_intake_policy_status": "response_intake_policy_recorded",
+            "response_intake_policy_scope": "future_provider_response_intake_only",
+            "response_trust_boundary": "provider_response_untrusted_by_default",
+            "response_storage_policy": {"raw_provider_response_stored": False, "response_body_stored": False, "response_body_hash_required": True, "bounded_summary_allowed": True, "artifact_storage_allowed_after_redaction": True, "raw_response_in_events_allowed": False, "raw_response_in_logs_allowed": False},
+            "response_redaction_policy": {"redaction_required_before_output": True, "redaction_required_before_artifact_write": True, "redaction_required_before_event_write": True, "secrets_redacted": True, "absolute_paths_redacted": True, "broker_content_redacted": True, "raw_exception_text_redacted": True, "raw_secret_echo_allowed": False, "redaction_profile": "atlas_provider_response_intake_v1", "raw_denylist_fragments_stored": False},
+            "response_validation_policy": {"response_schema_validation_required": True, "response_hash_required": True, "source_request_hash_required": True, "source_payload_preview_hash_required": True, "unsafe_content_detection_required": True, "trading_action_detection_required": True, "broker_action_detection_required": True, "manual_review_required_on_invalid_response": True},
+            "response_review_policy": {"manual_review_required": True, "auto_accept_response_allowed": False, "auto_execute_response_allowed": False, "auto_create_order_allowed": False, "auto_approve_order_allowed": False, "auto_call_broker_allowed": False},
+            "unsafe_response_policy": {"unsafe_response_behavior": "manual_review_required", "malformed_response_behavior": "fail_closed", "forbidden_fragment_behavior": "fail_closed", "trading_instruction_behavior": "manual_review_required", "broker_instruction_behavior": "fail_closed", "raw_exception_leakage_behavior": "release_blocker"},
+            "trading_separation_policy": {"provider_response_is_trade_signal": False, "provider_response_can_create_pending_order": False, "provider_response_can_approve_order": False, "provider_response_can_submit_order": False, "provider_response_can_modify_risk": False, "broker_live_bridge_allowed": False},
+            "response_hash_policy": {"response_hash_required": True, "hash_algorithm": "sha256", "canonical_json_required": True, "raw_body_hash_allowed_without_storing_body": True, "hash_excludes_volatile_fields": True},
+            "manual_review_policy": {"human_review_required_before_any_trading_interpretation": True, "human_review_required_before_any_future_broker_bridge": True, "review_artifact_required": True, "review_event_required": True, "review_can_still_not_create_orders": True},
+            "future_unlock_requirements": ["explicit_provider_execution_opt_in", "human_review_of_response_intake_policy", "separate_broker_bridge_approval", "risk_manager_validation"],
+            "blocking_reasons": ["provider_execution_not_implemented", "provider_response_reception_not_implemented", "provider_response_trust_boundary_not_established", "trading_separation_required", "manual_review_required_before_any_interpretation"],
+            "source_payload_preview_hash": "",
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": artifact_path,
+            "warnings": ["This is a local response intake policy. No provider response was received.", "No network request was sent.", "No provider response is trusted by default.", "Provider response cannot create orders, approvals, or pending orders.", "Real provider response handling requires explicit future opt-in."],
+            "metadata": {"source_preview_schema_version": "1", "source_preview_contract_version": "research_provider_outbound_payload_preview_v1"},
+            "denylist_metadata": {"denylist_profile": "atlas_provider_response_intake_v1", "forbidden_fragment_count": 11, "forbidden_fragments_raw_stored": False},
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+        }, f)
+    print(json.dumps({
+        "ok": True,
+        "status": "research_provider_response_intake_policy_created",
+        "provider_response_intake_policy_id": policy_id,
+        "source_provider_outbound_payload_preview_id": preview_id,
+        "response_intake_policy_status": "response_intake_policy_recorded",
+        "response_trust_boundary": "provider_response_untrusted_by_default",
+        "provider_response_trusted": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": artifact_path,
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_intake_policy_list",
+        "items": [{
+            "provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "response_intake_policy_status": "response_intake_policy_recorded",
+            "response_intake_policy_scope": "future_provider_response_intake_only",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_intake_policies/demointakepolicyidaryid12345.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+        }],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_intake_policy_shown",
+        "provider_response_intake_policy_id": policy_id,
+        "response_intake_policy_status": "response_intake_policy_recorded",
+        "response_intake_policy_scope": "future_provider_response_intake_only",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o",
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_can_create_orders": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_intake_policies/" + policy_id + ".json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_intake_policy_validated",
+        "provider_response_intake_policy_id": policy_id,
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_intake_policy_replayed",
+        "provider_response_intake_policy_id": policy_id,
+        "match": True,
+        "original_hash": "abc",
+        "replayed_hash": "abc",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_intake_policy_summary",
+        "run_id": run_id,
+        "provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "response_intake_policy_status": "response_intake_policy_recorded",
+        "provider_response_trusted": False,
+        "provider_response_received": False,
+        "provider_response_can_create_orders": False,
         "artifact_path": None,
     }))
     sys.exit(0)
@@ -29590,7 +29776,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -31089,6 +31275,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy":
+    preview_id = ARGS[2]
+    policy_id = "demointakepolicyid" + preview_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_response_intake_policies/" + policy_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_response_intake_policies"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_response_intake_policy",
+            contract_version="research_provider_response_intake_policy_v1",
+            provider_response_intake_policy_id=policy_id,
+            source_provider_outbound_payload_preview_id=preview_id,
+            response_intake_policy_status="response_intake_policy_recorded",
+            response_trust_boundary="provider_response_untrusted_by_default",
+            provider_response_received=False,
+            provider_response_trusted=False,
+            provider_response_imported=False,
+            provider_response_reviewed=False,
+            provider_response_can_create_orders=False,
+            provider_response_can_approve_orders=False,
+            provider_response_can_call_broker=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=artifact_path,
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f)
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_response_intake_policy_created",
+        provider_response_intake_policy_id=policy_id,
+        source_provider_outbound_payload_preview_id=preview_id,
+        response_intake_policy_status="response_intake_policy_recorded",
+        response_trust_boundary="provider_response_untrusted_by_default",
+        provider_response_trusted=False,
+        provider_response_received=False,
+        provider_response_imported=False,
+        provider_response_reviewed=False,
+        provider_response_can_create_orders=False,
+        provider_response_can_approve_orders=False,
+        provider_response_can_call_broker=False,
+        provider_call_allowed=False,
+        actual_provider_call_made=False,
+        trading_signal_generated=False,
+        approval_created=False,
+        pending_order_created=False,
+        broker_touched=False,
+        artifact_path=artifact_path,
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_list",
+        items=[dict(
+            provider_response_intake_policy_id="demointakepolicyidaryid12345",
+            source_provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            response_intake_policy_status="response_intake_policy_recorded",
+            response_intake_policy_scope="future_provider_response_intake_only",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_response_intake_policies/demointakepolicyidaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+        )],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_shown",
+        provider_response_intake_policy_id=policy_id,
+        response_intake_policy_status="response_intake_policy_recorded",
+        response_intake_policy_scope="future_provider_response_intake_only",
+        provider_id="custom-openai-compatible",
+        model_id="gpt-4o",
+        provider_response_received=False,
+        provider_response_trusted=False,
+        provider_response_can_create_orders=False,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_response_intake_policies/" + policy_id + ".json",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_validated",
+        provider_response_intake_policy_id=policy_id,
+        valid=True,
+        passed_checks=5,
+        failed_checks=0,
+        checks=[],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_replayed",
+        provider_response_intake_policy_id=policy_id,
+        match=True,
+        original_hash="abc",
+        replayed_hash="abc",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_summary",
+        run_id=run_id,
+        provider_response_intake_policy_id="demointakepolicyidaryid12345",
+        response_intake_policy_status="response_intake_policy_recorded",
+        provider_response_trusted=False,
+        provider_response_received=False,
+        provider_response_can_create_orders=False,
+        artifact_path=None,
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -31214,7 +31530,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -32644,6 +32960,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
     )))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy":
+    preview_id = ARGS[2]
+    policy_id = "demointakepolicyid" + preview_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_response_intake_policies/" + policy_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_response_intake_policies"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_response_intake_policy",
+            contract_version="research_provider_response_intake_policy_v1",
+            provider_response_intake_policy_id=policy_id,
+            source_provider_outbound_payload_preview_id=preview_id,
+            response_intake_policy_status="response_intake_policy_recorded",
+            response_trust_boundary="provider_response_untrusted_by_default",
+            provider_response_received=False,
+            provider_response_trusted=False,
+            provider_response_imported=False,
+            provider_response_reviewed=False,
+            provider_response_can_create_orders=False,
+            provider_response_can_approve_orders=False,
+            provider_response_can_call_broker=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=artifact_path,
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f)
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_response_intake_policy_created",
+        provider_response_intake_policy_id=policy_id,
+        source_provider_outbound_payload_preview_id=preview_id,
+        response_intake_policy_status="response_intake_policy_recorded",
+        response_trust_boundary="provider_response_untrusted_by_default",
+        provider_response_trusted=False,
+        provider_response_received=False,
+        provider_response_imported=False,
+        provider_response_reviewed=False,
+        provider_response_can_create_orders=False,
+        provider_response_can_approve_orders=False,
+        provider_response_can_call_broker=False,
+        provider_call_allowed=False,
+        actual_provider_call_made=False,
+        trading_signal_generated=False,
+        approval_created=False,
+        pending_order_created=False,
+        broker_touched=False,
+        artifact_path=artifact_path,
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_list",
+        items=[dict(
+            provider_response_intake_policy_id="demointakepolicyidaryid12345",
+            source_provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            response_intake_policy_status="response_intake_policy_recorded",
+            response_intake_policy_scope="future_provider_response_intake_only",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_response_intake_policies/demointakepolicyidaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+        )],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_shown",
+        provider_response_intake_policy_id=policy_id,
+        response_intake_policy_status="response_intake_policy_recorded",
+        response_intake_policy_scope="future_provider_response_intake_only",
+        provider_id="custom-openai-compatible",
+        model_id="gpt-4o",
+        provider_response_received=False,
+        provider_response_trusted=False,
+        provider_response_can_create_orders=False,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_response_intake_policies/" + policy_id + ".json",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_validated",
+        provider_response_intake_policy_id=policy_id,
+        valid=True,
+        passed_checks=5,
+        failed_checks=0,
+        checks=[],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_replayed",
+        provider_response_intake_policy_id=policy_id,
+        match=True,
+        original_hash="abc",
+        replayed_hash="abc",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_summary",
+        run_id=run_id,
+        provider_response_intake_policy_id="demointakepolicyidaryid12345",
+        response_intake_policy_status="response_intake_policy_recorded",
+        provider_response_trusted=False,
+        provider_response_received=False,
+        provider_response_can_create_orders=False,
+        artifact_path=None,
+    )))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -33796,7 +34242,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -35306,6 +35752,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-payload-preview-summary":
         payload_body_stored=False,
         outbound_request_sent=False,
         credentials_loaded=False,
+        artifact_path=None,
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy":
+    preview_id = ARGS[2]
+    policy_id = "demointakepolicyid" + preview_id[-10:]
+    symbol = "ATLAS-DEMO"
+    artifact_path = ".atlas/research/" + symbol + "/provider_response_intake_policies/" + policy_id + ".json"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_response_intake_policies"), exist_ok=True)
+    with open(artifact_path, "w") as f:
+        json.dump(dict(
+            schema_version="1",
+            artifact_type="provider_response_intake_policy",
+            contract_version="research_provider_response_intake_policy_v1",
+            provider_response_intake_policy_id=policy_id,
+            source_provider_outbound_payload_preview_id=preview_id,
+            response_intake_policy_status="response_intake_policy_recorded",
+            response_trust_boundary="provider_response_untrusted_by_default",
+            provider_response_received=False,
+            provider_response_trusted=False,
+            provider_response_imported=False,
+            provider_response_reviewed=False,
+            provider_response_can_create_orders=False,
+            provider_response_can_approve_orders=False,
+            provider_response_can_call_broker=False,
+            provider_call_allowed=False,
+            actual_provider_call_made=False,
+            trading_signal_generated=False,
+            approval_created=False,
+            pending_order_created=False,
+            broker_touched=False,
+            artifact_path=artifact_path,
+            warnings=[],
+            metadata=dict(),
+            created_at="2026-01-01T00:00:00+00:00",
+        ), f)
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_response_intake_policy_created",
+        provider_response_intake_policy_id=policy_id,
+        source_provider_outbound_payload_preview_id=preview_id,
+        response_intake_policy_status="response_intake_policy_recorded",
+        response_trust_boundary="provider_response_untrusted_by_default",
+        provider_response_trusted=False,
+        provider_response_received=False,
+        provider_response_imported=False,
+        provider_response_reviewed=False,
+        provider_response_can_create_orders=False,
+        provider_response_can_approve_orders=False,
+        provider_response_can_call_broker=False,
+        provider_call_allowed=False,
+        actual_provider_call_made=False,
+        trading_signal_generated=False,
+        approval_created=False,
+        pending_order_created=False,
+        broker_touched=False,
+        artifact_path=artifact_path,
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-list":
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_list",
+        items=[dict(
+            provider_response_intake_policy_id="demointakepolicyidaryid12345",
+            source_provider_outbound_payload_preview_id="demopayloadpreviewidaryid12345",
+            source_run_id="demorunid12345",
+            symbol="ATLAS-DEMO",
+            response_intake_policy_status="response_intake_policy_recorded",
+            response_intake_policy_scope="future_provider_response_intake_only",
+            created_at="2026-01-01T00:00:00+00:00",
+            artifact_path=".atlas/research/ATLAS-DEMO/provider_response_intake_policies/demointakepolicyidaryid12345.json",
+            provider_id="custom-openai-compatible",
+            model_id="gpt-4o",
+        )],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-show":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_shown",
+        provider_response_intake_policy_id=policy_id,
+        response_intake_policy_status="response_intake_policy_recorded",
+        response_intake_policy_scope="future_provider_response_intake_only",
+        provider_id="custom-openai-compatible",
+        model_id="gpt-4o",
+        provider_response_received=False,
+        provider_response_trusted=False,
+        provider_response_can_create_orders=False,
+        artifact_path=".atlas/research/ATLAS-DEMO/provider_response_intake_policies/" + policy_id + ".json",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-validate":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_validated",
+        provider_response_intake_policy_id=policy_id,
+        valid=True,
+        passed_checks=5,
+        failed_checks=0,
+        checks=[],
+        warnings=[],
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-replay":
+    policy_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_replayed",
+        provider_response_intake_policy_id=policy_id,
+        match=True,
+        original_hash="abc",
+        replayed_hash="abc",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-intake-policy-summary":
+    run_id = ARGS[2]
+    print(json.dumps(dict(
+        ok=True, status="research_provider_response_intake_policy_summary",
+        run_id=run_id,
+        provider_response_intake_policy_id="demointakepolicyidaryid12345",
+        response_intake_policy_status="response_intake_policy_recorded",
+        provider_response_trusted=False,
+        provider_response_received=False,
+        provider_response_can_create_orders=False,
         artifact_path=None,
     )))
     sys.exit(0)

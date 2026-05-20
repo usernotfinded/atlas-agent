@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev31] - 2026-05-20
+
+### Added
+- Batch 8.4 — Provider Response Intake Policy Artifact.
+  - `src/atlas_agent/research/provider_response_intake_policy.py`: local provider response intake policy artifacts.
+  - `build_provider_response_intake_policy_dict()`: deterministic response intake policy artifact construction from payload preview.
+  - `create_provider_response_intake_policy()`: safe creation with validation, lineage, hash, and denylist scanning.
+  - `safe_validate_provider_response_intake_policy_data()`: strict validation with invalid sentinel returns.
+  - `validate_provider_response_intake_policy_artifact()`: detailed per-check validation.
+  - `replay_provider_response_intake_policy()`: deterministic hash replay from source payload preview.
+  - `iter_provider_response_intake_policy_artifacts()`: safe listing with invalid sentinels for tampered items.
+  - `summarize_provider_response_intake_policy_state()`: read-only summary without writing artifacts.
+  - `provider_response_intake_policy_sha256()`: deterministic canonical hash excluding volatile fields.
+  - 8 policy substructures: `response_storage_policy`, `response_redaction_policy`, `response_validation_policy`, `response_review_policy`, `unsafe_response_policy`, `trading_separation_policy`, `response_hash_policy`, `manual_review_policy`.
+  - 23 boolean safety flags including `provider_response_received`, `provider_response_trusted`, `provider_response_imported`, `provider_response_reviewed`, `provider_response_can_create_orders`, `provider_response_can_approve_orders`, `provider_response_can_call_broker`.
+  - 6 new CLI commands: `provider-response-intake-policy`, `provider-response-intake-policy-list`, `provider-response-intake-policy-show`, `provider-response-intake-policy-validate`, `provider-response-intake-policy-replay`, `provider-response-intake-policy-summary`.
+  - Integration into `check-artifacts`, `timeline`, and `dossier`.
+  - Tests in `tests/research/test_research_provider_response_intake_policy.py`.
+  - Demo workflow extended with response intake policy creation, validation, replay, summary, and timeline lineage checks.
+
 ## [0.5.7.dev30] - 2026-05-20
 
 ### Added
