@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev26] - 2026-05-20
+
+### Added
+- Provider Preflight Freeze Audit & Evidence Pack (`src/atlas_agent/research/provider_preflight_freeze.py`).
+  - Deterministic freeze artifact consolidating the full 9-artifact provider-preflight chain into a single auditable envelope.
+  - `build_provider_preflight_freeze_dict()` creates freeze artifacts from readiness reports with hash, validation, command surface, boundary, and denylist manifests.
+  - `safe_validate_provider_preflight_freeze_data()` performs strict validation with invalid sentinel returns.
+  - `validate_provider_preflight_freeze_artifact()` performs detailed check-by-check validation including denylist manifest safety.
+  - `replay_provider_preflight_freeze()` rebuilds from source readiness report and compares hashes.
+  - `iter_provider_preflight_freeze_artifacts()` safely lists freeze artifacts with invalid sentinels.
+  - `summarize_provider_preflight_freeze_for_run()` provides read-only summary without writing artifacts.
+  - 10 boolean safety flags + 9 `no_action_attestations` all enforced as `False`.
+  - denylist_manifest stores only safe metadata (profile name, count, safety flags); never stores raw forbidden fragment strings.
+- CLI commands (all configless, local-only, read-only):
+  - `atlas research provider-preflight-freeze READINESS_REPORT_ID`
+  - `atlas research provider-preflight-freeze-list`
+  - `atlas research provider-preflight-freeze-show FREEZE_ID`
+  - `atlas research provider-preflight-freeze-validate FREEZE_ID`
+  - `atlas research provider-preflight-freeze-replay FREEZE_ID`
+  - `atlas research provider-preflight-freeze-summary RUN_ID`
+- Session integration: `check-artifacts`, `timeline`, and `dossier` now support provider preflight freeze artifacts.
+- Timeline nesting: freeze artifacts indexed by `source_provider_execution_readiness_report_id` under readiness report entries.
+- Demo workflow extended with provider preflight freeze creation, validation, replay, summary, and timeline lineage checks.
+
+### Fixed
+- denylist_manifest no longer stores raw forbidden fragment strings (`/Users/`, `Authorization`, `Bearer`, `APCA`, `SECRET`, `TOKEN`, `PASSWORD`, `API_KEY`, `sk-`, `broker.example.com`) inside freeze artifacts.
+- Forbidden fragment leak fixed: freeze artifacts are now denylist-clean in the happy path.
+- Validation updated to explicitly check `denylist_manifest.forbidden_fragments_raw_stored` is `False` and `denylist_profile` is known.
+
+### Safety / Compatibility
+- No real provider execution. No API/network calls. No API key loading. No provider SDK usage.
+- No trading signals generated. No approvals or pending orders created. No broker touched.
+- Freeze artifact is development-scope only; provider execution remains disabled.
+- Future opt-in required for any real provider call.
+- All configless invariants preserved.
+
 ## [0.5.7.dev25] - 2026-05-19
 
 ### Added

@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1386,12 +1386,14 @@ def check_research_artifacts(
     provider_execution_state_ids: dict[str, list[str]] = {}
     provider_execution_audit_packet_ids: dict[str, list[str]] = {}
     provider_execution_readiness_report_ids: dict[str, list[str]] = {}
+    provider_preflight_freeze_ids: dict[str, list[str]] = {}
 
     provider_call_plan_data: list[dict[str, Any]] = []
     provider_execution_dry_run_data: list[dict[str, Any]] = []
     provider_execution_state_data: list[dict[str, Any]] = []
     provider_execution_audit_packet_data: list[dict[str, Any]] = []
     provider_execution_readiness_report_data: list[dict[str, Any]] = []
+    provider_preflight_freeze_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1436,6 +1438,7 @@ def check_research_artifacts(
             "provider_execution_state": "provider_execution_state_id",
             "provider_execution_audit_packet": "provider_execution_audit_packet_id",
             "provider_execution_readiness_report": "provider_execution_readiness_report_id",
+            "provider_preflight_freeze": "provider_preflight_freeze_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1474,6 +1477,8 @@ def check_research_artifacts(
         elif expected_type == "provider_execution_audit_packet" and "provider_execution_audit_packets" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_execution_readiness_report" and "provider_execution_readiness_reports" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_preflight_freeze" and "provider_preflight_freezes" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1618,6 +1623,24 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_preflight_freeze":
+            for f in ("provider_preflight_freeze_id", "source_provider_execution_readiness_report_id", "symbol", "provider_id", "model_id", "freeze_status", "freeze_recommendation", "readiness_score", "chain_health"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            # Use provider_preflight_freeze safe validation
+            from atlas_agent.research.provider_preflight_freeze import (
+                safe_validate_provider_preflight_freeze_data,
+            )
+            _cleaned, error = safe_validate_provider_preflight_freeze_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1655,6 +1678,9 @@ def check_research_artifacts(
             elif expected_type == "provider_execution_readiness_report":
                 provider_execution_readiness_report_ids.setdefault(raw_id, []).append(rel)
                 provider_execution_readiness_report_data.append(data)
+            elif expected_type == "provider_preflight_freeze":
+                provider_preflight_freeze_ids.setdefault(raw_id, []).append(rel)
+                provider_preflight_freeze_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1684,6 +1710,8 @@ def check_research_artifacts(
             counts["provider_execution_audit_packets"] += 1
         elif expected_type == "provider_execution_readiness_report":
             counts["provider_execution_readiness_reports"] += 1
+        elif expected_type == "provider_preflight_freeze":
+            counts["provider_preflight_freezes"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1771,6 +1799,12 @@ def check_research_artifacts(
             for path in provider_execution_readiness_reports_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_execution_readiness_report", expected_symbol)
+        # Provider preflight freezes
+        provider_preflight_freezes_dir = sym_dir / "provider_preflight_freezes"
+        if provider_preflight_freezes_dir.exists():
+            for path in provider_preflight_freezes_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_preflight_freeze", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -1826,6 +1860,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for perrid, paths in provider_execution_readiness_report_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for ppfid, paths in provider_preflight_freeze_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -1963,6 +2001,44 @@ def check_research_artifacts(
             issues.append({"code": error, "path": rel, "severity": "error"})
         # readiness_score validation
         score = report.get("readiness_score")
+        if not isinstance(score, int) or score < 0 or score > 100:
+            issues.append({"code": "invalid_readiness_score", "path": rel, "severity": "error"})
+
+    # Provider preflight freeze lineage checks
+    provider_execution_readiness_report_data_by_id: dict[str, dict[str, Any]] = {}
+    for report in provider_execution_readiness_report_data:
+        pkt_id = report.get("provider_execution_readiness_report_id", "")
+        if pkt_id:
+            provider_execution_readiness_report_data_by_id[pkt_id] = report
+
+    for freeze in provider_preflight_freeze_data:
+        rel = freeze.get("artifact_path", "")
+        src_readiness_id = freeze.get("source_provider_execution_readiness_report_id", "")
+        # Invalid lineage
+        try:
+            validate_run_id(src_readiness_id)
+        except ResearchSessionError:
+            issues.append({"code": "invalid_lineage", "path": rel, "severity": "error"})
+            continue
+        # Missing source readiness report
+        if src_readiness_id not in provider_execution_readiness_report_data_by_id:
+            issues.append({"code": "missing_source_readiness_report", "path": rel, "severity": "error"})
+            continue
+        # Source readiness report hash mismatch
+        stored_src_hash = freeze.get("source_readiness_report_hash", "")
+        if stored_src_hash:
+            src_readiness = provider_execution_readiness_report_data_by_id[src_readiness_id]
+            actual_readiness_hash = src_readiness.get("artifact_hash", "")
+            if actual_readiness_hash != stored_src_hash:
+                issues.append({"code": "source_readiness_report_hash_mismatch", "path": rel, "severity": "error"})
+                continue
+        # Impossible booleans in freeze
+        from atlas_agent.research.provider_preflight_freeze import _check_boolean_safety_flags
+        error = _check_boolean_safety_flags(freeze)
+        if error:
+            issues.append({"code": error, "path": rel, "severity": "error"})
+        # readiness_score validation
+        score = freeze.get("readiness_score")
         if not isinstance(score, int) or score < 0 or score > 100:
             issues.append({"code": "invalid_readiness_score", "path": rel, "severity": "error"})
 
@@ -2374,6 +2450,8 @@ def build_research_timeline(
     provider_execution_audit_packet_items = iter_provider_execution_audit_packet_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_execution_readiness_report import iter_provider_execution_readiness_report_artifacts
     provider_execution_readiness_report_items = iter_provider_execution_readiness_report_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_preflight_freeze import iter_provider_preflight_freeze_artifacts
+    provider_preflight_freeze_items = iter_provider_preflight_freeze_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -2492,6 +2570,18 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_execution_readiness_report", "path": perr.get("artifact_path", ""), "severity": "warning"})
 
+    # Index provider preflight freezes by source_provider_execution_readiness_report_id
+    provider_preflight_freezes_by_readiness_id: dict[str, list[dict[str, Any]]] = {}
+    for ppf in provider_preflight_freeze_items:
+        if ppf.get("_invalid"):
+            warnings.append({"code": "invalid_provider_preflight_freeze_skipped", "path": ppf.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = ppf.get("source_provider_execution_readiness_report_id", "")
+        if src:
+            provider_preflight_freezes_by_readiness_id.setdefault(src, []).append(ppf)
+        else:
+            warnings.append({"code": "orphan_provider_preflight_freeze", "path": ppf.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -2577,6 +2667,17 @@ def build_research_timeline(
         if src and src not in seen_audit_packet_ids:
             warnings.append({"code": "orphan_provider_execution_readiness_report", "path": perr.get("artifact_path", ""), "severity": "warning"})
 
+    # Track seen readiness report IDs for orphan freeze detection
+    seen_readiness_report_ids = set()
+    for perr in provider_execution_readiness_report_items:
+        if not perr.get("_invalid"):
+            seen_readiness_report_ids.add(perr.get("provider_execution_readiness_report_id", ""))
+
+    for ppf in provider_preflight_freeze_items:
+        src = ppf.get("source_provider_execution_readiness_report_id", "")
+        if src and src not in seen_readiness_report_ids:
+            warnings.append({"code": "orphan_provider_preflight_freeze", "path": ppf.get("artifact_path", ""), "severity": "warning"})
+
     # Build entries
     entries: list[dict[str, Any]] = []
     for research in research_items:
@@ -2661,7 +2762,14 @@ def build_research_timeline(
                             for ap in audit_packets:
                                 ap_copy = dict(ap)
                                 ap_id = ap_copy.get("provider_execution_audit_packet_id", "")
-                                ap_copy["provider_execution_readiness_reports"] = provider_execution_readiness_reports_by_audit_id.get(ap_id, [])
+                                readiness_reports = provider_execution_readiness_reports_by_audit_id.get(ap_id, [])
+                                readiness_reports_with_freezes = []
+                                for rpt in readiness_reports:
+                                    rpt_copy = dict(rpt)
+                                    rpt_id = rpt_copy.get("provider_execution_readiness_report_id", "")
+                                    rpt_copy["provider_preflight_freezes"] = provider_preflight_freezes_by_readiness_id.get(rpt_id, [])
+                                    readiness_reports_with_freezes.append(rpt_copy)
+                                ap_copy["provider_execution_readiness_reports"] = readiness_reports_with_freezes
                                 audit_packets_with_readiness.append(ap_copy)
                             state_copy["provider_execution_audit_packets"] = audit_packets_with_readiness
                             states_with_audit_packets.append(state_copy)
@@ -4062,6 +4170,11 @@ def build_dossier(
     from atlas_agent.research.provider_execution_readiness_report import iter_provider_execution_readiness_report_artifacts
     provider_execution_readiness_report_items = iter_provider_execution_readiness_report_artifacts(workspace_path, symbol=symbol)
     linked_provider_execution_readiness_reports = [perr for perr in provider_execution_readiness_report_items if perr.get("source_provider_execution_audit_packet_id") in linked_audit_packet_ids]
+    linked_readiness_report_ids = {perr.get("provider_execution_readiness_report_id", "") for perr in linked_provider_execution_readiness_reports}
+
+    from atlas_agent.research.provider_preflight_freeze import iter_provider_preflight_freeze_artifacts
+    provider_preflight_freeze_items = iter_provider_preflight_freeze_artifacts(workspace_path, symbol=symbol)
+    linked_provider_preflight_freezes = [ppf for ppf in provider_preflight_freeze_items if ppf.get("source_provider_execution_readiness_report_id") in linked_readiness_report_ids]
 
     # Build workflow status
     workflow_status = {
@@ -4078,6 +4191,7 @@ def build_dossier(
         "provider_execution_states": len(linked_provider_execution_states) > 0,
         "provider_execution_audit_packets": len(linked_provider_execution_audit_packets) > 0,
         "provider_execution_readiness_reports": len(linked_provider_execution_readiness_reports) > 0,
+        "provider_preflight_freezes": len(linked_provider_preflight_freezes) > 0,
     }
 
     artifact_counts = {
@@ -4094,6 +4208,7 @@ def build_dossier(
         "provider_execution_states": len(linked_provider_execution_states),
         "provider_execution_audit_packets": len(linked_provider_execution_audit_packets),
         "provider_execution_readiness_reports": len(linked_provider_execution_readiness_reports),
+        "provider_preflight_freezes": len(linked_provider_preflight_freezes),
     }
 
     # Build linked_artifacts with relative paths only
@@ -4189,6 +4304,16 @@ def build_dossier(
             "readiness_score": perr.get("readiness_score", 0),
             "chain_health": perr.get("chain_health", ""),
         })
+    for ppf in linked_provider_preflight_freezes:
+        linked_artifacts.append({
+            "type": "provider_preflight_freeze",
+            "id": ppf.get("provider_preflight_freeze_id", ""),
+            "artifact_path": ppf.get("artifact_path", ""),
+            "freeze_status": ppf.get("freeze_status", ""),
+            "freeze_recommendation": ppf.get("freeze_recommendation", ""),
+            "readiness_score": ppf.get("readiness_score", 0),
+            "chain_health": ppf.get("chain_health", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -4258,6 +4383,14 @@ def build_dossier(
             "readiness_scores": [perr.get("readiness_score", 0) for perr in linked_provider_execution_readiness_reports],
             "chain_health_values": [perr.get("chain_health", "") for perr in linked_provider_execution_readiness_reports],
         }
+    if linked_provider_preflight_freezes:
+        summaries["provider_preflight_freeze"] = {
+            "freeze_count": len(linked_provider_preflight_freezes),
+            "freeze_statuses": [ppf.get("freeze_status", "") for ppf in linked_provider_preflight_freezes],
+            "freeze_recommendations": [ppf.get("freeze_recommendation", "") for ppf in linked_provider_preflight_freezes],
+            "readiness_scores": [ppf.get("readiness_score", 0) for ppf in linked_provider_preflight_freezes],
+            "chain_health_values": [ppf.get("chain_health", "") for ppf in linked_provider_preflight_freezes],
+        }
 
     # Safety summary
     safety_summary = {
@@ -4293,6 +4426,8 @@ def build_dossier(
         missing_links.append("no_provider_execution_audit_packet")
     if not linked_provider_execution_readiness_reports:
         missing_links.append("no_provider_execution_readiness_report")
+    if not linked_provider_preflight_freezes:
+        missing_links.append("no_provider_preflight_freeze")
 
     warnings: list[str] = []
     if missing_links:

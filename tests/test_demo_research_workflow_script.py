@@ -304,13 +304,33 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                             with open(os.path.join(readiness_dir, rfname)) as rf:
                                                 r = json.load(rf)
                                             if r.get("source_provider_execution_audit_packet_id") == a.get("provider_execution_audit_packet_id"):
+                                                readiness_report_id = r.get("provider_execution_readiness_report_id", "")
+                                                # Look up freezes for this readiness report
+                                                freezes = []
+                                                freeze_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes")
+                                                if os.path.isdir(freeze_dir):
+                                                    for ffname in sorted(os.listdir(freeze_dir)):
+                                                        if ffname.endswith(".json"):
+                                                            with open(os.path.join(freeze_dir, ffname)) as ff:
+                                                                frz = json.load(ff)
+                                                            if frz.get("source_provider_execution_readiness_report_id") == readiness_report_id:
+                                                                freezes.append({
+                                                                    "provider_preflight_freeze_id": frz.get("provider_preflight_freeze_id", ""),
+                                                                    "source_provider_execution_readiness_report_id": frz.get("source_provider_execution_readiness_report_id", ""),
+                                                                    "freeze_status": frz.get("freeze_status", ""),
+                                                                    "freeze_recommendation": frz.get("freeze_recommendation", ""),
+                                                                    "readiness_score": frz.get("readiness_score", 0),
+                                                                    "chain_health": frz.get("chain_health", ""),
+                                                                    "artifact_path": frz.get("artifact_path", ""),
+                                                                })
                                                 readiness_reports.append({
-                                                    "provider_execution_readiness_report_id": r.get("provider_execution_readiness_report_id", ""),
+                                                    "provider_execution_readiness_report_id": readiness_report_id,
                                                     "source_provider_execution_audit_packet_id": r.get("source_provider_execution_audit_packet_id", ""),
                                                     "readiness_status": r.get("readiness_status", ""),
                                                     "readiness_score": r.get("readiness_score", 0),
                                                     "chain_health": r.get("chain_health", ""),
                                                     "artifact_path": r.get("artifact_path", ""),
+                                                    "provider_preflight_freezes": freezes,
                                                 })
                                 audits.append({
                                     "provider_execution_audit_packet_id": a.get("provider_execution_audit_packet_id", ""),
@@ -1325,6 +1345,159 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
     )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze":
+    readiness_id = ARGS[2]
+    freeze_id = "freeze" + readiness_id
+    freeze_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes", freeze_id + ".json")
+    os.makedirs(os.path.dirname(freeze_path), exist_ok=True)
+    with open(freeze_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_preflight_freeze",
+            "contract_version": "research_provider_preflight_freeze_v1",
+            "provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": readiness_id,
+            "source_provider_execution_audit_packet_id": "auditodryrunid12345",
+            "source_provider_execution_state_id": "stateodryrunid12345",
+            "source_provider_execution_dry_run_id": "demodryrunid12345",
+            "source_provider_call_plan_id": "demopcpid12345",
+            "source_sandbox_request_id": "demosandboxid12345",
+            "source_prompt_packet_id": "demopromptid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "freeze_scope": "local_provider_preflight_only",
+            "development_scope": ["no_provider_execution", "no_network", "no_credentials", "no_broker", "no_trading_signal", "paper_only"],
+            "readiness_status": "chain_review_ready",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "artifact_chain": [],
+            "hash_manifest": {"source_readiness_report_hash_match": True, "linked_artifact_hashes_present": True, "linked_artifact_hash_mismatches": [], "freeze_artifact_hash": "", "hash_algorithm": "sha256", "canonical_json": True, "hash_excluded_fields": ["artifact_hash", "created_at"]},
+            "validation_manifest": {"validation_results": [], "passed_count": 0, "failed_count": 0, "issue_codes": [], "warning_codes": []},
+            "command_surface_manifest": [],
+            "configless_command_manifest": [],
+            "boundary_manifest": {"provider_api_calls_allowed": False, "network_allowed": False, "credential_loading_allowed": False, ".env.atlas_loading_allowed": False, "provider_sdk_import_allowed": False, "broker_execution_allowed": False, "order_routing_allowed": False, "approval_creation_allowed": False, "pending_order_creation_allowed": False, "trading_signal_generation_allowed": False},
+            "denylist_manifest": {"forbidden_fragments_checked": [], "output_safety_expected": True, "artifact_safety_expected": True, "raw_exception_output_allowed": False, "absolute_path_output_allowed": False, "unsafe_value_echo_allowed": False},
+            "no_action_attestations": {"provider_called": False, "network_request_made": False, "api_key_read": False, "provider_sdk_imported": False, "trading_signal_generated": False, "approval_created": False, "pending_order_created": False, "broker_touched": False, "live_trading_authorized": False},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "known_limitations": ["No real provider execution."],
+            "future_unlock_requirements": ["Explicit opt-in required."],
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "source_readiness_report_hash": "dummyhashreadiness12345",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+            "warnings": [],
+            "metadata": {},
+            "created_at": "2026-01-01T00:00:00+00:00",
+        }, f, indent=2, sort_keys=True)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_preflight_freeze_created",
+        "provider_preflight_freeze_id": freeze_id,
+        "source_provider_execution_readiness_report_id": readiness_id,
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-list":
+    items = []
+    freeze_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes")
+    if os.path.isdir(freeze_dir):
+        for fname in os.listdir(freeze_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(freeze_dir, fname)
+                with open(fpath) as f:
+                    frz = json.load(f)
+                items.append({
+                    "provider_preflight_freeze_id": frz.get("provider_preflight_freeze_id", ""),
+                    "source_provider_execution_readiness_report_id": frz.get("source_provider_execution_readiness_report_id", ""),
+                    "symbol": frz.get("symbol", ""),
+                    "freeze_status": frz.get("freeze_status", ""),
+                    "freeze_recommendation": frz.get("freeze_recommendation", ""),
+                    "readiness_score": frz.get("readiness_score", 0),
+                    "chain_health": frz.get("chain_health", ""),
+                    "created_at": frz.get("created_at", ""),
+                    "artifact_path": frz.get("artifact_path", ""),
+                })
+    print(json.dumps({"ok": True, "status": "research_provider_preflight_freezes_listed", "items": items}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-show":
+    freeze_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_preflight_freeze_loaded",
+        "artifact": {
+            "provider_preflight_freeze_id": freeze_id,
+            "symbol": "ATLAS-DEMO",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "provider_call_allowed": False,
+            "broker_touched": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "actual_provider_call_made": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        },
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-validate":
+    freeze_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_preflight_freeze_validated",
+        "provider_preflight_freeze_id": freeze_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-replay":
+    freeze_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_preflight_freeze_replayed",
+        "provider_preflight_freeze_id": freeze_id,
+        "match": True,
+        "expected_hash": "dummyhashfreeze12345",
+        "actual_hash": "dummyhashfreeze12345",
+        "checks": [], "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
+    run_id = ARGS[2]
+    print(json.dumps({
+        "ok": True, "status": "research_provider_preflight_freeze_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "known_limitations": ["No real provider execution."],
+        "warnings": [],
+    }))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -24795,7 +24968,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": []
             }}],
             "warnings": []
@@ -25673,6 +25846,140 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
     )))
     sys.exit(0)
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze":
+    readiness_id = ARGS[2]
+    freeze_id = "freeze" + readiness_id
+    freeze_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes", freeze_id + ".json")
+    os.makedirs(os.path.dirname(freeze_path), exist_ok=True)
+    with open(freeze_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_preflight_freeze",
+            "contract_version": "research_provider_preflight_freeze_v1",
+            "provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": readiness_id,
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "readiness_status": "chain_review_ready",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "provider_call_allowed": False,
+            "broker_touched": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "actual_provider_call_made": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00",
+        }}, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_created",
+        "provider_preflight_freeze_id": freeze_id,
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-list":
+    items = []
+    freeze_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes")
+    if os.path.isdir(freeze_dir):
+        for fname in os.listdir(freeze_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(freeze_dir, fname)
+                with open(fpath) as f:
+                    fr = json.load(f)
+                items.append({{
+                    "provider_preflight_freeze_id": fr.get("provider_preflight_freeze_id", ""),
+                    "source_provider_execution_readiness_report_id": fr.get("source_provider_execution_readiness_report_id", ""),
+                    "symbol": fr.get("symbol", ""),
+                    "freeze_status": fr.get("freeze_status", ""),
+                    "freeze_recommendation": fr.get("freeze_recommendation", ""),
+                    "readiness_score": fr.get("readiness_score", 0),
+                    "chain_health": fr.get("chain_health", ""),
+                    "created_at": fr.get("created_at", ""),
+                    "artifact_path": fr.get("artifact_path", ""),
+                    "provider_id": fr.get("provider_id", ""),
+                    "model_id": fr.get("model_id", ""),
+                    "warnings_count": len(fr.get("warnings", [])),
+                }})
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freezes_listed",
+        "items": items,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-show":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_loaded",
+        "artifact": {{
+            "provider_preflight_freeze_id": freeze_id,
+            "symbol": "ATLAS-DEMO",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "provider_call_allowed": False,
+            "broker_touched": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "actual_provider_call_made": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-validate":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_validated",
+        "provider_preflight_freeze_id": freeze_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-replay":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_replayed",
+        "provider_preflight_freeze_id": freeze_id,
+        "match": True,
+        "expected_hash": "dummyhashfreeze12345",
+        "actual_hash": "dummyhashfreeze12345",
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
+    run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "known_limitations": ["No real provider execution."],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -25798,7 +26105,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -26605,6 +26912,140 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
     )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze":
+    readiness_id = ARGS[2]
+    freeze_id = "freeze" + readiness_id
+    freeze_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes", freeze_id + ".json")
+    os.makedirs(os.path.dirname(freeze_path), exist_ok=True)
+    with open(freeze_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_preflight_freeze",
+            "contract_version": "research_provider_preflight_freeze_v1",
+            "provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": readiness_id,
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "readiness_status": "chain_review_ready",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "provider_call_allowed": False,
+            "broker_touched": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "actual_provider_call_made": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00",
+        }}, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_created",
+        "provider_preflight_freeze_id": freeze_id,
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-list":
+    items = []
+    freeze_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes")
+    if os.path.isdir(freeze_dir):
+        for fname in os.listdir(freeze_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(freeze_dir, fname)
+                with open(fpath) as f:
+                    fr = json.load(f)
+                items.append({{
+                    "provider_preflight_freeze_id": fr.get("provider_preflight_freeze_id", ""),
+                    "source_provider_execution_readiness_report_id": fr.get("source_provider_execution_readiness_report_id", ""),
+                    "symbol": fr.get("symbol", ""),
+                    "freeze_status": fr.get("freeze_status", ""),
+                    "freeze_recommendation": fr.get("freeze_recommendation", ""),
+                    "readiness_score": fr.get("readiness_score", 0),
+                    "chain_health": fr.get("chain_health", ""),
+                    "created_at": fr.get("created_at", ""),
+                    "artifact_path": fr.get("artifact_path", ""),
+                    "provider_id": fr.get("provider_id", ""),
+                    "model_id": fr.get("model_id", ""),
+                    "warnings_count": len(fr.get("warnings", [])),
+                }})
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freezes_listed",
+        "items": items,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-show":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_loaded",
+        "artifact": {{
+            "provider_preflight_freeze_id": freeze_id,
+            "symbol": "ATLAS-DEMO",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "provider_call_allowed": False,
+            "broker_touched": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "actual_provider_call_made": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-validate":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_validated",
+        "provider_preflight_freeze_id": freeze_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-replay":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_replayed",
+        "provider_preflight_freeze_id": freeze_id,
+        "match": True,
+        "expected_hash": "dummyhashfreeze12345",
+        "actual_hash": "dummyhashfreeze12345",
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
+    run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "known_limitations": ["No real provider execution."],
+        "warnings": [],
+    }}))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
@@ -27612,7 +28053,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345"}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -28503,6 +28944,140 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-chain-doctor":
         blocking_reasons=["provider_execution_not_implemented"],
         warnings=[],
     )))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze":
+    readiness_id = ARGS[2]
+    freeze_id = "freeze" + readiness_id
+    freeze_path = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes", freeze_id + ".json")
+    os.makedirs(os.path.dirname(freeze_path), exist_ok=True)
+    with open(freeze_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_preflight_freeze",
+            "contract_version": "research_provider_preflight_freeze_v1",
+            "provider_preflight_freeze_id": freeze_id,
+            "source_provider_execution_readiness_report_id": readiness_id,
+            "symbol": "ATLAS-DEMO",
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "readiness_status": "chain_review_ready",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "provider_call_allowed": False,
+            "broker_touched": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "actual_provider_call_made": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+            "warnings": [],
+            "metadata": dict(),
+            "created_at": "2026-01-01T00:00:00+00:00",
+        }}, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_created",
+        "provider_preflight_freeze_id": freeze_id,
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-list":
+    items = []
+    freeze_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_preflight_freezes")
+    if os.path.isdir(freeze_dir):
+        for fname in os.listdir(freeze_dir):
+            if fname.endswith(".json"):
+                fpath = os.path.join(freeze_dir, fname)
+                with open(fpath) as f:
+                    fr = json.load(f)
+                items.append({{
+                    "provider_preflight_freeze_id": fr.get("provider_preflight_freeze_id", ""),
+                    "source_provider_execution_readiness_report_id": fr.get("source_provider_execution_readiness_report_id", ""),
+                    "symbol": fr.get("symbol", ""),
+                    "freeze_status": fr.get("freeze_status", ""),
+                    "freeze_recommendation": fr.get("freeze_recommendation", ""),
+                    "readiness_score": fr.get("readiness_score", 0),
+                    "chain_health": fr.get("chain_health", ""),
+                    "created_at": fr.get("created_at", ""),
+                    "artifact_path": fr.get("artifact_path", ""),
+                    "provider_id": fr.get("provider_id", ""),
+                    "model_id": fr.get("model_id", ""),
+                    "warnings_count": len(fr.get("warnings", [])),
+                }})
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freezes_listed",
+        "items": items,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-show":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_loaded",
+        "artifact": {{
+            "provider_preflight_freeze_id": freeze_id,
+            "symbol": "ATLAS-DEMO",
+            "freeze_status": "provider_preflight_frozen",
+            "freeze_recommendation": "freeze_approved_for_development_scope",
+            "readiness_score": 100,
+            "chain_health": "complete",
+            "execution_status": "provider_execution_blocked",
+            "provider_call_allowed": False,
+            "broker_touched": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "actual_provider_call_made": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_preflight_freezes/" + freeze_id + ".json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-validate":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_validated",
+        "provider_preflight_freeze_id": freeze_id,
+        "valid": True, "passed_checks": 20, "failed_checks": 0,
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-replay":
+    freeze_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_replayed",
+        "provider_preflight_freeze_id": freeze_id,
+        "match": True,
+        "expected_hash": "dummyhashfreeze12345",
+        "actual_hash": "dummyhashfreeze12345",
+        "checks": [], "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-preflight-freeze-summary":
+    run_id = ARGS[2]
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_preflight_freeze_summary",
+        "run_id": run_id,
+        "symbol": "ATLAS-DEMO",
+        "freeze_status": "provider_preflight_frozen",
+        "freeze_recommendation": "freeze_approved_for_development_scope",
+        "provider_execution_allowed": False,
+        "provider_call_made": False,
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "known_limitations": ["No real provider execution."],
+        "warnings": [],
+    }}))
     sys.exit(0)
 
 print("Unknown command", file=sys.stderr)

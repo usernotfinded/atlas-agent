@@ -1317,7 +1317,170 @@ if [ "$TIMELINE_READINESS_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 50. Create local provider response fixture and import it
+# 50. Research provider-preflight-freeze
+printf '\n--- Research provider-preflight-freeze ---\n'
+FREEZE_OUTPUT="$(atlas research provider-preflight-freeze "$READINESS_REPORT_ID" --json)"
+assert_no_absolute_paths "$FREEZE_OUTPUT"
+assert_no_secrets_in_output "$FREEZE_OUTPUT"
+assert_no_forbidden_fragments "$FREEZE_OUTPUT" "provider-preflight-freeze CLI output"
+assert_ok "$FREEZE_OUTPUT" "research provider-preflight-freeze"
+FREEZE_STATUS="$(json_field "$FREEZE_OUTPUT" status)"
+if [ "$FREEZE_STATUS" != "research_provider_preflight_freeze_created" ]; then
+  printf 'FAIL: unexpected provider-preflight-freeze status: %s\n' "$FREEZE_STATUS" >&2
+  exit 1
+fi
+FREEZE_ID="$(json_field "$FREEZE_OUTPUT" provider_preflight_freeze_id)"
+if [ -z "$FREEZE_ID" ]; then
+  printf 'FAIL: provider_preflight_freeze_id is empty after freeze creation\n' >&2
+  exit 1
+fi
+FREEZE_ARTIFACT_PATH="$(json_field "$FREEZE_OUTPUT" artifact_path)"
+if [ ! -f "$WORKSPACE/$FREEZE_ARTIFACT_PATH" ]; then
+  printf 'FAIL: freeze artifact not found at %s\n' "$WORKSPACE/$FREEZE_ARTIFACT_PATH" >&2
+  exit 1
+fi
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$FREEZE_ARTIFACT_PATH")" "freeze artifact"
+assert_no_pending_orders
+
+# 51. Research provider-preflight-freeze-list
+printf '\n--- Research provider-preflight-freeze-list ---\n'
+FREEZE_LIST_OUTPUT="$(atlas research provider-preflight-freeze-list --json)"
+assert_no_absolute_paths "$FREEZE_LIST_OUTPUT"
+assert_no_secrets_in_output "$FREEZE_LIST_OUTPUT"
+assert_no_forbidden_fragments "$FREEZE_LIST_OUTPUT" "provider-preflight-freeze-list CLI output"
+assert_ok "$FREEZE_LIST_OUTPUT" "research provider-preflight-freeze-list"
+FREEZE_LIST_IDS="$( "$PYTHON_BIN" -c "import json,sys; data=json.load(sys.stdin); items=data.get('items',[]); print([i.get('provider_preflight_freeze_id') for i in items])" <<<"$FREEZE_LIST_OUTPUT" )"
+if ! printf '%s' "$FREEZE_LIST_IDS" | grep -q "$FREEZE_ID"; then
+  printf 'FAIL: freeze %s not found in list output\n' "$FREEZE_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 52. Research provider-preflight-freeze-show
+printf '\n--- Research provider-preflight-freeze-show ---\n'
+FREEZE_SHOW_OUTPUT="$(atlas research provider-preflight-freeze-show "$FREEZE_ID" --json)"
+assert_no_absolute_paths "$FREEZE_SHOW_OUTPUT"
+assert_no_secrets_in_output "$FREEZE_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$FREEZE_SHOW_OUTPUT" "provider-preflight-freeze-show CLI output"
+assert_ok "$FREEZE_SHOW_OUTPUT" "research provider-preflight-freeze-show"
+FREEZE_SHOW_ARTIFACT="$( "$PYTHON_BIN" -c "import json,sys; data=json.load(sys.stdin); print(json.dumps(data.get('artifact',{}), indent=2, sort_keys=True))" <<<"$FREEZE_SHOW_OUTPUT" )"
+assert_no_forbidden_fragments "$FREEZE_SHOW_ARTIFACT" "freeze show artifact JSON"
+FREEZE_SHOW_PROVIDER_CALL_ALLOWED="$(json_field "$FREEZE_SHOW_ARTIFACT" provider_call_allowed)"
+if [ "$FREEZE_SHOW_PROVIDER_CALL_ALLOWED" != "False" ]; then
+  printf 'FAIL: freeze artifact provider_call_allowed is not False\n' >&2
+  exit 1
+fi
+FREEZE_SHOW_BROKER_TOUCHED="$(json_field "$FREEZE_SHOW_ARTIFACT" broker_touched)"
+if [ "$FREEZE_SHOW_BROKER_TOUCHED" != "False" ]; then
+  printf 'FAIL: freeze artifact broker_touched is not False\n' >&2
+  exit 1
+fi
+FREEZE_SHOW_TRADING_SIGNAL="$(json_field "$FREEZE_SHOW_ARTIFACT" trading_signal_generated)"
+if [ "$FREEZE_SHOW_TRADING_SIGNAL" != "False" ]; then
+  printf 'FAIL: freeze artifact trading_signal_generated is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 53. Research provider-preflight-freeze-validate
+printf '\n--- Research provider-preflight-freeze-validate ---\n'
+FREEZE_VALIDATE_OUTPUT="$(atlas research provider-preflight-freeze-validate "$FREEZE_ID" --json)"
+assert_no_absolute_paths "$FREEZE_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$FREEZE_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$FREEZE_VALIDATE_OUTPUT" "provider-preflight-freeze-validate CLI output"
+assert_ok "$FREEZE_VALIDATE_OUTPUT" "research provider-preflight-freeze-validate"
+FREEZE_VALIDATE_VALID="$(json_field "$FREEZE_VALIDATE_OUTPUT" valid)"
+if [ "$FREEZE_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: freeze validation did not report valid=True\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 54. Research provider-preflight-freeze-replay
+printf '\n--- Research provider-preflight-freeze-replay ---\n'
+FREEZE_REPLAY_OUTPUT="$(atlas research provider-preflight-freeze-replay "$FREEZE_ID" --json)"
+assert_no_absolute_paths "$FREEZE_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$FREEZE_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$FREEZE_REPLAY_OUTPUT" "provider-preflight-freeze-replay CLI output"
+assert_ok "$FREEZE_REPLAY_OUTPUT" "research provider-preflight-freeze-replay"
+FREEZE_REPLAY_MATCH="$(json_field "$FREEZE_REPLAY_OUTPUT" match)"
+if [ "$FREEZE_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: freeze replay did not report match=True\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 55. Research provider-preflight-freeze-summary
+printf '\n--- Research provider-preflight-freeze-summary ---\n'
+FREEZE_SUMMARY_OUTPUT="$(atlas research provider-preflight-freeze-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$FREEZE_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$FREEZE_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$FREEZE_SUMMARY_OUTPUT" "provider-preflight-freeze-summary CLI output"
+assert_ok "$FREEZE_SUMMARY_OUTPUT" "research provider-preflight-freeze-summary"
+FREEZE_SUMMARY_EXEC_ALLOWED="$(json_field "$FREEZE_SUMMARY_OUTPUT" provider_execution_allowed)"
+if [ "$FREEZE_SUMMARY_EXEC_ALLOWED" != "False" ]; then
+  printf 'FAIL: freeze summary provider_execution_allowed is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 56. Research timeline after freeze (validate freeze lineage)
+printf '\n--- Research timeline (post freeze) ---\n'
+TIMELINE_OUTPUT_FREEZE="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_FREEZE"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_FREEZE"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_FREEZE" "timeline CLI output after freeze"
+assert_ok "$TIMELINE_OUTPUT_FREEZE" "research timeline after freeze"
+TIMELINE_FREEZE_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets',[]):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            for r in a.get('provider_execution_readiness_reports',[]):
+                                if r.get('provider_execution_readiness_report_id')!='$READINESS_REPORT_ID':
+                                    continue
+                                freezes=[f.get('provider_preflight_freeze_id') for f in r.get('provider_preflight_freezes',[])]
+                                if '$FREEZE_ID' in freezes:
+                                    print('valid')
+                                    break
+                            break
+                        break
+                    break
+                break
+            break
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_FREEZE" )"
+if [ "$TIMELINE_FREEZE_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link freeze under readiness report %s\n' "$READINESS_REPORT_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 57. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

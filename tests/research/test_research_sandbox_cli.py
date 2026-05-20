@@ -3742,3 +3742,187 @@ class TestProviderExecutionReadinessReportIntegration:
         assert "no_provider_execution_readiness_report" in dossier_data.get("missing_links", [])
         # Dossier should still be created successfully
         assert dossier_data["recommendation"] in ("research_dossier_ready", "manual_review_required")
+
+
+class TestProviderPreflightFreezeConfigless:
+    def _create_freeze(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, Path]:
+        run_id, prompt_id, sandbox_id, dry_run_id, state_id, audit_id = _create_full_chain_to_audit_packet(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-readiness", audit_id, "--json"]) == 0
+        readiness_out = json.loads(capsys.readouterr().out)
+        readiness_id = readiness_out["provider_execution_readiness_report_id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-preflight-freeze", readiness_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_preflight_freeze_created"
+        freeze_id = data["provider_preflight_freeze_id"]
+        artifact_path = tmp_path / data["artifact_path"]
+        return freeze_id, artifact_path
+
+    def test_freeze_creates_artifact_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+        assert artifact_path.exists()
+        artifact = json.loads(artifact_path.read_text())
+        assert artifact["artifact_type"] == "provider_preflight_freeze"
+        assert artifact["mode"] == "paper"
+        assert artifact["provider_enabled"] is False
+        assert artifact["network_enabled"] is False
+        assert artifact["credentials_loaded"] is False
+        assert artifact["provider_call_allowed"] is False
+        assert artifact["actual_provider_call_made"] is False
+        assert artifact["future_provider_execution_possible"] is False
+        assert artifact["trading_signal_generated"] is False
+        assert artifact["approval_created"] is False
+        assert artifact["pending_order_created"] is False
+        assert artifact["broker_touched"] is False
+
+    def test_freeze_artifact_denylist_clean(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+        artifact_text = artifact_path.read_text()
+        found = _output_has_forbidden_fragments(artifact_text)
+        assert not found, f"Forbidden fragments found in freeze artifact: {found}"
+
+    def test_denylist_manifest_does_not_store_raw_fragments(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        denylist = artifact.get("denylist_manifest", {})
+        assert denylist.get("denylist_profile") == "atlas_standard_forbidden_fragments_v1"
+        assert isinstance(denylist.get("forbidden_fragment_count"), int)
+        assert denylist.get("forbidden_fragment_count") >= 1
+        assert denylist.get("forbidden_fragments_raw_stored") is False
+        assert denylist.get("output_safety_expected") is True
+        assert denylist.get("artifact_safety_expected") is True
+        assert denylist.get("raw_exception_output_allowed") is False
+        assert denylist.get("absolute_path_output_allowed") is False
+        assert denylist.get("unsafe_value_echo_allowed") is False
+        # Ensure no field contains raw forbidden strings
+        denylist_text = json.dumps(denylist)
+        raw_found = _output_has_forbidden_fragments(denylist_text)
+        assert not raw_found, f"Raw forbidden fragments found in denylist_manifest: {raw_found}"
+
+    def test_freeze_show_exits_zero(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-preflight-freeze-show", freeze_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["status"] == "research_provider_preflight_freeze_loaded"
+        assert "artifact" in data
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in show output: {found}"
+
+    def test_freeze_validate_returns_valid(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-preflight-freeze-validate", freeze_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is True
+        assert data["failed_checks"] == 0
+        check_names = [c["name"] for c in data.get("checks", [])]
+        assert "denylist_manifest_safe" in check_names
+        denylist_check = next(c for c in data["checks"] if c["name"] == "denylist_manifest_safe")
+        assert denylist_check["passed"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in validate output: {found}"
+
+    def test_freeze_replay_returns_match(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-preflight-freeze-replay", freeze_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["match"] is True
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in replay output: {found}"
+
+    def test_check_artifacts_counts_freeze(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "check-artifacts", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        counts = data.get("counts", {})
+        assert counts.get("provider_preflight_freezes", 0) >= 1
+        issue_codes = [i["code"] for i in data.get("issues", [])]
+        assert "provider_preflight_freeze_malformed" not in issue_codes
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in check-artifacts output: {found}"
+
+    def test_freeze_tampered_boolean_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["provider_call_allowed"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-preflight-freeze-validate", freeze_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is False
+        issue_codes = [i["code"] for i in data.get("issues", [])]
+        # validate returns checks, not issues directly; check for failed boolean check
+        check_names = {c["name"]: c["passed"] for c in data.get("checks", [])}
+        assert check_names.get("boolean_safety_flags_false") is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in tamper output: {found}"
+
+    def test_freeze_tampered_denylist_raw_stored_fails(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        freeze_id, artifact_path = self._create_freeze(tmp_path, monkeypatch, capsys)
+        artifact = json.loads(artifact_path.read_text())
+        artifact["denylist_manifest"]["forbidden_fragments_raw_stored"] = True
+        artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", "provider-preflight-freeze-validate", freeze_id, "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert data["valid"] is False
+        check_names = {c["name"]: c["passed"] for c in data.get("checks", [])}
+        assert check_names.get("denylist_manifest_safe") is False
+        found = _output_has_forbidden_fragments(out)
+        assert not found, f"Forbidden fragments leaked in tamper output: {found}"
+
+    def test_freeze_list_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        self._create_freeze(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-preflight-freeze-list", "--json"])
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert code == 0
+        assert data["ok"] is True
+        assert len(data.get("items", [])) >= 1
