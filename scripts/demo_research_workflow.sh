@@ -2576,6 +2576,226 @@ if [ "$CHECK_SCHEMA_CONTRACT_COUNT" -lt 1 ]; then
 fi
 assert_no_pending_orders
 
+# 84.9. Research provider-response-review-result
+printf '\n--- Research provider-response-review-result ---\n'
+REVIEW_RESULT_OUTPUT="$(atlas research provider-response-review-result "$SCHEMA_CONTRACT_ID" --json)"
+assert_no_forbidden_fragments "$REVIEW_RESULT_OUTPUT" "provider-response-review-result CLI output"
+assert_ok "$REVIEW_RESULT_OUTPUT" "research provider-response-review-result"
+REVIEW_RESULT_STATUS="$(json_field "$REVIEW_RESULT_OUTPUT" status)"
+if [ "$REVIEW_RESULT_STATUS" != "research_provider_response_review_result_created" ]; then
+  printf 'FAIL: unexpected provider-response-review-result status: %s\n' "$REVIEW_RESULT_STATUS" >&2
+  exit 1
+fi
+REVIEW_RESULT_ID="$(json_field "$REVIEW_RESULT_OUTPUT" provider_response_review_result_id)"
+if [ -z "$REVIEW_RESULT_ID" ]; then
+  printf 'FAIL: provider_response_review_result_id is empty\n' >&2
+  exit 1
+fi
+REVIEW_RESULT_ARTIFACT_PATH="$(json_field "$REVIEW_RESULT_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$REVIEW_RESULT_ARTIFACT_PATH" "provider response review result artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$REVIEW_RESULT_ARTIFACT_PATH")" "provider response review result artifact"
+assert_no_pending_orders
+
+# 84.10. Research provider-response-review-result-list
+printf '\n--- Research provider-response-review-result-list ---\n'
+REVIEW_RESULT_LIST_OUTPUT="$(atlas research provider-response-review-result-list --json)"
+assert_no_forbidden_fragments "$REVIEW_RESULT_LIST_OUTPUT" "provider-response-review-result-list CLI output"
+assert_ok "$REVIEW_RESULT_LIST_OUTPUT" "research provider-response-review-result-list"
+REVIEW_RESULT_LIST_STATUS="$(json_field "$REVIEW_RESULT_LIST_OUTPUT" status)"
+if [ "$REVIEW_RESULT_LIST_STATUS" != "research_provider_response_review_result_list" ]; then
+  printf 'FAIL: unexpected provider-response-review-result-list status: %s\n' "$REVIEW_RESULT_LIST_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.11. Research provider-response-review-result-show
+printf '\n--- Research provider-response-review-result-show ---\n'
+REVIEW_RESULT_SHOW_OUTPUT="$(atlas research provider-response-review-result-show "$REVIEW_RESULT_ID" --json)"
+assert_no_forbidden_fragments "$REVIEW_RESULT_SHOW_OUTPUT" "provider-response-review-result-show CLI output"
+assert_ok "$REVIEW_RESULT_SHOW_OUTPUT" "research provider-response-review-result-show"
+REVIEW_RESULT_SHOW_STATUS="$(json_field "$REVIEW_RESULT_SHOW_OUTPUT" status)"
+if [ "$REVIEW_RESULT_SHOW_STATUS" != "research_provider_response_review_result_shown" ]; then
+  printf 'FAIL: unexpected provider-response-review-result-show status: %s\n' "$REVIEW_RESULT_SHOW_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.12. Research provider-response-review-result-validate
+printf '\n--- Research provider-response-review-result-validate ---\n'
+REVIEW_RESULT_VALIDATE_OUTPUT="$(atlas research provider-response-review-result-validate "$REVIEW_RESULT_ID" --json)"
+assert_no_forbidden_fragments "$REVIEW_RESULT_VALIDATE_OUTPUT" "provider-response-review-result-validate CLI output"
+assert_ok "$REVIEW_RESULT_VALIDATE_OUTPUT" "research provider-response-review-result-validate"
+REVIEW_RESULT_VALIDATE_STATUS="$(json_field "$REVIEW_RESULT_VALIDATE_OUTPUT" status)"
+if [ "$REVIEW_RESULT_VALIDATE_STATUS" != "research_provider_response_review_result_validated" ]; then
+  printf 'FAIL: unexpected provider-response-review-result-validate status: %s\n' "$REVIEW_RESULT_VALIDATE_STATUS" >&2
+  exit 1
+fi
+REVIEW_RESULT_VALIDATE_VALID="$(json_field "$REVIEW_RESULT_VALIDATE_OUTPUT" valid)"
+if [ "$REVIEW_RESULT_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: review result validation failed\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.13. Research provider-response-review-result-replay
+printf '\n--- Research provider-response-review-result-replay ---\n'
+REVIEW_RESULT_REPLAY_OUTPUT="$(atlas research provider-response-review-result-replay "$REVIEW_RESULT_ID" --json)"
+assert_no_forbidden_fragments "$REVIEW_RESULT_REPLAY_OUTPUT" "provider-response-review-result-replay CLI output"
+assert_ok "$REVIEW_RESULT_REPLAY_OUTPUT" "research provider-response-review-result-replay"
+REVIEW_RESULT_REPLAY_STATUS="$(json_field "$REVIEW_RESULT_REPLAY_OUTPUT" status)"
+if [ "$REVIEW_RESULT_REPLAY_STATUS" != "research_provider_response_review_result_replayed" ]; then
+  printf 'FAIL: unexpected provider-response-review-result-replay status: %s\n' "$REVIEW_RESULT_REPLAY_STATUS" >&2
+  exit 1
+fi
+REVIEW_RESULT_REPLAY_MATCH="$(json_field "$REVIEW_RESULT_REPLAY_OUTPUT" match)"
+if [ "$REVIEW_RESULT_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: review result replay mismatch\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.14. Research provider-response-review-result-summary
+printf '\n--- Research provider-response-review-result-summary ---\n'
+REVIEW_RESULT_SUMMARY_OUTPUT="$(atlas research provider-response-review-result-summary "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$REVIEW_RESULT_SUMMARY_OUTPUT" "provider-response-review-result-summary CLI output"
+assert_ok "$REVIEW_RESULT_SUMMARY_OUTPUT" "research provider-response-review-result-summary"
+REVIEW_RESULT_SUMMARY_STATUS="$(json_field "$REVIEW_RESULT_SUMMARY_OUTPUT" status)"
+if [ "$REVIEW_RESULT_SUMMARY_STATUS" != "research_provider_response_review_result_summary" ]; then
+  printf 'FAIL: unexpected provider-response-review-result-summary status: %s\n' "$REVIEW_RESULT_SUMMARY_STATUS" >&2
+  exit 1
+fi
+REVIEW_RESULT_SUMMARY_PRESENT="$(json_field "$REVIEW_RESULT_SUMMARY_OUTPUT" review_result_present)"
+if [ "$REVIEW_RESULT_SUMMARY_PRESENT" != "False" ]; then
+  printf 'FAIL: summary reports review_result_present != false\n' >&2
+  exit 1
+fi
+REVIEW_RESULT_SUMMARY_GATE="$(json_field "$REVIEW_RESULT_SUMMARY_OUTPUT" manual_review_gate_open)"
+if [ "$REVIEW_RESULT_SUMMARY_GATE" != "False" ]; then
+  printf 'FAIL: summary reports manual_review_gate_open != false\n' >&2
+  exit 1
+fi
+REVIEW_RESULT_SUMMARY_TRUSTED="$(json_field "$REVIEW_RESULT_SUMMARY_OUTPUT" provider_response_trusted)"
+if [ "$REVIEW_RESULT_SUMMARY_TRUSTED" != "False" ]; then
+  printf 'FAIL: summary reports provider_response_trusted != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.15. Research provider-response-review-result-doctor
+printf '\n--- Research provider-response-review-result-doctor ---\n'
+REVIEW_RESULT_DOCTOR_OUTPUT="$(atlas research provider-response-review-result-doctor "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$REVIEW_RESULT_DOCTOR_OUTPUT" "provider-response-review-result-doctor CLI output"
+assert_ok "$REVIEW_RESULT_DOCTOR_OUTPUT" "research provider-response-review-result-doctor"
+REVIEW_RESULT_DOCTOR_STATUS="$(json_field "$REVIEW_RESULT_DOCTOR_OUTPUT" status)"
+if [ "$REVIEW_RESULT_DOCTOR_STATUS" != "research_provider_response_review_result_doctor" ]; then
+  printf 'FAIL: unexpected provider-response-review-result-doctor status: %s\n' "$REVIEW_RESULT_DOCTOR_STATUS" >&2
+  exit 1
+fi
+REVIEW_RESULT_DOCTOR_PRESENT="$(json_field "$REVIEW_RESULT_DOCTOR_OUTPUT" review_result_present)"
+if [ "$REVIEW_RESULT_DOCTOR_PRESENT" != "False" ]; then
+  printf 'FAIL: doctor reports review_result_present != false\n' >&2
+  exit 1
+fi
+REVIEW_RESULT_DOCTOR_GATE="$(json_field "$REVIEW_RESULT_DOCTOR_OUTPUT" manual_review_gate_open)"
+if [ "$REVIEW_RESULT_DOCTOR_GATE" != "False" ]; then
+  printf 'FAIL: doctor reports manual_review_gate_open != false\n' >&2
+  exit 1
+fi
+REVIEW_RESULT_DOCTOR_TRUSTED="$(json_field "$REVIEW_RESULT_DOCTOR_OUTPUT" provider_response_trusted)"
+if [ "$REVIEW_RESULT_DOCTOR_TRUSTED" != "False" ]; then
+  printf 'FAIL: doctor reports provider_response_trusted != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.16. Research timeline post-review-result
+printf '\n--- Research timeline (post review result) ---\n'
+TIMELINE_OUTPUT_REVIEW_RESULT="$(atlas research timeline --json)"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_REVIEW_RESULT" "timeline CLI output after review result"
+assert_ok "$TIMELINE_OUTPUT_REVIEW_RESULT" "research timeline after review result"
+TIMELINE_REVIEW_RESULT_VALID="$(python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+valid = 'invalid'
+for e in data.get('entries', []):
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    for p in e.get('prompts', []):
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests', []):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans', []):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs', []):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states', []):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets', []):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            for r in a.get('provider_execution_readiness_reports', []):
+                                if r.get('provider_execution_readiness_report_id')!='$READINESS_REPORT_ID':
+                                    continue
+                                for f in r.get('provider_preflight_freezes', []):
+                                    if f.get('provider_preflight_freeze_id')!='$FREEZE_ID':
+                                        continue
+                                    for pol in f.get('provider_opt_in_policies', []):
+                                        if pol.get('provider_opt_in_policy_id')!='$POLICY_ID':
+                                            continue
+                                        for b in pol.get('provider_credential_boundaries', []):
+                                            if b.get('provider_credential_boundary_id')!='$BOUNDARY_ID':
+                                                continue
+                                            for pp in b.get('provider_outbound_payload_previews', []):
+                                                if pp.get('provider_outbound_payload_preview_id')!='$PAYLOAD_PREVIEW_ID':
+                                                    continue
+                                                for ip in pp.get('provider_response_intake_policies', []):
+                                                    if ip.get('provider_response_intake_policy_id')!='$INTAKE_POLICY_ID':
+                                                        continue
+                                                    for prrp in ip.get('provider_request_response_pairings', []):
+                                                        if prrp.get('provider_request_response_pairing_id')!='$PAIRING_ID':
+                                                            continue
+                                                        for prsc in prrp.get('provider_response_schema_contracts', []):
+                                                            if prsc.get('provider_response_schema_contract_id')!='$SCHEMA_CONTRACT_ID':
+                                                                continue
+                                                            review_results=prsc.get('provider_response_review_results', [])
+                                                            rr_ids=[r.get('provider_response_review_result_id') for r in review_results]
+                                                            if '$REVIEW_RESULT_ID' in rr_ids:
+                                                                print('valid')
+                                                                break
+                                                        break
+                                                    break
+                                            break
+                                    break
+                            break
+                    break
+            break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_REVIEW_RESULT" )"
+if [ "$TIMELINE_REVIEW_RESULT_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link review result under schema contract %s\n' "$SCHEMA_CONTRACT_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.17. Research check-artifacts after review result
+printf '\n--- Research check-artifacts (post review result) ---\n'
+CHECK_OUTPUT_REVIEW_RESULT="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_REVIEW_RESULT" "check-artifacts CLI output after review result"
+assert_ok "$CHECK_OUTPUT_REVIEW_RESULT" "research check-artifacts after review result"
+CHECK_REVIEW_RESULT_COUNT="$(json_field "$CHECK_OUTPUT_REVIEW_RESULT" counts.provider_response_review_results)"
+if [ "$CHECK_REVIEW_RESULT_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_response_review_results count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
 # 85. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"

@@ -277,7 +277,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
                 schema_contract_count += 1
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -376,13 +376,30 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                                                                                                                 with open(os.path.join(schema_dir, sfname)) as sf:
                                                                                                                                                                     sc = json.load(sf)
                                                                                                                                                                 if sc.get("source_provider_request_response_pairing_id") == pairing_id:
+                                                                                                                                                                    sc_id = sc.get("provider_response_schema_contract_id", "")
+                                                                                                                                                                    review_results = []
+                                                                                                                                                                    rr_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_response_review_results")
+                                                                                                                                                                    if os.path.isdir(rr_dir):
+                                                                                                                                                                        for rfname in sorted(os.listdir(rr_dir)):
+                                                                                                                                                                            if rfname.endswith(".json"):
+                                                                                                                                                                                with open(os.path.join(rr_dir, rfname)) as rf:
+                                                                                                                                                                                    rr = json.load(rf)
+                                                                                                                                                                                if rr.get("source_provider_response_schema_contract_id") == sc_id:
+                                                                                                                                                                                    review_results.append({
+                                                                                                                                                                                        "provider_response_review_result_id": rr.get("provider_response_review_result_id", ""),
+                                                                                                                                                                                        "review_result_status": rr.get("review_result_status", ""),
+                                                                                                                                                                                        "review_result_state": rr.get("review_result_state", ""),
+                                                                                                                                                                                        "review_decision": rr.get("review_decision", ""),
+                                                                                                                                                                                        "artifact_path": rr.get("artifact_path", ""),
+                                                                                                                                                                                    })
                                                                                                                                                                     schema_contracts.append({
-                                                                                                                                                                        "provider_response_schema_contract_id": sc.get("provider_response_schema_contract_id", ""),
+                                                                                                                                                                        "provider_response_schema_contract_id": sc_id,
                                                                                                                                                                         "source_provider_request_response_pairing_id": sc.get("source_provider_request_response_pairing_id", ""),
                                                                                                                                                                         "response_schema_status": sc.get("response_schema_status", ""),
                                                                                                                                                                         "response_schema_state": sc.get("response_schema_state", ""),
                                                                                                                                                                         "created_at": sc.get("created_at", ""),
                                                                                                                                                                         "artifact_path": sc.get("artifact_path", ""),
+                                                                                                                                                                        "provider_response_review_results": review_results
                                                                                                                                                                     })
                                                                                                                                                     pairings.append({
                                                                                                                                                         "provider_request_response_pairing_id": pairing_id,
@@ -2556,6 +2573,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False},
+            "review_notes_policy": {"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True},
+            "review_bounds_policy": {"max_review_note_chars": 1000, "structured_review_result_required": True},
+            "review_redaction_policy": {"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"},
+            "review_validation_policy": {"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"},
+            "trust_upgrade_policy": {"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True},
+            "trading_separation_policy": {"review_result_is_not_trading_signal": True},
+            "broker_separation_policy": {"broker_live_bridge_allowed": False},
+            "review_event_policy": {"review_event_required_in_future": True, "review_event_written_in_this_batch": False},
+            "future_response_requirements": {"future_response_artifact_required": True},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {},
+            "denylist_metadata": {"forbidden_fragments_raw_stored": False},
+        }, f)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -3928,6 +4157,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5163,6 +5604,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5269,7 +5922,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return unsafe absolute path in output
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
         "issues": [{{"code": "unsafe_path", "path": "/Users/natan/secret.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -6410,6 +7063,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -6516,7 +7381,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return ok=false
     print(json.dumps({{
         "ok": False, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [{{"code": "malformed_json", "path": ".atlas/research/X/bad.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -7657,6 +8522,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7767,7 +8844,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         json.dump({{}}, f)
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -8907,6 +9984,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -9012,7 +10301,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -10165,6 +11454,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -10270,7 +11771,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -11418,6 +12919,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -11523,7 +13236,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -12671,6 +14384,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -12776,7 +14701,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -13938,6 +15863,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -14043,7 +16180,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -15199,6 +17336,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -15304,7 +17653,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -16460,6 +18809,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -16565,7 +19126,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -17713,6 +20274,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -17818,7 +20591,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -18995,6 +21768,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -19100,7 +22085,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -20265,6 +23250,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -20370,7 +23567,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -21541,6 +24738,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -21646,7 +25055,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -22822,6 +26231,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -22927,7 +26548,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -24107,6 +27728,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -24212,7 +28045,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -25387,6 +29220,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -25492,7 +29537,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -26667,6 +30712,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -26772,7 +31029,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -27947,6 +32204,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -28051,7 +32520,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -29226,6 +33695,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -29330,7 +34011,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -30501,6 +35182,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -30606,7 +35499,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -31792,6 +36685,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -31902,7 +37007,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -33083,6 +38188,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -33188,7 +38505,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -34395,6 +39712,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -34500,7 +40029,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -35840,6 +41369,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -35950,7 +41691,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -37282,6 +43023,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -37387,7 +43340,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -38732,6 +44685,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -38858,7 +45023,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -38915,7 +45080,8 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                     "response_schema_status": "response_schema_contract_recorded",
                                                                     "response_schema_state": "schema_recorded_no_response_present",
                                                                     "created_at": "2026-01-01T00:00:00+00:00",
-                                                                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json"
+                                                                    "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json",
+                                                                    "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]
                                                                 }}]
                                                             }}]
                                                         }}]
@@ -40869,6 +47035,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -40974,7 +47352,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -40994,7 +47372,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json", "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]}}], "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -42866,6 +49244,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -42971,7 +49561,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -44205,6 +50795,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -44310,7 +51112,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -44330,7 +51132,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json", "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -46286,6 +53088,218 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-schema-contract-docto
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result":
+    schema_contract_id = ARGS[2]
+    review_result_id = "review-result-001"
+    symbol = "ATLAS-DEMO"
+    rr_dir = os.path.join(".", ".atlas", "research", symbol, "provider_response_review_results")
+    os.makedirs(rr_dir, exist_ok=True)
+    rr_path = os.path.join(rr_dir, review_result_id + ".json")
+    with open(rr_path, "w") as f:
+        json.dump({{
+            "schema_version": "1",
+            "artifact_type": "provider_response_review_result",
+            "contract_version": "research_provider_response_review_result_v1",
+            "provider_response_review_result_id": review_result_id,
+            "source_provider_response_schema_contract_id": schema_contract_id,
+            "source_provider_request_response_pairing_id": "demopairingid12345",
+            "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+            "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "mode": "paper",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_scope": "future_provider_response_review_result_only",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "reviewer_identity_policy": {{"reviewer_identity_required_in_future": True, "reviewer_identity_recorded": False}},
+            "review_notes_policy": {{"review_notes_allowed_in_future": True, "review_notes_stored": False, "review_notes_must_be_bounded": True, "review_notes_must_be_redacted": True}},
+            "review_bounds_policy": {{"max_review_note_chars": 1000, "structured_review_result_required": True}},
+            "review_redaction_policy": {{"redaction_required_before_output": True, "redaction_profile": "atlas_provider_response_review_result_v1"}},
+            "review_validation_policy": {{"review_result_schema_validation_required": True, "unsafe_review_content_behavior": "fail_closed"}},
+            "trust_upgrade_policy": {{"trust_upgrade_allowed": False, "trust_upgrade_not_implemented": True}},
+            "trading_separation_policy": {{"review_result_is_not_trading_signal": True}},
+            "broker_separation_policy": {{"broker_live_bridge_allowed": False}},
+            "review_event_policy": {{"review_event_required_in_future": True, "review_event_written_in_this_batch": False}},
+            "future_response_requirements": {{"future_response_artifact_required": True}},
+            "blocking_reasons": ["provider_execution_not_implemented"],
+            "source_schema_contract_hash": "dummyhash",
+            "source_pairing_hash": "dummyhash",
+            "source_response_intake_policy_hash": "dummyhash",
+            "source_payload_preview_hash": "dummyhash",
+            "review_result_present": False,
+            "manual_review_gate_open": False,
+            "manual_review_completed": False,
+            "reviewer_identity_recorded": False,
+            "review_notes_stored": False,
+            "review_notes_bounded": True,
+            "review_notes_redacted": True,
+            "review_decision_allows_use": False,
+            "review_decision_allows_trust_upgrade": False,
+            "review_decision_allows_trading_interpretation": False,
+            "review_decision_allows_order_creation": False,
+            "review_decision_allows_order_approval": False,
+            "review_decision_allows_broker_call": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "provider_response_imported": False,
+            "provider_response_reviewed": False,
+            "provider_response_can_create_orders": False,
+            "provider_response_can_approve_orders": False,
+            "provider_response_can_call_broker": False,
+            "response_schema_allows_trading_signal": False,
+            "response_schema_allows_order_creation": False,
+            "response_schema_allows_order_approval": False,
+            "response_schema_allows_broker_call": False,
+            "raw_response_body_stored": False,
+            "raw_prompt_body_stored": False,
+            "provider_enabled": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "credential_value_present": False,
+            "credential_lookup_attempted": False,
+            "env_read_attempted": False,
+            "dotenv_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "future_provider_execution_possible": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_hash": "dummyhash",
+            "warnings": [],
+            "metadata": {{}},
+            "denylist_metadata": {{"forbidden_fragments_raw_stored": False}},
+        }}, f)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_created",
+        "provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": schema_contract_id,
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "reviewer_identity_recorded": False,
+        "review_notes_stored": False,
+        "review_notes_bounded": True,
+        "review_notes_redacted": True,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_can_create_orders": False,
+        "provider_response_can_approve_orders": False,
+        "provider_response_can_call_broker": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/" + symbol + "/provider_response_review_results/" + review_result_id + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_list",
+        "items": [{{
+            "provider_response_review_result_id": "review-result-001",
+            "source_provider_response_schema_contract_id": "schema-contract-001",
+            "source_run_id": "run-001",
+            "symbol": "DEMO",
+            "review_result_status": "review_result_contract_recorded",
+            "review_result_state": "review_contract_recorded_no_response_present",
+            "review_decision": "no_decision_recorded",
+            "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+            "provider_id": "custom-openai-compatible",
+            "model_id": "gpt-4o",
+            "created_at": "2026-01-01T00:00:00",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_shown",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "manual_review_gate_open": False,
+        "review_result_present": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_validated",
+        "provider_response_review_result_id": "review-result-001",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with review result contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_replayed",
+        "provider_response_review_result_id": "review-result-001",
+        "match": True,
+        "original_hash": "abc123",
+        "replayed_hash": "abc123",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_summary",
+        "provider_response_review_result_id": "review-result-001",
+        "review_result_status": "review_result_contract_recorded",
+        "review_result_state": "review_contract_recorded_no_response_present",
+        "review_decision": "no_decision_recorded",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_response_review_result_doctor",
+        "run_id": "run-001",
+        "review_health": "review_contract_recorded_no_response_present",
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "provider_response_trusted": False,
+        "missing_artifacts": ["future_provider_response_artifact"],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',

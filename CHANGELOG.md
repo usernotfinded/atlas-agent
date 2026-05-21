@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.7.dev33] - 2026-05-21
+## [0.5.7.dev34] - 2026-05-21
 
 ### Added
 - Batch 8.6 — Provider Response Schema Contract & Manual Review Gate.

@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1406,6 +1406,8 @@ def check_research_artifacts(
     provider_request_response_pairing_data: list[dict[str, Any]] = []
     provider_response_schema_contract_ids: dict[str, list[str]] = {}
     provider_response_schema_contract_data: list[dict[str, Any]] = []
+    provider_response_review_result_ids: dict[str, list[str]] = {}
+    provider_response_review_result_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1456,6 +1458,7 @@ def check_research_artifacts(
             "provider_outbound_payload_preview": "provider_outbound_payload_preview_id",
             "provider_response_intake_policy": "provider_response_intake_policy_id",
             "provider_request_response_pairing": "provider_request_response_pairing_id",
+            "provider_response_review_result": "provider_response_review_result_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1506,6 +1509,8 @@ def check_research_artifacts(
         elif expected_type == "provider_response_intake_policy" and "provider_response_intake_policies" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_request_response_pairing" and "provider_request_response_pairings" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_response_review_result" and "provider_response_review_results" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1765,6 +1770,22 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_response_review_result":
+            for f in ("provider_response_review_result_id", "source_provider_response_schema_contract_id", "source_provider_request_response_pairing_id", "source_provider_response_intake_policy_id", "source_provider_outbound_payload_preview_id", "symbol", "provider_id", "model_id", "review_result_status", "review_result_state", "review_decision"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_response_review_result import (
+                safe_validate_provider_response_review_result_data,
+            )
+            _cleaned, error = safe_validate_provider_response_review_result_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1823,6 +1844,9 @@ def check_research_artifacts(
             elif expected_type == "provider_response_schema_contract":
                 provider_response_schema_contract_ids.setdefault(raw_id, []).append(rel)
                 provider_response_schema_contract_data.append(data)
+            elif expected_type == "provider_response_review_result":
+                provider_response_review_result_ids.setdefault(raw_id, []).append(rel)
+                provider_response_review_result_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1866,6 +1890,8 @@ def check_research_artifacts(
             counts["provider_request_response_pairings"] += 1
         elif expected_type == "provider_response_schema_contract":
             counts["provider_response_schema_contracts"] += 1
+        elif expected_type == "provider_response_review_result":
+            counts["provider_response_review_results"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1995,6 +2021,12 @@ def check_research_artifacts(
             for path in provider_response_schema_contracts_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_response_schema_contract", expected_symbol)
+        # Provider response review results
+        provider_response_review_results_dir = sym_dir / "provider_response_review_results"
+        if provider_response_review_results_dir.exists():
+            for path in provider_response_review_results_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_response_review_result", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -2078,6 +2110,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for prscid, paths in provider_response_schema_contract_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for prrrid, paths in provider_response_review_result_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2861,6 +2897,8 @@ def build_research_timeline(
     provider_request_response_pairing_items = iter_provider_request_response_pairing_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_response_schema_contract import iter_provider_response_schema_contract_artifacts
     provider_response_schema_contract_items = iter_provider_response_schema_contract_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_response_review_result import iter_provider_response_review_result_artifacts
+    provider_response_review_result_items = iter_provider_response_review_result_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -3057,6 +3095,17 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_response_schema_contract", "path": prsc.get("artifact_path", ""), "severity": "warning"})
 
+    provider_response_review_results_by_schema_contract_id: dict[str, list[dict[str, Any]]] = {}
+    for prrr in provider_response_review_result_items:
+        if prrr.get("_invalid"):
+            warnings.append({"code": "invalid_provider_response_review_result_skipped", "path": prrr.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = prrr.get("source_provider_response_schema_contract_id", "")
+        if src:
+            provider_response_review_results_by_schema_contract_id.setdefault(src, []).append(prrr)
+        else:
+            warnings.append({"code": "orphan_provider_response_review_result", "path": prrr.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -3218,6 +3267,17 @@ def build_research_timeline(
         src = prsc.get("source_provider_request_response_pairing_id", "")
         if src and src not in seen_pairing_ids:
             warnings.append({"code": "orphan_provider_response_schema_contract", "path": prsc.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen schema contract IDs for orphan provider response review result detection
+    seen_schema_contract_ids = set()
+    for prsc in provider_response_schema_contract_items:
+        if not prsc.get("_invalid"):
+            seen_schema_contract_ids.add(prsc.get("provider_response_schema_contract_id", ""))
+
+    for prrr in provider_response_review_result_items:
+        src = prrr.get("source_provider_response_schema_contract_id", "")
+        if src and src not in seen_schema_contract_ids:
+            warnings.append({"code": "orphan_provider_response_review_result", "path": prrr.get("artifact_path", ""), "severity": "warning"})
 
     def _timeline_summary(item: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
         """Build an acyclic JSON-safe summary from an artifact index item."""
@@ -3541,8 +3601,9 @@ def build_research_timeline(
                                                                 "broker_touched",
                                                             ))
                                                             pairing_id = pairing_copy.get("provider_request_response_pairing_id", "")
-                                                            pairing_copy["provider_response_schema_contracts"] = [
-                                                                _timeline_summary(contract, (
+                                                            contract_summaries = []
+                                                            for contract in provider_response_schema_contracts_by_pairing_id.get(pairing_id, []):
+                                                                contract_summary = _timeline_summary(contract, (
                                                                     "provider_response_schema_contract_id",
                                                                     "source_provider_request_response_pairing_id",
                                                                     "source_provider_response_intake_policy_id",
@@ -3590,8 +3651,29 @@ def build_research_timeline(
                                                                     "pending_order_created",
                                                                     "broker_touched",
                                                                 ))
-                                                                for contract in provider_response_schema_contracts_by_pairing_id.get(pairing_id, [])
-                                                            ]
+                                                                contract_id = contract_summary.get("provider_response_schema_contract_id", "")
+                                                                contract_summary["provider_response_review_results"] = [
+                                                                    _timeline_summary(review_result, (
+                                                                        "provider_response_review_result_id",
+                                                                        "source_provider_response_schema_contract_id",
+                                                                        "source_provider_request_response_pairing_id",
+                                                                        "source_provider_response_intake_policy_id",
+                                                                        "source_provider_outbound_payload_preview_id",
+                                                                        "symbol",
+                                                                        "artifact_path",
+                                                                        "provider_id",
+                                                                        "model_id",
+                                                                        "created_at",
+                                                                        "review_result_status",
+                                                                        "review_result_state",
+                                                                        "review_decision",
+                                                                        "provider_call_allowed",
+                                                                        "actual_provider_call_made",
+                                                                    ))
+                                                                    for review_result in provider_response_review_results_by_schema_contract_id.get(contract_id, [])
+                                                                ]
+                                                                contract_summaries.append(contract_summary)
+                                                            pairing_copy["provider_response_schema_contracts"] = contract_summaries
                                                             pairing_summaries.append(pairing_copy)
                                                         intake_policy_copy["provider_request_response_pairings"] = pairing_summaries
                                                         policies_with_pairings.append(intake_policy_copy)
@@ -5041,6 +5123,11 @@ def build_dossier(
     from atlas_agent.research.provider_response_schema_contract import iter_provider_response_schema_contract_artifacts
     provider_response_schema_contract_items = iter_provider_response_schema_contract_artifacts(workspace_path, symbol=symbol)
     linked_provider_response_schema_contracts = [prsc for prsc in provider_response_schema_contract_items if prsc.get("source_provider_request_response_pairing_id") in linked_pairing_ids]
+    linked_schema_contract_ids = {prsc.get("provider_response_schema_contract_id", "") for prsc in linked_provider_response_schema_contracts}
+
+    from atlas_agent.research.provider_response_review_result import iter_provider_response_review_result_artifacts
+    provider_response_review_result_items = iter_provider_response_review_result_artifacts(workspace_path, symbol=symbol)
+    linked_provider_response_review_results = [prrr for prrr in provider_response_review_result_items if prrr.get("source_provider_response_schema_contract_id") in linked_schema_contract_ids]
 
     # Build workflow status
     workflow_status = {
@@ -5064,6 +5151,7 @@ def build_dossier(
         "provider_response_intake_policies": len(linked_provider_response_intake_policies) > 0,
         "provider_request_response_pairings": len(linked_provider_request_response_pairings) > 0,
         "provider_response_schema_contracts": len(linked_provider_response_schema_contracts) > 0,
+        "provider_response_review_results": len(linked_provider_response_review_results) > 0,
     }
 
     artifact_counts = {
@@ -5087,6 +5175,7 @@ def build_dossier(
         "provider_response_intake_policies": len(linked_provider_response_intake_policies),
         "provider_request_response_pairings": len(linked_provider_request_response_pairings),
         "provider_response_schema_contracts": len(linked_provider_response_schema_contracts),
+        "provider_response_review_results": len(linked_provider_response_review_results),
     }
 
     # Build linked_artifacts with relative paths only
@@ -5250,6 +5339,17 @@ def build_dossier(
             "provider_id": prsc.get("provider_id", ""),
             "model_id": prsc.get("model_id", ""),
         })
+    for prrr in linked_provider_response_review_results:
+        linked_artifacts.append({
+            "type": "provider_response_review_result",
+            "id": prrr.get("provider_response_review_result_id", ""),
+            "artifact_path": prrr.get("artifact_path", ""),
+            "review_result_status": prrr.get("review_result_status", ""),
+            "review_result_state": prrr.get("review_result_state", ""),
+            "review_decision": prrr.get("review_decision", ""),
+            "provider_id": prrr.get("provider_id", ""),
+            "model_id": prrr.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -5375,6 +5475,15 @@ def build_dossier(
             "manual_review_gate_open": False,
             "future_response_artifact_present": False,
         }
+    if linked_provider_response_review_results:
+        summaries["provider_response_review_result"] = {
+            "review_result_count": len(linked_provider_response_review_results),
+            "review_result_statuses": [prrr.get("review_result_status", "") for prrr in linked_provider_response_review_results],
+            "review_result_states": [prrr.get("review_result_state", "") for prrr in linked_provider_response_review_results],
+            "review_decisions": [prrr.get("review_decision", "") for prrr in linked_provider_response_review_results],
+            "provider_ids": [prrr.get("provider_id", "") for prrr in linked_provider_response_review_results],
+            "model_ids": [prrr.get("model_id", "") for prrr in linked_provider_response_review_results],
+        }
 
     # Safety summary
     safety_summary = {
@@ -5428,6 +5537,8 @@ def build_dossier(
         warnings.append("no_provider_response_schema_contract")
     else:
         warnings.append("missing_future_response_artifact_expected")
+    if not linked_provider_response_review_results:
+        warnings.append("no_provider_response_review_result")
 
     # Determine recommendation
     core_present = linked_plans and linked_prompts and linked_provider_responses and linked_response_reviews

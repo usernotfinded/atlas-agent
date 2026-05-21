@@ -1184,6 +1184,65 @@ Safety First:
     research_provider_response_schema_contract_doctor.add_argument("run_id", help="Research run ID.")
     research_provider_response_schema_contract_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_response_review_result = research_sub.add_parser(
+        "provider-response-review-result",
+        help="Create a provider response review result contract artifact from a schema contract. Local-only.",
+        description="Create a local provider response review result contract artifact from a provider response schema contract. Local-only. Does not call providers, read API keys, load .env.atlas, read os.environ, modify config, or authorize live trading.",
+    )
+    research_provider_response_review_result.add_argument("schema_contract_id", help="Source provider response schema contract ID.")
+    research_provider_response_review_result.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_response_review_result_list = research_sub.add_parser(
+        "provider-response-review-result-list",
+        help="List provider response review result artifacts. Read-only.",
+        description="List local provider response review result artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_response_review_result_list.add_argument("--symbol", default="", help="Filter by symbol.")
+    research_provider_response_review_result_list.add_argument("--limit", type=int, default=20, help="Max items. Default 20, max 100.")
+    research_provider_response_review_result_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_response_review_result_show = research_sub.add_parser(
+        "provider-response-review-result-show",
+        help="Show one provider response review result artifact. Read-only.",
+        description="Show one provider response review result artifact. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_response_review_result_show.add_argument("review_result_id", help="Provider response review result ID.")
+    research_provider_response_review_result_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_response_review_result_validate = research_sub.add_parser(
+        "provider-response-review-result-validate",
+        help="Validate a provider response review result artifact. Read-only.",
+        description="Validate a provider response review result artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_response_review_result_validate.add_argument("review_result_id", help="Provider response review result ID.")
+    research_provider_response_review_result_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_response_review_result_validate.add_argument("--strict", action="store_true", help="Exit nonzero if validation fails.")
+
+    research_provider_response_review_result_replay = research_sub.add_parser(
+        "provider-response-review-result-replay",
+        help="Replay a provider response review result artifact from its source schema contract and compare hashes. Read-only by default.",
+        description="Rebuild the provider response review result artifact from its source schema contract and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_response_review_result_replay.add_argument("review_result_id", help="Provider response review result ID.")
+    research_provider_response_review_result_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_response_review_result_replay.add_argument("--strict", action="store_true", help="Exit nonzero if replay does not match.")
+
+    research_provider_response_review_result_summary = research_sub.add_parser(
+        "provider-response-review-result-summary",
+        help="Summarize the provider response review result state for a research run. Read-only.",
+        description="Read-only summary of the provider response review result state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_response_review_result_summary.add_argument("run_id", help="Research run ID.")
+    research_provider_response_review_result_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_response_review_result_doctor = research_sub.add_parser(
+        "provider-response-review-result-doctor",
+        help="Diagnose the provider response review result chain for a research run. Read-only.",
+        description="Read-only diagnostic of the provider response review result chain for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_response_review_result_doctor.add_argument("run_id", help="Research run ID.")
+    research_provider_response_review_result_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -3048,6 +3107,13 @@ def main(argv: list[str] | None = None) -> int:
         "provider-response-schema-contract-replay",
         "provider-response-schema-contract-summary",
         "provider-response-schema-contract-doctor",
+        "provider-response-review-result",
+        "provider-response-review-result-list",
+        "provider-response-review-result-show",
+        "provider-response-review-result-validate",
+        "provider-response-review-result-replay",
+        "provider-response-review-result-summary",
+        "provider-response-review-result-doctor",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -10035,6 +10101,375 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Health: {result.get('schema_health', '')}")
             print(f"  Manual review gate open: {result.get('manual_review_gate_open', False)}")
             print(f"  Future response present: {result.get('future_response_artifact_present', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            if result.get("missing_artifacts"):
+                print(f"  Missing artifacts: {', '.join(result['missing_artifacts'])}")
+            if result.get("blocking_reasons"):
+                print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-response-review-result":
+        try:
+            from atlas_agent.research.provider_response_review_result import create_provider_response_review_result
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-response-review-result skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.schema_contract_id)
+            result = create_provider_response_review_result(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-response-review-result", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-response-review-result", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider response review result created: {result.get('provider_response_review_result_id', '')}")
+            print(f"  Source schema contract: {result.get('source_provider_response_schema_contract_id', '')}")
+            print(f"  Status: {result.get('review_result_status', '')}")
+            print(f"  State: {result.get('review_result_state', '')}")
+            print(f"  Decision: {result.get('review_decision', '')}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-response-review-result-list":
+        try:
+            from atlas_agent.research.provider_response_review_result import iter_provider_response_review_result_artifacts
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-response-review-result-list skipped safely: no workspace found")
+                return 1
+
+            safe_symbol = args.symbol.strip().upper() if args.symbol else None
+            if safe_symbol:
+                safe_symbol = sanitize_symbol(safe_symbol)
+            limit = max(1, min(args.limit, 100))
+            items = iter_provider_response_review_result_artifacts(ws, symbol=safe_symbol)
+            items = items[:limit]
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-response-review-result-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-response-review-result-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps({"ok": True, "status": "research_provider_response_review_result_list", "items": items}, indent=2, sort_keys=True))
+        else:
+            print(f"Provider response review results ({len(items)}):")
+            for item in items:
+                if item.get("_invalid"):
+                    print(f"  [INVALID] {item.get('provider_response_review_result_id', '')}: {item.get('error_code', '')}")
+                else:
+                    print(f"  {item.get('provider_response_review_result_id', '')}: {item.get('review_result_status', '')} ({item.get('symbol', '')}) — {item.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-response-review-result-show":
+        try:
+            from atlas_agent.research.provider_response_review_result import (
+                find_provider_response_review_result_by_id,
+                load_provider_response_review_result,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-response-review-result-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.review_result_id)
+            path = find_provider_response_review_result_by_id(ws, safe_id)
+            if path is None:
+                if args.json:
+                    _research_error_json("research_artifact_not_found", "Research artifact not found.")
+                else:
+                    print("research provider-response-review-result-show skipped safely: artifact not found")
+                return 1
+            data = load_provider_response_review_result(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-response-review-result-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-response-review-result-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_response_review_result_shown",
+                "provider_response_review_result_id": safe_id,
+                "review_result_status": data.get("review_result_status"),
+                "review_result_state": data.get("review_result_state"),
+                "review_decision": data.get("review_decision"),
+                "manual_review_gate_open": data.get("manual_review_gate_open"),
+                "review_result_present": data.get("review_result_present"),
+                "provider_response_trusted": data.get("provider_response_trusted"),
+                "artifact_path": data.get("artifact_path"),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider response review result {safe_id}:")
+            print(f"  Status: {data.get('review_result_status', '')}")
+            print(f"  State: {data.get('review_result_state', '')}")
+            print(f"  Decision: {data.get('review_decision', '')}")
+            print(f"  Provider: {data.get('provider_id', '')} / {data.get('model_id', '')}")
+            print(f"  Artifact: {data.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-response-review-result-validate":
+        try:
+            from atlas_agent.research.provider_response_review_result import (
+                find_provider_response_review_result_by_id,
+                validate_provider_response_review_result_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-response-review-result-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.review_result_id)
+            path = find_provider_response_review_result_by_id(ws, safe_id)
+            if path is None:
+                if args.json:
+                    _research_error_json("research_artifact_not_found", "Research artifact not found.")
+                else:
+                    print("research provider-response-review-result-validate skipped safely: artifact not found")
+                return 1
+            result = validate_provider_response_review_result_artifact(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-response-review-result-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-response-review-result-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_response_review_result_validated",
+                "provider_response_review_result_id": safe_id,
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+                "recommendation": result.recommendation,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider response review result {safe_id}: {'valid' if result.valid else 'invalid'}")
+            print(f"  Passed: {result.passed_checks}, Failed: {result.failed_checks}")
+            print(f"  Recommendation: {result.recommendation}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-response-review-result-replay":
+        try:
+            from atlas_agent.research.provider_response_review_result import replay_provider_response_review_result
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-response-review-result-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.review_result_id)
+            replay_result = replay_provider_response_review_result(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-response-review-result-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-response-review-result-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_response_review_result_replayed",
+                "provider_response_review_result_id": safe_id,
+                "match": replay_result["match"],
+                "original_hash": replay_result["original_hash"],
+                "replayed_hash": replay_result["replayed_hash"],
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider response review result {safe_id}: {'match' if replay_result['match'] else 'mismatch'}")
+            print(f"  Original hash: {replay_result['original_hash']}")
+            print(f"  Replayed hash: {replay_result['replayed_hash']}")
+        if args.strict and not replay_result["match"]:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-response-review-result-summary":
+        try:
+            from atlas_agent.research.provider_response_review_result import summarize_provider_response_review_result_state
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-response-review-result-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_response_review_result_state(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-response-review-result-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-response-review-result-summary", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            if not result.get("ok"):
+                print(f"Response review result summary: {result.get('status', 'error')}")
+                print(f"  Run ID: {safe_id}")
+            else:
+                print(f"Response review result summary for run {safe_id}:")
+                print(f"  Review result ID: {result.get('provider_response_review_result_id') or 'none'}")
+                print(f"  Status: {result.get('review_result_status', '')}")
+                print(f"  State: {result.get('review_result_state', '')}")
+                print(f"  Decision: {result.get('review_decision', '')}")
+                print(f"  Review result present: {result.get('review_result_present', False)}")
+                print(f"  Manual review gate open: {result.get('manual_review_gate_open', False)}")
+                print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-response-review-result-doctor":
+        try:
+            from atlas_agent.research.provider_response_review_result import doctor_provider_response_review_result
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-response-review-result-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = doctor_provider_response_review_result(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-response-review-result-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-response-review-result-doctor", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Response review result doctor for run {safe_id}:")
+            print(f"  Health: {result.get('review_health', '')}")
+            print(f"  Review result present: {result.get('review_result_present', False)}")
+            print(f"  Manual review gate open: {result.get('manual_review_gate_open', False)}")
             print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
             if result.get("missing_artifacts"):
                 print(f"  Missing artifacts: {', '.join(result['missing_artifacts'])}")
