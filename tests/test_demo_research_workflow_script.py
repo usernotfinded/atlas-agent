@@ -277,7 +277,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
                 schema_contract_count += 1
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -2784,7 +2784,240 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        },
+        "manual_unlock_policy": {
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        },
+        "credential_unlock_policy": {
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        },
+        "provider_adapter_unlock_policy": {
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        },
+        "network_unlock_policy": {
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        },
+        "request_send_unlock_policy": {
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        },
+        "response_import_unlock_policy": {
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        },
+        "trust_upgrade_policy": {
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        },
+        "trading_separation_policy": {
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        },
+        "broker_separation_policy": {
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        },
+        "rollback_policy": {
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        },
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }))
+    sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -4368,6 +4601,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -5816,6 +6383,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -5922,7 +6823,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return unsafe absolute path in output
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [{{"code": "unsafe_path", "path": "/Users/natan/secret.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -7275,6 +8176,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7381,7 +8616,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return ok=false
     print(json.dumps({{
         "ok": False, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [{{"code": "malformed_json", "path": ".atlas/research/X/bad.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -8734,6 +9969,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8844,7 +10413,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         json.dump({{}}, f)
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -10196,6 +11765,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -10301,7 +12204,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -11666,6 +13569,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -11771,7 +14008,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -13131,6 +15368,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -13236,7 +15807,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -14596,6 +17167,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -14701,7 +17606,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -16075,6 +18980,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -16180,7 +19419,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -17548,6 +20787,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -17653,7 +21226,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -19021,6 +22594,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -19126,7 +23033,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -20486,6 +24393,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -20591,7 +24832,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -21980,6 +26221,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -22085,7 +26660,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -23462,6 +28037,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -23567,7 +28476,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -24950,6 +29859,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -25055,7 +30298,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -26443,6 +31686,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -26548,7 +32125,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -27940,6 +33517,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -28045,7 +33956,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -29432,6 +35343,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -29537,7 +35782,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -30924,6 +37169,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -31029,7 +37608,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -32416,6 +38995,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -32520,7 +39433,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -33907,6 +40820,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -34011,7 +41258,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -35394,6 +42641,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -35499,7 +43080,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -36897,6 +44478,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -37007,7 +44922,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -38400,6 +46315,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -38505,7 +46754,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -39924,6 +48173,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -40029,7 +48612,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -41581,6 +50164,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -41691,7 +50608,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -43235,6 +52152,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -43340,7 +52591,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -44897,6 +54148,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -45023,7 +54608,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -47247,6 +56832,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -47352,7 +57271,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -49456,6 +59375,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -49561,7 +59814,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -51007,6 +61260,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -51112,7 +61699,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -53299,6 +63886,340 @@ if ARGS[0] == "research" and ARGS[1] == "provider-response-review-result-doctor"
         "warnings": [],
     }}))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    review_result_id = ARGS[2] if len(ARGS) > 2 else ""
+    unlock_state_id = "unlock-state-001"
+    symbol = "ATLAS-DEMO"
+    us_dir = os.path.join(".", ".atlas", "research", symbol, "provider_execution_unlock_states")
+    os.makedirs(us_dir, exist_ok=True)
+    us_path = os.path.join(us_dir, unlock_state_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_execution_unlock_state",
+        "contract_version": "research_provider_execution_unlock_state_v1",
+        "provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": review_result_id,
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state_scope": "single_request",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "allowed_future_states": ["prerequisites_recorded", "manual_unlock_required", "blocked", "rolled_back"],
+        "unlock_transition_policy": {{
+            "manual_unlock_grants_provider_call_in_this_batch": False,
+            "unlock_requires_all_prerequisites": True,
+            "unlock_requires_explicit_approval": True,
+            "unlock_requires_kill_switch_check": True,
+            "unlock_requires_risk_manager_approval": True,
+            "unlock_requires_broker_separation_verification": True,
+            "unlock_requires_trading_separation_verification": True,
+        }},
+        "manual_unlock_policy": {{
+            "manual_unlock_requires_human_approval": True,
+            "manual_unlock_requires_documented_reason": True,
+            "manual_unlock_is_temporary": True,
+            "manual_unlock_expires_after_batch": True,
+        }},
+        "credential_unlock_policy": {{
+            "credential_unlock_requires_explicit_loader": True,
+            "credential_unlock_requires_env_verification": True,
+            "credential_unlock_is_read_only": True,
+            "credential_unlock_blocks_live_keys": True,
+        }},
+        "provider_adapter_unlock_policy": {{
+            "provider_adapter_unlock_requires_implementation": True,
+            "provider_adapter_unlock_requires_sandbox_verification": True,
+            "provider_adapter_unlock_blocks_untested_adapters": True,
+        }},
+        "network_unlock_policy": {{
+            "network_unlock_requires_explicit_enable": True,
+            "network_unlock_blocks_outbound_by_default": True,
+            "network_unlock_requires_request_audit": True,
+        }},
+        "request_send_unlock_policy": {{
+            "request_send_unlock_requires_explicit_approval": True,
+            "request_send_unlock_blocks_auto_send": True,
+            "request_send_unlock_requires_payload_preview": True,
+        }},
+        "response_import_unlock_policy": {{
+            "response_import_unlock_requires_explicit_approval": True,
+            "response_import_unlock_blocks_auto_import": True,
+            "response_import_unlock_requires_intake_policy": True,
+        }},
+        "trust_upgrade_policy": {{
+            "trust_upgrade_requires_manual_review": True,
+            "trust_upgrade_blocks_auto_trust": True,
+            "trust_upgrade_requires_verification": True,
+        }},
+        "trading_separation_policy": {{
+            "trading_separation_enforced": True,
+            "research_cannot_submit_orders": True,
+            "research_cannot_create_approvals": True,
+        }},
+        "broker_separation_policy": {{
+            "broker_separation_enforced": True,
+            "research_cannot_call_broker": True,
+            "research_cannot_access_positions": True,
+        }},
+        "rollback_policy": {{
+            "rollback_on_validation_failure": True,
+            "rollback_on_tamper_detected": True,
+            "rollback_requires_audit_entry": True,
+        }},
+        "blocking_reasons": ["provider_execution_not_implemented", "manual_unlock_required", "network_disabled", "provider_adapter_not_implemented"],
+        "required_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "satisfied_prerequisites": ["provider_response_review_result_present", "schema_contract_valid", "intake_policy_present", "payload_preview_present"],
+        "missing_prerequisites": ["manual_unlock_granted", "explicit_approval_present", "kill_switch_disengaged"],
+        "prerequisites_recorded": True,
+        "unlock_state_recorded": True,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "explicit_approval_present": False,
+        "kill_switch_disengaged": False,
+        "risk_manager_approved": False,
+        "broker_separation_verified": False,
+        "trading_separation_verified": False,
+        "credential_loader_implemented": False,
+        "env_verification_passed": False,
+        "provider_adapter_implemented": False,
+        "sandbox_verification_passed": False,
+        "network_explicitly_enabled": False,
+        "outbound_blocked_by_default": True,
+        "request_audit_configured": False,
+        "payload_preview_validated": False,
+        "response_intake_policy_validated": False,
+        "provider_call_allowed": False,
+        "provider_execution_unlocked": False,
+        "actual_provider_call_made": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_call_made": False,
+        "position_accessed": False,
+        "order_submitted": False,
+        "raw_request_body_stored": False,
+        "raw_response_body_stored": False,
+        "artifact_hash": "fakehashforunlockstate001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}
+    with open(us_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": review_result_id,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "ATLAS-DEMO",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "ATLAS-DEMO",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_created",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "source_provider_response_review_result_id": ARGS[2] if len(ARGS) > 2 else "",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_list",
+        "items": [{{
+            "provider_execution_unlock_state_id": "unlock-state-001",
+            "source_provider_response_review_result_id": "review-result-001",
+            "symbol": "DEMO-SYMBOL",
+            "unlock_state_status": "unlock_state_contract_recorded",
+            "unlock_state": "manual_unlock_required",
+            "current_state": "prerequisites_recorded",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_shown",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "source_provider_response_review_result_id": "review-result-001",
+        "symbol": "DEMO-SYMBOL",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_required": True,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_validated",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with unlock state contract.",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_replayed",
+        "provider_execution_unlock_state_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_summary",
+        "provider_execution_unlock_state_id": "unlock-state-001",
+        "unlock_state_status": "unlock_state_contract_recorded",
+        "unlock_state": "manual_unlock_required",
+        "current_state": "prerequisites_recorded",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_unlock_states/unlock-state-001.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_execution_unlock_state_doctor",
+        "run_id": "run-001",
+        "unlock_health": "unlock_state_recorded_execution_locked",
+        "provider_execution_unlocked": False,
+        "provider_call_allowed": False,
+        "manual_unlock_granted": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)

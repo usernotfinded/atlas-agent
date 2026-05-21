@@ -1243,6 +1243,65 @@ Safety First:
     research_provider_response_review_result_doctor.add_argument("run_id", help="Research run ID.")
     research_provider_response_review_result_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_execution_unlock_state = research_sub.add_parser(
+        "provider-execution-unlock-state",
+        help="Create a provider execution unlock state artifact from a review result. Local-only.",
+        description="Create a local provider execution unlock state artifact from a provider response review result. Local-only. Does not call providers, read API keys, load .env.atlas, read os.environ, modify config, or authorize live trading.",
+    )
+    research_provider_execution_unlock_state.add_argument("review_result_id", help="Source provider response review result ID.")
+    research_provider_execution_unlock_state.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_unlock_state_list = research_sub.add_parser(
+        "provider-execution-unlock-state-list",
+        help="List provider execution unlock state artifacts. Read-only.",
+        description="List local provider execution unlock state artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_unlock_state_list.add_argument("--symbol", default="", help="Filter by symbol.")
+    research_provider_execution_unlock_state_list.add_argument("--limit", type=int, default=20, help="Max items. Default 20, max 100.")
+    research_provider_execution_unlock_state_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_unlock_state_show = research_sub.add_parser(
+        "provider-execution-unlock-state-show",
+        help="Show one provider execution unlock state artifact. Read-only.",
+        description="Show one provider execution unlock state artifact. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_unlock_state_show.add_argument("unlock_state_id", help="Provider execution unlock state ID.")
+    research_provider_execution_unlock_state_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_unlock_state_validate = research_sub.add_parser(
+        "provider-execution-unlock-state-validate",
+        help="Validate a provider execution unlock state artifact. Read-only.",
+        description="Validate a provider execution unlock state artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_unlock_state_validate.add_argument("unlock_state_id", help="Provider execution unlock state ID.")
+    research_provider_execution_unlock_state_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_unlock_state_validate.add_argument("--strict", action="store_true", help="Exit nonzero if validation fails.")
+
+    research_provider_execution_unlock_state_replay = research_sub.add_parser(
+        "provider-execution-unlock-state-replay",
+        help="Replay a provider execution unlock state artifact from its source review result and compare hashes. Read-only by default.",
+        description="Rebuild the provider execution unlock state artifact from its source review result and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
+    )
+    research_provider_execution_unlock_state_replay.add_argument("unlock_state_id", help="Provider execution unlock state ID.")
+    research_provider_execution_unlock_state_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+    research_provider_execution_unlock_state_replay.add_argument("--strict", action="store_true", help="Exit nonzero if replay does not match.")
+
+    research_provider_execution_unlock_state_summary = research_sub.add_parser(
+        "provider-execution-unlock-state-summary",
+        help="Summarize the provider execution unlock state for a research run. Read-only.",
+        description="Read-only summary of the provider execution unlock state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_unlock_state_summary.add_argument("run_id", help="Research run ID.")
+    research_provider_execution_unlock_state_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_execution_unlock_state_doctor = research_sub.add_parser(
+        "provider-execution-unlock-state-doctor",
+        help="Diagnose the provider execution unlock state chain for a research run. Read-only.",
+        description="Read-only diagnostic of the provider execution unlock state chain for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+    )
+    research_provider_execution_unlock_state_doctor.add_argument("run_id", help="Research run ID.")
+    research_provider_execution_unlock_state_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -3114,6 +3173,13 @@ def main(argv: list[str] | None = None) -> int:
         "provider-response-review-result-replay",
         "provider-response-review-result-summary",
         "provider-response-review-result-doctor",
+        "provider-execution-unlock-state",
+        "provider-execution-unlock-state-list",
+        "provider-execution-unlock-state-show",
+        "provider-execution-unlock-state-validate",
+        "provider-execution-unlock-state-replay",
+        "provider-execution-unlock-state-summary",
+        "provider-execution-unlock-state-doctor",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -10473,6 +10539,369 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
             if result.get("missing_artifacts"):
                 print(f"  Missing artifacts: {', '.join(result['missing_artifacts'])}")
+            if result.get("blocking_reasons"):
+                print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-unlock-state":
+        try:
+            from atlas_agent.research.provider_execution_unlock_state import create_provider_execution_unlock_state
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+
+            from atlas_agent.workspace import resolve_workspace_path
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-unlock-state skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.review_result_id)
+            result = create_provider_execution_unlock_state(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-unlock-state", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-unlock-state", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Provider execution unlock state created:")
+            print(f"  ID: {result.get('provider_execution_unlock_state_id', '')}")
+            print(f"  Source review result: {result.get('source_provider_response_review_result_id', '')}")
+            print(f"  Status: {result.get('unlock_state_status', '')}")
+            print(f"  State: {result.get('unlock_state', '')}")
+            print(f"  Current state: {result.get('current_state', '')}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-unlock-state-list":
+        try:
+            from atlas_agent.research.provider_execution_unlock_state import iter_provider_execution_unlock_state_artifacts
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+
+            from atlas_agent.workspace import resolve_workspace_path
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-unlock-state-list skipped safely: no workspace found")
+                return 1
+
+            safe_symbol = args.symbol.strip().upper() if args.symbol else None
+            if safe_symbol:
+                safe_symbol = sanitize_symbol(safe_symbol)
+            items = iter_provider_execution_unlock_state_artifacts(ws, symbol=safe_symbol)
+            if args.limit:
+                items = items[:args.limit]
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-unlock-state-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-unlock-state-list", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps({"ok": True, "status": "research_provider_execution_unlock_state_list", "items": items}, indent=2, sort_keys=True))
+        else:
+            print("Provider execution unlock states:")
+            for item in items:
+                if item.get("_invalid"):
+                    print(f"  [INVALID] {item.get('provider_execution_unlock_state_id', '')}: {item.get('error_code', '')}")
+                else:
+                    print(f"  {item.get('provider_execution_unlock_state_id', '')}: {item.get('unlock_state_status', '')} ({item.get('symbol', '')}) — {item.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-unlock-state-show":
+        try:
+            from atlas_agent.research.provider_execution_unlock_state import (
+                find_provider_execution_unlock_state_by_id,
+                load_provider_execution_unlock_state,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+
+            from atlas_agent.workspace import resolve_workspace_path
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-unlock-state-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.unlock_state_id)
+            path = find_provider_execution_unlock_state_by_id(ws, safe_id)
+            if path is None:
+                if args.json:
+                    _research_error_json("research_artifact_not_found", "Research artifact not found.")
+                else:
+                    print("research provider-execution-unlock-state-show skipped safely: artifact not found")
+                return 1
+            data = load_provider_execution_unlock_state(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-unlock-state-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-unlock-state-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": True,
+                "status": "research_provider_execution_unlock_state_shown",
+                "provider_execution_unlock_state_id": data.get("provider_execution_unlock_state_id"),
+                "unlock_state_status": data.get("unlock_state_status"),
+                "unlock_state": data.get("unlock_state"),
+                "current_state": data.get("current_state"),
+                "manual_unlock_required": data.get("manual_unlock_required"),
+                "manual_unlock_granted": data.get("manual_unlock_granted"),
+                "provider_execution_unlocked": data.get("provider_execution_unlocked"),
+                "provider_call_allowed": data.get("provider_call_allowed"),
+                "artifact_path": data.get("artifact_path"),
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Provider execution unlock state:")
+            print(f"  ID: {data.get('provider_execution_unlock_state_id', '')}")
+            print(f"  Status: {data.get('unlock_state_status', '')}")
+            print(f"  State: {data.get('unlock_state', '')}")
+            print(f"  Current state: {data.get('current_state', '')}")
+            print(f"  Provider: {data.get('provider_id', '')} / {data.get('model_id', '')}")
+            print(f"  Artifact: {data.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-unlock-state-validate":
+        try:
+            from atlas_agent.research.provider_execution_unlock_state import (
+                find_provider_execution_unlock_state_by_id,
+                validate_provider_execution_unlock_state_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+
+            from atlas_agent.workspace import resolve_workspace_path
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-unlock-state-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.unlock_state_id)
+            path = find_provider_execution_unlock_state_by_id(ws, safe_id)
+            if path is None:
+                if args.json:
+                    _research_error_json("research_artifact_not_found", "Research artifact not found.")
+                else:
+                    print("research provider-execution-unlock-state-validate skipped safely: artifact not found")
+                return 1
+            result = validate_provider_execution_unlock_state_artifact(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-unlock-state-validate", message.lower().rstrip("."))
+            return 2 if args.strict else 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-unlock-state-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            out = {
+                "ok": result.valid,
+                "status": "research_provider_execution_unlock_state_validated",
+                "provider_execution_unlock_state_id": safe_id,
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+                "recommendation": result.recommendation,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution unlock state validation: {result.valid}")
+            for check in result.checks:
+                status = "PASS" if check["passed"] else "FAIL"
+                print(f"  [{status}] {check['name']}: {check['message']}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-unlock-state-replay":
+        try:
+            from atlas_agent.research.provider_execution_unlock_state import replay_provider_execution_unlock_state
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+
+            from atlas_agent.workspace import resolve_workspace_path
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-unlock-state-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.unlock_state_id)
+            result = replay_provider_execution_unlock_state(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-unlock-state-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-unlock-state-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution unlock state replay: {result.get('match', False)}")
+            print(f"  ID: {result.get('provider_execution_unlock_state_id', '')}")
+            print(f"  Original hash: {result.get('original_hash', '')}")
+            print(f"  Replayed hash: {result.get('replayed_hash', '')}")
+        if args.strict and not result.get("match"):
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-unlock-state-summary":
+        try:
+            from atlas_agent.research.provider_execution_unlock_state import summarize_provider_execution_unlock_state
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+
+            from atlas_agent.workspace import resolve_workspace_path
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-unlock-state-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_execution_unlock_state(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-unlock-state-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-unlock-state-summary", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution unlock state summary for run {safe_id}:")
+            print(f"  ID: {result.get('provider_execution_unlock_state_id', '')}")
+            print(f"  Status: {result.get('unlock_state_status', '')}")
+            print(f"  State: {result.get('unlock_state', '')}")
+            print(f"  Current state: {result.get('current_state', '')}")
+            print(f"  Provider execution unlocked: {result.get('provider_execution_unlocked', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Manual unlock granted: {result.get('manual_unlock_granted', False)}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-execution-unlock-state-doctor":
+        try:
+            from atlas_agent.research.provider_execution_unlock_state import doctor_provider_execution_unlock_state
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+
+            from atlas_agent.workspace import resolve_workspace_path
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-execution-unlock-state-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = doctor_provider_execution_unlock_state(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-execution-unlock-state-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-execution-unlock-state-doctor", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider execution unlock state doctor for run {safe_id}:")
+            print(f"  Health: {result.get('unlock_health', '')}")
+            print(f"  Provider execution unlocked: {result.get('provider_execution_unlocked', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Manual unlock granted: {result.get('manual_unlock_granted', False)}")
+            if result.get("missing_prerequisites"):
+                print(f"  Missing prerequisites: {', '.join(result['missing_prerequisites'])}")
             if result.get("blocking_reasons"):
                 print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
         return 0

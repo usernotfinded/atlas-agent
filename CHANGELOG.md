@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev35] - 2026-05-21
+
+### Added
+- Batch 8.8 — Provider Execution Unlock State Machine.
+  - `src/atlas_agent/research/provider_execution_unlock_state.py`: local provider execution unlock state artifacts.
+  - `build_provider_execution_unlock_state_dict()`: deterministic unlock state artifact construction from review result.
+  - `create_provider_execution_unlock_state()`: safe creation with validation, lineage, hash, and denylist scanning.
+  - `safe_validate_provider_execution_unlock_state_data()`: strict validation with invalid sentinel returns.
+  - `validate_provider_execution_unlock_state_artifact()`: detailed per-check validation.
+  - `replay_provider_execution_unlock_state()`: deterministic hash replay from source review result.
+  - `iter_provider_execution_unlock_state_artifacts()`: safe listing with invalid sentinels for tampered items.
+  - `summarize_provider_execution_unlock_state_state()`: read-only summary without writing artifacts.
+  - `doctor_provider_execution_unlock_state()`: read-only chain diagnostic.
+  - `provider_execution_unlock_state_sha256()`: deterministic canonical hash excluding volatile fields.
+  - 11 policy substructures: `unlock_transition_policy`, `manual_unlock_policy`, `credential_unlock_policy`, `provider_adapter_unlock_policy`, `network_unlock_policy`, `request_send_unlock_policy`, `response_import_unlock_policy`, `trust_upgrade_policy`, `trading_separation_policy`, `broker_separation_policy`, `rollback_policy`.
+  - 40+ boolean safety flags; only `unlock_state_recorded=True` and `manual_unlock_required=True` are ever True.
+  - 7 new CLI commands: `provider-execution-unlock-state`, `provider-execution-unlock-state-list`, `provider-execution-unlock-state-show`, `provider-execution-unlock-state-validate`, `provider-execution-unlock-state-replay`, `provider-execution-unlock-state-summary`, `provider-execution-unlock-state-doctor`.
+  - Integration into `check-artifacts`, `timeline`, and `dossier`.
+  - Tests in `tests/research/test_research_provider_execution_unlock_state.py`.
+  - Demo workflow extended with unlock state creation, list, show, validate, replay, summary, doctor, timeline lineage checks, and check-artifacts count validation.
+
 ## [0.5.7.dev34] - 2026-05-21
 
 ### Added

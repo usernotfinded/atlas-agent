@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1408,6 +1408,8 @@ def check_research_artifacts(
     provider_response_schema_contract_data: list[dict[str, Any]] = []
     provider_response_review_result_ids: dict[str, list[str]] = {}
     provider_response_review_result_data: list[dict[str, Any]] = []
+    provider_execution_unlock_state_ids: dict[str, list[str]] = {}
+    provider_execution_unlock_state_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1459,6 +1461,7 @@ def check_research_artifacts(
             "provider_response_intake_policy": "provider_response_intake_policy_id",
             "provider_request_response_pairing": "provider_request_response_pairing_id",
             "provider_response_review_result": "provider_response_review_result_id",
+            "provider_execution_unlock_state": "provider_execution_unlock_state_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1511,6 +1514,8 @@ def check_research_artifacts(
         elif expected_type == "provider_request_response_pairing" and "provider_request_response_pairings" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_response_review_result" and "provider_response_review_results" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_execution_unlock_state" and "provider_execution_unlock_states" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1786,6 +1791,41 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_execution_unlock_state":
+            for f in ("provider_execution_unlock_state_id", "source_provider_response_review_result_id", "source_provider_response_schema_contract_id", "source_provider_request_response_pairing_id", "source_provider_response_intake_policy_id", "source_provider_outbound_payload_preview_id", "symbol", "provider_id", "model_id", "unlock_state_status", "unlock_state", "current_state"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_execution_unlock_state import (
+                safe_validate_provider_execution_unlock_state_data,
+            )
+            _cleaned, error = safe_validate_provider_execution_unlock_state_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
+            # Check impossible booleans for unlock state
+            impossible_booleans = [
+                "manual_unlock_requested", "manual_unlock_granted", "manual_unlock_revoked",
+                "provider_execution_unlocked", "provider_enabled", "network_enabled",
+                "credentials_loaded", "credential_value_present", "credential_lookup_attempted",
+                "env_read_attempted", "dotenv_loaded", "provider_adapter_present",
+                "provider_adapter_enabled", "provider_call_allowed", "actual_provider_call_made",
+                "outbound_request_sent", "future_provider_execution_possible",
+                "future_response_artifact_present", "provider_response_received",
+                "provider_response_trusted", "provider_response_imported",
+                "provider_response_reviewed", "review_result_present", "manual_review_gate_open",
+                "trust_upgrade_performed", "provider_response_can_create_orders",
+                "provider_response_can_approve_orders", "provider_response_can_call_broker",
+                "trading_signal_generated", "approval_created", "pending_order_created", "broker_touched",
+            ]
+            for b in impossible_booleans:
+                if data.get(b) is True:
+                    issues.append({"code": "provider_execution_unlock_state_impossible_boolean", "path": rel, "severity": "error"})
+                    return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1847,6 +1887,9 @@ def check_research_artifacts(
             elif expected_type == "provider_response_review_result":
                 provider_response_review_result_ids.setdefault(raw_id, []).append(rel)
                 provider_response_review_result_data.append(data)
+            elif expected_type == "provider_execution_unlock_state":
+                provider_execution_unlock_state_ids.setdefault(raw_id, []).append(rel)
+                provider_execution_unlock_state_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1892,6 +1935,8 @@ def check_research_artifacts(
             counts["provider_response_schema_contracts"] += 1
         elif expected_type == "provider_response_review_result":
             counts["provider_response_review_results"] += 1
+        elif expected_type == "provider_execution_unlock_state":
+            counts["provider_execution_unlock_states"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -2027,6 +2072,12 @@ def check_research_artifacts(
             for path in provider_response_review_results_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_response_review_result", expected_symbol)
+        # Provider execution unlock states
+        provider_execution_unlock_states_dir = sym_dir / "provider_execution_unlock_states"
+        if provider_execution_unlock_states_dir.exists():
+            for path in provider_execution_unlock_states_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_execution_unlock_state", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -2114,6 +2165,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for prrrid, paths in provider_response_review_result_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for puesid, paths in provider_execution_unlock_state_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2899,6 +2954,8 @@ def build_research_timeline(
     provider_response_schema_contract_items = iter_provider_response_schema_contract_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_response_review_result import iter_provider_response_review_result_artifacts
     provider_response_review_result_items = iter_provider_response_review_result_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_execution_unlock_state import iter_provider_execution_unlock_state_artifacts
+    provider_execution_unlock_state_items = iter_provider_execution_unlock_state_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -3106,6 +3163,17 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_response_review_result", "path": prrr.get("artifact_path", ""), "severity": "warning"})
 
+    provider_execution_unlock_states_by_review_result_id: dict[str, list[dict[str, Any]]] = {}
+    for pues in provider_execution_unlock_state_items:
+        if pues.get("_invalid"):
+            warnings.append({"code": "invalid_provider_execution_unlock_state_skipped", "path": pues.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = pues.get("source_provider_response_review_result_id", "")
+        if src:
+            provider_execution_unlock_states_by_review_result_id.setdefault(src, []).append(pues)
+        else:
+            warnings.append({"code": "orphan_provider_execution_unlock_state", "path": pues.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -3278,6 +3346,17 @@ def build_research_timeline(
         src = prrr.get("source_provider_response_schema_contract_id", "")
         if src and src not in seen_schema_contract_ids:
             warnings.append({"code": "orphan_provider_response_review_result", "path": prrr.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen review result IDs for orphan unlock state detection
+    seen_review_result_ids = set()
+    for prrr in provider_response_review_result_items:
+        if not prrr.get("_invalid"):
+            seen_review_result_ids.add(prrr.get("provider_response_review_result_id", ""))
+
+    for pues in provider_execution_unlock_state_items:
+        src = pues.get("source_provider_response_review_result_id", "")
+        if src and src not in seen_review_result_ids:
+            warnings.append({"code": "orphan_provider_execution_unlock_state", "path": pues.get("artifact_path", ""), "severity": "warning"})
 
     def _timeline_summary(item: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
         """Build an acyclic JSON-safe summary from an artifact index item."""
@@ -3672,6 +3751,30 @@ def build_research_timeline(
                                                                     ))
                                                                     for review_result in provider_response_review_results_by_schema_contract_id.get(contract_id, [])
                                                                 ]
+                                                                for review_result in contract_summary.get("provider_response_review_results", []):
+                                                                    rr_id = review_result.get("provider_response_review_result_id", "")
+                                                                    review_result["provider_execution_unlock_states"] = [
+                                                                        _timeline_summary(unlock_state, (
+                                                                            "provider_execution_unlock_state_id",
+                                                                            "source_provider_response_review_result_id",
+                                                                            "source_provider_response_schema_contract_id",
+                                                                            "source_provider_request_response_pairing_id",
+                                                                            "source_provider_response_intake_policy_id",
+                                                                            "source_provider_outbound_payload_preview_id",
+                                                                            "symbol",
+                                                                            "artifact_path",
+                                                                            "provider_id",
+                                                                            "model_id",
+                                                                            "created_at",
+                                                                            "unlock_state_status",
+                                                                            "unlock_state",
+                                                                            "current_state",
+                                                                            "provider_execution_unlocked",
+                                                                            "provider_call_allowed",
+                                                                            "manual_unlock_granted",
+                                                                        ))
+                                                                        for unlock_state in provider_execution_unlock_states_by_review_result_id.get(rr_id, [])
+                                                                    ]
                                                                 contract_summaries.append(contract_summary)
                                                             pairing_copy["provider_response_schema_contracts"] = contract_summaries
                                                             pairing_summaries.append(pairing_copy)
@@ -5128,6 +5231,11 @@ def build_dossier(
     from atlas_agent.research.provider_response_review_result import iter_provider_response_review_result_artifacts
     provider_response_review_result_items = iter_provider_response_review_result_artifacts(workspace_path, symbol=symbol)
     linked_provider_response_review_results = [prrr for prrr in provider_response_review_result_items if prrr.get("source_provider_response_schema_contract_id") in linked_schema_contract_ids]
+    linked_review_result_ids = {prrr.get("provider_response_review_result_id", "") for prrr in linked_provider_response_review_results}
+
+    from atlas_agent.research.provider_execution_unlock_state import iter_provider_execution_unlock_state_artifacts
+    provider_execution_unlock_state_items = iter_provider_execution_unlock_state_artifacts(workspace_path, symbol=symbol)
+    linked_provider_execution_unlock_states = [pues for pues in provider_execution_unlock_state_items if pues.get("source_provider_response_review_result_id") in linked_review_result_ids]
 
     # Build workflow status
     workflow_status = {
@@ -5152,6 +5260,7 @@ def build_dossier(
         "provider_request_response_pairings": len(linked_provider_request_response_pairings) > 0,
         "provider_response_schema_contracts": len(linked_provider_response_schema_contracts) > 0,
         "provider_response_review_results": len(linked_provider_response_review_results) > 0,
+        "provider_execution_unlock_states": len(linked_provider_execution_unlock_states) > 0,
     }
 
     artifact_counts = {
@@ -5176,6 +5285,7 @@ def build_dossier(
         "provider_request_response_pairings": len(linked_provider_request_response_pairings),
         "provider_response_schema_contracts": len(linked_provider_response_schema_contracts),
         "provider_response_review_results": len(linked_provider_response_review_results),
+        "provider_execution_unlock_states": len(linked_provider_execution_unlock_states),
     }
 
     # Build linked_artifacts with relative paths only
@@ -5350,6 +5460,17 @@ def build_dossier(
             "provider_id": prrr.get("provider_id", ""),
             "model_id": prrr.get("model_id", ""),
         })
+    for pues in linked_provider_execution_unlock_states:
+        linked_artifacts.append({
+            "type": "provider_execution_unlock_state",
+            "id": pues.get("provider_execution_unlock_state_id", ""),
+            "artifact_path": pues.get("artifact_path", ""),
+            "unlock_state_status": pues.get("unlock_state_status", ""),
+            "unlock_state": pues.get("unlock_state", ""),
+            "current_state": pues.get("current_state", ""),
+            "provider_id": pues.get("provider_id", ""),
+            "model_id": pues.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -5484,6 +5605,18 @@ def build_dossier(
             "provider_ids": [prrr.get("provider_id", "") for prrr in linked_provider_response_review_results],
             "model_ids": [prrr.get("model_id", "") for prrr in linked_provider_response_review_results],
         }
+    if linked_provider_execution_unlock_states:
+        summaries["provider_execution_unlock_state"] = {
+            "unlock_state_count": len(linked_provider_execution_unlock_states),
+            "unlock_state_statuses": [pues.get("unlock_state_status", "") for pues in linked_provider_execution_unlock_states],
+            "unlock_states": [pues.get("unlock_state", "") for pues in linked_provider_execution_unlock_states],
+            "current_states": [pues.get("current_state", "") for pues in linked_provider_execution_unlock_states],
+            "provider_ids": [pues.get("provider_id", "") for pues in linked_provider_execution_unlock_states],
+            "model_ids": [pues.get("model_id", "") for pues in linked_provider_execution_unlock_states],
+            "provider_execution_unlocked": False,
+            "provider_call_allowed": False,
+            "manual_unlock_granted": False,
+        }
 
     # Safety summary
     safety_summary = {
@@ -5539,6 +5672,8 @@ def build_dossier(
         warnings.append("missing_future_response_artifact_expected")
     if not linked_provider_response_review_results:
         warnings.append("no_provider_response_review_result")
+    if not linked_provider_execution_unlock_states:
+        warnings.append("no_provider_execution_unlock_state")
 
     # Determine recommendation
     core_present = linked_plans and linked_prompts and linked_provider_responses and linked_response_reviews

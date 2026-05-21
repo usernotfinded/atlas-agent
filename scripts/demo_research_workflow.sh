@@ -2796,6 +2796,150 @@ if [ "$CHECK_REVIEW_RESULT_COUNT" -lt 1 ]; then
 fi
 assert_no_pending_orders
 
+# 84.18. Research provider-execution-unlock-state
+printf '\n--- Research provider-execution-unlock-state ---\n'
+UNLOCK_STATE_OUTPUT="$(atlas research provider-execution-unlock-state "$REVIEW_RESULT_ID" --json)"
+assert_no_forbidden_fragments "$UNLOCK_STATE_OUTPUT" "provider-execution-unlock-state CLI output"
+assert_ok "$UNLOCK_STATE_OUTPUT" "research provider-execution-unlock-state"
+UNLOCK_STATE_STATUS="$(json_field "$UNLOCK_STATE_OUTPUT" status)"
+if [ "$UNLOCK_STATE_STATUS" != "research_provider_execution_unlock_state_created" ]; then
+  printf 'FAIL: unexpected provider-execution-unlock-state status: %s\n' "$UNLOCK_STATE_STATUS" >&2
+  exit 1
+fi
+UNLOCK_STATE_ID="$(json_field "$UNLOCK_STATE_OUTPUT" provider_execution_unlock_state_id)"
+if [ -z "$UNLOCK_STATE_ID" ]; then
+  printf 'FAIL: provider_execution_unlock_state_id is empty\n' >&2
+  exit 1
+fi
+UNLOCK_STATE_ARTIFACT_PATH="$(json_field "$UNLOCK_STATE_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$UNLOCK_STATE_ARTIFACT_PATH" "provider execution unlock state artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$UNLOCK_STATE_ARTIFACT_PATH")" "provider execution unlock state artifact"
+assert_no_pending_orders
+
+# 84.19. Research provider-execution-unlock-state-list
+printf '\n--- Research provider-execution-unlock-state-list ---\n'
+UNLOCK_STATE_LIST_OUTPUT="$(atlas research provider-execution-unlock-state-list --json)"
+assert_no_forbidden_fragments "$UNLOCK_STATE_LIST_OUTPUT" "provider-execution-unlock-state-list CLI output"
+assert_ok "$UNLOCK_STATE_LIST_OUTPUT" "research provider-execution-unlock-state-list"
+UNLOCK_STATE_LIST_STATUS="$(json_field "$UNLOCK_STATE_LIST_OUTPUT" status)"
+if [ "$UNLOCK_STATE_LIST_STATUS" != "research_provider_execution_unlock_state_list" ]; then
+  printf 'FAIL: unexpected provider-execution-unlock-state-list status: %s\n' "$UNLOCK_STATE_LIST_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.20. Research provider-execution-unlock-state-show
+printf '\n--- Research provider-execution-unlock-state-show ---\n'
+UNLOCK_STATE_SHOW_OUTPUT="$(atlas research provider-execution-unlock-state-show "$UNLOCK_STATE_ID" --json)"
+assert_no_forbidden_fragments "$UNLOCK_STATE_SHOW_OUTPUT" "provider-execution-unlock-state-show CLI output"
+assert_ok "$UNLOCK_STATE_SHOW_OUTPUT" "research provider-execution-unlock-state-show"
+UNLOCK_STATE_SHOW_STATUS="$(json_field "$UNLOCK_STATE_SHOW_OUTPUT" status)"
+if [ "$UNLOCK_STATE_SHOW_STATUS" != "research_provider_execution_unlock_state_shown" ]; then
+  printf 'FAIL: unexpected provider-execution-unlock-state-show status: %s\n' "$UNLOCK_STATE_SHOW_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.21. Research provider-execution-unlock-state-validate
+printf '\n--- Research provider-execution-unlock-state-validate ---\n'
+UNLOCK_STATE_VALIDATE_OUTPUT="$(atlas research provider-execution-unlock-state-validate "$UNLOCK_STATE_ID" --json)"
+assert_no_forbidden_fragments "$UNLOCK_STATE_VALIDATE_OUTPUT" "provider-execution-unlock-state-validate CLI output"
+assert_ok "$UNLOCK_STATE_VALIDATE_OUTPUT" "research provider-execution-unlock-state-validate"
+UNLOCK_STATE_VALIDATE_STATUS="$(json_field "$UNLOCK_STATE_VALIDATE_OUTPUT" status)"
+if [ "$UNLOCK_STATE_VALIDATE_STATUS" != "research_provider_execution_unlock_state_validated" ]; then
+  printf 'FAIL: unexpected provider-execution-unlock-state-validate status: %s\n' "$UNLOCK_STATE_VALIDATE_STATUS" >&2
+  exit 1
+fi
+UNLOCK_STATE_VALIDATE_VALID="$(json_field "$UNLOCK_STATE_VALIDATE_OUTPUT" valid)"
+if [ "$UNLOCK_STATE_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: unlock state validation failed\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.22. Research provider-execution-unlock-state-replay
+printf '\n--- Research provider-execution-unlock-state-replay ---\n'
+UNLOCK_STATE_REPLAY_OUTPUT="$(atlas research provider-execution-unlock-state-replay "$UNLOCK_STATE_ID" --json)"
+assert_no_forbidden_fragments "$UNLOCK_STATE_REPLAY_OUTPUT" "provider-execution-unlock-state-replay CLI output"
+assert_ok "$UNLOCK_STATE_REPLAY_OUTPUT" "research provider-execution-unlock-state-replay"
+UNLOCK_STATE_REPLAY_STATUS="$(json_field "$UNLOCK_STATE_REPLAY_OUTPUT" status)"
+if [ "$UNLOCK_STATE_REPLAY_STATUS" != "research_provider_execution_unlock_state_replayed" ]; then
+  printf 'FAIL: unexpected provider-execution-unlock-state-replay status: %s\n' "$UNLOCK_STATE_REPLAY_STATUS" >&2
+  exit 1
+fi
+UNLOCK_STATE_REPLAY_MATCH="$(json_field "$UNLOCK_STATE_REPLAY_OUTPUT" match)"
+if [ "$UNLOCK_STATE_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: unlock state replay mismatch\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.23. Research provider-execution-unlock-state-summary
+printf '\n--- Research provider-execution-unlock-state-summary ---\n'
+UNLOCK_STATE_SUMMARY_OUTPUT="$(atlas research provider-execution-unlock-state-summary "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$UNLOCK_STATE_SUMMARY_OUTPUT" "provider-execution-unlock-state-summary CLI output"
+assert_ok "$UNLOCK_STATE_SUMMARY_OUTPUT" "research provider-execution-unlock-state-summary"
+UNLOCK_STATE_SUMMARY_STATUS="$(json_field "$UNLOCK_STATE_SUMMARY_OUTPUT" status)"
+if [ "$UNLOCK_STATE_SUMMARY_STATUS" != "research_provider_execution_unlock_state_summary" ]; then
+  printf 'FAIL: unexpected provider-execution-unlock-state-summary status: %s\n' "$UNLOCK_STATE_SUMMARY_STATUS" >&2
+  exit 1
+fi
+UNLOCK_STATE_SUMMARY_UNLOCKED="$(json_field "$UNLOCK_STATE_SUMMARY_OUTPUT" provider_execution_unlocked)"
+if [ "$UNLOCK_STATE_SUMMARY_UNLOCKED" != "False" ]; then
+  printf 'FAIL: summary reports provider_execution_unlocked != false\n' >&2
+  exit 1
+fi
+UNLOCK_STATE_SUMMARY_CALL_ALLOWED="$(json_field "$UNLOCK_STATE_SUMMARY_OUTPUT" provider_call_allowed)"
+if [ "$UNLOCK_STATE_SUMMARY_CALL_ALLOWED" != "False" ]; then
+  printf 'FAIL: summary reports provider_call_allowed != false\n' >&2
+  exit 1
+fi
+UNLOCK_STATE_SUMMARY_MANUAL_UNLOCK="$(json_field "$UNLOCK_STATE_SUMMARY_OUTPUT" manual_unlock_granted)"
+if [ "$UNLOCK_STATE_SUMMARY_MANUAL_UNLOCK" != "False" ]; then
+  printf 'FAIL: summary reports manual_unlock_granted != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.24. Research provider-execution-unlock-state-doctor
+printf '\n--- Research provider-execution-unlock-state-doctor ---\n'
+UNLOCK_STATE_DOCTOR_OUTPUT="$(atlas research provider-execution-unlock-state-doctor "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$UNLOCK_STATE_DOCTOR_OUTPUT" "provider-execution-unlock-state-doctor CLI output"
+assert_ok "$UNLOCK_STATE_DOCTOR_OUTPUT" "research provider-execution-unlock-state-doctor"
+UNLOCK_STATE_DOCTOR_STATUS="$(json_field "$UNLOCK_STATE_DOCTOR_OUTPUT" status)"
+if [ "$UNLOCK_STATE_DOCTOR_STATUS" != "research_provider_execution_unlock_state_doctor" ]; then
+  printf 'FAIL: unexpected provider-execution-unlock-state-doctor status: %s\n' "$UNLOCK_STATE_DOCTOR_STATUS" >&2
+  exit 1
+fi
+UNLOCK_STATE_DOCTOR_UNLOCKED="$(json_field "$UNLOCK_STATE_DOCTOR_OUTPUT" provider_execution_unlocked)"
+if [ "$UNLOCK_STATE_DOCTOR_UNLOCKED" != "False" ]; then
+  printf 'FAIL: doctor reports provider_execution_unlocked != false\n' >&2
+  exit 1
+fi
+UNLOCK_STATE_DOCTOR_CALL_ALLOWED="$(json_field "$UNLOCK_STATE_DOCTOR_OUTPUT" provider_call_allowed)"
+if [ "$UNLOCK_STATE_DOCTOR_CALL_ALLOWED" != "False" ]; then
+  printf 'FAIL: doctor reports provider_call_allowed != false\n' >&2
+  exit 1
+fi
+UNLOCK_STATE_DOCTOR_MANUAL_UNLOCK="$(json_field "$UNLOCK_STATE_DOCTOR_OUTPUT" manual_unlock_granted)"
+if [ "$UNLOCK_STATE_DOCTOR_MANUAL_UNLOCK" != "False" ]; then
+  printf 'FAIL: doctor reports manual_unlock_granted != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.25. Research check-artifacts after unlock state
+printf '\n--- Research check-artifacts (post unlock state) ---\n'
+CHECK_OUTPUT_UNLOCK_STATE="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_UNLOCK_STATE" "check-artifacts CLI output after unlock state"
+assert_ok "$CHECK_OUTPUT_UNLOCK_STATE" "research check-artifacts after unlock state"
+CHECK_UNLOCK_STATE_COUNT="$(json_field "$CHECK_OUTPUT_UNLOCK_STATE" counts.provider_execution_unlock_states)"
+if [ "$CHECK_UNLOCK_STATE_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_execution_unlock_states count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
 # 85. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
