@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -801,3 +802,77 @@ class TestProviderRequestResponsePairingInvalidLeakage:
         assert len(invalid_items) >= 1
         assert invalid_items[0]["model_id"] == "unknown"
         assert invalid_items[0]["provider_id"] == "unknown"
+
+
+class TestTimelineCircularReference:
+    def test_timeline_after_full_chain_is_valid_json_and_denylist_clean(self, tmp_path: Path, monkeypatch) -> None:
+        """Regression: timeline must not contain circular references after pairing is created."""
+        import json
+        from atlas_agent.research.session import build_research_timeline
+
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, preview_id, intake_policy_id = _full_chain_to_intake_policy(tmp_path, monkeypatch)
+        create_provider_request_response_pairing(tmp_path, intake_policy_id)
+
+        result = build_research_timeline(tmp_path, run_id_filter=run_id)
+
+        # Must serialize to JSON without circular reference error
+        out = json.dumps(result, indent=2, sort_keys=True)
+        assert "Circular reference detected" not in out
+        assert "Traceback" not in out
+
+        # Must be denylist-clean
+        for frag in FORBIDDEN_FRAGMENTS:
+            assert frag not in out, f"Forbidden fragment in timeline JSON: {frag}"
+
+        # Must include the pairing nested under intake policy
+        entries = result.get("entries", [])
+        assert len(entries) >= 1
+        pairing_entry: dict[str, Any] | None = None
+        for entry in entries:
+            for prompt in entry.get("prompts", []):
+                for sr in prompt.get("sandbox_requests", []):
+                    for pcp in sr.get("provider_call_plans", []):
+                        for ped in pcp.get("provider_execution_dry_runs", []):
+                            for s in ped.get("provider_execution_states", []):
+                                for a in s.get("provider_execution_audit_packets", []):
+                                    for r in a.get("provider_execution_readiness_reports", []):
+                                        for f in r.get("provider_preflight_freezes", []):
+                                            for pol in f.get("provider_opt_in_policies", []):
+                                                for b in pol.get("provider_credential_boundaries", []):
+                                                    for pr in b.get("provider_outbound_payload_previews", []):
+                                                        for ip in pr.get("provider_response_intake_policies", []):
+                                                            pairings = ip.get("provider_request_response_pairings", [])
+                                                            for pairing in pairings:
+                                                                if pairing.get("provider_request_response_pairing_id"):
+                                                                    pairing_entry = pairing
+        assert pairing_entry is not None, "Timeline did not include pairing under intake policy"
+
+        expected_false_fields = (
+            "request_response_pair_completed",
+            "future_response_artifact_present",
+            "provider_response_trusted",
+            "provider_response_can_create_orders",
+            "provider_response_can_approve_orders",
+            "provider_response_can_call_broker",
+            "provider_call_allowed",
+            "actual_provider_call_made",
+            "outbound_request_sent",
+            "approval_created",
+            "pending_order_created",
+            "broker_touched",
+        )
+        expected_lineage_fields = (
+            "provider_request_response_pairing_id",
+            "source_provider_outbound_payload_preview_id",
+            "source_provider_response_intake_policy_id",
+        )
+        for field in expected_lineage_fields:
+            assert pairing_entry.get(field), f"{field} missing from pairing timeline entry"
+            assert pairing_entry.get(field) is not None
+        assert pairing_entry["source_provider_outbound_payload_preview_id"] == preview_id
+        assert pairing_entry["source_provider_response_intake_policy_id"] == intake_policy_id
+        for field in expected_false_fields:
+            assert field in pairing_entry, f"{field} missing from pairing timeline entry"
+            assert pairing_entry[field] is False

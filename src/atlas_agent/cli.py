@@ -5336,7 +5336,16 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         if args.json:
             import json
-            print(json.dumps(result, indent=2, sort_keys=True))
+            try:
+                print(json.dumps(result, indent=2, sort_keys=True))
+            except (ValueError, TypeError):
+                print(json.dumps({
+                    "ok": False,
+                    "status": "research_timeline_failed",
+                    "error_code": "research_timeline_serialization_failed",
+                    "message": "Research timeline could not be generated safely.",
+                }, indent=2, sort_keys=True))
+                return 1
         else:
             entries = result.get("entries", [])
             if not entries:

@@ -3161,6 +3161,21 @@ def build_research_timeline(
         if src and src not in seen_intake_policy_ids:
             warnings.append({"code": "orphan_provider_request_response_pairing", "path": prrp.get("artifact_path", ""), "severity": "warning"})
 
+    def _timeline_summary(item: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
+        """Build an acyclic JSON-safe summary from an artifact index item."""
+        summary: dict[str, Any] = {}
+        for field in fields:
+            if field not in item:
+                continue
+            value = item.get(field)
+            if value is None:
+                continue
+            elif isinstance(value, (str, int, float, bool)):
+                summary[field] = value
+            else:
+                summary[field] = str(value)[:200]
+        return summary
+
     # Build entries
     entries: list[dict[str, Any]] = []
     for research in research_items:
@@ -3224,59 +3239,251 @@ def build_research_timeline(
             sandbox_requests = []
             for sr in sandbox_requests_by_prompt_id.get(prompt_id, []):
                 sr_id = sr.get("sandbox_request_id", "")
-                sr_copy = dict(sr)
+                sr_copy = _timeline_summary(sr, (
+                    "sandbox_request_id",
+                    "prompt_packet_id",
+                    "source_run_id",
+                    "symbol",
+                    "artifact_path",
+                    "provider",
+                    "created_at",
+                ))
                 pcp_list = provider_call_plans_by_sandbox_id.get(sr_id, [])
                 pcp_with_dry_runs = []
                 for pcp in pcp_list:
-                    pcp_copy = dict(pcp)
+                    pcp_copy = _timeline_summary(pcp, (
+                        "provider_call_plan_id",
+                        "source_sandbox_request_id",
+                        "source_run_id",
+                        "symbol",
+                        "artifact_path",
+                        "provider_id",
+                        "model_id",
+                        "created_at",
+                        "execution_mode",
+                        "provider_call_allowed",
+                    ))
                     pcp_id = pcp_copy.get("provider_call_plan_id", "")
                     dry_runs = provider_execution_dry_runs_by_plan_id.get(pcp_id, [])
                     dry_runs_with_states = []
                     for dr in dry_runs:
-                        dr_copy = dict(dr)
+                        dr_copy = _timeline_summary(dr, (
+                            "provider_execution_dry_run_id",
+                            "source_provider_call_plan_id",
+                            "source_run_id",
+                            "symbol",
+                            "artifact_path",
+                            "provider_id",
+                            "model_id",
+                            "created_at",
+                            "execution_mode",
+                        ))
                         dr_id = dr_copy.get("provider_execution_dry_run_id", "")
                         states = provider_execution_states_by_dry_run_id.get(dr_id, [])
                         states_with_audit_packets = []
                         for state in states:
-                            state_copy = dict(state)
+                            state_copy = _timeline_summary(state, (
+                                "provider_execution_state_id",
+                                "source_provider_execution_dry_run_id",
+                                "source_run_id",
+                                "symbol",
+                                "artifact_path",
+                                "provider_id",
+                                "model_id",
+                                "created_at",
+                                "state",
+                                "provider_call_allowed",
+                                "actual_provider_call_made",
+                            ))
                             state_id = state_copy.get("provider_execution_state_id", "")
                             audit_packets = provider_execution_audit_packets_by_state_id.get(state_id, [])
                             audit_packets_with_readiness = []
                             for ap in audit_packets:
-                                ap_copy = dict(ap)
+                                ap_copy = _timeline_summary(ap, (
+                                    "provider_execution_audit_packet_id",
+                                    "source_provider_execution_state_id",
+                                    "source_run_id",
+                                    "symbol",
+                                    "artifact_path",
+                                    "provider_id",
+                                    "model_id",
+                                    "created_at",
+                                    "audit_status",
+                                    "execution_status",
+                                    "provider_call_allowed",
+                                    "actual_provider_call_made",
+                                    "broker_touched",
+                                ))
                                 ap_id = ap_copy.get("provider_execution_audit_packet_id", "")
                                 readiness_reports = provider_execution_readiness_reports_by_audit_id.get(ap_id, [])
                                 readiness_reports_with_freezes = []
                                 for rpt in readiness_reports:
-                                    rpt_copy = dict(rpt)
+                                    rpt_copy = _timeline_summary(rpt, (
+                                        "provider_execution_readiness_report_id",
+                                        "source_provider_execution_audit_packet_id",
+                                        "source_run_id",
+                                        "symbol",
+                                        "artifact_path",
+                                        "provider_id",
+                                        "model_id",
+                                        "created_at",
+                                        "readiness_status",
+                                        "readiness_score",
+                                        "chain_health",
+                                        "provider_call_allowed",
+                                        "actual_provider_call_made",
+                                    ))
                                     rpt_id = rpt_copy.get("provider_execution_readiness_report_id", "")
                                     freezes = provider_preflight_freezes_by_readiness_id.get(rpt_id, [])
                                     freezes_with_policies = []
                                     for freeze in freezes:
-                                        freeze_copy = dict(freeze)
+                                        freeze_copy = _timeline_summary(freeze, (
+                                            "provider_preflight_freeze_id",
+                                            "source_provider_execution_readiness_report_id",
+                                            "source_run_id",
+                                            "symbol",
+                                            "artifact_path",
+                                            "provider_id",
+                                            "model_id",
+                                            "created_at",
+                                            "freeze_status",
+                                            "freeze_scope",
+                                            "freeze_recommendation",
+                                            "provider_call_allowed",
+                                            "actual_provider_call_made",
+                                        ))
                                         freeze_id = freeze_copy.get("provider_preflight_freeze_id", "")
-                                        freeze_copy["provider_opt_in_policies"] = provider_opt_in_policies_by_freeze_id.get(freeze_id, [])
                                         policies_with_boundaries = []
-                                        for policy in freeze_copy["provider_opt_in_policies"]:
-                                            policy_copy = dict(policy)
+                                        for policy in provider_opt_in_policies_by_freeze_id.get(freeze_id, []):
+                                            policy_copy = _timeline_summary(policy, (
+                                                "provider_opt_in_policy_id",
+                                                "source_provider_preflight_freeze_id",
+                                                "source_run_id",
+                                                "symbol",
+                                                "artifact_path",
+                                                "provider_id",
+                                                "model_id",
+                                                "created_at",
+                                                "policy_status",
+                                                "policy_scope",
+                                                "opt_in_state",
+                                                "provider_call_allowed",
+                                                "actual_provider_call_made",
+                                            ))
                                             policy_id = policy_copy.get("provider_opt_in_policy_id", "")
                                             boundaries = provider_credential_boundaries_by_policy_id.get(policy_id, [])
                                             boundaries_with_previews = []
                                             for boundary in boundaries:
-                                                boundary_copy = dict(boundary)
+                                                boundary_copy = _timeline_summary(boundary, (
+                                                    "provider_credential_boundary_id",
+                                                    "source_provider_opt_in_policy_id",
+                                                    "source_run_id",
+                                                    "symbol",
+                                                    "artifact_path",
+                                                    "provider_id",
+                                                    "model_id",
+                                                    "created_at",
+                                                    "credential_boundary_status",
+                                                    "credentials_loaded",
+                                                    "env_read_attempted",
+                                                    "dotenv_loaded",
+                                                    "provider_call_allowed",
+                                                    "actual_provider_call_made",
+                                                ))
                                                 boundary_id = boundary_copy.get("provider_credential_boundary_id", "")
                                                 previews = provider_outbound_payload_previews_by_boundary_id.get(boundary_id, [])
                                                 previews_with_policies = []
                                                 for preview in previews:
-                                                    preview_copy = dict(preview)
+                                                    preview_copy = _timeline_summary(preview, (
+                                                        "provider_outbound_payload_preview_id",
+                                                        "source_provider_credential_boundary_id",
+                                                        "source_run_id",
+                                                        "symbol",
+                                                        "artifact_path",
+                                                        "provider_id",
+                                                        "model_id",
+                                                        "created_at",
+                                                        "payload_preview_status",
+                                                        "payload_preview_scope",
+                                                        "payload_body_stored",
+                                                        "raw_prompt_stored",
+                                                        "raw_provider_request_stored",
+                                                        "outbound_request_sent",
+                                                        "provider_call_allowed",
+                                                        "actual_provider_call_made",
+                                                    ))
                                                     preview_id = preview_copy.get("provider_outbound_payload_preview_id", "")
                                                     policies = provider_response_intake_policies_by_preview_id.get(preview_id, [])
                                                     policies_with_pairings = []
-                                                    for policy in policies:
-                                                        policy_copy = dict(policy)
-                                                        policy_id = policy_copy.get("provider_response_intake_policy_id", "")
-                                                        policy_copy["provider_request_response_pairings"] = provider_request_response_pairings_by_intake_policy_id.get(policy_id, [])
-                                                        policies_with_pairings.append(policy_copy)
+                                                    for intake_policy in policies:
+                                                        intake_policy_copy = _timeline_summary(intake_policy, (
+                                                            "provider_response_intake_policy_id",
+                                                            "source_provider_outbound_payload_preview_id",
+                                                            "source_run_id",
+                                                            "symbol",
+                                                            "artifact_path",
+                                                            "provider_id",
+                                                            "model_id",
+                                                            "created_at",
+                                                            "response_intake_policy_status",
+                                                            "response_intake_policy_scope",
+                                                            "provider_response_received",
+                                                            "provider_response_trusted",
+                                                            "provider_response_can_create_orders",
+                                                            "provider_response_can_approve_orders",
+                                                            "provider_response_can_call_broker",
+                                                            "provider_call_allowed",
+                                                            "actual_provider_call_made",
+                                                        ))
+                                                        intake_policy_id = intake_policy_copy.get("provider_response_intake_policy_id", "")
+                                                        intake_policy_copy["provider_request_response_pairings"] = [
+                                                            _timeline_summary(pairing, (
+                                                                "provider_request_response_pairing_id",
+                                                                "source_provider_response_intake_policy_id",
+                                                                "source_provider_outbound_payload_preview_id",
+                                                                "source_provider_credential_boundary_id",
+                                                                "source_provider_opt_in_policy_id",
+                                                                "source_provider_preflight_freeze_id",
+                                                                "source_provider_execution_readiness_report_id",
+                                                                "source_provider_execution_audit_packet_id",
+                                                                "source_provider_execution_state_id",
+                                                                "source_provider_execution_dry_run_id",
+                                                                "source_provider_call_plan_id",
+                                                                "source_sandbox_request_id",
+                                                                "source_prompt_packet_id",
+                                                                "source_run_id",
+                                                                "symbol",
+                                                                "artifact_path",
+                                                                "provider_id",
+                                                                "model_id",
+                                                                "created_at",
+                                                                "pairing_status",
+                                                                "pairing_state",
+                                                                "request_response_pair_completed",
+                                                                "future_response_artifact_present",
+                                                                "future_response_hash_present",
+                                                                "provider_trace_id_present",
+                                                                "external_correlation_id_present",
+                                                                "raw_request_body_stored",
+                                                                "raw_response_body_stored",
+                                                                "provider_response_received",
+                                                                "provider_response_trusted",
+                                                                "provider_response_imported",
+                                                                "provider_response_reviewed",
+                                                                "provider_response_can_create_orders",
+                                                                "provider_response_can_approve_orders",
+                                                                "provider_response_can_call_broker",
+                                                                "provider_call_allowed",
+                                                                "actual_provider_call_made",
+                                                                "outbound_request_sent",
+                                                                "trading_signal_generated",
+                                                                "approval_created",
+                                                                "pending_order_created",
+                                                                "broker_touched",
+                                                            ))
+                                                            for pairing in provider_request_response_pairings_by_intake_policy_id.get(intake_policy_id, [])
+                                                        ]
+                                                        policies_with_pairings.append(intake_policy_copy)
                                                     preview_copy["provider_response_intake_policies"] = policies_with_pairings
                                                     previews_with_policies.append(preview_copy)
                                                 boundary_copy["provider_outbound_payload_previews"] = previews_with_policies

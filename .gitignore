@@ -55,6 +55,7 @@ BATCH2_PLAN.md
 
 # Local Atlas runtime artifacts
 .env.atlas
+.atlas/
 .atlas/config.toml
 .atlas/config.json
 .atlas/backtests/

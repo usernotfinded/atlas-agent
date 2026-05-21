@@ -2272,7 +2272,7 @@ assert_no_pending_orders
 
 # 83.11. Research provider-request-response-pairing-doctor
 printf '\n--- Research provider-request-response-pairing-doctor ---\n'
-PAIRING_DOCTOR_OUTPUT="$(atlas research provider-request-response-pairing-doctor --json)"
+PAIRING_DOCTOR_OUTPUT="$(atlas research provider-request-response-pairing-doctor "$RUN_ID" --json)"
 assert_no_absolute_paths "$PAIRING_DOCTOR_OUTPUT"
 assert_no_secrets_in_output "$PAIRING_DOCTOR_OUTPUT"
 assert_no_forbidden_fragments "$PAIRING_DOCTOR_OUTPUT" "provider-request-response-pairing-doctor CLI output"
