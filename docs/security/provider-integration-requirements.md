@@ -83,6 +83,8 @@ This checklist defines the requirements that must be met before real LLM/API pro
 - [ ] Security review of outbound payload shape.
 - [ ] Security review of response handling.
 - [ ] Security review of credential loading path.
+- [ ] Security review of provider response schema contract fields and validation rules.
+- [ ] Security review of manual review gate closure and inability to auto-open.
 - [ ] Review of boundary diff for unexpected changes under `config`, `brokers`, `execution`, `safety`, `risk`.
 - [ ] Review of docs for overclaiming.
 - [ ] Review of tests for completeness.

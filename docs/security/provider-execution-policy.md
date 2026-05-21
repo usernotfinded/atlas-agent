@@ -114,7 +114,17 @@ Every future provider call must produce or reference:
 - Future adapters must implement a defined `AIProvider` interface.
 - Adapters not on the allowlist must fail closed.
 
-## 10. Release Gate Policy
+## 10. Provider Response Schema Contract Policy
+
+- **No provider response is interpreted without a recorded schema contract.**
+- Schema contract artifacts are local-only and configless.
+- Schema contract defines allowed response fields, rejected response fields, and validation rules.
+- Manual review gate is **closed by default** and cannot be opened automatically.
+- Schema contract does not make any provider response trusted.
+- No raw response body, raw prompt body, or raw request body is stored in the schema contract.
+- Forbidden fragments are rejected, not redacted, in schema contract content.
+
+## 11. Release Gate Policy
 
 - The **full release gate** (`scripts/release_check.sh --full`) remains required before any push or tag.
 - Provider integration requires **new focused gates**:
@@ -122,5 +132,6 @@ Every future provider call must produce or reference:
   - Tests that prove API keys do not leak.
   - Tests that prove provider responses cannot create orders.
   - Tests that prove outbound payloads are denylist-clean.
+  - Tests that prove schema contract manual review gate is closed.
 - CI must remain **secret-free by default**.
 - Documentation must be updated to reflect new capabilities **without overclaiming**.

@@ -228,13 +228,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev32
+./scripts/smoke_release_tag.sh v0.5.7.dev33
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev32 --full
+./scripts/smoke_release_tag.sh v0.5.7.dev33 --full
 ```
 
 ## Tagging
@@ -245,8 +245,8 @@ After all validations pass and the commit is ready:
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
 git commit -m "Add provider opt-in policy artifacts"
 git push origin main
-git tag -a v0.5.7.dev32 -m "Atlas Agent v0.5.7.dev32"
-git push origin v0.5.7.dev32
+git tag -a v0.5.7.dev33 -m "Atlas Agent v0.5.7.dev33"
+git push origin v0.5.7.dev33
 ```
 
 Only create the tag after:

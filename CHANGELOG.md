@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev33] - 2026-05-21
+
+### Added
+- Batch 8.6 — Provider Response Schema Contract & Manual Review Gate.
+  - `src/atlas_agent/research/provider_response_schema_contract.py`: local provider response schema contract artifacts.
+  - `build_provider_response_schema_contract_dict()`: deterministic schema contract artifact construction from pairing.
+  - `create_provider_response_schema_contract()`: safe creation with validation, lineage, hash, and denylist scanning.
+  - `safe_validate_provider_response_schema_contract_data()`: strict validation with invalid sentinel returns.
+  - `validate_provider_response_schema_contract_artifact()`: detailed per-check validation.
+  - `replay_provider_response_schema_contract()`: deterministic hash replay from source pairing.
+  - `iter_provider_response_schema_contract_artifacts()`: safe listing with invalid sentinels for tampered items.
+  - `summarize_provider_response_schema_contract_state()`: read-only summary without writing artifacts.
+  - `doctor_provider_response_schema_contract()`: read-only chain diagnostic.
+  - `provider_response_schema_contract_sha256()`: deterministic canonical hash excluding volatile fields.
+  - 12 policy substructures: `expected_response_shape`, `allowed_response_fields`, `rejected_response_fields`, `schema_validation_policy`, `unsafe_content_policy`, `manual_review_gate_policy`, `trust_boundary_policy`, `trading_separation_policy`, `broker_separation_policy`, `response_storage_policy`, `response_hash_policy`, `review_result_policy`, `future_response_artifact_requirements`.
+  - 40 boolean safety flags including `schema_contract_enabled`, `manual_review_gate_open`, `automatic_review_allowed`, `future_response_artifact_present`, `future_response_schema_validated`, `provider_response_received`, `provider_response_trusted`, `provider_response_can_create_orders`, `response_schema_allows_trading_signal`, `response_schema_allows_broker_call`, `raw_response_body_stored`, `raw_prompt_body_stored`.
+  - 7 new CLI commands: `provider-response-schema-contract`, `provider-response-schema-contract-list`, `provider-response-schema-contract-show`, `provider-response-schema-contract-validate`, `provider-response-schema-contract-replay`, `provider-response-schema-contract-summary`, `provider-response-schema-contract-doctor`.
+  - Integration into `check-artifacts`, `timeline`, and `dossier`.
+  - Tests in `tests/research/test_research_provider_response_schema_contract.py`.
+  - Demo workflow extended with schema contract creation, list, show, validate, replay, summary, doctor, timeline lineage checks, and check-artifacts count validation.
+
 ## [0.5.7.dev32] - 2026-05-20
 
 ### Added

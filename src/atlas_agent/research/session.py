@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1404,6 +1404,8 @@ def check_research_artifacts(
     provider_response_intake_policy_data: list[dict[str, Any]] = []
     provider_request_response_pairing_ids: dict[str, list[str]] = {}
     provider_request_response_pairing_data: list[dict[str, Any]] = []
+    provider_response_schema_contract_ids: dict[str, list[str]] = {}
+    provider_response_schema_contract_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1746,6 +1748,23 @@ def check_research_artifacts(
             if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
                 issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
                 return
+        elif expected_type == "provider_response_schema_contract":
+            for f in ("provider_response_schema_contract_id", "source_provider_request_response_pairing_id", "source_provider_response_intake_policy_id", "source_provider_outbound_payload_preview_id", "symbol", "provider_id", "model_id", "response_schema_status", "response_schema_state"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_response_schema_contract import (
+                safe_validate_provider_response_schema_contract_data,
+            )
+            _cleaned, error = safe_validate_provider_response_schema_contract_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            # Forbidden fragments in raw file
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1801,6 +1820,9 @@ def check_research_artifacts(
             elif expected_type == "provider_request_response_pairing":
                 provider_request_response_pairing_ids.setdefault(raw_id, []).append(rel)
                 provider_request_response_pairing_data.append(data)
+            elif expected_type == "provider_response_schema_contract":
+                provider_response_schema_contract_ids.setdefault(raw_id, []).append(rel)
+                provider_response_schema_contract_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1842,6 +1864,8 @@ def check_research_artifacts(
             counts["provider_response_intake_policies"] += 1
         elif expected_type == "provider_request_response_pairing":
             counts["provider_request_response_pairings"] += 1
+        elif expected_type == "provider_response_schema_contract":
+            counts["provider_response_schema_contracts"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -1965,6 +1989,12 @@ def check_research_artifacts(
             for path in provider_request_response_pairings_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_request_response_pairing", expected_symbol)
+        # Provider response schema contracts
+        provider_response_schema_contracts_dir = sym_dir / "provider_response_schema_contracts"
+        if provider_response_schema_contracts_dir.exists():
+            for path in provider_response_schema_contracts_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_response_schema_contract", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -2044,6 +2074,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for prpid, paths in provider_request_response_pairing_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for prscid, paths in provider_response_schema_contract_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2825,6 +2859,8 @@ def build_research_timeline(
     provider_response_intake_policy_items = iter_provider_response_intake_policy_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_request_response_pairing import iter_provider_request_response_pairing_artifacts
     provider_request_response_pairing_items = iter_provider_request_response_pairing_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_response_schema_contract import iter_provider_response_schema_contract_artifacts
+    provider_response_schema_contract_items = iter_provider_response_schema_contract_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -3010,6 +3046,17 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_request_response_pairing", "path": prrp.get("artifact_path", ""), "severity": "warning"})
 
+    provider_response_schema_contracts_by_pairing_id: dict[str, list[dict[str, Any]]] = {}
+    for prsc in provider_response_schema_contract_items:
+        if prsc.get("_invalid"):
+            warnings.append({"code": "invalid_provider_response_schema_contract_skipped", "path": prsc.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src = prsc.get("source_provider_request_response_pairing_id", "")
+        if src:
+            provider_response_schema_contracts_by_pairing_id.setdefault(src, []).append(prsc)
+        else:
+            warnings.append({"code": "orphan_provider_response_schema_contract", "path": prsc.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -3160,6 +3207,17 @@ def build_research_timeline(
         src = prrp.get("source_provider_response_intake_policy_id", "")
         if src and src not in seen_intake_policy_ids:
             warnings.append({"code": "orphan_provider_request_response_pairing", "path": prrp.get("artifact_path", ""), "severity": "warning"})
+
+    # Track seen pairing IDs for orphan schema contract detection
+    seen_pairing_ids = set()
+    for prrp in provider_request_response_pairing_items:
+        if not prrp.get("_invalid"):
+            seen_pairing_ids.add(prrp.get("provider_request_response_pairing_id", ""))
+
+    for prsc in provider_response_schema_contract_items:
+        src = prsc.get("source_provider_request_response_pairing_id", "")
+        if src and src not in seen_pairing_ids:
+            warnings.append({"code": "orphan_provider_response_schema_contract", "path": prsc.get("artifact_path", ""), "severity": "warning"})
 
     def _timeline_summary(item: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
         """Build an acyclic JSON-safe summary from an artifact index item."""
@@ -3436,8 +3494,9 @@ def build_research_timeline(
                                                             "actual_provider_call_made",
                                                         ))
                                                         intake_policy_id = intake_policy_copy.get("provider_response_intake_policy_id", "")
-                                                        intake_policy_copy["provider_request_response_pairings"] = [
-                                                            _timeline_summary(pairing, (
+                                                        pairing_summaries = []
+                                                        for pairing in provider_request_response_pairings_by_intake_policy_id.get(intake_policy_id, []):
+                                                            pairing_copy = _timeline_summary(pairing, (
                                                                 "provider_request_response_pairing_id",
                                                                 "source_provider_response_intake_policy_id",
                                                                 "source_provider_outbound_payload_preview_id",
@@ -3481,8 +3540,60 @@ def build_research_timeline(
                                                                 "pending_order_created",
                                                                 "broker_touched",
                                                             ))
-                                                            for pairing in provider_request_response_pairings_by_intake_policy_id.get(intake_policy_id, [])
-                                                        ]
+                                                            pairing_id = pairing_copy.get("provider_request_response_pairing_id", "")
+                                                            pairing_copy["provider_response_schema_contracts"] = [
+                                                                _timeline_summary(contract, (
+                                                                    "provider_response_schema_contract_id",
+                                                                    "source_provider_request_response_pairing_id",
+                                                                    "source_provider_response_intake_policy_id",
+                                                                    "source_provider_outbound_payload_preview_id",
+                                                                    "source_provider_credential_boundary_id",
+                                                                    "source_provider_opt_in_policy_id",
+                                                                    "source_provider_preflight_freeze_id",
+                                                                    "source_provider_execution_readiness_report_id",
+                                                                    "source_provider_execution_audit_packet_id",
+                                                                    "source_provider_execution_state_id",
+                                                                    "source_provider_execution_dry_run_id",
+                                                                    "source_provider_call_plan_id",
+                                                                    "source_sandbox_request_id",
+                                                                    "source_prompt_packet_id",
+                                                                    "source_run_id",
+                                                                    "symbol",
+                                                                    "artifact_path",
+                                                                    "provider_id",
+                                                                    "model_id",
+                                                                    "created_at",
+                                                                    "response_schema_status",
+                                                                    "response_schema_scope",
+                                                                    "response_schema_state",
+                                                                    "schema_contract_enabled",
+                                                                    "manual_review_gate_open",
+                                                                    "automatic_review_allowed",
+                                                                    "future_response_artifact_present",
+                                                                    "future_response_schema_validated",
+                                                                    "provider_response_received",
+                                                                    "provider_response_trusted",
+                                                                    "provider_response_can_create_orders",
+                                                                    "provider_response_can_approve_orders",
+                                                                    "provider_response_can_call_broker",
+                                                                    "response_schema_allows_trading_signal",
+                                                                    "response_schema_allows_order_creation",
+                                                                    "response_schema_allows_order_approval",
+                                                                    "response_schema_allows_broker_call",
+                                                                    "raw_response_body_stored",
+                                                                    "raw_prompt_body_stored",
+                                                                    "provider_call_allowed",
+                                                                    "actual_provider_call_made",
+                                                                    "outbound_request_sent",
+                                                                    "trading_signal_generated",
+                                                                    "approval_created",
+                                                                    "pending_order_created",
+                                                                    "broker_touched",
+                                                                ))
+                                                                for contract in provider_response_schema_contracts_by_pairing_id.get(pairing_id, [])
+                                                            ]
+                                                            pairing_summaries.append(pairing_copy)
+                                                        intake_policy_copy["provider_request_response_pairings"] = pairing_summaries
                                                         policies_with_pairings.append(intake_policy_copy)
                                                     preview_copy["provider_response_intake_policies"] = policies_with_pairings
                                                     previews_with_policies.append(preview_copy)
@@ -4925,6 +5036,11 @@ def build_dossier(
     from atlas_agent.research.provider_request_response_pairing import iter_provider_request_response_pairing_artifacts
     provider_request_response_pairing_items = iter_provider_request_response_pairing_artifacts(workspace_path, symbol=symbol)
     linked_provider_request_response_pairings = [prrp for prrp in provider_request_response_pairing_items if prrp.get("source_provider_response_intake_policy_id") in linked_intake_policy_ids]
+    linked_pairing_ids = {prrp.get("provider_request_response_pairing_id", "") for prrp in linked_provider_request_response_pairings}
+
+    from atlas_agent.research.provider_response_schema_contract import iter_provider_response_schema_contract_artifacts
+    provider_response_schema_contract_items = iter_provider_response_schema_contract_artifacts(workspace_path, symbol=symbol)
+    linked_provider_response_schema_contracts = [prsc for prsc in provider_response_schema_contract_items if prsc.get("source_provider_request_response_pairing_id") in linked_pairing_ids]
 
     # Build workflow status
     workflow_status = {
@@ -4947,6 +5063,7 @@ def build_dossier(
         "provider_outbound_payload_previews": len(linked_provider_outbound_payload_previews) > 0,
         "provider_response_intake_policies": len(linked_provider_response_intake_policies) > 0,
         "provider_request_response_pairings": len(linked_provider_request_response_pairings) > 0,
+        "provider_response_schema_contracts": len(linked_provider_response_schema_contracts) > 0,
     }
 
     artifact_counts = {
@@ -4969,6 +5086,7 @@ def build_dossier(
         "provider_outbound_payload_previews": len(linked_provider_outbound_payload_previews),
         "provider_response_intake_policies": len(linked_provider_response_intake_policies),
         "provider_request_response_pairings": len(linked_provider_request_response_pairings),
+        "provider_response_schema_contracts": len(linked_provider_response_schema_contracts),
     }
 
     # Build linked_artifacts with relative paths only
@@ -5122,6 +5240,16 @@ def build_dossier(
             "provider_id": prrp.get("provider_id", ""),
             "model_id": prrp.get("model_id", ""),
         })
+    for prsc in linked_provider_response_schema_contracts:
+        linked_artifacts.append({
+            "type": "provider_response_schema_contract",
+            "id": prsc.get("provider_response_schema_contract_id", ""),
+            "artifact_path": prsc.get("artifact_path", ""),
+            "response_schema_status": prsc.get("response_schema_status", ""),
+            "response_schema_state": prsc.get("response_schema_state", ""),
+            "provider_id": prsc.get("provider_id", ""),
+            "model_id": prsc.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -5237,6 +5365,16 @@ def build_dossier(
             "provider_ids": [prrp.get("provider_id", "") for prrp in linked_provider_request_response_pairings],
             "model_ids": [prrp.get("model_id", "") for prrp in linked_provider_request_response_pairings],
         }
+    if linked_provider_response_schema_contracts:
+        summaries["provider_response_schema_contract"] = {
+            "contract_count": len(linked_provider_response_schema_contracts),
+            "response_schema_statuses": [prsc.get("response_schema_status", "") for prsc in linked_provider_response_schema_contracts],
+            "response_schema_states": [prsc.get("response_schema_state", "") for prsc in linked_provider_response_schema_contracts],
+            "provider_ids": [prsc.get("provider_id", "") for prsc in linked_provider_response_schema_contracts],
+            "model_ids": [prsc.get("model_id", "") for prsc in linked_provider_response_schema_contracts],
+            "manual_review_gate_open": False,
+            "future_response_artifact_present": False,
+        }
 
     # Safety summary
     safety_summary = {
@@ -5286,6 +5424,10 @@ def build_dossier(
         warnings.append("no_provider_outbound_payload_preview")
     if not linked_provider_response_intake_policies:
         warnings.append("no_provider_response_intake_policy")
+    if not linked_provider_response_schema_contracts:
+        warnings.append("no_provider_response_schema_contract")
+    else:
+        warnings.append("missing_future_response_artifact_expected")
 
     # Determine recommendation
     core_present = linked_plans and linked_prompts and linked_provider_responses and linked_response_reviews

@@ -2365,7 +2365,218 @@ if [ "$TIMELINE_PAIRING_VALID" != "valid" ]; then
 fi
 assert_no_pending_orders
 
-# 84. Create local provider response fixture and import it
+# 84. Research provider-response-schema-contract
+printf '\n--- Research provider-response-schema-contract ---\n'
+SCHEMA_CONTRACT_OUTPUT="$(atlas research provider-response-schema-contract "$PAIRING_ID" --json)"
+assert_no_absolute_paths "$SCHEMA_CONTRACT_OUTPUT"
+assert_no_secrets_in_output "$SCHEMA_CONTRACT_OUTPUT"
+assert_no_forbidden_fragments "$SCHEMA_CONTRACT_OUTPUT" "provider-response-schema-contract CLI output"
+assert_ok "$SCHEMA_CONTRACT_OUTPUT" "research provider-response-schema-contract"
+SCHEMA_CONTRACT_STATUS="$(json_field "$SCHEMA_CONTRACT_OUTPUT" status)"
+if [ "$SCHEMA_CONTRACT_STATUS" != "research_provider_response_schema_contract_created" ]; then
+  printf 'FAIL: unexpected provider-response-schema-contract status: %s\n' "$SCHEMA_CONTRACT_STATUS" >&2
+  exit 1
+fi
+SCHEMA_CONTRACT_ID="$(json_field "$SCHEMA_CONTRACT_OUTPUT" provider_response_schema_contract_id)"
+if [ -z "$SCHEMA_CONTRACT_ID" ]; then
+  printf 'FAIL: provider_response_schema_contract_id is empty\n' >&2
+  exit 1
+fi
+SCHEMA_CONTRACT_ARTIFACT_PATH="$(json_field "$SCHEMA_CONTRACT_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$SCHEMA_CONTRACT_ARTIFACT_PATH" "provider response schema contract artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$SCHEMA_CONTRACT_ARTIFACT_PATH")" "provider response schema contract artifact"
+assert_no_pending_orders
+
+# 84.1. Research provider-response-schema-contract-list
+printf '\n--- Research provider-response-schema-contract-list ---\n'
+SCHEMA_CONTRACT_LIST_OUTPUT="$(atlas research provider-response-schema-contract-list --json)"
+assert_no_forbidden_fragments "$SCHEMA_CONTRACT_LIST_OUTPUT" "provider-response-schema-contract-list CLI output"
+assert_ok "$SCHEMA_CONTRACT_LIST_OUTPUT" "research provider-response-schema-contract-list"
+SCHEMA_CONTRACT_LIST_STATUS="$(json_field "$SCHEMA_CONTRACT_LIST_OUTPUT" status)"
+if [ "$SCHEMA_CONTRACT_LIST_STATUS" != "research_provider_response_schema_contract_list" ]; then
+  printf 'FAIL: unexpected provider-response-schema-contract-list status: %s\n' "$SCHEMA_CONTRACT_LIST_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.2. Research provider-response-schema-contract-show
+printf '\n--- Research provider-response-schema-contract-show ---\n'
+SCHEMA_CONTRACT_SHOW_OUTPUT="$(atlas research provider-response-schema-contract-show "$SCHEMA_CONTRACT_ID" --json)"
+assert_no_forbidden_fragments "$SCHEMA_CONTRACT_SHOW_OUTPUT" "provider-response-schema-contract-show CLI output"
+assert_ok "$SCHEMA_CONTRACT_SHOW_OUTPUT" "research provider-response-schema-contract-show"
+SCHEMA_CONTRACT_SHOW_STATUS="$(json_field "$SCHEMA_CONTRACT_SHOW_OUTPUT" status)"
+if [ "$SCHEMA_CONTRACT_SHOW_STATUS" != "research_provider_response_schema_contract_shown" ]; then
+  printf 'FAIL: unexpected provider-response-schema-contract-show status: %s\n' "$SCHEMA_CONTRACT_SHOW_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.3. Research provider-response-schema-contract-validate
+printf '\n--- Research provider-response-schema-contract-validate ---\n'
+SCHEMA_CONTRACT_VALIDATE_OUTPUT="$(atlas research provider-response-schema-contract-validate "$SCHEMA_CONTRACT_ID" --json)"
+assert_no_forbidden_fragments "$SCHEMA_CONTRACT_VALIDATE_OUTPUT" "provider-response-schema-contract-validate CLI output"
+assert_ok "$SCHEMA_CONTRACT_VALIDATE_OUTPUT" "research provider-response-schema-contract-validate"
+SCHEMA_CONTRACT_VALIDATE_STATUS="$(json_field "$SCHEMA_CONTRACT_VALIDATE_OUTPUT" status)"
+if [ "$SCHEMA_CONTRACT_VALIDATE_STATUS" != "research_provider_response_schema_contract_validated" ]; then
+  printf 'FAIL: unexpected provider-response-schema-contract-validate status: %s\n' "$SCHEMA_CONTRACT_VALIDATE_STATUS" >&2
+  exit 1
+fi
+SCHEMA_CONTRACT_VALID="$(json_field "$SCHEMA_CONTRACT_VALIDATE_OUTPUT" valid)"
+if [ "$SCHEMA_CONTRACT_VALID" != "True" ]; then
+  printf 'FAIL: provider-response-schema-contract-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.4. Research provider-response-schema-contract-replay
+printf '\n--- Research provider-response-schema-contract-replay ---\n'
+SCHEMA_CONTRACT_REPLAY_OUTPUT="$(atlas research provider-response-schema-contract-replay "$SCHEMA_CONTRACT_ID" --json)"
+assert_no_forbidden_fragments "$SCHEMA_CONTRACT_REPLAY_OUTPUT" "provider-response-schema-contract-replay CLI output"
+assert_ok "$SCHEMA_CONTRACT_REPLAY_OUTPUT" "research provider-response-schema-contract-replay"
+SCHEMA_CONTRACT_REPLAY_STATUS="$(json_field "$SCHEMA_CONTRACT_REPLAY_OUTPUT" status)"
+if [ "$SCHEMA_CONTRACT_REPLAY_STATUS" != "research_provider_response_schema_contract_replayed" ]; then
+  printf 'FAIL: unexpected provider-response-schema-contract-replay status: %s\n' "$SCHEMA_CONTRACT_REPLAY_STATUS" >&2
+  exit 1
+fi
+SCHEMA_CONTRACT_REPLAY_MATCH="$(json_field "$SCHEMA_CONTRACT_REPLAY_OUTPUT" match)"
+if [ "$SCHEMA_CONTRACT_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-response-schema-contract-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.5. Research provider-response-schema-contract-summary
+printf '\n--- Research provider-response-schema-contract-summary ---\n'
+SCHEMA_CONTRACT_SUMMARY_OUTPUT="$(atlas research provider-response-schema-contract-summary "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$SCHEMA_CONTRACT_SUMMARY_OUTPUT" "provider-response-schema-contract-summary CLI output"
+assert_ok "$SCHEMA_CONTRACT_SUMMARY_OUTPUT" "research provider-response-schema-contract-summary"
+SCHEMA_CONTRACT_SUMMARY_STATUS="$(json_field "$SCHEMA_CONTRACT_SUMMARY_OUTPUT" status)"
+if [ "$SCHEMA_CONTRACT_SUMMARY_STATUS" != "research_provider_response_schema_contract_summary" ]; then
+  printf 'FAIL: unexpected provider-response-schema-contract-summary status: %s\n' "$SCHEMA_CONTRACT_SUMMARY_STATUS" >&2
+  exit 1
+fi
+SCHEMA_CONTRACT_SUMMARY_MANUAL_REVIEW="$(json_field "$SCHEMA_CONTRACT_SUMMARY_OUTPUT" manual_review_gate_open)"
+if [ "$SCHEMA_CONTRACT_SUMMARY_MANUAL_REVIEW" != "False" ]; then
+  printf 'FAIL: provider-response-schema-contract-summary manual_review_gate_open is not False\n' >&2
+  exit 1
+fi
+SCHEMA_CONTRACT_SUMMARY_FUTURE_RESPONSE="$(json_field "$SCHEMA_CONTRACT_SUMMARY_OUTPUT" future_response_artifact_present)"
+if [ "$SCHEMA_CONTRACT_SUMMARY_FUTURE_RESPONSE" != "False" ]; then
+  printf 'FAIL: provider-response-schema-contract-summary future_response_artifact_present is not False\n' >&2
+  exit 1
+fi
+SCHEMA_CONTRACT_SUMMARY_TRUSTED="$(json_field "$SCHEMA_CONTRACT_SUMMARY_OUTPUT" provider_response_trusted)"
+if [ "$SCHEMA_CONTRACT_SUMMARY_TRUSTED" != "False" ]; then
+  printf 'FAIL: provider-response-schema-contract-summary provider_response_trusted is not False\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.6. Research provider-response-schema-contract-doctor
+printf '\n--- Research provider-response-schema-contract-doctor ---\n'
+SCHEMA_CONTRACT_DOCTOR_OUTPUT="$(atlas research provider-response-schema-contract-doctor "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$SCHEMA_CONTRACT_DOCTOR_OUTPUT" "provider-response-schema-contract-doctor CLI output"
+assert_ok "$SCHEMA_CONTRACT_DOCTOR_OUTPUT" "research provider-response-schema-contract-doctor"
+SCHEMA_CONTRACT_DOCTOR_STATUS="$(json_field "$SCHEMA_CONTRACT_DOCTOR_OUTPUT" status)"
+if [ "$SCHEMA_CONTRACT_DOCTOR_STATUS" != "research_provider_response_schema_contract_doctor" ]; then
+  printf 'FAIL: unexpected provider-response-schema-contract-doctor status: %s\n' "$SCHEMA_CONTRACT_DOCTOR_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.7. Research timeline after schema contract (validate schema contract nesting)
+printf '\n--- Research timeline (post schema contract) ---\n'
+TIMELINE_OUTPUT_SCHEMA_CONTRACT="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_SCHEMA_CONTRACT"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_SCHEMA_CONTRACT"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_SCHEMA_CONTRACT" "timeline CLI output after schema contract"
+assert_ok "$TIMELINE_OUTPUT_SCHEMA_CONTRACT" "research timeline after schema contract"
+TIMELINE_SCHEMA_CONTRACT_STATUS="$(json_field "$TIMELINE_OUTPUT_SCHEMA_CONTRACT" status)"
+if [ "$TIMELINE_SCHEMA_CONTRACT_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after schema contract: %s\n' "$TIMELINE_SCHEMA_CONTRACT_STATUS" >&2
+  exit 1
+fi
+TIMELINE_SCHEMA_CONTRACT_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    if ped.get('provider_execution_dry_run_id')!='$DRY_RUN_ID':
+                        continue
+                    for s in ped.get('provider_execution_states',[]):
+                        if s.get('provider_execution_state_id')!='$STATE_IMPL_ID':
+                            continue
+                        for a in s.get('provider_execution_audit_packets',[]):
+                            if a.get('provider_execution_audit_packet_id')!='$AUDIT_PACKET_ID':
+                                continue
+                            for r in a.get('provider_execution_readiness_reports',[]):
+                                if r.get('provider_execution_readiness_report_id')!='$READINESS_REPORT_ID':
+                                    continue
+                                for f in r.get('provider_preflight_freezes',[]):
+                                    if f.get('provider_preflight_freeze_id')!='$FREEZE_ID':
+                                        continue
+                                    for pol in f.get('provider_opt_in_policies',[]):
+                                        if pol.get('provider_opt_in_policy_id')!='$POLICY_ID':
+                                            continue
+                                        for b in pol.get('provider_credential_boundaries',[]):
+                                            if b.get('provider_credential_boundary_id')!='$BOUNDARY_ID':
+                                                continue
+                                            for pp in b.get('provider_outbound_payload_previews',[]):
+                                                if pp.get('provider_outbound_payload_preview_id')!='$PAYLOAD_PREVIEW_ID':
+                                                    continue
+                                                for ip in pp.get('provider_response_intake_policies',[]):
+                                                    if ip.get('provider_response_intake_policy_id')!='$INTAKE_POLICY_ID':
+                                                        continue
+                                                    for prrp in ip.get('provider_request_response_pairings',[]):
+                                                        if prrp.get('provider_request_response_pairing_id')!='$PAIRING_ID':
+                                                            continue
+                                                        contracts=prrp.get('provider_response_schema_contracts',[])
+                                                        contract_ids=[c.get('provider_response_schema_contract_id') for c in contracts]
+                                                        if '$SCHEMA_CONTRACT_ID' in contract_ids:
+                                                            print('valid')
+                                                            break
+                                                    break
+                                            break
+                                    break
+                            break
+                    break
+            break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_SCHEMA_CONTRACT" )"
+if [ "$TIMELINE_SCHEMA_CONTRACT_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link schema contract under pairing %s\n' "$PAIRING_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 84.8. Research check-artifacts after schema contract
+printf '\n--- Research check-artifacts (post schema contract) ---\n'
+CHECK_OUTPUT_SCHEMA_CONTRACT="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_SCHEMA_CONTRACT" "check-artifacts CLI output after schema contract"
+assert_ok "$CHECK_OUTPUT_SCHEMA_CONTRACT" "research check-artifacts after schema contract"
+CHECK_SCHEMA_CONTRACT_COUNT="$(json_field "$CHECK_OUTPUT_SCHEMA_CONTRACT" counts.provider_response_schema_contracts)"
+if [ "$CHECK_SCHEMA_CONTRACT_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_response_schema_contracts count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"
