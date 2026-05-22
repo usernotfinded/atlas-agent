@@ -2940,7 +2940,321 @@ if [ "$CHECK_UNLOCK_STATE_COUNT" -lt 1 ]; then
 fi
 assert_no_pending_orders
 
-# 85. Create local provider response fixture and import it
+# 85. Research provider-adapter-interface-contract
+printf '\n--- Research provider-adapter-interface-contract ---\n'
+ADAPTER_CONTRACT_OUTPUT="$(atlas research provider-adapter-interface-contract "$UNLOCK_STATE_ID" --json)"
+assert_no_absolute_paths "$ADAPTER_CONTRACT_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_CONTRACT_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_CONTRACT_OUTPUT" "provider-adapter-interface-contract CLI output"
+assert_ok "$ADAPTER_CONTRACT_OUTPUT" "research provider-adapter-interface-contract"
+ADAPTER_CONTRACT_STATUS="$(json_field "$ADAPTER_CONTRACT_OUTPUT" status)"
+if [ "$ADAPTER_CONTRACT_STATUS" != "research_provider_adapter_interface_contract_created" ]; then
+  printf 'FAIL: unexpected provider-adapter-interface-contract status: %s\n' "$ADAPTER_CONTRACT_STATUS" >&2
+  exit 1
+fi
+ADAPTER_CONTRACT_ID="$(json_field "$ADAPTER_CONTRACT_OUTPUT" provider_adapter_interface_contract_id)"
+if [ -z "$ADAPTER_CONTRACT_ID" ]; then
+  printf 'FAIL: provider_adapter_interface_contract_id is empty\n' >&2
+  exit 1
+fi
+ADAPTER_CONTRACT_ARTIFACT_PATH="$(json_field "$ADAPTER_CONTRACT_OUTPUT" artifact_path)"
+assert_file_exists "$WORKSPACE/$ADAPTER_CONTRACT_ARTIFACT_PATH" "provider adapter interface contract artifact"
+assert_no_forbidden_fragments "$(cat "$WORKSPACE/$ADAPTER_CONTRACT_ARTIFACT_PATH")" "provider adapter interface contract artifact"
+ADAPTER_CONTRACT_ADAPTER_PRESENT="$(json_field "$ADAPTER_CONTRACT_OUTPUT" adapter_present)"
+if [ "$ADAPTER_CONTRACT_ADAPTER_PRESENT" != "False" ]; then
+  printf 'FAIL: adapter interface contract reports adapter_present != false\n' >&2
+  exit 1
+fi
+ADAPTER_CONTRACT_ADAPTER_ENABLED="$(json_field "$ADAPTER_CONTRACT_OUTPUT" adapter_enabled)"
+if [ "$ADAPTER_CONTRACT_ADAPTER_ENABLED" != "False" ]; then
+  printf 'FAIL: adapter interface contract reports adapter_enabled != false\n' >&2
+  exit 1
+fi
+ADAPTER_CONTRACT_PROVIDER_SDK="$(json_field "$ADAPTER_CONTRACT_OUTPUT" provider_sdk_imported)"
+if [ "$ADAPTER_CONTRACT_PROVIDER_SDK" != "False" ]; then
+  printf 'FAIL: adapter interface contract reports provider_sdk_imported != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.1. Research provider-adapter-interface-contract-list
+printf '\n--- Research provider-adapter-interface-contract-list ---\n'
+ADAPTER_LIST_OUTPUT="$(atlas research provider-adapter-interface-contract-list --json)"
+assert_no_absolute_paths "$ADAPTER_LIST_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_LIST_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_LIST_OUTPUT" "provider-adapter-interface-contract-list CLI output"
+assert_ok "$ADAPTER_LIST_OUTPUT" "research provider-adapter-interface-contract-list"
+ADAPTER_LIST_STATUS="$(json_field "$ADAPTER_LIST_OUTPUT" status)"
+if [ "$ADAPTER_LIST_STATUS" != "research_provider_adapter_interface_contract_list" ]; then
+  printf 'FAIL: unexpected provider-adapter-interface-contract-list status: %s\n' "$ADAPTER_LIST_STATUS" >&2
+  exit 1
+fi
+ADAPTER_LIST_HAS_ID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(any(i.get('provider_adapter_interface_contract_id')=='$ADAPTER_CONTRACT_ID' for i in items))
+" <<<"$ADAPTER_LIST_OUTPUT" )"
+if [ "$ADAPTER_LIST_HAS_ID" != "True" ]; then
+  printf 'FAIL: provider-adapter-interface-contract-list does not contain contract_id %s\n' "$ADAPTER_CONTRACT_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.2. Research provider-adapter-interface-contract-show
+printf '\n--- Research provider-adapter-interface-contract-show ---\n'
+ADAPTER_SHOW_OUTPUT="$(atlas research provider-adapter-interface-contract-show "$ADAPTER_CONTRACT_ID" --json)"
+assert_no_absolute_paths "$ADAPTER_SHOW_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_SHOW_OUTPUT" "provider-adapter-interface-contract-show CLI output"
+assert_ok "$ADAPTER_SHOW_OUTPUT" "research provider-adapter-interface-contract-show"
+ADAPTER_SHOW_STATUS="$(json_field "$ADAPTER_SHOW_OUTPUT" status)"
+if [ "$ADAPTER_SHOW_STATUS" != "research_provider_adapter_interface_contract_shown" ]; then
+  printf 'FAIL: unexpected provider-adapter-interface-contract-show status: %s\n' "$ADAPTER_SHOW_STATUS" >&2
+  exit 1
+fi
+ADAPTER_SHOW_ID="$(json_field "$ADAPTER_SHOW_OUTPUT" artifact.provider_adapter_interface_contract_id)"
+if [ "$ADAPTER_SHOW_ID" != "$ADAPTER_CONTRACT_ID" ]; then
+  printf 'FAIL: provider-adapter-interface-contract-show returned unexpected contract_id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.3. Research provider-adapter-interface-contract-validate
+printf '\n--- Research provider-adapter-interface-contract-validate ---\n'
+ADAPTER_VALIDATE_OUTPUT="$(atlas research provider-adapter-interface-contract-validate "$ADAPTER_CONTRACT_ID" --json)"
+assert_no_absolute_paths "$ADAPTER_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_VALIDATE_OUTPUT" "provider-adapter-interface-contract-validate CLI output"
+assert_ok "$ADAPTER_VALIDATE_OUTPUT" "research provider-adapter-interface-contract-validate"
+ADAPTER_VALIDATE_STATUS="$(json_field "$ADAPTER_VALIDATE_OUTPUT" status)"
+if [ "$ADAPTER_VALIDATE_STATUS" != "research_provider_adapter_interface_contract_validated" ]; then
+  printf 'FAIL: unexpected provider-adapter-interface-contract-validate status: %s\n' "$ADAPTER_VALIDATE_STATUS" >&2
+  exit 1
+fi
+ADAPTER_VALIDATE_VALID="$(json_field "$ADAPTER_VALIDATE_OUTPUT" valid)"
+if [ "$ADAPTER_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: provider-adapter-interface-contract-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.4. Research provider-adapter-interface-contract-replay
+printf '\n--- Research provider-adapter-interface-contract-replay ---\n'
+ADAPTER_REPLAY_OUTPUT="$(atlas research provider-adapter-interface-contract-replay "$ADAPTER_CONTRACT_ID" --json)"
+assert_no_absolute_paths "$ADAPTER_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_REPLAY_OUTPUT" "provider-adapter-interface-contract-replay CLI output"
+assert_ok "$ADAPTER_REPLAY_OUTPUT" "research provider-adapter-interface-contract-replay"
+ADAPTER_REPLAY_STATUS="$(json_field "$ADAPTER_REPLAY_OUTPUT" status)"
+if [ "$ADAPTER_REPLAY_STATUS" != "research_provider_adapter_interface_contract_replayed" ]; then
+  printf 'FAIL: unexpected provider-adapter-interface-contract-replay status: %s\n' "$ADAPTER_REPLAY_STATUS" >&2
+  exit 1
+fi
+ADAPTER_REPLAY_MATCH="$(json_field "$ADAPTER_REPLAY_OUTPUT" match)"
+if [ "$ADAPTER_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-adapter-interface-contract-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.5. Research provider-adapter-interface-contract-summary
+printf '\n--- Research provider-adapter-interface-contract-summary ---\n'
+ADAPTER_SUMMARY_OUTPUT="$(atlas research provider-adapter-interface-contract-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$ADAPTER_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_SUMMARY_OUTPUT" "provider-adapter-interface-contract-summary CLI output"
+assert_ok "$ADAPTER_SUMMARY_OUTPUT" "research provider-adapter-interface-contract-summary"
+ADAPTER_SUMMARY_STATUS="$(json_field "$ADAPTER_SUMMARY_OUTPUT" status)"
+if [ "$ADAPTER_SUMMARY_STATUS" != "research_provider_adapter_interface_contract_summary" ]; then
+  printf 'FAIL: unexpected provider-adapter-interface-contract-summary status: %s\n' "$ADAPTER_SUMMARY_STATUS" >&2
+  exit 1
+fi
+ADAPTER_SUMMARY_ADAPTER_PRESENT="$(json_field "$ADAPTER_SUMMARY_OUTPUT" adapter_present)"
+if [ "$ADAPTER_SUMMARY_ADAPTER_PRESENT" != "False" ]; then
+  printf 'FAIL: summary reports adapter_present != false\n' >&2
+  exit 1
+fi
+ADAPTER_SUMMARY_ADAPTER_ENABLED="$(json_field "$ADAPTER_SUMMARY_OUTPUT" adapter_enabled)"
+if [ "$ADAPTER_SUMMARY_ADAPTER_ENABLED" != "False" ]; then
+  printf 'FAIL: summary reports adapter_enabled != false\n' >&2
+  exit 1
+fi
+ADAPTER_SUMMARY_PROVIDER_CALL_ALLOWED="$(json_field "$ADAPTER_SUMMARY_OUTPUT" provider_call_allowed)"
+if [ "$ADAPTER_SUMMARY_PROVIDER_CALL_ALLOWED" != "False" ]; then
+  printf 'FAIL: summary reports provider_call_allowed != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.6. Research provider-adapter-interface-contract-doctor
+printf '\n--- Research provider-adapter-interface-contract-doctor ---\n'
+ADAPTER_DOCTOR_OUTPUT="$(atlas research provider-adapter-interface-contract-doctor "$RUN_ID" --json)"
+assert_no_absolute_paths "$ADAPTER_DOCTOR_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_DOCTOR_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_DOCTOR_OUTPUT" "provider-adapter-interface-contract-doctor CLI output"
+assert_ok "$ADAPTER_DOCTOR_OUTPUT" "research provider-adapter-interface-contract-doctor"
+ADAPTER_DOCTOR_STATUS="$(json_field "$ADAPTER_DOCTOR_OUTPUT" status)"
+if [ "$ADAPTER_DOCTOR_STATUS" != "research_provider_adapter_interface_contract_doctor" ]; then
+  printf 'FAIL: unexpected provider-adapter-interface-contract-doctor status: %s\n' "$ADAPTER_DOCTOR_STATUS" >&2
+  exit 1
+fi
+ADAPTER_DOCTOR_ADAPTER_PRESENT="$(json_field "$ADAPTER_DOCTOR_OUTPUT" adapter_present)"
+if [ "$ADAPTER_DOCTOR_ADAPTER_PRESENT" != "False" ]; then
+  printf 'FAIL: doctor reports adapter_present != false\n' >&2
+  exit 1
+fi
+ADAPTER_DOCTOR_ADAPTER_ENABLED="$(json_field "$ADAPTER_DOCTOR_OUTPUT" adapter_enabled)"
+if [ "$ADAPTER_DOCTOR_ADAPTER_ENABLED" != "False" ]; then
+  printf 'FAIL: doctor reports adapter_enabled != false\n' >&2
+  exit 1
+fi
+ADAPTER_DOCTOR_PROVIDER_CALL_ALLOWED="$(json_field "$ADAPTER_DOCTOR_OUTPUT" provider_call_allowed)"
+if [ "$ADAPTER_DOCTOR_PROVIDER_CALL_ALLOWED" != "False" ]; then
+  printf 'FAIL: doctor reports provider_call_allowed != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.7. Research provider-adapter-disabled-smoke
+printf '\n--- Research provider-adapter-disabled-smoke ---\n'
+ADAPTER_SMOKE_OUTPUT="$(atlas research provider-adapter-disabled-smoke "$ADAPTER_CONTRACT_ID" --json)"
+assert_no_absolute_paths "$ADAPTER_SMOKE_OUTPUT"
+assert_no_secrets_in_output "$ADAPTER_SMOKE_OUTPUT"
+assert_no_forbidden_fragments "$ADAPTER_SMOKE_OUTPUT" "provider-adapter-disabled-smoke CLI output"
+assert_ok "$ADAPTER_SMOKE_OUTPUT" "research provider-adapter-disabled-smoke"
+ADAPTER_SMOKE_STATUS="$(json_field "$ADAPTER_SMOKE_OUTPUT" status)"
+if [ "$ADAPTER_SMOKE_STATUS" != "research_provider_adapter_disabled_smoke_passed" ]; then
+  printf 'FAIL: unexpected provider-adapter-disabled-smoke status: %s\n' "$ADAPTER_SMOKE_STATUS" >&2
+  exit 1
+fi
+ADAPTER_SMOKE_SEND_FAILED="$(json_field "$ADAPTER_SMOKE_OUTPUT" send_failed_closed)"
+if [ "$ADAPTER_SMOKE_SEND_FAILED" != "True" ]; then
+  printf 'FAIL: disabled smoke reports send_failed_closed != true\n' >&2
+  exit 1
+fi
+ADAPTER_SMOKE_NETWORK="$(json_field "$ADAPTER_SMOKE_OUTPUT" network_call_attempted)"
+if [ "$ADAPTER_SMOKE_NETWORK" != "False" ]; then
+  printf 'FAIL: disabled smoke reports network_call_attempted != false\n' >&2
+  exit 1
+fi
+ADAPTER_SMOKE_CREDENTIALS="$(json_field "$ADAPTER_SMOKE_OUTPUT" credentials_loaded)"
+if [ "$ADAPTER_SMOKE_CREDENTIALS" != "False" ]; then
+  printf 'FAIL: disabled smoke reports credentials_loaded != false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.8. Research timeline after adapter interface contract
+printf '\n--- Research timeline (post adapter interface contract) ---\n'
+TIMELINE_OUTPUT_ADAPTER="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT_ADAPTER"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT_ADAPTER"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT_ADAPTER" "timeline CLI output after adapter interface contract"
+assert_ok "$TIMELINE_OUTPUT_ADAPTER" "research timeline after adapter interface contract"
+TIMELINE_ADAPTER_STATUS="$(json_field "$TIMELINE_OUTPUT_ADAPTER" status)"
+if [ "$TIMELINE_ADAPTER_STATUS" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after adapter interface contract: %s\n' "$TIMELINE_ADAPTER_STATUS" >&2
+  exit 1
+fi
+TIMELINE_ADAPTER_VALID="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+entries=data.get('entries',[])
+for e in entries:
+    if e.get('run_id')!='$RUN_ID':
+        continue
+    prompts=e.get('prompts',[])
+    for p in prompts:
+        if p.get('prompt_packet_id')!='$PROMPT_PACKET_ID':
+            continue
+        for sr in p.get('sandbox_requests',[]):
+            if sr.get('sandbox_request_id')!='$SANDBOX_ID':
+                continue
+            for pc in sr.get('provider_call_plans',[]):
+                if pc.get('provider_call_plan_id')!='$PLAN_PCP_ID':
+                    continue
+                for ped in pc.get('provider_execution_dry_runs',[]):
+                    for pes in ped.get('provider_execution_states',[]):
+                        for peap in pes.get('provider_execution_audit_packets',[]):
+                            for perr in peap.get('provider_execution_readiness_reports',[]):
+                                for ppf in perr.get('provider_preflight_freezes',[]):
+                                    for pop in ppf.get('provider_opt_in_policies',[]):
+                                        for pcb in pop.get('provider_credential_boundaries',[]):
+                                            for pp in pcb.get('provider_outbound_payload_previews',[]):
+                                                for pip in pp.get('provider_response_intake_policies',[]):
+                                                    for prrp in pip.get('provider_request_response_pairings',[]):
+                                                        for prsc in prrp.get('provider_response_schema_contracts',[]):
+                                                            for prrr in prsc.get('provider_response_review_results',[]):
+                                                                paics=[c.get('provider_adapter_interface_contract_id') for c in prrr.get('provider_adapter_interface_contracts',[])]
+                                                                if '$ADAPTER_CONTRACT_ID' in paics:
+                                                                    print('valid')
+                                                                    break
+                                                            else:
+                                                                continue
+                                                            break
+                                                        else:
+                                                            continue
+                                                        break
+                                                    else:
+                                                        continue
+                                                    break
+                                                else:
+                                                    continue
+                                                break
+                                            else:
+                                                continue
+                                            break
+                                        else:
+                                            continue
+                                        break
+                                    else:
+                                        continue
+                                    break
+                                else:
+                                    continue
+                                break
+                            else:
+                                continue
+                            break
+                        else:
+                            continue
+                        break
+                    else:
+                        continue
+                    break
+                else:
+                    continue
+                break
+            else:
+                continue
+            break
+        else:
+            continue
+        break
+    break
+else:
+    print('invalid')
+" <<<"$TIMELINE_OUTPUT_ADAPTER" )"
+if [ "$TIMELINE_ADAPTER_VALID" != "valid" ]; then
+  printf 'FAIL: timeline does not link adapter interface contract %s under review result\n' "$ADAPTER_CONTRACT_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.9. Research check-artifacts after adapter interface contract
+printf '\n--- Research check-artifacts (post adapter interface contract) ---\n'
+CHECK_OUTPUT_ADAPTER="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_ADAPTER" "check-artifacts CLI output after adapter interface contract"
+assert_ok "$CHECK_OUTPUT_ADAPTER" "research check-artifacts after adapter interface contract"
+CHECK_ADAPTER_COUNT="$(json_field "$CHECK_OUTPUT_ADAPTER" counts.provider_adapter_interface_contracts)"
+if [ "$CHECK_ADAPTER_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_adapter_interface_contracts count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 86. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
 printf '%s\n' '{"summary":"External analysis of market context.","sections":[{"title":"Scope","content":"Review local sandbox request only."},{"title":"Risks","content":"No live trading is authorized."}],"safety_checks":[{"name":"paper_only","status":"pass","notes":"Mode is paper."}],"limitations":["Not financial advice.","No real market data queried."]}' > "$IMPORT_FIXTURE"

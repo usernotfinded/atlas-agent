@@ -292,9 +292,54 @@ class TestBatch8NoProviderCode:
             "*llm_client*",
             "*api_client*",
         ]
+        # Interface-only disabled-harness modules are explicitly allowed
+        allowed_interface_only = {
+            "research/provider_adapter_interface.py",
+            "research/provider_adapter_interface_contract.py",
+        }
         findings: list[str] = []
         for pattern in disallowed_patterns:
             for path in repo_root.rglob(pattern):
-                if path.is_file():
-                    findings.append(str(path.relative_to(repo_root)))
+                if path.is_file() and "__pycache__" not in str(path):
+                    rel = str(path.relative_to(repo_root))
+                    if rel not in allowed_interface_only:
+                        findings.append(rel)
         assert findings == [], f"Unexpected provider adapter/client modules: {findings}"
+
+    def test_allowed_adapter_interface_modules_are_safe(self) -> None:
+        """Ensure allowed interface-only adapter modules do not import SDKs, HTTP clients, or env."""
+        repo_root = Path(__file__).resolve().parent.parent / "src" / "atlas_agent"
+        allowed_modules = [
+            repo_root / "research" / "provider_adapter_interface.py",
+            repo_root / "research" / "provider_adapter_interface_contract.py",
+        ]
+        forbidden_imports = ["openai", "anthropic", "openrouter", "moonshot", "kimi", "httpx", "requests", "urllib3"]
+        for module_path in allowed_modules:
+            text = module_path.read_text(encoding="utf-8")
+            tree = ast.parse(text)
+            imports: list[str] = []
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name in forbidden_imports:
+                            imports.append(alias.name)
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module in forbidden_imports:
+                        imports.append(node.module)
+            assert imports == [], f"Forbidden SDK/HTTP import in {module_path.name}: {imports}"
+            # Check for os.environ / os.getenv / load_dotenv via AST (not string match, to avoid docstring false positives)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute):
+                    if isinstance(node.value, ast.Name) and node.value.id == "os" and node.attr in ("environ", "getenv"):
+                        assert False, f"Forbidden env access os.{node.attr} in {module_path.name}"
+                elif isinstance(node, ast.Call):
+                    if isinstance(node.func, ast.Name) and node.func.id == "load_dotenv":
+                        assert False, f"Forbidden load_dotenv call in {module_path.name}"
+                    elif isinstance(node.func, ast.Attribute):
+                        if node.func.attr == "load_dotenv":
+                            assert False, f"Forbidden load_dotenv call in {module_path.name}"
+            # Check for urllib network calls in actual code (not docstrings)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute):
+                    if node.attr in ("urlopen", "Request"):
+                        assert False, f"Forbidden urllib network call in {module_path.name}"

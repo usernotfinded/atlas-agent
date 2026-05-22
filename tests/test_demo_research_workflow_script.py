@@ -275,9 +275,15 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         for fname in os.listdir(schema_dir):
             if fname.endswith(".json"):
                 schema_contract_count += 1
+    adapter_contract_count = 0
+    adapter_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_adapter_interface_contracts")
+    if os.path.isdir(adapter_dir):
+        for fname in os.listdir(adapter_dir):
+            if fname.endswith(".json"):
+                adapter_contract_count += 1
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -385,12 +391,29 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                                                                                                                                 with open(os.path.join(rr_dir, rfname)) as rf:
                                                                                                                                                                                     rr = json.load(rf)
                                                                                                                                                                                 if rr.get("source_provider_response_schema_contract_id") == sc_id:
+                                                                                                                                                                                    rr_id = rr.get("provider_response_review_result_id", "")
+                                                                                                                                                                                    # Look up adapter interface contracts for this review result
+                                                                                                                                                                                    adapter_contracts = []
+                                                                                                                                                                                    ac_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_adapter_interface_contracts")
+                                                                                                                                                                                    if os.path.isdir(ac_dir):
+                                                                                                                                                                                        for acfname in sorted(os.listdir(ac_dir)):
+                                                                                                                                                                                            if acfname.endswith(".json"):
+                                                                                                                                                                                                with open(os.path.join(ac_dir, acfname)) as acf:
+                                                                                                                                                                                                    ac = json.load(acf)
+                                                                                                                                                                                                if ac.get("source_provider_response_review_result_id") == rr_id:
+                                                                                                                                                                                                    adapter_contracts.append({
+                                                                                                                                                                                                        "provider_adapter_interface_contract_id": ac.get("provider_adapter_interface_contract_id", ""),
+                                                                                                                                                                                                        "adapter_contract_status": ac.get("adapter_contract_status", ""),
+                                                                                                                                                                                                        "adapter_state": ac.get("adapter_state", ""),
+                                                                                                                                                                                                        "artifact_path": ac.get("artifact_path", ""),
+                                                                                                                                                                                                    })
                                                                                                                                                                                     review_results.append({
-                                                                                                                                                                                        "provider_response_review_result_id": rr.get("provider_response_review_result_id", ""),
+                                                                                                                                                                                        "provider_response_review_result_id": rr_id,
                                                                                                                                                                                         "review_result_status": rr.get("review_result_status", ""),
                                                                                                                                                                                         "review_result_state": rr.get("review_result_state", ""),
                                                                                                                                                                                         "review_decision": rr.get("review_decision", ""),
                                                                                                                                                                                         "artifact_path": rr.get("artifact_path", ""),
+                                                                                                                                                                                        "provider_adapter_interface_contracts": adapter_contracts,
                                                                                                                                                                                     })
                                                                                                                                                                     schema_contracts.append({
                                                                                                                                                                         "provider_response_schema_contract_id": sc_id,
@@ -3016,6 +3039,210 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor"
         "missing_prerequisites": [],
         "blocking_reasons": ["provider_execution_not_implemented"],
         "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract":
+    unlock_state_id = ARGS[2] if len(ARGS) > 2 else ""
+    contract_id = "adapter-contract-001"
+    symbol = "ATLAS-DEMO"
+    ac_dir = os.path.join(".", ".atlas", "research", symbol, "provider_adapter_interface_contracts")
+    os.makedirs(ac_dir, exist_ok=True)
+    ac_path = os.path.join(ac_dir, contract_id + ".json")
+    artifact = {
+        "schema_version": "1",
+        "artifact_type": "provider_adapter_interface_contract",
+        "contract_version": "research_provider_adapter_interface_contract_v1",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_value_present": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_hash": "fakehashforadaptercontract001",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-contract-001.json",
+    }
+    with open(ac_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_interface_contract_created",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-contract-001.json",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-list":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_interface_contract_list",
+        "items": [{
+            "provider_adapter_interface_contract_id": "adapter-contract-001",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-contract-001.json",
+        }],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-show":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_interface_contract_shown",
+        "artifact": {
+            "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-contract-001.json",
+        },
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-validate":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_interface_contract_validated",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 6,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with adapter interface contract.",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-replay":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_interface_contract_replayed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "original_hash": "fake-hash-original",
+        "replayed_hash": "fake-hash-replayed",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "provider_call_allowed": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-summary":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_interface_contract_summary",
+        "provider_adapter_interface_contract_id": "adapter-contract-001",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "provider_call_allowed": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-contract-001.json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_interface_contract_doctor",
+        "run_id": "run-001",
+        "adapter_health": "disabled_adapter_only",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_not_implemented"],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_adapter_disabled_smoke_passed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "send_failed_closed": True,
+        "static_safe_error": True,
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
     }))
     sys.exit(0)
 
@@ -54608,7 +54835,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -54666,7 +54893,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                                                                     "response_schema_state": "schema_recorded_no_response_present",
                                                                     "created_at": "2026-01-01T00:00:00+00:00",
                                                                     "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json",
-                                                                    "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]
+                                                                    "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json", "provider_adapter_interface_contracts": [{{"provider_adapter_interface_contract_id": "adapter-interface-contract-demo-1", "adapter_contract_status": "adapter_interface_recorded", "adapter_state": "disabled_adapter_only", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json"}}]}}]
                                                                 }}]
                                                             }}]
                                                         }}]
@@ -57166,6 +57393,228 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor"
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract":
+    unlock_state_id = ARGS[2] if len(ARGS) > 2 else ""
+    contract_id = "adapter-interface-contract-demo-1"
+    symbol = "ATLAS-DEMO"
+    ac_dir = os.path.join(".", ".atlas", "research", symbol, "provider_adapter_interface_contracts")
+    os.makedirs(ac_dir, exist_ok=True)
+    ac_path = os.path.join(ac_dir, contract_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_adapter_interface_contract",
+        "contract_version": "research_provider_adapter_interface_contract_v1",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_hash": "fakehashforadaptercontractdemo1",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+    }}
+    with open(ac_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_created",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_list",
+        "items": [{{
+            "provider_adapter_interface_contract_id": "adapter-interface-contract-demo-1",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_shown",
+        "artifact": {{
+            "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "real_provider_adapter_implemented": False,
+            "provider_sdk_imported": False,
+            "http_client_imported": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "trust_upgrade_performed": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_validated",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 1,
+        "failed_checks": 0,
+        "checks": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_replayed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "expected_hash": "demo",
+        "actual_hash": "demo",
+        "checks": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_summary",
+        "run_id": "run-001",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_call_allowed": False,
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_doctor",
+        "run_id": "run-001",
+        "adapter_health": "disabled_adapter_only",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_adapter_not_implemented", "provider_sdk_policy_not_implemented", "credential_loader_not_implemented", "network_policy_not_implemented"],
+        "blocking_reasons": ["real_provider_adapter_missing"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_disabled_smoke_passed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "disabled_adapter_available": True,
+        "send_failed_closed": True,
+        "static_safe_error": True,
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -57271,7 +57720,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -57291,7 +57740,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json", "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]}}], "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json", "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json", "provider_adapter_interface_contracts": [{{"provider_adapter_interface_contract_id": "adapter-interface-contract-demo-1", "adapter_contract_status": "adapter_interface_recorded", "adapter_state": "disabled_adapter_only", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json"}}]}}]}}], "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json", "provider_adapter_interface_contracts": [{{"provider_adapter_interface_contract_id": "adapter-interface-contract-demo-1", "adapter_contract_status": "adapter_interface_recorded", "adapter_state": "disabled_adapter_only", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "WRONGRESPONSEID123",
                     "provider": "deterministic-mock",
@@ -59709,6 +60158,228 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor"
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract":
+    unlock_state_id = ARGS[2] if len(ARGS) > 2 else ""
+    contract_id = "adapter-interface-contract-demo-1"
+    symbol = "ATLAS-DEMO"
+    ac_dir = os.path.join(".", ".atlas", "research", symbol, "provider_adapter_interface_contracts")
+    os.makedirs(ac_dir, exist_ok=True)
+    ac_path = os.path.join(ac_dir, contract_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_adapter_interface_contract",
+        "contract_version": "research_provider_adapter_interface_contract_v1",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_hash": "fakehashforadaptercontractdemo1",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+    }}
+    with open(ac_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_created",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_list",
+        "items": [{{
+            "provider_adapter_interface_contract_id": "adapter-interface-contract-demo-1",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_shown",
+        "artifact": {{
+            "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "real_provider_adapter_implemented": False,
+            "provider_sdk_imported": False,
+            "http_client_imported": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "trust_upgrade_performed": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_validated",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 1,
+        "failed_checks": 0,
+        "checks": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_replayed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "expected_hash": "demo",
+        "actual_hash": "demo",
+        "checks": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_summary",
+        "run_id": "run-001",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_call_allowed": False,
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_doctor",
+        "run_id": "run-001",
+        "adapter_health": "disabled_adapter_only",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_adapter_not_implemented", "provider_sdk_policy_not_implemented", "credential_loader_not_implemented", "network_policy_not_implemented"],
+        "blocking_reasons": ["real_provider_adapter_missing"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_disabled_smoke_passed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "disabled_adapter_available": True,
+        "send_failed_closed": True,
+        "static_safe_error": True,
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -61699,7 +62370,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -61719,7 +62390,7 @@ if ARGS[0] == "research" and ARGS[1] == "timeline":
                 "prompt_packet_id": "demopromptid12345",
                 "created_at": "2026-01-01T00:00:00+00:00",
                 "artifact_path": ".atlas/research/ATLAS-DEMO/prompts/demopromptid12345.json",
-                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json", "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
+                "sandbox_requests": [{{"sandbox_request_id": "demosandboxid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/sandbox_requests/demosandboxid12345.json", "provider_call_plans": [{{"provider_call_plan_id": "demopcpid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_call_plans/demopcpid12345.json", "provider_execution_dry_runs": [{{"provider_execution_dry_run_id": "demodryrunid12345", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_execution_dry_runs/demodryrunid12345.json", "provider_execution_states": [{{"provider_execution_state_id": "stateodryrunid12345", "provider_execution_audit_packets": [{{"provider_execution_audit_packet_id": "auditodryrunid12345", "provider_execution_readiness_reports": [{{"provider_execution_readiness_report_id": "readiness-auditodryrunid12345", "provider_preflight_freezes": [{{"provider_preflight_freeze_id": "freezereadiness-auditodryrunid12345", "provider_opt_in_policies": [{{"provider_opt_in_policy_id": "policyfreezereadiness-auditodryrunid12345", "provider_credential_boundaries": [{{"provider_credential_boundary_id": "demoboundaryid12345", "provider_outbound_payload_previews": [{{"provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345", "source_provider_credential_boundary_id": "demoboundaryid12345", "payload_preview_status": "payload_preview_recorded", "payload_preview_scope": "future_provider_request_preview_only", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_outbound_payload_previews/demopayloadpreviewidaryid12345.json", "provider_response_intake_policies": [{{"provider_response_intake_policy_id": "demointakepolicyidaryid12345", "provider_request_response_pairings": [{{"provider_request_response_pairing_id": "demopairingidaryid12345", "provider_response_schema_contracts": [{{"provider_response_schema_contract_id": "demoschemacontractidaryid12345", "response_schema_status": "response_schema_contract_recorded", "response_schema_state": "schema_recorded_no_response_present", "created_at": "2026-01-01T00:00:00+00:00", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_response_schema_contracts/demoschemacontractidaryid12345.json", "provider_response_review_results": [{{"provider_response_review_result_id": "review-result-001", "review_result_status": "review_result_contract_recorded", "review_result_state": "review_contract_recorded_no_response_present", "review_decision": "no_decision_recorded", "artifact_path": ".atlas/research/DEMO/provider_response_review_results/review-result-001.json", "provider_adapter_interface_contracts": [{{"provider_adapter_interface_contract_id": "adapter-interface-contract-demo-1", "adapter_contract_status": "adapter_interface_recorded", "adapter_state": "disabled_adapter_only", "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json"}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}]}}],
                 "provider_responses": [{{
                     "provider_response_id": "demoimportresponse12345",
                     "provider": "external-local-import",
@@ -64220,6 +64891,228 @@ if ARGS[0] == "research" and ARGS[1] == "provider-execution-unlock-state-doctor"
     }}))
     sys.exit(0)
 
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract":
+    unlock_state_id = ARGS[2] if len(ARGS) > 2 else ""
+    contract_id = "adapter-interface-contract-demo-1"
+    symbol = "ATLAS-DEMO"
+    ac_dir = os.path.join(".", ".atlas", "research", symbol, "provider_adapter_interface_contracts")
+    os.makedirs(ac_dir, exist_ok=True)
+    ac_path = os.path.join(ac_dir, contract_id + ".json")
+    artifact = {{
+        "schema_version": "1",
+        "artifact_type": "provider_adapter_interface_contract",
+        "contract_version": "research_provider_adapter_interface_contract_v1",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "source_provider_credential_boundary_id": "democredentialboundaryid12345",
+        "source_provider_opt_in_policy_id": "demooptinpolicyid12345",
+        "source_provider_preflight_freeze_id": "demofreezeid12345",
+        "source_provider_execution_readiness_report_id": "demoreadinessreportid12345",
+        "source_provider_execution_audit_packet_id": "demoauditpacketid12345",
+        "source_provider_execution_state_id": "demoexecutionstateid12345",
+        "source_provider_execution_dry_run_id": "demodryrunid12345",
+        "source_provider_call_plan_id": "democallplanid12345",
+        "source_sandbox_request_id": "demosandboxrequestid12345",
+        "source_prompt_packet_id": "demopromptpacketid12345",
+        "source_run_id": "demorunid12345",
+        "symbol": symbol,
+        "mode": "paper",
+        "provider_id": "custom-openai-compatible",
+        "model_id": "gpt-4o-mini",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_hash": "fakehashforadaptercontractdemo1",
+        "created_at": "2026-05-21T10:00:00Z",
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+    }}
+    with open(ac_path, "w") as f:
+        json.dump(artifact, f, indent=2, sort_keys=True)
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_created",
+        "provider_adapter_interface_contract_id": contract_id,
+        "source_provider_execution_unlock_state_id": unlock_state_id,
+        "source_provider_response_review_result_id": "review-result-001",
+        "source_provider_response_schema_contract_id": "demoschemacontractid12345",
+        "source_provider_request_response_pairing_id": "demopairingid12345",
+        "source_provider_response_intake_policy_id": "demointakepolicyidaryid12345",
+        "source_provider_outbound_payload_preview_id": "demopayloadpreviewidaryid12345",
+        "adapter_contract_status": "adapter_interface_recorded",
+        "adapter_state": "disabled_adapter_only",
+        "adapter_interface_recorded": True,
+        "disabled_adapter_available": True,
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_execution_unlocked": False,
+        "manual_unlock_granted": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_trusted": False,
+        "trust_upgrade_performed": False,
+        "trading_signal_generated": False,
+        "approval_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-list":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_list",
+        "items": [{{
+            "provider_adapter_interface_contract_id": "adapter-interface-contract-demo-1",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "provider_call_allowed": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        }}],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-show":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_shown",
+        "artifact": {{
+            "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+            "source_provider_execution_unlock_state_id": "unlock-state-001",
+            "symbol": "DEMO-SYMBOL",
+            "adapter_contract_status": "adapter_interface_recorded",
+            "adapter_state": "disabled_adapter_only",
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "real_provider_adapter_implemented": False,
+            "provider_sdk_imported": False,
+            "http_client_imported": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "outbound_request_sent": False,
+            "provider_response_received": False,
+            "provider_response_trusted": False,
+            "trust_upgrade_performed": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_adapter_interface_contracts/adapter-interface-contract-demo-1.json",
+        }},
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_validated",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "valid": True,
+        "passed_checks": 1,
+        "failed_checks": 0,
+        "checks": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_replayed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "match": True,
+        "expected_hash": "demo",
+        "actual_hash": "demo",
+        "checks": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_summary",
+        "run_id": "run-001",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_call_allowed": False,
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-interface-contract-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_interface_contract_doctor",
+        "run_id": "run-001",
+        "adapter_health": "disabled_adapter_only",
+        "adapter_present": False,
+        "adapter_enabled": False,
+        "real_provider_adapter_implemented": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_adapter_not_implemented", "provider_sdk_policy_not_implemented", "credential_loader_not_implemented", "network_policy_not_implemented"],
+        "blocking_reasons": ["real_provider_adapter_missing"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_adapter_disabled_smoke_passed",
+        "provider_adapter_interface_contract_id": ARGS[2] if len(ARGS) > 2 else "",
+        "disabled_adapter_available": True,
+        "send_failed_closed": True,
+        "static_safe_error": True,
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "warnings": [],
+    }}))
+    sys.exit(0)
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)

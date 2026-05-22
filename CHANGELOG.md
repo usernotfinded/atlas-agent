@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev36] - 2026-05-21
+
+### Added
+- Batch 8.9 — Provider Adapter Interface Contract.
+  - `src/atlas_agent/research/provider_adapter_interface_contract.py`: future adapter interface definition with disabled adapter harness.
+  - `ProviderAdapterCapability`: static descriptor with all execution flags false.
+  - `ProviderAdapterRequestPreview`: metadata-only preview with `payload_body_present=false` and `provider_call_allowed=false`.
+  - `ProviderAdapterResponsePlaceholder`: safe placeholder with only `manual_review_required=true`.
+  - `ProviderAdapterDisabledError`: custom exception with static safe message.
+  - `ProviderAdapterProtocol`: typing Protocol for future adapter implementations.
+  - `DisabledProviderAdapter`: concrete harness where `send()` always raises `ProviderAdapterDisabledError`.
+  - `build_provider_adapter_interface_contract_dict()`: deterministic contract artifact with 12 policy substructures.
+  - `create_provider_adapter_interface_contract()`: safe creation from unlock state with validation, lineage, hash, and denylist scanning.
+  - `safe_validate_provider_adapter_interface_contract_data()`: strict validation with hash, lineage, forbidden fragments, and impossible boolean checks.
+  - `validate_provider_adapter_interface_contract_artifact()`: detailed per-check validation.
+  - `replay_provider_adapter_interface_contract()`: deterministic hash replay from source unlock state.
+  - `iter_provider_adapter_interface_contract_artifacts()`: safe listing with invalid sentinels for tampered items.
+  - `summarize_provider_adapter_interface_contract()`: read-only summary without writing artifacts.
+  - `doctor_provider_adapter_interface_contract()`: read-only chain diagnostic.
+  - `run_disabled_adapter_smoke_test()`: exercises disabled harness and confirms fail-closed behavior.
+  - 12 policy substructures: `adapter_capability_summary`, `disabled_adapter_policy`, `request_preview_contract`, `response_placeholder_contract`, `send_method_policy`, `credential_access_policy`, `network_access_policy`, `provider_sdk_policy`, `error_handling_policy`, `side_effect_policy`, `broker_separation_policy`, `future_adapter_requirements`.
+  - 40+ boolean safety flags; only `adapter_interface_recorded=True` and `disabled_adapter_available=True` are ever True.
+  - 8 new CLI commands under `atlas research`.
+  - Session integration: `check_research_artifacts`, `build_research_timeline`, `build_dossier`.
+  - Demo script extended with adapter interface flow.
+  - Comprehensive test suite: 51 tests.
+
 ## [0.5.7.dev35] - 2026-05-21
 
 ### Added

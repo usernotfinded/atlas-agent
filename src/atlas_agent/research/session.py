@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0, "provider_adapter_interface_contracts": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1410,6 +1410,8 @@ def check_research_artifacts(
     provider_response_review_result_data: list[dict[str, Any]] = []
     provider_execution_unlock_state_ids: dict[str, list[str]] = {}
     provider_execution_unlock_state_data: list[dict[str, Any]] = []
+    provider_adapter_interface_contract_ids: dict[str, list[str]] = {}
+    provider_adapter_interface_contract_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1462,6 +1464,7 @@ def check_research_artifacts(
             "provider_request_response_pairing": "provider_request_response_pairing_id",
             "provider_response_review_result": "provider_response_review_result_id",
             "provider_execution_unlock_state": "provider_execution_unlock_state_id",
+            "provider_adapter_interface_contract": "provider_adapter_interface_contract_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1516,6 +1519,8 @@ def check_research_artifacts(
         elif expected_type == "provider_response_review_result" and "provider_response_review_results" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         elif expected_type == "provider_execution_unlock_state" and "provider_execution_unlock_states" not in rel.split("/"):
+            warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
+        elif expected_type == "provider_adapter_interface_contract" and "provider_adapter_interface_contracts" not in rel.split("/"):
             warnings.append({"code": "unexpected_artifact_location", "path": rel, "severity": "warning"})
         # minimal required fields
         if expected_type == "research":
@@ -1826,6 +1831,37 @@ def check_research_artifacts(
                 if data.get(b) is True:
                     issues.append({"code": "provider_execution_unlock_state_impossible_boolean", "path": rel, "severity": "error"})
                     return
+        elif expected_type == "provider_adapter_interface_contract":
+            for f in ("provider_adapter_interface_contract_id", "source_provider_execution_unlock_state_id", "source_provider_response_review_result_id", "source_provider_response_schema_contract_id", "source_provider_request_response_pairing_id", "source_provider_response_intake_policy_id", "source_provider_outbound_payload_preview_id", "symbol", "provider_id", "model_id", "adapter_contract_status", "adapter_state"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_adapter_interface_contract import (
+                safe_validate_provider_adapter_interface_contract_data,
+            )
+            _cleaned, error = safe_validate_provider_adapter_interface_contract_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
+            # Check impossible booleans for adapter interface contract
+            impossible_booleans = [
+                "adapter_present", "adapter_enabled", "real_provider_adapter_implemented",
+                "provider_sdk_imported", "http_client_imported", "network_enabled",
+                "network_call_attempted", "credentials_loaded", "credential_value_present",
+                "credential_lookup_attempted", "env_read_attempted", "dotenv_loaded",
+                "provider_execution_unlocked", "manual_unlock_granted", "provider_call_allowed",
+                "actual_provider_call_made", "outbound_request_sent", "provider_response_received",
+                "provider_response_trusted", "trust_upgrade_performed",
+                "trading_signal_generated", "approval_created", "pending_order_created", "broker_touched",
+            ]
+            for b in impossible_booleans:
+                if data.get(b) is True:
+                    issues.append({"code": "provider_adapter_interface_contract_impossible_boolean", "path": rel, "severity": "error"})
+                    return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -1890,6 +1926,9 @@ def check_research_artifacts(
             elif expected_type == "provider_execution_unlock_state":
                 provider_execution_unlock_state_ids.setdefault(raw_id, []).append(rel)
                 provider_execution_unlock_state_data.append(data)
+            elif expected_type == "provider_adapter_interface_contract":
+                provider_adapter_interface_contract_ids.setdefault(raw_id, []).append(rel)
+                provider_adapter_interface_contract_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -1937,6 +1976,8 @@ def check_research_artifacts(
             counts["provider_response_review_results"] += 1
         elif expected_type == "provider_execution_unlock_state":
             counts["provider_execution_unlock_states"] += 1
+        elif expected_type == "provider_adapter_interface_contract":
+            counts["provider_adapter_interface_contracts"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -2078,6 +2119,12 @@ def check_research_artifacts(
             for path in provider_execution_unlock_states_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_execution_unlock_state", expected_symbol)
+        # Provider adapter interface contracts
+        provider_adapter_interface_contracts_dir = sym_dir / "provider_adapter_interface_contracts"
+        if provider_adapter_interface_contracts_dir.exists():
+            for path in provider_adapter_interface_contracts_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_adapter_interface_contract", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -2169,6 +2216,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for puesid, paths in provider_execution_unlock_state_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for cid, paths in provider_adapter_interface_contract_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -2956,6 +3007,8 @@ def build_research_timeline(
     provider_response_review_result_items = iter_provider_response_review_result_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_execution_unlock_state import iter_provider_execution_unlock_state_artifacts
     provider_execution_unlock_state_items = iter_provider_execution_unlock_state_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.provider_adapter_interface_contract import iter_provider_adapter_interface_contract_artifacts
+    provider_adapter_interface_contract_items = iter_provider_adapter_interface_contract_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -3173,6 +3226,21 @@ def build_research_timeline(
             provider_execution_unlock_states_by_review_result_id.setdefault(src, []).append(pues)
         else:
             warnings.append({"code": "orphan_provider_execution_unlock_state", "path": pues.get("artifact_path", ""), "severity": "warning"})
+
+    provider_adapter_interface_contracts_by_unlock_state_id: dict[str, list[dict[str, Any]]] = {}
+    provider_adapter_interface_contracts_by_review_result_id: dict[str, list[dict[str, Any]]] = {}
+    for paic in provider_adapter_interface_contract_items:
+        if paic.get("_invalid"):
+            warnings.append({"code": "invalid_provider_adapter_interface_contract_skipped", "path": paic.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src_us = paic.get("source_provider_execution_unlock_state_id", "")
+        if src_us:
+            provider_adapter_interface_contracts_by_unlock_state_id.setdefault(src_us, []).append(paic)
+        src_rr = paic.get("source_provider_response_review_result_id", "")
+        if src_rr:
+            provider_adapter_interface_contracts_by_review_result_id.setdefault(src_rr, []).append(paic)
+        if not src_us and not src_rr:
+            warnings.append({"code": "orphan_provider_adapter_interface_contract", "path": paic.get("artifact_path", ""), "severity": "warning"})
 
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
@@ -3774,6 +3842,44 @@ def build_research_timeline(
                                                                             "manual_unlock_granted",
                                                                         ))
                                                                         for unlock_state in provider_execution_unlock_states_by_review_result_id.get(rr_id, [])
+                                                                    ]
+                                                                    review_result["provider_adapter_interface_contracts"] = [
+                                                                        _timeline_summary(contract, (
+                                                                            "provider_adapter_interface_contract_id",
+                                                                            "source_provider_execution_unlock_state_id",
+                                                                            "source_provider_response_review_result_id",
+                                                                            "source_provider_response_schema_contract_id",
+                                                                            "source_provider_request_response_pairing_id",
+                                                                            "source_provider_response_intake_policy_id",
+                                                                            "source_provider_outbound_payload_preview_id",
+                                                                            "symbol",
+                                                                            "artifact_path",
+                                                                            "provider_id",
+                                                                            "model_id",
+                                                                            "created_at",
+                                                                            "adapter_contract_status",
+                                                                            "adapter_state",
+                                                                            "adapter_interface_recorded",
+                                                                            "disabled_adapter_available",
+                                                                            "adapter_present",
+                                                                            "adapter_enabled",
+                                                                            "real_provider_adapter_implemented",
+                                                                            "provider_sdk_imported",
+                                                                            "http_client_imported",
+                                                                            "network_enabled",
+                                                                            "credentials_loaded",
+                                                                            "provider_call_allowed",
+                                                                            "actual_provider_call_made",
+                                                                            "outbound_request_sent",
+                                                                            "provider_response_received",
+                                                                            "provider_response_trusted",
+                                                                            "trust_upgrade_performed",
+                                                                            "trading_signal_generated",
+                                                                            "approval_created",
+                                                                            "pending_order_created",
+                                                                            "broker_touched",
+                                                                        ))
+                                                                        for contract in provider_adapter_interface_contracts_by_review_result_id.get(rr_id, [])
                                                                     ]
                                                                 contract_summaries.append(contract_summary)
                                                             pairing_copy["provider_response_schema_contracts"] = contract_summaries
@@ -5237,6 +5343,11 @@ def build_dossier(
     provider_execution_unlock_state_items = iter_provider_execution_unlock_state_artifacts(workspace_path, symbol=symbol)
     linked_provider_execution_unlock_states = [pues for pues in provider_execution_unlock_state_items if pues.get("source_provider_response_review_result_id") in linked_review_result_ids]
 
+    from atlas_agent.research.provider_adapter_interface_contract import iter_provider_adapter_interface_contract_artifacts
+    provider_adapter_interface_contract_items = iter_provider_adapter_interface_contract_artifacts(workspace_path, symbol=symbol)
+    linked_provider_execution_unlock_state_ids = {pues.get("provider_execution_unlock_state_id", "") for pues in linked_provider_execution_unlock_states}
+    linked_provider_adapter_interface_contracts = [paic for paic in provider_adapter_interface_contract_items if paic.get("source_provider_execution_unlock_state_id") in linked_provider_execution_unlock_state_ids]
+
     # Build workflow status
     workflow_status = {
         "research": True,
@@ -5261,6 +5372,7 @@ def build_dossier(
         "provider_response_schema_contracts": len(linked_provider_response_schema_contracts) > 0,
         "provider_response_review_results": len(linked_provider_response_review_results) > 0,
         "provider_execution_unlock_states": len(linked_provider_execution_unlock_states) > 0,
+        "provider_adapter_interface_contracts": len(linked_provider_adapter_interface_contracts) > 0,
     }
 
     artifact_counts = {
@@ -5286,6 +5398,7 @@ def build_dossier(
         "provider_response_schema_contracts": len(linked_provider_response_schema_contracts),
         "provider_response_review_results": len(linked_provider_response_review_results),
         "provider_execution_unlock_states": len(linked_provider_execution_unlock_states),
+        "provider_adapter_interface_contracts": len(linked_provider_adapter_interface_contracts),
     }
 
     # Build linked_artifacts with relative paths only
@@ -5471,6 +5584,16 @@ def build_dossier(
             "provider_id": pues.get("provider_id", ""),
             "model_id": pues.get("model_id", ""),
         })
+    for paic in linked_provider_adapter_interface_contracts:
+        linked_artifacts.append({
+            "type": "provider_adapter_interface_contract",
+            "id": paic.get("provider_adapter_interface_contract_id", ""),
+            "artifact_path": paic.get("artifact_path", ""),
+            "adapter_contract_status": paic.get("adapter_contract_status", ""),
+            "adapter_state": paic.get("adapter_state", ""),
+            "provider_id": paic.get("provider_id", ""),
+            "model_id": paic.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -5616,6 +5739,17 @@ def build_dossier(
             "provider_execution_unlocked": False,
             "provider_call_allowed": False,
             "manual_unlock_granted": False,
+        }
+    if linked_provider_adapter_interface_contracts:
+        summaries["provider_adapter_interface_contract"] = {
+            "contract_count": len(linked_provider_adapter_interface_contracts),
+            "adapter_contract_statuses": [paic.get("adapter_contract_status", "") for paic in linked_provider_adapter_interface_contracts],
+            "adapter_states": [paic.get("adapter_state", "") for paic in linked_provider_adapter_interface_contracts],
+            "provider_ids": [paic.get("provider_id", "") for paic in linked_provider_adapter_interface_contracts],
+            "model_ids": [paic.get("model_id", "") for paic in linked_provider_adapter_interface_contracts],
+            "adapter_present": False,
+            "adapter_enabled": False,
+            "real_provider_adapter_implemented": False,
         }
 
     # Safety summary
