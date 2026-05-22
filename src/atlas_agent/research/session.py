@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0, "provider_adapter_interface_contracts": 0, "provider_mock_response_simulations": 0, "provider_mock_response_import_candidates": 0, "provider_mock_response_review_sandboxes": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0, "provider_adapter_interface_contracts": 0, "provider_mock_response_simulations": 0, "provider_mock_response_import_candidates": 0, "provider_mock_response_review_sandboxes": 0, "provider_mock_response_trust_decision_blockers": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1418,6 +1418,8 @@ def check_research_artifacts(
     provider_mock_response_import_candidate_data: list[dict[str, Any]] = []
     provider_mock_response_review_sandbox_ids: dict[str, list[str]] = {}
     provider_mock_response_review_sandbox_data: list[dict[str, Any]] = []
+    provider_mock_response_trust_decision_blocker_ids: dict[str, list[str]] = {}
+    provider_mock_response_trust_decision_blocker_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1967,12 +1969,49 @@ def check_research_artifacts(
                 "credential_value_present", "credential_lookup_attempted", "env_read_attempted",
                 "dotenv_loaded", "provider_execution_unlocked", "manual_unlock_granted",
                 "provider_call_allowed", "actual_provider_call_made", "outbound_request_sent",
-                "trust_upgrade_performed", "trading_signal_generated", "approval_created",
-                "pending_order_created", "broker_touched",
             ]
             for b in impossible_booleans:
                 if data.get(b) is True:
                     issues.append({"code": "provider_mock_response_review_sandbox_impossible_boolean", "path": rel, "severity": "error"})
+                    return
+        elif expected_type == "provider_mock_response_trust_decision_blocker":
+            for f in ("provider_mock_response_trust_decision_blocker_id", "source_provider_mock_response_review_sandbox_id", "symbol", "provider_id", "model_id", "trust_decision_blocker_status", "trust_decision_blocker_state"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import (
+                safe_validate_provider_mock_response_trust_decision_blocker_data,
+            )
+            _cleaned, error = safe_validate_provider_mock_response_trust_decision_blocker_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
+            # Check impossible booleans for mock response trust decision blocker
+            impossible_booleans = [
+                "trust_decision_present", "trust_decision_granted", "trust_decision_denied",
+                "trust_upgrade_available", "trust_upgrade_performed",
+                "real_provider_response_reviewed", "real_provider_response_imported", "real_provider_response_received",
+                "provider_response_received", "provider_response_imported", "provider_response_reviewed",
+                "provider_response_trusted", "mock_response_trusted", "review_result_present",
+                "manual_review_gate_open", "manual_review_completed", "review_decision_allows_use",
+                "review_decision_allows_trust_upgrade", "review_decision_allows_trading_interpretation",
+                "review_decision_allows_order_creation", "review_decision_allows_order_approval",
+                "review_decision_allows_broker_call", "future_response_schema_validated",
+                "raw_response_body_stored", "raw_request_body_stored", "raw_prompt_body_stored",
+                "raw_review_notes_stored", "provider_sdk_imported", "http_client_imported",
+                "network_enabled", "network_call_attempted", "credentials_loaded",
+                "credential_value_present", "credential_lookup_attempted", "env_read_attempted",
+                "dotenv_loaded", "provider_execution_unlocked", "manual_unlock_granted",
+                "provider_call_allowed", "actual_provider_call_made", "outbound_request_sent",
+                "trading_signal_generated", "approval_created", "pending_order_created", "broker_touched",
+            ]
+            for b in impossible_booleans:
+                if data.get(b) is True:
+                    issues.append({"code": "provider_mock_response_trust_decision_blocker_impossible_boolean", "path": rel, "severity": "error"})
                     return
         # Track ID for duplicate detection
         if id_field:
@@ -2050,6 +2089,9 @@ def check_research_artifacts(
             elif expected_type == "provider_mock_response_review_sandbox":
                 provider_mock_response_review_sandbox_ids.setdefault(raw_id, []).append(rel)
                 provider_mock_response_review_sandbox_data.append(data)
+            elif expected_type == "provider_mock_response_trust_decision_blocker":
+                provider_mock_response_trust_decision_blocker_ids.setdefault(raw_id, []).append(rel)
+                provider_mock_response_trust_decision_blocker_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -2105,6 +2147,8 @@ def check_research_artifacts(
             counts["provider_mock_response_import_candidates"] += 1
         elif expected_type == "provider_mock_response_review_sandbox":
             counts["provider_mock_response_review_sandboxes"] += 1
+        elif expected_type == "provider_mock_response_trust_decision_blocker":
+            counts["provider_mock_response_trust_decision_blockers"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -2270,6 +2314,12 @@ def check_research_artifacts(
             for path in provider_mock_response_review_sandboxes_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_mock_response_review_sandbox", expected_symbol)
+        # Provider mock response trust decision blockers
+        provider_mock_response_trust_decision_blockers_dir = sym_dir / "provider_mock_response_trust_decision_blockers"
+        if provider_mock_response_trust_decision_blockers_dir.exists():
+            for path in provider_mock_response_trust_decision_blockers_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_mock_response_trust_decision_blocker", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -2377,6 +2427,10 @@ def check_research_artifacts(
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
     for pmrsbid, paths in provider_mock_response_review_sandbox_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pmtbid, paths in provider_mock_response_trust_decision_blocker_ids.items():
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
@@ -3544,6 +3598,20 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_mock_response_review_sandbox", "path": pmrsb.get("artifact_path", ""), "severity": "warning"})
 
+    from atlas_agent.research.provider_mock_response_trust_decision_blocker import iter_provider_mock_response_trust_decision_blocker_artifacts
+    provider_mock_response_trust_decision_blocker_items = iter_provider_mock_response_trust_decision_blocker_artifacts(workspace_path, symbol=symbol_filter)
+
+    provider_mock_response_trust_decision_blockers_by_review_sandbox_id: dict[str, list[dict[str, Any]]] = {}
+    for pmtb in provider_mock_response_trust_decision_blocker_items:
+        if pmtb.get("_invalid"):
+            warnings.append({"code": "invalid_provider_mock_response_trust_decision_blocker_skipped", "path": pmtb.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src_rs = pmtb.get("source_provider_mock_response_review_sandbox_id", "")
+        if src_rs:
+            provider_mock_response_trust_decision_blockers_by_review_sandbox_id.setdefault(src_rs, []).append(pmtb)
+        else:
+            warnings.append({"code": "orphan_provider_mock_response_trust_decision_blocker", "path": pmtb.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -4236,8 +4304,9 @@ def build_research_timeline(
                                                                         ]
                                                                         for pmrc in contract_copy["provider_mock_response_import_candidates"]:
                                                                             pmrc_id = pmrc.get("provider_mock_response_import_candidate_id", "")
-                                                                            pmrc["provider_mock_response_review_sandboxes"] = [
-                                                                                _timeline_summary(pmrsb, (
+                                                                            pmrc["provider_mock_response_review_sandboxes"] = []
+                                                                            for pmrsb in provider_mock_response_review_sandboxes_by_import_candidate_id.get(pmrc_id, []):
+                                                                                rsb_summary = _timeline_summary(pmrsb, (
                                                                                     "provider_mock_response_review_sandbox_id",
                                                                                     "source_provider_mock_response_import_candidate_id",
                                                                                     "source_run_id",
@@ -4260,8 +4329,36 @@ def build_research_timeline(
                                                                                     "provider_call_allowed",
                                                                                     "broker_touched",
                                                                                 ))
-                                                                                for pmrsb in provider_mock_response_review_sandboxes_by_import_candidate_id.get(pmrc_id, [])
-                                                                            ]
+                                                                                rsb_id = rsb_summary.get("provider_mock_response_review_sandbox_id", "")
+                                                                                rsb_summary["provider_mock_response_trust_decision_blockers"] = [
+                                                                                    _timeline_summary(pmtb, (
+                                                                                        "provider_mock_response_trust_decision_blocker_id",
+                                                                                        "source_provider_mock_response_review_sandbox_id",
+                                                                                        "source_run_id",
+                                                                                        "symbol",
+                                                                                        "artifact_path",
+                                                                                        "provider_id",
+                                                                                        "model_id",
+                                                                                        "created_at",
+                                                                                        "trust_decision_blocker_status",
+                                                                                        "trust_decision_blocker_scope",
+                                                                                        "trust_decision_blocker_state",
+                                                                                        "trust_decision_blocker_recorded",
+                                                                                        "trust_source_verified",
+                                                                                        "trust_blocker_active",
+                                                                                        "trust_decision_required",
+                                                                                        "trust_decision_present",
+                                                                                        "trust_decision_granted",
+                                                                                        "trust_decision_explicitly_blocked",
+                                                                                        "trust_upgrade_performed",
+                                                                                        "provider_response_trusted",
+                                                                                        "mock_response_trusted",
+                                                                                        "provider_call_allowed",
+                                                                                        "broker_touched",
+                                                                                    ))
+                                                                                    for pmtb in provider_mock_response_trust_decision_blockers_by_review_sandbox_id.get(rsb_id, [])
+                                                                                ]
+                                                                                pmrc["provider_mock_response_review_sandboxes"].append(rsb_summary)
                                                                         review_result["provider_adapter_interface_contracts"].append(contract_copy)
                                                                 contract_summaries.append(contract_summary)
                                                             pairing_copy["provider_response_schema_contracts"] = contract_summaries
@@ -5744,6 +5841,11 @@ def build_dossier(
     from atlas_agent.research.provider_mock_response_review_sandbox import iter_provider_mock_response_review_sandbox_artifacts
     provider_mock_response_review_sandbox_items = iter_provider_mock_response_review_sandbox_artifacts(workspace_path, symbol=symbol)
     linked_provider_mock_response_review_sandboxes = [pmrsb for pmrsb in provider_mock_response_review_sandbox_items if pmrsb.get("source_provider_mock_response_import_candidate_id") in linked_provider_mock_response_import_candidate_ids]
+    linked_provider_mock_response_review_sandbox_ids = {pmrsb.get("provider_mock_response_review_sandbox_id", "") for pmrsb in linked_provider_mock_response_review_sandboxes}
+
+    from atlas_agent.research.provider_mock_response_trust_decision_blocker import iter_provider_mock_response_trust_decision_blocker_artifacts
+    provider_mock_response_trust_decision_blocker_items = iter_provider_mock_response_trust_decision_blocker_artifacts(workspace_path, symbol=symbol)
+    linked_provider_mock_response_trust_decision_blockers = [pmtb for pmtb in provider_mock_response_trust_decision_blocker_items if pmtb.get("source_provider_mock_response_review_sandbox_id") in linked_provider_mock_response_review_sandbox_ids]
 
     # Build workflow status
     workflow_status = {
@@ -5773,6 +5875,7 @@ def build_dossier(
         "provider_mock_response_simulations": len(linked_provider_mock_response_simulations) > 0,
         "provider_mock_response_import_candidates": len(linked_provider_mock_response_import_candidates) > 0,
         "provider_mock_response_review_sandboxes": len(linked_provider_mock_response_review_sandboxes) > 0,
+        "provider_mock_response_trust_decision_blockers": len(linked_provider_mock_response_trust_decision_blockers) > 0,
     }
 
     artifact_counts = {
@@ -5802,6 +5905,7 @@ def build_dossier(
         "provider_mock_response_simulations": len(linked_provider_mock_response_simulations),
         "provider_mock_response_import_candidates": len(linked_provider_mock_response_import_candidates),
         "provider_mock_response_review_sandboxes": len(linked_provider_mock_response_review_sandboxes),
+        "provider_mock_response_trust_decision_blockers": len(linked_provider_mock_response_trust_decision_blockers),
     }
 
     # Build linked_artifacts with relative paths only
@@ -6027,6 +6131,16 @@ def build_dossier(
             "provider_id": pmrsb.get("provider_id", ""),
             "model_id": pmrsb.get("model_id", ""),
         })
+    for pmtb in linked_provider_mock_response_trust_decision_blockers:
+        linked_artifacts.append({
+            "type": "provider_mock_response_trust_decision_blocker",
+            "id": pmtb.get("provider_mock_response_trust_decision_blocker_id", ""),
+            "artifact_path": pmtb.get("artifact_path", ""),
+            "trust_decision_blocker_status": pmtb.get("trust_decision_blocker_status", ""),
+            "trust_decision_blocker_state": pmtb.get("trust_decision_blocker_state", ""),
+            "provider_id": pmtb.get("provider_id", ""),
+            "model_id": pmtb.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -6215,6 +6329,26 @@ def build_dossier(
             "provider_call_allowed": False,
             "broker_touched": False,
         }
+    if linked_provider_mock_response_trust_decision_blockers:
+        summaries["provider_mock_response_trust_decision_blocker"] = {
+            "blocker_count": len(linked_provider_mock_response_trust_decision_blockers),
+            "trust_decision_blocker_statuses": [pmtb.get("trust_decision_blocker_status", "") for pmtb in linked_provider_mock_response_trust_decision_blockers],
+            "trust_decision_blocker_states": [pmtb.get("trust_decision_blocker_state", "") for pmtb in linked_provider_mock_response_trust_decision_blockers],
+            "provider_ids": [pmtb.get("provider_id", "") for pmtb in linked_provider_mock_response_trust_decision_blockers],
+            "model_ids": [pmtb.get("model_id", "") for pmtb in linked_provider_mock_response_trust_decision_blockers],
+            "trust_decision_blocker_recorded": True,
+            "trust_blocker_active": True,
+            "mock_only": True,
+            "sandbox_only": True,
+            "trust_decision_present": False,
+            "trust_decision_granted": False,
+            "trust_decision_explicitly_blocked": True,
+            "trust_upgrade_performed": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "provider_call_allowed": False,
+            "broker_touched": False,
+        }
 
     # Safety summary
     safety_summary = {
@@ -6260,6 +6394,8 @@ def build_dossier(
         missing_links.append("no_provider_mock_response_simulation")
     if not linked_provider_mock_response_review_sandboxes:
         missing_links.append("no_provider_mock_response_review_sandbox")
+    if not linked_provider_mock_response_trust_decision_blockers:
+        missing_links.append("no_provider_mock_response_trust_decision_blocker")
 
     warnings: list[str] = []
     if missing_links:

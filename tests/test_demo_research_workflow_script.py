@@ -295,7 +295,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
                 mock_import_count += 1
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count, "provider_mock_response_simulations": mock_sim_count, "provider_mock_response_import_candidates": mock_import_count, "provider_mock_response_review_sandboxes": 1},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count, "provider_mock_response_simulations": mock_sim_count, "provider_mock_response_import_candidates": mock_import_count, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -3593,6 +3593,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -5733,6 +5863,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -7737,6 +7997,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -7844,7 +8234,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return unsafe absolute path in output
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [{{"code": "unsafe_path", "path": "/Users/natan/secret.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -9753,6 +10143,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -9860,7 +10380,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return ok=false
     print(json.dumps({{
         "ok": False, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [{{"code": "malformed_json", "path": ".atlas/research/X/bad.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -11769,6 +12289,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -11880,7 +12530,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         json.dump({{}}, f)
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -13788,6 +14438,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -13894,7 +14674,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -15815,6 +16595,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -15921,7 +16831,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -17837,6 +18747,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -17943,7 +18983,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -19859,6 +20899,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -19965,7 +21135,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -21895,6 +23065,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -22001,7 +23301,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -23925,6 +25225,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -24031,7 +25461,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -25955,6 +27385,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -26061,7 +27621,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -27977,6 +29537,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -28083,7 +29773,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -30028,6 +31718,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -30134,7 +31954,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -32067,6 +33887,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -32173,7 +34123,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -34112,6 +36062,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -34218,7 +36298,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -36162,6 +38242,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -36268,7 +38478,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -38216,6 +40426,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -38322,7 +40662,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -40265,6 +42605,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -40371,7 +42841,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -42314,6 +44784,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -42420,7 +45020,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -44363,6 +46963,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -44468,7 +47198,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -46411,6 +49141,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -46516,7 +49376,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -48455,6 +51315,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -48561,7 +51551,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -50515,6 +53505,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -50626,7 +53746,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -52575,6 +55695,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -52681,7 +55931,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -54656,6 +57906,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -54762,7 +58142,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -56870,6 +60250,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -56981,7 +60491,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -59081,6 +62591,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -59187,7 +62827,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -61300,6 +64940,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -61427,7 +65197,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -64538,6 +68308,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -64644,7 +68544,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -67635,6 +71535,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -67741,7 +71771,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -69743,6 +73773,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
@@ -69849,7 +74009,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -72924,6 +77084,136 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-d
         "warnings": [],
     }}))
     sys.exit(0)
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_created",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "source_provider_mock_response_review_sandbox_id": ARGS[2],
+        "source_provider_mock_response_import_candidate_id": "mock-import-" + ARGS[2],
+        "source_provider_mock_response_simulation_id": "mock-sim-" + ARGS[2],
+        "source_provider_adapter_interface_contract_id": "adapter-contract-" + ARGS[2],
+        "source_provider_execution_unlock_state_id": "unlock-state-" + ARGS[2],
+        "source_provider_response_review_result_id": "review-result-" + ARGS[2],
+        "source_provider_response_schema_contract_id": "schema-contract-" + ARGS[2],
+        "source_provider_request_response_pairing_id": "pairing-" + ARGS[2],
+        "source_provider_response_intake_policy_id": "intake-policy-" + ARGS[2],
+        "source_provider_outbound_payload_preview_id": "payload-preview-" + ARGS[2],
+        "provider_id": "mock",
+        "trust_decision_blocker_recorded": True,
+        "trust_source_verified": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_denied": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_available": False,
+        "trust_upgrade_performed": False,
+        "mock_only": True,
+        "sandbox_only": True,
+        "real_provider_response_reviewed": False,
+        "real_provider_response_imported": False,
+        "real_provider_response_received": False,
+        "provider_response_received": False,
+        "provider_response_imported": False,
+        "provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "review_result_present": False,
+        "manual_review_gate_open": False,
+        "manual_review_completed": False,
+        "review_decision_allows_use": False,
+        "review_decision_allows_trust_upgrade": False,
+        "review_decision_allows_trading_interpretation": False,
+        "review_decision_allows_order_creation": False,
+        "review_decision_allows_order_approval": False,
+        "review_decision_allows_broker_call": False,
+        "raw_response_body_stored": False,
+        "raw_request_body_stored": False,
+        "raw_prompt_body_stored": False,
+        "raw_review_notes_stored": False,
+        "provider_sdk_imported": False,
+        "http_client_imported": False,
+        "network_enabled": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "credential_lookup_attempted": False,
+        "env_read_attempted": False,
+        "dotenv_loaded": False,
+        "provider_call_allowed": False,
+        "actual_provider_call_made": False,
+        "outbound_request_sent": False,
+        "trading_signal_generated": False,
+        "approval_created": False,
+        "pending_order_created": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/trust-blocker-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_trust_decision_blockers/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_trust_decision_blocker_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_trust_decision_blocker_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_summary",
+        "provider_mock_response_trust_decision_blocker_id": "trust-blocker-" + ARGS[2],
+        "trust_decision_blocker_status": "trust_decision_blocker_recorded",
+        "trust_decision_blocker_state": "trust_decision_blocked_untrusted",
+        "trust_decision_blocker_recorded": True,
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-blocker-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_trust_decision_blocker_doctor",
+        "run_id": ARGS[2],
+        "trust_health": "trust_decision_blocked_untrusted",
+        "trust_blocker_active": True,
+        "trust_decision_required": True,
+        "trust_decision_present": False,
+        "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True,
+        "trust_upgrade_performed": False,
+        "provider_response_trusted": False,
+        "mock_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 
 print("Unknown command", file=sys.stderr)
 sys.exit(1)

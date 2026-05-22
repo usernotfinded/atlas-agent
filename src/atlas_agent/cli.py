@@ -1546,6 +1546,65 @@ Safety First:
     research_provider_mock_response_review_sandbox_doctor.add_argument("run_id", help="Run ID.")
     research_provider_mock_response_review_sandbox_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_mock_response_trust_decision_blocker = research_sub.add_parser(
+        "provider-mock-response-trust-decision-blocker",
+        help="Create a provider mock response trust decision blocker from a review sandbox. Configless.",
+        description="Create a provider mock response trust decision blocker artifact from an existing provider mock response review sandbox. Configless. Does not create trust decisions, upgrade trust, grant approvals, call providers, read API keys, perform network requests, submit orders, or authorize live trading.",
+    )
+    research_provider_mock_response_trust_decision_blocker.add_argument("review_sandbox_id", help="Source provider mock response review sandbox ID.")
+    research_provider_mock_response_trust_decision_blocker.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_trust_decision_blocker_list = research_sub.add_parser(
+        "provider-mock-response-trust-decision-blocker-list",
+        help="List provider mock response trust decision blocker artifacts. Configless.",
+        description="List provider mock response trust decision blocker artifacts. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_trust_decision_blocker_list.add_argument("--symbol", default=None, help="Filter by symbol.")
+    research_provider_mock_response_trust_decision_blocker_list.add_argument("--limit", type=int, default=20, help="Limit results. Default 20, max 100.")
+    research_provider_mock_response_trust_decision_blocker_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_trust_decision_blocker_show = research_sub.add_parser(
+        "provider-mock-response-trust-decision-blocker-show",
+        help="Show a provider mock response trust decision blocker artifact. Configless.",
+        description="Show a provider mock response trust decision blocker artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_trust_decision_blocker_show.add_argument("blocker_id", help="Provider mock response trust decision blocker ID.")
+    research_provider_mock_response_trust_decision_blocker_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_trust_decision_blocker_validate = research_sub.add_parser(
+        "provider-mock-response-trust-decision-blocker-validate",
+        help="Validate a provider mock response trust decision blocker artifact. Configless.",
+        description="Validate a provider mock response trust decision blocker artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_trust_decision_blocker_validate.add_argument("blocker_id", help="Provider mock response trust decision blocker ID.")
+    research_provider_mock_response_trust_decision_blocker_validate.add_argument("--strict", action="store_true", help="Exit non-zero on any failed check.")
+    research_provider_mock_response_trust_decision_blocker_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_trust_decision_blocker_replay = research_sub.add_parser(
+        "provider-mock-response-trust-decision-blocker-replay",
+        help="Replay a provider mock response trust decision blocker artifact. Configless.",
+        description="Replay a provider mock response trust decision blocker artifact deterministically. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_trust_decision_blocker_replay.add_argument("blocker_id", help="Provider mock response trust decision blocker ID.")
+    research_provider_mock_response_trust_decision_blocker_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay hash does not match.")
+    research_provider_mock_response_trust_decision_blocker_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_trust_decision_blocker_summary = research_sub.add_parser(
+        "provider-mock-response-trust-decision-blocker-summary",
+        help="Summarize the latest provider mock response trust decision blocker for a run. Configless.",
+        description="Summarize the latest provider mock response trust decision blocker for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_trust_decision_blocker_summary.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_trust_decision_blocker_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_trust_decision_blocker_doctor = research_sub.add_parser(
+        "provider-mock-response-trust-decision-blocker-doctor",
+        help="Diagnose provider mock response trust decision blocker readiness for a run. Configless.",
+        description="Diagnose provider mock response trust decision blocker readiness for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_trust_decision_blocker_doctor.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_trust_decision_blocker_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -3453,6 +3512,13 @@ def main(argv: list[str] | None = None) -> int:
         "provider-mock-response-review-sandbox-replay",
         "provider-mock-response-review-sandbox-summary",
         "provider-mock-response-review-sandbox-doctor",
+        "provider-mock-response-trust-decision-blocker",
+        "provider-mock-response-trust-decision-blocker-list",
+        "provider-mock-response-trust-decision-blocker-show",
+        "provider-mock-response-trust-decision-blocker-validate",
+        "provider-mock-response-trust-decision-blocker-replay",
+        "provider-mock-response-trust-decision-blocker-summary",
+        "provider-mock-response-trust-decision-blocker-doctor",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -12699,6 +12765,345 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Sandbox review only: {result.get('sandbox_review_only', False)}")
             print(f"  Real provider response reviewed: {result.get('real_provider_response_reviewed', False)}")
             print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+            if result.get("missing_prerequisites"):
+                print(f"  Missing prerequisites: {', '.join(result['missing_prerequisites'])}")
+            if result.get("blocking_reasons"):
+                print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
+            if result.get("warnings"):
+                for w in result["warnings"]:
+                    print(f"  Warning: {w}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-trust-decision-blocker":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import create_provider_mock_response_trust_decision_blocker
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-trust-decision-blocker skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.review_sandbox_id)
+            result = create_provider_mock_response_trust_decision_blocker(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Provider mock response trust decision blocker created")
+            print(f"  ID: {result.get('provider_mock_response_trust_decision_blocker_id', '')}")
+            print(f"  Source review sandbox: {result.get('source_provider_mock_response_review_sandbox_id', '')}")
+            print(f"  Provider ID: {result.get('provider_id', '')}")
+            print(f"  Trust blocker active: {result.get('trust_blocker_active', False)}")
+            print(f"  Trust decision granted: {result.get('trust_decision_granted', False)}")
+            print(f"  Trust decision explicitly blocked: {result.get('trust_decision_explicitly_blocked', False)}")
+            print(f"  Trust upgrade performed: {result.get('trust_upgrade_performed', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+            print(f"  Warnings: {len(result.get('warnings', []))}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-trust-decision-blocker-list":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import iter_provider_mock_response_trust_decision_blocker_artifacts
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-trust-decision-blocker-list skipped safely: no workspace found")
+                return 1
+
+            items = iter_provider_mock_response_trust_decision_blocker_artifacts(ws, symbol=args.symbol)
+            limit = max(1, min(args.limit, 100))
+            items = items[:limit]
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-list", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps({"ok": True, "status": "provider_mock_response_trust_decision_blockers_listed", "items": items}, indent=2, sort_keys=True))
+        else:
+            print("Provider mock response trust decision blockers:")
+            for item in items:
+                if item.get("_invalid"):
+                    print(f"  [INVALID] {item.get('provider_mock_response_trust_decision_blocker_id', '')} — {item.get('error_code', '')}")
+                else:
+                    print(f"  {item.get('provider_mock_response_trust_decision_blocker_id', '')} {item.get('symbol', '')} {item.get('trust_decision_blocker_status', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-trust-decision-blocker-show":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import (
+                find_provider_mock_response_trust_decision_blocker_by_id,
+                load_provider_mock_response_trust_decision_blocker,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-trust-decision-blocker-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.blocker_id)
+            artifact_path = find_provider_mock_response_trust_decision_blocker_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "blocker_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Provider mock response trust decision blocker not found.")
+                return 1
+            data = load_provider_mock_response_trust_decision_blocker(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-show", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(data, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response trust decision blocker {safe_id}:")
+            print(f"  Symbol: {data.get('symbol', '')}")
+            print(f"  Provider ID: {data.get('provider_id', '')}")
+            print(f"  Status: {data.get('trust_decision_blocker_status', '')}")
+            print(f"  State: {data.get('trust_decision_blocker_state', '')}")
+            print(f"  Artifact: {data.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-trust-decision-blocker-validate":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import (
+                find_provider_mock_response_trust_decision_blocker_by_id,
+                validate_provider_mock_response_trust_decision_blocker_artifact,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-trust-decision-blocker-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.blocker_id)
+            artifact_path = find_provider_mock_response_trust_decision_blocker_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "blocker_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Provider mock response trust decision blocker not found.")
+                return 1
+            result = validate_provider_mock_response_trust_decision_blocker_artifact(artifact_path, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-validate", "research command failed")
+            return 1
+        payload = {
+            "ok": True,
+            "valid": result.valid,
+            "passed_checks": result.passed_checks,
+            "failed_checks": result.failed_checks,
+            "checks": result.checks,
+            "recommendation": result.recommendation,
+            "warnings": result.warnings,
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Validation: {'PASS' if result.valid else 'FAIL'}")
+            print(f"  Passed: {result.passed_checks}")
+            print(f"  Failed: {result.failed_checks}")
+            print(f"  Recommendation: {result.recommendation}")
+            for check in result.checks:
+                status_str = "PASS" if check["passed"] else "FAIL"
+                print(f"  [{status_str}] {check['name']}: {check['message']}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-trust-decision-blocker-replay":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import replay_provider_mock_response_trust_decision_blocker
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-trust-decision-blocker-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.blocker_id)
+            result = replay_provider_mock_response_trust_decision_blocker(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-replay", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Replay: {'MATCH' if result.get('match') else 'MISMATCH'}")
+            print(f"  Original hash: {result.get('original_hash', '')}")
+            print(f"  Replayed hash: {result.get('replayed_hash', '')}")
+        if args.strict and not result.get("match"):
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-trust-decision-blocker-summary":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import summarize_provider_mock_response_trust_decision_blocker
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-trust-decision-blocker-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_mock_response_trust_decision_blocker(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-summary", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response trust decision blocker summary for run {safe_id}:")
+            print(f"  Blocker ID: {result.get('provider_mock_response_trust_decision_blocker_id', 'None')}")
+            print(f"  Status: {result.get('trust_decision_blocker_status', '')}")
+            print(f"  State: {result.get('trust_decision_blocker_state', '')}")
+            print(f"  Trust blocker active: {result.get('trust_blocker_active', False)}")
+            print(f"  Trust decision present: {result.get('trust_decision_present', False)}")
+            print(f"  Trust decision granted: {result.get('trust_decision_granted', False)}")
+            print(f"  Trust decision explicitly blocked: {result.get('trust_decision_explicitly_blocked', False)}")
+            print(f"  Trust upgrade performed: {result.get('trust_upgrade_performed', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-trust-decision-blocker-doctor":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_trust_decision_blocker import doctor_provider_mock_response_trust_decision_blocker
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-trust-decision-blocker-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = doctor_provider_mock_response_trust_decision_blocker(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-trust-decision-blocker-doctor", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response trust decision blocker doctor for run {safe_id}:")
+            print(f"  Health: {result.get('trust_health', '')}")
+            print(f"  Trust blocker active: {result.get('trust_blocker_active', False)}")
+            print(f"  Trust decision present: {result.get('trust_decision_present', False)}")
+            print(f"  Trust decision granted: {result.get('trust_decision_granted', False)}")
+            print(f"  Trust decision explicitly blocked: {result.get('trust_decision_explicitly_blocked', False)}")
+            print(f"  Trust upgrade performed: {result.get('trust_upgrade_performed', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")
             print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
             print(f"  Broker touched: {result.get('broker_touched', False)}")
             if result.get("missing_prerequisites"):

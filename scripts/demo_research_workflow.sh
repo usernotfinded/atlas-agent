@@ -3602,6 +3602,147 @@ if [ "$CHECK_MOCK_REVIEW_COUNT" -lt 1 ]; then
 fi
 assert_no_pending_orders
 
+# 85.33. Research provider-mock-response-trust-decision-blocker
+printf '\n--- Research provider-mock-response-trust-decision-blocker ---\n'
+TRUST_BLOCKER_OUTPUT="$(atlas research provider-mock-response-trust-decision-blocker "$MOCK_REVIEW_ID" --json)"
+assert_no_absolute_paths "$TRUST_BLOCKER_OUTPUT"
+assert_no_secrets_in_output "$TRUST_BLOCKER_OUTPUT"
+assert_no_forbidden_fragments "$TRUST_BLOCKER_OUTPUT" "provider-mock-response-trust-decision-blocker CLI output"
+assert_ok "$TRUST_BLOCKER_OUTPUT" "research provider-mock-response-trust-decision-blocker"
+TRUST_BLOCKER_STATUS="$(json_field "$TRUST_BLOCKER_OUTPUT" status)"
+if [ "$TRUST_BLOCKER_STATUS" != "research_provider_mock_response_trust_decision_blocker_created" ]; then
+  printf 'FAIL: unexpected trust blocker status: %s\n' "$TRUST_BLOCKER_STATUS" >&2
+  exit 1
+fi
+TRUST_BLOCKER_ID="$(json_field "$TRUST_BLOCKER_OUTPUT" provider_mock_response_trust_decision_blocker_id)"
+if [ -z "$TRUST_BLOCKER_ID" ]; then
+  printf 'FAIL: provider_mock_response_trust_decision_blocker_id is empty\n' >&2
+  exit 1
+fi
+TRUST_BLOCKER_PROVIDER_ID="$(json_field "$TRUST_BLOCKER_OUTPUT" provider_id)"
+if [ "$TRUST_BLOCKER_PROVIDER_ID" != "mock" ]; then
+  printf 'FAIL: trust blocker provider_id is not mock: %s\n' "$TRUST_BLOCKER_PROVIDER_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.34. Research provider-mock-response-trust-decision-blocker-list
+printf '\n--- Research provider-mock-response-trust-decision-blocker-list ---\n'
+TRUST_BLOCKER_LIST_OUTPUT="$(atlas research provider-mock-response-trust-decision-blocker-list --json)"
+assert_no_forbidden_fragments "$TRUST_BLOCKER_LIST_OUTPUT" "provider-mock-response-trust-decision-blocker-list CLI output"
+assert_ok "$TRUST_BLOCKER_LIST_OUTPUT" "research provider-mock-response-trust-decision-blocker-list"
+assert_no_pending_orders
+
+# 85.35. Research provider-mock-response-trust-decision-blocker-show
+printf '\n--- Research provider-mock-response-trust-decision-blocker-show ---\n'
+TRUST_BLOCKER_SHOW_OUTPUT="$(atlas research provider-mock-response-trust-decision-blocker-show "$TRUST_BLOCKER_ID" --json)"
+assert_no_forbidden_fragments "$TRUST_BLOCKER_SHOW_OUTPUT" "provider-mock-response-trust-decision-blocker-show CLI output"
+TRUST_BLOCKER_SHOW_ID="$(json_field "$TRUST_BLOCKER_SHOW_OUTPUT" provider_mock_response_trust_decision_blocker_id)"
+if [ "$TRUST_BLOCKER_SHOW_ID" != "$TRUST_BLOCKER_ID" ]; then
+  printf 'FAIL: show returned different trust blocker id: %s vs %s\n' "$TRUST_BLOCKER_SHOW_ID" "$TRUST_BLOCKER_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.36. Research provider-mock-response-trust-decision-blocker-validate
+printf '\n--- Research provider-mock-response-trust-decision-blocker-validate ---\n'
+TRUST_BLOCKER_VALIDATE_OUTPUT="$(atlas research provider-mock-response-trust-decision-blocker-validate "$TRUST_BLOCKER_ID" --json)"
+assert_no_forbidden_fragments "$TRUST_BLOCKER_VALIDATE_OUTPUT" "provider-mock-response-trust-decision-blocker-validate CLI output"
+assert_ok "$TRUST_BLOCKER_VALIDATE_OUTPUT" "research provider-mock-response-trust-decision-blocker-validate"
+TRUST_BLOCKER_VALID="$(json_field "$TRUST_BLOCKER_VALIDATE_OUTPUT" valid)"
+if [ "$TRUST_BLOCKER_VALID" != "True" ]; then
+  printf 'FAIL: trust blocker validation did not pass\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.37. Research provider-mock-response-trust-decision-blocker-replay
+printf '\n--- Research provider-mock-response-trust-decision-blocker-replay ---\n'
+TRUST_BLOCKER_REPLAY_OUTPUT="$(atlas research provider-mock-response-trust-decision-blocker-replay "$TRUST_BLOCKER_ID" --json)"
+assert_no_forbidden_fragments "$TRUST_BLOCKER_REPLAY_OUTPUT" "provider-mock-response-trust-decision-blocker-replay CLI output"
+assert_ok "$TRUST_BLOCKER_REPLAY_OUTPUT" "research provider-mock-response-trust-decision-blocker-replay"
+TRUST_BLOCKER_REPLAY_MATCH="$(json_field "$TRUST_BLOCKER_REPLAY_OUTPUT" match)"
+if [ "$TRUST_BLOCKER_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: trust blocker replay did not match\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.38. Research provider-mock-response-trust-decision-blocker-summary
+printf '\n--- Research provider-mock-response-trust-decision-blocker-summary ---\n'
+TRUST_BLOCKER_SUMMARY_OUTPUT="$(atlas research provider-mock-response-trust-decision-blocker-summary "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$TRUST_BLOCKER_SUMMARY_OUTPUT" "provider-mock-response-trust-decision-blocker-summary CLI output"
+assert_ok "$TRUST_BLOCKER_SUMMARY_OUTPUT" "research provider-mock-response-trust-decision-blocker-summary"
+TRUST_BLOCKER_SUMMARY_ACTIVE="$(json_field "$TRUST_BLOCKER_SUMMARY_OUTPUT" trust_blocker_active)"
+if [ "$TRUST_BLOCKER_SUMMARY_ACTIVE" != "True" ]; then
+  printf 'FAIL: summary did not report trust_blocker_active=true\n' >&2
+  exit 1
+fi
+TRUST_BLOCKER_SUMMARY_GRANTED="$(json_field "$TRUST_BLOCKER_SUMMARY_OUTPUT" trust_decision_granted)"
+if [ "$TRUST_BLOCKER_SUMMARY_GRANTED" != "False" ]; then
+  printf 'FAIL: summary did not report trust_decision_granted=false\n' >&2
+  exit 1
+fi
+TRUST_BLOCKER_SUMMARY_TRUSTED="$(json_field "$TRUST_BLOCKER_SUMMARY_OUTPUT" provider_response_trusted)"
+if [ "$TRUST_BLOCKER_SUMMARY_TRUSTED" != "False" ]; then
+  printf 'FAIL: summary did not report provider_response_trusted=false\n' >&2
+  exit 1
+fi
+TRUST_BLOCKER_SUMMARY_MOCK_TRUSTED="$(json_field "$TRUST_BLOCKER_SUMMARY_OUTPUT" mock_response_trusted)"
+if [ "$TRUST_BLOCKER_SUMMARY_MOCK_TRUSTED" != "False" ]; then
+  printf 'FAIL: summary did not report mock_response_trusted=false\n' >&2
+  exit 1
+fi
+TRUST_BLOCKER_SUMMARY_ALLOWED="$(json_field "$TRUST_BLOCKER_SUMMARY_OUTPUT" provider_call_allowed)"
+if [ "$TRUST_BLOCKER_SUMMARY_ALLOWED" != "False" ]; then
+  printf 'FAIL: summary did not report provider_call_allowed=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.39. Research provider-mock-response-trust-decision-blocker-doctor
+printf '\n--- Research provider-mock-response-trust-decision-blocker-doctor ---\n'
+TRUST_BLOCKER_DOCTOR_OUTPUT="$(atlas research provider-mock-response-trust-decision-blocker-doctor "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$TRUST_BLOCKER_DOCTOR_OUTPUT" "provider-mock-response-trust-decision-blocker-doctor CLI output"
+assert_ok "$TRUST_BLOCKER_DOCTOR_OUTPUT" "research provider-mock-response-trust-decision-blocker-doctor"
+TRUST_BLOCKER_DOCTOR_HEALTH="$(json_field "$TRUST_BLOCKER_DOCTOR_OUTPUT" trust_health)"
+if [ "$TRUST_BLOCKER_DOCTOR_HEALTH" != "trust_decision_blocked_untrusted" ]; then
+  printf 'FAIL: doctor did not report trust_decision_blocked_untrusted\n' >&2
+  exit 1
+fi
+TRUST_BLOCKER_DOCTOR_GRANTED="$(json_field "$TRUST_BLOCKER_DOCTOR_OUTPUT" trust_decision_granted)"
+if [ "$TRUST_BLOCKER_DOCTOR_GRANTED" != "False" ]; then
+  printf 'FAIL: doctor did not report trust_decision_granted=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.40. Research timeline post mock trust blocker
+printf '\n--- Research timeline (post mock trust blocker) ---\n'
+TIMELINE_OUTPUT3="$(atlas research timeline --json)"
+assert_no_absolute_paths "$TIMELINE_OUTPUT3"
+assert_no_secrets_in_output "$TIMELINE_OUTPUT3"
+assert_no_forbidden_fragments "$TIMELINE_OUTPUT3" "timeline CLI output after mock trust blocker"
+assert_ok "$TIMELINE_OUTPUT3" "research timeline after mock trust blocker"
+TIMELINE_STATUS3="$(json_field "$TIMELINE_OUTPUT3" status)"
+if [ "$TIMELINE_STATUS3" != "research_timeline" ]; then
+  printf 'FAIL: unexpected timeline status after mock trust blocker: %s\n' "$TIMELINE_STATUS3" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.41. Research check-artifacts after mock trust blocker
+printf '\n--- Research check-artifacts (post mock trust blocker) ---\n'
+CHECK_OUTPUT_MOCK_TRUST="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_MOCK_TRUST" "check-artifacts CLI output after mock trust blocker"
+assert_ok "$CHECK_OUTPUT_MOCK_TRUST" "research check-artifacts after mock trust blocker"
+CHECK_MOCK_TRUST_COUNT="$(json_field "$CHECK_OUTPUT_MOCK_TRUST" counts.provider_mock_response_trust_decision_blockers)"
+if [ "$CHECK_MOCK_TRUST_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_mock_response_trust_decision_blockers count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
 # 86. Create local provider response fixture and import it
 CHECK_OUTPUT_MOCK="$(atlas research check-artifacts --json)"
 assert_no_forbidden_fragments "$CHECK_OUTPUT_MOCK" "check-artifacts CLI output after mock response simulation"
