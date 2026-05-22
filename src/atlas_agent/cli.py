@@ -1369,6 +1369,65 @@ Safety First:
     research_provider_adapter_disabled_smoke.add_argument("contract_id", help="Provider adapter interface contract ID.")
     research_provider_adapter_disabled_smoke.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_mock_response_simulate = research_sub.add_parser(
+        "provider-mock-response-simulate",
+        help="Create a provider mock response simulation artifact from an adapter interface contract. Configless.",
+        description="Create a provider mock response simulation artifact from an existing adapter interface contract. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_simulate.add_argument("contract_id", help="Source provider adapter interface contract ID.")
+    research_provider_mock_response_simulate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_list = research_sub.add_parser(
+        "provider-mock-response-list",
+        help="List provider mock response simulation artifacts. Configless.",
+        description="List provider mock response simulation artifacts. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_list.add_argument("--symbol", default=None, help="Filter by symbol.")
+    research_provider_mock_response_list.add_argument("--limit", type=int, default=100, help="Limit results. Default 100.")
+    research_provider_mock_response_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_show = research_sub.add_parser(
+        "provider-mock-response-show",
+        help="Show a provider mock response simulation artifact. Configless.",
+        description="Show a provider mock response simulation artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_show.add_argument("simulation_id", help="Provider mock response simulation ID.")
+    research_provider_mock_response_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_validate = research_sub.add_parser(
+        "provider-mock-response-validate",
+        help="Validate a provider mock response simulation artifact. Configless.",
+        description="Validate a provider mock response simulation artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_validate.add_argument("simulation_id", help="Provider mock response simulation ID.")
+    research_provider_mock_response_validate.add_argument("--strict", action="store_true", help="Exit non-zero on any failed check.")
+    research_provider_mock_response_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_replay = research_sub.add_parser(
+        "provider-mock-response-replay",
+        help="Replay a provider mock response simulation artifact. Configless.",
+        description="Replay a provider mock response simulation artifact deterministically. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_replay.add_argument("simulation_id", help="Provider mock response simulation ID.")
+    research_provider_mock_response_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay hash does not match.")
+    research_provider_mock_response_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_summary = research_sub.add_parser(
+        "provider-mock-response-summary",
+        help="Summarize the latest provider mock response simulation for a run. Configless.",
+        description="Summarize the latest provider mock response simulation for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_summary.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_doctor = research_sub.add_parser(
+        "provider-mock-response-doctor",
+        help="Diagnose provider mock response simulation readiness for a run. Configless.",
+        description="Diagnose provider mock response simulation readiness for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_doctor.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -3255,6 +3314,13 @@ def main(argv: list[str] | None = None) -> int:
         "provider-adapter-interface-contract-summary",
         "provider-adapter-interface-contract-doctor",
         "provider-adapter-disabled-smoke",
+        "provider-mock-response-simulate",
+        "provider-mock-response-list",
+        "provider-mock-response-show",
+        "provider-mock-response-validate",
+        "provider-mock-response-replay",
+        "provider-mock-response-summary",
+        "provider-mock-response-doctor",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -11375,6 +11441,388 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
             print(f"  Broker touched: {result.get('broker_touched', False)}")
         return 0 if result.get("ok") else 1
+    if args.command == "research" and args.research_command == "provider-mock-response-simulate":
+        try:
+            from atlas_agent.research.provider_mock_response_simulation import create_provider_mock_response_simulation
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-simulate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.contract_id)
+            result = create_provider_mock_response_simulation(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-simulate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-simulate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Provider mock response simulation created")
+            print(f"  ID: {result.get('provider_mock_response_simulation_id', '')}")
+            print(f"  Status: {result.get('mock_simulation_status', '')}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+            if result.get("warnings"):
+                print(f"  Warnings: {len(result['warnings'])}")
+            else:
+                print("  Warnings: 0")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-list":
+        try:
+            from atlas_agent.research.provider_mock_response_simulation import iter_provider_mock_response_simulation_artifacts
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = args.limit
+            if limit < 1:
+                limit = 1
+            if limit > 100:
+                limit = 100
+
+            items = iter_provider_mock_response_simulation_artifacts(ws, symbol=symbol_filter)[:limit]
+
+            if args.json:
+                import json
+                out = {
+                    "ok": True,
+                    "status": "provider_mock_response_simulations_listed",
+                    "items": items,
+                }
+                print(json.dumps(out, indent=2, sort_keys=True))
+            else:
+                if not items:
+                    print("No provider mock response simulation artifacts found.")
+                else:
+                    print(f"{'Created At':<24} {'Symbol':<8} {'Run ID':<34} {'Provider':<14} {'Status':<24} {'Artifact'}")
+                    for item in items:
+                        created = item.get("created_at", "")[:19]
+                        print(f"{created:<24} {item['symbol']:<8} {item['source_run_id']:<34} {item['provider_id']:<14} {item['mock_simulation_status']:<24} {item['artifact_path']}")
+            return 0
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-list", "research command failed")
+            return 1
+    if args.command == "research" and args.research_command == "provider-mock-response-show":
+        try:
+            from atlas_agent.research.provider_mock_response_simulation import (
+                find_provider_mock_response_simulation_by_id,
+                load_provider_mock_response_simulation,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.simulation_id)
+            path = find_provider_mock_response_simulation_by_id(ws, safe_id)
+            if not path:
+                if args.json:
+                    _research_error_json("not_found", "Provider mock response simulation not found.")
+                else:
+                    _research_error_text("research provider-mock-response-show", "not found")
+                return 1
+
+            data = load_provider_mock_response_simulation(path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(data, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response simulation: {data.get('provider_mock_response_simulation_id', '')}")
+            print(f"  Status: {data.get('mock_simulation_status', '')}")
+            print(f"  State: {data.get('mock_simulation_state', '')}")
+            print(f"  Provider: {data.get('provider_id', '')}")
+            print(f"  Model: {data.get('model_id', '')}")
+            print(f"  Mock adapter used: {data.get('mock_adapter_used', False)}")
+            print(f"  Mock response simulated: {data.get('mock_response_simulated', False)}")
+            print(f"  Mock only: {data.get('mock_only', False)}")
+            print(f"  Artifact: {data.get('artifact_path', '')}")
+            if data.get("warnings"):
+                print(f"  Warnings: {len(data['warnings'])}")
+            else:
+                print("  Warnings: 0")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-validate":
+        try:
+            from atlas_agent.research.provider_mock_response_simulation import (
+                find_provider_mock_response_simulation_by_id,
+                validate_provider_mock_response_simulation_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.simulation_id)
+            path = find_provider_mock_response_simulation_by_id(ws, safe_id)
+            if not path:
+                if args.json:
+                    _research_error_json("not_found", "Provider mock response simulation not found.")
+                else:
+                    _research_error_text("research provider-mock-response-validate", "not found")
+                return 1
+
+            result = validate_provider_mock_response_simulation_artifact(path, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps({
+                "ok": result.valid,
+                "status": "research_provider_mock_response_simulation_validated" if result.valid else "research_provider_mock_response_simulation_validation_failed",
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+                "recommendation": result.recommendation,
+                "warnings": result.warnings,
+            }, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response simulation validation: {'PASS' if result.valid else 'FAIL'}")
+            print(f"  Passed checks: {result.passed_checks}")
+            print(f"  Failed checks: {result.failed_checks}")
+            print(f"  Recommendation: {result.recommendation}")
+            if result.warnings:
+                for w in result.warnings:
+                    print(f"  Warning: {w}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-replay":
+        try:
+            from atlas_agent.research.provider_mock_response_simulation import replay_provider_mock_response_simulation
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.simulation_id)
+            result = replay_provider_mock_response_simulation(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response simulation replay: {result.get('match', False)}")
+            print(f"  ID: {result.get('provider_mock_response_simulation_id', '')}")
+            print(f"  Original hash: {result.get('original_hash', '')}")
+            print(f"  Replayed hash: {result.get('replayed_hash', '')}")
+        if args.strict and not result.get("match"):
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-summary":
+        try:
+            from atlas_agent.research.provider_mock_response_simulation import summarize_provider_mock_response_simulation
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_mock_response_simulation(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-summary", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response simulation summary for run {safe_id}:")
+            print(f"  ID: {result.get('provider_mock_response_simulation_id', '')}")
+            print(f"  Status: {result.get('mock_simulation_status', '')}")
+            print(f"  State: {result.get('mock_simulation_state', '')}")
+            print(f"  Mock response simulated: {result.get('mock_response_simulated', False)}")
+            print(f"  Mock only: {result.get('mock_only', False)}")
+            print(f"  Real provider request sent: {result.get('real_provider_request_sent', False)}")
+            print(f"  Real provider response received: {result.get('real_provider_response_received', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-doctor":
+        try:
+            from atlas_agent.research.provider_mock_response_simulation import doctor_provider_mock_response_simulation
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = doctor_provider_mock_response_simulation(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-doctor", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response simulation doctor for run {safe_id}:")
+            print(f"  Health: {result.get('mock_response_health', '')}")
+            print(f"  Mock response simulated: {result.get('mock_response_simulated', False)}")
+            print(f"  Mock only: {result.get('mock_only', False)}")
+            print(f"  Real provider request sent: {result.get('real_provider_request_sent', False)}")
+            print(f"  Real provider response received: {result.get('real_provider_response_received', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+            if result.get("missing_prerequisites"):
+                print(f"  Missing prerequisites: {', '.join(result['missing_prerequisites'])}")
+            if result.get("blocking_reasons"):
+                print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
+            if result.get("warnings"):
+                for w in result["warnings"]:
+                    print(f"  Warning: {w}")
+        return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():
             print(f"notification skipped safely: file not found: {args.file}")

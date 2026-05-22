@@ -281,9 +281,15 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         for fname in os.listdir(adapter_dir):
             if fname.endswith(".json"):
                 adapter_contract_count += 1
+    mock_sim_count = 0
+    mock_sim_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_mock_response_simulations")
+    if os.path.isdir(mock_sim_dir):
+        for fname in os.listdir(mock_sim_dir):
+            if fname.endswith(".json"):
+                mock_sim_count += 1
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count, "provider_mock_response_simulations": mock_sim_count},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -3243,6 +3249,119 @@ if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
         "credentials_loaded": False,
         "provider_call_allowed": False,
         "broker_touched": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-simulate":
+    mock_sim_dir = os.path.join(".", ".atlas", "research", "ATLAS-DEMO", "provider_mock_response_simulations")
+    os.makedirs(mock_sim_dir, exist_ok=True)
+    with open(os.path.join(mock_sim_dir, "mock-sim-id.json"), "w") as f:
+        json.dump({"provider_mock_response_simulation_id": "mock-sim-id"}, f)
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_simulated",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_adapter_used": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-list":
+    print(json.dumps({
+        "ok": True, "status": "provider_mock_response_simulations_listed",
+        "items": [
+            {
+                "provider_mock_response_simulation_id": "mock-sim-id",
+                "symbol": "DEMO-SYMBOL",
+                "provider_id": "mock",
+                "mock_simulation_status": "mock_response_simulation_recorded",
+                "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+                "created_at": "2024-01-01T00:00:00+00:00",
+            }
+        ],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-show":
+    print(json.dumps({
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "provider_id": "mock",
+        "model_id": "mock",
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-validate":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_simulation_validated",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with mock response simulation.",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-replay":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_simulation_replayed",
+        "match": True,
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "original_hash": "hash1",
+        "replayed_hash": "hash1",
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-summary":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_simulation_summary",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_doctor",
+        "mock_response_health": "mock_response_simulated_untrusted",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_disabled", "real_provider_adapter_missing"],
+        "warnings": [],
     }))
     sys.exit(0)
 
@@ -7050,7 +7169,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return unsafe absolute path in output
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [{{"code": "unsafe_path", "path": "/Users/natan/secret.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -8843,7 +8962,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return ok=false
     print(json.dumps({{
         "ok": False, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [{{"code": "malformed_json", "path": ".atlas/research/X/bad.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -10640,7 +10759,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         json.dump({{}}, f)
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -12431,7 +12550,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -14235,7 +14354,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -16034,7 +16153,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -17833,7 +17952,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -19646,7 +19765,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -21453,7 +21572,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -23260,7 +23379,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -25059,7 +25178,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -26887,7 +27006,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -28703,7 +28822,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -30525,7 +30644,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -32352,7 +32471,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -34183,7 +34302,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -36009,7 +36128,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -37835,7 +37954,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -39660,7 +39779,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -41485,7 +41604,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -43307,7 +43426,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -45149,7 +45268,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -46981,7 +47100,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -48839,7 +48958,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -50835,7 +50954,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -52818,7 +52937,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -54835,7 +54954,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -57615,6 +57734,115 @@ if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-simulate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulated",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_adapter_used": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-list":
+    print(json.dumps({{
+        "ok": True, "status": "provider_mock_response_simulations_listed",
+        "items": [
+            {{
+                "provider_mock_response_simulation_id": "mock-sim-id",
+                "symbol": "DEMO-SYMBOL",
+                "provider_id": "mock",
+                "mock_simulation_status": "mock_response_simulation_recorded",
+                "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+                "created_at": "2024-01-01T00:00:00+00:00",
+            }}
+        ],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-show":
+    print(json.dumps({{
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "provider_id": "mock",
+        "model_id": "mock",
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_validated",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with mock response simulation.",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_replayed",
+        "match": True,
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "original_hash": "hash1",
+        "replayed_hash": "hash1",
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_summary",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_doctor",
+        "mock_response_health": "mock_response_simulated_untrusted",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_disabled", "real_provider_adapter_missing"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -57720,7 +57948,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -60380,6 +60608,115 @@ if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-simulate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulated",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_adapter_used": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-list":
+    print(json.dumps({{
+        "ok": True, "status": "provider_mock_response_simulations_listed",
+        "items": [
+            {{
+                "provider_mock_response_simulation_id": "mock-sim-id",
+                "symbol": "DEMO-SYMBOL",
+                "provider_id": "mock",
+                "mock_simulation_status": "mock_response_simulation_recorded",
+                "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+                "created_at": "2024-01-01T00:00:00+00:00",
+            }}
+        ],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-show":
+    print(json.dumps({{
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "provider_id": "mock",
+        "model_id": "mock",
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_validated",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with mock response simulation.",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_replayed",
+        "match": True,
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "original_hash": "hash1",
+        "replayed_hash": "hash1",
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_summary",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_doctor",
+        "mock_response_health": "mock_response_simulated_untrusted",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_disabled", "real_provider_adapter_missing"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -60485,7 +60822,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -62370,7 +62707,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -65110,6 +65447,115 @@ if ARGS[0] == "research" and ARGS[1] == "provider-adapter-disabled-smoke":
         "credentials_loaded": False,
         "provider_call_allowed": False,
         "broker_touched": False,
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-simulate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulated",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_adapter_used": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-list":
+    print(json.dumps({{
+        "ok": True, "status": "provider_mock_response_simulations_listed",
+        "items": [
+            {{
+                "provider_mock_response_simulation_id": "mock-sim-id",
+                "symbol": "DEMO-SYMBOL",
+                "provider_id": "mock",
+                "mock_simulation_status": "mock_response_simulation_recorded",
+                "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+                "created_at": "2024-01-01T00:00:00+00:00",
+            }}
+        ],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-show":
+    print(json.dumps({{
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_adapter_used": True,
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "provider_id": "mock",
+        "model_id": "mock",
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-validate":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_validated",
+        "valid": True,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "checks": [],
+        "recommendation": "Proceed with mock response simulation.",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-replay":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_replayed",
+        "match": True,
+        "provider_mock_response_simulation_id": ARGS[2] if len(ARGS) > 2 else "mock-sim-id",
+        "original_hash": "hash1",
+        "replayed_hash": "hash1",
+        "provider_response_received": False,
+        "network_call_attempted": False,
+        "credentials_loaded": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_simulation_summary",
+        "provider_mock_response_simulation_id": "mock-sim-id",
+        "mock_simulation_status": "mock_response_simulation_recorded",
+        "mock_simulation_state": "simulated_response_recorded_no_provider_call",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/DEMO-SYMBOL/provider_mock_response_simulations/mock-sim-id.json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_doctor",
+        "mock_response_health": "mock_response_simulated_untrusted",
+        "mock_response_simulated": True,
+        "mock_only": True,
+        "real_provider_request_sent": False,
+        "real_provider_response_received": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "missing_prerequisites": [],
+        "blocking_reasons": ["provider_execution_disabled", "real_provider_adapter_missing"],
         "warnings": [],
     }}))
     sys.exit(0)

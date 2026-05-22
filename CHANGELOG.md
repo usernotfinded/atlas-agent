@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev37] - 2026-05-21
+
+### Added
+- Batch 9.0 — Mock Provider Adapter / Simulated Response.
+  - `src/atlas_agent/research/provider_mock_response_simulation.py`: offline mock response artifact lifecycle.
+  - `src/atlas_agent/research/provider_adapter_interface.py`: mock-only adapter classes with safe defaults.
+  - `MockProviderAdapterCapability`: static descriptor with `supports_mock_response=True` and all real flags false.
+  - `MockProviderRequestPreview`: metadata-only preview with `mock_generation_allowed=True` and `real_provider_request_sent=False`.
+  - `MockProviderResponseSimulation`: safe placeholder with `manual_review_required=True`.
+  - `MockProviderAdapter`: `capabilities()`, `build_request_preview()`, `simulate_response()`, `send()` raises `ProviderAdapterDisabledError`.
+  - `create_provider_mock_response_simulation()`: safe creation from adapter contract with validation, lineage, hash, and positive-claim scanning.
+  - `safe_validate_provider_mock_response_simulation_data()`: strict validation with hash, lineage, forbidden fragments, impossible boolean checks, and recursive unsafe positive claim detection.
+  - `validate_provider_mock_response_simulation_artifact()`: detailed per-check validation.
+  - `replay_provider_mock_response_simulation()`: deterministic hash replay.
+  - `iter_provider_mock_response_simulation_artifacts()`: safe listing with invalid sentinels.
+  - `summarize_provider_mock_response_simulation()`: read-only summary.
+  - `doctor_provider_mock_response_simulation()`: read-only chain diagnostic.
+  - `validate_provider_id()`: accepts `"mock"` alongside disabled provider IDs.
+  - 7 new CLI commands under `atlas research`.
+  - Session integration: `check_research_artifacts`, `build_research_timeline`, `build_dossier`.
+  - Demo script extended with mock response flow after disabled-smoke and before import-provider-response.
+  - Comprehensive test suite: 45 tests.
+
 ## [0.5.7.dev36] - 2026-05-21
 
 ### Added

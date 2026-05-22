@@ -3254,6 +3254,139 @@ if [ "$CHECK_ADAPTER_COUNT" -lt 1 ]; then
 fi
 assert_no_pending_orders
 
+# 85.10. Research provider-mock-response-simulate
+printf '\n--- Research provider-mock-response-simulate ---\n'
+MOCK_SIM_OUTPUT="$(atlas research provider-mock-response-simulate "$ADAPTER_CONTRACT_ID" --json)"
+assert_no_absolute_paths "$MOCK_SIM_OUTPUT"
+assert_no_secrets_in_output "$MOCK_SIM_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_SIM_OUTPUT" "provider-mock-response-simulate CLI output"
+assert_ok "$MOCK_SIM_OUTPUT" "research provider-mock-response-simulate"
+MOCK_SIM_STATUS="$(json_field "$MOCK_SIM_OUTPUT" status)"
+if [ "$MOCK_SIM_STATUS" != "research_provider_mock_response_simulated" ]; then
+  printf 'FAIL: unexpected provider-mock-response-simulate status: %s\n' "$MOCK_SIM_STATUS" >&2
+  exit 1
+fi
+MOCK_SIM_ID="$(json_field "$MOCK_SIM_OUTPUT" provider_mock_response_simulation_id)"
+if [ -z "$MOCK_SIM_ID" ]; then
+  printf 'FAIL: provider_mock_response_simulation_id is empty after mock response simulate\n' >&2
+  exit 1
+fi
+MOCK_SIM_MOCK_ONLY="$(json_field "$MOCK_SIM_OUTPUT" mock_only)"
+if [ "$MOCK_SIM_MOCK_ONLY" != "True" ]; then
+  printf 'FAIL: mock_only is not True after mock response simulate\n' >&2
+  exit 1
+fi
+MOCK_SIM_REAL_ADAPTER="$(json_field "$MOCK_SIM_OUTPUT" real_provider_adapter_used)"
+if [ "$MOCK_SIM_REAL_ADAPTER" != "False" ]; then
+  printf 'FAIL: real_provider_adapter_used is not False after mock response simulate\n' >&2
+  exit 1
+fi
+MOCK_SIM_NETWORK="$(json_field "$MOCK_SIM_OUTPUT" network_call_attempted)"
+if [ "$MOCK_SIM_NETWORK" != "False" ]; then
+  printf 'FAIL: network_call_attempted is not False after mock response simulate\n' >&2
+  exit 1
+fi
+MOCK_SIM_CREDENTIALS="$(json_field "$MOCK_SIM_OUTPUT" credentials_loaded)"
+if [ "$MOCK_SIM_CREDENTIALS" != "False" ]; then
+  printf 'FAIL: credentials_loaded is not False after mock response simulate\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.11. Research provider-mock-response-list
+printf '\n--- Research provider-mock-response-list ---\n'
+MOCK_LIST_OUTPUT="$(atlas research provider-mock-response-list --json)"
+assert_no_absolute_paths "$MOCK_LIST_OUTPUT"
+assert_no_secrets_in_output "$MOCK_LIST_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_LIST_OUTPUT" "provider-mock-response-list CLI output"
+assert_ok "$MOCK_LIST_OUTPUT" "research provider-mock-response-list"
+MOCK_LIST_HAS_ITEM="$( "$PYTHON_BIN" -c "import json,sys; d=json.load(sys.stdin); items=d.get('items',[]); print('yes' if any(i.get('provider_mock_response_simulation_id')=='$MOCK_SIM_ID' for i in items) else 'no')" <<<"$MOCK_LIST_OUTPUT" )"
+if [ "$MOCK_LIST_HAS_ITEM" != "yes" ]; then
+  printf 'FAIL: provider-mock-response-list does not contain mock simulation %s\n' "$MOCK_SIM_ID" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.12. Research provider-mock-response-show
+printf '\n--- Research provider-mock-response-show ---\n'
+MOCK_SHOW_OUTPUT="$(atlas research provider-mock-response-show "$MOCK_SIM_ID" --json)"
+assert_no_absolute_paths "$MOCK_SHOW_OUTPUT"
+assert_no_secrets_in_output "$MOCK_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_SHOW_OUTPUT" "provider-mock-response-show CLI output"
+MOCK_SHOW_ID="$(json_field "$MOCK_SHOW_OUTPUT" provider_mock_response_simulation_id)"
+if [ "$MOCK_SHOW_ID" != "$MOCK_SIM_ID" ]; then
+  printf 'FAIL: provider-mock-response-show returned wrong simulation id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.13. Research provider-mock-response-validate
+printf '\n--- Research provider-mock-response-validate ---\n'
+MOCK_VALIDATE_OUTPUT="$(atlas research provider-mock-response-validate "$MOCK_SIM_ID" --json)"
+assert_no_absolute_paths "$MOCK_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$MOCK_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_VALIDATE_OUTPUT" "provider-mock-response-validate CLI output"
+MOCK_VALIDATE_VALID="$(json_field "$MOCK_VALIDATE_OUTPUT" valid)"
+if [ "$MOCK_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: provider-mock-response-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.14. Research provider-mock-response-replay
+printf '\n--- Research provider-mock-response-replay ---\n'
+MOCK_REPLAY_OUTPUT="$(atlas research provider-mock-response-replay "$MOCK_SIM_ID" --json)"
+assert_no_absolute_paths "$MOCK_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$MOCK_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_REPLAY_OUTPUT" "provider-mock-response-replay CLI output"
+assert_ok "$MOCK_REPLAY_OUTPUT" "research provider-mock-response-replay"
+MOCK_REPLAY_MATCH="$(json_field "$MOCK_REPLAY_OUTPUT" match)"
+if [ "$MOCK_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-mock-response-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.15. Research provider-mock-response-summary
+printf '\n--- Research provider-mock-response-summary ---\n'
+MOCK_SUMMARY_OUTPUT="$(atlas research provider-mock-response-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$MOCK_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$MOCK_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_SUMMARY_OUTPUT" "provider-mock-response-summary CLI output"
+assert_ok "$MOCK_SUMMARY_OUTPUT" "research provider-mock-response-summary"
+MOCK_SUMMARY_SIMULATED="$(json_field "$MOCK_SUMMARY_OUTPUT" mock_response_simulated)"
+if [ "$MOCK_SUMMARY_SIMULATED" != "True" ]; then
+  printf 'FAIL: provider-mock-response-summary returned mock_response_simulated=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.16. Research provider-mock-response-doctor
+printf '\n--- Research provider-mock-response-doctor ---\n'
+MOCK_DOCTOR_OUTPUT="$(atlas research provider-mock-response-doctor "$RUN_ID" --json)"
+assert_no_absolute_paths "$MOCK_DOCTOR_OUTPUT"
+assert_no_secrets_in_output "$MOCK_DOCTOR_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_DOCTOR_OUTPUT" "provider-mock-response-doctor CLI output"
+assert_ok "$MOCK_DOCTOR_OUTPUT" "research provider-mock-response-doctor"
+MOCK_DOCTOR_SIMULATED="$(json_field "$MOCK_DOCTOR_OUTPUT" mock_response_simulated)"
+if [ "$MOCK_DOCTOR_SIMULATED" != "True" ]; then
+  printf 'FAIL: provider-mock-response-doctor returned mock_response_simulated=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.17. Research check-artifacts after mock response simulation
+printf '\n--- Research check-artifacts (post mock response simulation) ---\n'
+CHECK_OUTPUT_MOCK="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_MOCK" "check-artifacts CLI output after mock response simulation"
+assert_ok "$CHECK_OUTPUT_MOCK" "research check-artifacts after mock response simulation"
+CHECK_MOCK_COUNT="$(json_field "$CHECK_OUTPUT_MOCK" counts.provider_mock_response_simulations)"
+if [ "$CHECK_MOCK_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_mock_response_simulations count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
 # 86. Create local provider response fixture and import it
 printf '\n--- Import provider response ---\n'
 IMPORT_FIXTURE="$WORKSPACE/imported_response.json"
