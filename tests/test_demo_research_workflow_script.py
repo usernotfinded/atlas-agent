@@ -295,7 +295,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
                 mock_import_count += 1
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count, "provider_mock_response_simulations": mock_sim_count, "provider_mock_response_import_candidates": mock_import_count},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count, "provider_mock_response_simulations": mock_sim_count, "provider_mock_response_import_candidates": mock_import_count, "provider_mock_response_review_sandboxes": 1},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -3514,6 +3514,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 '''
@@ -5574,6 +5654,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7498,6 +7658,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -7604,7 +7844,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return unsafe absolute path in output
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [{{"code": "unsafe_path", "path": "/Users/natan/secret.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -9434,6 +9674,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -9540,7 +9860,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return ok=false
     print(json.dumps({{
         "ok": False, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [{{"code": "malformed_json", "path": ".atlas/research/X/bad.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -11370,6 +11690,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -11480,7 +11880,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         json.dump({{}}, f)
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -13309,6 +13709,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -13414,7 +13894,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -15256,6 +15736,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -15361,7 +15921,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -17198,6 +17758,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -17303,7 +17943,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -19140,6 +19780,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -19245,7 +19965,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -21096,6 +21816,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -21201,7 +22001,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -23046,6 +23846,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -23151,7 +24031,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -24996,6 +25876,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -25101,7 +26061,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -26938,6 +27898,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -27043,7 +28083,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -28909,6 +29949,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -29014,7 +30134,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -30868,6 +31988,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -30973,7 +32173,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -32833,6 +34033,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -32938,7 +34218,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -34803,6 +36083,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -34908,7 +36268,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -36777,6 +38137,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -36882,7 +38322,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -38746,6 +40186,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -38851,7 +40371,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -40715,6 +42235,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -40820,7 +42420,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -42684,6 +44284,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -42788,7 +44468,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -44652,6 +46332,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -44756,7 +46516,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -46616,6 +48376,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -46721,7 +48561,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -48596,6 +50436,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -48706,7 +50626,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -50576,6 +52496,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -50681,7 +52681,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -52577,6 +54577,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -52682,7 +54762,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -54711,6 +56791,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -54821,7 +56981,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -56842,6 +59002,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -56947,7 +59187,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -58981,6 +61221,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -59107,7 +61427,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -62139,6 +64459,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -62244,7 +64644,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -65156,6 +67556,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -65261,7 +67741,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -67184,6 +69664,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -67289,7 +69849,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -70281,6 +72841,86 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-import-candidate
         "broker_touched": False,
         "missing_prerequisites": [],
         "blocking_reasons": ["provider_execution_disabled", "real_provider_adapter_missing"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_created",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "source_provider_mock_response_import_candidate_id": ARGS[2],
+        "provider_id": "mock",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_source_verified": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/review-sandbox-" + ARGS[2] + ".json",
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_review_sandboxes_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_review_sandbox_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_review_sandboxes/" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_review_sandbox_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_review_sandbox_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_summary",
+        "provider_mock_response_review_sandbox_id": "review-sandbox-" + ARGS[2],
+        "mock_review_sandbox_status": "mock_review_sandbox_recorded",
+        "mock_review_sandbox_state": "mock_review_sandbox_recorded_untrusted",
+        "mock_review_sandbox_recorded": True,
+        "mock_review_passed": True,
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-review-sandbox-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_review_sandbox_doctor",
+        "run_id": ARGS[2],
+        "mock_review_health": "mock_review_sandbox_recorded_untrusted",
+        "mock_only": True,
+        "sandbox_review_only": True,
+        "mock_review_checks_completed": True,
+        "mock_review_passed": True,
+        "mock_review_requires_manual_followup": True,
+        "real_provider_response_reviewed": False,
+        "provider_response_trusted": False,
+        "provider_call_allowed": False,
+        "missing_prerequisites": ["real_provider_response_not_reviewed"],
+        "blocking_reasons": ["provider_execution_disabled"],
         "warnings": [],
     }}))
     sys.exit(0)

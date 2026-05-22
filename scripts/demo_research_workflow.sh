@@ -3483,6 +3483,125 @@ if [ "$CHECK_MOCK_IMPORT_COUNT" -lt 1 ]; then
 fi
 assert_no_pending_orders
 
+# 85.25. Research provider-mock-response-review-sandbox
+printf '\n--- Research provider-mock-response-review-sandbox ---\n'
+MOCK_REVIEW_OUTPUT="$(atlas research provider-mock-response-review-sandbox "$MOCK_IMPORT_ID" --json)"
+assert_no_absolute_paths "$MOCK_REVIEW_OUTPUT"
+assert_no_secrets_in_output "$MOCK_REVIEW_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_REVIEW_OUTPUT" "provider-mock-response-review-sandbox CLI output"
+assert_ok "$MOCK_REVIEW_OUTPUT" "research provider-mock-response-review-sandbox"
+MOCK_REVIEW_STATUS="$(json_field "$MOCK_REVIEW_OUTPUT" status)"
+if [ "$MOCK_REVIEW_STATUS" != "research_provider_mock_response_review_sandbox_created" ]; then
+  printf 'FAIL: unexpected provider-mock-response-review-sandbox status: %s\n' "$MOCK_REVIEW_STATUS" >&2
+  exit 1
+fi
+MOCK_REVIEW_ID="$(json_field "$MOCK_REVIEW_OUTPUT" provider_mock_response_review_sandbox_id)"
+if [ -z "$MOCK_REVIEW_ID" ]; then
+  printf 'FAIL: provider_mock_response_review_sandbox_id is empty\n' >&2
+  exit 1
+fi
+MOCK_REVIEW_PROVIDER_ID="$(json_field "$MOCK_REVIEW_OUTPUT" provider_id)"
+if [ "$MOCK_REVIEW_PROVIDER_ID" != "mock" ]; then
+  printf 'FAIL: provider_id is not mock\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.26. Research provider-mock-response-review-sandbox-list
+printf '\n--- Research provider-mock-response-review-sandbox-list ---\n'
+MOCK_REVIEW_LIST_OUTPUT="$(atlas research provider-mock-response-review-sandbox-list --json)"
+assert_no_forbidden_fragments "$MOCK_REVIEW_LIST_OUTPUT" "provider-mock-response-review-sandbox-list CLI output"
+assert_ok "$MOCK_REVIEW_LIST_OUTPUT" "research provider-mock-response-review-sandbox-list"
+assert_no_pending_orders
+
+# 85.27. Research provider-mock-response-review-sandbox-show
+printf '\n--- Research provider-mock-response-review-sandbox-show ---\n'
+MOCK_REVIEW_SHOW_OUTPUT="$(atlas research provider-mock-response-review-sandbox-show "$MOCK_REVIEW_ID" --json)"
+assert_no_forbidden_fragments "$MOCK_REVIEW_SHOW_OUTPUT" "provider-mock-response-review-sandbox-show CLI output"
+MOCK_REVIEW_SHOW_ID="$(json_field "$MOCK_REVIEW_SHOW_OUTPUT" provider_mock_response_review_sandbox_id)"
+if [ "$MOCK_REVIEW_SHOW_ID" != "$MOCK_REVIEW_ID" ]; then
+  printf 'FAIL: provider-mock-response-review-sandbox-show returned wrong id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.28. Research provider-mock-response-review-sandbox-validate
+printf '\n--- Research provider-mock-response-review-sandbox-validate ---\n'
+MOCK_REVIEW_VALIDATE_OUTPUT="$(atlas research provider-mock-response-review-sandbox-validate "$MOCK_REVIEW_ID" --json)"
+assert_no_forbidden_fragments "$MOCK_REVIEW_VALIDATE_OUTPUT" "provider-mock-response-review-sandbox-validate CLI output"
+assert_ok "$MOCK_REVIEW_VALIDATE_OUTPUT" "research provider-mock-response-review-sandbox-validate"
+assert_no_pending_orders
+
+# 85.29. Research provider-mock-response-review-sandbox-replay
+printf '\n--- Research provider-mock-response-review-sandbox-replay ---\n'
+MOCK_REVIEW_REPLAY_OUTPUT="$(atlas research provider-mock-response-review-sandbox-replay "$MOCK_REVIEW_ID" --json)"
+assert_no_forbidden_fragments "$MOCK_REVIEW_REPLAY_OUTPUT" "provider-mock-response-review-sandbox-replay CLI output"
+assert_ok "$MOCK_REVIEW_REPLAY_OUTPUT" "research provider-mock-response-review-sandbox-replay"
+MOCK_REVIEW_REPLAY_MATCH="$(json_field "$MOCK_REVIEW_REPLAY_OUTPUT" match)"
+if [ "$MOCK_REVIEW_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-mock-response-review-sandbox-replay did not match\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.30. Research provider-mock-response-review-sandbox-summary
+printf '\n--- Research provider-mock-response-review-sandbox-summary ---\n'
+MOCK_REVIEW_SUMMARY_OUTPUT="$(atlas research provider-mock-response-review-sandbox-summary "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$MOCK_REVIEW_SUMMARY_OUTPUT" "provider-mock-response-review-sandbox-summary CLI output"
+assert_ok "$MOCK_REVIEW_SUMMARY_OUTPUT" "research provider-mock-response-review-sandbox-summary"
+MOCK_REVIEW_SUMMARY_RECORDED="$(json_field "$MOCK_REVIEW_SUMMARY_OUTPUT" mock_review_sandbox_recorded)"
+if [ "$MOCK_REVIEW_SUMMARY_RECORDED" != "True" ]; then
+  printf 'FAIL: summary did not report mock_review_sandbox_recorded=true\n' >&2
+  exit 1
+fi
+MOCK_REVIEW_SUMMARY_PASSED="$(json_field "$MOCK_REVIEW_SUMMARY_OUTPUT" mock_review_passed)"
+if [ "$MOCK_REVIEW_SUMMARY_PASSED" != "True" ]; then
+  printf 'FAIL: summary did not report mock_review_passed=true\n' >&2
+  exit 1
+fi
+MOCK_REVIEW_SUMMARY_TRUSTED="$(json_field "$MOCK_REVIEW_SUMMARY_OUTPUT" provider_response_trusted)"
+if [ "$MOCK_REVIEW_SUMMARY_TRUSTED" != "False" ]; then
+  printf 'FAIL: summary did not report provider_response_trusted=false\n' >&2
+  exit 1
+fi
+MOCK_REVIEW_SUMMARY_CALL_ALLOWED="$(json_field "$MOCK_REVIEW_SUMMARY_OUTPUT" provider_call_allowed)"
+if [ "$MOCK_REVIEW_SUMMARY_CALL_ALLOWED" != "False" ]; then
+  printf 'FAIL: summary did not report provider_call_allowed=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.31. Research provider-mock-response-review-sandbox-doctor
+printf '\n--- Research provider-mock-response-review-sandbox-doctor ---\n'
+MOCK_REVIEW_DOCTOR_OUTPUT="$(atlas research provider-mock-response-review-sandbox-doctor "$RUN_ID" --json)"
+assert_no_absolute_paths "$MOCK_REVIEW_DOCTOR_OUTPUT"
+assert_no_secrets_in_output "$MOCK_REVIEW_DOCTOR_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_REVIEW_DOCTOR_OUTPUT" "provider-mock-response-review-sandbox-doctor CLI output"
+assert_ok "$MOCK_REVIEW_DOCTOR_OUTPUT" "research provider-mock-response-review-sandbox-doctor"
+MOCK_REVIEW_DOCTOR_HEALTH="$(json_field "$MOCK_REVIEW_DOCTOR_OUTPUT" mock_review_health)"
+if [ "$MOCK_REVIEW_DOCTOR_HEALTH" != "mock_review_sandbox_recorded_untrusted" ]; then
+  printf 'FAIL: doctor did not report mock_review_sandbox_recorded_untrusted\n' >&2
+  exit 1
+fi
+MOCK_REVIEW_DOCTOR_REVIEWED="$(json_field "$MOCK_REVIEW_DOCTOR_OUTPUT" real_provider_response_reviewed)"
+if [ "$MOCK_REVIEW_DOCTOR_REVIEWED" != "False" ]; then
+  printf 'FAIL: doctor did not report real_provider_response_reviewed=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.32. Research check-artifacts after mock response review sandbox
+printf '\n--- Research check-artifacts (post mock response review sandbox) ---\n'
+CHECK_OUTPUT_MOCK_REVIEW="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_MOCK_REVIEW" "check-artifacts CLI output after mock response review sandbox"
+assert_ok "$CHECK_OUTPUT_MOCK_REVIEW" "research check-artifacts after mock response review sandbox"
+CHECK_MOCK_REVIEW_COUNT="$(json_field "$CHECK_OUTPUT_MOCK_REVIEW" counts.provider_mock_response_review_sandboxes)"
+if [ "$CHECK_MOCK_REVIEW_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_mock_response_review_sandboxes count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
 # 86. Create local provider response fixture and import it
 CHECK_OUTPUT_MOCK="$(atlas research check-artifacts --json)"
 assert_no_forbidden_fragments "$CHECK_OUTPUT_MOCK" "check-artifacts CLI output after mock response simulation"

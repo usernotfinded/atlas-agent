@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0, "provider_adapter_interface_contracts": 0, "provider_mock_response_simulations": 0, "provider_mock_response_import_candidates": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0, "provider_adapter_interface_contracts": 0, "provider_mock_response_simulations": 0, "provider_mock_response_import_candidates": 0, "provider_mock_response_review_sandboxes": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1416,6 +1416,8 @@ def check_research_artifacts(
     provider_mock_response_simulation_data: list[dict[str, Any]] = []
     provider_mock_response_import_candidate_ids: dict[str, list[str]] = {}
     provider_mock_response_import_candidate_data: list[dict[str, Any]] = []
+    provider_mock_response_review_sandbox_ids: dict[str, list[str]] = {}
+    provider_mock_response_review_sandbox_data: list[dict[str, Any]] = []
     sandbox_request_data_by_id: dict[str, dict[str, Any]] = {}
 
     def _rel(path: Path) -> str:
@@ -1471,6 +1473,7 @@ def check_research_artifacts(
             "provider_adapter_interface_contract": "provider_adapter_interface_contract_id",
             "provider_mock_response_simulation": "provider_mock_response_simulation_id",
             "provider_mock_response_import_candidate": "provider_mock_response_import_candidate_id",
+            "provider_mock_response_review_sandbox": "provider_mock_response_review_sandbox_id",
         }.get(expected_type)
         if id_field and id_field not in data:
             issues.append({"code": "missing_required_id", "path": rel, "severity": "error"})
@@ -1933,6 +1936,44 @@ def check_research_artifacts(
                 if data.get(b) is True:
                     issues.append({"code": "provider_mock_response_import_candidate_impossible_boolean", "path": rel, "severity": "error"})
                     return
+        elif expected_type == "provider_mock_response_review_sandbox":
+            for f in ("provider_mock_response_review_sandbox_id", "source_provider_mock_response_import_candidate_id", "symbol", "provider_id", "model_id", "mock_review_sandbox_status", "mock_review_sandbox_state"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.provider_mock_response_review_sandbox import (
+                safe_validate_provider_mock_response_review_sandbox_data,
+            )
+            _cleaned, error = safe_validate_provider_mock_response_review_sandbox_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
+            # Check impossible booleans for mock response review sandbox
+            impossible_booleans = [
+                "real_provider_response_reviewed", "real_provider_response_imported", "real_provider_response_received",
+                "provider_response_received", "provider_response_imported", "provider_response_reviewed",
+                "provider_response_trusted", "mock_response_trusted", "review_result_present",
+                "manual_review_gate_open", "manual_review_completed", "review_decision_allows_use",
+                "review_decision_allows_trust_upgrade", "review_decision_allows_trading_interpretation",
+                "review_decision_allows_order_creation", "review_decision_allows_order_approval",
+                "review_decision_allows_broker_call", "future_response_schema_validated",
+                "raw_response_body_stored", "raw_request_body_stored", "raw_prompt_body_stored",
+                "raw_review_notes_stored", "provider_sdk_imported", "http_client_imported",
+                "network_enabled", "network_call_attempted", "credentials_loaded",
+                "credential_value_present", "credential_lookup_attempted", "env_read_attempted",
+                "dotenv_loaded", "provider_execution_unlocked", "manual_unlock_granted",
+                "provider_call_allowed", "actual_provider_call_made", "outbound_request_sent",
+                "trust_upgrade_performed", "trading_signal_generated", "approval_created",
+                "pending_order_created", "broker_touched",
+            ]
+            for b in impossible_booleans:
+                if data.get(b) is True:
+                    issues.append({"code": "provider_mock_response_review_sandbox_impossible_boolean", "path": rel, "severity": "error"})
+                    return
         # Track ID for duplicate detection
         if id_field:
             raw_id = data.get(id_field, "")
@@ -2006,6 +2047,9 @@ def check_research_artifacts(
             elif expected_type == "provider_mock_response_import_candidate":
                 provider_mock_response_import_candidate_ids.setdefault(raw_id, []).append(rel)
                 provider_mock_response_import_candidate_data.append(data)
+            elif expected_type == "provider_mock_response_review_sandbox":
+                provider_mock_response_review_sandbox_ids.setdefault(raw_id, []).append(rel)
+                provider_mock_response_review_sandbox_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -2059,6 +2103,8 @@ def check_research_artifacts(
             counts["provider_mock_response_simulations"] += 1
         elif expected_type == "provider_mock_response_import_candidate":
             counts["provider_mock_response_import_candidates"] += 1
+        elif expected_type == "provider_mock_response_review_sandbox":
+            counts["provider_mock_response_review_sandboxes"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -2218,6 +2264,12 @@ def check_research_artifacts(
             for path in provider_mock_response_import_candidates_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_mock_response_import_candidate", expected_symbol)
+        # Provider mock response review sandboxes
+        provider_mock_response_review_sandboxes_dir = sym_dir / "provider_mock_response_review_sandboxes"
+        if provider_mock_response_review_sandboxes_dir.exists():
+            for path in provider_mock_response_review_sandboxes_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "provider_mock_response_review_sandbox", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -2324,6 +2376,10 @@ def check_research_artifacts(
         if len(paths) > 1:
             for p in paths:
                 issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
+    for pmrsbid, paths in provider_mock_response_review_sandbox_ids.items():
+        if len(paths) > 1:
+            for p in paths:
+                issues.append({"code": "duplicate_id", "path": p, "severity": "error"})
 
     # Provider mock response import candidate lineage checks
     provider_mock_response_simulation_data_by_id: dict[str, dict[str, Any]] = {}
@@ -2371,6 +2427,63 @@ def check_research_artifacts(
         for b in impossible_booleans:
             if candidate.get(b) is not False:
                 issues.append({"code": "provider_mock_response_import_candidate_impossible_boolean", "path": rel, "severity": "error"})
+                break
+
+    # Provider mock response review sandbox lineage checks
+    provider_mock_response_import_candidate_data_by_id: dict[str, dict[str, Any]] = {}
+    for pmrc in provider_mock_response_import_candidate_data:
+        pmrc_id = pmrc.get("provider_mock_response_import_candidate_id", "")
+        if pmrc_id:
+            provider_mock_response_import_candidate_data_by_id[pmrc_id] = pmrc
+
+    for sandbox in provider_mock_response_review_sandbox_data:
+        rel = sandbox.get("artifact_path", "")
+        src_import_candidate_id = sandbox.get("source_provider_mock_response_import_candidate_id", "")
+        # Invalid lineage
+        try:
+            validate_run_id(src_import_candidate_id)
+        except ResearchSessionError:
+            issues.append({"code": "invalid_lineage", "path": rel, "severity": "error"})
+            continue
+        # Missing source mock import candidate
+        if src_import_candidate_id not in provider_mock_response_import_candidate_data_by_id:
+            issues.append({"code": "missing_source_mock_import_candidate", "path": rel, "severity": "error"})
+            continue
+        # Source mock import candidate hash mismatch
+        stored_src_hash = sandbox.get("source_mock_import_candidate_hash", "")
+        if stored_src_hash:
+            src_import_candidate = provider_mock_response_import_candidate_data_by_id[src_import_candidate_id]
+            actual_import_candidate_hash = src_import_candidate.get("artifact_hash", "")
+            if actual_import_candidate_hash != stored_src_hash:
+                issues.append({"code": "source_mock_import_candidate_hash_mismatch", "path": rel, "severity": "error"})
+                continue
+        # Source provider_id must be mock
+        if src_import_candidate_id in provider_mock_response_import_candidate_data_by_id:
+            src_ic = provider_mock_response_import_candidate_data_by_id[src_import_candidate_id]
+            if src_ic.get("provider_id") != "mock":
+                issues.append({"code": "provider_mock_response_review_sandbox_source_import_candidate_provider_not_mock", "path": rel, "severity": "error"})
+                continue
+        # Impossible booleans in review sandbox
+        impossible_booleans = [
+            "real_provider_response_reviewed", "real_provider_response_imported", "real_provider_response_received",
+            "provider_response_received", "provider_response_imported", "provider_response_reviewed",
+            "provider_response_trusted", "mock_response_trusted", "review_result_present",
+            "manual_review_gate_open", "manual_review_completed", "review_decision_allows_use",
+            "review_decision_allows_trust_upgrade", "review_decision_allows_trading_interpretation",
+            "review_decision_allows_order_creation", "review_decision_allows_order_approval",
+            "review_decision_allows_broker_call", "future_response_schema_validated",
+            "raw_response_body_stored", "raw_request_body_stored", "raw_prompt_body_stored",
+            "raw_review_notes_stored", "provider_sdk_imported", "http_client_imported",
+            "network_enabled", "network_call_attempted", "credentials_loaded",
+            "credential_value_present", "credential_lookup_attempted", "env_read_attempted",
+            "dotenv_loaded", "provider_execution_unlocked", "manual_unlock_granted",
+            "provider_call_allowed", "actual_provider_call_made", "outbound_request_sent",
+            "trust_upgrade_performed", "trading_signal_generated", "approval_created",
+            "pending_order_created", "broker_touched",
+        ]
+        for b in impossible_booleans:
+            if sandbox.get(b) is not False:
+                issues.append({"code": "provider_mock_response_review_sandbox_impossible_boolean", "path": rel, "severity": "error"})
                 break
 
     # Provider call plan lineage checks
@@ -3417,6 +3530,20 @@ def build_research_timeline(
         else:
             warnings.append({"code": "orphan_provider_mock_response_import_candidate", "path": pmrc.get("artifact_path", ""), "severity": "warning"})
 
+    from atlas_agent.research.provider_mock_response_review_sandbox import iter_provider_mock_response_review_sandbox_artifacts
+    provider_mock_response_review_sandbox_items = iter_provider_mock_response_review_sandbox_artifacts(workspace_path, symbol=symbol_filter)
+
+    provider_mock_response_review_sandboxes_by_import_candidate_id: dict[str, list[dict[str, Any]]] = {}
+    for pmrsb in provider_mock_response_review_sandbox_items:
+        if pmrsb.get("_invalid"):
+            warnings.append({"code": "invalid_provider_mock_response_review_sandbox_skipped", "path": pmrsb.get("artifact_path", ""), "severity": "warning"})
+            continue
+        src_ic = pmrsb.get("source_provider_mock_response_import_candidate_id", "")
+        if src_ic:
+            provider_mock_response_review_sandboxes_by_import_candidate_id.setdefault(src_ic, []).append(pmrsb)
+        else:
+            warnings.append({"code": "orphan_provider_mock_response_review_sandbox", "path": pmrsb.get("artifact_path", ""), "severity": "warning"})
+
     # Track seen plan IDs to detect orphans (plans whose source_run_id has no research artifact)
     seen_run_ids = set()
     for r in research_items:
@@ -4107,6 +4234,34 @@ def build_research_timeline(
                                                                             for pmrc in provider_mock_response_import_candidates_by_simulation_id.get(
                                                                                 pmrs.get("provider_mock_response_simulation_id", ""), [])
                                                                         ]
+                                                                        for pmrc in contract_copy["provider_mock_response_import_candidates"]:
+                                                                            pmrc_id = pmrc.get("provider_mock_response_import_candidate_id", "")
+                                                                            pmrc["provider_mock_response_review_sandboxes"] = [
+                                                                                _timeline_summary(pmrsb, (
+                                                                                    "provider_mock_response_review_sandbox_id",
+                                                                                    "source_provider_mock_response_import_candidate_id",
+                                                                                    "source_run_id",
+                                                                                    "symbol",
+                                                                                    "artifact_path",
+                                                                                    "provider_id",
+                                                                                    "model_id",
+                                                                                    "created_at",
+                                                                                    "mock_review_sandbox_status",
+                                                                                    "mock_review_sandbox_scope",
+                                                                                    "mock_review_sandbox_state",
+                                                                                    "mock_review_sandbox_recorded",
+                                                                                    "mock_review_source_verified",
+                                                                                    "mock_review_checks_completed",
+                                                                                    "mock_review_passed",
+                                                                                    "mock_only",
+                                                                                    "sandbox_review_only",
+                                                                                    "real_provider_response_reviewed",
+                                                                                    "provider_response_trusted",
+                                                                                    "provider_call_allowed",
+                                                                                    "broker_touched",
+                                                                                ))
+                                                                                for pmrsb in provider_mock_response_review_sandboxes_by_import_candidate_id.get(pmrc_id, [])
+                                                                            ]
                                                                         review_result["provider_adapter_interface_contracts"].append(contract_copy)
                                                                 contract_summaries.append(contract_summary)
                                                             pairing_copy["provider_response_schema_contracts"] = contract_summaries
@@ -5584,6 +5739,11 @@ def build_dossier(
     from atlas_agent.research.provider_mock_response_import_candidate import iter_provider_mock_response_import_candidate_artifacts
     provider_mock_response_import_candidate_items = iter_provider_mock_response_import_candidate_artifacts(workspace_path, symbol=symbol)
     linked_provider_mock_response_import_candidates = [pmrc for pmrc in provider_mock_response_import_candidate_items if pmrc.get("source_provider_mock_response_simulation_id") in linked_provider_mock_response_simulation_ids]
+    linked_provider_mock_response_import_candidate_ids = {pmrc.get("provider_mock_response_import_candidate_id", "") for pmrc in linked_provider_mock_response_import_candidates}
+
+    from atlas_agent.research.provider_mock_response_review_sandbox import iter_provider_mock_response_review_sandbox_artifacts
+    provider_mock_response_review_sandbox_items = iter_provider_mock_response_review_sandbox_artifacts(workspace_path, symbol=symbol)
+    linked_provider_mock_response_review_sandboxes = [pmrsb for pmrsb in provider_mock_response_review_sandbox_items if pmrsb.get("source_provider_mock_response_import_candidate_id") in linked_provider_mock_response_import_candidate_ids]
 
     # Build workflow status
     workflow_status = {
@@ -5612,6 +5772,7 @@ def build_dossier(
         "provider_adapter_interface_contracts": len(linked_provider_adapter_interface_contracts) > 0,
         "provider_mock_response_simulations": len(linked_provider_mock_response_simulations) > 0,
         "provider_mock_response_import_candidates": len(linked_provider_mock_response_import_candidates) > 0,
+        "provider_mock_response_review_sandboxes": len(linked_provider_mock_response_review_sandboxes) > 0,
     }
 
     artifact_counts = {
@@ -5640,6 +5801,7 @@ def build_dossier(
         "provider_adapter_interface_contracts": len(linked_provider_adapter_interface_contracts),
         "provider_mock_response_simulations": len(linked_provider_mock_response_simulations),
         "provider_mock_response_import_candidates": len(linked_provider_mock_response_import_candidates),
+        "provider_mock_response_review_sandboxes": len(linked_provider_mock_response_review_sandboxes),
     }
 
     # Build linked_artifacts with relative paths only
@@ -5855,6 +6017,16 @@ def build_dossier(
             "provider_id": pmrc.get("provider_id", ""),
             "model_id": pmrc.get("model_id", ""),
         })
+    for pmrsb in linked_provider_mock_response_review_sandboxes:
+        linked_artifacts.append({
+            "type": "provider_mock_response_review_sandbox",
+            "id": pmrsb.get("provider_mock_response_review_sandbox_id", ""),
+            "artifact_path": pmrsb.get("artifact_path", ""),
+            "mock_review_sandbox_status": pmrsb.get("mock_review_sandbox_status", ""),
+            "mock_review_sandbox_state": pmrsb.get("mock_review_sandbox_state", ""),
+            "provider_id": pmrsb.get("provider_id", ""),
+            "model_id": pmrsb.get("model_id", ""),
+        })
 
     # Build summaries (bounded, no full bodies)
     summaries: dict[str, Any] = {
@@ -6028,6 +6200,21 @@ def build_dossier(
             "provider_call_allowed": False,
             "broker_touched": False,
         }
+    if linked_provider_mock_response_review_sandboxes:
+        summaries["provider_mock_response_review_sandbox"] = {
+            "sandbox_count": len(linked_provider_mock_response_review_sandboxes),
+            "mock_review_sandbox_statuses": [pmrsb.get("mock_review_sandbox_status", "") for pmrsb in linked_provider_mock_response_review_sandboxes],
+            "mock_review_sandbox_states": [pmrsb.get("mock_review_sandbox_state", "") for pmrsb in linked_provider_mock_response_review_sandboxes],
+            "provider_ids": [pmrsb.get("provider_id", "") for pmrsb in linked_provider_mock_response_review_sandboxes],
+            "model_ids": [pmrsb.get("model_id", "") for pmrsb in linked_provider_mock_response_review_sandboxes],
+            "mock_review_sandbox_recorded": True,
+            "mock_only": True,
+            "sandbox_review_only": True,
+            "real_provider_response_reviewed": False,
+            "provider_response_trusted": False,
+            "provider_call_allowed": False,
+            "broker_touched": False,
+        }
 
     # Safety summary
     safety_summary = {
@@ -6071,6 +6258,8 @@ def build_dossier(
         missing_links.append("no_provider_credential_boundary")
     if not linked_provider_mock_response_simulations:
         missing_links.append("no_provider_mock_response_simulation")
+    if not linked_provider_mock_response_review_sandboxes:
+        missing_links.append("no_provider_mock_response_review_sandbox")
 
     warnings: list[str] = []
     if missing_links:

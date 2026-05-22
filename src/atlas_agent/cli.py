@@ -1487,6 +1487,65 @@ Safety First:
     research_provider_mock_response_import_candidate_doctor.add_argument("run_id", help="Run ID.")
     research_provider_mock_response_import_candidate_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_mock_response_review_sandbox = research_sub.add_parser(
+        "provider-mock-response-review-sandbox",
+        help="Create a provider mock response review sandbox from a mock response import candidate. Configless.",
+        description="Create a provider mock response review sandbox artifact from an existing provider mock response import candidate. Configless. Does not review real provider responses, read external files, accept stdin, call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_review_sandbox.add_argument("import_candidate_id", help="Source provider mock response import candidate ID.")
+    research_provider_mock_response_review_sandbox.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_review_sandbox_list = research_sub.add_parser(
+        "provider-mock-response-review-sandbox-list",
+        help="List provider mock response review sandbox artifacts. Configless.",
+        description="List provider mock response review sandbox artifacts. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_review_sandbox_list.add_argument("--symbol", default=None, help="Filter by symbol.")
+    research_provider_mock_response_review_sandbox_list.add_argument("--limit", type=int, default=100, help="Limit results. Default 100.")
+    research_provider_mock_response_review_sandbox_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_review_sandbox_show = research_sub.add_parser(
+        "provider-mock-response-review-sandbox-show",
+        help="Show a provider mock response review sandbox artifact. Configless.",
+        description="Show a provider mock response review sandbox artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_review_sandbox_show.add_argument("sandbox_id", help="Provider mock response review sandbox ID.")
+    research_provider_mock_response_review_sandbox_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_review_sandbox_validate = research_sub.add_parser(
+        "provider-mock-response-review-sandbox-validate",
+        help="Validate a provider mock response review sandbox artifact. Configless.",
+        description="Validate a provider mock response review sandbox artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_review_sandbox_validate.add_argument("sandbox_id", help="Provider mock response review sandbox ID.")
+    research_provider_mock_response_review_sandbox_validate.add_argument("--strict", action="store_true", help="Exit non-zero on any failed check.")
+    research_provider_mock_response_review_sandbox_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_review_sandbox_replay = research_sub.add_parser(
+        "provider-mock-response-review-sandbox-replay",
+        help="Replay a provider mock response review sandbox artifact. Configless.",
+        description="Replay a provider mock response review sandbox artifact deterministically. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_review_sandbox_replay.add_argument("sandbox_id", help="Provider mock response review sandbox ID.")
+    research_provider_mock_response_review_sandbox_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay hash does not match.")
+    research_provider_mock_response_review_sandbox_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_review_sandbox_summary = research_sub.add_parser(
+        "provider-mock-response-review-sandbox-summary",
+        help="Summarize the latest provider mock response review sandbox for a run. Configless.",
+        description="Summarize the latest provider mock response review sandbox for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_review_sandbox_summary.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_review_sandbox_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_review_sandbox_doctor = research_sub.add_parser(
+        "provider-mock-response-review-sandbox-doctor",
+        help="Diagnose provider mock response review sandbox readiness for a run. Configless.",
+        description="Diagnose provider mock response review sandbox readiness for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_review_sandbox_doctor.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_review_sandbox_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -3387,6 +3446,13 @@ def main(argv: list[str] | None = None) -> int:
         "provider-mock-response-import-candidate-replay",
         "provider-mock-response-import-candidate-summary",
         "provider-mock-response-import-candidate-doctor",
+        "provider-mock-response-review-sandbox",
+        "provider-mock-response-review-sandbox-list",
+        "provider-mock-response-review-sandbox-show",
+        "provider-mock-response-review-sandbox-validate",
+        "provider-mock-response-review-sandbox-replay",
+        "provider-mock-response-review-sandbox-summary",
+        "provider-mock-response-review-sandbox-doctor",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -12254,6 +12320,384 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Mock import candidate recorded: {result.get('mock_response_import_candidate_recorded', False)}")
             print(f"  Mock only: {result.get('mock_only', False)}")
             print(f"  Real provider response imported: {result.get('real_provider_response_imported', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+            if result.get("missing_prerequisites"):
+                print(f"  Missing prerequisites: {', '.join(result['missing_prerequisites'])}")
+            if result.get("blocking_reasons"):
+                print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
+            if result.get("warnings"):
+                for w in result["warnings"]:
+                    print(f"  Warning: {w}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-review-sandbox":
+        try:
+            from atlas_agent.research.provider_mock_response_review_sandbox import create_provider_mock_response_review_sandbox
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-review-sandbox skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.import_candidate_id)
+            result = create_provider_mock_response_review_sandbox(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Provider mock response review sandbox created")
+            print(f"  ID: {result.get('provider_mock_response_review_sandbox_id', '')}")
+            print(f"  Source import candidate: {result.get('source_provider_mock_response_import_candidate_id', '')}")
+            print(f"  Status: {result.get('status', '')}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+            if result.get("warnings"):
+                print(f"  Warnings: {len(result['warnings'])}")
+            else:
+                print("  Warnings: 0")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-review-sandbox-list":
+        try:
+            from atlas_agent.research.provider_mock_response_review_sandbox import iter_provider_mock_response_review_sandbox_artifacts
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                sanitize_symbol,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-review-sandbox-list skipped safely: no workspace found")
+                return 1
+
+            symbol_filter = None
+            if args.symbol:
+                symbol_filter = sanitize_symbol(args.symbol)
+
+            limit = args.limit
+            if limit < 1:
+                limit = 1
+            if limit > 100:
+                limit = 100
+
+            items = iter_provider_mock_response_review_sandbox_artifacts(ws, symbol=symbol_filter)[:limit]
+
+            if args.json:
+                import json
+                out = {
+                    "ok": True,
+                    "status": "provider_mock_response_review_sandboxes_listed",
+                    "items": items,
+                }
+                print(json.dumps(out, indent=2, sort_keys=True))
+            else:
+                if not items:
+                    print("No provider mock response review sandbox artifacts found.")
+                else:
+                    print(f"{'Created At':<24} {'Symbol':<8} {'Run ID':<34} {'Provider':<14} {'Status':<24} {'Artifact'}")
+                    for item in items:
+                        created = item.get("created_at", "")[:19]
+                        print(f"{created:<24} {item['symbol']:<8} {item['source_run_id']:<34} {item['provider_id']:<14} {item['mock_review_sandbox_status']:<24} {item['artifact_path']}")
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-list", "research command failed")
+            return 1
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-review-sandbox-show":
+        try:
+            from atlas_agent.research.provider_mock_response_review_sandbox import (
+                find_provider_mock_response_review_sandbox_by_id,
+                load_and_validate_provider_mock_response_review_sandbox,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-review-sandbox-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.sandbox_id)
+            artifact_path = find_provider_mock_response_review_sandbox_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    _research_error_json("sandbox_not_found", "Provider mock response review sandbox not found.")
+                else:
+                    _research_error_text("research provider-mock-response-review-sandbox-show", "sandbox not found")
+                return 1
+
+            data = load_and_validate_provider_mock_response_review_sandbox(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-show", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(data, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response review sandbox: {safe_id}")
+            print(f"  Symbol: {data.get('symbol', '')}")
+            print(f"  Provider: {data.get('provider_id', '')}")
+            print(f"  Model: {data.get('model_id', '')}")
+            print(f"  Status: {data.get('mock_review_sandbox_status', '')}")
+            print(f"  State: {data.get('mock_review_sandbox_state', '')}")
+            print(f"  Artifact: {data.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-review-sandbox-validate":
+        try:
+            from atlas_agent.research.provider_mock_response_review_sandbox import (
+                find_provider_mock_response_review_sandbox_by_id,
+                validate_provider_mock_response_review_sandbox_artifact,
+            )
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-review-sandbox-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.sandbox_id)
+            artifact_path = find_provider_mock_response_review_sandbox_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    _research_error_json("sandbox_not_found", "Provider mock response review sandbox not found.")
+                else:
+                    _research_error_text("research provider-mock-response-review-sandbox-validate", "sandbox not found")
+                return 1
+
+            result = validate_provider_mock_response_review_sandbox_artifact(artifact_path, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-validate", "research command failed")
+            return 1
+        if args.json:
+            import json
+            payload = {
+                "ok": result.valid,
+                "valid": result.valid,
+                "passed_checks": result.passed_checks,
+                "failed_checks": result.failed_checks,
+                "checks": result.checks,
+                "recommendation": result.recommendation,
+                "warnings": result.warnings,
+            }
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response review sandbox validation: {safe_id}")
+            print(f"  Valid: {result.valid}")
+            print(f"  Passed: {result.passed_checks}")
+            print(f"  Failed: {result.failed_checks}")
+            for c in result.checks:
+                status = "PASS" if c["passed"] else "FAIL"
+                print(f"  [{status}] {c['name']}: {c['message']}")
+            print(f"  Recommendation: {result.recommendation}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-review-sandbox-replay":
+        try:
+            from atlas_agent.research.provider_mock_response_review_sandbox import replay_provider_mock_response_review_sandbox
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-review-sandbox-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.sandbox_id)
+            result = replay_provider_mock_response_review_sandbox(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-replay", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response review sandbox replay: {safe_id}")
+            print(f"  Match: {result.get('match', False)}")
+            print(f"  Original hash: {result.get('original_hash', '')}")
+            print(f"  Replayed hash: {result.get('replayed_hash', '')}")
+        if args.strict and not result.get("match"):
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-review-sandbox-summary":
+        try:
+            from atlas_agent.research.provider_mock_response_review_sandbox import summarize_provider_mock_response_review_sandbox
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-review-sandbox-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_mock_response_review_sandbox(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-summary", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response review sandbox summary for run {safe_id}:")
+            print(f"  Sandbox ID: {result.get('provider_mock_response_review_sandbox_id', 'None')}")
+            print(f"  Status: {result.get('mock_review_sandbox_status', '')}")
+            print(f"  State: {result.get('mock_review_sandbox_state', '')}")
+            print(f"  Mock review sandbox recorded: {result.get('mock_review_sandbox_recorded', False)}")
+            print(f"  Mock only: {result.get('mock_only', False)}")
+            print(f"  Sandbox review only: {result.get('sandbox_review_only', False)}")
+            print(f"  Real provider response reviewed: {result.get('real_provider_response_reviewed', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-review-sandbox-doctor":
+        try:
+            from atlas_agent.research.provider_mock_response_review_sandbox import doctor_provider_mock_response_review_sandbox
+            from atlas_agent.research.session import (
+                ResearchSessionError,
+                validate_run_id,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    import json
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-review-sandbox-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = doctor_provider_mock_response_review_sandbox(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-review-sandbox-doctor", "research command failed")
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response review sandbox doctor for run {safe_id}:")
+            print(f"  Health: {result.get('mock_review_health', '')}")
+            print(f"  Mock review sandbox recorded: {result.get('mock_review_sandbox_recorded', False)}")
+            print(f"  Mock only: {result.get('mock_only', False)}")
+            print(f"  Sandbox review only: {result.get('sandbox_review_only', False)}")
+            print(f"  Real provider response reviewed: {result.get('real_provider_response_reviewed', False)}")
             print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
             print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
             print(f"  Broker touched: {result.get('broker_touched', False)}")
