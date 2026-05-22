@@ -3375,8 +3375,115 @@ if [ "$MOCK_DOCTOR_SIMULATED" != "True" ]; then
 fi
 assert_no_pending_orders
 
-# 85.17. Research check-artifacts after mock response simulation
-printf '\n--- Research check-artifacts (post mock response simulation) ---\n'
+# 85.17. Research provider-mock-response-import-candidate
+printf '\n--- Research provider-mock-response-import-candidate ---\n'
+MOCK_IMPORT_OUTPUT="$(atlas research provider-mock-response-import-candidate "$MOCK_SIM_ID" --json)"
+assert_no_absolute_paths "$MOCK_IMPORT_OUTPUT"
+assert_no_secrets_in_output "$MOCK_IMPORT_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_IMPORT_OUTPUT" "provider-mock-response-import-candidate CLI output"
+assert_ok "$MOCK_IMPORT_OUTPUT" "research provider-mock-response-import-candidate"
+MOCK_IMPORT_STATUS="$(json_field "$MOCK_IMPORT_OUTPUT" status)"
+if [ "$MOCK_IMPORT_STATUS" != "research_provider_mock_response_import_candidate_created" ]; then
+  printf 'FAIL: unexpected provider-mock-response-import-candidate status: %s\n' "$MOCK_IMPORT_STATUS" >&2
+  exit 1
+fi
+MOCK_IMPORT_ID="$(json_field "$MOCK_IMPORT_OUTPUT" provider_mock_response_import_candidate_id)"
+if [ -z "$MOCK_IMPORT_ID" ]; then
+  printf 'FAIL: provider_mock_response_import_candidate_id is empty after import candidate create\n' >&2
+  exit 1
+fi
+MOCK_IMPORT_MOCK_ONLY="$(json_field "$MOCK_IMPORT_OUTPUT" mock_only)"
+if [ "$MOCK_IMPORT_MOCK_ONLY" != "True" ]; then
+  printf 'FAIL: mock_only is not True after import candidate create\n' >&2
+  exit 1
+fi
+MOCK_IMPORT_PROVIDER="$(json_field "$MOCK_IMPORT_OUTPUT" provider_id)"
+if [ "$MOCK_IMPORT_PROVIDER" != "mock" ]; then
+  printf 'FAIL: provider_id is not mock after import candidate create\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.18. Research provider-mock-response-import-candidate-list
+printf '\n--- Research provider-mock-response-import-candidate-list ---\n'
+MOCK_IMPORT_LIST_OUTPUT="$(atlas research provider-mock-response-import-candidate-list --json)"
+assert_no_absolute_paths "$MOCK_IMPORT_LIST_OUTPUT"
+assert_no_secrets_in_output "$MOCK_IMPORT_LIST_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_IMPORT_LIST_OUTPUT" "provider-mock-response-import-candidate-list CLI output"
+assert_ok "$MOCK_IMPORT_LIST_OUTPUT" "research provider-mock-response-import-candidate-list"
+assert_no_pending_orders
+
+# 85.19. Research provider-mock-response-import-candidate-show
+printf '\n--- Research provider-mock-response-import-candidate-show ---\n'
+MOCK_IMPORT_SHOW_OUTPUT="$(atlas research provider-mock-response-import-candidate-show "$MOCK_IMPORT_ID" --json)"
+assert_no_absolute_paths "$MOCK_IMPORT_SHOW_OUTPUT"
+assert_no_secrets_in_output "$MOCK_IMPORT_SHOW_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_IMPORT_SHOW_OUTPUT" "provider-mock-response-import-candidate-show CLI output"
+MOCK_IMPORT_SHOW_ID="$(json_field "$MOCK_IMPORT_SHOW_OUTPUT" provider_mock_response_import_candidate_id)"
+if [ "$MOCK_IMPORT_SHOW_ID" != "$MOCK_IMPORT_ID" ]; then
+  printf 'FAIL: provider-mock-response-import-candidate-show returned wrong id\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.20. Research provider-mock-response-import-candidate-validate
+printf '\n--- Research provider-mock-response-import-candidate-validate ---\n'
+MOCK_IMPORT_VALIDATE_OUTPUT="$(atlas research provider-mock-response-import-candidate-validate "$MOCK_IMPORT_ID" --json)"
+assert_no_absolute_paths "$MOCK_IMPORT_VALIDATE_OUTPUT"
+assert_no_secrets_in_output "$MOCK_IMPORT_VALIDATE_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_IMPORT_VALIDATE_OUTPUT" "provider-mock-response-import-candidate-validate CLI output"
+MOCK_IMPORT_VALIDATE_VALID="$(json_field "$MOCK_IMPORT_VALIDATE_OUTPUT" valid)"
+if [ "$MOCK_IMPORT_VALIDATE_VALID" != "True" ]; then
+  printf 'FAIL: provider-mock-response-import-candidate-validate returned valid=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.21. Research provider-mock-response-import-candidate-replay
+printf '\n--- Research provider-mock-response-import-candidate-replay ---\n'
+MOCK_IMPORT_REPLAY_OUTPUT="$(atlas research provider-mock-response-import-candidate-replay "$MOCK_IMPORT_ID" --json)"
+assert_no_absolute_paths "$MOCK_IMPORT_REPLAY_OUTPUT"
+assert_no_secrets_in_output "$MOCK_IMPORT_REPLAY_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_IMPORT_REPLAY_OUTPUT" "provider-mock-response-import-candidate-replay CLI output"
+assert_ok "$MOCK_IMPORT_REPLAY_OUTPUT" "research provider-mock-response-import-candidate-replay"
+MOCK_IMPORT_REPLAY_MATCH="$(json_field "$MOCK_IMPORT_REPLAY_OUTPUT" match)"
+if [ "$MOCK_IMPORT_REPLAY_MATCH" != "True" ]; then
+  printf 'FAIL: provider-mock-response-import-candidate-replay returned match=false\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.22. Research provider-mock-response-import-candidate-summary
+printf '\n--- Research provider-mock-response-import-candidate-summary ---\n'
+MOCK_IMPORT_SUMMARY_OUTPUT="$(atlas research provider-mock-response-import-candidate-summary "$RUN_ID" --json)"
+assert_no_absolute_paths "$MOCK_IMPORT_SUMMARY_OUTPUT"
+assert_no_secrets_in_output "$MOCK_IMPORT_SUMMARY_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_IMPORT_SUMMARY_OUTPUT" "provider-mock-response-import-candidate-summary CLI output"
+assert_ok "$MOCK_IMPORT_SUMMARY_OUTPUT" "research provider-mock-response-import-candidate-summary"
+assert_no_pending_orders
+
+# 85.23. Research provider-mock-response-import-candidate-doctor
+printf '\n--- Research provider-mock-response-import-candidate-doctor ---\n'
+MOCK_IMPORT_DOCTOR_OUTPUT="$(atlas research provider-mock-response-import-candidate-doctor "$RUN_ID" --json)"
+assert_no_absolute_paths "$MOCK_IMPORT_DOCTOR_OUTPUT"
+assert_no_secrets_in_output "$MOCK_IMPORT_DOCTOR_OUTPUT"
+assert_no_forbidden_fragments "$MOCK_IMPORT_DOCTOR_OUTPUT" "provider-mock-response-import-candidate-doctor CLI output"
+assert_ok "$MOCK_IMPORT_DOCTOR_OUTPUT" "research provider-mock-response-import-candidate-doctor"
+assert_no_pending_orders
+
+# 85.24. Research check-artifacts after mock response import candidate
+printf '\n--- Research check-artifacts (post mock response import candidate) ---\n'
+CHECK_OUTPUT_MOCK_IMPORT="$(atlas research check-artifacts --json)"
+assert_no_forbidden_fragments "$CHECK_OUTPUT_MOCK_IMPORT" "check-artifacts CLI output after mock response import candidate"
+assert_ok "$CHECK_OUTPUT_MOCK_IMPORT" "research check-artifacts after mock response import candidate"
+CHECK_MOCK_IMPORT_COUNT="$(json_field "$CHECK_OUTPUT_MOCK_IMPORT" counts.provider_mock_response_import_candidates)"
+if [ "$CHECK_MOCK_IMPORT_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_mock_response_import_candidates count is < 1\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 86. Create local provider response fixture and import it
 CHECK_OUTPUT_MOCK="$(atlas research check-artifacts --json)"
 assert_no_forbidden_fragments "$CHECK_OUTPUT_MOCK" "check-artifacts CLI output after mock response simulation"
 assert_ok "$CHECK_OUTPUT_MOCK" "research check-artifacts after mock response simulation"
