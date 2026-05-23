@@ -1664,6 +1664,51 @@ Safety First:
     research_provider_mock_response_final_safety_seal_doctor.add_argument("run_id", help="Run ID.")
     research_provider_mock_response_final_safety_seal_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_safety_dossier = research_sub.add_parser(
+        "provider-safety-dossier", help="Create a provider safety dossier."
+    )
+    research_provider_safety_dossier.add_argument("seal_id", help="Source provider mock response final safety seal ID.")
+    research_provider_safety_dossier.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_safety_dossier_list = research_sub.add_parser(
+        "provider-safety-dossier-list", help="List provider safety dossiers."
+    )
+    research_provider_safety_dossier_list.add_argument("--symbol", default=None, help="Filter by symbol.")
+    research_provider_safety_dossier_list.add_argument("--limit", type=int, default=20, help="Limit results. Default 20, max 100.")
+    research_provider_safety_dossier_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_safety_dossier_show = research_sub.add_parser(
+        "provider-safety-dossier-show", help="Show a provider safety dossier."
+    )
+    research_provider_safety_dossier_show.add_argument("dossier_id", help="Provider safety dossier ID.")
+    research_provider_safety_dossier_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_safety_dossier_validate = research_sub.add_parser(
+        "provider-safety-dossier-validate", help="Validate a provider safety dossier."
+    )
+    research_provider_safety_dossier_validate.add_argument("dossier_id", help="Provider safety dossier ID.")
+    research_provider_safety_dossier_validate.add_argument("--strict", action="store_true", help="Exit non-zero on any failed check.")
+    research_provider_safety_dossier_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_safety_dossier_replay = research_sub.add_parser(
+        "provider-safety-dossier-replay", help="Replay a provider safety dossier."
+    )
+    research_provider_safety_dossier_replay.add_argument("dossier_id", help="Provider safety dossier ID.")
+    research_provider_safety_dossier_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay hash does not match.")
+    research_provider_safety_dossier_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_safety_dossier_summary = research_sub.add_parser(
+        "provider-safety-dossier-summary", help="Summarize a provider safety dossier."
+    )
+    research_provider_safety_dossier_summary.add_argument("run_id", help="Run ID.")
+    research_provider_safety_dossier_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_safety_dossier_doctor = research_sub.add_parser(
+        "provider-safety-dossier-doctor", help="Doctor a provider safety dossier."
+    )
+    research_provider_safety_dossier_doctor.add_argument("run_id", help="Run ID.")
+    research_provider_safety_dossier_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_mock_response_final_safety_seal = research_sub.add_parser(
         "mock-response-final-safety-seal",
         help="Create/show/list/validate/replay mock response final safety seals. Configless.",
@@ -3597,6 +3642,13 @@ def main(argv: list[str] | None = None) -> int:
         "provider-mock-response-final-safety-seal-replay",
         "provider-mock-response-final-safety-seal-summary",
         "provider-mock-response-final-safety-seal-doctor",
+        "provider-safety-dossier",
+        "provider-safety-dossier-list",
+        "provider-safety-dossier-show",
+        "provider-safety-dossier-validate",
+        "provider-safety-dossier-replay",
+        "provider-safety-dossier-summary",
+        "provider-safety-dossier-doctor",
         "mock-response-final-safety-seal",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
@@ -13561,6 +13613,322 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")
             print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
             print(f"  Broker touched: {result.get('broker_touched', False)}")
+            if result.get("missing_prerequisites"):
+                print(f"  Missing prerequisites: {', '.join(result['missing_prerequisites'])}")
+            if result.get("blocking_reasons"):
+                print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
+            if result.get("warnings"):
+                for w in result["warnings"]:
+                    print(f"  Warning: {w}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import create_provider_safety_dossier
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.seal_id)
+            result = create_provider_safety_dossier(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Provider safety dossier created")
+            print(f"  ID: {result.get('provider_safety_dossier_id', '')}")
+            print(f"  Symbol: {result.get('symbol', '')}")
+            print(f"  Provider ID: {result.get('provider_id', '')}")
+            print(f"  Safety Verdict: {result.get('safety_verdict', '')}")
+            print(f"  Sandbox Only: {result.get('sandbox_only', False)}")
+            print(f"  Chain Complete: {result.get('chain_complete', False)}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+            print(f"  Warnings: {len(result.get('warnings', []))}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-list":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import iter_provider_safety_dossier_artifacts
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-list skipped safely: no workspace found")
+                return 1
+
+            items = iter_provider_safety_dossier_artifacts(ws, symbol=args.symbol)
+            limit = max(1, min(args.limit, 100))
+            items = items[:limit]
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-list", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps({"ok": True, "status": "provider_safety_dossiers_listed", "items": items}, indent=2, sort_keys=True))
+        else:
+            print("Provider safety dossiers:")
+            for item in items:
+                if item.get("_invalid"):
+                    print(f"  [INVALID] {item.get('provider_safety_dossier_id', '')} — {item.get('error_code', '')}")
+                else:
+                    print(f"  {item.get('provider_safety_dossier_id', '')} {item.get('symbol', '')} {item.get('safety_verdict', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-show":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import (
+                find_provider_safety_dossier_by_id,
+                load_provider_safety_dossier,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.dossier_id)
+            artifact_path = find_provider_safety_dossier_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "dossier_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Provider safety dossier not found.")
+                return 1
+            data = load_provider_safety_dossier(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-show", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(data, indent=2, sort_keys=True))
+        else:
+            print(f"Provider safety dossier {safe_id}:")
+            print(f"  Symbol: {data.get('symbol', '')}")
+            print(f"  Provider ID: {data.get('provider_id', '')}")
+            print(f"  Safety Verdict: {data.get('safety_verdict', '')}")
+            print(f"  Artifact: {data.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-validate":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import (
+                find_provider_safety_dossier_by_id,
+                validate_provider_safety_dossier_artifact,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.dossier_id)
+            artifact_path = find_provider_safety_dossier_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "dossier_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Provider safety dossier not found.")
+                return 1
+            result = validate_provider_safety_dossier_artifact(artifact_path, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-validate", "research command failed")
+            return 1
+        payload = {
+            "ok": True,
+            "valid": result.valid,
+            "passed_checks": result.passed_checks,
+            "failed_checks": result.failed_checks,
+            "checks": result.checks,
+            "recommendation": result.recommendation,
+            "warnings": result.warnings,
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Validation: {'PASS' if result.valid else 'FAIL'}")
+            print(f"  Passed: {result.passed_checks}")
+            print(f"  Failed: {result.failed_checks}")
+            print(f"  Recommendation: {result.recommendation}")
+            for check in result.checks:
+                status_str = "PASS" if check["passed"] else "FAIL"
+                print(f"  [{status_str}] {check['name']}: {check['message']}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-replay":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import replay_provider_safety_dossier
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.dossier_id)
+            result = replay_provider_safety_dossier(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-replay", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Replay: {'MATCH' if result.get('match') else 'MISMATCH'}")
+            print(f"  Original hash: {result.get('original_hash', '')}")
+            print(f"  Replayed hash: {result.get('replayed_hash', '')}")
+        if args.strict and not result.get("match"):
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-summary":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import summarize_provider_safety_dossier
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_safety_dossier(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-summary", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider safety dossier summary for run {safe_id}:")
+            print(f"  Dossier ID: {result.get('provider_safety_dossier_id', 'None')}")
+            print(f"  Verdict: {result.get('safety_verdict', '')}")
+            print(f"  Chain Complete: {result.get('chain_complete', False)}")
+            print(f"  Sandbox Only: {result.get('sandbox_only', False)}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-doctor":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import doctor_provider_safety_dossier
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = doctor_provider_safety_dossier(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-doctor", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider safety dossier doctor for run {safe_id}:")
+            print(f"  Health: {result.get('dossier_health', '')}")
             if result.get("missing_prerequisites"):
                 print(f"  Missing prerequisites: {', '.join(result['missing_prerequisites'])}")
             if result.get("blocking_reasons"):
