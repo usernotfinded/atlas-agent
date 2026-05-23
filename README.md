@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev44)** — see [release notes](docs/releases/v0.5.7.dev40.md).
+> **Current Status (v0.5.7.dev45)** — see [release notes](docs/releases/v0.5.7.dev40.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -62,7 +62,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7.dev44)
+## Current Status (v0.5.7.dev45)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
@@ -156,6 +156,43 @@ Review a provider response artifact deterministically:
 
 Build a deterministic dossier consolidating a research chain:
 - `atlas research dossier RUN_ID`
+
+## Provider Safety Dossier
+
+The provider safety dossier is a **sandbox-only**, **offline mock workflow** that produces a local safety report for the provider response pipeline. It does not submit orders, call brokers, or enable live trading.
+
+The chain works as follows:
+
+1. **`mock_response_simulation`** — Generate a deterministic mock provider response from a local prompt packet. No network, no API keys.
+2. **`mock_response_import_candidate`** — Import a locally prepared provider response JSON file for review. No real provider calls.
+3. **`mock_response_review_sandbox`** — Run a deterministic sandbox review of the imported response against safety rules. No trust is granted.
+4. **`mock_response_trust_decision_blocker`** — Record the explicit decision to **block** trust. The response is not trusted; execution remains locked.
+5. **`mock_response_final_safety_seal`** — Apply a final local safety seal over the blocked chain. The seal is tamper-evident and offline.
+6. **`provider_safety_dossier`** — Consolidate the entire chain into one summary artifact with hashes, lineage, and safety verdict.
+7. **`provider_safety_dossier Markdown export`** — Export the dossier to a human-readable Markdown file with redacted paths and safe sentinels.
+8. **`provider_safety_dossier discovery UX`** — List, filter, and discover dossiers by status without exposing raw invalid fields or absolute paths.
+
+Key safety properties:
+
+- **Sandbox-only** — The entire pipeline operates on local mock responses.
+- **Offline mock workflow** — No external LLM or provider calls are made.
+- **Provider execution remains locked** — No real provider calls are authorized.
+- **Trust remains blocked** — Mock responses are explicitly not trusted.
+- **No broker/order path** — No orders, approvals, or broker contact.
+- **No credentials loaded** — `.env.atlas` is not read during dossier creation.
+- **No network enabled** — All artifacts are local.
+- **Live trading disabled by default** — The dossier is a report, not an execution trigger.
+- **Safety validation does not imply profitability or trading correctness** — The dossier validates structural safety, not strategy performance.
+
+Command examples:
+
+```bash
+atlas research provider-safety-dossier-latest --json
+atlas research provider-safety-dossier-list --status sandbox_chain_complete --limit 5 --json
+atlas research provider-safety-dossier-export <DOSSIER_ID> --format markdown --output reports/provider-safety-dossier.md
+```
+
+For the full public documentation, see [docs/provider-safety-dossier.md](docs/provider-safety-dossier.md). For a step-by-step workflow, see [docs/examples/provider-safety-dossier-workflow.md](docs/examples/provider-safety-dossier-workflow.md).
 
 ## Demos
 
