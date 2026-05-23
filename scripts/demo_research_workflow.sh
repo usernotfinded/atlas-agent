@@ -3818,6 +3818,42 @@ if [ "$EXPORT_FORMAT" != "markdown" ]; then
 fi
 assert_no_pending_orders
 
+# 85.43. Research provider-safety-dossier-latest
+printf '\n--- Research provider-safety-dossier-latest ---\n'
+LATEST_OUTPUT="$(atlas research provider-safety-dossier-latest --json)"
+assert_no_forbidden_fragments "$LATEST_OUTPUT" "provider-safety-dossier-latest CLI output"
+assert_no_absolute_paths "$LATEST_OUTPUT"
+assert_ok "$LATEST_OUTPUT" "research provider-safety-dossier-latest"
+LATEST_FOUND="$(json_field "$LATEST_OUTPUT" found)"
+if [ "$LATEST_FOUND" != "True" ]; then
+  printf 'FAIL: provider-safety-dossier-latest did not find a dossier\n' >&2
+  exit 1
+fi
+LATEST_SAFE_STATUS="$(json_field "$LATEST_OUTPUT" safe_status)"
+if [ "$LATEST_SAFE_STATUS" != "sandbox_chain_complete" ]; then
+  printf 'FAIL: provider-safety-dossier-latest safe_status is not sandbox_chain_complete: %s\n' "$LATEST_SAFE_STATUS" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.44. Research provider-safety-dossier-list
+printf '\n--- Research provider-safety-dossier-list ---\n'
+LIST_STATUS_OUTPUT="$(atlas research provider-safety-dossier-list --status sandbox_chain_complete --json)"
+assert_no_forbidden_fragments "$LIST_STATUS_OUTPUT" "provider-safety-dossier-list CLI output"
+assert_no_absolute_paths "$LIST_STATUS_OUTPUT"
+assert_ok "$LIST_STATUS_OUTPUT" "research provider-safety-dossier-list"
+LIST_STATUS_COUNT="$( "$PYTHON_BIN" -c "
+import json,sys
+data=json.load(sys.stdin)
+items=data.get('items',[])
+print(len(items))
+" <<<"$LIST_STATUS_OUTPUT" )"
+if [ "$LIST_STATUS_COUNT" -lt 1 ]; then
+  printf 'FAIL: provider-safety-dossier-list --status sandbox_chain_complete returned no items\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
 # 85.40. Research timeline post mock trust blocker
 printf '\n--- Research timeline (post mock trust blocker) ---\n'
 TIMELINE_OUTPUT3="$(atlas research timeline --json)"

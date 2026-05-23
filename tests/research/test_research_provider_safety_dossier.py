@@ -12,12 +12,17 @@ from atlas_agent.research.provider_mock_response_final_safety_seal import create
 from atlas_agent.research.provider_safety_dossier import (
     ProviderSafetyDossierValidationResult,
     _has_unsafe_positive_claims,
+    _SAFE_STATUS_INCOMPLETE,
+    _SAFE_STATUS_INVALID,
+    _SAFE_STATUS_TAMPER,
+    _SAFE_STATUS_VALID,
     build_provider_safety_dossier_dict,
     create_provider_safety_dossier,
     doctor_provider_safety_dossier,
     export_provider_safety_dossier_markdown,
     find_provider_safety_dossier_by_id,
     iter_provider_safety_dossier_artifacts,
+    latest_provider_safety_dossier,
     load_provider_safety_dossier,
     provider_safety_dossier_sha256,
     replay_provider_safety_dossier,
@@ -828,3 +833,350 @@ class TestSafetyDossierMarkdownExport:
         assert result["output_path_redacted"] is True
         assert "/" not in result["output_path_relative"] or result["output_path_relative"] == "external_export.md"
         assert "/private/var/" not in json.dumps(result)
+
+
+# ---------------------------------------------------------------------------
+# Discovery UX tests (Batch 9.7)
+# ---------------------------------------------------------------------------
+
+class TestSafetyDossierDiscoveryUX:
+    def test_latest_returns_newest_valid_dossier(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        result = latest_provider_safety_dossier(ws)
+        assert result["ok"] is True
+        assert result["found"] is True
+        assert result["artifact_id"] == dossier_id
+        assert result["provider_id"] == "mock"
+        assert result["sandbox_only"] is True
+        assert result["chain_health"] == "complete"
+        assert result["safety_verdict"] == "sandbox_chain_complete"
+        assert result["export_available"] is True
+        assert result["safe_status"] == _SAFE_STATUS_VALID
+
+    def test_latest_no_dossiers_returns_not_found(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        result = latest_provider_safety_dossier(ws)
+        assert result["ok"] is True
+        assert result["found"] is False
+        assert result["reason"] == "no_provider_safety_dossier_found"
+
+    def test_latest_ignores_invalid_dossier(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_bad"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        bad_data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "provider_call_allowed": True,  # invalid
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        bad_data["artifact_hash"] = provider_safety_dossier_sha256(bad_data)
+        dossier_path.write_text(json.dumps(bad_data))
+
+        result = latest_provider_safety_dossier(ws)
+        assert result["ok"] is True
+        assert result["found"] is False
+        assert result["reason"] == "no_provider_safety_dossier_found"
+
+    def test_latest_ignores_tampered_dossier(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_tampered"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "chain_nodes": [
+                {"artifact_type": "a", "artifact_id": "1"},
+                {"artifact_type": "b", "artifact_id": "2"},
+                {"artifact_type": "c", "artifact_id": "3"},
+                {"artifact_type": "d", "artifact_id": "4"},
+                {"artifact_type": "e", "artifact_id": "5"},
+                {"artifact_type": "f", "artifact_id": "6"},
+            ],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "tampered_hash_12345",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        dossier_path.write_text(json.dumps(data))
+
+        result = latest_provider_safety_dossier(ws)
+        assert result["ok"] is True
+        assert result["found"] is False
+        assert result["reason"] == "no_provider_safety_dossier_found"
+
+    def test_latest_does_not_copy_raw_invalid_fields(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        result = latest_provider_safety_dossier(ws)
+        assert result["ok"] is True
+        assert result["found"] is True
+        # Should not contain raw artifact_path or other raw fields
+        assert "artifact_path" not in result
+        assert "source_seal_id" not in result
+        assert "chain_nodes" not in result
+
+    def test_list_status_filter_sandbox_chain_complete(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        create_provider_safety_dossier(ws, seal_id)
+
+        items = iter_provider_safety_dossier_artifacts(ws, status_filter=_SAFE_STATUS_VALID)
+        assert len(items) == 1
+        assert items[0]["safe_status"] == _SAFE_STATUS_VALID
+
+    def test_list_status_filter_chain_incomplete(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_incomplete"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": False,
+            "chain_nodes": [],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        data["artifact_hash"] = provider_safety_dossier_sha256(data)
+        dossier_path.write_text(json.dumps(data))
+
+        items = iter_provider_safety_dossier_artifacts(ws, status_filter=_SAFE_STATUS_INCOMPLETE)
+        assert len(items) == 1
+        assert items[0]["safe_status"] == _SAFE_STATUS_INCOMPLETE
+
+    def test_list_status_filter_chain_invalid(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_invalid"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        # Use chain_complete=True with too few nodes to trigger chain_incomplete validation error
+        bad_data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "chain_nodes": [
+                {"artifact_type": "a", "artifact_id": "1"},
+            ],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        bad_data["artifact_hash"] = provider_safety_dossier_sha256(bad_data)
+        dossier_path.write_text(json.dumps(bad_data))
+
+        items = iter_provider_safety_dossier_artifacts(ws, status_filter=_SAFE_STATUS_INVALID)
+        assert len(items) == 1
+        assert items[0]["_invalid"] is True
+        assert items[0]["safe_status"] == _SAFE_STATUS_INVALID
+
+    def test_list_status_filter_unsafe_tamper_detected(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_tampered"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "chain_nodes": [
+                {"artifact_type": "a", "artifact_id": "1"},
+                {"artifact_type": "b", "artifact_id": "2"},
+                {"artifact_type": "c", "artifact_id": "3"},
+                {"artifact_type": "d", "artifact_id": "4"},
+                {"artifact_type": "e", "artifact_id": "5"},
+                {"artifact_type": "f", "artifact_id": "6"},
+            ],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "tampered_hash_12345",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        dossier_path.write_text(json.dumps(data))
+
+        items = iter_provider_safety_dossier_artifacts(ws, status_filter=_SAFE_STATUS_TAMPER)
+        assert len(items) == 1
+        assert items[0]["_invalid"] is True
+        assert items[0]["safe_status"] == _SAFE_STATUS_TAMPER
+
+    def test_list_invalid_filter_raises(self, tmp_path: Path) -> None:
+        with pytest.raises(ResearchSessionError, match="invalid_provider_safety_dossier_status_filter"):
+            iter_provider_safety_dossier_artifacts(tmp_path, status_filter="invalid_status")
+
+    def test_list_limit_respected(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        # Create two dossiers with slight time gap
+        run_id1, seal_id1 = _full_chain_to_seal(ws, monkeypatch)
+        create_provider_safety_dossier(ws, seal_id1)
+        import time
+        time.sleep(0.01)
+        run_id2, seal_id2 = _full_chain_to_seal(ws, monkeypatch)
+        create_provider_safety_dossier(ws, seal_id2)
+
+        items = iter_provider_safety_dossier_artifacts(ws)
+        assert len(items) == 2
+        limited = items[:1]
+        assert len(limited) == 1
+
+    def test_latest_output_no_absolute_paths(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        create_provider_safety_dossier(ws, seal_id)
+
+        result = latest_provider_safety_dossier(ws)
+        result_json = json.dumps(result)
+        assert "/private/var/" not in result_json
+        assert "/Users/" not in result_json
+        assert str(ws) not in result_json
+
+    def test_list_output_no_absolute_paths(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        create_provider_safety_dossier(ws, seal_id)
+
+        items = iter_provider_safety_dossier_artifacts(ws)
+        items_json = json.dumps(items)
+        assert "/private/var/" not in items_json
+        assert "/Users/" not in items_json
+        assert str(ws) not in items_json
+
+    def test_list_output_no_forbidden_fragments(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        create_provider_safety_dossier(ws, seal_id)
+
+        items = iter_provider_safety_dossier_artifacts(ws)
+        items_json = json.dumps(items)
+        for frag in [
+            "Authorization", "Bearer", "APCA", "SECRET", "TOKEN",
+            "PASSWORD", "API_KEY", "sk-", "broker.example.com",
+        ]:
+            assert frag not in items_json, f"Forbidden fragment in list output: {frag}"

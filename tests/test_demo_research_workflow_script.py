@@ -3882,6 +3882,51 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }],
+    }))
+    sys.exit(0)
+
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }],
+    }))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -3910,6 +3955,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }],
+    }))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -6266,6 +6342,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -6294,6 +6384,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -8514,6 +8635,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -8542,6 +8677,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -10774,6 +10940,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -10802,6 +10982,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -13034,6 +13245,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -13062,6 +13287,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -15297,6 +15553,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -15325,6 +15595,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -17568,6 +17869,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -17596,6 +17911,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -19834,6 +20180,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -19862,6 +20222,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -22100,6 +22491,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -22128,6 +22533,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -24380,6 +24816,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -24408,6 +24858,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -26654,6 +27135,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -26682,6 +27177,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -28928,6 +29454,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -28956,6 +29496,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -31194,6 +31765,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -31222,6 +31807,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -33489,6 +34105,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -33517,6 +34147,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -35772,6 +36433,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -35800,6 +36475,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -38061,6 +38767,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -38089,6 +38809,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -40355,6 +41106,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -40383,6 +41148,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -42653,6 +43449,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -42681,6 +43491,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -44946,6 +45787,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -44974,6 +45829,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -47239,6 +48125,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -47267,6 +48167,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -49532,6 +50463,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -49560,6 +50505,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -51824,6 +52800,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -51852,6 +52842,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -54112,6 +55133,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -54140,6 +55175,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -56416,6 +57482,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -56444,6 +57524,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -58720,6 +59831,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -58748,6 +59873,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -61045,6 +62201,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -61073,6 +62243,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -63503,6 +64704,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -63531,6 +64746,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -65958,6 +67204,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -65986,6 +67246,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -68421,6 +69712,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -68449,6 +69754,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -71903,6 +73239,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -71931,6 +73281,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -75244,6 +76625,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -75272,6 +76667,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -77596,6 +79022,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -77624,6 +79064,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
@@ -81021,6 +82492,20 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
     dossier_id = "dossier-" + ARGS[2]
     print(json.dumps(dict(
@@ -81049,6 +82534,37 @@ if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
         format="markdown",
     )))
     sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-latest":
+    print(json.dumps({{
+        "ok": True,
+        "found": True,
+        "artifact_id": "demodossierid12345",
+        "artifact_hash": "dummyhash12345",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "provider_id": "mock",
+        "sandbox_only": True,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+        "export_available": True,
+        "safe_status": "sandbox_chain_complete",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-list":
+    print(json.dumps({{
+        "ok": True,
+        "status": "provider_safety_dossiers_listed",
+        "items": [{{
+            "provider_safety_dossier_id": "demodossierid12345",
+            "safety_verdict": "sandbox_chain_complete",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "chain_health": "complete",
+            "safe_status": "sandbox_chain_complete",
+        }}],
+    }}))
+    sys.exit(0)
+
 
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))

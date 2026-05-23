@@ -619,7 +619,34 @@ def find_provider_safety_dossier_by_id(workspace_path: Path, dossier_id: str) ->
             return p
     return None
 
-def iter_provider_safety_dossier_artifacts(workspace_path: Path, symbol: str | None = None) -> list[dict[str, Any]]:
+_SAFE_STATUS_VALID = "sandbox_chain_complete"
+_SAFE_STATUS_INCOMPLETE = "chain_incomplete"
+_SAFE_STATUS_INVALID = "chain_invalid"
+_SAFE_STATUS_TAMPER = "unsafe_tamper_detected"
+
+_ALLOWED_STATUS_FILTERS = {
+    _SAFE_STATUS_VALID,
+    _SAFE_STATUS_INCOMPLETE,
+    _SAFE_STATUS_INVALID,
+    _SAFE_STATUS_TAMPER,
+}
+
+
+def _is_tamper_error(error_code: str) -> bool:
+    return any(
+        frag in error_code
+        for frag in ("hash_mismatch", "impossible_boolean", "forbidden_trust_claim", "source_seal_hash_mismatch")
+    )
+
+
+def iter_provider_safety_dossier_artifacts(
+    workspace_path: Path,
+    symbol: str | None = None,
+    status_filter: str | None = None,
+) -> list[dict[str, Any]]:
+    if status_filter and status_filter not in _ALLOWED_STATUS_FILTERS:
+        raise ResearchSessionError("invalid_provider_safety_dossier_status_filter")
+
     search_dir = workspace_path / RESEARCH_DIR
     if symbol:
         result_dir = search_dir / symbol / "provider_safety_dossiers"
@@ -637,24 +664,85 @@ def iter_provider_safety_dossier_artifacts(workspace_path: Path, symbol: str | N
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except Exception:
-            invalid_items.append({"provider_safety_dossier_id": path.stem, "_invalid": True})
+            invalid_items.append({
+                "provider_safety_dossier_id": path.stem,
+                "_invalid": True,
+                "safe_status": _SAFE_STATUS_INVALID,
+                "error_code": "malformed",
+            })
             continue
         cleaned, error = safe_validate_provider_safety_dossier_data(raw, workspace_path=workspace_path)
         if error or not cleaned:
+            safe_status = _SAFE_STATUS_TAMPER if _is_tamper_error(error or "") else _SAFE_STATUS_INVALID
             invalid_items.append({
                 "provider_safety_dossier_id": raw.get("provider_safety_dossier_id", path.stem),
                 "_invalid": True,
-                "error_code": error or "malformed"
+                "safe_status": safe_status,
+                "error_code": error or "malformed",
             })
             continue
+        safe_status = _SAFE_STATUS_VALID if cleaned.get("chain_complete") else _SAFE_STATUS_INCOMPLETE
         items.append({
             "provider_safety_dossier_id": cleaned.get("provider_safety_dossier_id", ""),
             "safety_verdict": cleaned.get("safety_verdict", ""),
             "created_at": cleaned.get("created_at", ""),
             "chain_health": cleaned.get("chain_health", ""),
+            "safe_status": safe_status,
         })
     items.sort(key=lambda i: i.get("created_at", ""), reverse=True)
+    invalid_items.sort(key=lambda i: i.get("created_at", ""), reverse=True)
+
+    if status_filter == _SAFE_STATUS_VALID:
+        return [i for i in items if i["safe_status"] == _SAFE_STATUS_VALID]
+    if status_filter == _SAFE_STATUS_INCOMPLETE:
+        return [i for i in items if i["safe_status"] == _SAFE_STATUS_INCOMPLETE]
+    if status_filter == _SAFE_STATUS_INVALID:
+        return invalid_items
+    if status_filter == _SAFE_STATUS_TAMPER:
+        return [i for i in invalid_items if i["safe_status"] == _SAFE_STATUS_TAMPER]
+
     return items + invalid_items
+
+def latest_provider_safety_dossier(workspace_path: Path) -> dict[str, Any]:
+    """Return the latest valid provider safety dossier metadata.
+
+    Ignores invalid/tampered dossiers. Does not copy raw invalid fields.
+    """
+    items = iter_provider_safety_dossier_artifacts(workspace_path)
+    valid_items = [i for i in items if not i.get("_invalid")]
+    if not valid_items:
+        return {
+            "ok": True,
+            "found": False,
+            "reason": "no_provider_safety_dossier_found",
+        }
+
+    latest_item = valid_items[0]
+    dossier_id = latest_item["provider_safety_dossier_id"]
+    dossier_path = find_provider_safety_dossier_by_id(workspace_path, dossier_id)
+    if not dossier_path:
+        return {
+            "ok": True,
+            "found": False,
+            "reason": "no_provider_safety_dossier_found",
+        }
+
+    data = load_provider_safety_dossier(dossier_path, workspace_path)
+    chain_complete = data.get("chain_complete", False)
+
+    return {
+        "ok": True,
+        "found": True,
+        "artifact_id": data.get("provider_safety_dossier_id", ""),
+        "artifact_hash": data.get("artifact_hash", ""),
+        "created_at": data.get("created_at", ""),
+        "provider_id": data.get("provider_id", ""),
+        "sandbox_only": data.get("sandbox_only", True),
+        "chain_health": data.get("chain_health", ""),
+        "safety_verdict": data.get("safety_verdict", ""),
+        "export_available": chain_complete,
+        "safe_status": latest_item.get("safe_status", ""),
+    }
 
 def _find_latest_provider_safety_dossier_for_run(workspace_path: Path, run_id: str) -> Path | None:
     items = iter_provider_safety_dossier_artifacts(workspace_path)

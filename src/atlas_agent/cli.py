@@ -1674,8 +1674,14 @@ Safety First:
         "provider-safety-dossier-list", help="List provider safety dossiers."
     )
     research_provider_safety_dossier_list.add_argument("--symbol", default=None, help="Filter by symbol.")
+    research_provider_safety_dossier_list.add_argument("--status", default=None, help="Filter by safe status: sandbox_chain_complete, chain_incomplete, chain_invalid, unsafe_tamper_detected.")
     research_provider_safety_dossier_list.add_argument("--limit", type=int, default=20, help="Limit results. Default 20, max 100.")
     research_provider_safety_dossier_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_safety_dossier_latest = research_sub.add_parser(
+        "provider-safety-dossier-latest", help="Get the latest valid provider safety dossier. Configless."
+    )
+    research_provider_safety_dossier_latest.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
     research_provider_safety_dossier_show = research_sub.add_parser(
         "provider-safety-dossier-show", help="Show a provider safety dossier."
@@ -3652,6 +3658,7 @@ def main(argv: list[str] | None = None) -> int:
         "provider-mock-response-final-safety-seal-doctor",
         "provider-safety-dossier",
         "provider-safety-dossier-list",
+        "provider-safety-dossier-latest",
         "provider-safety-dossier-show",
         "provider-safety-dossier-validate",
         "provider-safety-dossier-replay",
@@ -13688,7 +13695,7 @@ def main(argv: list[str] | None = None) -> int:
                     print("research provider-safety-dossier-list skipped safely: no workspace found")
                 return 1
 
-            items = iter_provider_safety_dossier_artifacts(ws, symbol=args.symbol)
+            items = iter_provider_safety_dossier_artifacts(ws, symbol=args.symbol, status_filter=args.status)
             limit = max(1, min(args.limit, 100))
             items = items[:limit]
         except ResearchSessionError as exc:
@@ -13710,9 +13717,55 @@ def main(argv: list[str] | None = None) -> int:
             print("Provider safety dossiers:")
             for item in items:
                 if item.get("_invalid"):
-                    print(f"  [INVALID] {item.get('provider_safety_dossier_id', '')} — {item.get('error_code', '')}")
+                    print(f"  [INVALID] {item.get('provider_safety_dossier_id', '')} — {item.get('safe_status', '')}")
                 else:
-                    print(f"  {item.get('provider_safety_dossier_id', '')} {item.get('symbol', '')} {item.get('safety_verdict', '')}")
+                    print(f"  {item.get('provider_safety_dossier_id', '')} {item.get('safe_status', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-latest":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import latest_provider_safety_dossier
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-latest skipped safely: no workspace found")
+                return 1
+
+            result = latest_provider_safety_dossier(ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-latest", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-latest", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            if result.get("found"):
+                print("Latest provider safety dossier:")
+                print(f"  ID: {result.get('artifact_id', '')}")
+                print(f"  Hash: {result.get('artifact_hash', '')}")
+                print(f"  Created: {result.get('created_at', '')}")
+                print(f"  Provider: {result.get('provider_id', '')}")
+                print(f"  Sandbox Only: {result.get('sandbox_only', False)}")
+                print(f"  Chain Health: {result.get('chain_health', '')}")
+                print(f"  Safety Verdict: {result.get('safety_verdict', '')}")
+                print(f"  Export Available: {result.get('export_available', False)}")
+                print(f"  Safe Status: {result.get('safe_status', '')}")
+            else:
+                print(f"No provider safety dossier found: {result.get('reason', '')}")
         return 0
     if args.command == "research" and args.research_command == "provider-safety-dossier-show":
         try:
