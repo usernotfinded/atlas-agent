@@ -15,6 +15,7 @@ from atlas_agent.research.provider_safety_dossier import (
     build_provider_safety_dossier_dict,
     create_provider_safety_dossier,
     doctor_provider_safety_dossier,
+    export_provider_safety_dossier_markdown,
     find_provider_safety_dossier_by_id,
     iter_provider_safety_dossier_artifacts,
     load_provider_safety_dossier,
@@ -438,3 +439,392 @@ def test_tamper_positive_claim(tmp_path):
 
     with pytest.raises(ResearchSessionError, match="provider_safety_dossier_forbidden_trust_claim"):
         load_provider_safety_dossier(dossier_path, ws)
+
+
+# ---------------------------------------------------------------------------
+# Markdown export tests
+# ---------------------------------------------------------------------------
+
+class TestSafetyDossierMarkdownExport:
+    def test_export_happy_path(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "dossier_export.md"
+        result = export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        assert result["ok"] is True
+        assert result["format"] == "markdown"
+        assert result["output_path_redacted"] is True
+        assert "output_path_relative" in result
+        assert result["output_path_relative"] == "reports/dossier_export.md"
+        assert "output_path" not in result
+        assert output_path.exists()
+
+        text = output_path.read_text(encoding="utf-8")
+        assert "# Provider Safety Dossier" in text
+        assert "## 1. Summary" in text
+        assert "## 2. Chain" in text
+        assert "## 3. Safety Invariants" in text
+        assert "## 4. Trust Status" in text
+        assert "## 5. Execution Status" in text
+        assert "## 6. Broker/Order Status" in text
+        assert "## 7. Validation Result" in text
+        assert "## 8. Limitations" in text
+
+    def test_export_output_file_created(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "nested" / "export.md"
+        export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        assert output_path.exists()
+        assert output_path.stat().st_size > 0
+
+    def test_export_forbidden_word_absent(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "export.md"
+        export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        text = output_path.read_text(encoding="utf-8").lower()
+        forbidden = [
+            "production ready",
+            "live trading ready",
+            "safe to trade",
+            "trust granted",
+            "provider execution enabled",
+            "broker execution enabled",
+            "orders enabled",
+            "approvals enabled",
+        ]
+        for phrase in forbidden:
+            assert phrase not in text, f"Forbidden phrase found: {phrase}"
+
+    def test_export_forbidden_fragments_absent(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "export.md"
+        export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        text = output_path.read_text(encoding="utf-8")
+        for frag in [
+            "/Users/", "/private/var/", "Authorization", "Bearer", "APCA",
+            "SECRET", "TOKEN", "PASSWORD", "API_KEY", "sk-", "broker.example.com",
+        ]:
+            assert frag not in text, f"Forbidden fragment found: {frag}"
+
+    def test_export_invalid_dossier_fails_closed(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_bad"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        bad_data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "provider_call_allowed": True,  # invalid
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        bad_data["artifact_hash"] = provider_safety_dossier_sha256(bad_data)
+        dossier_path.write_text(json.dumps(bad_data))
+
+        output_path = ws / "reports" / "export.md"
+        with pytest.raises(ResearchSessionError, match="provider_safety_dossier_impossible_boolean"):
+            export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        assert not output_path.exists()
+
+    def test_export_tampered_dossier_fails_closed(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_tampered"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "chain_nodes": [
+                {"artifact_type": "a", "artifact_id": "1"},
+                {"artifact_type": "b", "artifact_id": "2"},
+                {"artifact_type": "c", "artifact_id": "3"},
+                {"artifact_type": "d", "artifact_id": "4"},
+                {"artifact_type": "e", "artifact_id": "5"},
+                {"artifact_type": "f", "artifact_id": "6"},
+            ],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "tampered_hash_12345",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        dossier_path.write_text(json.dumps(data))
+
+        output_path = ws / "reports" / "export.md"
+        with pytest.raises(ResearchSessionError, match="provider_safety_dossier_hash_mismatch"):
+            export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        assert not output_path.exists()
+
+    def test_export_positive_unsafe_claim_rejected(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_unsafe"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "chain_nodes": [
+                {"artifact_type": "a", "artifact_id": "1"},
+                {"artifact_type": "b", "artifact_id": "2"},
+                {"artifact_type": "c", "artifact_id": "3"},
+                {"artifact_type": "d", "artifact_id": "4"},
+                {"artifact_type": "e", "artifact_id": "5"},
+                {"artifact_type": "f", "artifact_id": "6"},
+            ],
+            "safety_verdict": "trust decision granted",  # unsafe claim
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        data["artifact_hash"] = provider_safety_dossier_sha256(data)
+        dossier_path.write_text(json.dumps(data))
+
+        output_path = ws / "reports" / "export.md"
+        # safe_validate catches the forbidden claim during load
+        with pytest.raises(ResearchSessionError, match="provider_safety_dossier_forbidden_trust_claim"):
+            export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        assert not output_path.exists()
+
+    def test_export_chain_incomplete_fails(self, tmp_path: Path) -> None:
+        ws = tmp_path
+        dossier_id = "dossier_incomplete"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": False,
+            "chain_nodes": [],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        data["artifact_hash"] = provider_safety_dossier_sha256(data)
+        dossier_path.write_text(json.dumps(data))
+
+        output_path = ws / "reports" / "export.md"
+        with pytest.raises(ResearchSessionError, match="provider_safety_dossier_export_chain_incomplete"):
+            export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        assert not output_path.exists()
+
+    def test_export_no_raw_invalid_fields(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "export.md"
+        export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        text = output_path.read_text(encoding="utf-8")
+        # The raw artifact_path should not appear in the markdown
+        artifact = load_provider_safety_dossier(find_provider_safety_dossier_by_id(ws, dossier_id), ws)
+        raw_path = artifact.get("artifact_path", "")
+        assert raw_path not in text
+
+    def test_export_envelope_no_absolute_paths(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "export.md"
+        result = export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        result_json = json.dumps(result)
+        assert "/private/var/" not in result_json
+        assert "/Users/" not in result_json
+        assert str(ws) not in result_json
+
+    def test_export_markdown_no_absolute_paths(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "export.md"
+        export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        text = output_path.read_text(encoding="utf-8")
+        assert "/private/var/" not in text
+        assert "/Users/" not in text
+        assert str(ws) not in text
+
+    def test_export_envelope_no_forbidden_fragments(self, tmp_path: Path, monkeypatch) -> None:
+        _ensure_workspace(tmp_path)
+        ws = tmp_path
+        run_id, seal_id = _full_chain_to_seal(ws, monkeypatch)
+        res = create_provider_safety_dossier(ws, seal_id)
+        dossier_id = res["provider_safety_dossier_id"]
+
+        output_path = ws / "reports" / "export.md"
+        result = export_provider_safety_dossier_markdown(ws, dossier_id, output_path)
+        result_json = json.dumps(result)
+        for frag in [
+            "Authorization", "Bearer", "APCA", "SECRET", "TOKEN",
+            "PASSWORD", "API_KEY", "sk-", "broker.example.com",
+        ]:
+            assert frag not in result_json, f"Forbidden fragment in envelope: {frag}"
+
+    def test_export_temp_path_redacted(self, tmp_path: Path, monkeypatch) -> None:
+        """Ensure that even when output_path is outside workspace (should not happen in CLI),
+        the envelope falls back to basename and never leaks absolute paths."""
+        ws = tmp_path
+        dossier_id = "dossier_temp"
+        dossier_dir = ws / ".atlas" / "research" / "DEMO" / "provider_safety_dossiers"
+        dossier_dir.mkdir(parents=True)
+        dossier_path = dossier_dir / f"{dossier_id}.json"
+        data = {
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": RESEARCH_ARTIFACT_SCHEMA_VERSION,
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "symbol": "DEMO",
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "chain_nodes": [
+                {"artifact_type": "a", "artifact_id": "1"},
+                {"artifact_type": "b", "artifact_id": "2"},
+                {"artifact_type": "c", "artifact_id": "3"},
+                {"artifact_type": "d", "artifact_id": "4"},
+                {"artifact_type": "e", "artifact_id": "5"},
+                {"artifact_type": "f", "artifact_id": "6"},
+            ],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": datetime.now(UTC).isoformat(),
+            "artifact_path": str(dossier_path.relative_to(ws)),
+        }
+        data["artifact_hash"] = provider_safety_dossier_sha256(data)
+        dossier_path.write_text(json.dumps(data))
+
+        # Pass an absolute path that is not inside workspace
+        external_path = tmp_path.parent / "external_export.md"
+        result = export_provider_safety_dossier_markdown(ws, dossier_id, external_path)
+        assert result["output_path_redacted"] is True
+        assert "/" not in result["output_path_relative"] or result["output_path_relative"] == "external_export.md"
+        assert "/private/var/" not in json.dumps(result)

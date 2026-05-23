@@ -1709,6 +1709,14 @@ Safety First:
     research_provider_safety_dossier_doctor.add_argument("run_id", help="Run ID.")
     research_provider_safety_dossier_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_safety_dossier_export = research_sub.add_parser(
+        "provider-safety-dossier-export", help="Export a provider safety dossier to Markdown. Configless."
+    )
+    research_provider_safety_dossier_export.add_argument("dossier_id", help="Provider safety dossier ID.")
+    research_provider_safety_dossier_export.add_argument("--output", required=True, help="Output Markdown file path.")
+    research_provider_safety_dossier_export.add_argument("--format", default="markdown", help="Export format. Default: markdown.")
+    research_provider_safety_dossier_export.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_mock_response_final_safety_seal = research_sub.add_parser(
         "mock-response-final-safety-seal",
         help="Create/show/list/validate/replay mock response final safety seals. Configless.",
@@ -3649,6 +3657,7 @@ def main(argv: list[str] | None = None) -> int:
         "provider-safety-dossier-replay",
         "provider-safety-dossier-summary",
         "provider-safety-dossier-doctor",
+        "provider-safety-dossier-export",
         "mock-response-final-safety-seal",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
@@ -13936,6 +13945,52 @@ def main(argv: list[str] | None = None) -> int:
             if result.get("warnings"):
                 for w in result["warnings"]:
                     print(f"  Warning: {w}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-safety-dossier-export":
+        try:
+            import json
+            from atlas_agent.research.provider_safety_dossier import export_provider_safety_dossier_markdown
+            from atlas_agent.research.session import ResearchSessionError, _is_inside_workspace, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-export skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.dossier_id)
+            output_path = Path(args.output).resolve()
+            if not _is_inside_workspace(output_path, ws):
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "export_path_outside_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-safety-dossier-export refused: output path must be inside workspace")
+                return 1
+
+            result = export_provider_safety_dossier_markdown(ws, safe_id, output_path)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-safety-dossier-export", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-safety-dossier-export", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Provider safety dossier exported")
+            print(f"  Dossier ID: {result.get('provider_safety_dossier_id', '')}")
+            print(f"  Output: {result.get('output_path_relative', '')}")
+            print(f"  Format: {result.get('format', '')}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

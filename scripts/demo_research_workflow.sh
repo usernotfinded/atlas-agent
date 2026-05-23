@@ -3789,6 +3789,35 @@ if [ "$FINAL_SAFETY_SEAL_DOCTOR_GRANTED" != "False" ]; then
   exit 1
 fi
 
+# 85.41. Research provider-safety-dossier
+printf '\n--- Research provider-safety-dossier ---\n'
+SAFETY_DOSSIER_OUTPUT="$(atlas research provider-safety-dossier "$FINAL_SAFETY_SEAL_ID" --json)"
+assert_no_forbidden_fragments "$SAFETY_DOSSIER_OUTPUT" "provider-safety-dossier CLI output"
+assert_ok "$SAFETY_DOSSIER_OUTPUT" "research provider-safety-dossier"
+SAFETY_DOSSIER_ID="$(json_field "$SAFETY_DOSSIER_OUTPUT" provider_safety_dossier_id)"
+if [ -z "$SAFETY_DOSSIER_ID" ]; then
+  printf 'FAIL: provider-safety-dossier did not return a dossier ID\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.42. Research provider-safety-dossier-export
+printf '\n--- Research provider-safety-dossier-export ---\n'
+EXPORT_PATH="$WORKSPACE/reports/provider_safety_dossier.md"
+EXPORT_OUTPUT="$(atlas research provider-safety-dossier-export "$SAFETY_DOSSIER_ID" --output "$EXPORT_PATH" --format markdown --json)"
+assert_no_forbidden_fragments "$EXPORT_OUTPUT" "provider-safety-dossier-export CLI output"
+assert_ok "$EXPORT_OUTPUT" "research provider-safety-dossier-export"
+if [ ! -f "$EXPORT_PATH" ]; then
+  printf 'FAIL: provider-safety-dossier-export did not create output file\n' >&2
+  exit 1
+fi
+EXPORT_FORMAT="$(json_field "$EXPORT_OUTPUT" format)"
+if [ "$EXPORT_FORMAT" != "markdown" ]; then
+  printf 'FAIL: export format is not markdown: %s\n' "$EXPORT_FORMAT" >&2
+  exit 1
+fi
+assert_no_pending_orders
+
 # 85.40. Research timeline post mock trust blocker
 printf '\n--- Research timeline (post mock trust blocker) ---\n'
 TIMELINE_OUTPUT3="$(atlas research timeline --json)"

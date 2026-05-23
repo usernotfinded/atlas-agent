@@ -3806,6 +3806,111 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    seal_id = ARGS[2]
+    dossier_id = "dossier-" + seal_id
+    symbol = "ATLAS-DEMO"
+    os.makedirs(os.path.join(".", ".atlas", "research", symbol, "provider_safety_dossiers"), exist_ok=True)
+    dossier_path = os.path.join(".", ".atlas", "research", symbol, "provider_safety_dossiers", dossier_id + ".json")
+    with open(dossier_path, "w") as f:
+        json.dump({
+            "artifact_type": "provider_safety_dossier",
+            "schema_version": "1",
+            "contract_version": "research_provider_safety_dossier_v1",
+            "provider_safety_dossier_id": dossier_id,
+            "source_seal_id": seal_id,
+            "source_seal_hash": "dummyhash",
+            "source_run_id": "demorunid12345",
+            "symbol": symbol,
+            "provider_id": "mock",
+            "sandbox_only": True,
+            "chain_complete": True,
+            "chain_health": "complete",
+            "safety_verdict": "sandbox_chain_complete",
+            "chain_nodes": [
+                {"artifact_type": "provider_mock_response_simulation", "artifact_id": "sim-1", "artifact_hash": "h1", "source_artifact_id": "", "valid": True, "provider_id": "mock", "created_at": "2026-01-01T00:00:00+00:00", "safe_status": "simulated"},
+                {"artifact_type": "provider_mock_response_import_candidate", "artifact_id": "imp-1", "artifact_hash": "h2", "source_artifact_id": "sim-1", "valid": True, "provider_id": "mock", "created_at": "2026-01-01T00:00:00+00:00", "safe_status": "imported"},
+                {"artifact_type": "provider_mock_response_review_sandbox", "artifact_id": "rev-1", "artifact_hash": "h3", "source_artifact_id": "imp-1", "valid": True, "provider_id": "mock", "created_at": "2026-01-01T00:00:00+00:00", "safe_status": "reviewed"},
+                {"artifact_type": "provider_mock_response_trust_decision_blocker", "artifact_id": "blk-1", "artifact_hash": "h4", "source_artifact_id": "rev-1", "valid": True, "provider_id": "mock", "created_at": "2026-01-01T00:00:00+00:00", "safe_status": "blocked"},
+                {"artifact_type": "provider_mock_response_final_safety_seal", "artifact_id": seal_id, "artifact_hash": "h5", "source_artifact_id": "blk-1", "valid": True, "provider_id": "mock", "created_at": "2026-01-01T00:00:00+00:00", "safe_status": "sealed"},
+                {"artifact_type": "provider_safety_dossier", "artifact_id": dossier_id, "artifact_hash": "", "source_artifact_id": seal_id, "valid": True, "provider_id": "mock", "created_at": "2026-01-01T00:00:00+00:00", "safe_status": "sandbox_chain_complete"},
+            ],
+            "provider_call_allowed": False,
+            "actual_provider_call_made": False,
+            "provider_response_trusted": False,
+            "mock_response_trusted": False,
+            "trading_signal_generated": False,
+            "approval_created": False,
+            "pending_order_created": False,
+            "broker_touched": False,
+            "network_enabled": False,
+            "credentials_loaded": False,
+            "trust_upgrade_performed": False,
+            "trust_decision_granted": False,
+            "provider_execution_unlocked": False,
+            "real_provider_response_imported": False,
+            "live_trading_path_enabled": False,
+            "broker_order_path_enabled": False,
+            "artifact_hash": "",
+            "created_at": "2026-01-01T00:00:00+00:00",
+            "artifact_path": ".atlas/research/ATLAS-DEMO/provider_safety_dossiers/" + dossier_id + ".json",
+        }, f)
+    print(json.dumps({
+        "ok": True,
+        "status": "research_provider_safety_dossier_created",
+        "provider_safety_dossier_id": dossier_id,
+        "source_seal_id": seal_id,
+        "chain_health": "complete",
+        "safety_verdict": "sandbox_chain_complete",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps({
+        "ok": True,
+        "status": "research_provider_safety_dossier_exported",
+        "provider_safety_dossier_id": dossier_id,
+        "output_path_relative": "reports/provider_safety_dossier.md",
+        "output_path_redacted": True,
+        "format": "markdown",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -6161,6 +6266,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -8378,6 +8512,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -10611,6 +10774,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -12840,6 +13032,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -15074,6 +15295,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -17318,6 +17568,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -19555,6 +19834,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -21790,6 +22098,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -24043,6 +24380,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -26286,6 +26652,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -28533,6 +28928,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -30768,6 +31192,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -33036,6 +33489,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -35288,6 +35770,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -37548,6 +38059,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -39813,6 +40353,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -42084,6 +42653,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -44346,6 +44944,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -46612,6 +47239,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -48874,6 +49530,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -51139,6 +51824,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -53396,6 +54110,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -55673,6 +56416,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -57946,6 +58718,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -60242,6 +61043,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -62673,6 +63503,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -65097,6 +65956,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -67531,6 +68419,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -70986,6 +71903,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -74298,6 +75244,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
     }}))
     sys.exit(0)
 
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
+    sys.exit(0)
+
 if ARGS[0] == "research":
     print(json.dumps(dict(ok=True, status="safe_default")))
     sys.exit(0)
@@ -76619,6 +77594,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":
@@ -80015,6 +81019,35 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-sea
         "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
         "warnings": [],
     }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier":
+    dossier_id = "dossier-" + ARGS[2]
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_created",
+        provider_safety_dossier_id=dossier_id,
+        source_seal_id=ARGS[2],
+        chain_health="complete",
+        safety_verdict="sandbox_chain_complete",
+    )))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-safety-dossier-export":
+    dossier_id = ARGS[2]
+    output_path = ARGS[4] if len(ARGS) > 4 else ""
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write("# Provider Safety Dossier  " + dossier_id + "  ATLAS-DEMO")
+    print(json.dumps(dict(
+        ok=True,
+        status="research_provider_safety_dossier_exported",
+        provider_safety_dossier_id=dossier_id,
+        output_path_relative="reports/provider_safety_dossier.md",
+        output_path_redacted=True,
+        format="markdown",
+    )))
     sys.exit(0)
 
 if ARGS[0] == "research":

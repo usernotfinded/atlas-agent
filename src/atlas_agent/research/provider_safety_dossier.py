@@ -432,6 +432,185 @@ def doctor_provider_safety_dossier(workspace_path: Path, run_id: str) -> dict[st
         "dossier_health": "valid",
     }
 
+def export_provider_safety_dossier_markdown(
+    workspace_path: Path,
+    dossier_id: str,
+    output_path: Path,
+) -> dict[str, Any]:
+    """Export a provider safety dossier to a safe Markdown report.
+
+    Fails closed if the dossier is invalid, tampered, or contains unsafe claims.
+    Does not copy raw invalid fields into the output.
+    """
+    dossier_path = find_provider_safety_dossier_by_id(workspace_path, dossier_id)
+    if not dossier_path:
+        raise ResearchSessionError("provider_safety_dossier_missing")
+
+    # Load validates schema, booleans, hash, and forbidden claims
+    data = load_provider_safety_dossier(dossier_path, workspace_path)
+
+    # Run full artifact validation
+    validation = validate_provider_safety_dossier_artifact(dossier_path, workspace_path, strict=False)
+    if not validation.valid:
+        raise ResearchSessionError("provider_safety_dossier_export_validation_failed")
+
+    # Reject incomplete chains
+    if not data.get("chain_complete"):
+        raise ResearchSessionError("provider_safety_dossier_export_chain_incomplete")
+
+    # Re-check unsafe claims explicitly (defense in depth)
+    if _has_unsafe_positive_claims(data):
+        raise ResearchSessionError("provider_safety_dossier_export_unsafe_claim")
+
+    # Safe extraction — only whitelisted fields
+    symbol = data.get("symbol", "UNKNOWN")
+    provider_id = data.get("provider_id", "mock")
+    chain_health = data.get("chain_health", "unknown")
+    safety_verdict = data.get("safety_verdict", "unknown")
+    chain_nodes = data.get("chain_nodes", [])
+
+    # Build Markdown
+    lines = []
+    lines.append("# Provider Safety Dossier")
+    lines.append("")
+    lines.append(f"- **Dossier ID**: `{data.get('provider_safety_dossier_id', '')}`")
+    lines.append(f"- **Symbol**: {symbol}")
+    lines.append(f"- **Provider ID**: {provider_id}")
+    lines.append(f"- **Generated**: {data.get('created_at', '')}")
+    lines.append("")
+
+    lines.append("## 1. Summary")
+    lines.append("")
+    lines.append(f"This dossier documents an **offline mock workflow** for the symbol **{symbol}**.")
+    lines.append("The workflow is **sandbox-only** and does not involve real provider execution.")
+    lines.append("")
+    lines.append(f"- **Chain Health**: {chain_health}")
+    lines.append(f"- **Safety Verdict**: {safety_verdict}")
+    lines.append("")
+
+    lines.append("## 2. Chain")
+    lines.append("")
+    if chain_nodes:
+        lines.append("| Step | Artifact Type | Artifact ID | Safe Status |")
+        lines.append("|------|---------------|-------------|-------------|")
+        for node in chain_nodes:
+            atype = node.get("artifact_type", "unknown")
+            aid = node.get("artifact_id", "")
+            status = node.get("safe_status", "unknown")
+            lines.append(f"| - | {atype} | `{aid}` | {status} |")
+    else:
+        lines.append("No chain nodes recorded.")
+    lines.append("")
+
+    lines.append("## 3. Safety Invariants")
+    lines.append("")
+    lines.append("The following invariants are enforced and verified:")
+    lines.append("")
+    lines.append("| Invariant | Value |")
+    lines.append("|-----------|-------|")
+    for flag in [
+        "provider_call_allowed",
+        "actual_provider_call_made",
+        "provider_response_trusted",
+        "mock_response_trusted",
+        "trading_signal_generated",
+        "approval_created",
+        "pending_order_created",
+        "broker_touched",
+        "network_enabled",
+        "credentials_loaded",
+        "trust_upgrade_performed",
+        "trust_decision_granted",
+        "provider_execution_unlocked",
+        "real_provider_response_imported",
+        "live_trading_path_enabled",
+        "broker_order_path_enabled",
+    ]:
+        value = data.get(flag, "missing")
+        lines.append(f"| {flag} | {value} |")
+    lines.append("")
+
+    lines.append("## 4. Trust Status")
+    lines.append("")
+    lines.append("- **Trust Decision Granted**: False")
+    lines.append("- **Trust Upgrade Performed**: False")
+    lines.append("- **Provider Response Trusted**: False")
+    lines.append("- **Mock Response Trusted**: False")
+    lines.append("- **Sandbox Review Trusted**: False")
+    lines.append("")
+    lines.append("No trust decisions have been granted. The workflow remains in the offline mock sandbox.")
+    lines.append("")
+
+    lines.append("## 5. Execution Status")
+    lines.append("")
+    lines.append("- **Provider Call Allowed**: False")
+    lines.append("- **Actual Provider Call Made**: False")
+    lines.append("- **Provider Execution Unlocked**: False")
+    lines.append("- **Network Enabled**: False")
+    lines.append("- **Credentials Loaded**: False")
+    lines.append("")
+    lines.append("No provider execution has been authorized or performed.")
+    lines.append("")
+
+    lines.append("## 6. Broker/Order Status")
+    lines.append("")
+    lines.append("- **Trading Signal Generated**: False")
+    lines.append("- **Approval Created**: False")
+    lines.append("- **Pending Order Created**: False")
+    lines.append("- **Broker Touched**: False")
+    lines.append("")
+    lines.append("No broker or order paths are enabled.")
+    lines.append("")
+
+    lines.append("## 7. Validation Result")
+    lines.append("")
+    lines.append(f"- **Valid**: {validation.valid}")
+    lines.append(f"- **Passed Checks**: {validation.passed_checks}")
+    lines.append(f"- **Failed Checks**: {validation.failed_checks}")
+    lines.append(f"- **Recommendation**: {validation.recommendation}")
+    lines.append("")
+
+    lines.append("## 8. Limitations")
+    lines.append("")
+    lines.append("- This report is generated from an **offline mock workflow**.")
+    lines.append("- **No provider execution** has occurred.")
+    lines.append("- **No trust upgrade** is available.")
+    lines.append("- **No broker/order path** is enabled.")
+    lines.append("- **No credentials** were loaded.")
+    lines.append("- **No network** was enabled.")
+    lines.append("- **Live trading is disabled**.")
+    lines.append("")
+    lines.append("---")
+    lines.append("*Generated by Atlas Agent Provider Safety Dossier Export*")
+    lines.append("")
+
+    markdown = "\n".join(lines)
+
+    # Leak-safety scan
+    for fragment in FORBIDDEN_FRAGMENTS:
+        if fragment in markdown:
+            raise ResearchSessionError("provider_safety_dossier_export_forbidden_fragment")
+
+    # Ensure output directory exists
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(markdown, encoding="utf-8")
+
+    # Leak-safe path: never return absolute paths; workspace-relative only
+    try:
+        output_path_relative = str(output_path.relative_to(workspace_path))
+    except ValueError:
+        output_path_relative = str(output_path.name)
+
+    return {
+        "ok": True,
+        "status": "research_provider_safety_dossier_exported",
+        "provider_safety_dossier_id": data.get("provider_safety_dossier_id", ""),
+        "output_path_relative": output_path_relative,
+        "output_path_redacted": True,
+        "format": "markdown",
+    }
+
+
 def find_provider_safety_dossier_by_id(workspace_path: Path, dossier_id: str) -> Path | None:
     safe_id = validate_run_id(dossier_id)
     search_dir = workspace_path / RESEARCH_DIR
