@@ -1605,6 +1605,77 @@ Safety First:
     research_provider_mock_response_trust_decision_blocker_doctor.add_argument("run_id", help="Run ID.")
     research_provider_mock_response_trust_decision_blocker_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_provider_mock_response_final_safety_seal = research_sub.add_parser(
+        "provider-mock-response-final-safety-seal",
+        help="Create a provider mock response final safety seal from a trust decision blocker. Configless.",
+        description="Create a provider mock response final safety seal artifact from an existing provider mock response trust decision blocker. Configless. Does not create trust decisions, upgrade trust, grant approvals, call providers, read API keys, perform network requests, submit orders, or authorize live trading.",
+    )
+    research_provider_mock_response_final_safety_seal.add_argument("blocker_id", help="Source provider mock response trust decision blocker ID.")
+    research_provider_mock_response_final_safety_seal.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_final_safety_seal_list = research_sub.add_parser(
+        "provider-mock-response-final-safety-seal-list",
+        help="List provider mock response final safety seal artifacts. Configless.",
+        description="List provider mock response final safety seal artifacts. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_final_safety_seal_list.add_argument("--symbol", default=None, help="Filter by symbol.")
+    research_provider_mock_response_final_safety_seal_list.add_argument("--limit", type=int, default=20, help="Limit results. Default 20, max 100.")
+    research_provider_mock_response_final_safety_seal_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_final_safety_seal_show = research_sub.add_parser(
+        "provider-mock-response-final-safety-seal-show",
+        help="Show a provider mock response final safety seal artifact. Configless.",
+        description="Show a provider mock response final safety seal artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_final_safety_seal_show.add_argument("seal_id", help="Provider mock response final safety seal ID.")
+    research_provider_mock_response_final_safety_seal_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_final_safety_seal_validate = research_sub.add_parser(
+        "provider-mock-response-final-safety-seal-validate",
+        help="Validate a provider mock response final safety seal artifact. Configless.",
+        description="Validate a provider mock response final safety seal artifact. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_final_safety_seal_validate.add_argument("seal_id", help="Provider mock response final safety seal ID.")
+    research_provider_mock_response_final_safety_seal_validate.add_argument("--strict", action="store_true", help="Exit non-zero on any failed check.")
+    research_provider_mock_response_final_safety_seal_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_final_safety_seal_replay = research_sub.add_parser(
+        "provider-mock-response-final-safety-seal-replay",
+        help="Replay a provider mock response final safety seal artifact. Configless.",
+        description="Replay a provider mock response final safety seal artifact deterministically. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_final_safety_seal_replay.add_argument("seal_id", help="Provider mock response final safety seal ID.")
+    research_provider_mock_response_final_safety_seal_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay hash does not match.")
+    research_provider_mock_response_final_safety_seal_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_final_safety_seal_summary = research_sub.add_parser(
+        "provider-mock-response-final-safety-seal-summary",
+        help="Summarize the latest provider mock response final safety seal for a run. Configless.",
+        description="Summarize the latest provider mock response final safety seal for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_final_safety_seal_summary.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_final_safety_seal_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_provider_mock_response_final_safety_seal_doctor = research_sub.add_parser(
+        "provider-mock-response-final-safety-seal-doctor",
+        help="Diagnose provider mock response final safety seal readiness for a run. Configless.",
+        description="Diagnose provider mock response final safety seal readiness for a run. Configless. Does not call providers, read API keys, perform network requests, submit orders, create approvals, or authorize live trading.",
+    )
+    research_provider_mock_response_final_safety_seal_doctor.add_argument("run_id", help="Run ID.")
+    research_provider_mock_response_final_safety_seal_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_mock_response_final_safety_seal = research_sub.add_parser(
+        "mock-response-final-safety-seal",
+        help="Create/show/list/validate/replay mock response final safety seals. Configless.",
+        description="Compatibility command for mock response final safety seal create/show/list/validate/replay. Configless and non-authorizing.",
+    )
+    research_mock_response_final_safety_seal.add_argument("mock_response_final_safety_seal_args", nargs="*", help="Action and optional artifact ID.")
+    research_mock_response_final_safety_seal.add_argument("--symbol", default=None, help="Filter list by symbol.")
+    research_mock_response_final_safety_seal.add_argument("--limit", type=int, default=20, help="Limit list results. Default 20, max 100.")
+    research_mock_response_final_safety_seal.add_argument("--strict", action="store_true", help="Exit non-zero for failed validate/replay.")
+    research_mock_response_final_safety_seal.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+
     research_simulate = research_sub.add_parser(
         "simulate-provider",
         help="Simulate a deterministic provider response from a prompt packet. Local-only. Does not call LLMs or network.",
@@ -3519,6 +3590,14 @@ def main(argv: list[str] | None = None) -> int:
         "provider-mock-response-trust-decision-blocker-replay",
         "provider-mock-response-trust-decision-blocker-summary",
         "provider-mock-response-trust-decision-blocker-doctor",
+        "provider-mock-response-final-safety-seal",
+        "provider-mock-response-final-safety-seal-list",
+        "provider-mock-response-final-safety-seal-show",
+        "provider-mock-response-final-safety-seal-validate",
+        "provider-mock-response-final-safety-seal-replay",
+        "provider-mock-response-final-safety-seal-summary",
+        "provider-mock-response-final-safety-seal-doctor",
+        "mock-response-final-safety-seal",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
@@ -3587,6 +3666,38 @@ def main(argv: list[str] | None = None) -> int:
                 )
             print("Configuration error: unable to load AtlasConfig.", file=sys.stderr)
             return 1
+
+    if args.command == "research" and getattr(args, "research_command", None) == "mock-response-final-safety-seal":
+        raw = list(getattr(args, "mock_response_final_safety_seal_args", []) or [])
+        action_map = {
+            "create": "provider-mock-response-final-safety-seal",
+            "list": "provider-mock-response-final-safety-seal-list",
+            "show": "provider-mock-response-final-safety-seal-show",
+            "validate": "provider-mock-response-final-safety-seal-validate",
+            "replay": "provider-mock-response-final-safety-seal-replay",
+        }
+        if raw and raw[0] in action_map:
+            action = raw[0]
+            rest = raw[1:]
+        elif raw:
+            action = "create"
+            rest = raw
+        else:
+            action = ""
+            rest = []
+        if not action or (action != "list" and not rest):
+            if getattr(args, "json", False):
+                print(json.dumps({"ok": False, "status": "invalid_mock_response_final_safety_seal_command"}, indent=2, sort_keys=True))
+            else:
+                print("research mock-response-final-safety-seal requires create/show/list/validate/replay")
+            return 1
+        args.research_command = action_map[action]
+        if action == "create":
+            args.blocker_id = rest[0]
+        elif action in {"show", "validate", "replay"}:
+            args.seal_id = rest[0]
+
+            args.run_id = rest[0]
 
     if args.command == "setup":
         return _run_guided_setup(args=args)
@@ -13101,6 +13212,350 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Trust decision present: {result.get('trust_decision_present', False)}")
             print(f"  Trust decision granted: {result.get('trust_decision_granted', False)}")
             print(f"  Trust decision explicitly blocked: {result.get('trust_decision_explicitly_blocked', False)}")
+            print(f"  Trust upgrade performed: {result.get('trust_upgrade_performed', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+            if result.get("missing_prerequisites"):
+                print(f"  Missing prerequisites: {', '.join(result['missing_prerequisites'])}")
+            if result.get("blocking_reasons"):
+                print(f"  Blocking reasons: {', '.join(result['blocking_reasons'])}")
+            if result.get("warnings"):
+                for w in result["warnings"]:
+                    print(f"  Warning: {w}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-final-safety-seal":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_final_safety_seal import create_provider_mock_response_final_safety_seal
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-final-safety-seal skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.blocker_id)
+            result = create_provider_mock_response_final_safety_seal(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Provider mock response final safety seal created")
+            print(f"  ID: {result.get('provider_mock_response_final_safety_seal_id', '')}")
+            print(f"  Source trust decision blocker: {result.get('source_provider_mock_response_trust_decision_blocker_id', '')}")
+            print(f"  Provider ID: {result.get('provider_id', '')}")
+            print(f"  Final safety seal created: {result.get('final_safety_seal_created', False)}")
+            print(f"  Mock pipeline complete: {result.get('mock_pipeline_complete', False)}")
+            print(f"  Seal valid: {result.get('seal_valid', False)}")
+            print(f"  Seal non-authorizing: {result.get('seal_non_authorizing', False)}")
+            print(f"  Trust decision granted: {result.get('trust_decision_granted', False)}")
+            print(f"  Trust upgrade performed: {result.get('trust_upgrade_performed', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+            print(f"  Artifact: {result.get('artifact_path', '')}")
+            print(f"  Warnings: {len(result.get('warnings', []))}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-final-safety-seal-list":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_final_safety_seal import iter_provider_mock_response_final_safety_seal_artifacts
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-final-safety-seal-list skipped safely: no workspace found")
+                return 1
+
+            items = iter_provider_mock_response_final_safety_seal_artifacts(ws, symbol=args.symbol)
+            limit = max(1, min(args.limit, 100))
+            items = items[:limit]
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-list", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps({"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": items}, indent=2, sort_keys=True))
+        else:
+            print("Provider mock response final safety seals:")
+            for item in items:
+                if item.get("_invalid"):
+                    print(f"  [INVALID] {item.get('provider_mock_response_final_safety_seal_id', '')} — {item.get('error_code', '')}")
+                else:
+                    print(f"  {item.get('provider_mock_response_final_safety_seal_id', '')} {item.get('symbol', '')} {item.get('final_safety_seal_status', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-final-safety-seal-show":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_final_safety_seal import (
+                find_provider_mock_response_final_safety_seal_by_id,
+                load_provider_mock_response_final_safety_seal,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-final-safety-seal-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.seal_id)
+            artifact_path = find_provider_mock_response_final_safety_seal_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "seal_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Provider mock response final safety seal not found.")
+                return 1
+            data = load_provider_mock_response_final_safety_seal(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-show", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(data, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response final safety seal {safe_id}:")
+            print(f"  Symbol: {data.get('symbol', '')}")
+            print(f"  Provider ID: {data.get('provider_id', '')}")
+            print(f"  Status: {data.get('final_safety_seal_status', '')}")
+            print(f"  State: {data.get('final_safety_seal_state', '')}")
+            print(f"  Artifact: {data.get('artifact_path', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-final-safety-seal-validate":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_final_safety_seal import (
+                find_provider_mock_response_final_safety_seal_by_id,
+                validate_provider_mock_response_final_safety_seal_artifact,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-final-safety-seal-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.seal_id)
+            artifact_path = find_provider_mock_response_final_safety_seal_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "seal_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Provider mock response final safety seal not found.")
+                return 1
+            result = validate_provider_mock_response_final_safety_seal_artifact(artifact_path, ws, strict=args.strict)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-validate", "research command failed")
+            return 1
+        payload = {
+            "ok": True,
+            "valid": result.valid,
+            "passed_checks": result.passed_checks,
+            "failed_checks": result.failed_checks,
+            "checks": result.checks,
+            "recommendation": result.recommendation,
+            "warnings": result.warnings,
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Validation: {'PASS' if result.valid else 'FAIL'}")
+            print(f"  Passed: {result.passed_checks}")
+            print(f"  Failed: {result.failed_checks}")
+            print(f"  Recommendation: {result.recommendation}")
+            for check in result.checks:
+                status_str = "PASS" if check["passed"] else "FAIL"
+                print(f"  [{status_str}] {check['name']}: {check['message']}")
+        if args.strict and not result.valid:
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-final-safety-seal-replay":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_final_safety_seal import replay_provider_mock_response_final_safety_seal
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-final-safety-seal-replay skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.seal_id)
+            result = replay_provider_mock_response_final_safety_seal(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-replay", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-replay", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Replay: {'MATCH' if result.get('match') else 'MISMATCH'}")
+            print(f"  Original hash: {result.get('original_hash', '')}")
+            print(f"  Replayed hash: {result.get('replayed_hash', '')}")
+        if args.strict and not result.get("match"):
+            return 2
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-final-safety-seal-summary":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_final_safety_seal import summarize_provider_mock_response_final_safety_seal
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-final-safety-seal-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = summarize_provider_mock_response_final_safety_seal(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-summary", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response final safety seal summary for run {safe_id}:")
+            print(f"  Seal ID: {result.get('provider_mock_response_final_safety_seal_id', 'None')}")
+            print(f"  Status: {result.get('final_safety_seal_status', '')}")
+            print(f"  State: {result.get('final_safety_seal_state', '')}")
+            print(f"  Final safety seal created: {result.get('final_safety_seal_created', False)}")
+            print(f"  Mock pipeline complete: {result.get('mock_pipeline_complete', False)}")
+            print(f"  Seal valid: {result.get('seal_valid', False)}")
+            print(f"  Seal non-authorizing: {result.get('seal_non_authorizing', False)}")
+            print(f"  Trust decision granted: {result.get('trust_decision_granted', False)}")
+            print(f"  Trust upgrade performed: {result.get('trust_upgrade_performed', False)}")
+            print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
+            print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")
+            print(f"  Provider call allowed: {result.get('provider_call_allowed', False)}")
+            print(f"  Broker touched: {result.get('broker_touched', False)}")
+        return 0
+    if args.command == "research" and args.research_command == "provider-mock-response-final-safety-seal-doctor":
+        try:
+            import json
+            from atlas_agent.research.provider_mock_response_final_safety_seal import doctor_provider_mock_response_final_safety_seal
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research provider-mock-response-final-safety-seal-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.run_id)
+            result = doctor_provider_mock_response_final_safety_seal(ws, safe_id)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research provider-mock-response-final-safety-seal-doctor", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"Provider mock response final safety seal doctor for run {safe_id}:")
+            print(f"  Health: {result.get('seal_health', '')}")
+            print(f"  Final safety seal created: {result.get('final_safety_seal_created', False)}")
+            print(f"  Mock pipeline complete: {result.get('mock_pipeline_complete', False)}")
+            print(f"  Seal valid: {result.get('seal_valid', False)}")
+            print(f"  Seal non-authorizing: {result.get('seal_non_authorizing', False)}")
+            print(f"  Trust decision granted: {result.get('trust_decision_granted', False)}")
+            print(f"  Trust decision present: {result.get('trust_decision_present', False)}")
             print(f"  Trust upgrade performed: {result.get('trust_upgrade_performed', False)}")
             print(f"  Provider response trusted: {result.get('provider_response_trusted', False)}")
             print(f"  Mock response trusted: {result.get('mock_response_trusted', False)}")

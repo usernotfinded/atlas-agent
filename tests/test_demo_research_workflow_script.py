@@ -295,7 +295,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
                 mock_import_count += 1
     print(json.dumps({
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count, "provider_mock_response_simulations": mock_sim_count, "provider_mock_response_import_candidates": mock_import_count, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1},
+        "counts": {"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "prompts": 1, "provider_responses": 1, "response_reviews": 1, "provider_call_plans": 1, "provider_response_schema_contracts": schema_contract_count, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": adapter_contract_count, "provider_mock_response_simulations": mock_sim_count, "provider_mock_response_import_candidates": mock_import_count, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1},
         "issues": [], "warnings": []
     }))
     sys.exit(0)
@@ -3724,6 +3724,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 '''
@@ -5994,6 +6079,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8128,6 +8298,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -8234,7 +8489,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return unsafe absolute path in output
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [{{"code": "unsafe_path", "path": "/Users/natan/secret.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -10274,6 +10529,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -10380,7 +10720,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     # Return ok=false
     print(json.dumps({{
         "ok": False, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [{{"code": "malformed_json", "path": ".atlas/research/X/bad.json", "severity": "error"}}],
         "warnings": []
     }}))
@@ -12420,6 +12760,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -12530,7 +12955,7 @@ if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
         json.dump({{}}, f)
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -14569,6 +14994,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -14674,7 +15184,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -16726,6 +17236,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -16831,7 +17426,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -18878,6 +19473,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -18983,7 +19663,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -21030,6 +21710,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -21135,7 +21900,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -23196,6 +23961,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -23301,7 +24151,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -25356,6 +26206,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -25461,7 +26396,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -27516,6 +28451,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -27621,7 +28641,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -29668,6 +30688,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -29773,7 +30878,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -31849,6 +32954,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -31954,7 +33144,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -34018,6 +35208,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -34123,7 +35398,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -36193,6 +37468,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -36298,7 +37658,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -38373,6 +39733,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -38478,7 +39923,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -40557,6 +42002,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -40662,7 +42192,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -42736,6 +44266,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -42841,7 +44456,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -44915,6 +46530,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -45020,7 +46720,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -47094,6 +48794,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -47198,7 +48983,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -49272,6 +51057,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -49376,7 +51246,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -51446,6 +53316,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -51551,7 +53506,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -53636,6 +55591,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -53746,7 +55786,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -55826,6 +57866,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -55931,7 +58056,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -58037,6 +60162,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -58142,7 +60352,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -60381,6 +62591,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -60491,7 +62786,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -62722,6 +65017,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -62827,7 +65207,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -65071,6 +67451,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -65197,7 +67662,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -68439,6 +70904,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -68544,7 +71094,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -71666,6 +74216,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -71771,7 +74406,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -73904,6 +76539,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',
@@ -74009,7 +76729,7 @@ if ARGS[0] == "research" and ARGS[1] == "summary":
 if ARGS[0] == "research" and ARGS[1] == "check-artifacts":
     print(json.dumps({{
         "ok": True, "status": "research_artifacts_checked",
-        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1}},
+        "counts": {{"research": 1, "plans": 1, "verifications": 1, "evaluations": 1, "provider_response_schema_contracts": 1, "provider_response_review_results": 1, "provider_execution_unlock_states": 1, "provider_adapter_interface_contracts": 1, "provider_mock_response_simulations": 1, "provider_mock_response_import_candidates": 1, "provider_mock_response_review_sandboxes": 1, "provider_mock_response_trust_decision_blockers": 1, "provider_mock_response_final_safety_seals": 1, "provider_mock_response_final_safety_seals": 1}},
         "issues": [], "warnings": []
     }}))
     sys.exit(0)
@@ -77215,6 +79935,91 @@ if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-trust-decision-b
     sys.exit(0)
 
 
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_created",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "source_trust_decision_blocker_id": ARGS[2],
+        "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/seal-" + ARGS[2] + ".json",
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-list":
+    print(json.dumps({{"ok": True, "status": "provider_mock_response_final_safety_seals_listed", "items": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-show":
+    print(json.dumps({{
+        "ok": True, "provider_mock_response_final_safety_seal_id": ARGS[2],
+        "symbol": "AAPL", "provider_id": "mock", "model_id": "gpt-4o",
+        "final_safety_seal_status": "final_safety_seal_recorded",
+        "final_safety_seal_state": "mock_pipeline_sealed",
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-validate":
+    print(json.dumps({{"ok": True, "valid": True, "passed_checks": 5, "failed_checks": 0, "checks": [], "recommendation": "Proceed.", "warnings": []}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-replay":
+    print(json.dumps({{"ok": True, "match": True, "provider_mock_response_final_safety_seal_id": ARGS[2], "original_hash": "abc", "replayed_hash": "abc", "status": "research_provider_mock_response_final_safety_seal_replayed"}}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-summary":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_summary",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "run_id": ARGS[2], "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research" and ARGS[1] == "provider-mock-response-final-safety-seal-doctor":
+    print(json.dumps({{
+        "ok": True, "status": "research_provider_mock_response_final_safety_seal_doctor",
+        "run_id": ARGS[2], "seal_health": "seal_valid",
+        "provider_mock_response_final_safety_seal_id": "seal-" + ARGS[2],
+        "final_safety_seal_created": True, "mock_pipeline_complete": True,
+        "seal_valid": True, "seal_non_authorizing": True,
+        "trust_decision_blocker_recorded": True, "trust_source_verified": True,
+        "trust_blocker_active": True, "trust_decision_required": True,
+        "trust_decision_present": False, "trust_decision_granted": False,
+        "trust_decision_explicitly_blocked": True, "trust_upgrade_performed": False,
+        "provider_response_trusted": False, "mock_response_trusted": False,
+        "provider_call_allowed": False, "broker_touched": False,
+        "missing_prerequisites": ["real_trust_decision_not_implemented", "manual_review_not_completed", "trust_upgrade_not_implemented", "real_provider_response_not_available"],
+        "blocking_reasons": ["trust_decision_explicitly_blocked", "trust_upgrade_not_implemented", "manual_review_required_before_future_trust", "mock_response_not_trusted", "provider_response_not_trusted", "provider_execution_disabled"],
+        "warnings": [],
+    }}))
+    sys.exit(0)
+
+if ARGS[0] == "research":
+    print(json.dumps(dict(ok=True, status="safe_default")))
+    sys.exit(0)
 print("Unknown command", file=sys.stderr)
 sys.exit(1)
 ''',

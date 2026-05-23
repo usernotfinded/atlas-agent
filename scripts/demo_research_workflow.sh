@@ -3717,6 +3717,78 @@ if [ "$TRUST_BLOCKER_DOCTOR_GRANTED" != "False" ]; then
 fi
 assert_no_pending_orders
 
+# 85.40a. Research provider-mock-response-final-safety-seal
+printf '\n--- Research provider-mock-response-final-safety-seal ---\n'
+FINAL_SAFETY_SEAL_OUTPUT="$(atlas research provider-mock-response-final-safety-seal "$TRUST_BLOCKER_ID" --json)"
+assert_no_forbidden_fragments "$FINAL_SAFETY_SEAL_OUTPUT" "provider-mock-response-final-safety-seal CLI output"
+assert_ok "$FINAL_SAFETY_SEAL_OUTPUT" "research provider-mock-response-final-safety-seal"
+FINAL_SAFETY_SEAL_ID="$(json_field "$FINAL_SAFETY_SEAL_OUTPUT" provider_mock_response_final_safety_seal_id)"
+if [ -z "$FINAL_SAFETY_SEAL_ID" ]; then
+  printf 'FAIL: provider-mock-response-final-safety-seal did not return a seal ID\n' >&2
+  exit 1
+fi
+FINAL_SAFETY_SEAL_PROVIDER="$(json_field "$FINAL_SAFETY_SEAL_OUTPUT" provider_id)"
+if [ "$FINAL_SAFETY_SEAL_PROVIDER" != "mock" ]; then
+  printf 'FAIL: final safety seal provider_id is not mock\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.40b. Research provider-mock-response-final-safety-seal-list
+printf '\n--- Research provider-mock-response-final-safety-seal-list ---\n'
+FINAL_SAFETY_SEAL_LIST_OUTPUT="$(atlas research provider-mock-response-final-safety-seal-list --json)"
+assert_no_forbidden_fragments "$FINAL_SAFETY_SEAL_LIST_OUTPUT" "provider-mock-response-final-safety-seal-list CLI output"
+assert_ok "$FINAL_SAFETY_SEAL_LIST_OUTPUT" "research provider-mock-response-final-safety-seal-list"
+assert_no_pending_orders
+
+# 85.40c. Research provider-mock-response-final-safety-seal-show
+printf '\n--- Research provider-mock-response-final-safety-seal-show ---\n'
+FINAL_SAFETY_SEAL_SHOW_OUTPUT="$(atlas research provider-mock-response-final-safety-seal-show "$FINAL_SAFETY_SEAL_ID" --json)"
+assert_no_forbidden_fragments "$FINAL_SAFETY_SEAL_SHOW_OUTPUT" "provider-mock-response-final-safety-seal-show CLI output"
+FINAL_SAFETY_SEAL_SHOW_PROVIDER="$(json_field "$FINAL_SAFETY_SEAL_SHOW_OUTPUT" provider_id)"
+if [ "$FINAL_SAFETY_SEAL_SHOW_PROVIDER" != "mock" ]; then
+  printf 'FAIL: final safety seal show provider_id is not mock\n' >&2
+  exit 1
+fi
+assert_no_pending_orders
+
+# 85.40d. Research provider-mock-response-final-safety-seal-validate
+printf '\n--- Research provider-mock-response-final-safety-seal-validate ---\n'
+FINAL_SAFETY_SEAL_VALIDATE_OUTPUT="$(atlas research provider-mock-response-final-safety-seal-validate "$FINAL_SAFETY_SEAL_ID" --json)"
+assert_no_forbidden_fragments "$FINAL_SAFETY_SEAL_VALIDATE_OUTPUT" "provider-mock-response-final-safety-seal-validate CLI output"
+assert_ok "$FINAL_SAFETY_SEAL_VALIDATE_OUTPUT" "research provider-mock-response-final-safety-seal-validate"
+assert_no_pending_orders
+
+# 85.40e. Research provider-mock-response-final-safety-seal-replay
+printf '\n--- Research provider-mock-response-final-safety-seal-replay ---\n'
+FINAL_SAFETY_SEAL_REPLAY_OUTPUT="$(atlas research provider-mock-response-final-safety-seal-replay "$FINAL_SAFETY_SEAL_ID" --json)"
+assert_no_forbidden_fragments "$FINAL_SAFETY_SEAL_REPLAY_OUTPUT" "provider-mock-response-final-safety-seal-replay CLI output"
+assert_ok "$FINAL_SAFETY_SEAL_REPLAY_OUTPUT" "research provider-mock-response-final-safety-seal-replay"
+assert_no_pending_orders
+
+# 85.40f. Research provider-mock-response-final-safety-seal-summary
+printf '\n--- Research provider-mock-response-final-safety-seal-summary ---\n'
+FINAL_SAFETY_SEAL_SUMMARY_OUTPUT="$(atlas research provider-mock-response-final-safety-seal-summary "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$FINAL_SAFETY_SEAL_SUMMARY_OUTPUT" "provider-mock-response-final-safety-seal-summary CLI output"
+assert_ok "$FINAL_SAFETY_SEAL_SUMMARY_OUTPUT" "research provider-mock-response-final-safety-seal-summary"
+assert_no_pending_orders
+
+# 85.40g. Research provider-mock-response-final-safety-seal-doctor
+printf '\n--- Research provider-mock-response-final-safety-seal-doctor ---\n'
+FINAL_SAFETY_SEAL_DOCTOR_OUTPUT="$(atlas research provider-mock-response-final-safety-seal-doctor "$RUN_ID" --json)"
+assert_no_forbidden_fragments "$FINAL_SAFETY_SEAL_DOCTOR_OUTPUT" "provider-mock-response-final-safety-seal-doctor CLI output"
+assert_ok "$FINAL_SAFETY_SEAL_DOCTOR_OUTPUT" "research provider-mock-response-final-safety-seal-doctor"
+FINAL_SAFETY_SEAL_DOCTOR_HEALTH="$(json_field "$FINAL_SAFETY_SEAL_DOCTOR_OUTPUT" seal_health)"
+if [ "$FINAL_SAFETY_SEAL_DOCTOR_HEALTH" != "seal_valid" ]; then
+  printf 'FAIL: doctor did not report seal_valid\n' >&2
+  exit 1
+fi
+FINAL_SAFETY_SEAL_DOCTOR_GRANTED="$(json_field "$FINAL_SAFETY_SEAL_DOCTOR_OUTPUT" trust_decision_granted)"
+if [ "$FINAL_SAFETY_SEAL_DOCTOR_GRANTED" != "False" ]; then
+  printf 'FAIL: doctor did not report trust_decision_granted=false\n' >&2
+  exit 1
+fi
+
 # 85.40. Research timeline post mock trust blocker
 printf '\n--- Research timeline (post mock trust blocker) ---\n'
 TIMELINE_OUTPUT3="$(atlas research timeline --json)"
@@ -3741,7 +3813,11 @@ if [ "$CHECK_MOCK_TRUST_COUNT" -lt 1 ]; then
   printf 'FAIL: check-artifacts provider_mock_response_trust_decision_blockers count is < 1\n' >&2
   exit 1
 fi
-assert_no_pending_orders
+CHECK_FINAL_SEAL_COUNT="$(json_field "$CHECK_OUTPUT_MOCK_TRUST" counts.provider_mock_response_final_safety_seals)"
+if [ "$CHECK_FINAL_SEAL_COUNT" -lt 1 ]; then
+  printf 'FAIL: check-artifacts provider_mock_response_final_safety_seals count is < 1\n' >&2
+  exit 1
+fi
 
 # 86. Create local provider response fixture and import it
 CHECK_OUTPUT_MOCK="$(atlas research check-artifacts --json)"
