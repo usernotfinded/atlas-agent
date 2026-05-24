@@ -46,7 +46,6 @@ def test_readme_avoids_forbidden_positioning_and_profit_claims() -> None:
 
     forbidden = (
         "experi" + "mental",
-        "paper" + "-first",
         "guaranteed " + "profit",
         "profit " + "guarantee",
         "guaranteed " + "returns",

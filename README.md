@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7.dev45)** — see [release notes](docs/releases/v0.5.7.dev40.md).
+> **Current Status (v0.5.7.dev46)** — see [release notes](docs/releases/v0.5.7.dev40.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -62,7 +62,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7.dev45)
+## Current Status (v0.5.7.dev46)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
@@ -71,26 +71,63 @@ For full release history, see [CHANGELOG.md](CHANGELOG.md).
 
 ## Quickstart
 
+Atlas Agent is **sandbox-only**, **paper-first**, and **offline-safe** by default. Live trading is disabled by default. No broker orders, provider execution, or credential loading happen in the quickstart flow.
+
+**Not financial advice.** Trading involves significant risk of loss.
+
+### 1. Install
+
 ```bash
-# Install in editable mode
-pip install -e .
-
-# Create a workspace
-atlas init <workspace> --template routine-trader
-cd <workspace>
-
-# Guided first-run setup
-atlas setup
-
-# Check your configuration
-atlas validate
-
-# Run your first paper-trading cycle
-atlas run --mode paper
+python3.11 -m pip install -e .
+atlas --help
 ```
 
-1. **`atlas setup`**: Guided setup walks through provider/model/auth, discipline profile, symbol selection, and a final readiness summary.
-2. **`atlas run`**: Execution is explicit. Use `--mode paper` for safety and simulation. Live trading is designed to prevent orders without explicit configuration and multi-stage gates.
+### 2. Create a workspace
+
+Most commands require an Atlas workspace.
+
+```bash
+atlas init my-workspace --template routine-trader
+cd my-workspace
+atlas discipline setup --manual --yes
+atlas config set market.symbol DEMO-SYMBOL
+```
+
+### 3. Validate configuration
+
+```bash
+atlas validate
+```
+
+Expected: a readiness report. Missing provider API keys are expected and safe — Atlas does not require real credentials for paper and backtest workflows.
+
+### 4. Run a safe local backtest
+
+```bash
+atlas backtest run --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL
+```
+
+This runs a deterministic buy-and-hold backtest on local sample data. No network, no broker, no credentials.
+
+### 5. Inspect provider safety dossiers
+
+```bash
+atlas research provider-safety-dossier-latest --json
+atlas research provider-safety-dossier-list --status sandbox_chain_complete --limit 5 --json
+```
+
+If no dossier exists, the command returns `found: false` safely. No errors, no leaks, no broker/order path, no credentials loaded.
+
+### What is intentionally disabled
+
+- **Live trading** requires explicit multi-factor opt-in, valid credentials, and kill-switch normal state.
+- **Provider execution** remains locked — no real LLM/provider calls are made by default.
+- **Broker order submission** is blocked by `can_submit=false`.
+- **Credentials** are not loaded unless explicitly configured.
+
+### Development checks
+
+Tiered local check scripts help avoid running the full heavy gate on every iteration:
 
 ### Development checks
 
