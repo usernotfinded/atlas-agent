@@ -1,5 +1,7 @@
 # Provider Safety Dossier
 
+> **Not financial advice.** This document describes a local safety-reporting workflow, not trading recommendations.
+
 ## What this is
 
 The Provider Safety Dossier is a **local, offline safety report** for the mock provider pipeline in Atlas Agent. It consolidates the full chain of mock-response artifacts into a single tamper-evident document that can be inspected, exported, and shared for review.

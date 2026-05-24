@@ -1,5 +1,7 @@
 # Release Checklist
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 Run this before pushing a public GitHub release.
 
 ## Required Validation Commands
@@ -11,6 +13,8 @@ Run this before pushing a public GitHub release.
 - `./scripts/demo_research_workflow.sh` (optional: validates the complete paper-only research chain including evaluation, artifact health checking, and lineage timeline)
 - `python3.11 scripts/check_version_consistency.py`
 - `python3.11 scripts/check_forbidden_claims.py`
+- `python3.11 scripts/verify_readme_quickstart.py`
+- `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/check_no_protected_staged.py`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
@@ -39,6 +43,8 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Confirm no private values or credential-like strings are committed in docs or scripts.
 - Verify `pyproject.toml` `project.version` matches `src/atlas_agent/__init__.py` `__version__`.
 - Verify `git status` does not include runtime files like `memory/`.
+- Stage files explicitly. Do not use `git add .`.
+- Do not stage `.atlas/`, `.env`, `.env.atlas`, `memory/`, `build/`, `dist/`, `*.egg-info/`, generated reports, credentials, local logs, scratch files.
 - Verify `./scripts/check_no_protected_staged.py` passes (no protected local artifacts staged):
   - `AUDIT_ENHANCEMENTS_2026-05-13.md`
   - `BATCH2_PLAN.md`
@@ -228,13 +234,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev46
+./scripts/smoke_release_tag.sh v0.5.7.dev47
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev46 --full
+./scripts/smoke_release_tag.sh v0.5.7.dev47 --full
 ```
 
 ## Tagging
@@ -245,8 +251,8 @@ After all validations pass and the commit is ready:
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
 git commit -m "Add provider opt-in policy artifacts"
 git push origin main
-git tag -a v0.5.7.dev46 -m "Atlas Agent v0.5.7.dev46"
-git push origin v0.5.7.dev46
+git tag -a v0.5.7.dev47 -m "Atlas Agent v0.5.7.dev47"
+git push origin v0.5.7.dev47
 ```
 
 Only create the tag after:

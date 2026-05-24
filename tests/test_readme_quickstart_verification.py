@@ -1,4 +1,4 @@
-"""Tests for README quickstart verification — Batch 9.9.
+"""Tests for README quickstart verification — Batch 9.9 + 10.0.
 
 This batch is documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
@@ -6,8 +6,10 @@ no credentials, no provider SDKs, no broker changes.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -23,6 +25,32 @@ def _read(path: Path) -> str:
 
 def _lower(text: str) -> str:
     return text.lower()
+
+
+def _run_script_on_text(text: str) -> subprocess.CompletedProcess[str]:
+    """Run verify_readme_quickstart.py against a temporary README."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        f.write(text)
+        f.flush()
+        tmp_path = f.name
+
+    original_script = VERIFY_SCRIPT.read_text(encoding="utf-8")
+    # Patch the hardcoded README_PATH to point at our temp file
+    patched_script = original_script.replace(
+        'README_PATH = REPO_ROOT / "README.md"',
+        f'README_PATH = Path("{tmp_path}")',
+    )
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write(patched_script)
+        f.flush()
+        tmp_script = f.name
+
+    return subprocess.run(
+        [sys.executable, tmp_script],
+        capture_output=True,
+        text=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +115,16 @@ class TestReadmeQuickstartSafetyWording:
         text = _read(README_PATH)
         assert "no credentials loaded" in _lower(text)
 
+    def test_profitability_limitation_present(self) -> None:
+        text = _read(README_PATH)
+        lower = _lower(text)
+        assert "safety validation does not imply profitability" in lower
+        # Accept combined form "profitability or trading correctness"
+        assert (
+            "safety validation does not imply trading correctness" in lower
+            or "does not imply profitability or trading correctness" in lower
+        )
+
 
 # ---------------------------------------------------------------------------
 # README forbidden claims
@@ -106,40 +144,50 @@ class TestReadmeQuickstartNoForbiddenClaims:
         "autonomous trading ready",
     )
 
+    def _sentence_around(self, text: str, start: int, end: int) -> str:
+        boundary_chars = {'.', '!', '?', '\n'}
+        s = start
+        while s > 0 and text[s - 1] not in boundary_chars:
+            s -= 1
+        e = end
+        while e < len(text) and text[e] not in boundary_chars:
+            e += 1
+        return text[s:e]
+
     def _assert_absent_outside_negative_context(self, text: str, phrase: str) -> bool:
         lower_text = text.lower()
         phrase_lower = phrase.lower()
-        idx = lower_text.find(phrase_lower)
-        if idx == -1:
-            return True
-        window = 120
-        start = max(0, idx - window)
-        end = min(len(text), idx + len(phrase_lower) + window)
-        context = lower_text[start:end]
-        negative_indicators = (
-            "not ",
-            "does not",
-            "never",
-            "no ",
-            "avoid",
-            "disclaimer",
-            "prohibited",
-            "forbidden",
-            "must not",
-            "cannot",
-            "do not",
-            "is not",
-            "are not",
-            "without",
-            "fail closed",
-            "not yet",
-            "not implemented",
-            "not enabled",
-            "not authorized",
-            "not a ",
-            "not ready",
-        )
-        return any(ind in context for ind in negative_indicators)
+        for m in re.finditer(re.escape(phrase_lower), lower_text):
+            sentence = self._sentence_around(lower_text, m.start(), m.end()).lower()
+            negative_indicators = (
+                "not ",
+                "does not",
+                "never",
+                "no ",
+                "avoid",
+                "disclaimer",
+                "prohibited",
+                "forbidden",
+                "must not",
+                "cannot",
+                "do not",
+                "is not",
+                "are not",
+                "without",
+                "fail closed",
+                "not yet",
+                "not implemented",
+                "not enabled",
+                "not authorized",
+                "not a ",
+                "not ready",
+                "remains disabled",
+                "remains locked",
+                "remains blocked",
+            )
+            if not any(ind in sentence for ind in negative_indicators):
+                return False
+        return True
 
     def test_no_forbidden_claims(self) -> None:
         text = _read(README_PATH)
@@ -164,18 +212,26 @@ class TestReadmeQuickstartNoForbiddenFragments:
         assert "/private/var/" not in text, "Absolute /private/var/ path found in README"
 
     def test_no_secret_placeholders_in_bash_blocks(self) -> None:
-        import re
-
         text = _read(README_PATH)
         for block in re.findall(r"```bash\n(.*?)```", text, re.DOTALL):
             for line in block.splitlines():
+                if line.strip().startswith("#"):
+                    continue
                 if re.search(r"\bsk-[A-Za-z0-9]+", line):
                     raise AssertionError(f"Secret-like placeholder in README bash block: {line.strip()}")
                 for token in ("API_KEY", "SECRET", "TOKEN", "PASSWORD"):
-                    if token in line and "#" not in line:
-                        raise AssertionError(
-                            f"Credential-like token '{token}' in README bash block: {line.strip()}"
-                        )
+                    comment_pos = line.find("#")
+                    if comment_pos != -1:
+                        before = line[:comment_pos]
+                        if re.search(rf"\b{token}\b", before):
+                            raise AssertionError(
+                                f"Credential-like token '{token}' in README bash block: {line.strip()}"
+                            )
+                    else:
+                        if re.search(rf"\b{token}\b", line):
+                            raise AssertionError(
+                                f"Credential-like token '{token}' in README bash block: {line.strip()}"
+                            )
 
 
 # ---------------------------------------------------------------------------
@@ -198,29 +254,48 @@ class TestVerifyReadmeQuickstartScript:
         )
 
     def test_script_rejects_live_trading_claim(self) -> None:
-        import tempfile
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
-            f.write("# README\n\n```bash\natlas --help\n```\n\nLive trading ready.\n")
-            f.flush()
-            result = subprocess.run(
-                [sys.executable, str(VERIFY_SCRIPT)],
-                capture_output=True,
-                text=True,
-                env={**dict(subprocess.os.environ), "README_QUICKSTART_OVERRIDE": f.name},
-            )
-            # The script does not support override; test by checking the logic directly
-            # Skip this test since the script is hardcoded to README.md
-            pass
+        text = "# README\n\n```bash\natlas --help\n```\n\nLive trading ready.\n"
+        result = _run_script_on_text(text)
+        assert result.returncode != 0, "Expected script to reject live trading ready claim"
+        assert "live trading ready" in result.stdout.lower()
 
     def test_script_rejects_unsafe_command(self) -> None:
-        import re
+        text = "# README\n\n```bash\ncurl https://example.com\n```\n"
+        result = _run_script_on_text(text)
+        assert result.returncode != 0, "Expected script to reject curl command"
+        assert "curl" in result.stdout.lower()
 
-        script_text = VERIFY_SCRIPT.read_text(encoding="utf-8")
-        # Verify the script contains forbidden command checks
-        assert "FORBIDDEN_COMMAND_PATTERNS" in script_text
-        assert "curl" in script_text
-        assert "/Users/" in script_text
+    def test_script_rejects_missing_safe_phrase(self) -> None:
+        text = "# README\n\n```bash\natlas --help\n```\n\nNot financial advice.\n"
+        # Missing sandbox-only, paper-first, offline-safe, live trading disabled by default
+        result = _run_script_on_text(text)
+        assert result.returncode != 0, "Expected script to reject missing safe phrases"
+
+    def test_script_accepts_negative_context(self) -> None:
+        text = (
+            "# README\n\n```bash\npython3.11 -m pip install -e .\natlas --help\natlas validate\n"
+            "atlas backtest run --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL\n"
+            "```\n\n"
+            "Sandbox-only, paper-first, offline-safe. Live trading disabled by default.\n"
+            "Not financial advice. Safety validation does not imply profitability.\n"
+            "Safety validation does not imply trading correctness.\n"
+            "Live trading is not ready.\n"
+        )
+        result = _run_script_on_text(text)
+        assert result.returncode == 0, (
+            f"Expected script to accept negative context:\n{result.stdout}"
+        )
+
+    def test_script_rejects_secret_placeholder(self) -> None:
+        text = (
+            "# README\n\n```bash\natlas --help\nexport API_KEY=sk-abc123\n```\n\n"
+            "Sandbox-only, paper-first, offline-safe. Live trading disabled by default.\n"
+            "Not financial advice. Safety validation does not imply profitability.\n"
+            "Safety validation does not imply trading correctness.\n"
+        )
+        result = _run_script_on_text(text)
+        assert result.returncode != 0, "Expected script to reject secret placeholder"
+        assert "sk-" in result.stdout.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -230,11 +305,27 @@ class TestVerifyReadmeQuickstartScript:
 
 class TestReadmeQuickstartCommandPaths:
     def test_bash_commands_use_relative_paths_only(self) -> None:
-        import re
-
         text = _read(README_PATH)
         for block in re.findall(r"```bash\n(.*?)```", text, re.DOTALL):
             for line in block.splitlines():
                 if line.strip().startswith("atlas ") or line.strip().startswith("pip "):
                     assert "/Users/" not in line, f"Absolute path in command: {line}"
                     assert "/private/" not in line, f"Absolute path in command: {line}"
+
+    def test_no_secret_tokens_in_any_bash_line(self) -> None:
+        text = _read(README_PATH)
+        for block in re.findall(r"```bash\n(.*?)```", text, re.DOTALL):
+            for line in block.splitlines():
+                if line.strip().startswith("#"):
+                    continue
+                for token in ("API_KEY", "SECRET", "TOKEN", "PASSWORD"):
+                    comment_pos = line.find("#")
+                    if comment_pos != -1:
+                        before = line[:comment_pos]
+                        assert not re.search(rf"\b{token}\b", before), (
+                            f"Credential token '{token}' in bash block: {line.strip()}"
+                        )
+                    else:
+                        assert not re.search(rf"\b{token}\b", line), (
+                            f"Credential token '{token}' in bash block: {line.strip()}"
+                        )

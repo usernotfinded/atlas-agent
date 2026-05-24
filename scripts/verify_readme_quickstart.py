@@ -78,7 +78,6 @@ def _read_readme() -> str:
 def _extract_bash_commands(readme_text: str) -> list[str]:
     """Extract lines from ```bash ... ``` code blocks."""
     commands: list[str] = []
-    # Find all ```bash blocks
     for block in re.findall(r"```bash\n(.*?)```", readme_text, re.DOTALL):
         for line in block.splitlines():
             stripped = line.strip()
@@ -96,42 +95,54 @@ def _check_forbidden_commands(commands: list[str]) -> list[str]:
     return violations
 
 
+def _sentence_around(text: str, start: int, end: int) -> str:
+    """Extract the sentence/paragraph containing the match."""
+    boundary_chars = {'.', '!', '?', '\n'}
+    s = start
+    while s > 0 and text[s - 1] not in boundary_chars:
+        s -= 1
+    e = end
+    while e < len(text) and text[e] not in boundary_chars:
+        e += 1
+    return text[s:e]
+
+
 def _check_forbidden_claims(text: str) -> list[str]:
     violations: list[str] = []
     lower_text = text.lower()
     for phrase in FORBIDDEN_CLAIM_PHRASES:
-        idx = lower_text.find(phrase)
-        if idx == -1:
-            continue
-        window = 120
-        start = max(0, idx - window)
-        end = min(len(text), idx + len(phrase) + window)
-        context = lower_text[start:end]
-        negative_indicators = (
-            "not ",
-            "does not",
-            "never",
-            "no ",
-            "avoid",
-            "disclaimer",
-            "prohibited",
-            "forbidden",
-            "must not",
-            "cannot",
-            "do not",
-            "is not",
-            "are not",
-            "without",
-            "fail closed",
-            "not yet",
-            "not implemented",
-            "not enabled",
-            "not authorized",
-            "not a ",
-            "not ready",
-        )
-        if not any(ind in context for ind in negative_indicators):
-            violations.append(f"Forbidden claim '{phrase}' found outside negative context")
+        for m in re.finditer(re.escape(phrase), lower_text):
+            sentence = _sentence_around(lower_text, m.start(), m.end()).lower()
+            negative_indicators = (
+                "not ",
+                "does not",
+                "never",
+                "no ",
+                "avoid",
+                "disclaimer",
+                "prohibited",
+                "forbidden",
+                "must not",
+                "cannot",
+                "do not",
+                "is not",
+                "are not",
+                "without",
+                "fail closed",
+                "not yet",
+                "not implemented",
+                "not enabled",
+                "not authorized",
+                "not a ",
+                "not ready",
+                "remains disabled",
+                "remains locked",
+                "remains blocked",
+            )
+            if not any(ind in sentence for ind in negative_indicators):
+                violations.append(
+                    f"Forbidden claim '{phrase}' found outside negative context"
+                )
     return violations
 
 
@@ -163,15 +174,51 @@ def _check_forbidden_fragments(text: str) -> list[str]:
 
 def _check_no_secret_placeholders(text: str) -> list[str]:
     violations: list[str] = []
-    # Look for secret-looking placeholders in code blocks
     for block in re.findall(r"```bash\n(.*?)```", text, re.DOTALL):
         for line in block.splitlines():
+            # Skip pure comment lines
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            # Check for secret-looking values even if there's a trailing comment
             if re.search(r"\bsk-[A-Za-z0-9]+", line):
                 violations.append(f"Secret-like placeholder in bash block: {line.strip()}")
             for token in ("API_KEY", "SECRET", "TOKEN", "PASSWORD"):
-                if token in line and "#" not in line:
-                    violations.append(f"Credential-like token '{token}' in bash block: {line.strip()}")
+                # Token must appear as a value (after = or space), not just in a comment
+                if re.search(rf"\b{token}\b", line):
+                    # Allow if the only occurrence is inside a comment
+                    comment_pos = line.find("#")
+                    if comment_pos != -1:
+                        before_comment = line[:comment_pos]
+                        if re.search(rf"\b{token}\b", before_comment):
+                            violations.append(
+                                f"Credential-like token '{token}' in bash block: {line.strip()}"
+                            )
+                    else:
+                        violations.append(
+                            f"Credential-like token '{token}' in bash block: {line.strip()}"
+                        )
     return violations
+
+
+def _check_profitability_limitation(text: str) -> list[str]:
+    missing: list[str] = []
+    lower = text.lower()
+    if "safety validation does not imply profitability" not in lower:
+        missing.append(
+            "Required limitation phrase 'safety validation does not imply profitability' missing"
+        )
+    # Accept either the combined form "profitability or trading correctness"
+    # or the separate phrase "trading correctness"
+    has_trading_correctness = (
+        "safety validation does not imply trading correctness" in lower
+        or "does not imply profitability or trading correctness" in lower
+    )
+    if not has_trading_correctness:
+        missing.append(
+            "Required limitation phrase about trading correctness missing"
+        )
+    return missing
 
 
 def main() -> int:
@@ -189,6 +236,7 @@ def main() -> int:
     all_violations.extend(_check_required_commands(commands))
     all_violations.extend(_check_forbidden_fragments(text))
     all_violations.extend(_check_no_secret_placeholders(text))
+    all_violations.extend(_check_profitability_limitation(text))
 
     if all_violations:
         print("README quickstart verification FAILED")
