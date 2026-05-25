@@ -1760,6 +1760,41 @@ Safety First:
     research_release_candidate_readiness_doctor.add_argument("report_id", help="Report ID.")
     research_release_candidate_readiness_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_release_candidate_cutover = research_sub.add_parser(
+        "release-candidate-cutover-dry-run",
+        help="Create a local release candidate cutover dry-run report.",
+    )
+    research_release_candidate_cutover.add_argument("--target-version", required=True, help="Target RC tag, for example v0.5.7-rc1.")
+    research_release_candidate_cutover.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_cutover_list = research_sub.add_parser(
+        "release-candidate-cutover-dry-run-list",
+        help="List release candidate cutover dry-run reports.",
+    )
+    research_release_candidate_cutover_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_cutover_validate = research_sub.add_parser(
+        "release-candidate-cutover-dry-run-validate",
+        help="Validate a release candidate cutover dry-run report.",
+    )
+    research_release_candidate_cutover_validate.add_argument("report_id", help="Dry-run report ID.")
+    research_release_candidate_cutover_validate.add_argument("--strict", action="store_true", help="Exit non-zero for invalid reports.")
+    research_release_candidate_cutover_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_cutover_summary = research_sub.add_parser(
+        "release-candidate-cutover-dry-run-summary",
+        help="Summarize a release candidate cutover dry-run report.",
+    )
+    research_release_candidate_cutover_summary.add_argument("report_id", help="Dry-run report ID.")
+    research_release_candidate_cutover_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_cutover_doctor = research_sub.add_parser(
+        "release-candidate-cutover-dry-run-doctor",
+        help="Doctor a release candidate cutover dry-run report.",
+    )
+    research_release_candidate_cutover_doctor.add_argument("report_id", help="Dry-run report ID.")
+    research_release_candidate_cutover_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_mock_response_final_safety_seal = research_sub.add_parser(
         "mock-response-final-safety-seal",
         help="Create/show/list/validate/replay mock response final safety seals. Configless.",
@@ -3708,6 +3743,11 @@ def main(argv: list[str] | None = None) -> int:
         "release-candidate-readiness-validate",
         "release-candidate-readiness-summary",
         "release-candidate-readiness-doctor",
+        "release-candidate-cutover-dry-run",
+        "release-candidate-cutover-dry-run-list",
+        "release-candidate-cutover-dry-run-validate",
+        "release-candidate-cutover-dry-run-summary",
+        "release-candidate-cutover-dry-run-doctor",
         "mock-response-final-safety-seal",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
@@ -14391,6 +14431,236 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Recommendation: {result.get('recommendation', '')}")
             if result.get("mismatched_fields"):
                 print(f"  Mismatched Fields: {', '.join(result['mismatched_fields'])}")
+            if result.get("blockers"):
+                print(f"  Blockers: {', '.join(result['blockers'])}")
+            if result.get("warnings"):
+                for w in result["warnings"]:
+                    print(f"  Warning: {w}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-cutover-dry-run":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_cutover import create_release_candidate_cutover_dry_run
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-cutover-dry-run skipped safely: no workspace found")
+                return 1
+
+            result = create_release_candidate_cutover_dry_run(ws, args.target_version)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Release candidate cutover dry run")
+            print(f"  Status: {result.get('cutover_status', '')}")
+            print(f"  Target: {result.get('target_version', '')}")
+            print(f"  Score: {result.get('cutover_score', 0)}")
+            if result.get("blockers"):
+                print(f"  Blockers: {', '.join(result['blockers'])}")
+            print("  Dry run only: no tag, push, or publish executed.")
+        return 0 if result.get("ok") else 1
+    if args.command == "research" and args.research_command == "release-candidate-cutover-dry-run-list":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_cutover import iter_release_candidate_cutover_artifacts
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-cutover-dry-run-list skipped safely: no workspace found")
+                return 1
+            result = iter_release_candidate_cutover_artifacts(ws)
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run-list", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps({"ok": True, "status": "research_release_candidate_cutover_dry_run_list", "items": result}, indent=2, sort_keys=True))
+        else:
+            print(f"Release candidate cutover dry runs: {len(result)}")
+            for item in result:
+                print(f"  {item.get('release_candidate_cutover_dry_run_id', '')} | {item.get('target_version', '')} | {item.get('cutover_status', '')} | {item.get('cutover_score', 0)}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-cutover-dry-run-validate":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_cutover import (
+                find_release_candidate_cutover_by_id,
+                validate_release_candidate_cutover_artifact,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-cutover-dry-run-validate skipped safely: no workspace found")
+                return 1
+            safe_id = validate_run_id(args.report_id)
+            artifact_path = find_release_candidate_cutover_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "report_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Release candidate cutover dry-run report not found.")
+                return 1
+            result = validate_release_candidate_cutover_artifact(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run-validate", "research command failed")
+            return 1
+        output = {
+            "ok": result.valid,
+            "status": "research_release_candidate_cutover_dry_run_validated" if result.valid else "research_release_candidate_cutover_dry_run_validation_failed",
+            "valid": result.valid,
+            "structurally_valid": result.structurally_valid,
+            "cutover_valid": result.cutover_valid,
+            "cutover_status": result.cutover_status,
+            "blockers": result.blockers,
+            "passed_checks": result.passed_checks,
+            "failed_checks": result.failed_checks,
+            "recommendation": result.recommendation,
+            "warnings": result.warnings,
+            "mismatched_fields": result.mismatched_fields,
+        }
+        if args.json:
+            print(json.dumps(output, indent=2, sort_keys=True))
+        else:
+            print(f"Release candidate cutover dry-run validation: {'PASS' if result.valid else 'FAIL'}")
+            print(f"  Status: {result.cutover_status}")
+            if result.blockers:
+                print(f"  Blockers: {', '.join(result.blockers)}")
+        if args.strict and not result.valid:
+            return 1
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-cutover-dry-run-summary":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_cutover import (
+                find_release_candidate_cutover_by_id,
+                summarize_release_candidate_cutover,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-cutover-dry-run-summary skipped safely: no workspace found")
+                return 1
+            safe_id = validate_run_id(args.report_id)
+            artifact_path = find_release_candidate_cutover_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "report_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Release candidate cutover dry-run report not found.")
+                return 1
+            result = summarize_release_candidate_cutover(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run-summary", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Release candidate cutover dry-run summary")
+            print(f"  Status: {result.get('cutover_status', '')}")
+            print(f"  Target: {result.get('target_version', '')}")
+            print(f"  Score: {result.get('cutover_score', 0)}")
+            if result.get("blockers"):
+                print(f"  Blockers: {', '.join(result['blockers'])}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-cutover-dry-run-doctor":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_cutover import (
+                doctor_release_candidate_cutover,
+                find_release_candidate_cutover_by_id,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-cutover-dry-run-doctor skipped safely: no workspace found")
+                return 1
+            safe_id = validate_run_id(args.report_id)
+            artifact_path = find_release_candidate_cutover_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "report_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Release candidate cutover dry-run report not found.")
+                return 1
+            result = doctor_release_candidate_cutover(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-cutover-dry-run-doctor", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Release candidate cutover dry-run doctor")
+            print(f"  Valid: {result.get('valid', False)}")
+            print(f"  Status: {result.get('cutover_status', '')}")
             if result.get("blockers"):
                 print(f"  Blockers: {', '.join(result['blockers'])}")
             if result.get("warnings"):

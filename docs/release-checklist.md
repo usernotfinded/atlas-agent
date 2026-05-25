@@ -16,8 +16,12 @@ Run this before pushing a public GitHub release.
 - `python3.11 scripts/verify_readme_quickstart.py`
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/check_no_protected_staged.py`
+- `./scripts/release_check.sh --quick`
+- `./scripts/release_check.sh --research`
+- `./scripts/release_check.sh --full`
 - `atlas research release-candidate-readiness --symbol ATLAS-DEMO --json`
 - `atlas research release-candidate-readiness-validate REPORT_ID --json`
+- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc1 --json`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
@@ -55,6 +59,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
   - `dist/`
   - `*.egg-info/`
 - Verify `./scripts/check_forbidden_claims.py` passes.
+- Verify the release candidate cutover dry run does not tag, push, publish, or create a GitHub release. External review and PUSH OK are still required before any release action.
 - If broker, submit, reconcile, approval, audit, risk, or kill-switch behavior changed, review `docs/live-submit-safety-contract.md` for accuracy and update it if necessary.
 
 ## Broker Foundation 3.x Release Assertions
@@ -236,13 +241,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev48
+./scripts/smoke_release_tag.sh v0.5.7.dev49
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev48 --full
+./scripts/smoke_release_tag.sh v0.5.7.dev49 --full
 ```
 
 ## Tagging
@@ -253,8 +258,8 @@ After all validations pass and the commit is ready:
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
 git commit -m "Add provider opt-in policy artifacts"
 git push origin main
-git tag -a v0.5.7.dev48 -m "Atlas Agent v0.5.7.dev48"
-git push origin v0.5.7.dev48
+git tag -a v0.5.7.dev49 -m "Atlas Agent v0.5.7.dev49"
+git push origin v0.5.7.dev49
 ```
 
 Only create the tag after:

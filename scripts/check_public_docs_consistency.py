@@ -23,6 +23,8 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "provider-safety-dossier.md",
     REPO_ROOT / "docs" / "examples" / "provider-safety-dossier-workflow.md",
     REPO_ROOT / "docs" / "release-checklist.md",
+    REPO_ROOT / "docs" / "release-candidate-readiness.md",
+    REPO_ROOT / "docs" / "release-candidate-cutover.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
@@ -86,14 +88,14 @@ FORBIDDEN_COMMAND_PATTERNS = [
 
 # Stale version pattern: any reference to an older dev tag that looks like a current-status claim.
 # We allow old release notes to mention their own version, but flag "Current Status (v0.5.7.dev46)"
-# when the current version is dev47.
+# when the current version is dev49.
 STALE_VERSION_PATTERNS = [
-    r"Current Status \(v0\.5\.7\.dev4[0-6]\)",
-    r"v0\.5\.7\.dev4[0-6](?!\d)",  # standalone old dev tags
+    r"Current Status \(v0\.5\.7\.dev4[0-8]\)",
+    r"v0\.5\.7\.dev4[0-8](?!\d)",  # standalone old dev tags
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.5.7.dev48"
+CURRENT_VERSION = "v0.5.7.dev49"
 
 
 def _read(path: Path) -> str:

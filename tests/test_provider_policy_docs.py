@@ -274,6 +274,7 @@ class TestBatch8NoProviderCode:
             "research/provider_call_plan.py",
             "research/session.py",
             "research/perplexity.py",
+            "research/release_candidate_cutover.py",  # uses FORBIDDEN_FRAGMENTS
             "providers/openai_compatible.py",
             "setup/wizard_ui.py",
             "notifications/clickup.py",
