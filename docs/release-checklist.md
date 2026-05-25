@@ -16,6 +16,8 @@ Run this before pushing a public GitHub release.
 - `python3.11 scripts/verify_readme_quickstart.py`
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/check_no_protected_staged.py`
+- `atlas research release-candidate-readiness --symbol ATLAS-DEMO --json`
+- `atlas research release-candidate-readiness-validate REPORT_ID --json`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
@@ -234,13 +236,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev47
+./scripts/smoke_release_tag.sh v0.5.7.dev48
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7.dev47 --full
+./scripts/smoke_release_tag.sh v0.5.7.dev48 --full
 ```
 
 ## Tagging
@@ -251,8 +253,8 @@ After all validations pass and the commit is ready:
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
 git commit -m "Add provider opt-in policy artifacts"
 git push origin main
-git tag -a v0.5.7.dev47 -m "Atlas Agent v0.5.7.dev47"
-git push origin v0.5.7.dev47
+git tag -a v0.5.7.dev48 -m "Atlas Agent v0.5.7.dev48"
+git push origin v0.5.7.dev48
 ```
 
 Only create the tag after:

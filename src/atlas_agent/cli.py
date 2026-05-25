@@ -1723,6 +1723,43 @@ Safety First:
     research_provider_safety_dossier_export.add_argument("--format", default="markdown", help="Export format. Default: markdown.")
     research_provider_safety_dossier_export.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
+    research_release_candidate_readiness = research_sub.add_parser(
+        "release-candidate-readiness", help="Create a release candidate readiness report."
+    )
+    research_release_candidate_readiness.add_argument("--symbol", default="ATLAS-DEMO", help="Symbol to tag the report. Default: ATLAS-DEMO.")
+    research_release_candidate_readiness.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_readiness_list = research_sub.add_parser(
+        "release-candidate-readiness-list", help="List release candidate readiness reports."
+    )
+    research_release_candidate_readiness_list.add_argument("--symbol", default=None, help="Filter by symbol.")
+    research_release_candidate_readiness_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_readiness_show = research_sub.add_parser(
+        "release-candidate-readiness-show", help="Show a release candidate readiness report."
+    )
+    research_release_candidate_readiness_show.add_argument("report_id", help="Report ID.")
+    research_release_candidate_readiness_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_readiness_validate = research_sub.add_parser(
+        "release-candidate-readiness-validate", help="Validate a release candidate readiness report."
+    )
+    research_release_candidate_readiness_validate.add_argument("report_id", help="Report ID.")
+    research_release_candidate_readiness_validate.add_argument("--strict", action="store_true", help="Exit non-zero for invalid reports.")
+    research_release_candidate_readiness_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_readiness_summary = research_sub.add_parser(
+        "release-candidate-readiness-summary", help="Summarize a release candidate readiness report."
+    )
+    research_release_candidate_readiness_summary.add_argument("report_id", help="Report ID.")
+    research_release_candidate_readiness_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
+    research_release_candidate_readiness_doctor = research_sub.add_parser(
+        "release-candidate-readiness-doctor", help="Doctor a release candidate readiness report."
+    )
+    research_release_candidate_readiness_doctor.add_argument("report_id", help="Report ID.")
+    research_release_candidate_readiness_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
+
     research_mock_response_final_safety_seal = research_sub.add_parser(
         "mock-response-final-safety-seal",
         help="Create/show/list/validate/replay mock response final safety seals. Configless.",
@@ -3665,6 +3702,12 @@ def main(argv: list[str] | None = None) -> int:
         "provider-safety-dossier-summary",
         "provider-safety-dossier-doctor",
         "provider-safety-dossier-export",
+        "release-candidate-readiness",
+        "release-candidate-readiness-list",
+        "release-candidate-readiness-show",
+        "release-candidate-readiness-validate",
+        "release-candidate-readiness-summary",
+        "release-candidate-readiness-doctor",
         "mock-response-final-safety-seal",
     }
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
@@ -14044,6 +14087,315 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Dossier ID: {result.get('provider_safety_dossier_id', '')}")
             print(f"  Output: {result.get('output_path_relative', '')}")
             print(f"  Format: {result.get('format', '')}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-readiness":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_readiness import create_release_candidate_readiness
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-readiness skipped safely: no workspace found")
+                return 1
+
+            from atlas_agent import __version__
+            result = create_release_candidate_readiness(ws, args.symbol, __version__)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-readiness", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-readiness", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Release candidate readiness report created")
+            print(f"  ID: {result.get('release_candidate_readiness_report_id', '')}")
+            print(f"  Symbol: {result.get('symbol', '')}")
+            print(f"  Version: {result.get('version', '')}")
+            print(f"  Readiness Status: {result.get('readiness_status', '')}")
+            print(f"  Readiness Score: {result.get('readiness_score', 0)}")
+            blockers = result.get("blockers", [])
+            if blockers:
+                print(f"  Blockers: {', '.join(blockers)}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-readiness-list":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_readiness import iter_release_candidate_readiness_artifacts
+            from atlas_agent.research.session import ResearchSessionError
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-readiness-list skipped safely: no workspace found")
+                return 1
+
+            result = iter_release_candidate_readiness_artifacts(ws, symbol=args.symbol)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-readiness-list", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-readiness-list", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps({"ok": True, "status": "research_release_candidate_readiness_list", "items": result}, indent=2, sort_keys=True))
+        else:
+            print(f"Release candidate readiness reports: {len(result)}")
+            for item in result:
+                print(f"  {item.get('release_candidate_readiness_report_id', '')} | {item.get('symbol', '')} | {item.get('readiness_status', '')} | {item.get('readiness_score', 0)}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-readiness-show":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_readiness import (
+                find_release_candidate_readiness_by_id,
+                load_release_candidate_readiness,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-readiness-show skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.report_id)
+            artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "report_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Release candidate readiness report not found.")
+                return 1
+            data = load_release_candidate_readiness(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-readiness-show", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-readiness-show", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(data, indent=2, sort_keys=True))
+        else:
+            print("Release candidate readiness report")
+            print(f"  ID: {data.get('release_candidate_readiness_report_id', '')}")
+            print(f"  Symbol: {data.get('symbol', '')}")
+            print(f"  Version: {data.get('version', '')}")
+            print(f"  Status: {data.get('readiness_status', '')}")
+            print(f"  Score: {data.get('readiness_score', 0)}")
+            print(f"  Sandbox Only: {data.get('sandbox_only', True)}")
+            print(f"  Paper First: {data.get('paper_first', True)}")
+            print(f"  Offline Safe: {data.get('offline_safe', True)}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-readiness-validate":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_readiness import (
+                find_release_candidate_readiness_by_id,
+                validate_release_candidate_readiness_artifact,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-readiness-validate skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.report_id)
+            artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "report_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Release candidate readiness report not found.")
+                return 1
+            result = validate_release_candidate_readiness_artifact(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-readiness-validate", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-readiness-validate", "research command failed")
+            return 1
+        output = {
+            "ok": result.valid,
+            "status": "research_release_candidate_readiness_validated" if result.valid else "research_release_candidate_readiness_validation_failed",
+            "valid": result.valid,
+            "structurally_valid": result.structurally_valid,
+            "readiness_valid": result.readiness_valid,
+            "readiness_status": result.readiness_status,
+            "blockers": result.blockers,
+            "passed_checks": result.passed_checks,
+            "failed_checks": result.failed_checks,
+            "recommendation": result.recommendation,
+            "warnings": result.warnings,
+        }
+        if args.json:
+            print(json.dumps(output, indent=2, sort_keys=True))
+        else:
+            print(f"Release candidate readiness validation: {'PASS' if result.valid else 'FAIL'}")
+            print(f"  Passed: {result.passed_checks}")
+            print(f"  Failed: {result.failed_checks}")
+            print(f"  Recommendation: {result.recommendation}")
+            if result.warnings:
+                for w in result.warnings:
+                    print(f"  Warning: {w}")
+        if args.strict and not result.valid:
+            return 1
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-readiness-summary":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_readiness import (
+                find_release_candidate_readiness_by_id,
+                summarize_release_candidate_readiness,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-readiness-summary skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.report_id)
+            artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "report_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Release candidate readiness report not found.")
+                return 1
+            result = summarize_release_candidate_readiness(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-readiness-summary", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-readiness-summary", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Release candidate readiness summary")
+            print(f"  ID: {result.get('release_candidate_readiness_report_id', '')}")
+            print(f"  Status: {result.get('readiness_status', '')}")
+            print(f"  Score: {result.get('readiness_score', 0)}")
+            print(f"  Checks: {result.get('total_checks', 0)} total, {result.get('passed_checks', 0)} passed, {result.get('failed_checks', 0)} failed")
+            blockers = result.get("blockers", [])
+            if blockers:
+                print(f"  Blockers: {', '.join(blockers)}")
+        return 0
+    if args.command == "research" and args.research_command == "release-candidate-readiness-doctor":
+        try:
+            import json
+            from atlas_agent.research.release_candidate_readiness import (
+                find_release_candidate_readiness_by_id,
+                doctor_release_candidate_readiness,
+            )
+            from atlas_agent.research.session import ResearchSessionError, validate_run_id
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research release-candidate-readiness-doctor skipped safely: no workspace found")
+                return 1
+
+            safe_id = validate_run_id(args.report_id)
+            artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
+            if artifact_path is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "report_not_found"}, indent=2, sort_keys=True))
+                else:
+                    print("Release candidate readiness report not found.")
+                return 1
+            result = doctor_release_candidate_readiness(artifact_path, ws)
+        except ResearchSessionError as exc:
+            status, message = _safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research release-candidate-readiness-doctor", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research release-candidate-readiness-doctor", "research command failed")
+            return 1
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("Release candidate readiness doctor")
+            print(f"  Valid: {result.get('valid', False)}")
+            print(f"  Structurally Valid: {result.get('structurally_valid', False)}")
+            print(f"  Readiness Valid: {result.get('readiness_valid', False)}")
+            print(f"  Readiness Status: {result.get('readiness_status', '')}")
+            print(f"  Passed: {result.get('passed_checks', 0)}")
+            print(f"  Failed: {result.get('failed_checks', 0)}")
+            print(f"  Recommendation: {result.get('recommendation', '')}")
+            if result.get("mismatched_fields"):
+                print(f"  Mismatched Fields: {', '.join(result['mismatched_fields'])}")
+            if result.get("blockers"):
+                print(f"  Blockers: {', '.join(result['blockers'])}")
+            if result.get("warnings"):
+                for w in result["warnings"]:
+                    print(f"  Warning: {w}")
         return 0
     if args.command == "notify" and args.notify_command == "clickup":
         if not args.file.exists():

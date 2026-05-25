@@ -1350,7 +1350,7 @@ def check_research_artifacts(
     """
     issues: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
-    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0, "provider_adapter_interface_contracts": 0, "provider_mock_response_simulations": 0, "provider_mock_response_import_candidates": 0, "provider_mock_response_review_sandboxes": 0, "provider_mock_response_trust_decision_blockers": 0, "provider_mock_response_final_safety_seals": 0}
+    counts = {"research": 0, "plans": 0, "verifications": 0, "evaluations": 0, "prompts": 0, "provider_responses": 0, "response_reviews": 0, "dossiers": 0, "sandbox_requests": 0, "provider_call_plans": 0, "provider_execution_dry_runs": 0, "provider_execution_states": 0, "provider_execution_audit_packets": 0, "provider_execution_readiness_reports": 0, "provider_preflight_freezes": 0, "provider_opt_in_policies": 0, "provider_credential_boundaries": 0, "provider_outbound_payload_previews": 0, "provider_response_intake_policies": 0, "provider_request_response_pairings": 0, "provider_response_schema_contracts": 0, "provider_response_review_results": 0, "provider_execution_unlock_states": 0, "provider_adapter_interface_contracts": 0, "provider_mock_response_simulations": 0, "provider_mock_response_import_candidates": 0, "provider_mock_response_review_sandboxes": 0, "provider_mock_response_trust_decision_blockers": 0, "provider_mock_response_final_safety_seals": 0, "release_candidate_readiness_reports": 0}
 
     research_dir = workspace_path / RESEARCH_DIR
     if not research_dir.exists():
@@ -1386,6 +1386,7 @@ def check_research_artifacts(
     provider_execution_state_ids: dict[str, list[str]] = {}
     provider_execution_audit_packet_ids: dict[str, list[str]] = {}
     provider_execution_readiness_report_ids: dict[str, list[str]] = {}
+    release_candidate_readiness_report_ids: dict[str, list[str]] = {}
     provider_preflight_freeze_ids: dict[str, list[str]] = {}
     provider_opt_in_policy_ids: dict[str, list[str]] = {}
     provider_credential_boundary_ids: dict[str, list[str]] = {}
@@ -1395,6 +1396,7 @@ def check_research_artifacts(
     provider_execution_state_data: list[dict[str, Any]] = []
     provider_execution_audit_packet_data: list[dict[str, Any]] = []
     provider_execution_readiness_report_data: list[dict[str, Any]] = []
+    release_candidate_readiness_report_data: list[dict[str, Any]] = []
     provider_preflight_freeze_data: list[dict[str, Any]] = []
     provider_opt_in_policy_data: list[dict[str, Any]] = []
     provider_credential_boundary_data: list[dict[str, Any]] = []
@@ -1578,6 +1580,20 @@ def check_research_artifacts(
                 if f not in data:
                     issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
                     return
+        elif expected_type == "release_candidate_readiness_report":
+            for f in ("release_candidate_readiness_report_id", "symbol", "version", "readiness_status", "readiness_score"):
+                if f not in data:
+                    issues.append({"code": "missing_required_fields", "path": rel, "severity": "error"})
+                    return
+            from atlas_agent.research.release_candidate_readiness import safe_validate_release_candidate_readiness_data
+            _cleaned, error = safe_validate_release_candidate_readiness_data(data, workspace_path)
+            if error:
+                issues.append({"code": error, "path": rel, "severity": "error"})
+                return
+            raw_text = path.read_text(encoding="utf-8")
+            if any(frag in raw_text for frag in FORBIDDEN_FRAGMENTS):
+                issues.append({"code": "forbidden_fragments", "path": rel, "severity": "error"})
+                return
         elif expected_type == "sandbox_request":
             for f in ("sandbox_request_id", "prompt_packet_id", "source_run_id", "symbol", "mode", "provider"):
                 if f not in data:
@@ -2097,6 +2113,9 @@ def check_research_artifacts(
             elif expected_type == "provider_mock_response_final_safety_seal":
                 provider_mock_response_final_safety_seal_ids.setdefault(raw_id, []).append(rel)
                 provider_mock_response_final_safety_seal_data.append(data)
+            elif expected_type == "release_candidate_readiness_report":
+                release_candidate_readiness_report_ids.setdefault(raw_id, []).append(rel)
+                release_candidate_readiness_report_data.append(data)
         # Count
         if expected_type == "research":
             counts["research"] += 1
@@ -2156,6 +2175,8 @@ def check_research_artifacts(
             counts["provider_mock_response_trust_decision_blockers"] += 1
         elif expected_type == "provider_mock_response_final_safety_seal":
             counts["provider_mock_response_final_safety_seals"] += 1
+        elif expected_type == "release_candidate_readiness_report":
+            counts["release_candidate_readiness_reports"] += 1
 
     for sym_dir in search_symbols:
         if not sym_dir.is_dir():
@@ -2333,6 +2354,12 @@ def check_research_artifacts(
             for path in provider_mock_response_final_safety_seals_dir.glob("*.json"):
                 if path.is_file():
                     _inspect_file(path, "provider_mock_response_final_safety_seal", expected_symbol)
+        # Release candidate readiness reports
+        release_candidate_readiness_reports_dir = sym_dir / "release_candidate_readiness_reports"
+        if release_candidate_readiness_reports_dir.exists():
+            for path in release_candidate_readiness_reports_dir.glob("*.json"):
+                if path.is_file():
+                    _inspect_file(path, "release_candidate_readiness_report", expected_symbol)
 
     # Duplicate detection
     for rid, paths in run_ids.items():
@@ -3394,6 +3421,8 @@ def build_research_timeline(
     provider_mock_response_simulation_items = iter_provider_mock_response_simulation_artifacts(workspace_path, symbol=symbol_filter)
     from atlas_agent.research.provider_mock_response_import_candidate import iter_provider_mock_response_import_candidate_artifacts
     provider_mock_response_import_candidate_items = iter_provider_mock_response_import_candidate_artifacts(workspace_path, symbol=symbol_filter)
+    from atlas_agent.research.release_candidate_readiness import iter_release_candidate_readiness_artifacts
+    release_candidate_readiness_items = iter_release_candidate_readiness_artifacts(workspace_path, symbol=symbol_filter)
 
     # Index plans by source_run_id
     plans_by_run_id: dict[str, list[dict[str, Any]]] = {}
@@ -4539,10 +4568,26 @@ def build_research_timeline(
     # Apply limit
     entries = entries[:limit]
 
+    # Release candidate readiness reports (standalone, not linked to a specific run)
+    rcrs = [
+        {
+            "release_candidate_readiness_report_id": rcr.get("release_candidate_readiness_report_id", ""),
+            "symbol": rcr.get("symbol", ""),
+            "version": rcr.get("version", ""),
+            "readiness_status": rcr.get("readiness_status", ""),
+            "readiness_score": rcr.get("readiness_score", 0),
+            "created_at": rcr.get("created_at", ""),
+            "artifact_path": rcr.get("artifact_path", ""),
+        }
+        for rcr in release_candidate_readiness_items
+        if not rcr.get("_invalid")
+    ]
+
     return {
         "ok": True,
         "status": "research_timeline",
         "entries": entries,
+        "release_candidate_readiness_reports": rcrs,
         "warnings": deduped_warnings,
     }
 
