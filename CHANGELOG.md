@@ -7,6 +7,214 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7.dev50] - 2026-05-25
+
+### Documentation
+- Synchronized `CHANGELOG.md` with recent dev release notes (dev38–dev49).
+- Added release-history hygiene for the future RC path.
+- Cross-checked release notes against tags, git history, and version files.
+
+### Release hygiene
+- No runtime behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev49] - 2026-05-25
+
+### Added
+- Batch 10.2 — Release Candidate Cutover Dry Run.
+  - `src/atlas_agent/research/release_candidate_cutover.py`: local, deterministic dry-run report for dev-to-RC transition planning.
+  - Validates target RC version shape (e.g. `v0.5.7-rc1`) without tagging, pushing, or publishing.
+  - Checks local docs, verification scripts, forbidden claims, protected boundaries, and release checklist entries.
+  - Recomputes derived fields during validation so recalculated-hash tampering is rejected.
+  - CLI commands: `release-candidate-cutover-dry-run`, `release-candidate-cutover-dry-run-list`, `release-candidate-cutover-dry-run-validate`, `release-candidate-cutover-dry-run-summary`, `release-candidate-cutover-dry-run-doctor`.
+  - Fixed summary/list tamper exposure: `validate`, `summarize`, and `iter` now agree on tampered artifact status.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker adapter changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev48] - 2026-05-24
+
+### Added
+- Batch 10.1 — Release Candidate Readiness Report.
+  - `src/atlas_agent/research/release_candidate_readiness.py`: local, read-only readiness report for sandbox/paper/preflight release candidate evaluation.
+  - Checks version consistency, README quickstart verification, public docs consistency, forbidden claims scan, protected boundaries, and hard-false safety invariants.
+  - Produces `readiness_status` and `readiness_score` — never claims live-trading readiness or profitability.
+  - CLI commands: `release-candidate-readiness`, `release-candidate-readiness-list`, `release-candidate-readiness-show`, `release-candidate-readiness-validate`, `release-candidate-readiness-summary`, `release-candidate-readiness-doctor`.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker adapter changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev47] - 2026-05-24
+
+### Added
+- Batch 9.10 — Pre-Release Hardening Sweep.
+  - `scripts/verify_readme_quickstart.py`: hardened forbidden-claim detection using `re.finditer` and improved secret detection in bash blocks.
+  - `scripts/check_public_docs_consistency.py`: new deterministic local script scanning README and public docs for unsafe claims, forbidden fragments, secret-like patterns, and stale version references.
+  - `tests/test_public_docs_consistency.py`: 16 tests covering pass-on-current-docs, rejection of unsafe claims, forbidden fragments, and absolute paths.
+  - `docs/releases/v0.5.7-dev40-to-dev47-summary.md`: cumulative release map.
+
+### Changed
+- README: fixed duplicate heading, stale release-notes link, current-status version references.
+- `docs/release-checklist.md`: added `verify_readme_quickstart.py` and `check_public_docs_consistency.py` to required validation commands; added explicit staging reminders.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev46] - 2026-05-23
+
+### Added
+- Batch 9.9 — README Quickstart Verification Pack.
+  - `scripts/verify_readme_quickstart.py`: programmatically verifies README quickstart commands are safe, consistent, and free of forbidden claims/fragments.
+  - `tests/test_readme_quickstart_verification.py`: 21 tests covering README structure, safety wording, forbidden claims, forbidden fragments, and command path safety.
+
+### Changed
+- README quickstart reorganized into clear install → create → validate → backtest → inspect steps.
+- Added explicit "What is intentionally disabled" subsection.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev45] - 2026-05-23
+
+### Added
+- Batch 9.8 — Public Safety Proof Pack.
+  - `docs/provider-safety-dossier.md`: public-facing documentation explaining the mock/offline safety chain.
+  - `docs/examples/provider-safety-dossier-workflow.md`: safe copy-paste workflow for discovering and exporting dossiers.
+  - `tests/test_provider_safety_dossier_docs.py`: docs-truth tests guarding against unsafe claims and forbidden fragments in public docs.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev44] - 2026-05-23
+
+### Added
+- Batch 9.7 — Provider Safety Dossier Discovery UX.
+  - `atlas research provider-safety-dossier-latest`: returns the latest valid dossier metadata with safe sentinels only.
+  - `atlas research provider-safety-dossier-list --status <status>`: filters dossiers by safe status without exposing raw tampered fields.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev43] - 2026-05-23
+
+### Added
+- Batch 9.6 — Provider Safety Dossier Markdown Export.
+  - `export_provider_safety_dossier_markdown()`: generates safe local Markdown reports from validated dossiers.
+  - Scans output for forbidden fragments before writing; fails closed on validation failure.
+  - CLI command: `atlas research provider-safety-dossier-export <id> --format markdown --output <path>`.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev42] - 2026-05-23
+
+### Added
+- Batch 9.5 — Provider Safety Dossier.
+  - `src/atlas_agent/research/provider_safety_dossier.py`: read-only, offline safety report summarizing the completed mock provider safety chain.
+  - Traverses the 6-node chain of custody from mock simulation through final safety seal.
+  - Reports `chain_complete` / `chain_incomplete` health and `safety_verdict`.
+  - Enforces 16 hard-false boolean invariants.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev41] - 2026-05-23
+
+### Added
+- Batch 9.4 — Mock Response Final Safety Seal.
+  - `src/atlas_agent/research/provider_mock_response_final_safety_seal.py`: terminal artifact in the mock response pipeline.
+  - Derived from trust decision blocker artifacts; stores source hash for lineage verification.
+  - All dangerous booleans hard-false (~40 flags); safety booleans hard-true (~8 flags).
+  - Seal is explicitly non-authorizing.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev40] - 2026-05-22
+
+### Added
+- Batch 9.3 — Mock Response Trust Decision Blocker.
+  - `src/atlas_agent/research/provider_mock_response_trust_decision_blocker.py`: blocks all trust decisions, trust upgrades, and trading authorization.
+  - Derived from mock response review sandbox artifacts.
+  - Hardcodes `provider_id="mock"`; all execution/network/credential/broker booleans are `False`.
+  - 12 policy sub-dicts document the absence of trust at every boundary.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev39] - 2026-05-22
+
+### Added
+- Batch 9.2 — Mock Response Review Sandbox.
+  - `src/atlas_agent/research/provider_mock_response_review_sandbox.py`: sandboxed, non-authorizing review layer for mock response import candidates.
+  - Hardcodes `provider_id="mock"`; all execution/network/credential/broker booleans are `False`.
+  - Deterministic hash, source hash validation, semantic positive-claim validation, forbidden fragment scan.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
+## [0.5.7.dev38] - 2026-05-22
+
+### Added
+- Batch 9.1 — Mock Response Import Candidate.
+  - `src/atlas_agent/research/provider_mock_response_import_candidate.py`: local schema-validation sandbox deriving import candidates from existing mock response simulations.
+  - Hardcodes `provider_id="mock"`; validates mock-source lineage and structural compatibility.
+  - Source hash validation against upstream artifacts; semantic positive-claim scanning.
+
+### Safety / Compatibility
+- No execution behavior changes.
+- No broker/execution/risk/config/safety changes.
+- Live trading remains disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+
 ## [0.5.7.dev37] - 2026-05-21
 
 ### Added
@@ -288,7 +496,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Demo workflow extended with provider preflight freeze creation, validation, replay, summary, and timeline lineage checks.
 
 ### Fixed
-- denylist_manifest no longer stores raw forbidden fragment strings (`/Users/`, `Authorization`, `Bearer`, `APCA`, `SECRET`, `TOKEN`, `PASSWORD`, `API_KEY`, `sk-`, `broker.example.com`) inside freeze artifacts.
+- denylist_manifest no longer stores raw forbidden fragment strings (`<users-path>`, `<authorization-header>`, `<bearer-token>`, `<apca-fragment>`, `<secret-fragment>`, `<token-fragment>`, `<password-fragment>`, `<api-key-fragment>`, `<api-key-prefix>`, `<broker-example-host>`) inside freeze artifacts.
 - Forbidden fragment leak fixed: freeze artifacts are now denylist-clean in the happy path.
 - Validation updated to explicitly check `denylist_manifest.forbidden_fragments_raw_stored` is `False` and `denylist_profile` is known.
 
@@ -549,7 +757,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Made all local research CLI commands bypass global config/secret loading.
 - Removed handler-level `AtlasConfig.from_env` and `get_config` calls from `research run`, `plan`, `verify`, `evaluate`, `prompt`, `simulate-provider`, and `review-response`.
-- Demo research workflow script stdout/stderr sanitized to prevent absolute temp path leaks (`/Users/`, `/private/var/`, etc.).
+- Demo research workflow script stdout/stderr sanitized to prevent absolute temp path leaks (`<users-path>`, `<private-var-path>`, etc.).
 
 ### Safety / Compatibility
 - This is a documentation/release-prep tag.
