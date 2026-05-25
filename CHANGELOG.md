@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc1] - 2026-05-25
+
+### Release Engineering
+- First release candidate for the v0.5.7 line.
+- Cutover from `0.5.7.dev50` to `0.5.7rc1` (package) / `v0.5.7-rc1` (public tag).
+- No runtime behavior changes.
+- Documentation and release-engineering maturity only.
+- Sandbox/paper/preflight positioning.
+- Release candidate readiness and cutover dry-run checks completed before RC.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the provider safety workflow.
+- No credentials loaded by the provider safety workflow.
+- No network enabled by the provider safety workflow.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7.dev50] - 2026-05-25
 
 ### Documentation

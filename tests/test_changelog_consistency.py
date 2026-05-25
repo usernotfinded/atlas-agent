@@ -58,6 +58,7 @@ _FORBIDDEN_FRAGMENTS = (
 )
 
 _REQUIRED_VERSIONS = (
+    "0.5.7rc1",
     "0.5.7.dev40",
     "0.5.7.dev41",
     "0.5.7.dev42",
@@ -84,6 +85,9 @@ class TestChangelogStructure:
     def test_dev40_through_dev50_present(self, changelog_text: str) -> None:
         for version in _REQUIRED_VERSIONS:
             assert f"[{version}]" in changelog_text, f"Missing CHANGELOG entry for {version}"
+
+    def test_rc1_release_note_exists(self) -> None:
+        assert (RELEASES_DIR / "v0.5.7-rc1.md").exists()
 
     def test_dev50_release_note_exists(self) -> None:
         assert (RELEASES_DIR / "v0.5.7.dev50.md").exists()
@@ -129,6 +133,9 @@ class TestChangelogSafety:
 
 
 class TestChangelogVersionReferences:
+    def test_current_rc_version_in_changelog(self, changelog_text: str) -> None:
+        assert "[0.5.7rc1]" in changelog_text
+
     def test_current_dev_version_in_changelog(self, changelog_text: str) -> None:
         assert "[0.5.7.dev50]" in changelog_text
 

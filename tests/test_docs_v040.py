@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from pathlib import Path
 import tomllib
@@ -40,11 +42,25 @@ def _project_version() -> str:
         return tomllib.load(f)["project"]["version"]
 
 
+def _public_version_label(version: str) -> str:
+    """Map PEP 440 package version to public display/tag version.
+
+    Examples:
+        0.5.7rc1 -> v0.5.7-rc1
+        0.5.7.dev50 -> v0.5.7.dev50
+        0.5.7 -> v0.5.7
+    """
+    m = re.fullmatch(r"(\d+\.\d+\.\d+)rc(\d+)", version)
+    if m:
+        return f"v{m.group(1)}-rc{m.group(2)}"
+    return f"v{version}"
+
+
 def test_readme_contains_v030_essentials():
     readme = Path("README.md").read_text(encoding="utf-8")
-    
+
     essentials = [
-        f"Current Status (v{_project_version()})",
+        f"Current Status ({_public_version_label(_project_version())})",
         "atlas backtest run",
         "atlas broker sync",
         "read-only",

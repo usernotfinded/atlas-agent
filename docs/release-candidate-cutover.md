@@ -4,7 +4,7 @@
 
 ## What this is
 
-The Release Candidate Cutover Dry Run is a **dry-run only** local report for checking whether the current repository can move from the `v0.5.7.dev49` development series toward a future **sandbox release candidate** such as `v0.5.7-rc1`.
+The Release Candidate Cutover Dry Run is a **dry-run only** local report for checking whether the current repository can move from the `v0.5.7` development series toward a **sandbox release candidate** such as `v0.5.7-rc1`.
 
 It is a paper-first release-engineering preflight. It checks version shape, documentation readiness, public safety wording, required local verification commands, protected boundary cleanliness, and hard-false safety invariants.
 
@@ -34,10 +34,10 @@ Rejected examples include missing `v` prefixes, development tags, final stable t
 
 The dry run checks:
 
-- Current package version is `0.5.7.dev49`.
+- Current package version is `0.5.7rc1`.
 - Target version is an RC tag, not a dev tag or final stable tag.
 - The dev-to-RC transition is coherent.
-- `docs/releases/v0.5.7.dev49.md` exists.
+- `docs/releases/v0.5.7-rc1.md` exists.
 - README quickstart verification passes.
 - Public docs consistency passes.
 - Provider safety docs and release candidate readiness code are present.

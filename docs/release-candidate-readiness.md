@@ -18,7 +18,7 @@ The report inspects repository files and verification scripts to confirm:
 - **Provider safety dossier documentation** — `docs/provider-safety-dossier.md` and example workflow exist.
 - **Provider safety dossier commands documented** — latest, list, and export commands are documented.
 - **Release checklist present** — `docs/release-checklist.md` exists.
-- **Release note present** — `docs/releases/v0.5.7.dev48.md` exists.
+- **Release note present** — `docs/releases/v0.5.7-rc1.md` exists.
 - **Forbidden claims scan clean** — `scripts/check_forbidden_claims.py` passes.
 - **Protected boundaries clean** — no diffs in `src/atlas_agent/config`, `brokers`, `execution`, `safety`, `risk`.
 - **README safety wording** — sandbox-only, paper-first, offline-safe, live trading disabled by default, not financial advice, profitability limitation.

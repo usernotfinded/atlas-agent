@@ -39,6 +39,17 @@ _HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 _SAFE_INVALID_TARGET = "<invalid>"
 _TARGET_RE = re.compile(r"^v(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)-rc(?P<rc>[1-9]\d*)$")
 _CURRENT_DEV_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.dev(?P<dev>[1-9]\d*)$")
+_CURRENT_RC_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)rc(?P<rc>[1-9]\d*)$")
+
+
+def _package_version_to_tag(package_version: str) -> str:
+    """Map PEP 440 package version to public tag version for release note paths."""
+    rc_match = _CURRENT_RC_RE.fullmatch(package_version)
+    if rc_match is not None:
+        return f"v{rc_match.group('major')}.{rc_match.group('minor')}.{rc_match.group('patch')}-rc{rc_match.group('rc')}"
+    return f"v{package_version}"
+
+
 _FINAL_RE = re.compile(r"^v\d+\.\d+\.\d+$")
 _DEV_TAG_RE = re.compile(r"^v?\d+\.\d+\.\d+\.dev\d+$")
 _SHELL_META_RE = re.compile(r"[\s;&|`$<>(){}\[\]*?!'\"\\]")
@@ -327,11 +338,14 @@ def validate_target_version(target_version: str) -> TargetVersionFacts:
     )
 
 
-def _current_version_facts(current_version: str) -> tuple[bool, tuple[str, str, str] | None]:
-    match = _CURRENT_DEV_RE.fullmatch(current_version)
-    if match is None:
-        return False, None
-    return True, (match.group("major"), match.group("minor"), match.group("patch"))
+def _current_version_facts(current_version: str) -> tuple[bool, bool, tuple[str, str, str] | None]:
+    dev_match = _CURRENT_DEV_RE.fullmatch(current_version)
+    if dev_match is not None:
+        return True, False, (dev_match.group("major"), dev_match.group("minor"), dev_match.group("patch"))
+    rc_match = _CURRENT_RC_RE.fullmatch(current_version)
+    if rc_match is not None:
+        return False, True, (rc_match.group("major"), rc_match.group("minor"), rc_match.group("patch"))
+    return False, False, None
 
 
 def _scan_public_docs_for_claims(repo_root: Path) -> tuple[bool, bool]:
@@ -369,11 +383,12 @@ def _compute_expected_cutover_core(
 ) -> dict[str, Any]:
     repo_root = _repo_root_from_workspace(workspace_path)
     target = validate_target_version(target_version)
-    current_version_is_dev, current_tuple = _current_version_facts(current_version)
+    current_version_is_dev, current_version_is_rc, current_tuple = _current_version_facts(current_version)
     dev_to_rc_transition_valid = (
         target.target_version_valid
-        and current_version_is_dev
+        and current_tuple is not None
         and current_tuple == target.target_tuple
+        and (current_version_is_dev or current_version_is_rc)
     )
 
     quickstart_ok = _run_local_script(repo_root, "scripts/verify_readme_quickstart.py")
@@ -391,7 +406,7 @@ def _compute_expected_cutover_core(
         "target_is_not_final_release": target.target_is_not_final_release,
         "current_version_is_dev": current_version_is_dev,
         "dev_to_rc_transition_valid": dev_to_rc_transition_valid,
-        "release_note_present": _file_exists(repo_root, f"docs/releases/v{current_version}.md"),
+        "release_note_present": _file_exists(repo_root, f"docs/releases/{_package_version_to_tag(current_version)}.md"),
         "readme_quickstart_verified": quickstart_ok,
         "public_docs_consistent": public_docs_ok,
         "release_candidate_readiness_available": _file_exists(repo_root, "src/atlas_agent/research/release_candidate_readiness.py"),

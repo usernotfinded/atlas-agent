@@ -196,10 +196,19 @@ class TestResearchUnsupportedProviderLeakRegression:
 class TestVersionHygiene:
     """Ensure current-version references are not stale."""
 
+    @staticmethod
+    def _package_to_tag(package_version: str) -> str:
+        """Map PEP 440 package version to public tag version."""
+        import re
+        m = re.match(r"^(\d+\.\d+\.\d+)rc(\d+)$", package_version)
+        if m:
+            return f"v{m.group(1)}-rc{m.group(2)}"
+        return f"v{package_version}"
+
     def test_readme_current_status_matches_package_version(self) -> None:
         from atlas_agent import __version__
 
-        expected_tag = f"v{__version__}"
+        expected_tag = self._package_to_tag(__version__)
         readme = Path("README.md").read_text(encoding="utf-8")
         # Only check the current status heading, not historical mentions
         for line in readme.splitlines():
@@ -211,7 +220,7 @@ class TestVersionHygiene:
     def test_release_checklist_smoke_example_matches_package_version(self) -> None:
         from atlas_agent import __version__
 
-        expected_tag = f"v{__version__}"
+        expected_tag = self._package_to_tag(__version__)
         checklist = Path("docs/release-checklist.md").read_text(encoding="utf-8")
         found = False
         for line in checklist.splitlines():

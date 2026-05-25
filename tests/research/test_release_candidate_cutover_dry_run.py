@@ -531,7 +531,9 @@ class TestRealRepoIntegration:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real")
         assert report["target_version_valid"] is True
         assert report["target_is_rc"] is True
-        assert report["current_version_is_dev"] is True
+        # Current version is now rc1, so current_version_is_dev is False
+        assert report["current_version_is_dev"] is False
+        # dev_to_rc_transition_valid is True because current (rc1) matches target (rc1)
         assert report["dev_to_rc_transition_valid"] is True
 
     def test_real_repo_release_note_present(self) -> None:
