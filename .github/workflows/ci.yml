@@ -10,11 +10,14 @@ on:
 env:
   PYTHON_BIN: python3.11
   PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTEST_ADDOPTS: "-p no:cacheprovider"
   ATLAS_CI: "1"
 
 jobs:
-  full-gate:
+  quick-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,19 +27,40 @@ jobs:
         run: |
           python3.11 -m pip install --upgrade pip
           python3.11 -m pip install -e .
-          python3.11 -m pip install pytest
+          python3.11 -m pip install pytest build
       - name: Version consistency
         run: python3.11 scripts/check_version_consistency.py
       - name: Forbidden claims scan
         run: python3.11 scripts/check_forbidden_claims.py
-      - name: pytest
-        run: python3.11 -m pytest -q
+      - name: Public docs consistency
+        run: python3.11 scripts/check_public_docs_consistency.py
+      - name: README quickstart verification
+        run: python3.11 scripts/verify_readme_quickstart.py
+      - name: RC cutover check
+        run: python3.11 scripts/check_rc1_cutover.py
+      - name: Clean install dry-run
+        run: python3.11 scripts/check_clean_install.py --dry-run
+      - name: Clean install verification
+        run: python3.11 scripts/check_clean_install.py
+      - name: Package distribution dry-run
+        run: python3.11 scripts/check_package_distribution.py --dry-run
+      - name: Package distribution verification
+        run: python3.11 scripts/check_package_distribution.py
+      - name: Focused pytest subset
+        run: |
+          python3.11 -m pytest tests/test_clean_install_check.py -q
+          python3.11 -m pytest tests/test_package_distribution_check.py -q
+          python3.11 -m pytest tests/test_rc1_cutover_consistency.py -q
+          python3.11 -m pytest tests/test_changelog_consistency.py -q
+          python3.11 -m pytest tests/test_public_docs_consistency.py -q
+          python3.11 -m pytest tests/test_readme_quickstart_verification.py -q
+          python3.11 -m pytest tests/test_release_check_scripts.py -q
+          python3.11 -m pytest tests/test_ci_workflows.py -q
+          python3.11 -m pytest tests/test_docs_v040.py -q
+      - name: Release check quick
+        run: ./scripts/release_check.sh --quick
       - name: pip check
         run: python3.11 -m pip check
-      - name: Demo paper workflow
-        run: ./scripts/demo_paper_workflow.sh
-      - name: Demo research workflow
-        run: ./scripts/demo_research_workflow.sh
       - name: git diff --check
         run: git diff --check
       - name: Protected staged files check

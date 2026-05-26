@@ -1,0 +1,93 @@
+name: Release Gate
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+env:
+  PYTHON_BIN: python3.11
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTEST_ADDOPTS: "-p no:cacheprovider"
+  ATLAS_CI: "1"
+
+jobs:
+  release-check-quick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test dependencies
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install -e .
+          python3.11 -m pip install pytest build
+      - name: Release check quick
+        run: ./scripts/release_check.sh --quick
+
+  release-check-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test dependencies
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install -e .
+          python3.11 -m pip install pytest build
+      - name: Release check research
+        run: ./scripts/release_check.sh --research
+
+  release-check-full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test dependencies
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install -e .
+          python3.11 -m pip install pytest build
+      - name: Release check full
+        run: ./scripts/release_check.sh --full
+
+  clean-install-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build tooling
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install build
+      - name: Clean install verification
+        run: python3.11 scripts/check_clean_install.py
+
+  package-distribution-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build tooling
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install build
+      - name: Package distribution verification
+        run: python3.11 scripts/check_package_distribution.py

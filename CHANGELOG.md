@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc4] - 2026-05-26
+
+### Release Engineering
+- Fourth release candidate for the v0.5.7 line.
+- CI release gate parity: aligned GitHub Actions with local RC verification stack.
+- Added clean install verification and package distribution dry-run to CI quick gate.
+- Added public docs consistency, README quickstart verification, and RC cutover check to CI.
+- Restructured CI into fast PR gate and manual heavy release gate.
+- Added `docs/ci-release-gates.md` documenting CI structure.
+- Package version bumped to `0.5.7rc4` (package) / `v0.5.7-rc4` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the CI workflow.
+- No credentials loaded by the CI workflow.
+- No network enabled by Atlas runtime in CI.
+- No publish, upload, tag, or push performed by CI.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc3] - 2026-05-26
 
 ### Release Engineering

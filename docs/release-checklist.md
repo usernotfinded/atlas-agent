@@ -23,7 +23,7 @@ Run this before pushing a public GitHub release.
 - `./scripts/release_check.sh --full`
 - `atlas research release-candidate-readiness --symbol ATLAS-DEMO --json`
 - `atlas research release-candidate-readiness-validate REPORT_ID --json`
-- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc3 --json`
+- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc4 --json`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
@@ -265,14 +265,66 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc3
+./scripts/smoke_release_tag.sh v0.5.7-rc4
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc3 --full
+./scripts/smoke_release_tag.sh v0.5.7-rc4 --full
 ```
+
+## CI Release Gate Parity
+
+CI must run the same checks as local release gates, scoped appropriately:
+
+### CI Quick Gate (pull_request / push to main)
+
+Runs fast, safe checks without heavy demos or full pytest:
+
+- `python3.11 scripts/check_version_consistency.py`
+- `python3.11 scripts/check_forbidden_claims.py`
+- `python3.11 scripts/check_public_docs_consistency.py`
+- `python3.11 scripts/verify_readme_quickstart.py`
+- `python3.11 scripts/check_rc1_cutover.py`
+- `python3.11 scripts/check_clean_install.py --dry-run`
+- `python3.11 scripts/check_clean_install.py`
+- `python3.11 scripts/check_package_distribution.py --dry-run`
+- `python3.11 scripts/check_package_distribution.py`
+- Focused pytest subset:
+  - `tests/test_clean_install_check.py`
+  - `tests/test_package_distribution_check.py`
+  - `tests/test_rc1_cutover_consistency.py`
+  - `tests/test_changelog_consistency.py`
+  - `tests/test_public_docs_consistency.py`
+  - `tests/test_readme_quickstart_verification.py`
+  - `tests/test_release_check_scripts.py`
+  - `tests/test_ci_workflows.py`
+  - `tests/test_docs_v040.py`
+- `python3.11 -m pip check`
+- `git diff --check`
+- `python3.11 scripts/check_no_protected_staged.py`
+
+### CI Heavy Gate (workflow_dispatch / tags)
+
+Runs full validation including demos and complete pytest:
+
+- `./scripts/release_check.sh --quick`
+- `./scripts/release_check.sh --research`
+- `./scripts/release_check.sh --full`
+- `python3.11 scripts/check_clean_install.py`
+- `python3.11 scripts/check_package_distribution.py`
+
+### CI Safety Rules
+
+- No secrets required.
+- No broker/provider credentials.
+- No PyPI upload or GitHub release creation.
+- No git push or tag from CI.
+- Atlas runtime does not call live providers or brokers.
+- Live trading remains disabled by default.
+
+See `docs/ci-release-gates.md` for full CI documentation.
 
 ## Tagging
 
@@ -280,10 +332,10 @@ After all validations pass and the commit is ready:
 
 ```bash
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
-git commit -m "Batch 10.6 — RC3 packaging and distribution dry run"
+git commit -m "Batch 10.7 — RC4 CI release gate parity"
 git push origin main
-git tag -a v0.5.7-rc3 -m "Atlas Agent v0.5.7-rc3"
-git push origin v0.5.7-rc3
+git tag -a v0.5.7-rc4 -m "Atlas Agent v0.5.7-rc4"
+git push origin v0.5.7-rc4
 ```
 
 Only create the tag after:

@@ -20,27 +20,55 @@ echo "2. forbidden claims scan"
 "$PYTHON_BIN" scripts/check_forbidden_claims.py
 
 echo ""
-echo "3. pytest"
-"$PYTHON_BIN" -m pytest -q
+echo "3. public docs consistency"
+"$PYTHON_BIN" scripts/check_public_docs_consistency.py
 
 echo ""
-echo "4. pip check"
+echo "4. README quickstart verification"
+"$PYTHON_BIN" scripts/verify_readme_quickstart.py
+
+echo ""
+echo "5. RC cutover check"
+"$PYTHON_BIN" scripts/check_rc1_cutover.py
+
+echo ""
+echo "6. clean install dry-run"
+"$PYTHON_BIN" scripts/check_clean_install.py --dry-run
+
+echo ""
+echo "7. clean install verification"
+"$PYTHON_BIN" scripts/check_clean_install.py
+
+echo ""
+echo "8. package distribution dry-run"
+"$PYTHON_BIN" scripts/check_package_distribution.py --dry-run
+
+echo ""
+echo "9. package distribution verification"
+"$PYTHON_BIN" scripts/check_package_distribution.py
+
+echo ""
+echo "10. focused pytest subset"
+"$PYTHON_BIN" -m pytest tests/test_clean_install_check.py -q
+"$PYTHON_BIN" -m pytest tests/test_package_distribution_check.py -q
+"$PYTHON_BIN" -m pytest tests/test_rc1_cutover_consistency.py -q
+"$PYTHON_BIN" -m pytest tests/test_changelog_consistency.py -q
+"$PYTHON_BIN" -m pytest tests/test_public_docs_consistency.py -q
+"$PYTHON_BIN" -m pytest tests/test_readme_quickstart_verification.py -q
+"$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q
+"$PYTHON_BIN" -m pytest tests/test_ci_workflows.py -q
+"$PYTHON_BIN" -m pytest tests/test_docs_v040.py -q
+
+echo ""
+echo "11. pip check"
 "$PYTHON_BIN" -m pip check
 
 echo ""
-echo "5. demo paper workflow"
-./scripts/demo_paper_workflow.sh
-
-echo ""
-echo "6. demo research workflow"
-./scripts/demo_research_workflow.sh
-
-echo ""
-echo "7. git diff --check"
+echo "12. git diff --check"
 git diff --check
 
 echo ""
-echo "8. protected staged files"
+echo "13. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""
