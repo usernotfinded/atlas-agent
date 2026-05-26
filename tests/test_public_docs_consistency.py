@@ -31,12 +31,15 @@ def _run_script_on_text(text: str) -> subprocess.CompletedProcess[str]:
     old_paths_block = (
         'PUBLIC_DOC_PATHS = [\n'
         '    REPO_ROOT / "README.md",\n'
+        '    REPO_ROOT / "SECURITY.md",\n'
+        '    REPO_ROOT / "CONTRIBUTING.md",\n'
         '    REPO_ROOT / "docs" / "provider-safety-dossier.md",\n'
         '    REPO_ROOT / "docs" / "examples" / "provider-safety-dossier-workflow.md",\n'
         '    REPO_ROOT / "docs" / "release-checklist.md",\n'
         '    REPO_ROOT / "docs" / "release-candidate-readiness.md",\n'
         '    REPO_ROOT / "docs" / "release-candidate-cutover.md",\n'
         '    REPO_ROOT / "docs" / "package-distribution-verification.md",\n'
+        '    REPO_ROOT / "docs" / "public-repo-hygiene.md",\n'
         ']'
     )
     new_paths_block = f'PUBLIC_DOC_PATHS = [Path("{tmp_path}")]'

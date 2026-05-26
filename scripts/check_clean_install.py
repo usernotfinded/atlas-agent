@@ -25,7 +25,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Expected package version (PEP 440). Updated during RC cutover.
-EXPECTED_PACKAGE_VERSION = "0.5.7rc4"
+EXPECTED_PACKAGE_VERSION = "0.5.7rc5"
 
 # Safety phrases expected in ``atlas validate`` output when run without config.
 EXPECTED_VALIDATE_PHRASES = (
@@ -69,7 +69,7 @@ def _redact(text: str) -> str:
     for prefix in ("/var/folders/", "/private/var/", "/tmp/", "/var/tmp/"):
         replacements.append((prefix, "<temp>/"))
     # Redact any remaining /Users/ references
-    replacements.append(("/Users/", "<users>/"))
+    replacements.append(("/Users/", "<home>/"))
     for old, new in replacements:
         text = text.replace(old, new)
     return text

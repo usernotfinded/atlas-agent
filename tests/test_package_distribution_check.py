@@ -18,8 +18,8 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 
-PACKAGE_VERSION = "0.5.7rc4"
-PUBLIC_TAG = "v0.5.7-rc4"
+PACKAGE_VERSION = "0.5.7rc5"
+PUBLIC_TAG = "v0.5.7-rc5"
 
 
 def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
@@ -180,7 +180,7 @@ class TestVersionReporting:
 
     def test_expected_tag_matches_version(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
-        assert 'EXPECTED_PUBLIC_TAG = "v0.5.7-rc4"' in text
+        assert 'EXPECTED_PUBLIC_TAG = "v0.5.7-rc5"' in text
 
 
 # ---------------------------------------------------------------------------
@@ -240,8 +240,8 @@ class TestWheelMetadataParser:
         sys.modules["check_package_distribution_wheel"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / "atlas_agent-0.5.7rc4-py3-none-any.whl"
-        _make_fake_wheel(wheel_path, name="atlas_agent", version="0.5.7rc4")
+        wheel_path = tmp_path / "atlas_agent-0.5.7rc5-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version="0.5.7rc5")
         ok, errors = cpd._check_wheel_metadata(wheel_path)
         assert ok, f"Unexpected errors: {errors}"
         assert errors == []
@@ -255,7 +255,7 @@ class TestWheelMetadataParser:
         sys.modules["check_package_distribution_wheel2"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / "atlas_agent-0.5.7rc4-py3-none-any.whl"
+        wheel_path = tmp_path / "atlas_agent-0.5.7rc5-py3-none-any.whl"
         _make_fake_wheel(wheel_path, name="atlas_agent", version="0.5.7rc3")
         ok, errors = cpd._check_wheel_metadata(wheel_path)
         assert not ok
@@ -325,8 +325,8 @@ class TestSdistMetadataParser:
         sys.modules["check_package_distribution_sdist"] = cpd
         spec.loader.exec_module(cpd)
 
-        sdist_path = tmp_path / "atlas-agent-0.5.7rc4.tar.gz"
-        _make_fake_sdist(sdist_path, name="atlas-agent", version="0.5.7rc4")
+        sdist_path = tmp_path / "atlas-agent-0.5.7rc5.tar.gz"
+        _make_fake_sdist(sdist_path, name="atlas-agent", version="0.5.7rc5")
         ok, errors = cpd._check_sdist_metadata(sdist_path)
         assert ok, f"Unexpected errors: {errors}"
         assert errors == []
@@ -340,7 +340,7 @@ class TestSdistMetadataParser:
         sys.modules["check_package_distribution_sdist2"] = cpd
         spec.loader.exec_module(cpd)
 
-        sdist_path = tmp_path / "atlas-agent-0.5.7rc4.tar.gz"
+        sdist_path = tmp_path / "atlas-agent-0.5.7rc5.tar.gz"
         _make_fake_sdist(sdist_path, name="atlas-agent", version="0.5.7rc3")
         ok, errors = cpd._check_sdist_metadata(sdist_path)
         assert not ok
@@ -387,8 +387,8 @@ class TestArtifactFilenameChecks:
         sys.modules["check_package_distribution_fn"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel = Path("atlas_agent-0.5.7rc4-py3-none-any.whl")
-        sdist = Path("atlas-agent-0.5.7rc4.tar.gz")
+        wheel = Path("atlas_agent-0.5.7rc5-py3-none-any.whl")
+        sdist = Path("atlas-agent-0.5.7rc5.tar.gz")
         errors = cpd._check_artifact_filenames(wheel, sdist)
         assert errors == []
 
@@ -421,7 +421,7 @@ class TestRealBuild:
             f"Package distribution check failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
         assert "Package distribution verification PASSED" in result.stdout
-        assert "Package version: 0.5.7rc4" in result.stdout
+        assert "Package version: 0.5.7rc5" in result.stdout
         assert "Build isolation: disabled" in result.stdout or "Network allowed: False" in result.stdout
 
     def test_real_build_output_has_no_absolute_paths(self) -> None:

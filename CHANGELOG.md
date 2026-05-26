@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc5] - 2026-05-26
+
+### Release Engineering
+- Fifth release candidate for the v0.5.7 line.
+- Added public repository hygiene pack.
+- Added `SECURITY.md` and `CONTRIBUTING.md`.
+- Added GitHub issue templates (bug report, docs issue, safety concern, feature request) and PR template.
+- Added `docs/public-repo-hygiene.md` explaining the public contribution and safety model.
+- Added `tests/test_public_repo_hygiene.py` with safety and structure tests for repo hygiene files.
+- Updated `docs/release-checklist.md` with public repo hygiene gate.
+- Package version bumped to `0.5.7rc5` (package) / `v0.5.7-rc5` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the repo hygiene workflow.
+- No credentials loaded by the repo hygiene workflow.
+- No network enabled by Atlas runtime in CI.
+- No publish, upload, tag, or push performed by CI.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc4] - 2026-05-26
 
 ### Release Engineering

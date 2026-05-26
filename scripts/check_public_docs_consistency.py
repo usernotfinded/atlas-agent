@@ -20,12 +20,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # not for stale historical descriptions.
 PUBLIC_DOC_PATHS = [
     REPO_ROOT / "README.md",
+    REPO_ROOT / "SECURITY.md",
+    REPO_ROOT / "CONTRIBUTING.md",
     REPO_ROOT / "docs" / "provider-safety-dossier.md",
     REPO_ROOT / "docs" / "examples" / "provider-safety-dossier-workflow.md",
     REPO_ROOT / "docs" / "release-checklist.md",
     REPO_ROOT / "docs" / "release-candidate-readiness.md",
     REPO_ROOT / "docs" / "release-candidate-cutover.md",
     REPO_ROOT / "docs" / "package-distribution-verification.md",
+    REPO_ROOT / "docs" / "public-repo-hygiene.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
@@ -102,7 +105,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.5.7-rc4"
+CURRENT_VERSION = "v0.5.7-rc5"
 
 
 def _read(path: Path) -> str:

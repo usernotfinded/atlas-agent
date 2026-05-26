@@ -1,0 +1,71 @@
+name: Safety Concern
+description: Report a security, safety gate, or trust-boundary issue.
+title: "[Safety] "
+labels: [safety, security]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **Do not paste secrets, API keys, broker credentials, provider credentials, account IDs, private financial details, or personal data in this form.**
+        >
+        > For active credential leaks or active security vulnerabilities, use [GitHub Security Advisories](https://github.com/usernotfinded/atlas-agent/security/advisories) instead.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What type of safety concern is this?
+      options:
+        - docs overclaim
+        - credential leak risk
+        - path leak risk
+        - risk gate concern
+        - provider safety workflow
+        - broker execution concern
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: affected
+    attributes:
+      label: Affected File or Command
+      description: Which file, command, or workflow is affected?
+      placeholder: "e.g., src/atlas_agent/safety/risk_manager.py, atlas validate"
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What is the potential impact?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: |
+        How can this be reproduced? **Do not include real credentials or secrets.**
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected_safe
+    attributes:
+      label: Expected Safe Behavior
+      description: What should the safe behavior be?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      description: Confirm the following before submitting.
+      options:
+        - label: I did not include secrets, API keys, broker credentials, or personal financial data.
+          required: true

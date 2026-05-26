@@ -1,284 +1,130 @@
 # Contributing to Atlas Agent
 
-Thank you for your interest in contributing to Atlas Agent. Atlas Agent is a local-first, broker-neutral supervised trading workspace designed for precision, safety, and transparency.
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
-## Contribution Priorities
+## Project Scope
 
-We prioritize contributions that improve the reliability and safety of the agent. Please align your work with these priorities:
-
-1.  **Bug Fixes**: Addressing crashes, incorrect behavior, data loss, or broken setup flows.
-2.  **Safety and Risk Hardening**: Improving live-trading gates, the kill switch, approval gates, and the correctness of the Risk Manager.
-3.  **Secret and Config Safety**: Ensuring API keys and `.env.atlas` files are never leaked, committed, or accidentally overwritten during updates.
-4.  **Provider Compatibility**: Improving support for OpenAI-compatible APIs, Anthropic, OpenRouter, and local models.
-5.  **Tool Registry Correctness**: Refining tool schemas, validation logic, descriptions, and audit/risk/approval flags.
-6.  **Cross-Platform Compatibility**: Ensuring smooth operation on macOS, Linux, and WSL2.
-7.  **Testing and CI Robustness**: Adding unit and integration tests to cover critical execution paths.
-8.  **Documentation**: Improving clarity for onboarding and development.
-9.  **New Features**: Adding capabilities that fit the roadmap without compromising safety or simplicity.
-
-## What Should Be a Tool, Provider, Guardrail, or Agent Feature?
-
-To maintain a clean architecture, follow these guidelines when deciding where to add new functionality:
-
-Do not hardcode a preferred research/search vendor in user-facing documentation, setup flows, or tests. Research/search/browser integrations should be provider adapters. Secrets must go to .env.atlas; non-secret settings must go to .atlas/config.toml. Standardize on `ATLAS_RESEARCH_API_KEY` for research-related secrets.
-
-### Make it a Tool when:
-- The LLM needs to call it as an explicit action. (Tool: action exposed to the LLM)
-- It interacts with market data, broker actions, portfolio state, memory, research, trade journals, or user notifications.
-- It requires a stable JSON schema for model consumption.
-- It must be validated by the `ToolRegistry` and may require safety flags (audit, risk, or approval).
-- **Backward Compatibility:** When renaming a tool, keep the old name as a legacy alias in `BUILTIN_TOOLS` to prevent breaking existing reasoning loops.
-
-*Examples: `get_quote`, `get_ohlcv`, `propose_order`, `cancel_order`, `append_journal`, `request_user_approval`, `notify_user`.*
-
-### Make it a Provider Adapter when:
-- It normalizes one vendor/backend into Atlas internal research/search/browser shapes.
-- It normalizes model-specific output into the internal `LLMResponse` or `ToolCall` models.
-- It handles native tool calling or implements JSON fallback parsing for a specific model family.
-- It is responsible for communication with the AI vendor, not trading logic.
-
-### Make it a Guardrail/Risk/Safety component when:
-- It blocks unsafe or invalid trading behavior independently of the LLM. (Guardrail: deterministic safety/risk blocker)
-- It enforces risk limits (e.g., position size, daily loss) via the **RiskManager**.
-- It manages emergency states via the **KillSwitch**.
-- It creates or executes emergency interventions via the **SafetyActionPlanner** or **SafetyActionExecutor**.
-- It protects sensitive files, paths, or execution states.
-
-### Make it Agent Loop logic when:
-- It manages how context is composed for the LLM in the **AgentLoop**.
-- It coordinates session state and routes tool results back into the reasoning flow.
-- It handles the high-level coordination of an autonomous tool-driven loop.
-- Logic belongs in `src/atlas_agent/agent/`.
-
-### Make it an Audit component when:
-- It records immutable, tamper-evident logs via the **Audit Hash-Chain**.
-- It manages run-level **Audit Manifests** and root hashes.
-- Logic belongs in `src/atlas_agent/audit/`.
-
-### Make it a Risk or Safety component when:
-- It blocks unsafe or invalid trading behavior independently of the LLM.
-- It enforces risk limits via the **RiskManager** (`src/atlas_agent/risk/`).
-- It manages emergency states via the **KillSwitch** (`src/atlas_agent/safety/`).
-- It creates or executes emergency interventions via the **SafetyActionPlanner** or **SafetyActionExecutor**.
-
-### Make it a Broker component when:
-- It synchronizes account state, positions, and orders via the **BrokerSyncService** (`src/atlas_agent/brokers/`).
-- It implements normalization for a specific broker backend.
-
-### Make it a Backtest component when:
-- It handles historical simulation, data loading, or deterministic metrics.
-- Logic belongs in `src/atlas_agent/backtest/` and `src/atlas_agent/backtest/engine.py`.
-
-### Make it a Dashboard component when:
-- It provides read-only local visibility into the system state via the **Dashboard** (`src/atlas_agent/dashboard/`).
-
-### Make it Setup Wizard logic when:
-- It collects config and secrets, but never stores API keys in config.toml.
-
-### Do NOT add a new tool when:
-- A simple schema correction to an existing tool is sufficient.
-- The capability is a trading strategy disguised as infrastructure.
-- It bypasses risk controls, approval gates, or audit logging.
+Atlas Agent is a broker-neutral supervised trading workspace with market research, paper workflows, and deterministic risk gates. Contributions should align with the safe-by-default, sandbox-first design.
 
 ## Development Setup
 
-Atlas Agent requires Python 3.11+.
+```bash
+# Install in editable mode
+python3.11 -m pip install -e .
+
+# Run fast safety checks
+python3.11 scripts/check_version_consistency.py
+python3.11 scripts/check_forbidden_claims.py
+python3.11 scripts/verify_readme_quickstart.py
+python3.11 scripts/check_public_docs_consistency.py
+
+# Run dry-run checks (no artifacts created)
+python3.11 scripts/check_clean_install.py --dry-run
+python3.11 scripts/check_package_distribution.py --dry-run
+
+# Run quick development gate
+./scripts/release_check.sh --quick
+```
+
+## Branch/PR Expectations
+
+- Work directly on `main` for small, scoped changes.
+- For larger changes, use a feature branch.
+- Keep PRs focused and surgical.
+- Do not mix unrelated concerns in a single PR.
+
+## Test Expectations
+
+- Every new execution path must be tested.
+- Run `./scripts/release_check.sh --quick` before submitting.
+- For release-candidate readiness, run `./scripts/release_check.sh --full`.
+- Do not weaken existing tests or remove forbidden-claim checks.
+
+## Safety Boundaries
+
+The following directories are **protected**. Changes to them require explicit justification and stricter review:
+
+- `src/atlas_agent/config`
+- `src/atlas_agent/brokers`
+- `src/atlas_agent/execution`
+- `src/atlas_agent/safety`
+- `src/atlas_agent/risk`
+
+Check protected boundary status before staging:
 
 ```bash
-# Clone the repository
-git clone https://github.com/usernotfinded/atlas-agent.git
-cd atlas-agent
-
-# Create and activate a virtual environment
-python3.11 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies and the package in editable mode
-python -m pip install --upgrade pip
-python -m pip install -e .
-
-# Verify the installation
-atlas
+git diff -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk
+git diff --cached -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk
 ```
 
-The first time you run `atlas`, it may open the interactive setup wizard if configuration is missing. You can also run `atlas validate` to check your environment.
+Expected: no output.
 
-## Configuration for Development
+## Documentation Rules
 
-- **`.atlas/config.toml`**: Stores non-secret workspace configuration.
-- **`.env.atlas`**: Stores sensitive API keys and broker credentials. This file must **never** be committed.
-- **`atlas configure`**: The official command to (re)configure your environment.
-- **`atlas update`**: Preserves your secrets and local configuration while updating the codebase.
+- Public docs must not contain forbidden claims (examples of prohibited wording include assertions that live trading is ready or that profits are guaranteed).
+- Public docs must not contain absolute paths (e.g., user home directories, system temp directories, or macOS private var paths).
+- Public docs must include "not financial advice" wording.
+- Do not add live trading instructions to the README.
+- Do not add credential examples in public documentation.
 
-| File | Purpose | Commit? |
-| :--- | :--- | :--- |
-| `.atlas/config.toml` | Local Atlas configuration | No (unless used as a test fixture) |
-| `.atlas/config.json` | Legacy Atlas configuration (migrated to TOML) | No |
-| `.env.atlas` | API keys and secrets | **Never** |
-| `.env` / `.env.local` | Local environment secrets | **Never** |
-| `pyproject.toml` | Package metadata and dependencies | Yes |
-| `README.md` / `CONTRIBUTING.md` | Documentation | Yes |
+## Forbidden Claims
 
-**Contributor Rule:** Never print, log, snapshot, or commit real API keys or secrets.
+Do not add the following claims anywhere in the repository. These categories of unsafe wording are prohibited:
+- assertions that live trading is ready or production-ready
+- assertions that trading is safe or without risk
+- assertions that trust is granted or provider execution is enabled
+- assertions that broker execution, orders, or approvals are enabled
+- assertions that autonomous or real-money trading is ready
+- assertions of guaranteed returns, profitable strategies, outperformance claims, or market-beating performance
 
-## Running Tests
+## Protected Directories
 
-We use `pytest` for testing. Ensure you are in your virtual environment.
+See [Safety Boundaries](#safety-boundaries) above.
 
-```bash
-# Run all tests
-python3.11 -m pytest
+## How to Propose Changes
 
-# Check for dependency issues
-python3.11 -m pip check
+1. Open an issue using the appropriate template (bug report, feature request, docs issue, or safety concern).
+2. For changes touching live trading, broker execution, provider execution, credentials, or risk gates, expect stricter review.
+3. Keep changes minimal and well-justified.
+4. Update docs if behavior or public interfaces change.
 
-# Run targeted tests
-python3.11 -m pytest tests/tools/
-python3.11 -m pytest tests/test_provider_adapters.py
-python3.11 -m pytest tests/update/
-python3.11 -m pytest tests/safety/
-```
+## How to Report Issues
 
-- Run the full test suite before opening a Pull Request.
-- Always use Python 3.11, as CI and project validation target this version.
-- Do not rely on the `python` alias in test scripts; prefer `python3.11` or `sys.executable`.
+Use the GitHub issue templates:
+- **Bug report** — for reproducible defects
+- **Feature request** — for new capabilities (with guardrails)
+- **Docs issue** — for documentation problems or improvements
+- **Safety concern** — for security, safety gate, or trust-boundary issues
 
-## Project Structure
+## Contribution Rules
 
-```text
-src/atlas_agent/
-├── agent/            # Agent loop, planning, and runner logic
-├── ai/               # High-level AI interfaces and response models
-├── brokers/          # Broker adapters (Paper, Alpaca, Binance, CCXT)
-├── execution/        # Order routing, audit logging, and approval management
-├── market_data/      # Data providers (CSV, etc.)
-├── providers/        # Provider adapters (Anthropic, OpenAI, etc.)
-├── risk/             # Deterministic risk manager and policy gates
-├── safety/           # Kill switch, TOTP, and dead-man heartbeats
-├── setup/            # Interactive setup wizard and onboarding logic
-├── tools/            # Tool Registry and builtin tool implementations
-├── update/           # Safe update manager
-└── cli.py            # Primary CLI entry point
-```
+- Do not weaken safety tests.
+- Do not remove forbidden-claim checks.
+- Do not add credential examples.
+- Do not add live trading instructions to the README.
+- Do not add broker/provider execution behavior without dedicated review.
+- Do not stage generated artifacts (`build/`, `dist/`, `*.egg-info/`, temp dirs, `.venv/`).
 
-## Architecture Overview
+## Allowed Contribution Areas
 
-```text
-User / Scheduler / Event
-        ↓
-CLI / Setup / Session
-        ↓
-Agent Context + Provider Adapter
-        ↓
-LLMResponse / ToolCall normalization
-        ↓
-Tool Registry
-        ↓
-Market Data / Research / Memory / Broker / Update / User Approval
-        ↓
-Risk Gates / Guardrails / Audit / Safety Controls
-```
+- Documentation and public docs
+- Tests and test infrastructure
+- CLI UX and developer experience
+- Safety validation and sandbox workflows
+- Package and release engineering
+- Non-execution research artifacts
 
-- **Provider adapters** convert raw model output into normalized internal objects.
-- **ToolRegistry** validates arguments against JSON schemas before execution.
-- **Risk Gates** independently verify every order proposal regardless of LLM "confidence."
+Research-related contributions, including web research helpers, market data fixtures, and documentation around paper/sandbox workflows, must remain offline-safe, deterministic where practical, and must not imply trading correctness, profitability, live-trading readiness, or provider/broker execution approval.
 
-## Adding or Modifying a Tool
+## Stricter Review Required
 
-Every tool must be safe, documented, and predictable.
+Changes in the following areas require explicit justification and stricter review:
+- Live trading enablement or gating
+- Broker execution paths
+- Provider execution unlocks
+- Credential handling or secret loading
+- Risk gate modifications
+- Kill switch behavior
+- Approval queue logic
 
-1.  **Stable Signature**: Use explicit Python types. Avoid `**kwargs` unless absolutely necessary.
-2.  **Clear Descriptions**: Tell the model exactly when to use (and when *not* to use) the tool.
-3.  **Strict Validation**: Schemas should reject invalid types or extra arguments (`additionalProperties: false`).
-4.  **Safety Flags**: Trading and execution tools must be `risk_gated=True`, `approval_gated=True`, and `audit_logged=True`.
-5.  **Mockable**: Provide a safe implementation that returns a typed value for testing.
-
-**Checklist:**
-- [ ] Signature matches the intended JSON schema.
-- [ ] Required fields are correctly marked in the schema.
-- [ ] Risk/approval/audit flags are set correctly for the tool's impact.
-- [ ] Tests cover valid input, missing required fields, and type mismatches.
-
-## Provider Adapter Guidelines
-
-- Normalization must handle both native tool calling (e.g., OpenAI/Anthropic) and JSON fallback parsing.
-- Adapters must reject unknown tools or invalid argument shapes.
-- **Do not** include trading or risk logic inside a provider adapter.
-- Adapters should never execute tools directly; they only return `ToolCall` objects.
-
-## Setup Wizard Guidelines
-
-- The wizard must be interactive-friendly and preserve the Atlas banner.
-- Use full-screen/clean UI flows that do not pollute terminal scrollback.
-- It must fail safely in non-interactive environments (CI, pipes).
-- It must never leak or log secrets during the collection process.
-
-## Update System Guidelines
-
-- `atlas update` is the only official way to update a deployed workspace.
-- The updater must **never** overwrite local `.env.atlas` or secret files.
-- Conservative safety patterns (denylists) must be strictly enforced.
-- Any change to the update logic must include safety tests to prevent secret overwrites.
-
-## Trading Safety Guidelines
-
-Trading is dangerous. Atlas Agent prioritizes the protection of the user's capital.
-
-- **Paper Mode First**: Never weaken paper-mode defaults.
-- **Live Trading is Opt-in**: Live execution must require explicit configuration and multiple safety gates.
-- **No Bypass**: Never allow LLM output to bypass the `RiskManager`.
-- **Review Critical Changes**: Any change to `execution/`, `risk/`, or `safety/` is considered safety-critical and requires deep review.
-- **No Auto-Approve**: We do not support "auto-approve" for live trading unless core and heavily guarded.
-- **Protections**: Tools must never average down on losing positions or remove stop-loss protections without immediate replacement.
-
-## Security Considerations
-
-- **No Secret Logging**: Never log API keys, tokens, or broker secrets.
-- **Path Validation**: Tools like `run_shell_command` must be restricted to the workspace and prevented from accessing forbidden paths or secrets.
-- **Subprocess Safety**: Always use list-form calls (`subprocess.run(["ls", "-l"])`) to avoid shell injection.
-- **Leak Prevention**: Do not expose credentials in exception messages or CLI output.
-
-## Cross-Platform Compatibility
-
-- Use `pathlib.Path` for all file operations.
-- Avoid assuming a specific shell (e.g., `bash`) exists; use `sys.executable` for Python calls.
-- Use `UTF-8` encoding for all file reads and writes.
-- Be careful with file permissions and path separators on Windows/WSL2.
-
-## Code Style
-
-- **Explicit is better than implicit**: Prefer typed dataclasses and Pydantic models.
-- **Deterministic**: Avoid non-deterministic behavior in core logic.
-- **Small Functions**: Keep functions focused and testable.
-- **Specific Exceptions**: Avoid broad `except Exception` blocks unless re-raising or logging at the top level.
-
-## Pull Request Process
-
-1.  **Focus**: One logical change per PR. Do not mix refactors, features, and documentation.
-2.  **Tests**: Include tests for every change.
-3.  **Safety**: Clearly state if your PR touches risk or safety-critical modules.
-4.  **No Artifacts**: Ensure no local `.atlas/`, `.env*`, or `__pycache__` files are included.
-
-**Branch Naming:**
-- `fix/description`
-- `feat/description`
-- `docs/description`
-- `test/description`
-
-**Commit Messages (Conventional Commits):**
-- `fix(cli): prevent bare atlas from starting execution`
-- `feat(setup): add secure credential onboarding`
-- `test(tools): validate schema rejection paths`
-
-## Issue Reports
-
-When reporting a bug, please include:
-- Operating System and Python version.
-- Atlas Agent version (`atlas --version` or `pip show atlas-agent`).
-- The exact command run and the full traceback.
-- Whether you were in paper or live mode.
-- The AI provider used (do **not** include your API key).
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+Thank you for helping keep Atlas Agent safe by default.

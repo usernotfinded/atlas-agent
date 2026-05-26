@@ -23,7 +23,7 @@ Run this before pushing a public GitHub release.
 - `./scripts/release_check.sh --full`
 - `atlas research release-candidate-readiness --symbol ATLAS-DEMO --json`
 - `atlas research release-candidate-readiness-validate REPORT_ID --json`
-- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc4 --json`
+- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc5 --json`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
@@ -265,13 +265,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc4
+./scripts/smoke_release_tag.sh v0.5.7-rc5
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc4 --full
+./scripts/smoke_release_tag.sh v0.5.7-rc5 --full
 ```
 
 ## CI Release Gate Parity
@@ -326,16 +326,33 @@ Runs full validation including demos and complete pytest:
 
 See `docs/ci-release-gates.md` for full CI documentation.
 
+## Public Repository Hygiene Gate
+
+Before tagging, verify public repo hygiene files are present and safe:
+
+- `SECURITY.md` present and contains safe wording
+- `CONTRIBUTING.md` present and contains safe wording
+- `.github/ISSUE_TEMPLATE/bug_report.yml` present
+- `.github/ISSUE_TEMPLATE/docs_issue.yml` present
+- `.github/ISSUE_TEMPLATE/safety_concern.yml` present
+- `.github/ISSUE_TEMPLATE/feature_request.yml` present
+- `.github/ISSUE_TEMPLATE/config.yml` present
+- `.github/pull_request_template.md` present
+- `tests/test_public_repo_hygiene.py` passes
+- No secrets or credential examples in templates
+- No forbidden claims in templates or hygiene docs
+- No absolute paths in templates or hygiene docs
+
 ## Tagging
 
 After all validations pass and the commit is ready:
 
 ```bash
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
-git commit -m "Batch 10.7 — RC4 CI release gate parity"
+git commit -m "Batch 10.8 — RC5 public repository hygiene pack"
 git push origin main
-git tag -a v0.5.7-rc4 -m "Atlas Agent v0.5.7-rc4"
-git push origin v0.5.7-rc4
+git tag -a v0.5.7-rc5 -m "Atlas Agent v0.5.7-rc5"
+git push origin v0.5.7-rc5
 ```
 
 Only create the tag after:

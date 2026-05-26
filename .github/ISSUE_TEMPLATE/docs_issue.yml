@@ -1,0 +1,43 @@
+name: Documentation Issue
+description: Report a problem or suggest an improvement in Atlas Agent documentation.
+title: "[Docs] "
+labels: [documentation]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **Do not paste secrets, API keys, broker credentials, provider credentials, account IDs, private financial details, or personal data in this form.**
+
+  - type: input
+    id: page
+    attributes:
+      label: Page or File
+      description: Which document or file is affected?
+      placeholder: "e.g., README.md, docs/provider-safety-dossier.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Wording
+      description: What would you suggest instead?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: safety_concern
+    attributes:
+      label: Safety Concern
+      description: Does this docs issue relate to a safety or security concern?
+      options:
+        - label: This docs issue involves a safety or security concern.
+          required: false

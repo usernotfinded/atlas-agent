@@ -218,7 +218,7 @@ class TestFailedSubprocessRedaction:
         """Simulate failed pip install subprocess with forbidden paths in stdout/stderr.
 
         Assert the final output/report does NOT contain raw absolute paths
-        and instead contains safe placeholders (<temp>, ~, <repo>, <users>).
+        and instead contains safe placeholders (<temp>, ~, <repo>, <home>).
         """
         import importlib.util
         import tempfile as _tempfile_module
@@ -294,7 +294,7 @@ class TestFailedSubprocessRedaction:
         assert repo not in combined, f"Leaked repo path in output:\n{combined}"
 
         # Safe placeholders present
-        assert "<temp>" in combined or "<users>" in combined
+        assert "<temp>" in combined or "<home>" in combined
         if home != "/":
             assert "~" in combined, f"Home path not redacted with ~:\n{combined}"
         # Repo may be redacted as <repo> or as ~ when it lives under home
