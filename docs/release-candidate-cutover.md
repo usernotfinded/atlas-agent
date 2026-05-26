@@ -34,10 +34,10 @@ Rejected examples include missing `v` prefixes, development tags, final stable t
 
 The dry run checks:
 
-- Current package version is `0.5.7rc1`.
+- Current package version is `0.5.7rc3`.
 - Target version is an RC tag, not a dev tag or final stable tag.
 - The dev-to-RC transition is coherent.
-- `docs/releases/v0.5.7-rc1.md` exists.
+- `docs/releases/v0.5.7-rc3.md` exists.
 - README quickstart verification passes.
 - Public docs consistency passes.
 - Provider safety docs and release candidate readiness code are present.

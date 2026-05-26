@@ -19,8 +19,8 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PACKAGE_VERSION = "0.5.7rc2"
-PUBLIC_TAG = "v0.5.7-rc2"
+PACKAGE_VERSION = "0.5.7rc3"
+PUBLIC_TAG = "v0.5.7-rc3"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [

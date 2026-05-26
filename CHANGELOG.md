@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc3] - 2026-05-26
+
+### Release Engineering
+- Third release candidate for the v0.5.7 line.
+- Added `scripts/check_package_distribution.py` for local packaging/distribution dry-run verification.
+- Added `tests/test_package_distribution_check.py` with safety and structure tests.
+- Added `docs/package-distribution-verification.md`.
+- Updated `docs/release-checklist.md` with package distribution dry-run as RC gate.
+- Package version bumped to `0.5.7rc3` (package) / `v0.5.7-rc3` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the package distribution workflow.
+- No credentials loaded by the package distribution workflow.
+- No network enabled by the package distribution workflow.
+- No publish, upload, tag, or push performed by the package distribution workflow.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc2] - 2026-05-25
 
 ### Release Engineering
