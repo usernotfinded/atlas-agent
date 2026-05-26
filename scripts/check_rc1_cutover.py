@@ -19,8 +19,8 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PACKAGE_VERSION = "0.5.7rc1"
-PUBLIC_TAG = "v0.5.7-rc1"
+PACKAGE_VERSION = "0.5.7rc2"
+PUBLIC_TAG = "v0.5.7-rc2"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -217,12 +217,12 @@ def main() -> int:
     all_errors.extend(_check_no_package_artifacts_staged())
 
     if all_errors:
-        print("RC1 cutover check FAILED")
+        print("RC2 cutover check FAILED")
         for e in all_errors:
             print(f"  - {e}")
         return 2
 
-    print(f"RC1 cutover check PASSED: package={PACKAGE_VERSION} public_tag={PUBLIC_TAG}")
+    print(f"RC2 cutover check PASSED: package={PACKAGE_VERSION} public_tag={PUBLIC_TAG}")
     return 0
 
 

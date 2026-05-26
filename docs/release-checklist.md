@@ -21,7 +21,7 @@ Run this before pushing a public GitHub release.
 - `./scripts/release_check.sh --full`
 - `atlas research release-candidate-readiness --symbol ATLAS-DEMO --json`
 - `atlas research release-candidate-readiness-validate REPORT_ID --json`
-- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc1 --json`
+- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc2 --json`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
@@ -221,6 +221,28 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Missing live broker credentials block opt-in before any opt-in record is written.
 - Protected untracked files (`AUDIT_ENHANCEMENTS_2026-05-13.md`, `BATCH2_PLAN.md`, `memory/kill_switch_state.json.lock`) must not be staged.
 
+## Clean Install Verification
+
+Before tagging a release candidate, verify the package installs cleanly from the current worktree without credentials or network calls:
+
+```bash
+python3.11 scripts/check_clean_install.py --dry-run
+python3.11 scripts/check_clean_install.py
+```
+
+Expectation:
+- Exits `0`.
+- Installs with `--no-index --no-build-isolation` by default (no PyPI access).
+- Verifies the installed `atlas` console entrypoint (`atlas --help` and `atlas validate`), not `python -m atlas_agent.cli`.
+- Installed version matches expected package version.
+- No absolute paths leak in output (temp, repo, home, and system paths are redacted).
+
+Optional flags:
+- `--dry-run` to preview steps without creating files.
+- `--allow-network` to permit pip index access if local build dependencies are missing.
+- `--skip-venv` (dry-run only) to show the plan without creating a virtual environment.
+- `--keep-temp` to preserve the temporary directory for debugging.
+
 ## Package Artifact Verification
 
 Before publishing artifacts or tagging a release candidate, verify the package builds and installs from wheel in a clean environment:
@@ -241,13 +263,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc1
+./scripts/smoke_release_tag.sh v0.5.7-rc2
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc1 --full
+./scripts/smoke_release_tag.sh v0.5.7-rc2 --full
 ```
 
 ## Tagging
@@ -256,10 +278,10 @@ After all validations pass and the commit is ready:
 
 ```bash
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
-git commit -m "Add provider opt-in policy artifacts"
+git commit -m "Batch 10.5 — RC2 clean install verification"
 git push origin main
-git tag -a v0.5.7-rc1 -m "Atlas Agent v0.5.7-rc1"
-git push origin v0.5.7-rc1
+git tag -a v0.5.7-rc2 -m "Atlas Agent v0.5.7-rc2"
+git push origin v0.5.7-rc2
 ```
 
 Only create the tag after:

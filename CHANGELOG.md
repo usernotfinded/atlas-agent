@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc2] - 2026-05-25
+
+### Release Engineering
+- Second release candidate for the v0.5.7 line.
+- Added `scripts/check_clean_install.py` for local clean-install verification.
+- Added `tests/test_clean_install_check.py` with 18+ safety tests.
+- Added `docs/clean-install-verification.md`.
+- Updated `docs/release-checklist.md` with clean-install verification as RC gate.
+- No runtime behavior changes.
+- Sandbox/paper/preflight positioning.
+- Clean-install verification confirms no credentials, no network, no broker/provider contact, no live trading enablement.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the clean-install workflow.
+- No credentials loaded by the clean-install workflow.
+- No network enabled by the clean-install workflow.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc1] - 2026-05-25
 
 ### Release Engineering
