@@ -23,7 +23,7 @@ Run this before pushing a public GitHub release.
 - `./scripts/release_check.sh --full`
 - `atlas research release-candidate-readiness --symbol ATLAS-DEMO --json`
 - `atlas research release-candidate-readiness-validate REPORT_ID --json`
-- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc9 --json`
+- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7 --json`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
@@ -265,13 +265,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc9
+./scripts/smoke_release_tag.sh v0.5.7
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc9 --full
+./scripts/smoke_release_tag.sh v0.5.7 --full
 ```
 
 ## CI Release Gate Parity
@@ -358,7 +358,7 @@ Before tagging, verify public launch readiness materials are present and safe:
 - `tests/test_public_launch_readiness.py` passes
 - README has "What this is" and "What this is not" sections
 - README links to SECURITY.md, CONTRIBUTING.md, and changelog/release notes
-- README contains safe current status `v0.5.7-rc9`
+- README contains safe current status `v0.5.7`
 - No overclaim in public docs
 - No secrets in public docs
 - No package artifacts staged
@@ -413,16 +413,38 @@ python3.11 scripts/check_final_rc_audit.py --json
 python3.11 -m pytest tests/test_final_rc_audit.py -q
 ```
 
+## Stable Release Decision Gate
+
+Before tagging a stable release, verify the stable release decision materials are present and safe:
+
+- `docs/stable-release-decision.md` present and contains safe wording
+- `docs/stable-release-checklist.md` present and contains safe wording
+- `scripts/check_stable_release_decision.py` passes
+- `tests/test_stable_release_decision.py` passes
+- Stable decision doc explains stable means release/process/docs stability
+- Stable decision doc does not claim live trading readiness
+- Stable decision doc does not claim profitability
+- Stable checklist includes protected boundary diff commands
+- Stable checklist includes `release_check.sh --full`
+- No package artifacts staged
+
+**Commands:**
+```bash
+python3.11 scripts/check_stable_release_decision.py
+python3.11 scripts/check_stable_release_decision.py --json
+python3.11 -m pytest tests/test_stable_release_decision.py -q
+```
+
 ## Tagging
 
 After all validations pass and the commit is ready:
 
 ```bash
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
-git commit -m "Batch 10.12 — RC9 final public release candidate audit"
+git commit -m "Batch 10.13 — Stable v0.5.7 release decision pack"
 git push origin main
-git tag -a v0.5.7-rc9 -m "Atlas Agent v0.5.7-rc9"
-git push origin v0.5.7-rc9
+git tag -a v0.5.7 -m "Atlas Agent v0.5.7"
+git push origin v0.5.7
 ```
 
 Only create the tag after:

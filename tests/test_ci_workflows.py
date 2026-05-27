@@ -64,6 +64,9 @@ class TestCiWorkflow:
     def test_includes_final_rc_audit(self, ci_content: str) -> None:
         assert "check_final_rc_audit.py" in ci_content
 
+    def test_includes_stable_release_decision(self, ci_content: str) -> None:
+        assert "check_stable_release_decision.py" in ci_content
+
     def test_includes_release_check_quick(self, ci_content: str) -> None:
         assert "release_check.sh --quick" in ci_content
 
@@ -233,6 +236,9 @@ class TestCiCheckScript:
 
     def test_includes_final_rc_audit(self, ci_check_content: str) -> None:
         assert "check_final_rc_audit.py" in ci_check_content
+
+    def test_includes_stable_release_decision(self, ci_check_content: str) -> None:
+        assert "check_stable_release_decision.py" in ci_check_content
 
     def test_includes_pip_check(self, ci_check_content: str) -> None:
         assert "pip check" in ci_check_content

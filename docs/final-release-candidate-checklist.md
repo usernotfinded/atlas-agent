@@ -2,7 +2,7 @@
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
-Use this checklist to decide whether the repo should move from `rc9` toward a stable `v0.5.7` final release.
+Use this checklist to decide whether the repo should move from `rc9` toward a stable `v0.5.7` final release. If the stable release has already been decided, see `docs/stable-release-checklist.md` for the pre-tag checklist and `docs/stable-release-decision.md` for the decision rationale.
 
 A stable `v0.5.7` release means documentation/release/process stability, not trading profitability or real-money safety.
 
@@ -10,9 +10,9 @@ A stable `v0.5.7` release means documentation/release/process stability, not tra
 
 ## Version Consistency
 
-- [ ] `pyproject.toml` version is `0.5.7rc9`
-- [ ] `src/atlas_agent/__init__.py` `__version__` is `0.5.7rc9`
-- [ ] README current status references `v0.5.7-rc9`
+- [ ] `pyproject.toml` version is `0.5.7`
+- [ ] `src/atlas_agent/__init__.py` `__version__` is `0.5.7`
+- [ ] README current status references `v0.5.7`
 - [ ] CHANGELOG has `[0.5.7rc9]` entry
 - [ ] Release note `docs/releases/v0.5.7-rc9.md` exists
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static/local final audit check for the RC series before stable release.
+"""Static/local check for stable v0.5.7 release decision readiness.
 
 Deterministic and local. Does not:
 - call network
@@ -34,9 +34,11 @@ REQUIRED_FILES = [
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
     REPO_ROOT / "CHANGELOG.md",
+    REPO_ROOT / "docs" / "releases" / f"{PUBLIC_TAG}.md",
+    REPO_ROOT / "docs" / "stable-release-decision.md",
+    REPO_ROOT / "docs" / "stable-release-checklist.md",
     REPO_ROOT / "docs" / "final-rc-audit.md",
     REPO_ROOT / "docs" / "final-release-candidate-checklist.md",
-    REPO_ROOT / "docs" / "releases" / f"{PUBLIC_TAG}.md",
     REPO_ROOT / "docs" / "public-launch-readiness.md",
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
     REPO_ROOT / "docs" / "reviewer-checklist.md",
@@ -58,6 +60,8 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "README.md",
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
+    REPO_ROOT / "docs" / "stable-release-decision.md",
+    REPO_ROOT / "docs" / "stable-release-checklist.md",
     REPO_ROOT / "docs" / "final-rc-audit.md",
     REPO_ROOT / "docs" / "final-release-candidate-checklist.md",
     REPO_ROOT / "docs" / "public-launch-readiness.md",
@@ -143,20 +147,17 @@ def _check_readme_links() -> list[str]:
     text = _read(readme)
     lower = text.lower()
 
-    if "final-rc-audit.md" not in text and "final rc audit" not in lower:
-        errors.append("README.md missing link to final RC audit")
+    if "stable-release-decision.md" not in text and "stable release decision" not in lower:
+        errors.append("README.md missing link to stable release decision")
 
-    if "final-release-candidate-checklist.md" not in text and "final release candidate checklist" not in lower:
-        errors.append("README.md missing link to final release candidate checklist")
+    if "stable-release-checklist.md" not in text and "stable release checklist" not in lower:
+        errors.append("README.md missing link to stable release checklist")
 
     if "public-launch-readiness.md" not in text and "public launch readiness" not in lower:
         errors.append("README.md missing link to public launch readiness")
 
-    if "external-reviewer-walkthrough.md" not in text and "reviewer walkthrough" not in lower:
-        errors.append("README.md missing link to reviewer walkthrough")
-
-    if "public-faq.md" not in text and "public faq" not in lower:
-        errors.append("README.md missing link to public FAQ")
+    if "final-rc-audit.md" not in text and "final rc audit" not in lower:
+        errors.append("README.md missing link to final RC audit")
 
     if PUBLIC_TAG not in text:
         errors.append("README.md missing current status reference")
@@ -198,6 +199,27 @@ def _check_public_docs_safety() -> list[str]:
             for m in re.finditer(pattern, text, re.IGNORECASE):
                 errors.append(f"[{rel}] Secret-like pattern: {m.group(0)[:40]}")
 
+    return errors
+
+
+def _check_stable_doc_clarity() -> list[str]:
+    errors: list[str] = []
+    decision = REPO_ROOT / "docs" / "stable-release-decision.md"
+    if decision.exists():
+        text = decision.read_text(encoding="utf-8").lower()
+        required_phrases = [
+            ("stable v0.5.7", "release/documentation/process stability"),
+            ("live trading", "disabled by default"),
+            ("provider execution remains locked",),
+            ("trust remains blocked",),
+            ("not financial advice",),
+            ("profitability",),
+            ("trading correctness",),
+            ("real-money",),
+        ]
+        for parts in required_phrases:
+            if not all(part.lower() in text for part in parts):
+                errors.append(f"stable-release-decision.md missing required phrase: {' / '.join(parts)}")
     return errors
 
 
@@ -252,13 +274,13 @@ def _check_no_staged_artifacts() -> list[str]:
 
 def _check_checklist_has_boundary_commands() -> list[str]:
     errors: list[str] = []
-    checklist = REPO_ROOT / "docs" / "final-release-candidate-checklist.md"
+    checklist = REPO_ROOT / "docs" / "stable-release-checklist.md"
     if checklist.exists():
         text = checklist.read_text(encoding="utf-8").lower()
         if "git diff -- src/atlas_agent/config" not in text:
-            errors.append("Final checklist missing protected boundary diff command")
+            errors.append("Stable checklist missing protected boundary diff command")
         if "release_check.sh --full" not in text:
-            errors.append("Final checklist missing release_check.sh --full command")
+            errors.append("Stable checklist missing release_check.sh --full command")
     return errors
 
 
@@ -267,6 +289,7 @@ def _run_checks() -> dict:
     all_errors.extend(_check_required_files())
     all_errors.extend(_check_readme_links())
     all_errors.extend(_check_public_docs_safety())
+    all_errors.extend(_check_stable_doc_clarity())
     all_errors.extend(_check_changelog_entry())
     all_errors.extend(_check_version_match())
     all_errors.extend(_check_no_staged_artifacts())
@@ -283,7 +306,7 @@ def _run_checks() -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Final RC audit check for Atlas Agent."
+        description="Stable release decision check for Atlas Agent."
     )
     parser.add_argument(
         "--json",
@@ -306,12 +329,12 @@ def main() -> int:
         return 0 if result["passed"] else 2
 
     if result["errors"]:
-        print("Final RC audit check FAILED")
+        print("Stable release decision check FAILED")
         for e in result["errors"]:
             print(f"  - {_redact(e)}")
         return 2
 
-    print("Final RC audit check PASSED")
+    print("Stable release decision check PASSED")
     print(f"  Package version: {result['package_version']}")
     print(f"  Public tag: {result['public_tag']}")
     print(f"  Required files: {len(REQUIRED_FILES)} present")

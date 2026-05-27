@@ -38,6 +38,8 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "public-faq.md",
     REPO_ROOT / "docs" / "final-rc-audit.md",
     REPO_ROOT / "docs" / "final-release-candidate-checklist.md",
+    REPO_ROOT / "docs" / "stable-release-decision.md",
+    REPO_ROOT / "docs" / "stable-release-checklist.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
@@ -114,7 +116,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.5.7-rc9"
+CURRENT_VERSION = "v0.5.7"
 
 
 def _read(path: Path) -> str:

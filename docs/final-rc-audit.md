@@ -1,10 +1,10 @@
-# Final RC Audit — Atlas Agent v0.5.7-rc9
+# Final RC Audit — Atlas Agent v0.5.7
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
 ## Current RC Status
 
-Atlas Agent is at **release candidate 9** (`0.5.7rc9` / `v0.5.7-rc9`) for the `v0.5.7` line.
+Atlas Agent has moved to **stable v0.5.7** (`0.5.7` / `v0.5.7`) from the RC series. This audit documents the RC series and informs the stable release decision. See `docs/stable-release-decision.md` for the decision document and `docs/stable-release-checklist.md` for the pre-tag checklist.
 
 This is a **sandbox/paper/preflight release candidate**. It is not a production trading release. Live trading remains disabled by default. Provider execution remains locked. Trust remains blocked. No broker/order path exists in provider safety workflows. No credentials are required for default verification.
 

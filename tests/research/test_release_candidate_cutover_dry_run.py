@@ -531,9 +531,43 @@ class TestRealRepoIntegration:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real")
         assert report["target_version_valid"] is True
         assert report["target_is_rc"] is True
-        # Current version is now rc1, so current_version_is_dev is False
+        # Current version is stable 0.5.7, so current_version_is_dev is False
         assert report["current_version_is_dev"] is False
-        # dev_to_rc_transition_valid is True because current (rc1) matches target (rc1)
+        # dev_to_rc_transition_valid is False because stable is not a valid dev-to-RC source
+        assert report["dev_to_rc_transition_valid"] is False
+
+    def test_real_repo_stable_state(self) -> None:
+        report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-stable")
+        # Stable 0.5.7 should not be treated as dev
+        assert report["current_version_is_dev"] is False
+        # dev_to_rc_transition_valid should be False for stable
+        assert report["dev_to_rc_transition_valid"] is False
+        # But release note for stable should be present
+        assert report["release_note_present"] is True
+        # Safety invariants should hold
+        assert report["live_trading_disabled_by_default"] is True
+        assert report["provider_execution_locked"] is True
+        assert report["trust_blocked"] is True
+        assert report["broker_order_path_disabled"] is True
+
+    def test_synthetic_dev_to_rc_transition_valid(self) -> None:
+        # Verify dev-to-RC transition logic still works with a dev current version
+        report = build_release_candidate_cutover_dict(
+            REPO_ROOT, "v0.5.7-rc1", "rcc-synthetic-dev",
+            current_version="0.5.7.dev50"
+        )
+        assert report["target_version_valid"] is True
+        assert report["current_version_is_dev"] is True
+        assert report["dev_to_rc_transition_valid"] is True
+
+    def test_synthetic_rc_to_rc_transition_valid(self) -> None:
+        # Verify rc-to-same-rc transition logic still works with an rc current version
+        report = build_release_candidate_cutover_dict(
+            REPO_ROOT, "v0.5.7-rc1", "rcc-synthetic-rc",
+            current_version="0.5.7rc1"
+        )
+        assert report["target_version_valid"] is True
+        assert report["current_version_is_dev"] is False
         assert report["dev_to_rc_transition_valid"] is True
 
     def test_real_repo_release_note_present(self) -> None:

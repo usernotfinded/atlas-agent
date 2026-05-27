@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7] - 2026-05-26
+
+### Release Engineering
+- Stable v0.5.7 release decision from RC9.
+- Added stable release decision doc (`docs/stable-release-decision.md`) documenting the decision to prepare stable v0.5.7.
+- Added stable release checklist (`docs/stable-release-checklist.md`) for pre-tag verification.
+- Added `scripts/check_stable_release_decision.py` for local static verification of stable release readiness.
+- Added `tests/test_stable_release_decision.py` with safety and structure tests for stable release decision.
+- Updated final RC audit docs to reference stable release decision materials.
+- Updated README current status to stable v0.5.7.
+- Updated public docs version references to stable v0.5.7.
+- Updated `docs/release-checklist.md` with stable release decision gate.
+- Updated CI quick gate to include stable release decision check.
+- Package version cutover to `0.5.7` (package) / `v0.5.7` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the stable release workflow.
+- No credentials loaded by the stable release workflow.
+- No network enabled by Atlas runtime in CI.
+- No publish, upload, tag, or push performed by CI.
+- Not financial advice. Does not imply profitability or trading correctness.
+- Does not imply real-money readiness.
+
 ## [0.5.7rc9] - 2026-05-26
 
 ### Release Engineering
