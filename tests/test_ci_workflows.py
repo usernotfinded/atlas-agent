@@ -52,6 +52,9 @@ class TestCiWorkflow:
     def test_includes_package_distribution(self, ci_content: str) -> None:
         assert "check_package_distribution.py" in ci_content
 
+    def test_includes_public_launch_readiness(self, ci_content: str) -> None:
+        assert "check_public_launch_readiness.py" in ci_content
+
     def test_includes_release_check_quick(self, ci_content: str) -> None:
         assert "release_check.sh --quick" in ci_content
 
@@ -209,6 +212,9 @@ class TestCiCheckScript:
 
     def test_includes_package_distribution(self, ci_check_content: str) -> None:
         assert "check_package_distribution.py" in ci_check_content
+
+    def test_includes_public_launch_readiness(self, ci_check_content: str) -> None:
+        assert "check_public_launch_readiness.py" in ci_check_content
 
     def test_includes_pip_check(self, ci_check_content: str) -> None:
         assert "pip check" in ci_check_content

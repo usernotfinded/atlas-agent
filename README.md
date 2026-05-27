@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7-rc5)** — see [release notes](docs/releases/v0.5.7-rc5.md).
+> **Current Status (v0.5.7-rc6)** — see [release notes](docs/releases/v0.5.7-rc6.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -62,7 +62,24 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-## Current Status (v0.5.7-rc5)
+## What this is
+
+Atlas Agent is a **local-first research and paper-trading workbench** with deterministic safety gates, audit logs, and sandbox-only provider safety workflows. It helps you:
+
+- Run deterministic backtests on local CSV data
+- Build and review paper-only research artifacts
+- Inspect provider safety dossiers in an offline mock workflow
+- Maintain trading memory and audit trails
+
+## What this is not
+
+- **Not a live trading system by default.** Live trading is disabled by default and requires explicit multi-factor opt-in.
+- **Does not imply profitable outcomes.** Atlas does not predict profit, guarantee returns, or claim future performance.
+- **Not a broker.** Atlas is broker-neutral and does not custody funds.
+- **Not a licensed financial advisor.** This is software, not financial advice.
+- **Not autonomous.** All live actions require explicit human confirmation when enabled.
+
+## Current Status (v0.5.7-rc6)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 

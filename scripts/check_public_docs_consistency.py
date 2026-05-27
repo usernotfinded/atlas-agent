@@ -29,6 +29,8 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "release-candidate-cutover.md",
     REPO_ROOT / "docs" / "package-distribution-verification.md",
     REPO_ROOT / "docs" / "public-repo-hygiene.md",
+    REPO_ROOT / "docs" / "public-launch-readiness.md",
+    REPO_ROOT / "docs" / "github-repo-settings.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
@@ -105,7 +107,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.5.7-rc5"
+CURRENT_VERSION = "v0.5.7-rc6"
 
 
 def _read(path: Path) -> str:

@@ -48,7 +48,11 @@ echo "9. package distribution verification"
 "$PYTHON_BIN" scripts/check_package_distribution.py
 
 echo ""
-echo "10. focused pytest subset"
+echo "10. public launch readiness check"
+"$PYTHON_BIN" scripts/check_public_launch_readiness.py
+
+echo ""
+echo "11. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_clean_install_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_package_distribution_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_rc1_cutover_consistency.py -q

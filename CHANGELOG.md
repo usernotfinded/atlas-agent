@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc6] - 2026-05-26
+
+### Release Engineering
+- Sixth release candidate for the v0.5.7 line.
+- Added public launch readiness docs and checks.
+- Added `docs/public-launch-readiness.md` explaining public launch status, verified checks, and known limitations.
+- Added `docs/github-repo-settings.md` with recommended repository settings for public review.
+- Added `scripts/check_public_launch_readiness.py` for local static verification of launch materials.
+- Added `tests/test_public_launch_readiness.py` with safety and structure tests for launch readiness.
+- Hardened README for public review with explicit "What this is" and "What this is not" sections.
+- Updated `docs/release-checklist.md` with public launch readiness gate.
+- Updated CI quick gate to include public launch readiness check.
+- Package version bumped to `0.5.7rc6` (package) / `v0.5.7-rc6` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the public launch workflow.
+- No credentials loaded by the public launch workflow.
+- No network enabled by Atlas runtime in CI.
+- No publish, upload, tag, or push performed by CI.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc5] - 2026-05-26
 
 ### Release Engineering

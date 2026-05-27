@@ -13,7 +13,7 @@ body:
     attributes:
       label: Version
       description: What version of Atlas Agent are you running?
-      placeholder: "e.g., 0.5.7rc5"
+      placeholder: "e.g., 0.5.7rc6"
     validations:
       required: true
 

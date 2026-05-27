@@ -40,6 +40,8 @@ def _run_script_on_text(text: str) -> subprocess.CompletedProcess[str]:
         '    REPO_ROOT / "docs" / "release-candidate-cutover.md",\n'
         '    REPO_ROOT / "docs" / "package-distribution-verification.md",\n'
         '    REPO_ROOT / "docs" / "public-repo-hygiene.md",\n'
+        '    REPO_ROOT / "docs" / "public-launch-readiness.md",\n'
+        '    REPO_ROOT / "docs" / "github-repo-settings.md",\n'
         ']'
     )
     new_paths_block = f'PUBLIC_DOC_PATHS = [Path("{tmp_path}")]'

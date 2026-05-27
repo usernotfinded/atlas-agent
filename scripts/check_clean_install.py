@@ -25,7 +25,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Expected package version (PEP 440). Updated during RC cutover.
-EXPECTED_PACKAGE_VERSION = "0.5.7rc5"
+EXPECTED_PACKAGE_VERSION = "0.5.7rc6"
 
 # Safety phrases expected in ``atlas validate`` output when run without config.
 EXPECTED_VALIDATE_PHRASES = (
@@ -133,8 +133,8 @@ def _check_atlas_help(atlas_bin: Path) -> tuple[bool, str]:
     return True, ""
 
 
-def _check_atlas_validate(atlas_bin: Path) -> tuple[bool, str]:
-    result = _run([str(atlas_bin), "validate"])
+def _check_atlas_validate(atlas_bin: Path, cwd: Path | None = None) -> tuple[bool, str]:
+    result = _run([str(atlas_bin), "validate"], cwd=cwd)
     combined = result.stdout + result.stderr
     for phrase in EXPECTED_VALIDATE_PHRASES:
         if phrase.lower() not in combined.lower():
@@ -307,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
 
         # 2. Console entrypoint: atlas validate
         print("Checking atlas validate (installed console entrypoint)...")
-        ok, msg = _check_atlas_validate(atlas_bin)
+        ok, msg = _check_atlas_validate(atlas_bin, cwd=temp_dir)
         if not ok:
             errors.append(f"atlas validate: {msg}")
         else:
