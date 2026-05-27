@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc7] - 2026-05-26
+
+### Release Engineering
+- Seventh release candidate for the v0.5.7 line.
+- Added external reviewer walkthrough (`docs/external-reviewer-walkthrough.md`).
+- Added reviewer checklist (`docs/reviewer-checklist.md`).
+- Added `scripts/check_reviewer_onboarding.py` for local static verification of reviewer onboarding materials.
+- Added `tests/test_reviewer_onboarding.py` with safety and structure tests for reviewer onboarding.
+- Linked reviewer path from README and public launch docs.
+- Updated `docs/release-checklist.md` with reviewer onboarding gate.
+- Updated CI quick gate to include reviewer onboarding check.
+- Package version bumped to `0.5.7rc7` (package) / `v0.5.7-rc7` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the reviewer onboarding workflow.
+- No credentials loaded by the reviewer onboarding workflow.
+- No network enabled by Atlas runtime in CI.
+- No publish, upload, tag, or push performed by CI.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc6] - 2026-05-26
 
 ### Release Engineering

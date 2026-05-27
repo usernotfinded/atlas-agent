@@ -47,8 +47,8 @@ Expected: no output.
 ## Release Candidate Status
 
 Atlas is currently in release-candidate preflight:
-- **Package version:** `0.5.7rc6`
-- **Public tag:** `v0.5.7-rc6`
+- **Package version:** `0.5.7rc7`
+- **Public tag:** `v0.5.7-rc7`
 - Sandbox/paper/preflight positioning
 - Live trading disabled by default
 - Provider execution remains locked

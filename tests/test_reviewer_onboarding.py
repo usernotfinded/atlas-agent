@@ -1,4 +1,4 @@
-"""Tests for public launch readiness script and docs — Batch 10.9.
+"""Tests for reviewer onboarding script and docs — Batch 10.10.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
@@ -15,7 +15,9 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "check_public_launch_readiness.py"
+SCRIPT = ROOT / "scripts" / "check_reviewer_onboarding.py"
+WALKTHROUGH = ROOT / "docs" / "external-reviewer-walkthrough.md"
+CHECKLIST = ROOT / "docs" / "reviewer-checklist.md"
 
 _FORBIDDEN_POSITIVE_CLAIMS = (
     "live trading ready",
@@ -53,65 +55,65 @@ def _run_script(*args: str) -> subprocess.CompletedProcess[str]:
     return result
 
 
-class TestScriptAndDocsExist:
+class TestDocsExist:
+    def test_walkthrough_exists(self) -> None:
+        assert WALKTHROUGH.exists(), f"Walkthrough not found: {WALKTHROUGH}"
+
+    def test_checklist_exists(self) -> None:
+        assert CHECKLIST.exists(), f"Checklist not found: {CHECKLIST}"
+
     def test_script_exists(self) -> None:
         assert SCRIPT.exists(), f"Script not found: {SCRIPT}"
 
-    def test_public_launch_readiness_doc_exists(self) -> None:
-        assert (ROOT / "docs" / "public-launch-readiness.md").exists()
 
-    def test_github_repo_settings_doc_exists(self) -> None:
-        assert (ROOT / "docs" / "github-repo-settings.md").exists()
-
-    def test_release_note_exists(self) -> None:
-        assert (ROOT / "docs" / "releases" / "v0.5.7-rc7.md").exists()
-
-
-class TestReadmePublicLaunch:
+class TestReadmeLinks:
     @pytest.fixture
     def readme_text(self) -> str:
         return (ROOT / "README.md").read_text(encoding="utf-8")
 
-    def test_readme_has_what_this_is(self, readme_text: str) -> None:
-        assert "What this is" in readme_text
-
-    def test_readme_has_what_this_is_not(self, readme_text: str) -> None:
-        assert "What this is not" in readme_text
-
-    def test_readme_links_to_security(self, readme_text: str) -> None:
+    def test_readme_links_to_walkthrough(self, readme_text: str) -> None:
         lower = readme_text.lower()
-        assert "security.md" in lower
+        assert (
+            "external-reviewer-walkthrough.md" in readme_text
+            or "reviewer walkthrough" in lower
+        )
 
-    def test_readme_links_to_contributing(self, readme_text: str) -> None:
+    def test_readme_links_to_checklist(self, readme_text: str) -> None:
         lower = readme_text.lower()
-        assert "contributing.md" in lower
+        assert (
+            "reviewer-checklist.md" in readme_text
+            or "reviewer checklist" in lower
+        )
 
-    def test_readme_links_to_changelog_or_release_notes(self, readme_text: str) -> None:
+    def test_readme_links_to_public_launch_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
-        assert "changelog" in lower or "release notes" in lower
-
-    def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.5.7-rc7" in readme_text
-
-    def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
-        lower = readme_text.lower()
-        for claim in _FORBIDDEN_POSITIVE_CLAIMS:
-            assert claim not in lower, f"README contains forbidden claim: {claim}"
-
-    def test_readme_does_not_claim_profitability(self, readme_text: str) -> None:
-        lower = readme_text.lower()
-        assert "guaranteed profit" not in lower
-        assert "profitable strategy" not in lower
-        assert "verified alpha" not in lower
-        assert "beats the market" not in lower
+        assert (
+            "public-launch-readiness.md" in readme_text
+            or "public launch readiness" in lower
+        )
 
 
-class TestPublicLaunchDocsSafety:
+class TestPublicLaunchDocsLinks:
+    def test_public_launch_readiness_links_to_walkthrough(self) -> None:
+        text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
+        lower = text.lower()
+        assert (
+            "external-reviewer-walkthrough.md" in text
+            or "reviewer walkthrough" in lower
+        )
+
+    def test_public_launch_readiness_links_to_checklist(self) -> None:
+        text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
+        lower = text.lower()
+        assert (
+            "reviewer-checklist.md" in text
+            or "reviewer checklist" in lower
+        )
+
+
+class TestOnboardingDocsSafety:
     def _doc_paths(self) -> list[Path]:
-        return [
-            ROOT / "docs" / "public-launch-readiness.md",
-            ROOT / "docs" / "github-repo-settings.md",
-        ]
+        return [WALKTHROUGH, CHECKLIST]
 
     def test_no_forbidden_claims(self) -> None:
         for path in self._doc_paths():
@@ -146,26 +148,61 @@ class TestPublicLaunchDocsSafety:
             for frag in _FORBIDDEN_FRAGMENTS:
                 assert frag not in text, f"{path.name} contains absolute path: {frag}"
 
+    def test_no_live_trading_readiness_claims(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "live trading ready" not in text
+            assert "production trading ready" not in text
+            assert "safe to trade" not in text
 
-class TestRepoSettingsDoc:
-    def test_does_not_include_unsafe_topics(self) -> None:
-        text = (ROOT / "docs" / "github-repo-settings.md").read_text(encoding="utf-8").lower()
-        assert "live-trading" not in text or "not include" in text
-        assert "profit" not in text or "not include" in text
-        assert "alpha" not in text or "not include" in text
+    def test_no_profitability_claims(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "guaranteed profit" not in text
+            assert "profitable strategy" not in text
+            assert "verified alpha" not in text
+            assert "beats the market" not in text
+
+    def test_mentions_no_credentials_required(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "no credentials" in text or "credentials are not" in text
+
+    def test_mentions_live_trading_disabled(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "live trading disabled by default" in text
+
+    def test_mentions_provider_execution_locked(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "provider execution remains locked" in text
+
+    def test_mentions_trust_blocked(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "trust remains blocked" in text
+
+    def test_safe_commands_present(self) -> None:
+        text = WALKTHROUGH.read_text(encoding="utf-8").lower()
+        assert "check_version_consistency.py" in text
+        assert "check_forbidden_claims.py" in text
+        assert "check_public_docs_consistency.py" in text
+        assert "check_public_launch_readiness.py" in text
+        assert "release_check.sh --quick" in text
 
 
 class TestScriptBehavior:
     def test_script_passes(self) -> None:
         result = _run_script()
         assert result.returncode == 0, (
-            f"Launch readiness script failed:\n{result.stdout}\n{result.stderr}"
+            f"Reviewer onboarding script failed:\n{result.stdout}\n{result.stderr}"
         )
 
     def test_script_json_output(self) -> None:
         result = _run_script("--json")
         assert result.returncode == 0, (
-            f"Launch readiness script --json failed:\n{result.stdout}\n{result.stderr}"
+            f"Reviewer onboarding script --json failed:\n{result.stdout}\n{result.stderr}"
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
@@ -194,6 +231,10 @@ class TestScriptSafety:
         text = SCRIPT.read_text(encoding="utf-8").lower()
         assert "git push" not in text
         assert "git tag" not in text
+
+    def test_no_shell_true(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        assert "shell=True" not in text
 
     def test_no_secrets_required(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8").lower()

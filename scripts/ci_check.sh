@@ -52,7 +52,11 @@ echo "10. public launch readiness check"
 "$PYTHON_BIN" scripts/check_public_launch_readiness.py
 
 echo ""
-echo "11. focused pytest subset"
+echo "11. reviewer onboarding check"
+"$PYTHON_BIN" scripts/check_reviewer_onboarding.py
+
+echo ""
+echo "12. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_clean_install_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_package_distribution_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_rc1_cutover_consistency.py -q
@@ -62,13 +66,15 @@ echo "11. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q
 "$PYTHON_BIN" -m pytest tests/test_ci_workflows.py -q
 "$PYTHON_BIN" -m pytest tests/test_docs_v040.py -q
+"$PYTHON_BIN" -m pytest tests/test_public_launch_readiness.py -q
+"$PYTHON_BIN" -m pytest tests/test_reviewer_onboarding.py -q
 
 echo ""
-echo "11. pip check"
+echo "13. pip check"
 "$PYTHON_BIN" -m pip check
 
 echo ""
-echo "12. git diff --check"
+echo "14. git diff --check"
 git diff --check
 
 echo ""

@@ -12,8 +12,8 @@ import tomllib
 from pathlib import Path
 
 
-PACKAGE_VERSION = "0.5.7rc6"
-PUBLIC_TAG = "v0.5.7-rc6"
+PACKAGE_VERSION = "0.5.7rc7"
+PUBLIC_TAG = "v0.5.7-rc7"
 
 
 def main() -> int:

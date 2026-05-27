@@ -74,13 +74,15 @@ No broker, no network, no credentials, no live trading.
 - `docs/ci-release-gates.md` present
 - `docs/package-distribution-verification.md` present
 - `docs/clean-install-verification.md` present
+- `docs/external-reviewer-walkthrough.md` present
+- `docs/reviewer-checklist.md` present
 
 ## Release artifacts status
 
 - Package distribution dry-run does not publish or upload.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
-- Version is `0.5.7rc6` (package) / `v0.5.7-rc6` (public tag).
+- Version is `0.5.7rc7` (package) / `v0.5.7-rc7` (public tag).
 
 ## Known limitations
 
@@ -92,14 +94,21 @@ No broker, no network, no credentials, no live trading.
 - Self-improvement features are early-stage.
 - Backtesting is a research tool; historical results do not guarantee future performance.
 
+## Reviewer onboarding
+
+For a structured review path, see:
+- [External Reviewer Walkthrough](external-reviewer-walkthrough.md) — 10–15 minute safe review path
+- [Reviewer Checklist](reviewer-checklist.md) — checklist before trusting or recommending
+
 ## What reviewers should check
 
 1. Verify the README "What this is" and "What this is not" sections match your expectations.
 2. Run `./scripts/release_check.sh --quick` locally.
 3. Run `python3.11 scripts/check_public_launch_readiness.py`.
-4. Confirm no live-trading readiness claims exist in docs.
-5. Confirm no profitability claims exist in docs.
-6. Confirm protected boundaries show no diff:
+4. Run `python3.11 scripts/check_reviewer_onboarding.py`.
+5. Confirm no live-trading readiness claims exist in docs.
+6. Confirm no profitability claims exist in docs.
+7. Confirm protected boundaries show no diff:
    ```bash
    git diff -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk
    git diff --cached -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk

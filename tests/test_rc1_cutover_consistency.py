@@ -16,8 +16,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_rc1_cutover.py"
 VERSION_SCRIPT = REPO_ROOT / "scripts" / "check_version_consistency.py"
 
-PACKAGE_VERSION = "0.5.7rc6"
-PUBLIC_TAG = "v0.5.7-rc6"
+PACKAGE_VERSION = "0.5.7rc7"
+PUBLIC_TAG = "v0.5.7-rc7"
 
 
 class TestRc1ScriptExists:

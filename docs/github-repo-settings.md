@@ -32,6 +32,10 @@ Do not include "live-trading", "profit", or "alpha".
 - **Topics:** Use the suggested topics above.
 - **Releases:** Not yet enabled for public distribution (no GitHub releases created).
 - **Packages:** Not yet published to PyPI.
+- **Suggested sidebar links:**
+  - [External Reviewer Walkthrough](../docs/external-reviewer-walkthrough.md)
+  - [Reviewer Checklist](../docs/reviewer-checklist.md)
+  - [Public Launch Readiness](../docs/public-launch-readiness.md)
 
 ## Branch protection recommendations
 

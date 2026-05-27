@@ -23,7 +23,7 @@ Run this before pushing a public GitHub release.
 - `./scripts/release_check.sh --full`
 - `atlas research release-candidate-readiness --symbol ATLAS-DEMO --json`
 - `atlas research release-candidate-readiness-validate REPORT_ID --json`
-- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc6 --json`
+- `atlas research release-candidate-cutover-dry-run --target-version v0.5.7-rc7 --json`
 - `python3.11 -c "import atlas_agent; print(getattr(atlas_agent, '__version__', 'no __version__'))"`
 - `python3.11 -m pytest tests/research -q`
 - `python3.11 -m pytest tests/test_research_workflow_docs.py -q`
@@ -265,13 +265,13 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc6
+./scripts/smoke_release_tag.sh v0.5.7-rc7
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.7-rc6 --full
+./scripts/smoke_release_tag.sh v0.5.7-rc7 --full
 ```
 
 ## CI Release Gate Parity
@@ -291,6 +291,8 @@ Runs fast, safe checks without heavy demos or full pytest:
 - `python3.11 scripts/check_clean_install.py`
 - `python3.11 scripts/check_package_distribution.py --dry-run`
 - `python3.11 scripts/check_package_distribution.py`
+- `python3.11 scripts/check_public_launch_readiness.py`
+- `python3.11 scripts/check_reviewer_onboarding.py`
 - Focused pytest subset:
   - `tests/test_clean_install_check.py`
   - `tests/test_package_distribution_check.py`
@@ -301,6 +303,8 @@ Runs fast, safe checks without heavy demos or full pytest:
   - `tests/test_release_check_scripts.py`
   - `tests/test_ci_workflows.py`
   - `tests/test_docs_v040.py`
+  - `tests/test_public_launch_readiness.py`
+  - `tests/test_reviewer_onboarding.py`
 - `python3.11 -m pip check`
 - `git diff --check`
 - `python3.11 scripts/check_no_protected_staged.py`
@@ -349,14 +353,28 @@ Before tagging, verify public launch readiness materials are present and safe:
 
 - `docs/public-launch-readiness.md` present and contains safe wording
 - `docs/github-repo-settings.md` present and contains safe wording
-- `docs/releases/v0.5.7-rc6.md` present
+- `docs/releases/v0.5.7-rc7.md` present
 - `scripts/check_public_launch_readiness.py` passes
 - `tests/test_public_launch_readiness.py` passes
 - README has "What this is" and "What this is not" sections
 - README links to SECURITY.md, CONTRIBUTING.md, and changelog/release notes
-- README contains safe current status `v0.5.7-rc6`
+- README contains safe current status `v0.5.7-rc7`
 - No overclaim in public docs
 - No secrets in public docs
+- No package artifacts staged
+
+## Reviewer Onboarding Gate
+
+Before tagging, verify reviewer-facing materials are present and safe:
+
+- `docs/external-reviewer-walkthrough.md` present and contains safe wording
+- `docs/reviewer-checklist.md` present and contains safe wording
+- `scripts/check_reviewer_onboarding.py` passes
+- `tests/test_reviewer_onboarding.py` passes
+- README links to reviewer walkthrough and checklist
+- Public launch docs link to reviewer walkthrough and checklist
+- No overclaim in onboarding docs
+- No secrets in onboarding docs
 - No package artifacts staged
 
 ## Tagging
@@ -365,10 +383,10 @@ After all validations pass and the commit is ready:
 
 ```bash
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
-git commit -m "Batch 10.9 — RC6 public launch readiness pack"
+git commit -m "Batch 10.10 — RC7 external reviewer onboarding pack"
 git push origin main
-git tag -a v0.5.7-rc6 -m "Atlas Agent v0.5.7-rc6"
-git push origin v0.5.7-rc6
+git tag -a v0.5.7-rc7 -m "Atlas Agent v0.5.7-rc7"
+git push origin v0.5.7-rc7
 ```
 
 Only create the tag after:
