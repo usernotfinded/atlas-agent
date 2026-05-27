@@ -60,7 +60,11 @@ echo "12. public launch messaging check"
 "$PYTHON_BIN" scripts/check_public_launch_messaging.py
 
 echo ""
-echo "13. focused pytest subset"
+echo "13. final RC audit check"
+"$PYTHON_BIN" scripts/check_final_rc_audit.py
+
+echo ""
+echo "14. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_clean_install_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_package_distribution_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_rc1_cutover_consistency.py -q
@@ -73,17 +77,18 @@ echo "13. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_public_launch_readiness.py -q
 "$PYTHON_BIN" -m pytest tests/test_reviewer_onboarding.py -q
 "$PYTHON_BIN" -m pytest tests/test_public_launch_messaging.py -q
+"$PYTHON_BIN" -m pytest tests/test_final_rc_audit.py -q
 
 echo ""
-echo "14. pip check"
+echo "15. pip check"
 "$PYTHON_BIN" -m pip check
 
 echo ""
-echo "15. git diff --check"
+echo "16. git diff --check"
 git diff --check
 
 echo ""
-echo "16. protected staged files"
+echo "17. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""

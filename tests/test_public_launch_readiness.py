@@ -64,7 +64,7 @@ class TestScriptAndDocsExist:
         assert (ROOT / "docs" / "github-repo-settings.md").exists()
 
     def test_release_note_exists(self) -> None:
-        assert (ROOT / "docs" / "releases" / "v0.5.7-rc8.md").exists()
+        assert (ROOT / "docs" / "releases" / "v0.5.7-rc9.md").exists()
 
 
 class TestReadmePublicLaunch:
@@ -91,7 +91,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.5.7-rc8" in readme_text
+        assert "v0.5.7-rc9" in readme_text
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -169,8 +169,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.7rc8"
-        assert data["public_tag"] == "v0.5.7-rc8"
+        assert data["package_version"] == "0.5.7rc9"
+        assert data["public_tag"] == "v0.5.7-rc9"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:

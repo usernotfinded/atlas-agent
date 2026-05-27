@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local static check that public-facing repo launch materials are present and safe.
+"""Static/local final audit check for the RC series before stable release.
 
 Deterministic and local. Does not:
 - call network
@@ -11,6 +11,7 @@ Deterministic and local. Does not:
 - require credentials
 - run live trading
 - call brokers/providers
+- use shell = True
 """
 
 from __future__ import annotations
@@ -33,14 +34,19 @@ REQUIRED_FILES = [
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
     REPO_ROOT / "CHANGELOG.md",
-    REPO_ROOT / "docs" / "public-launch-readiness.md",
-    REPO_ROOT / "docs" / "github-repo-settings.md",
-    REPO_ROOT / "docs" / "ci-release-gates.md",
-    REPO_ROOT / "docs" / "package-distribution-verification.md",
-    REPO_ROOT / "docs" / "clean-install-verification.md",
+    REPO_ROOT / "docs" / "final-rc-audit.md",
+    REPO_ROOT / "docs" / "final-release-candidate-checklist.md",
     REPO_ROOT / "docs" / "releases" / f"{PUBLIC_TAG}.md",
+    REPO_ROOT / "docs" / "public-launch-readiness.md",
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
     REPO_ROOT / "docs" / "reviewer-checklist.md",
+    REPO_ROOT / "docs" / "public-launch-messaging.md",
+    REPO_ROOT / "docs" / "feedback-request-guide.md",
+    REPO_ROOT / "docs" / "public-faq.md",
+    REPO_ROOT / "docs" / "release-checklist.md",
+    REPO_ROOT / "docs" / "ci-release-gates.md",
+    REPO_ROOT / "docs" / "clean-install-verification.md",
+    REPO_ROOT / "docs" / "package-distribution-verification.md",
     REPO_ROOT / ".github" / "pull_request_template.md",
     REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml",
     REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "docs_issue.yml",
@@ -52,14 +58,15 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "README.md",
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
+    REPO_ROOT / "docs" / "final-rc-audit.md",
+    REPO_ROOT / "docs" / "final-release-candidate-checklist.md",
     REPO_ROOT / "docs" / "public-launch-readiness.md",
-    REPO_ROOT / "docs" / "github-repo-settings.md",
-    REPO_ROOT / "docs" / "public-repo-hygiene.md",
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
     REPO_ROOT / "docs" / "reviewer-checklist.md",
     REPO_ROOT / "docs" / "public-launch-messaging.md",
     REPO_ROOT / "docs" / "feedback-request-guide.md",
     REPO_ROOT / "docs" / "public-faq.md",
+    REPO_ROOT / "docs" / "release-checklist.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution.
@@ -130,55 +137,29 @@ def _check_required_files() -> list[str]:
     return errors
 
 
-def _check_readme_safety() -> list[str]:
+def _check_readme_links() -> list[str]:
     errors: list[str] = []
     readme = REPO_ROOT / "README.md"
     text = _read(readme)
     lower = text.lower()
 
+    if "final-rc-audit.md" not in text and "final rc audit" not in lower:
+        errors.append("README.md missing link to final RC audit")
+
+    if "final-release-candidate-checklist.md" not in text and "final release candidate checklist" not in lower:
+        errors.append("README.md missing link to final release candidate checklist")
+
+    if "public-launch-readiness.md" not in text and "public launch readiness" not in lower:
+        errors.append("README.md missing link to public launch readiness")
+
+    if "external-reviewer-walkthrough.md" not in text and "reviewer walkthrough" not in lower:
+        errors.append("README.md missing link to reviewer walkthrough")
+
+    if "public-faq.md" not in text and "public faq" not in lower:
+        errors.append("README.md missing link to public FAQ")
+
     if PUBLIC_TAG not in text:
         errors.append("README.md missing current status reference")
-
-    if "what this is" not in lower:
-        errors.append("README.md missing 'What this is' section")
-
-    if "what this is not" not in lower:
-        errors.append("README.md missing 'What this is not' section")
-
-    if "security.md" not in lower:
-        errors.append("README.md missing link to SECURITY.md")
-
-    if "contributing.md" not in lower:
-        errors.append("README.md missing link to CONTRIBUTING.md")
-
-    if "changelog" not in lower and "release notes" not in lower:
-        errors.append("README.md missing link to changelog or release notes")
-
-    forbidden_claims = [
-        "live trading ready",
-        "production trading ready",
-        "safe to trade",
-        "guaranteed profit",
-        "profitable strategy",
-        "verified alpha",
-        "beats the market",
-    ]
-    for claim in forbidden_claims:
-        if claim in lower:
-            idx = lower.index(claim)
-            context_start = max(0, idx - 120)
-            context_end = min(len(lower), idx + 120)
-            context = lower[context_start:context_end]
-            negative_indicators = (
-                "not ", "does not", "never", "no ", "avoid",
-                "disclaimer", "prohibited", "forbidden", "must not",
-                "cannot", "do not", "is not", "are not", "without",
-                "fail closed", "not yet", "not implemented", "not enabled",
-                "not authorized", "not a ", "not ready", "remains disabled",
-                "remains locked", "remains blocked", "do not assume",
-            )
-            if not any(ind in context for ind in negative_indicators):
-                errors.append(f"README.md contains forbidden claim: {claim}")
 
     return errors
 
@@ -215,26 +196,20 @@ def _check_public_docs_safety() -> list[str]:
 
         for pattern in _SECRET_PATTERNS:
             for m in re.finditer(pattern, text, re.IGNORECASE):
-                errors.append(
-                    f"[{rel}] Secret-like pattern: {m.group(0)[:40]}"
-                )
+                errors.append(f"[{rel}] Secret-like pattern: {m.group(0)[:40]}")
 
     return errors
 
 
-def _check_no_staged_artifacts() -> list[str]:
+def _check_changelog_entry() -> list[str]:
     errors: list[str] = []
-    result = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    staged = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    forbidden = ("dist/", "build/")
-    for f in staged:
-        if f.startswith(forbidden) or f.endswith(".egg-info/"):
-            errors.append(f"Package artifact staged: {f}")
+    changelog = REPO_ROOT / "CHANGELOG.md"
+    if changelog.exists():
+        text = changelog.read_text(encoding="utf-8")
+        if f"[{PACKAGE_VERSION}]" not in text:
+            errors.append(f"CHANGELOG.md missing entry for [{PACKAGE_VERSION}]")
+    else:
+        errors.append("CHANGELOG.md not found")
     return errors
 
 
@@ -259,13 +234,43 @@ def _check_version_match() -> list[str]:
     return errors
 
 
+def _check_no_staged_artifacts() -> list[str]:
+    errors: list[str] = []
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    staged = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    forbidden = ("dist/", "build/")
+    for f in staged:
+        if f.startswith(forbidden) or f.endswith(".egg-info/"):
+            errors.append(f"Package artifact staged: {f}")
+    return errors
+
+
+def _check_checklist_has_boundary_commands() -> list[str]:
+    errors: list[str] = []
+    checklist = REPO_ROOT / "docs" / "final-release-candidate-checklist.md"
+    if checklist.exists():
+        text = checklist.read_text(encoding="utf-8").lower()
+        if "git diff -- src/atlas_agent/config" not in text:
+            errors.append("Final checklist missing protected boundary diff command")
+        if "release_check.sh --full" not in text:
+            errors.append("Final checklist missing release_check.sh --full command")
+    return errors
+
+
 def _run_checks() -> dict:
     all_errors: list[str] = []
     all_errors.extend(_check_required_files())
-    all_errors.extend(_check_readme_safety())
+    all_errors.extend(_check_readme_links())
     all_errors.extend(_check_public_docs_safety())
-    all_errors.extend(_check_no_staged_artifacts())
+    all_errors.extend(_check_changelog_entry())
     all_errors.extend(_check_version_match())
+    all_errors.extend(_check_no_staged_artifacts())
+    all_errors.extend(_check_checklist_has_boundary_commands())
 
     result = {
         "passed": len(all_errors) == 0,
@@ -278,7 +283,7 @@ def _run_checks() -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Public launch readiness check for Atlas Agent."
+        description="Final RC audit check for Atlas Agent."
     )
     parser.add_argument(
         "--json",
@@ -290,7 +295,6 @@ def main() -> int:
     result = _run_checks()
 
     if args.json:
-        # Redact errors before JSON output
         redacted_errors = [_redact(e) for e in result["errors"]]
         output = {
             "passed": result["passed"],
@@ -302,12 +306,12 @@ def main() -> int:
         return 0 if result["passed"] else 2
 
     if result["errors"]:
-        print("Public launch readiness check FAILED")
+        print("Final RC audit check FAILED")
         for e in result["errors"]:
             print(f"  - {_redact(e)}")
         return 2
 
-    print("Public launch readiness check PASSED")
+    print("Final RC audit check PASSED")
     print(f"  Package version: {result['package_version']}")
     print(f"  Public tag: {result['public_tag']}")
     print(f"  Required files: {len(REQUIRED_FILES)} present")

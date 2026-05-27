@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc9] - 2026-05-26
+
+### Release Engineering
+- Ninth release candidate for the v0.5.7 line.
+- Added final RC audit doc (`docs/final-rc-audit.md`) with release-manager style audit of the RC series.
+- Added final release candidate checklist (`docs/final-release-candidate-checklist.md`) to decide whether to move toward v0.5.7 final.
+- Added `scripts/check_final_rc_audit.py` for local static verification of final RC audit materials.
+- Added `tests/test_final_rc_audit.py` with safety and structure tests for final RC audit.
+- Linked final RC audit and checklist from README and public launch docs.
+- Updated `docs/release-checklist.md` with final RC audit gate.
+- Updated CI quick gate to include final RC audit check.
+- Package version bumped to `0.5.7rc9` (package) / `v0.5.7-rc9` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the final RC audit workflow.
+- No credentials loaded by the final RC audit workflow.
+- No network enabled by Atlas runtime in CI.
+- No publish, upload, tag, or push performed by CI.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc8] - 2026-05-26
 
 ### Release Engineering

@@ -87,7 +87,7 @@ No broker, no network, no credentials, no live trading.
 - Package distribution dry-run does not publish or upload.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
-- Version is `0.5.7rc8` (package) / `v0.5.7-rc8` (public tag).
+- Version is `0.5.7rc9` (package) / `v0.5.7-rc9` (public tag).
 
 ## Known limitations
 

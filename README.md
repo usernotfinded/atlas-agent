@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.7-rc8)** — see [release notes](docs/releases/v0.5.7-rc8.md).
+> **Current Status (v0.5.7-rc9)** — see [release notes](docs/releases/v0.5.7-rc9.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -79,7 +79,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **Not a licensed financial advisor.** This is software, not financial advice.
 - **Not autonomous.** All live actions require explicit human confirmation when enabled.
 
-## Current Status (v0.5.7-rc8)
+## Current Status (v0.5.7-rc9)
 
 Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
 
@@ -91,6 +91,8 @@ Atlas is in active development. Paper workflows, deterministic backtesting, audi
 - **[Public Launch Messaging](docs/public-launch-messaging.md)** — safe draft messaging for feedback requests
 - **[Feedback Request Guide](docs/feedback-request-guide.md)** — how to ask for feedback safely
 - **[Public FAQ](docs/public-faq.md)** — answers to common questions
+- **[Final RC Audit](docs/final-rc-audit.md)** — release-manager audit of the RC series
+- **[Final Release Candidate Checklist](docs/final-release-candidate-checklist.md)** — go/no-go checklist for v0.5.7 final
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 
