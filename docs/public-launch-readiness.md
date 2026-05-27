@@ -20,7 +20,9 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_clean_install.py` — clean install works without credentials or network
 - `python3.11 scripts/check_package_distribution.py` — package builds and metadata is correct
 - `python3.11 scripts/check_public_launch_readiness.py` — launch materials are present and safe
+- `python3.11 scripts/check_public_launch_messaging.py` — launch messaging is safe
 - `python3.11 -m pytest tests/test_public_launch_readiness.py` — launch readiness tests pass
+- `python3.11 -m pytest tests/test_public_launch_messaging.py` — launch messaging tests pass
 - `python3.11 -m pytest tests/test_public_repo_hygiene.py` — repository hygiene tests pass
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
@@ -76,13 +78,16 @@ No broker, no network, no credentials, no live trading.
 - `docs/clean-install-verification.md` present
 - `docs/external-reviewer-walkthrough.md` present
 - `docs/reviewer-checklist.md` present
+- `docs/public-launch-messaging.md` present
+- `docs/feedback-request-guide.md` present
+- `docs/public-faq.md` present
 
 ## Release artifacts status
 
 - Package distribution dry-run does not publish or upload.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
-- Version is `0.5.7rc7` (package) / `v0.5.7-rc7` (public tag).
+- Version is `0.5.7rc8` (package) / `v0.5.7-rc8` (public tag).
 
 ## Known limitations
 
@@ -99,6 +104,8 @@ No broker, no network, no credentials, no live trading.
 For a structured review path, see:
 - [External Reviewer Walkthrough](external-reviewer-walkthrough.md) — 10–15 minute safe review path
 - [Reviewer Checklist](reviewer-checklist.md) — checklist before trusting or recommending
+- [Public FAQ](public-faq.md) — answers to common questions
+- [Feedback Request Guide](feedback-request-guide.md) — how to ask for feedback safely
 
 ## What reviewers should check
 

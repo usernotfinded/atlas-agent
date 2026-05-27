@@ -26,8 +26,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.7rc7"
-PUBLIC_TAG = "v0.5.7-rc7"
+PACKAGE_VERSION = "0.5.7rc8"
+PUBLIC_TAG = "v0.5.7-rc8"
 
 ONBOARDING_DOC_PATHS = [
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",

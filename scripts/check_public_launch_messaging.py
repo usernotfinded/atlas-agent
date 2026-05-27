@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Local static check that public-facing repo launch materials are present and safe.
+"""Static check for launch/feedback messaging safety.
 
 Deterministic and local. Does not:
 - call network
+- post to social platforms
 - call GitHub API
 - publish
 - upload
@@ -11,6 +12,7 @@ Deterministic and local. Does not:
 - require credentials
 - run live trading
 - call brokers/providers
+- use shell = True
 """
 
 from __future__ import annotations
@@ -28,38 +30,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PACKAGE_VERSION = "0.5.7rc8"
 PUBLIC_TAG = "v0.5.7-rc8"
 
-REQUIRED_FILES = [
-    REPO_ROOT / "README.md",
-    REPO_ROOT / "SECURITY.md",
-    REPO_ROOT / "CONTRIBUTING.md",
-    REPO_ROOT / "CHANGELOG.md",
-    REPO_ROOT / "docs" / "public-launch-readiness.md",
-    REPO_ROOT / "docs" / "github-repo-settings.md",
-    REPO_ROOT / "docs" / "ci-release-gates.md",
-    REPO_ROOT / "docs" / "package-distribution-verification.md",
-    REPO_ROOT / "docs" / "clean-install-verification.md",
-    REPO_ROOT / "docs" / "releases" / f"{PUBLIC_TAG}.md",
-    REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
-    REPO_ROOT / "docs" / "reviewer-checklist.md",
-    REPO_ROOT / ".github" / "pull_request_template.md",
-    REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml",
-    REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "docs_issue.yml",
-    REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "safety_concern.yml",
-    REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "feature_request.yml",
-]
-
-PUBLIC_DOC_PATHS = [
-    REPO_ROOT / "README.md",
-    REPO_ROOT / "SECURITY.md",
-    REPO_ROOT / "CONTRIBUTING.md",
-    REPO_ROOT / "docs" / "public-launch-readiness.md",
-    REPO_ROOT / "docs" / "github-repo-settings.md",
-    REPO_ROOT / "docs" / "public-repo-hygiene.md",
-    REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
-    REPO_ROOT / "docs" / "reviewer-checklist.md",
+LAUNCH_DOC_PATHS = [
     REPO_ROOT / "docs" / "public-launch-messaging.md",
     REPO_ROOT / "docs" / "feedback-request-guide.md",
     REPO_ROOT / "docs" / "public-faq.md",
+]
+
+LINKING_DOC_PATHS = [
+    REPO_ROOT / "README.md",
+    REPO_ROOT / "docs" / "public-launch-readiness.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution.
@@ -75,9 +54,25 @@ _FORBIDDEN_POSITIVE_CLAIMS = [
     "autonomous trading ready",
     "real-money ready",
     "guaranteed profit",
+    "profit guarantee",
     "profitable strategy",
     "verified alpha",
     "beats the market",
+    "beat the market",
+    "makes money",
+    "earns money",
+    "passive income",
+    "financial freedom",
+]
+
+# Hype words that should not appear in launch messaging.
+_HYPE_WORDS = [
+    "revolutionary",
+    "game-changing",
+    "guaranteed",
+    "unstoppable",
+    "fully autonomous",
+    "production-grade trading bot",
 ]
 
 # Secret-like patterns.
@@ -121,120 +116,29 @@ def _read(path: Path) -> str:
         return f.read()
 
 
-def _check_required_files() -> list[str]:
+def _check_launch_docs_exist() -> list[str]:
     errors: list[str] = []
-    for path in REQUIRED_FILES:
+    for path in LAUNCH_DOC_PATHS:
         if not path.exists():
             rel = path.relative_to(REPO_ROOT)
-            errors.append(f"Required file missing: {rel}")
+            errors.append(f"Launch doc missing: {rel}")
     return errors
 
 
-def _check_readme_safety() -> list[str]:
+def _check_linking_docs() -> list[str]:
     errors: list[str] = []
-    readme = REPO_ROOT / "README.md"
-    text = _read(readme)
-    lower = text.lower()
-
-    if PUBLIC_TAG not in text:
-        errors.append("README.md missing current status reference")
-
-    if "what this is" not in lower:
-        errors.append("README.md missing 'What this is' section")
-
-    if "what this is not" not in lower:
-        errors.append("README.md missing 'What this is not' section")
-
-    if "security.md" not in lower:
-        errors.append("README.md missing link to SECURITY.md")
-
-    if "contributing.md" not in lower:
-        errors.append("README.md missing link to CONTRIBUTING.md")
-
-    if "changelog" not in lower and "release notes" not in lower:
-        errors.append("README.md missing link to changelog or release notes")
-
-    forbidden_claims = [
-        "live trading ready",
-        "production trading ready",
-        "safe to trade",
-        "guaranteed profit",
-        "profitable strategy",
-        "verified alpha",
-        "beats the market",
-    ]
-    for claim in forbidden_claims:
-        if claim in lower:
-            idx = lower.index(claim)
-            context_start = max(0, idx - 120)
-            context_end = min(len(lower), idx + 120)
-            context = lower[context_start:context_end]
-            negative_indicators = (
-                "not ", "does not", "never", "no ", "avoid",
-                "disclaimer", "prohibited", "forbidden", "must not",
-                "cannot", "do not", "is not", "are not", "without",
-                "fail closed", "not yet", "not implemented", "not enabled",
-                "not authorized", "not a ", "not ready", "remains disabled",
-                "remains locked", "remains blocked", "do not assume",
-            )
-            if not any(ind in context for ind in negative_indicators):
-                errors.append(f"README.md contains forbidden claim: {claim}")
-
-    return errors
-
-
-def _check_public_docs_safety() -> list[str]:
-    errors: list[str] = []
-    for path in PUBLIC_DOC_PATHS:
+    for path in LINKING_DOC_PATHS:
         if not path.exists():
             continue
         text = _read(path)
         lower = text.lower()
         rel = str(path.relative_to(REPO_ROOT))
-
-        for claim in _FORBIDDEN_POSITIVE_CLAIMS:
-            if claim in lower:
-                idx = lower.index(claim)
-                context_start = max(0, idx - 120)
-                context_end = min(len(lower), idx + 120)
-                context = lower[context_start:context_end]
-                negative_indicators = (
-                    "not ", "does not", "never", "no ", "avoid",
-                    "disclaimer", "prohibited", "forbidden", "must not",
-                    "cannot", "do not", "is not", "are not", "without",
-                    "fail closed", "not yet", "not implemented", "not enabled",
-                    "not authorized", "not a ", "not ready", "remains disabled",
-                    "remains locked", "remains blocked", "do not assume",
-                )
-                if not any(ind in context for ind in negative_indicators):
-                    errors.append(f"[{rel}] Forbidden claim: {claim}")
-
-        for prefix in _ABSOLUTE_PATH_PREFIXES:
-            if prefix in text:
-                errors.append(f"[{rel}] Absolute path fragment: {prefix}")
-
-        for pattern in _SECRET_PATTERNS:
-            for m in re.finditer(pattern, text, re.IGNORECASE):
-                errors.append(
-                    f"[{rel}] Secret-like pattern: {m.group(0)[:40]}"
-                )
-
-    return errors
-
-
-def _check_no_staged_artifacts() -> list[str]:
-    errors: list[str] = []
-    result = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    staged = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    forbidden = ("dist/", "build/")
-    for f in staged:
-        if f.startswith(forbidden) or f.endswith(".egg-info/"):
-            errors.append(f"Package artifact staged: {f}")
+        if "public-launch-messaging.md" not in text and "launch messaging" not in lower:
+            errors.append(f"[{rel}] Missing link to public launch messaging")
+        if "feedback-request-guide.md" not in text and "feedback request guide" not in lower:
+            errors.append(f"[{rel}] Missing link to feedback request guide")
+        if "public-faq.md" not in text and "public faq" not in lower:
+            errors.append(f"[{rel}] Missing link to public FAQ")
     return errors
 
 
@@ -259,13 +163,126 @@ def _check_version_match() -> list[str]:
     return errors
 
 
+def _check_launch_doc_safety() -> list[str]:
+    errors: list[str] = []
+    required_phrases = [
+        "live trading disabled by default",
+        "provider execution remains locked",
+        "trust remains blocked",
+        "not financial advice",
+    ]
+
+    for path in LAUNCH_DOC_PATHS:
+        if not path.exists():
+            continue
+        text = _read(path)
+        lower = text.lower()
+        rel = str(path.relative_to(REPO_ROOT))
+
+        for claim in _FORBIDDEN_POSITIVE_CLAIMS:
+            if claim in lower:
+                idx = lower.index(claim)
+                context_start = max(0, idx - 120)
+                context_end = min(len(lower), idx + 120)
+                context = lower[context_start:context_end]
+                negative_indicators = (
+                    "not ", "does not", "never", "no ", "avoid",
+                    "disclaimer", "prohibited", "forbidden", "must not",
+                    "cannot", "do not", "is not", "are not", "without",
+                    "fail closed", "not yet", "not implemented", "not enabled",
+                    "not authorized", "not a ", "not ready", "remains disabled",
+                    "remains locked", "remains blocked", "do not assume",
+                )
+                if not any(ind in context for ind in negative_indicators):
+                    errors.append(f"[{rel}] Forbidden claim: {claim}")
+
+        for hype in _HYPE_WORDS:
+            if hype in lower:
+                errors.append(f"[{rel}] Hype word: {hype}")
+
+        for prefix in _ABSOLUTE_PATH_PREFIXES:
+            if prefix in text:
+                errors.append(f"[{rel}] Absolute path fragment: {prefix}")
+
+        for pattern in _SECRET_PATTERNS:
+            for m in re.finditer(pattern, text, re.IGNORECASE):
+                errors.append(f"[{rel}] Secret-like pattern: {m.group(0)[:40]}")
+
+        for phrase in required_phrases:
+            if phrase.lower() not in lower:
+                errors.append(f"[{rel}] Required safety phrase missing: {phrase}")
+
+    return errors
+
+
+def _check_no_real_money_invite() -> list[str]:
+    errors: list[str] = []
+    for path in LAUNCH_DOC_PATHS:
+        if not path.exists():
+            continue
+        text = _read(path).lower()
+        rel = str(path.relative_to(REPO_ROOT))
+        inviting_phrases = [
+            "use atlas with real money",
+            "connect real broker credentials",
+            "trade real money",
+            "start live trading now",
+            "enable live trading",
+        ]
+        for phrase in inviting_phrases:
+            if phrase not in text:
+                continue
+            idx = text.index(phrase)
+            context_start = max(0, idx - 120)
+            context_end = min(len(text), idx + 120)
+            context = text[context_start:context_end]
+            negative_indicators = (
+                "not ", "do not", "never", "no ", "avoid",
+                "must not", "cannot", "prohibited", "forbidden",
+                "do not ask", "do not create", "do not request",
+            )
+            if not any(ind in context for ind in negative_indicators):
+                errors.append(f"[{rel}] May invite real-money trading: {phrase}")
+    return errors
+
+
+def _check_no_credentials_request() -> list[str]:
+    errors: list[str] = []
+    for path in LAUNCH_DOC_PATHS:
+        if not path.exists():
+            continue
+        text = _read(path).lower()
+        rel = str(path.relative_to(REPO_ROOT))
+        if "send me your api key" in text or "share your credentials" in text:
+            errors.append(f"[{rel}] Requests credentials")
+    return errors
+
+
+def _check_no_staged_artifacts() -> list[str]:
+    errors: list[str] = []
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    staged = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    forbidden = ("dist/", "build/")
+    for f in staged:
+        if f.startswith(forbidden) or f.endswith(".egg-info/"):
+            errors.append(f"Package artifact staged: {f}")
+    return errors
+
+
 def _run_checks() -> dict:
     all_errors: list[str] = []
-    all_errors.extend(_check_required_files())
-    all_errors.extend(_check_readme_safety())
-    all_errors.extend(_check_public_docs_safety())
-    all_errors.extend(_check_no_staged_artifacts())
+    all_errors.extend(_check_launch_docs_exist())
+    all_errors.extend(_check_linking_docs())
     all_errors.extend(_check_version_match())
+    all_errors.extend(_check_launch_doc_safety())
+    all_errors.extend(_check_no_real_money_invite())
+    all_errors.extend(_check_no_credentials_request())
+    all_errors.extend(_check_no_staged_artifacts())
 
     result = {
         "passed": len(all_errors) == 0,
@@ -278,7 +295,7 @@ def _run_checks() -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Public launch readiness check for Atlas Agent."
+        description="Public launch messaging check for Atlas Agent."
     )
     parser.add_argument(
         "--json",
@@ -290,7 +307,6 @@ def main() -> int:
     result = _run_checks()
 
     if args.json:
-        # Redact errors before JSON output
         redacted_errors = [_redact(e) for e in result["errors"]]
         output = {
             "passed": result["passed"],
@@ -302,16 +318,16 @@ def main() -> int:
         return 0 if result["passed"] else 2
 
     if result["errors"]:
-        print("Public launch readiness check FAILED")
+        print("Public launch messaging check FAILED")
         for e in result["errors"]:
             print(f"  - {_redact(e)}")
         return 2
 
-    print("Public launch readiness check PASSED")
+    print("Public launch messaging check PASSED")
     print(f"  Package version: {result['package_version']}")
     print(f"  Public tag: {result['public_tag']}")
-    print(f"  Required files: {len(REQUIRED_FILES)} present")
-    print(f"  Public docs safe: yes")
+    print(f"  Launch docs present: {len(LAUNCH_DOC_PATHS)}")
+    print(f"  Docs safe: yes")
     print(f"  No staged artifacts: yes")
     return 0
 

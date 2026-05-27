@@ -33,6 +33,9 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "github-repo-settings.md",
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
     REPO_ROOT / "docs" / "reviewer-checklist.md",
+    REPO_ROOT / "docs" / "public-launch-messaging.md",
+    REPO_ROOT / "docs" / "feedback-request-guide.md",
+    REPO_ROOT / "docs" / "public-faq.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
@@ -109,7 +112,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.5.7-rc7"
+CURRENT_VERSION = "v0.5.7-rc8"
 
 
 def _read(path: Path) -> str:

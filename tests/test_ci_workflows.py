@@ -58,6 +58,9 @@ class TestCiWorkflow:
     def test_includes_reviewer_onboarding(self, ci_content: str) -> None:
         assert "check_reviewer_onboarding.py" in ci_content
 
+    def test_includes_public_launch_messaging(self, ci_content: str) -> None:
+        assert "check_public_launch_messaging.py" in ci_content
+
     def test_includes_release_check_quick(self, ci_content: str) -> None:
         assert "release_check.sh --quick" in ci_content
 
@@ -221,6 +224,9 @@ class TestCiCheckScript:
 
     def test_includes_reviewer_onboarding(self, ci_check_content: str) -> None:
         assert "check_reviewer_onboarding.py" in ci_check_content
+
+    def test_includes_public_launch_messaging(self, ci_check_content: str) -> None:
+        assert "check_public_launch_messaging.py" in ci_check_content
 
     def test_includes_pip_check(self, ci_check_content: str) -> None:
         assert "pip check" in ci_check_content

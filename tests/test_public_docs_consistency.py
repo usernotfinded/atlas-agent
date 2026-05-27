@@ -44,6 +44,9 @@ def _run_script_on_text(text: str) -> subprocess.CompletedProcess[str]:
         '    REPO_ROOT / "docs" / "github-repo-settings.md",\n'
         '    REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",\n'
         '    REPO_ROOT / "docs" / "reviewer-checklist.md",\n'
+        '    REPO_ROOT / "docs" / "public-launch-messaging.md",\n'
+        '    REPO_ROOT / "docs" / "feedback-request-guide.md",\n'
+        '    REPO_ROOT / "docs" / "public-faq.md",\n'
         ']'
     )
     new_paths_block = f'PUBLIC_DOC_PATHS = [Path("{tmp_path}")]'

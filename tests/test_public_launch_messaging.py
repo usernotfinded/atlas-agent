@@ -1,4 +1,4 @@
-"""Tests for reviewer onboarding script and docs — Batch 10.10.
+"""Tests for public launch messaging script and docs — Batch 10.11.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
@@ -15,9 +15,10 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "check_reviewer_onboarding.py"
-WALKTHROUGH = ROOT / "docs" / "external-reviewer-walkthrough.md"
-CHECKLIST = ROOT / "docs" / "reviewer-checklist.md"
+SCRIPT = ROOT / "scripts" / "check_public_launch_messaging.py"
+LAUNCH_DOC = ROOT / "docs" / "public-launch-messaging.md"
+FEEDBACK_GUIDE = ROOT / "docs" / "feedback-request-guide.md"
+PUBLIC_FAQ = ROOT / "docs" / "public-faq.md"
 
 _FORBIDDEN_POSITIVE_CLAIMS = (
     "live trading ready",
@@ -34,6 +35,19 @@ _FORBIDDEN_POSITIVE_CLAIMS = (
     "profitable strategy",
     "verified alpha",
     "beats the market",
+    "beat the market",
+    "makes money",
+    "earns money",
+    "passive income",
+    "financial freedom",
+)
+
+_HYPE_WORDS = (
+    "revolutionary",
+    "game-changing",
+    "unstoppable",
+    "fully autonomous",
+    "production-grade trading bot",
 )
 
 _FORBIDDEN_FRAGMENTS = (
@@ -56,11 +70,14 @@ def _run_script(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 class TestDocsExist:
-    def test_walkthrough_exists(self) -> None:
-        assert WALKTHROUGH.exists(), f"Walkthrough not found: {WALKTHROUGH}"
+    def test_launch_messaging_doc_exists(self) -> None:
+        assert LAUNCH_DOC.exists(), f"Launch messaging doc not found: {LAUNCH_DOC}"
 
-    def test_checklist_exists(self) -> None:
-        assert CHECKLIST.exists(), f"Checklist not found: {CHECKLIST}"
+    def test_feedback_request_guide_exists(self) -> None:
+        assert FEEDBACK_GUIDE.exists(), f"Feedback request guide not found: {FEEDBACK_GUIDE}"
+
+    def test_public_faq_exists(self) -> None:
+        assert PUBLIC_FAQ.exists(), f"Public FAQ not found: {PUBLIC_FAQ}"
 
     def test_script_exists(self) -> None:
         assert SCRIPT.exists(), f"Script not found: {SCRIPT}"
@@ -71,49 +88,57 @@ class TestReadmeLinks:
     def readme_text(self) -> str:
         return (ROOT / "README.md").read_text(encoding="utf-8")
 
-    def test_readme_links_to_walkthrough(self, readme_text: str) -> None:
+    def test_readme_links_to_launch_messaging(self, readme_text: str) -> None:
         lower = readme_text.lower()
         assert (
-            "external-reviewer-walkthrough.md" in readme_text
-            or "reviewer walkthrough" in lower
+            "public-launch-messaging.md" in readme_text
+            or "launch messaging" in lower
         )
 
-    def test_readme_links_to_checklist(self, readme_text: str) -> None:
+    def test_readme_links_to_feedback_guide(self, readme_text: str) -> None:
         lower = readme_text.lower()
         assert (
-            "reviewer-checklist.md" in readme_text
-            or "reviewer checklist" in lower
+            "feedback-request-guide.md" in readme_text
+            or "feedback request guide" in lower
         )
 
-    def test_readme_links_to_public_launch_readiness(self, readme_text: str) -> None:
+    def test_readme_links_to_public_faq(self, readme_text: str) -> None:
         lower = readme_text.lower()
         assert (
-            "public-launch-readiness.md" in readme_text
-            or "public launch readiness" in lower
+            "public-faq.md" in readme_text
+            or "public faq" in lower
         )
 
 
 class TestPublicLaunchDocsLinks:
-    def test_public_launch_readiness_links_to_walkthrough(self) -> None:
+    def test_public_launch_readiness_links_to_launch_messaging(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
         lower = text.lower()
         assert (
-            "external-reviewer-walkthrough.md" in text
-            or "reviewer walkthrough" in lower
+            "public-launch-messaging.md" in text
+            or "launch messaging" in lower
         )
 
-    def test_public_launch_readiness_links_to_checklist(self) -> None:
+    def test_public_launch_readiness_links_to_feedback_guide(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
         lower = text.lower()
         assert (
-            "reviewer-checklist.md" in text
-            or "reviewer checklist" in lower
+            "feedback-request-guide.md" in text
+            or "feedback request guide" in lower
+        )
+
+    def test_public_launch_readiness_links_to_public_faq(self) -> None:
+        text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
+        lower = text.lower()
+        assert (
+            "public-faq.md" in text
+            or "public faq" in lower
         )
 
 
-class TestOnboardingDocsSafety:
+class TestLaunchDocsSafety:
     def _doc_paths(self) -> list[Path]:
-        return [WALKTHROUGH, CHECKLIST]
+        return [LAUNCH_DOC, FEEDBACK_GUIDE, PUBLIC_FAQ]
 
     def test_no_forbidden_claims(self) -> None:
         for path in self._doc_paths():
@@ -135,6 +160,12 @@ class TestOnboardingDocsSafety:
                 )
                 if not any(ind in context for ind in negative_indicators):
                     pytest.fail(f"{path.name} contains forbidden claim: {claim}")
+
+    def test_no_hype_words(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            for hype in _HYPE_WORDS:
+                assert hype not in text, f"{path.name} contains hype word: {hype}"
 
     def test_no_forbidden_fragments(self) -> None:
         for path in self._doc_paths():
@@ -163,10 +194,26 @@ class TestOnboardingDocsSafety:
             assert "verified alpha" not in text
             assert "beats the market" not in text
 
-    def test_mentions_no_credentials_required(self) -> None:
+    def test_asks_for_technical_feedback(self) -> None:
         for path in self._doc_paths():
             text = path.read_text(encoding="utf-8").lower()
-            assert "no credentials" in text or "credentials are not" in text
+            assert "technical feedback" in text or "feedback" in text
+
+    def test_does_not_ask_for_profit_feedback(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            # Allow negative contexts like "do not ask for profit feedback"
+            for phrase in ("profit feedback", "trading signal quality"):
+                if phrase not in text:
+                    continue
+                idx = text.index(phrase)
+                context = text[max(0, idx - 120):min(len(text), idx + 120)]
+                negative_indicators = (
+                    "not ", "do not", "never", "no ", "avoid",
+                    "must not", "cannot", "prohibited", "forbidden",
+                )
+                if not any(ind in context for ind in negative_indicators):
+                    pytest.fail(f"{path.name} asks for profit feedback: {phrase}")
 
     def test_mentions_live_trading_disabled(self) -> None:
         for path in self._doc_paths():
@@ -183,26 +230,53 @@ class TestOnboardingDocsSafety:
             text = path.read_text(encoding="utf-8").lower()
             assert "trust remains blocked" in text
 
-    def test_safe_commands_present(self) -> None:
-        text = WALKTHROUGH.read_text(encoding="utf-8").lower()
-        assert "check_version_consistency.py" in text
-        assert "check_forbidden_claims.py" in text
-        assert "check_public_docs_consistency.py" in text
-        assert "check_public_launch_readiness.py" in text
-        assert "release_check.sh --quick" in text
+    def test_mentions_not_financial_advice(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "not financial advice" in text
+
+    def test_mentions_no_profitability_implication(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "does not imply profitability" in text or "no promise of returns" in text
+
+    def test_does_not_invite_real_money_trading(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            for phrase in (
+                "use atlas with real money",
+                "connect real broker credentials",
+                "trade real money",
+            ):
+                if phrase not in text:
+                    continue
+                idx = text.index(phrase)
+                context = text[max(0, idx - 60):min(len(text), idx + 60)]
+                negative_indicators = (
+                    "not ", "do not", "never", "no ", "avoid",
+                    "must not", "cannot", "prohibited", "forbidden",
+                )
+                if not any(ind in context for ind in negative_indicators):
+                    pytest.fail(f"{path.name} invites real-money trading: {phrase}")
+
+    def test_does_not_request_credentials(self) -> None:
+        for path in self._doc_paths():
+            text = path.read_text(encoding="utf-8").lower()
+            assert "send me your api key" not in text
+            assert "share your credentials" not in text
 
 
 class TestScriptBehavior:
     def test_script_passes(self) -> None:
         result = _run_script()
         assert result.returncode == 0, (
-            f"Reviewer onboarding script failed:\n{result.stdout}\n{result.stderr}"
+            f"Public launch messaging script failed:\n{result.stdout}\n{result.stderr}"
         )
 
     def test_script_json_output(self) -> None:
         result = _run_script("--json")
         assert result.returncode == 0, (
-            f"Reviewer onboarding script --json failed:\n{result.stdout}\n{result.stderr}"
+            f"Public launch messaging script --json failed:\n{result.stdout}\n{result.stderr}"
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
@@ -218,6 +292,21 @@ class TestScriptBehavior:
 
 
 class TestScriptSafety:
+    def test_no_network_calls(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8").lower()
+        assert "urllib" not in text
+        assert "httpx" not in text
+        # "requests" as a plain word is too brittle; check for import patterns
+        assert "import requests" not in text
+        assert "from requests" not in text
+
+    def test_no_social_posting(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8").lower()
+        assert "reddit" not in text
+        assert "hacker news" not in text
+        assert "twitter" not in text
+        assert "discord" not in text
+
     def test_no_github_api_usage(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8").lower()
         assert "github api" not in text or "does not" in text

@@ -12,6 +12,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] CHANGELOG.md exists with current version entry
 - [ ] Issue and PR templates exist
 - [ ] Release notes exist for current version
+- [ ] Public launch messaging docs present and safe
 - [ ] No package artifacts (`dist/`, `build/`, `*.egg-info/`) are staged
 
 ## README clarity

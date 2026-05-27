@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7rc8] - 2026-05-26
+
+### Release Engineering
+- Eighth release candidate for the v0.5.7 line.
+- Added public launch messaging doc (`docs/public-launch-messaging.md`) with safe draft messaging for feedback requests.
+- Added feedback request guide (`docs/feedback-request-guide.md`) explaining how to ask for feedback safely.
+- Added public FAQ (`docs/public-faq.md`) answering common visitor questions conservatively.
+- Added `scripts/check_public_launch_messaging.py` for local static verification of launch messaging safety.
+- Added `tests/test_public_launch_messaging.py` with safety and structure tests for launch messaging.
+- Linked launch/reviewer/feedback materials from README and public launch docs.
+- Updated `docs/release-checklist.md` with public launch messaging gate.
+- Updated CI quick gate to include public launch messaging check.
+- Package version bumped to `0.5.7rc8` (package) / `v0.5.7-rc8` (public tag).
+- No runtime behavior changes in this batch.
+- No broker/execution/risk/config/safety boundary changes.
+
+### Safety
+- Provider execution remains locked.
+- Trust remains blocked.
+- Live trading disabled by default.
+- No broker/order path in the public launch messaging workflow.
+- No credentials loaded by the public launch messaging workflow.
+- No network enabled by Atlas runtime in CI.
+- No publish, upload, tag, or push performed by CI.
+- Not financial advice. Does not imply profitability or trading correctness.
+
 ## [0.5.7rc7] - 2026-05-26
 
 ### Release Engineering
