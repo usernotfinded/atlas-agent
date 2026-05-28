@@ -25,7 +25,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.7"
+PACKAGE_VERSION = "0.5.8.dev0"
 PUBLIC_TAG = "v0.5.7"
 
 REQUIRED_FILES = [
@@ -138,6 +138,15 @@ def _check_readme_safety() -> list[str]:
 
     if PUBLIC_TAG not in text:
         errors.append("README.md missing current status reference")
+
+    # Reject stale RC current-status claims
+    stale_rc_patterns = [
+        r"Current Status \(v0\.5\.7-rc\d+\)",
+        r"Current Status \(0\.5\.7rc\d+\)",
+    ]
+    for pattern in stale_rc_patterns:
+        if re.search(pattern, text):
+            errors.append(f"README.md contains stale RC current-status reference matching {pattern}")
 
     if "what this is" not in lower:
         errors.append("README.md missing 'What this is' section")

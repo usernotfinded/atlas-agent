@@ -4,7 +4,7 @@
 
 ## Public launch status
 
-Atlas Agent is a **sandbox/paper/preflight release candidate**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**.
+Atlas Agent is a **stable v0.5.7 public-review release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**.
 
 This document explains what is verified, what remains disabled, and what reviewers should check.
 
@@ -87,11 +87,11 @@ No broker, no network, no credentials, no live trading.
 - Package distribution dry-run does not publish or upload.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
-- Version is `0.5.7` (package) / `v0.5.7` (public tag).
+- Version on `main` is `0.5.8.dev0`; latest stable release is `v0.5.7`.
 
 ## Known limitations
 
-- This is a release candidate, not a final release.
+- This is not a live-trading-ready product. Stable v0.5.7 refers to release/documentation/process stability, not trading correctness or real-money safety.
 - Live trading is explicitly disabled by default.
 - Provider execution is not implemented for real providers.
 - Broker adapters are in beta (Alpaca read-only sync available; others deferred).

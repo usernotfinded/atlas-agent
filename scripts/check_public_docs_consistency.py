@@ -109,6 +109,8 @@ STALE_VERSION_PATTERNS = [
     r"Current Status \(v0\.5\.7\.dev4[0-9]\)",
     r"Current Status \(0\.5\.7\.dev5[0-9]\)",
     r"Current Status \(0\.5\.7\.dev4[0-9]\)",
+    r"Current Status \(v0\.5\.7-rc\d+\)",
+    r"Current Status \(0\.5\.7rc\d+\)",
     r"v0\.5\.7\.dev5[0-9](?!\d)",
     r"v0\.5\.7\.dev4[0-9](?!\d)",
     r"0\.5\.7\.dev5[0-9](?!\d)",
@@ -116,7 +118,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.5.7"
+CURRENT_VERSION = "v0.5.8.dev0"
 
 
 def _read(path: Path) -> str:
@@ -241,14 +243,25 @@ def _check_readme_required_safe(text: str, rel_path: str) -> list[str]:
     return violations
 
 
+# Patterns that indicate a doc claims the project is still a release candidate.
+_STALE_RC_STATUS_PATTERNS = [
+    re.compile(r"this is a release candidate, not a final release", re.IGNORECASE),
+    re.compile(r"atlas agent is a .*release candidate", re.IGNORECASE),
+]
+
+# Historical doc names where RC references are expected and allowed.
+_HISTORICAL_RC_DOC_INDICATORS = [
+    "final-rc-audit",
+    "final-release-candidate-checklist",
+    "release-candidate-readiness",
+    "release-candidate-cutover",
+    "v0.5.7-rc",
+    "changelog",
+]
+
+
 def _check_stale_version_refs(text: str, rel_path: str) -> list[str]:
     violations: list[str] = []
-    # Only flag if the CURRENT_VERSION is NOT present and an old one IS present
-    # in what looks like a current-status context.
-    if CURRENT_VERSION.lower() in text.lower():
-        # Current version is referenced somewhere; don't flag old references in release notes
-        # unless they look like a current-status claim.
-        pass
     for pattern in STALE_VERSION_PATTERNS:
         for m in re.finditer(pattern, text):
             # Skip if this is inside an old release note filename or historical description
@@ -259,6 +272,26 @@ def _check_stale_version_refs(text: str, rel_path: str) -> list[str]:
                 continue
             violations.append(
                 f"[{rel_path}] Stale version reference looks like current-status claim: {m.group(0)}"
+            )
+    return violations
+
+
+def _check_stale_rc_status_claims(text: str, rel_path: str) -> list[str]:
+    violations: list[str] = []
+    lower = text.lower()
+    # Skip historical docs that are expected to discuss RC history
+    if any(ind.lower() in rel_path.lower() for ind in _HISTORICAL_RC_DOC_INDICATORS):
+        return violations
+    for pattern in _STALE_RC_STATUS_PATTERNS:
+        for m in pattern.finditer(text):
+            context_start = max(0, m.start() - 60)
+            context_end = min(len(text), m.end() + 60)
+            context = text[context_start:context_end].lower()
+            # Allow if clearly historical (past tense)
+            if "was a" in context or "were" in context:
+                continue
+            violations.append(
+                f"[{rel_path}] Stale RC status claim: {m.group(0)}"
             )
     return violations
 
@@ -279,6 +312,7 @@ def main() -> int:
         all_violations.extend(_check_required_safety_wording(text, str(rel)))
         all_violations.extend(_check_readme_required_safe(text, str(rel)))
         all_violations.extend(_check_stale_version_refs(text, str(rel)))
+        all_violations.extend(_check_stale_rc_status_claims(text, str(rel)))
 
     if all_violations:
         print("Public docs consistency check FAILED")

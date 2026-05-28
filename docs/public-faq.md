@@ -30,7 +30,7 @@ No. The default verification path (install, validate, backtest, inspect safety d
 
 ## What is provider execution?
 
-Provider execution is the path through which Atlas would send prompts to an LLM/API provider and receive responses. In the current release candidate, provider execution remains locked — no real provider calls are made by default. All provider workflows operate on local mock responses.
+Provider execution is the path through which Atlas would send prompts to an LLM/API provider and receive responses. In the current version, provider execution remains locked — no real provider calls are made by default. All provider workflows operate on local mock responses.
 
 ## What is trust blocked?
 

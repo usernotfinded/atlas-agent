@@ -6,7 +6,7 @@
 
 Atlas Agent has moved to **stable v0.5.7** (`0.5.7` / `v0.5.7`) from the RC series. This audit documents the RC series and informs the stable release decision. See `docs/stable-release-decision.md` for the decision document and `docs/stable-release-checklist.md` for the pre-tag checklist.
 
-This is a **sandbox/paper/preflight release candidate**. It is not a production trading release. Live trading remains disabled by default. Provider execution remains locked. Trust remains blocked. No broker/order path exists in provider safety workflows. No credentials are required for default verification.
+This was a **sandbox/paper/preflight release candidate series**. It is not a production trading release. Live trading remains disabled by default. Provider execution remains locked. Trust remains blocked. No broker/order path exists in provider safety workflows. No credentials are required for default verification.
 
 ## What Has Been Verified
 
@@ -124,7 +124,7 @@ All public docs exist and contain safe wording:
 - The dashboard is read-only and basic.
 - Self-improvement is early-stage.
 - No third-party security audit has been performed.
-- This is a sandbox/paper/preflight release candidate, not a production trading system.
+- This was a sandbox/paper/preflight release candidate series, not a production trading system.
 
 ## What Remains Disabled
 

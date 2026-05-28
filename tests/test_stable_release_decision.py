@@ -137,6 +137,11 @@ class TestDecisionDocSafety:
         text = DECISION_DOC.read_text(encoding="utf-8").lower()
         assert "release/documentation/process stability" in text or "release process stability" in text
 
+    def test_stable_does_not_mean_live_trading_readiness(self) -> None:
+        text = DECISION_DOC.read_text(encoding="utf-8").lower()
+        assert "live trading readiness" not in text or "does not mean" in text
+        assert "production trading readiness" not in text or "does not mean" in text
+
     def test_does_not_claim_stable_release_published_externally(self) -> None:
         text = DECISION_DOC.read_text(encoding="utf-8").lower()
         # Allow negative contexts like "does not claim that v0.5.7 has already been published"
@@ -209,7 +214,7 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.7"
+        assert data["package_version"] == "0.5.8.dev0"
         assert data["public_tag"] == "v0.5.7"
         assert data["errors"] == []
 
@@ -246,20 +251,20 @@ class TestScriptSafety:
 
 
 class TestVersionConsistency:
-    def test_package_version_is_stable(self) -> None:
+    def test_package_version_is_dev(self) -> None:
         import tomllib
         pyproject = ROOT / "pyproject.toml"
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
-        assert data.get("project", {}).get("version") == "0.5.7"
+        assert data.get("project", {}).get("version") == "0.5.8.dev0"
 
-    def test_init_version_is_stable(self) -> None:
+    def test_init_version_is_dev(self) -> None:
         init = ROOT / "src" / "atlas_agent" / "__init__.py"
         text = init.read_text(encoding="utf-8")
         import re
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         assert m is not None
-        assert m.group(1) == "0.5.7"
+        assert m.group(1) == "0.5.8.dev0"
 
     def test_release_note_exists(self) -> None:
         assert (ROOT / "docs" / "releases" / "v0.5.7.md").exists()

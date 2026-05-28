@@ -128,5 +128,5 @@ This script provides a safe, automated preflight that catches packaging issues b
 - Trust remains **blocked**.
 - No broker/order path is enabled by this workflow.
 - No credentials are loaded.
-- This is a **sandbox/paper/preflight release candidate** verification step only.
+- This is a **sandbox/paper/preflight** verification step only.
 - Safety validation does not imply profitability or trading correctness.

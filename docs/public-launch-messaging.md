@@ -111,6 +111,6 @@ Do not claim or imply:
 - Trust remains blocked — mock responses in safety workflows are explicitly not trusted.
 - Not financial advice. Does not imply profitability or trading correctness.
 
-## Current release candidate status
+## Current stable status
 
 This is stable v0.5.7. It is ready for public review and technical feedback, but it is not a live-trading-ready product. See `docs/public-launch-readiness.md` for the full verified-checks list.

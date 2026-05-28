@@ -169,7 +169,7 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.7"
+        assert data["package_version"] == "0.5.8.dev0"
         assert data["public_tag"] == "v0.5.7"
         assert data["errors"] == []
 
@@ -178,6 +178,56 @@ class TestScriptBehavior:
         assert result.returncode == 0
         for frag in _FORBIDDEN_FRAGMENTS:
             assert frag not in result.stdout, f"JSON output contains absolute path: {frag}"
+
+
+class TestStaleRCReferencesBlocked:
+    def test_readme_with_current_status_rc9_fails(self) -> None:
+        from tests.test_public_docs_consistency import _run_script_on_text
+        text = (
+            "# README\n\n```bash\natlas --help\n```\n\n"
+            "## Current Status (v0.5.7-rc9)\n\n"
+            "Sandbox-only, paper-first, offline-safe.\n"
+            "Live trading disabled by default. Not financial advice.\n"
+        )
+        result = _run_script_on_text(text)
+        assert result.returncode != 0, "Expected failure on stale RC current-status reference"
+        assert "v0.5.7-rc9" in result.stdout or "stale" in result.stdout.lower()
+
+    def test_public_launch_readiness_saying_release_candidate_fails(self) -> None:
+        from tests.test_public_docs_consistency import _run_script_on_text
+        text = (
+            "# Public Launch Readiness\n\n"
+            "Atlas Agent is a sandbox/paper/preflight release candidate.\n\n"
+            "Not financial advice.\n"
+        )
+        result = _run_script_on_text(text)
+        assert result.returncode != 0, "Expected failure on stale RC status claim"
+        assert "release candidate" in result.stdout.lower()
+
+    def test_historical_changelog_rc9_reference_allowed(self) -> None:
+        from tests.test_public_docs_consistency import _run_script_on_text
+        text = (
+            "# Changelog\n\n## [0.5.7rc9] - 2026-05-26\n\n"
+            "Ninth release candidate for the v0.5.7 line.\n\n"
+            "Not financial advice.\n"
+        )
+        result = _run_script_on_text(text)
+        assert result.returncode == 0, (
+            f"Expected pass for historical RC changelog entry:\n{result.stdout}"
+        )
+
+    def test_current_dev_version_058dev0_accepted(self) -> None:
+        from tests.test_public_docs_consistency import _run_script_on_text
+        text = (
+            "# README\n\n```bash\natlas --help\n```\n\n"
+            "Sandbox-only, paper-first, offline-safe.\n"
+            "Live trading disabled by default. Not financial advice.\n"
+            "Current development version is 0.5.8.dev0.\n"
+        )
+        result = _run_script_on_text(text)
+        assert result.returncode == 0, (
+            f"Expected pass for current dev version:\n{result.stdout}"
+        )
 
 
 class TestScriptSafety:

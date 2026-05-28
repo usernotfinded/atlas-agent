@@ -358,7 +358,7 @@ Before tagging, verify public launch readiness materials are present and safe:
 - `tests/test_public_launch_readiness.py` passes
 - README has "What this is" and "What this is not" sections
 - README links to SECURITY.md, CONTRIBUTING.md, and changelog/release notes
-- README contains safe current status `v0.5.7`
+- README contains safe current status matching the target version
 - No overclaim in public docs
 - No secrets in public docs
 - No package artifacts staged

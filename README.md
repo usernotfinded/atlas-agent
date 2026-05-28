@@ -79,9 +79,15 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **Not a licensed financial advisor.** This is software, not financial advice.
 - **Not autonomous.** All live actions require explicit human confirmation when enabled.
 
-## Current Status (v0.5.7-rc9)
+## Current Development Status
 
-Atlas is in active development. Paper workflows, deterministic backtesting, audit logs, approval queues, and broker sync/reconciliation are usable. Live submit remains disabled by default and requires explicit multi-factor opt-in, typed confirmation, valid credentials, live trading mode, kill switch normal state, a valid opt-in audit record, and live-submit hard limits.
+`main` is now post-`v0.5.7` development. The latest stable public release is `v0.5.7`; unreleased changes on `main` are tracked in the `[Unreleased]` section of `CHANGELOG.md`.
+
+- Live trading is disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.
+- No profitability or trading correctness claims.
+- Not financial advice.
 
 ## Review and Feedback
 

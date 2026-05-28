@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactored CLI command structure to reduce the size of the main CLI module while preserving research command compatibility.
+
+### Safety
+- No intentional live trading enablement.
+- No intentional provider execution unlock.
+- No intentional broker execution unlock.
+- Safety-critical boundaries remain conservative and require review before release.
+
 ## [0.5.7] - 2026-05-26
 
 ### Release Engineering

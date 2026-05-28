@@ -26,7 +26,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.7"
+PACKAGE_VERSION = "0.5.8.dev0"
 PUBLIC_TAG = "v0.5.7"
 
 REQUIRED_FILES = [
@@ -228,7 +228,8 @@ def _check_changelog_entry() -> list[str]:
     changelog = REPO_ROOT / "CHANGELOG.md"
     if changelog.exists():
         text = changelog.read_text(encoding="utf-8")
-        if f"[{PACKAGE_VERSION}]" not in text:
+        is_dev = ".dev" in PACKAGE_VERSION
+        if f"[{PACKAGE_VERSION}]" not in text and not is_dev:
             errors.append(f"CHANGELOG.md missing entry for [{PACKAGE_VERSION}]")
     else:
         errors.append("CHANGELOG.md not found")

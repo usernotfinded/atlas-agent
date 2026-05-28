@@ -12,7 +12,7 @@ import tomllib
 from pathlib import Path
 
 
-PACKAGE_VERSION = "0.5.7"
+PACKAGE_VERSION = "0.5.8.dev0"
 PUBLIC_TAG = "v0.5.7"
 
 
@@ -76,19 +76,22 @@ def main() -> int:
         readme_text = readme_path.read_text(encoding="utf-8")
         if PUBLIC_TAG not in readme_text:
             errors.append(f"README.md missing current status reference to {PUBLIC_TAG}")
-        # Reject stale dev50 current-status claim
+        # Reject stale dev/RC current-status claims
         stale_patterns = [
             r"Current Status \(v0\.5\.7\.dev5[0-9]\)",
             r"Current Status \(0\.5\.7\.dev5[0-9]\)",
+            r"Current Status \(v0\.5\.7-rc\d+\)",
+            r"Current Status \(0\.5\.7rc\d+\)",
         ]
         for pattern in stale_patterns:
             if re.search(pattern, readme_text):
-                errors.append(f"README.md contains stale dev current-status reference matching {pattern}")
+                errors.append(f"README.md contains stale current-status reference matching {pattern}")
 
-    # 5. CHANGELOG entry
+    # 5. CHANGELOG entry (skip for dev versions; Unreleased is sufficient)
     if changelog_path.exists():
         changelog_text = changelog_path.read_text(encoding="utf-8")
-        if f"[{PACKAGE_VERSION}]" not in changelog_text:
+        is_dev = ".dev" in PACKAGE_VERSION
+        if f"[{PACKAGE_VERSION}]" not in changelog_text and not is_dev:
             errors.append(f"CHANGELOG.md missing entry for [{PACKAGE_VERSION}]")
 
     # 6. Release note exists
