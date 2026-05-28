@@ -29,11 +29,15 @@ echo "1. version consistency"
 "$PYTHON_BIN" scripts/check_version_consistency.py
 
 echo ""
-echo "2. forbidden claims scan"
+echo "2. CLI command compatibility"
+"$PYTHON_BIN" scripts/check_cli_command_compatibility.py
+
+echo ""
+echo "3. forbidden claims scan"
 "$PYTHON_BIN" scripts/check_forbidden_claims.py
 
 echo ""
-echo "3. research sandbox CLI tests"
+echo "4. research sandbox CLI tests"
 "$PYTHON_BIN" -m pytest tests/research/test_research_sandbox_cli.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""

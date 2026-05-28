@@ -12,6 +12,7 @@ Run this before pushing a public GitHub release.
 - `./scripts/demo_paper_workflow.sh`
 - `./scripts/demo_research_workflow.sh` (optional: validates the complete paper-only research chain including evaluation, artifact health checking, and lineage timeline)
 - `python3.11 scripts/check_version_consistency.py`
+- `python3.11 scripts/check_cli_command_compatibility.py`
 - `python3.11 scripts/check_forbidden_claims.py`
 - `python3.11 scripts/verify_readme_quickstart.py`
 - `python3.11 scripts/check_public_docs_consistency.py`

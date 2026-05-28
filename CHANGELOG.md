@@ -10,11 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Refactored CLI command structure to reduce the size of the main CLI module while preserving research command compatibility.
 
+### Added
+- Added a CLI command compatibility contract and local check to guard public command families after the post-v0.5.7 CLI refactor.
+
 ### Safety
 - No intentional live trading enablement.
 - No intentional provider execution unlock.
 - No intentional broker execution unlock.
 - Safety-critical boundaries remain conservative and require review before release.
+- The CLI compatibility check is parser-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
 
 ## [0.5.7] - 2026-05-26
 

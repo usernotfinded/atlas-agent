@@ -30,6 +30,8 @@ jobs:
           python3.11 -m pip install pytest build
       - name: Version consistency
         run: python3.11 scripts/check_version_consistency.py
+      - name: CLI command compatibility
+        run: python3.11 scripts/check_cli_command_compatibility.py
       - name: Forbidden claims scan
         run: python3.11 scripts/check_forbidden_claims.py
       - name: Public docs consistency
