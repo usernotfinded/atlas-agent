@@ -41,19 +41,23 @@ echo "4. research sandbox CLI tests"
 "$PYTHON_BIN" -m pytest tests/research/test_research_sandbox_cli.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "4. release check script tests"
+echo "5. reviewer golden-path smoke tests"
+"$PYTHON_BIN" -m pytest tests/test_reviewer_golden_path_smoke.py -q "${PYTEST_EXTRA_ARGS[@]}"
+
+echo ""
+echo "6. release check script tests"
 "$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "5. git diff --check"
+echo "7. git diff --check"
 git diff --check
 
 echo ""
-echo "6. git diff --cached --check"
+echo "8. git diff --cached --check"
 git diff --cached --check
 
 echo ""
-echo "7. protected staged files"
+echo "9. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""

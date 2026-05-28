@@ -102,6 +102,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **[Stable Release Decision](docs/stable-release-decision.md)** — decision record for stable v0.5.7
 - **[Stable Release Checklist](docs/stable-release-checklist.md)** — pre-tag checklist for stable v0.5.7
 - **[CLI Command Compatibility](docs/cli-command-compatibility.md)** — parser contract and regression guard for public CLI commands
+- **[Reviewer Golden Path](docs/reviewer-golden-path.md)** — safe local onboarding smoke test
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 

@@ -94,43 +94,49 @@ $PYTHON_BIN -m pip check
 
 echo ""
 echo "========================================"
-echo "3. demo paper workflow"
+echo "3. reviewer golden-path smoke"
+echo "========================================"
+$PYTHON_BIN scripts/smoke_reviewer_golden_path.py --skip-release-check
+
+echo ""
+echo "========================================"
+echo "4. demo paper workflow"
 echo "========================================"
 ./scripts/demo_paper_workflow.sh
 
 echo ""
 echo "========================================"
-echo "4. demo research workflow"
+echo "5. demo research workflow"
 echo "========================================"
 ./scripts/demo_research_workflow.sh
 
 echo ""
 echo "========================================"
-echo "5. git diff --check"
+echo "6. git diff --check"
 echo "========================================"
 git diff --check
 
 echo ""
 echo "========================================"
-echo "6. git diff --cached --check"
+echo "7. git diff --cached --check"
 echo "========================================"
 git diff --cached --check
 
 echo ""
 echo "========================================"
-echo "7. protected staged files"
+echo "8. protected staged files"
 echo "========================================"
 $PYTHON_BIN scripts/check_no_protected_staged.py
 
 echo ""
 echo "========================================"
-echo "8. version consistency"
+echo "9. version consistency"
 echo "========================================"
 $PYTHON_BIN scripts/check_version_consistency.py
 
 echo ""
 echo "========================================"
-echo "9. forbidden claims scan"
+echo "10. forbidden claims scan"
 echo "========================================"
 $PYTHON_BIN scripts/check_forbidden_claims.py
 
