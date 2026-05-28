@@ -287,6 +287,7 @@ Runs fast, safe checks without heavy demos or full pytest:
 
 - `python3.11 scripts/check_version_consistency.py`
 - `python3.11 scripts/check_forbidden_claims.py`
+- `python3.11 scripts/check_feedback_intake.py`
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/verify_readme_quickstart.py`
 - `python3.11 scripts/check_rc1_cutover.py` — historical v0.5.7 release record check (verifies stable tag and current dev posture)

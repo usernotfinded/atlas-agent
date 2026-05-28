@@ -37,27 +37,31 @@ echo "3. forbidden claims scan"
 "$PYTHON_BIN" scripts/check_forbidden_claims.py
 
 echo ""
-echo "4. research sandbox CLI tests"
+echo "4. feedback intake check"
+"$PYTHON_BIN" scripts/check_feedback_intake.py
+
+echo ""
+echo "5. research sandbox CLI tests"
 "$PYTHON_BIN" -m pytest tests/research/test_research_sandbox_cli.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "5. reviewer golden-path smoke tests"
+echo "6. reviewer golden-path smoke tests"
 "$PYTHON_BIN" -m pytest tests/test_reviewer_golden_path_smoke.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "6. release check script tests"
+echo "7. release check script tests"
 "$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "7. git diff --check"
+echo "8. git diff --check"
 git diff --check
 
 echo ""
-echo "8. git diff --cached --check"
+echo "9. git diff --cached --check"
 git diff --cached --check
 
 echo ""
-echo "9. protected staged files"
+echo "10. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""

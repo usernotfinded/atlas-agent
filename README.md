@@ -104,6 +104,8 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **[CLI Command Compatibility](docs/cli-command-compatibility.md)** — parser contract and regression guard for public CLI commands
 - **[Reviewer Golden Path](docs/reviewer-golden-path.md)** — safe local onboarding smoke test
 - **[Release Evidence Bundle](docs/release-evidence-bundle.md)** — local JSON/Markdown release snapshot
+- **[Feedback Intake Process](docs/feedback-intake-process.md)** — how to submit structured reviewer feedback
+- **[Public Feedback Checklist](docs/public-feedback-checklist.md)** — pre-outreach safety checklist
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 

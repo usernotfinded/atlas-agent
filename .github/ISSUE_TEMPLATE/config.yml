@@ -3,3 +3,18 @@ contact_links:
   - name: Security Advisory
     url: https://github.com/usernotfinded/atlas-agent/security/advisories
     about: Report security vulnerabilities or active credential leaks privately.
+  - name: Reviewer Feedback
+    url: https://github.com/usernotfinded/atlas-agent/issues/new?template=reviewer_feedback.yml
+    about: Structured feedback from external reviewers and new users.
+  - name: Docs Issue
+    url: https://github.com/usernotfinded/atlas-agent/issues/new?template=docs_issue.yml
+    about: Report unclear, missing, or incorrect documentation.
+  - name: Safety Concern
+    url: https://github.com/usernotfinded/atlas-agent/issues/new?template=safety_concern.yml
+    about: Report a security, safety gate, or trust-boundary issue.
+  - name: Feature Request
+    url: https://github.com/usernotfinded/atlas-agent/issues/new?template=feature_request.yml
+    about: Suggest a new capability or improvement.
+  - name: Bug Report
+    url: https://github.com/usernotfinded/atlas-agent/issues/new?template=bug_report.yml
+    about: Report a reproducible defect.
