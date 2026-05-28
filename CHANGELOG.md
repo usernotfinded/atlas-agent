@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added public feedback intake templates, docs, and checks for structured reviewer feedback.
 - Added a local feedback label taxonomy and triage checker for public reviewer issues.
 - Added a controlled reviewer outreach pack with safe copy-paste review requests, outreach checklist, and local validation checks.
+- Added a product capability inventory and local gap-audit check for public claims, docs, CLI surface, and safety posture.
 
 ### Fixed
 - Updated the legacy RC cutover check so post-v0.5.7 development versions such as `0.5.8.dev0` are accepted while the historical `v0.5.7` tag remains verified.
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feedback intake docs and templates explicitly reject credential sharing, safety-bypass requests, real-money broker setup, and profitability/trading-signal evaluation.
 - Feedback taxonomy docs classify live-trading, broker, provider, credential, and safety-bypass requests as safety-sensitive or out-of-scope by default.
 - Reviewer outreach drafts explicitly avoid profitability claims, live-trading readiness claims, broker setup requests, credential sharing, and safety-bypass requests.
+- Capability inventory marks live trading, provider execution, broker execution, credentials, and profitability-related areas as disabled, safety-sensitive, or not safe to claim unless explicitly verified.
 
 ## [0.5.7] - 2026-05-26
 

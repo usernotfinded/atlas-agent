@@ -109,6 +109,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **[Feedback Triage Taxonomy](docs/feedback-triage-taxonomy.md)** — label taxonomy and triage rules for incoming reviewer feedback
 - **[Controlled Reviewer Outreach](docs/controlled-reviewer-outreach.md)** — safe copy-paste review requests and outreach process for 5–10 technical reviewers
 - **[Reviewer Outreach Checklist](docs/reviewer-outreach-checklist.md)** — pre-outreach safety and readiness checklist
+- **[Product Capability Inventory](docs/product-capability-inventory.md)** — capability matrix, implementation status, and public-claim boundaries
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 

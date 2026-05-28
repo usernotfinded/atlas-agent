@@ -36,55 +36,59 @@ echo "6. reviewer outreach check"
 "$PYTHON_BIN" scripts/check_reviewer_outreach.py
 
 echo ""
-echo "7. public docs consistency"
+echo "7. product capability inventory check"
+"$PYTHON_BIN" scripts/check_product_capability_inventory.py
+
+echo ""
+echo "8. public docs consistency"
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py
 
 echo ""
-echo "8. README quickstart verification"
+echo "9. README quickstart verification"
 "$PYTHON_BIN" scripts/verify_readme_quickstart.py
 
 echo ""
-echo "9. RC cutover check"
+echo "10. RC cutover check"
 "$PYTHON_BIN" scripts/check_rc1_cutover.py
 
 echo ""
-echo "8. clean install dry-run"
+echo "11. clean install dry-run"
 "$PYTHON_BIN" scripts/check_clean_install.py --dry-run
 
 echo ""
-echo "9. clean install verification"
+echo "12. clean install verification"
 "$PYTHON_BIN" scripts/check_clean_install.py
 
 echo ""
-echo "10. package distribution dry-run"
+echo "13. package distribution dry-run"
 "$PYTHON_BIN" scripts/check_package_distribution.py --dry-run
 
 echo ""
-echo "11. package distribution verification"
+echo "14. package distribution verification"
 "$PYTHON_BIN" scripts/check_package_distribution.py
 
 echo ""
-echo "12. public launch readiness check"
+echo "15. public launch readiness check"
 "$PYTHON_BIN" scripts/check_public_launch_readiness.py
 
 echo ""
-echo "13. reviewer onboarding check"
+echo "16. reviewer onboarding check"
 "$PYTHON_BIN" scripts/check_reviewer_onboarding.py
 
 echo ""
-echo "14. public launch messaging check"
+echo "17. public launch messaging check"
 "$PYTHON_BIN" scripts/check_public_launch_messaging.py
 
 echo ""
-echo "15. final RC audit check"
+echo "18. final RC audit check"
 "$PYTHON_BIN" scripts/check_final_rc_audit.py
 
 echo ""
-echo "16. stable release decision check"
+echo "19. stable release decision check"
 "$PYTHON_BIN" scripts/check_stable_release_decision.py
 
 echo ""
-echo "17. focused pytest subset"
+echo "20. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_clean_install_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_package_distribution_check.py -q
 "$PYTHON_BIN" -m pytest tests/test_rc1_cutover_consistency.py -q
@@ -101,15 +105,15 @@ echo "17. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_stable_release_decision.py -q
 
 echo ""
-echo "18. pip check"
+echo "21. pip check"
 "$PYTHON_BIN" -m pip check
 
 echo ""
-echo "19. git diff --check"
+echo "22. git diff --check"
 git diff --check
 
 echo ""
-echo "20. protected staged files"
+echo "23. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""

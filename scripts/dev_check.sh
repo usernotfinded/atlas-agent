@@ -49,27 +49,31 @@ echo "6. reviewer outreach check"
 "$PYTHON_BIN" scripts/check_reviewer_outreach.py
 
 echo ""
-echo "7. research sandbox CLI tests"
+echo "7. product capability inventory check"
+"$PYTHON_BIN" scripts/check_product_capability_inventory.py
+
+echo ""
+echo "8. research sandbox CLI tests"
 "$PYTHON_BIN" -m pytest tests/research/test_research_sandbox_cli.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "8. reviewer golden-path smoke tests"
+echo "9. reviewer golden-path smoke tests"
 "$PYTHON_BIN" -m pytest tests/test_reviewer_golden_path_smoke.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "9. release check script tests"
+echo "10. release check script tests"
 "$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "10. git diff --check"
+echo "11. git diff --check"
 git diff --check
 
 echo ""
-echo "11. git diff --cached --check"
+echo "12. git diff --cached --check"
 git diff --cached --check
 
 echo ""
-echo "12. protected staged files"
+echo "13. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""
