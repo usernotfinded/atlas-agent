@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a deterministic reviewer golden-path smoke test for safe local onboarding.
 - Added a local release evidence bundle generator that writes JSON and Markdown reports for reviewer/release verification.
 
+### Fixed
+- Updated the legacy RC cutover check so post-v0.5.7 development versions such as `0.5.8.dev0` are accepted while the historical `v0.5.7` tag remains verified.
+
 ### Safety
 - No intentional live trading enablement.
 - No intentional provider execution unlock.
@@ -23,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The CLI compatibility check is parser-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
 - The golden-path smoke test runs in a temporary workspace and does not call providers, brokers, load credentials, submit orders, or enable live trading.
 - The release evidence bundle is local-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
+- The historical release record check is local-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
 
 ## [0.5.7] - 2026-05-26
 

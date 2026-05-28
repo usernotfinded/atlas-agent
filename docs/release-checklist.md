@@ -289,7 +289,7 @@ Runs fast, safe checks without heavy demos or full pytest:
 - `python3.11 scripts/check_forbidden_claims.py`
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/verify_readme_quickstart.py`
-- `python3.11 scripts/check_rc1_cutover.py`
+- `python3.11 scripts/check_rc1_cutover.py` — historical v0.5.7 release record check (verifies stable tag and current dev posture)
 - `python3.11 scripts/check_clean_install.py --dry-run`
 - `python3.11 scripts/check_clean_install.py`
 - `python3.11 scripts/check_package_distribution.py --dry-run`

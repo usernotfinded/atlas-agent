@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Verify the repo is internally consistent for v0.5.7-rc1.
+"""Verify the historical v0.5.7 stable release record and current dev posture.
+
+This script ensures:
+- The historical v0.5.7 tag contains the expected stable version metadata.
+- Current main is a post-v0.5.7 development version (e.g. 0.5.8.dev0).
+- Public docs remain safe and do not contain forbidden claims or secrets.
 
 Deterministic and local. Does not:
 - tag
@@ -12,15 +17,19 @@ Deterministic and local. Does not:
 
 from __future__ import annotations
 
+import argparse
+import json
 import re
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PACKAGE_VERSION = "0.5.7"
-PUBLIC_TAG = "v0.5.7"
+HISTORICAL_STABLE_VERSION = "0.5.7"
+HISTORICAL_STABLE_TAG = "v0.5.7"
+CURRENT_DEV_SERIES = "0.5.8.dev0"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -66,55 +75,115 @@ def _read(path: Path) -> str:
         return f.read()
 
 
+def _git_show(tag: str, path: str) -> str:
+    result = subprocess.run(
+        ["git", "show", f"{tag}:{path}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout if result.returncode == 0 else ""
+
+
 def _check_version_consistency() -> list[str]:
     errors: list[str] = []
     pyproject_path = REPO_ROOT / "pyproject.toml"
     init_path = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
     readme_path = REPO_ROOT / "README.md"
     changelog_path = REPO_ROOT / "CHANGELOG.md"
-    release_note_path = REPO_ROOT / "docs" / "releases" / f"{PUBLIC_TAG}.md"
+    release_note_path = REPO_ROOT / "docs" / "releases" / f"{HISTORICAL_STABLE_TAG}.md"
     checklist_path = REPO_ROOT / "docs" / "release-checklist.md"
 
+    # 1. Current main version should be a dev version after 0.5.7
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
-        toml_version = data.get("project", {}).get("version")
-        if toml_version != PACKAGE_VERSION:
-            errors.append(
-                f"pyproject.toml version {toml_version!r} != {PACKAGE_VERSION!r}"
-            )
+        current_toml_version = data.get("project", {}).get("version")
+        if current_toml_version != CURRENT_DEV_SERIES:
+            # Allow any dev version after 0.5.7, or explicitly the expected series
+            if not (
+                current_toml_version
+                and (
+                    current_toml_version.startswith("0.5.8.dev")
+                    or current_toml_version.startswith("0.5.9.dev")
+                    or current_toml_version.startswith("0.6.")
+                )
+            ):
+                errors.append(
+                    f"pyproject.toml version {current_toml_version!r} is not a recognized post-0.5.7 dev version"
+                )
     else:
         errors.append("pyproject.toml not found")
 
     if init_path.exists():
         init_text = init_path.read_text(encoding="utf-8")
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', init_text, re.MULTILINE)
-        init_version = m.group(1) if m else None
-        if init_version != PACKAGE_VERSION:
-            errors.append(
-                f"__init__.py version {init_version!r} != {PACKAGE_VERSION!r}"
-            )
+        current_init_version = m.group(1) if m else None
+        if current_init_version != CURRENT_DEV_SERIES:
+            if not (
+                current_init_version
+                and (
+                    current_init_version.startswith("0.5.8.dev")
+                    or current_init_version.startswith("0.5.9.dev")
+                    or current_init_version.startswith("0.6.")
+                )
+            ):
+                errors.append(
+                    f"__init__.py version {current_init_version!r} is not a recognized post-0.5.7 dev version"
+                )
     else:
         errors.append("__init__.py not found")
 
+    # 2. Historical v0.5.7 tag must contain version 0.5.7
+    tag_pyproject = _git_show(HISTORICAL_STABLE_TAG, "pyproject.toml")
+    if not tag_pyproject:
+        errors.append(f"Could not read pyproject.toml from tag {HISTORICAL_STABLE_TAG}")
+    else:
+        tag_toml_version = None
+        try:
+            tag_toml_version = tomllib.loads(tag_pyproject).get("project", {}).get("version")
+        except Exception:
+            pass
+        if tag_toml_version != HISTORICAL_STABLE_VERSION:
+            errors.append(
+                f"Tag {HISTORICAL_STABLE_TAG} pyproject.toml version {tag_toml_version!r} != {HISTORICAL_STABLE_VERSION!r}"
+            )
+
+    tag_init = _git_show(HISTORICAL_STABLE_TAG, "src/atlas_agent/__init__.py")
+    if not tag_init:
+        errors.append(f"Could not read __init__.py from tag {HISTORICAL_STABLE_TAG}")
+    else:
+        m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', tag_init, re.MULTILINE)
+        tag_init_version = m.group(1) if m else None
+        if tag_init_version != HISTORICAL_STABLE_VERSION:
+            errors.append(
+                f"Tag {HISTORICAL_STABLE_TAG} __init__.py version {tag_init_version!r} != {HISTORICAL_STABLE_VERSION!r}"
+            )
+
+    # 3. README must reference stable tag and not contain stale dev wording
     if readme_path.exists():
         readme_text = readme_path.read_text(encoding="utf-8")
-        if PUBLIC_TAG not in readme_text:
-            errors.append("README.md missing current status reference to RC1")
+        if HISTORICAL_STABLE_TAG not in readme_text:
+            errors.append("README.md missing current status reference to stable tag")
         stale = [
             r"Current Status \(v0\.5\.7\.dev5[0-9]\)",
             r"Current Status \(0\.5\.7\.dev5[0-9]\)",
+            r"Current Status \(v0\.5\.7-rc\d+\)",
+            r"Current Status \(0\.5\.7rc\d+\)",
         ]
         for pattern in stale:
             if re.search(pattern, readme_text):
-                errors.append(f"README.md contains stale dev current-status reference")
+                errors.append("README.md contains stale RC/dev current-status reference")
     else:
         errors.append("README.md not found")
 
+    # 4. CHANGELOG must have both Unreleased and 0.5.7
     if changelog_path.exists():
         changelog_text = changelog_path.read_text(encoding="utf-8")
-        if f"[{PACKAGE_VERSION}]" not in changelog_text:
-            errors.append("CHANGELOG.md missing RC1 entry")
+        if "[Unreleased]" not in changelog_text:
+            errors.append("CHANGELOG.md missing [Unreleased] section")
+        if f"[{HISTORICAL_STABLE_VERSION}]" not in changelog_text:
+            errors.append("CHANGELOG.md missing stable release entry")
     else:
         errors.append("CHANGELOG.md not found")
 
@@ -123,8 +192,8 @@ def _check_version_consistency() -> list[str]:
 
     if checklist_path.exists():
         checklist_text = checklist_path.read_text(encoding="utf-8")
-        if PUBLIC_TAG not in checklist_text:
-            errors.append("release-checklist.md missing RC1 reference")
+        if HISTORICAL_STABLE_TAG not in checklist_text:
+            errors.append("release-checklist.md missing stable tag reference")
     else:
         errors.append("release-checklist.md not found")
 
@@ -174,9 +243,6 @@ def _scan_text(text: str, rel_path: str) -> list[str]:
 
 def _check_no_package_artifacts_staged() -> list[str]:
     errors: list[str] = []
-    git_index = REPO_ROOT / ".git" / "index"
-    # Use git diff --cached to detect staged files
-    import subprocess
     result = subprocess.run(
         ["git", "diff", "--cached", "--name-only"],
         cwd=REPO_ROOT,
@@ -191,7 +257,7 @@ def _check_no_package_artifacts_staged() -> list[str]:
     return errors
 
 
-def main() -> int:
+def _gather() -> dict:
     all_errors: list[str] = []
 
     all_errors.extend(_check_version_consistency())
@@ -199,7 +265,7 @@ def main() -> int:
     public_docs = [
         REPO_ROOT / "README.md",
         REPO_ROOT / "CHANGELOG.md",
-        REPO_ROOT / "docs" / "releases" / f"{PUBLIC_TAG}.md",
+        REPO_ROOT / "docs" / "releases" / f"{HISTORICAL_STABLE_TAG}.md",
         REPO_ROOT / "docs" / "release-checklist.md",
         REPO_ROOT / "docs" / "provider-safety-dossier.md",
         REPO_ROOT / "docs" / "examples" / "provider-safety-dossier-workflow.md",
@@ -216,14 +282,52 @@ def main() -> int:
 
     all_errors.extend(_check_no_package_artifacts_staged())
 
-    if all_errors:
-        print("RC2 cutover check FAILED")
-        for e in all_errors:
-            print(f"  - {e}")
-        return 2
+    current_toml_version = None
+    current_init_version = None
+    pyproject_path = REPO_ROOT / "pyproject.toml"
+    init_path = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
+    if pyproject_path.exists():
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+        current_toml_version = data.get("project", {}).get("version")
+    if init_path.exists():
+        init_text = init_path.read_text(encoding="utf-8")
+        m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', init_text, re.MULTILINE)
+        current_init_version = m.group(1) if m else None
 
-    print(f"RC2 cutover check PASSED: package={PACKAGE_VERSION} public_tag={PUBLIC_TAG}")
-    return 0
+    return {
+        "passed": len(all_errors) == 0,
+        "current_package_version": current_toml_version,
+        "current_init_version": current_init_version,
+        "stable_tag": HISTORICAL_STABLE_TAG,
+        "stable_tag_version": HISTORICAL_STABLE_VERSION,
+        "errors": all_errors,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Historical v0.5.7 release record check"
+    )
+    parser.add_argument("--json", action="store_true", help="Emit JSON envelope")
+    args = parser.parse_args()
+
+    result = _gather()
+
+    if args.json:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        if result["errors"]:
+            print("Historical v0.5.7 release record check FAILED")
+            for e in result["errors"]:
+                print(f"  - {e}")
+        else:
+            print(
+                f"Historical v0.5.7 release record check PASSED: "
+                f"current={result['current_package_version']} stable_tag={result['stable_tag']}"
+            )
+
+    return 0 if result["passed"] else 2
 
 
 if __name__ == "__main__":
