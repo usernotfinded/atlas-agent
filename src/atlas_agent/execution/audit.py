@@ -19,10 +19,6 @@ class AuditLogger:
         record = {
             "timestamp": datetime.now(UTC).isoformat(),
             "event_type": event_type,
-            "payload": _redact(payload),
+            "payload": redact_payload(payload),
         }
         self._writer.write(record)
-
-
-def _redact(value: Any) -> Any:
-    return redact_payload(value)

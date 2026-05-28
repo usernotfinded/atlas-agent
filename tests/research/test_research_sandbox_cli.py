@@ -4425,3 +4425,189 @@ class TestProviderCredentialBoundaryConfigless:
                                                     if pcb.get("provider_credential_boundary_id") == boundary_id:
                                                         found_boundary = True
         assert found_boundary, "Credential boundary not found in timeline"
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: provider-execution CLI parser/dispatch compatibility
+# ---------------------------------------------------------------------------
+
+
+class TestProviderExecutionCommandAliases:
+    """Ensure old public commands parse, dispatch, and produce output."""
+
+    def _create_dry_run(self, tmp_path: Path, monkeypatch, capsys) -> tuple[str, str, str, str, str]:
+        """Returns (run_id, prompt_id, sandbox_id, plan_id, dry_run_id)."""
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id = _create_provider_call_plan(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run", plan_id, "--json"]) == 0
+
+        out = json.loads(capsys.readouterr().out)
+        return run_id, prompt_id, sandbox_id, plan_id, out["provider_execution_dry_run_id"]
+
+    @pytest.mark.parametrize("cmd", [
+        "provider-execution-list",
+        "provider-execution-show",
+        "provider-execution-validate",
+        "provider-execution-replay",
+        "provider-execution-chain-doctor",
+    ])
+    def test_old_public_commands_parse(self, tmp_path: Path, monkeypatch, capsys, cmd: str) -> None:
+        """Old public commands must be accepted by argparse."""
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        extra_args = []
+        if cmd in ("provider-execution-show", "provider-execution-validate", "provider-execution-replay"):
+            extra_args = ["dummy-id"]
+        elif cmd == "provider-execution-chain-doctor":
+            extra_args = ["dummy-run-id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", cmd, *extra_args, "--json"])
+
+        out = capsys.readouterr().out
+        # Must not be an argparse error; should either succeed or fail safely with JSON
+        assert "invalid choice" not in out.lower()
+        assert out.strip() != "", f"Command {cmd} produced no output"
+        data = json.loads(out)
+        # dummy IDs should fail safely with JSON error, not crash
+        assert "ok" in data
+
+    @pytest.mark.parametrize("cmd", [
+        "provider-execution-dry-run-list",
+        "provider-execution-dry-run-show",
+        "provider-execution-dry-run-validate",
+        "provider-execution-dry-run-replay",
+    ])
+    def test_new_alias_commands_parse(self, tmp_path: Path, monkeypatch, capsys, cmd: str) -> None:
+        """Newly exposed aliases must also parse and produce JSON output."""
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        extra_args = []
+        if cmd in ("provider-execution-dry-run-show", "provider-execution-dry-run-validate", "provider-execution-dry-run-replay"):
+            extra_args = ["dummy-id"]
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            code = main(["research", cmd, *extra_args, "--json"])
+
+        out = capsys.readouterr().out
+        assert "invalid choice" not in out.lower()
+        assert out.strip() != "", f"Command {cmd} produced no output"
+        data = json.loads(out)
+        assert "ok" in data
+
+    def test_alias_list_produces_same_output_as_public(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        """provider-execution-dry-run-list --json must behave like provider-execution-list --json."""
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id, dry_run_id = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-list", "--json"]) == 0
+        public_out = json.loads(capsys.readouterr().out)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run-list", "--json"]) == 0
+        alias_out = json.loads(capsys.readouterr().out)
+
+        assert public_out == alias_out
+
+    def test_alias_show_produces_same_output_as_public(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        """provider-execution-dry-run-show --json must behave like provider-execution-show --json."""
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id, dry_run_id = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-show", dry_run_id, "--json"]) == 0
+        public_out = json.loads(capsys.readouterr().out)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run-show", dry_run_id, "--json"]) == 0
+        alias_out = json.loads(capsys.readouterr().out)
+
+        assert public_out == alias_out
+
+    def test_alias_validate_produces_same_output_as_public(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        """provider-execution-dry-run-validate --json must behave like provider-execution-validate --json."""
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id, dry_run_id = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-validate", dry_run_id, "--json"]) == 0
+        public_out = json.loads(capsys.readouterr().out)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run-validate", dry_run_id, "--json"]) == 0
+        alias_out = json.loads(capsys.readouterr().out)
+
+        assert public_out == alias_out
+
+    def test_alias_replay_produces_same_output_as_public(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        """provider-execution-dry-run-replay --json must behave like provider-execution-replay --json."""
+        _ensure_workspace(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id, dry_run_id = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-replay", dry_run_id, "--json"]) == 0
+        public_out = json.loads(capsys.readouterr().out)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", return_value=None):
+            assert main(["research", "provider-execution-dry-run-replay", dry_run_id, "--json"]) == 0
+        alias_out = json.loads(capsys.readouterr().out)
+
+        assert public_out == alias_out
+
+    def test_provider_execution_chain_doctor_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        """provider-execution-chain-doctor must not require config or secrets."""
+        _ensure_workspace(tmp_path)
+        _write_env_atlas(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id, dry_run_id = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+            "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+        ):
+            code = main(["research", "provider-execution-chain-doctor", run_id, "--json"])
+
+        out = capsys.readouterr().out
+        assert out.strip() != ""
+        data = json.loads(out)
+        assert "ok" in data
+        assert code in (0, 1)  # may succeed or fail safely, but must not crash
+
+    def test_provider_execution_commands_configless(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        """All provider-execution list/show/validate/replay commands must be configless."""
+        _ensure_workspace(tmp_path)
+        _write_env_atlas(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        run_id, prompt_id, sandbox_id, plan_id, dry_run_id = self._create_dry_run(tmp_path, monkeypatch, capsys)
+
+        commands = [
+            (["research", "provider-execution-list", "--json"], "list"),
+            (["research", "provider-execution-show", dry_run_id, "--json"], "show"),
+            (["research", "provider-execution-validate", dry_run_id, "--json"], "validate"),
+            (["research", "provider-execution-replay", dry_run_id, "--json"], "replay"),
+            (["research", "provider-execution-dry-run-list", "--json"], "alias-list"),
+            (["research", "provider-execution-dry-run-show", dry_run_id, "--json"], "alias-show"),
+            (["research", "provider-execution-dry-run-validate", dry_run_id, "--json"], "alias-validate"),
+            (["research", "provider-execution-dry-run-replay", dry_run_id, "--json"], "alias-replay"),
+        ]
+
+        for argv, label in commands:
+            with patch("atlas_agent.cli.AtlasConfig.from_env", side_effect=_raise_if_called), patch(
+                "atlas_agent.config.secrets.load_atlas_secrets", side_effect=_raise_if_called
+            ):
+                code = main(argv)
+
+            out = capsys.readouterr().out
+            assert out.strip() != "", f"{label} produced no output"
+            data = json.loads(out)
+            assert data["ok"] is True, f"{label} failed: {data}"
+            assert code == 0

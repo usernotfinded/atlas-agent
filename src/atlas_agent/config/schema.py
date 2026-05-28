@@ -44,6 +44,34 @@ def parse_int(name: str, default: int) -> int:
     return value
 
 
+LEGACY_CONFIG_FIELD_MAP: dict[str, str] = {
+    "enable_live_trading": "broker.enable_live_trading",
+    "enable_live_submit": "broker.enable_live_submit",
+    "live_broker": "broker.provider",
+    "order_approval_mode": "safety.order_approval_mode",
+    "require_order_approval": "safety.require_order_approval",
+    "max_daily_loss": "risk.max_daily_loss",
+    "max_position_size": "risk.max_position_notional",
+    "max_trades_per_day": "risk.max_trades_per_day",
+    "max_portfolio_exposure": "risk.max_portfolio_exposure",
+    "max_order_notional": "risk.max_order_notional",
+    "allow_leverage": "risk.allow_leverage",
+    "kill_switch_enabled": "safety.kill_switch_enabled",
+    "minimum_confidence": "risk.minimum_confidence",
+    "require_stop_loss_live": "risk.require_stop_loss_live",
+    "enforce_market_hours": "risk.enforce_market_hours",
+    "symbol_allowlist": "risk.symbol_allowlist",
+    "symbol_blocklist": "risk.symbol_blocklist",
+    "live_submit_max_order_notional": "risk.live_submit_max_order_notional",
+    "live_submit_allowed_symbols": "risk.live_submit_allowed_symbols",
+    "live_submit_allowed_sides": "risk.live_submit_allowed_sides",
+    "starting_cash": "backtest.initial_cash",
+    "default_symbol": "backtest.default_symbol",
+    "data_path": "backtest.data_path",
+    "audit_dir": "audit.audit_dir",
+}
+
+
 def parse_csv_set(value: str | None) -> set[str]:
     if not value:
         return set()
@@ -178,34 +206,7 @@ class AtlasConfig(BaseModel):
                 curr = curr[p]
             curr[parts[-1]] = val
 
-        mapping = {
-            "enable_live_trading": "broker.enable_live_trading",
-            "enable_live_submit": "broker.enable_live_submit",
-            "live_broker": "broker.provider",
-            "order_approval_mode": "safety.order_approval_mode",
-            "require_order_approval": "safety.require_order_approval",
-            "max_daily_loss": "risk.max_daily_loss",
-            "max_position_size": "risk.max_position_notional",
-            "max_trades_per_day": "risk.max_trades_per_day",
-            "max_portfolio_exposure": "risk.max_portfolio_exposure",
-            "max_order_notional": "risk.max_order_notional",
-            "allow_leverage": "risk.allow_leverage",
-            "kill_switch_enabled": "safety.kill_switch_enabled",
-            "minimum_confidence": "risk.minimum_confidence",
-            "require_stop_loss_live": "risk.require_stop_loss_live",
-            "enforce_market_hours": "risk.enforce_market_hours",
-            "symbol_allowlist": "risk.symbol_allowlist",
-            "symbol_blocklist": "risk.symbol_blocklist",
-            "live_submit_max_order_notional": "risk.live_submit_max_order_notional",
-            "live_submit_allowed_symbols": "risk.live_submit_allowed_symbols",
-            "live_submit_allowed_sides": "risk.live_submit_allowed_sides",
-            "starting_cash": "backtest.initial_cash",
-            "default_symbol": "backtest.default_symbol",
-            "data_path": "backtest.data_path",
-            "audit_dir": "audit.audit_dir",
-        }
-
-        for legacy_key, new_path in mapping.items():
+        for legacy_key, new_path in LEGACY_CONFIG_FIELD_MAP.items():
             if legacy_key in data:
                 val = data.pop(legacy_key)
                 # Avoid overwriting if new_path already has a value in data

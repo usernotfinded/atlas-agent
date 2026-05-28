@@ -6,21 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from atlas_agent.cli_context import CLIContext
+from atlas_agent.cli_io import display_path, emit_cli_success, redact_cli_text
 from atlas_agent.learning import ingest_conversation, rebuild_search_index
 from atlas_agent.learning.nudges import generate_memory_nudge
 from atlas_agent.memory_doctor import run_memory_doctor
-from atlas_agent.output import emit_json, success_envelope
 
 
-SECRET_ASSIGNMENT_RE = re.compile(
-    r"\b(?P<name>[A-Z0-9_.-]*(?:API[_-]?KEY|API[_-]?SECRET|SECRET[_-]?KEY|TOKEN|PASSWORD)[A-Z0-9_.-]*)"
-    r"(?P<sep>\s*[:=]\s*)"
-    r"(?P<quote>[\"']?)"
-    r"(?P<value>[^\s,;`\"']+)"
-    r"(?P=quote)",
-    re.IGNORECASE,
-)
-BEARER_TOKEN_RE = re.compile(r"\b(Bearer\s+)[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
 MAX_CLI_SNIPPET_CHARS = 220
 
 
@@ -39,7 +30,7 @@ def handle_memory(context: CLIContext) -> int:
     if args.memory_command == "search":
         if getattr(args, "json", False):
             matches, warning = _memory_search_matches(config.memory_dir, args.query)
-            return _emit_json_success(
+            return emit_cli_success(
                 "atlas memory search",
                 {
                     "query": args.query,
@@ -57,7 +48,7 @@ def handle_memory(context: CLIContext) -> int:
     if args.memory_command == "doctor":
         payload = _memory_doctor_payload(context)
         if getattr(args, "json", False):
-            return _emit_json_success("atlas memory doctor", payload)
+            return emit_cli_success("atlas memory doctor", payload)
         _print_memory_doctor_text(payload)
         return 0
 
@@ -70,11 +61,6 @@ def handle_memory(context: CLIContext) -> int:
         print(nudge or "No memory nudge available yet.")
         return 0
 
-    return 0
-
-
-def _emit_json_success(command: str, data: dict[str, Any]) -> int:
-    emit_json(success_envelope(command, data))
     return 0
 
 
@@ -94,7 +80,7 @@ def _memory_search_matches(memory_dir: Path, query: str) -> tuple[list[dict[str,
         if index < 0:
             continue
         snippet = _snippet(content, index, len(query))
-        matches.append({"path": _display_path(path), "snippet": snippet})
+        matches.append({"path": display_path(path), "snippet": snippet})
     return matches, None
 
 
@@ -131,28 +117,10 @@ def _snippet(content: str, index: int, query_length: int) -> str:
         snippet = "... " + snippet
     if end < len(content):
         snippet += " ..."
-    snippet = _redact_sensitive_text(snippet)
+    snippet = redact_cli_text(snippet)
     if len(snippet) > MAX_CLI_SNIPPET_CHARS:
         snippet = snippet[: MAX_CLI_SNIPPET_CHARS - 4].rstrip() + " ..."
     return snippet
-
-
-def _redact_sensitive_text(text: str) -> str:
-    redacted = SECRET_ASSIGNMENT_RE.sub(
-        lambda match: (
-            f"{match.group('name')}{match.group('sep')}"
-            f"{match.group('quote')}[REDACTED]{match.group('quote')}"
-        ),
-        text,
-    )
-    return BEARER_TOKEN_RE.sub(r"\1[REDACTED]", redacted)
-
-
-def _display_path(path: Path) -> str:
-    try:
-        return str(path.relative_to(Path.cwd()))
-    except ValueError:
-        return str(path)
 
 
 def _memory_doctor_payload(context: CLIContext) -> dict[str, Any]:

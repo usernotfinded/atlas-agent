@@ -96,18 +96,18 @@ class TestGenericOutputSanitizer:
         assert_no_forbidden_output(d)
 
     def test_cli_redact_sensitive_text_strips_bearer(self) -> None:
-        from atlas_agent.cli import _redact_sensitive_text
+        from atlas_agent.cli_io import redact_cli_text
 
         text = "Authorization: Bearer abc123 and some other text"
-        redacted = _redact_sensitive_text(text)
+        redacted = redact_cli_text(text)
         assert "Bearer abc123" not in redacted
         assert "[REDACTED]" in redacted
 
     def test_cli_redact_sensitive_text_strips_secret_assignment(self) -> None:
-        from atlas_agent.cli import _redact_sensitive_text
+        from atlas_agent.cli_io import redact_cli_text
 
         text = "API_KEY=FAKE_API_KEY_123 SECRET_TOKEN=LEAKED_PASSWORD_999"
-        redacted = _redact_sensitive_text(text)
+        redacted = redact_cli_text(text)
         assert "FAKE_API_KEY_123" not in redacted
         assert "LEAKED_PASSWORD_999" not in redacted
         assert "[REDACTED]" in redacted

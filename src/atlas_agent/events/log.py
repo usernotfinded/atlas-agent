@@ -39,10 +39,10 @@ class EventLogger:
             "run_id": run_id,
             "command": command,
             "mode": mode,
-            "payload": _redact(payload or {}),
+            "payload": redact_payload(payload or {}),
         }
         # Final pass immediately before writing any event record.
-        record = _redact(record)
+        record = redact_payload(record)
         errors = validate_event_record(record)
         if errors:
             raise ValueError(f"invalid event record: {', '.join(errors)}")
@@ -95,7 +95,3 @@ def latest_event_file(events_dir: str | Path = "events") -> Path | None:
     if not files:
         return None
     return files[-1]
-
-
-def _redact(value: Any, *, key_context: str | None = None) -> Any:
-    return redact_payload(value)

@@ -267,58 +267,39 @@ def iter_research_artifacts(
     symbol: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return a list of artifact metadata dicts, newest first."""
-    research_dir = workspace_path / RESEARCH_DIR
-    if not research_dir.exists():
-        return []
+    from atlas_agent.research.artifact_store import ArtifactKind, ResearchArtifactStore
 
-    search_dirs: list[Path] = []
-    if symbol is not None:
-        safe = sanitize_symbol(symbol)
-        search_dirs.append(research_dir / safe)
-    else:
-        search_dirs = [d for d in research_dir.iterdir() if d.is_dir()]
+    store = ResearchArtifactStore(workspace_path)
+    kind = ArtifactKind(name="research", id_field="run_id")
+    entries = store.list_entries(kind, symbol=symbol)
 
     items: list[dict[str, Any]] = []
-    for directory in search_dirs:
-        if not directory.exists():
-            continue
-        for path in directory.glob("*.json"):
-            if not path.is_file():
-                continue
-            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
-                continue
-            try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
-                # Malformed JSON: skip in list mode with a safe sentinel
-                items.append(
-                    {
-                        "run_id": path.stem,
-                        "symbol": directory.name,
-                        "created_at": "",
-                        "artifact_path": path.relative_to(workspace_path).as_posix(),
-                        "provider": "unknown",
-                        "warnings_count": 1,
-                        "_malformed": True,
-                    }
-                )
-                continue
-            # Skip unsupported schema versions safely in list mode
-            sv = data.get("schema_version")
-            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
-                continue
-            # Only use computed workspace-relative path
-            rel_path = path.relative_to(workspace_path).as_posix()
+    for entry in entries:
+        if entry.is_malformed:
             items.append(
                 {
-                    "run_id": data.get("run_id", path.stem),
-                    "symbol": data.get("symbol", directory.name),
-                    "created_at": data.get("created_at", ""),
-                    "artifact_path": rel_path,
-                    "provider": data.get("provider", "unknown"),
-                    "warnings_count": len(data.get("warnings", [])),
+                    "run_id": entry.path.stem,
+                    "symbol": entry.symbol,
+                    "created_at": "",
+                    "artifact_path": entry.path.relative_to(workspace_path).as_posix(),
+                    "provider": "unknown",
+                    "warnings_count": 1,
+                    "_malformed": True,
                 }
             )
+            continue
+        data = entry.data
+        assert data is not None
+        items.append(
+            {
+                "run_id": data.get("run_id", entry.path.stem),
+                "symbol": data.get("symbol", entry.symbol),
+                "created_at": data.get("created_at", ""),
+                "artifact_path": entry.path.relative_to(workspace_path).as_posix(),
+                "provider": data.get("provider", "unknown"),
+                "warnings_count": len(data.get("warnings", [])),
+            }
+        )
 
     # Sort by created_at descending; malformed items sort to bottom
     def _sort_key(item: dict[str, Any]) -> str:
@@ -333,61 +314,40 @@ def iter_plan_artifacts(
     symbol: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return a list of plan artifact metadata dicts, newest first."""
-    research_dir = workspace_path / RESEARCH_DIR
-    if not research_dir.exists():
-        return []
+    from atlas_agent.research.artifact_store import ArtifactKind, ResearchArtifactStore
 
-    search_dirs: list[Path] = []
-    if symbol is not None:
-        safe = sanitize_symbol(symbol)
-        search_dirs.append(research_dir / safe / "plans")
-    else:
-        for sym_dir in research_dir.iterdir():
-            if sym_dir.is_dir():
-                plans_dir = sym_dir / "plans"
-                if plans_dir.exists():
-                    search_dirs.append(plans_dir)
+    store = ResearchArtifactStore(workspace_path)
+    kind = ArtifactKind(name="plan", id_field="plan_id", subdir="plans")
+    entries = store.list_entries(kind, symbol=symbol)
 
     items: list[dict[str, Any]] = []
-    for directory in search_dirs:
-        if not directory.exists():
-            continue
-        for path in directory.glob("*.json"):
-            if not path.is_file():
-                continue
-            if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
-                continue
-            try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
-                items.append(
-                    {
-                        "plan_id": path.stem,
-                        "symbol": directory.parent.name,
-                        "created_at": "",
-                        "artifact_path": path.relative_to(workspace_path).as_posix(),
-                        "provider": "unknown",
-                        "warnings_count": 1,
-                        "_malformed": True,
-                    }
-                )
-                continue
-            # Skip unsupported schema versions safely in list mode
-            sv = data.get("schema_version")
-            if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
-                continue
-            rel_path = path.relative_to(workspace_path).as_posix()
+    for entry in entries:
+        if entry.is_malformed:
             items.append(
                 {
-                    "plan_id": data.get("plan_id", path.stem),
-                    "source_run_id": data.get("source_run_id", ""),
-                    "symbol": data.get("symbol", directory.parent.name),
-                    "created_at": data.get("created_at", ""),
-                    "artifact_path": rel_path,
-                    "provider": data.get("provider", "unknown"),
-                    "warnings_count": len(data.get("warnings", [])),
+                    "plan_id": entry.path.stem,
+                    "symbol": entry.symbol,
+                    "created_at": "",
+                    "artifact_path": entry.path.relative_to(workspace_path).as_posix(),
+                    "provider": "unknown",
+                    "warnings_count": 1,
+                    "_malformed": True,
                 }
             )
+            continue
+        data = entry.data
+        assert data is not None
+        items.append(
+            {
+                "plan_id": data.get("plan_id", entry.path.stem),
+                "source_run_id": data.get("source_run_id", ""),
+                "symbol": data.get("symbol", entry.symbol),
+                "created_at": data.get("created_at", ""),
+                "artifact_path": entry.path.relative_to(workspace_path).as_posix(),
+                "provider": data.get("provider", "unknown"),
+                "warnings_count": len(data.get("warnings", [])),
+            }
+        )
 
     def _sort_key(item: dict[str, Any]) -> str:
         return item["created_at"] if not item.get("_malformed") else ""
@@ -487,21 +447,10 @@ def load_research_artifact(path: Path, workspace_path: Path) -> dict[str, Any]:
 
     Returns a dict with a computed workspace-relative artifact_path.
     """
-    if not path.exists() or not path.is_file():
-        raise ResearchSessionError("artifact_not_found")
-    if path.is_symlink() and not _is_inside_workspace(path, workspace_path):
-        raise ResearchSessionError("artifact_path_not_allowed")
-    try:
-        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        raise ResearchSessionError("artifact_malformed")
-    # Enforce workspace-relative path in output
-    data["artifact_path"] = path.relative_to(workspace_path).as_posix()
-    # Fail closed on unsupported schema versions when loading full artifacts
-    sv = data.get("schema_version")
-    if sv is not None and sv != RESEARCH_ARTIFACT_SCHEMA_VERSION:
-        raise UnsupportedArtifactSchemaError("unsupported_research_artifact_schema")
-    return data
+    from atlas_agent.research.artifact_store import ResearchArtifactStore
+
+    store = ResearchArtifactStore(workspace_path)
+    return store.load_artifact(path, artifact_type="research")
 
 
 def find_research_artifact_by_run_id(
@@ -512,26 +461,11 @@ def find_research_artifact_by_run_id(
     Returns the path, or None if not found.
     Raises ResearchSessionError if ambiguous.
     """
-    safe_run_id = validate_run_id(run_id)
-    research_dir = workspace_path / RESEARCH_DIR
-    if not research_dir.exists():
-        return None
+    from atlas_agent.research.artifact_store import ArtifactKind, ResearchArtifactStore
 
-    matches: list[Path] = []
-    for directory in research_dir.iterdir():
-        if not directory.is_dir():
-            continue
-        candidate = directory / f"{safe_run_id}.json"
-        if candidate.exists() and candidate.is_file():
-            if candidate.is_symlink() and not _is_inside_workspace(candidate, workspace_path):
-                continue
-            matches.append(candidate)
-
-    if len(matches) == 0:
-        return None
-    if len(matches) > 1:
-        raise ResearchSessionError("ambiguous_run_id")
-    return matches[0]
+    store = ResearchArtifactStore(workspace_path)
+    kind = ArtifactKind(name="research", id_field="run_id")
+    return store.find_by_id(kind, run_id)
 
 
 @dataclass(frozen=True)
@@ -707,29 +641,11 @@ def find_plan_artifact_by_plan_id(
     Returns the path, or None if not found.
     Raises ResearchSessionError if ambiguous.
     """
-    safe_plan_id = validate_run_id(plan_id)
-    research_dir = workspace_path / RESEARCH_DIR
-    if not research_dir.exists():
-        return None
+    from atlas_agent.research.artifact_store import ArtifactKind, ResearchArtifactStore
 
-    matches: list[Path] = []
-    for sym_dir in research_dir.iterdir():
-        if not sym_dir.is_dir():
-            continue
-        plans_dir = sym_dir / "plans"
-        if not plans_dir.exists():
-            continue
-        candidate = plans_dir / f"{safe_plan_id}.json"
-        if candidate.exists() and candidate.is_file():
-            if candidate.is_symlink() and not _is_inside_workspace(candidate, workspace_path):
-                continue
-            matches.append(candidate)
-
-    if len(matches) == 0:
-        return None
-    if len(matches) > 1:
-        raise ResearchSessionError("ambiguous_plan_id")
-    return matches[0]
+    store = ResearchArtifactStore(workspace_path)
+    kind = ArtifactKind(name="plan", id_field="plan_id", subdir="plans")
+    return store.find_by_id(kind, plan_id)
 
 
 @dataclass(frozen=True)

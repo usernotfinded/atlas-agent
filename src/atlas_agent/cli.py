@@ -26,6 +26,7 @@ from atlas_agent.brokers.ccxt_adapter import CCXTBroker
 from atlas_agent.brokers.paper import PaperBroker
 from atlas_agent.cli_commands import build_core_command_registry
 from atlas_agent.cli_context import CLIContext
+from atlas_agent.cli_io import display_path, emit_cli_error, emit_cli_success, redact_cli_text
 from atlas_agent.config import AtlasConfig
 from atlas_agent.config.errors import AtlasConfigError
 from atlas_agent.execution.approval import ApprovalManager
@@ -34,10 +35,7 @@ from atlas_agent.execution.order import Order, OrderResult
 from atlas_agent.execution.order_router import OrderRouter
 from atlas_agent.events import (
     EventLogger,
-    diagnose_events,
     generate_run_id,
-    latest_event_file,
-    read_event_file,
 )
 from atlas_agent.market_data.csv_provider import CSVMarketDataProvider
 from atlas_agent.market_data.sample_data import ensure_sample_data
@@ -48,6 +46,12 @@ from atlas_agent.research import (
     get_research_provider,
     ResearchConfigurationError,
 )
+from atlas_agent.research.command_specs import (
+    CONFIGLESS_RESEARCH_COMMANDS,
+    RESEARCH_COMMAND_ALIAS_MAP,
+    add_research_subparsers,
+)
+from atlas_agent.research.errors import safe_research_session_error
 from atlas_agent.risk.manager import RiskManager
 from atlas_agent.routines.engine import ROUTINE_NAMES, run_routine
 from atlas_agent.routines.git_sync import GitSync, GitSyncError
@@ -64,15 +68,17 @@ from atlas_agent.notifications.clickup import (
 )
 from atlas_agent.output import emit_json, error_envelope, success_envelope
 from atlas_agent.replay import replay_from_path, replay_last_run
-from atlas_agent.demo import seed_demo_workspace
+from atlas_agent.cli_safety import (
+    _effective_config_with_runtime_kill_switch,
+    _kill_switch_controller,
+)
 from atlas_agent.safety import (
-    KillSwitchController,
     deadman_heartbeat_path,
     write_deadman_heartbeat,
 )
 from atlas_agent.safety.totp import verify_totp
 from atlas_agent.strategies.moving_average import MovingAverageStrategy
-from atlas_agent.update import AUTO_CHECK_VALUES, SafeUpdateManager
+from atlas_agent.update import AUTO_CHECK_VALUES
 from atlas_agent.workspace import (
     DEFAULT_TEMPLATE,
     WorkspaceInitError,
@@ -84,17 +90,6 @@ from atlas_agent.workspace import (
     resolve_workspace,
     set_default_workspace,
 )
-
-
-SECRET_ASSIGNMENT_RE = re.compile(
-    r"\b(?P<name>[A-Z0-9_.-]*(?:API[_-]?KEY|API[_-]?SECRET|SECRET[_-]?KEY|TOKEN|PASSWORD)[A-Z0-9_.-]*)"
-    r"(?P<sep>\s*[:=]\s*)"
-    r"(?P<quote>[\"']?)"
-    r"(?P<value>[^\s,;`\"']+)"
-    r"(?P=quote)",
-    re.IGNORECASE,
-)
-BEARER_TOKEN_RE = re.compile(r"\b(Bearer\s+)[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -585,436 +580,15 @@ Safety First:
     )
     research_provider_targets.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
-    research_provider_plan = research_sub.add_parser(
-        "provider-plan",
-        help="Create a provider call plan artifact from a sandbox request. Local-only.",
-        description="Create a provider call plan artifact from an existing sandbox request. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_plan.add_argument("sandbox_request_id", help="Source sandbox request ID.")
-    research_provider_plan.add_argument("--provider", required=True, help="Provider ID.")
-    research_provider_plan.add_argument("--model", required=True, help="Model ID.")
-    research_provider_plan.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_plan_list = research_sub.add_parser(
-        "provider-plan-list",
-        help="List provider call plan artifacts. Read-only. Does not call providers or network.",
-        description="List local provider call plan artifacts. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_plan_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_plan_list.add_argument("--limit", type=int, default=20, help="Maximum items to show. Default: 20, max: 100.")
-    research_provider_plan_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_plan_show = research_sub.add_parser(
-        "provider-plan-show",
-        help="Show a provider call plan artifact. Read-only. Does not call providers or network.",
-        description="Show one local provider call plan artifact by ID. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_plan_show.add_argument("provider_call_plan_id", help="Provider call plan ID.")
-    research_provider_plan_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_plan_validate = research_sub.add_parser(
-        "provider-plan-validate",
-        help="Validate a provider call plan artifact against the local contract. Read-only.",
-        description="Validate a provider call plan artifact against the local contract. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_plan_validate.add_argument("provider_call_plan_id", help="Provider call plan ID.")
-    research_provider_plan_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_plan_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_plan_replay = research_sub.add_parser(
-        "provider-plan-replay",
-        help="Replay a provider call plan from its source sandbox request and compare hashes. Read-only by default.",
-        description="Rebuild the provider call plan from its source sandbox request and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_plan_replay.add_argument("provider_call_plan_id", help="Provider call plan ID.")
-    research_provider_plan_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_plan_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_execution_dry_run = research_sub.add_parser(
-        "provider-execution-dry-run",
-        help="Create a provider execution dry-run artifact from a provider call plan. Local-only.",
-        description="Create a provider execution dry-run artifact from an existing provider call plan. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_dry_run.add_argument("provider_call_plan_id", help="Source provider call plan ID.")
-    research_provider_execution_dry_run.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_list = research_sub.add_parser(
-        "provider-execution-list",
-        help="List provider execution dry-run artifacts. Read-only. Does not call providers or network.",
-        description="List local provider execution dry-run artifacts. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_execution_list.add_argument("--limit", type=int, default=20, help="Maximum items to show. Default: 20, max: 100.")
-    research_provider_execution_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_show = research_sub.add_parser(
-        "provider-execution-show",
-        help="Show a provider execution dry-run artifact. Read-only. Does not call providers or network.",
-        description="Show one local provider execution dry-run artifact by ID. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_show.add_argument("provider_execution_dry_run_id", help="Provider execution dry-run ID.")
-    research_provider_execution_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_validate = research_sub.add_parser(
-        "provider-execution-validate",
-        help="Validate a provider execution dry-run artifact against the local contract. Read-only.",
-        description="Validate a provider execution dry-run artifact against the local contract. Read-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_validate.add_argument("provider_execution_dry_run_id", help="Provider execution dry-run ID.")
-    research_provider_execution_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_execution_replay = research_sub.add_parser(
-        "provider-execution-replay",
-        help="Replay a provider execution dry-run from its source call plan and compare hashes. Read-only by default.",
-        description="Rebuild the provider execution dry-run from its source provider call plan and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_replay.add_argument("provider_execution_dry_run_id", help="Provider execution dry-run ID.")
-    research_provider_execution_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_execution_state = research_sub.add_parser(
-        "provider-execution-state",
-        help="Create a provider execution state transition artifact. Local-only. No provider calls.",
-        description="Create a local provider execution opt-in state transition artifact from a dry-run. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_state.add_argument("provider_execution_dry_run_id", help="Source provider execution dry-run ID.")
-    research_provider_execution_state.add_argument("--to", dest="requested_state", required=True, help="Requested state. Must be one of: disabled, dry_run_only, manual_unlock_required, provider_call_allowed_but_not_implemented.")
-    research_provider_execution_state.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_state_list = research_sub.add_parser(
-        "provider-execution-state-list",
-        help="List provider execution state artifacts. Read-only.",
-        description="List local provider execution state artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_state_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_execution_state_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
-    research_provider_execution_state_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_state_show = research_sub.add_parser(
-        "provider-execution-state-show",
-        help="Show one provider execution state artifact. Read-only.",
-        description="Show a single provider execution state artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_state_show.add_argument("provider_execution_state_id", help="Provider execution state ID.")
-    research_provider_execution_state_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_state_validate = research_sub.add_parser(
-        "provider-execution-state-validate",
-        help="Validate a provider execution state artifact. Read-only.",
-        description="Validate a provider execution state artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_state_validate.add_argument("provider_execution_state_id", help="Provider execution state ID.")
-    research_provider_execution_state_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_state_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_execution_state_replay = research_sub.add_parser(
-        "provider-execution-state-replay",
-        help="Replay a provider execution state from its source dry-run and compare hashes. Read-only by default.",
-        description="Rebuild the provider execution state from its source dry-run and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_state_replay.add_argument("provider_execution_state_id", help="Provider execution state ID.")
-    research_provider_execution_state_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_state_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_execution_audit = research_sub.add_parser(
-        "provider-execution-audit",
-        help="Create a provider execution audit packet from a state artifact. Local-only. No provider calls.",
-        description="Create a local provider execution audit packet artifact from a provider execution state. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_audit.add_argument("provider_execution_state_id", help="Source provider execution state ID.")
-    research_provider_execution_audit.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_audit_list = research_sub.add_parser(
-        "provider-execution-audit-list",
-        help="List provider execution audit packet artifacts. Read-only.",
-        description="List local provider execution audit packet artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_audit_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_execution_audit_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
-    research_provider_execution_audit_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_audit_show = research_sub.add_parser(
-        "provider-execution-audit-show",
-        help="Show one provider execution audit packet artifact. Read-only.",
-        description="Show a single provider execution audit packet artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_audit_show.add_argument("provider_execution_audit_packet_id", help="Provider execution audit packet ID.")
-    research_provider_execution_audit_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_audit_validate = research_sub.add_parser(
-        "provider-execution-audit-validate",
-        help="Validate a provider execution audit packet artifact. Read-only.",
-        description="Validate a provider execution audit packet artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_audit_validate.add_argument("provider_execution_audit_packet_id", help="Provider execution audit packet ID.")
-    research_provider_execution_audit_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_audit_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_execution_audit_replay = research_sub.add_parser(
-        "provider-execution-audit-replay",
-        help="Replay a provider execution audit packet from its source state and compare hashes. Read-only by default.",
-        description="Rebuild the provider execution audit packet from its source state and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_audit_replay.add_argument("provider_execution_audit_packet_id", help="Provider execution audit packet ID.")
-    research_provider_execution_audit_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_audit_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_execution_readiness = research_sub.add_parser(
-        "provider-execution-readiness",
-        help="Create a provider execution readiness report from an audit packet. Local-only. No provider calls.",
-        description="Create a local provider execution readiness report artifact from a provider execution audit packet. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_readiness.add_argument("provider_execution_audit_packet_id", help="Source provider execution audit packet ID.")
-    research_provider_execution_readiness.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_readiness_list = research_sub.add_parser(
-        "provider-execution-readiness-list",
-        help="List provider execution readiness report artifacts. Read-only.",
-        description="List local provider execution readiness report artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_readiness_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_execution_readiness_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
-    research_provider_execution_readiness_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_readiness_show = research_sub.add_parser(
-        "provider-execution-readiness-show",
-        help="Show one provider execution readiness report artifact. Read-only.",
-        description="Show a single provider execution readiness report artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_readiness_show.add_argument("provider_execution_readiness_report_id", help="Provider execution readiness report ID.")
-    research_provider_execution_readiness_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_execution_readiness_validate = research_sub.add_parser(
-        "provider-execution-readiness-validate",
-        help="Validate a provider execution readiness report artifact. Read-only.",
-        description="Validate a provider execution readiness report artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_execution_readiness_validate.add_argument("provider_execution_readiness_report_id", help="Provider execution readiness report ID.")
-    research_provider_execution_readiness_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_readiness_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_execution_readiness_replay = research_sub.add_parser(
-        "provider-execution-readiness-replay",
-        help="Replay a provider execution readiness report from its source audit packet and compare hashes. Read-only by default.",
-        description="Rebuild the provider execution readiness report from its source audit packet and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_execution_readiness_replay.add_argument("provider_execution_readiness_report_id", help="Provider execution readiness report ID.")
-    research_provider_execution_readiness_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_execution_readiness_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
+    add_research_subparsers(research_sub)
 
     research_provider_execution_chain_doctor = research_sub.add_parser(
         "provider-execution-chain-doctor",
-        help="Diagnose the full provider-preflight chain for a run. Read-only.",
-        description="Read-only diagnostic command for the full provider-preflight chain under one research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
+        help="Diagnose the provider execution chain for a research run. Read-only.",
+        description="Read-only diagnostic of the provider execution chain for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
     )
     research_provider_execution_chain_doctor.add_argument("run_id", help="Research run ID.")
     research_provider_execution_chain_doctor.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_preflight_freeze = research_sub.add_parser(
-        "provider-preflight-freeze",
-        help="Create a provider preflight freeze audit artifact from a readiness report. Local-only.",
-        description="Create a local provider preflight freeze audit artifact from a provider execution readiness report. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_preflight_freeze.add_argument("provider_execution_readiness_report_id", help="Source provider execution readiness report ID.")
-    research_provider_preflight_freeze.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_preflight_freeze_list = research_sub.add_parser(
-        "provider-preflight-freeze-list",
-        help="List provider preflight freeze audit artifacts. Read-only.",
-        description="List local provider preflight freeze audit artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_preflight_freeze_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_preflight_freeze_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
-    research_provider_preflight_freeze_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_preflight_freeze_show = research_sub.add_parser(
-        "provider-preflight-freeze-show",
-        help="Show one provider preflight freeze audit artifact. Read-only.",
-        description="Show a single provider preflight freeze audit artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_preflight_freeze_show.add_argument("provider_preflight_freeze_id", help="Provider preflight freeze ID.")
-    research_provider_preflight_freeze_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_preflight_freeze_validate = research_sub.add_parser(
-        "provider-preflight-freeze-validate",
-        help="Validate a provider preflight freeze audit artifact. Read-only.",
-        description="Validate a provider preflight freeze audit artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_preflight_freeze_validate.add_argument("provider_preflight_freeze_id", help="Provider preflight freeze ID.")
-    research_provider_preflight_freeze_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_preflight_freeze_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_preflight_freeze_replay = research_sub.add_parser(
-        "provider-preflight-freeze-replay",
-        help="Replay a provider preflight freeze audit artifact from its source readiness report and compare hashes. Read-only by default.",
-        description="Rebuild the provider preflight freeze audit artifact from its source readiness report and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_preflight_freeze_replay.add_argument("provider_preflight_freeze_id", help="Provider preflight freeze ID.")
-    research_provider_preflight_freeze_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_preflight_freeze_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_preflight_freeze_summary = research_sub.add_parser(
-        "provider-preflight-freeze-summary",
-        help="Summarize the provider preflight freeze state for a research run. Read-only.",
-        description="Read-only summary of the provider preflight freeze state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_preflight_freeze_summary.add_argument("run_id", help="Research run ID.")
-    research_provider_preflight_freeze_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_opt_in_policy = research_sub.add_parser(
-        "provider-opt-in-policy",
-        help="Create a provider opt-in policy artifact from a preflight freeze. Local-only.",
-        description="Create a local provider opt-in policy artifact from a provider preflight freeze. Local-only. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_opt_in_policy.add_argument("provider_preflight_freeze_id", help="Source provider preflight freeze ID.")
-    research_provider_opt_in_policy.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_opt_in_policy_list = research_sub.add_parser(
-        "provider-opt-in-policy-list",
-        help="List provider opt-in policy artifacts. Read-only.",
-        description="List local provider opt-in policy artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_opt_in_policy_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_opt_in_policy_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
-    research_provider_opt_in_policy_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_opt_in_policy_show = research_sub.add_parser(
-        "provider-opt-in-policy-show",
-        help="Show one provider opt-in policy artifact. Read-only.",
-        description="Show a single provider opt-in policy artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_opt_in_policy_show.add_argument("provider_opt_in_policy_id", help="Provider opt-in policy ID.")
-    research_provider_opt_in_policy_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_opt_in_policy_validate = research_sub.add_parser(
-        "provider-opt-in-policy-validate",
-        help="Validate a provider opt-in policy artifact. Read-only.",
-        description="Validate a provider opt-in policy artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_opt_in_policy_validate.add_argument("provider_opt_in_policy_id", help="Provider opt-in policy ID.")
-    research_provider_opt_in_policy_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_opt_in_policy_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_opt_in_policy_replay = research_sub.add_parser(
-        "provider-opt-in-policy-replay",
-        help="Replay a provider opt-in policy artifact from its source freeze and compare hashes. Read-only by default.",
-        description="Rebuild the provider opt-in policy artifact from its source preflight freeze and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_opt_in_policy_replay.add_argument("provider_opt_in_policy_id", help="Provider opt-in policy ID.")
-    research_provider_opt_in_policy_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_opt_in_policy_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_opt_in_policy_summary = research_sub.add_parser(
-        "provider-opt-in-policy-summary",
-        help="Summarize the provider opt-in policy state for a research run. Read-only.",
-        description="Read-only summary of the provider opt-in policy state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_opt_in_policy_summary.add_argument("run_id", help="Research run ID.")
-    research_provider_opt_in_policy_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_credential_boundary = research_sub.add_parser(
-        "provider-credential-boundary",
-        help="Create a provider credential boundary artifact from an opt-in policy. Local-only.",
-        description="Create a local provider credential boundary artifact from a provider opt-in policy. Local-only. Does not call providers, read API keys, load .env.atlas, read os.environ, modify config, or authorize live trading.",
-    )
-    research_provider_credential_boundary.add_argument("provider_opt_in_policy_id", help="Source provider opt-in policy ID.")
-    research_provider_credential_boundary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_credential_boundary_list = research_sub.add_parser(
-        "provider-credential-boundary-list",
-        help="List provider credential boundary artifacts. Read-only.",
-        description="List local provider credential boundary artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_credential_boundary_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_credential_boundary_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
-    research_provider_credential_boundary_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_credential_boundary_show = research_sub.add_parser(
-        "provider-credential-boundary-show",
-        help="Show one provider credential boundary artifact. Read-only.",
-        description="Show a single provider credential boundary artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_credential_boundary_show.add_argument("provider_credential_boundary_id", help="Provider credential boundary ID.")
-    research_provider_credential_boundary_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_credential_boundary_validate = research_sub.add_parser(
-        "provider-credential-boundary-validate",
-        help="Validate a provider credential boundary artifact. Read-only.",
-        description="Validate a provider credential boundary artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_credential_boundary_validate.add_argument("provider_credential_boundary_id", help="Provider credential boundary ID.")
-    research_provider_credential_boundary_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_credential_boundary_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_credential_boundary_replay = research_sub.add_parser(
-        "provider-credential-boundary-replay",
-        help="Replay a provider credential boundary artifact from its source policy and compare hashes. Read-only by default.",
-        description="Rebuild the provider credential boundary artifact from its source opt-in policy and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_credential_boundary_replay.add_argument("provider_credential_boundary_id", help="Provider credential boundary ID.")
-    research_provider_credential_boundary_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_credential_boundary_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_credential_boundary_summary = research_sub.add_parser(
-        "provider-credential-boundary-summary",
-        help="Summarize the provider credential boundary state for a research run. Read-only.",
-        description="Read-only summary of the provider credential boundary state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_credential_boundary_summary.add_argument("run_id", help="Research run ID.")
-    research_provider_credential_boundary_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-
-    research_provider_payload_preview = research_sub.add_parser(
-        "provider-payload-preview",
-        help="Create a provider outbound payload preview artifact from a credential boundary. Local-only.",
-        description="Create a local provider outbound payload preview artifact from a provider credential boundary. Local-only. Does not call providers, read API keys, load .env.atlas, read os.environ, modify config, or authorize live trading.",
-    )
-    research_provider_payload_preview.add_argument("provider_credential_boundary_id", help="Source provider credential boundary ID.")
-    research_provider_payload_preview.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_payload_preview_list = research_sub.add_parser(
-        "provider-payload-preview-list",
-        help="List provider outbound payload preview artifacts. Read-only.",
-        description="List local provider outbound payload preview artifacts. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_payload_preview_list.add_argument("--symbol", help="Filter by symbol.")
-    research_provider_payload_preview_list.add_argument("--limit", type=int, default=20, help="Max items to return. Default 20, max 100.")
-    research_provider_payload_preview_list.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_payload_preview_show = research_sub.add_parser(
-        "provider-payload-preview-show",
-        help="Show one provider outbound payload preview artifact. Read-only.",
-        description="Show a single provider outbound payload preview artifact with validation. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_payload_preview_show.add_argument("provider_outbound_payload_preview_id", help="Provider outbound payload preview ID.")
-    research_provider_payload_preview_show.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-
-    research_provider_payload_preview_validate = research_sub.add_parser(
-        "provider-payload-preview-validate",
-        help="Validate a provider outbound payload preview artifact. Read-only.",
-        description="Validate a provider outbound payload preview artifact against safety checks. Read-only. Does not call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_payload_preview_validate.add_argument("provider_outbound_payload_preview_id", help="Provider outbound payload preview ID.")
-    research_provider_payload_preview_validate.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_payload_preview_validate.add_argument("--strict", action="store_true", help="Exit non-zero if validation fails.")
-
-    research_provider_payload_preview_replay = research_sub.add_parser(
-        "provider-payload-preview-replay",
-        help="Replay a provider outbound payload preview artifact from its source boundary and compare hashes. Read-only by default.",
-        description="Rebuild the provider outbound payload preview artifact from its source credential boundary and compare deterministic hashes. Read-only by default. Does not call providers, read API keys, modify config, or authorize live trading.",
-    )
-    research_provider_payload_preview_replay.add_argument("provider_outbound_payload_preview_id", help="Provider outbound payload preview ID.")
-    research_provider_payload_preview_replay.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
-    research_provider_payload_preview_replay.add_argument("--strict", action="store_true", help="Exit non-zero if replay does not match.")
-
-    research_provider_payload_preview_summary = research_sub.add_parser(
-        "provider-payload-preview-summary",
-        help="Summarize the provider outbound payload preview state for a research run. Read-only.",
-        description="Read-only summary of the provider outbound payload preview state for a research run. Does not create artifacts, call providers, read API keys, or authorize live trading.",
-    )
-    research_provider_payload_preview_summary.add_argument("run_id", help="Research run ID.")
-    research_provider_payload_preview_summary.add_argument("--json", action="store_true", help="Emit safe JSON envelope.")
 
     research_provider_response_intake_policy = research_sub.add_parser(
         "provider-response-intake-policy",
@@ -2263,48 +1837,6 @@ def _run_once_live_analysis(
     )
 
 
-def _redact_sensitive_text(text: str) -> str:
-    redacted = SECRET_ASSIGNMENT_RE.sub(
-        lambda match: (
-            f"{match.group('name')}{match.group('sep')}"
-            f"{match.group('quote')}[REDACTED]{match.group('quote')}"
-        ),
-        text,
-    )
-    return BEARER_TOKEN_RE.sub(r"\1[REDACTED]", redacted)
-
-
-def _display_path(path: Path) -> str:
-    try:
-        return str(path.relative_to(Path.cwd()))
-    except ValueError:
-        return str(path)
-
-
-def _kill_switch_controller(config: AtlasConfig) -> KillSwitchController:
-    audit_logger = AuditLogger(config.audit_dir)
-
-    def _audit_hook(event_type: str, actor: str, payload: dict[str, Any]) -> None:
-        record = dict(payload)
-        record["actor"] = actor
-        audit_logger.write(event_type, record)
-
-    return KillSwitchController(
-        state_path=config.memory_dir / "kill_switch_state.json",
-        enabled_flag_path=config.memory_dir / "kill_switch.enabled",
-        audit_hook=_audit_hook,
-    )
-
-
-def _effective_config_with_runtime_kill_switch(config: AtlasConfig) -> AtlasConfig:
-    enabled = config.kill_switch_enabled or _kill_switch_controller(config).is_enabled()
-    if enabled == config.kill_switch_enabled:
-        return config
-    # Map back to nested structure for model_copy if needed, 
-    # but since we added legacy fields to AtlasConfig, we can just update it.
-    return config.model_copy(update={"safety": config.safety.model_copy(update={"kill_switch_enabled": enabled})})
-
-
 def _requires_kill_switch_totp(
     *,
     state_mode: str,
@@ -2332,32 +1864,6 @@ def _verify_totp_for_kill_switch(code: str | None) -> tuple[bool, str]:
 
 def _heartbeat_path_for_config(config: AtlasConfig) -> Path:
     return deadman_heartbeat_path(config.memory_dir)
-
-
-def _handle_deploy(kind: str) -> int:
-    from atlas_agent.deploy import ensure_deploy_files
-
-    files = ensure_deploy_files(kind)
-    for generated in files:
-        action = "created" if generated.created else "existing"
-        print(f"{action}: {_display_path(generated.path)}")
-    return 0
-
-
-def _emit_json_success(command: str, data: dict[str, Any]) -> int:
-    emit_json(success_envelope(command, data))
-    return 0
-
-
-def _emit_json_error(
-    command: str,
-    *,
-    code: str,
-    message: str,
-    details: dict[str, Any] | None = None,
-) -> int:
-    emit_json(error_envelope(command, code=code, message=message, details=details))
-    return 2
 
 
 def _emit_config_error(exc: Exception | None) -> int:
@@ -2415,13 +1921,6 @@ def _portfolio_payload(config: AtlasConfig) -> dict[str, Any]:
     }
 
 
-def _events_to_payload(events: list[dict[str, Any]]) -> dict[str, Any]:
-    return {
-        "count": len(events),
-        "events": events,
-    }
-
-
 def config_has_workspace_context(config: AtlasConfig) -> bool:
     workspace_paths = (
         config.memory_dir,
@@ -2474,44 +1973,6 @@ def _load_config_for_command(
     if config_has_workspace_context(config):
         return config, resolution, None
     return config, resolution, "workspace_not_configured"
-
-
-def _workspace_doctor_payload(resolution: WorkspaceResolution) -> dict[str, Any]:
-    default_workspace = get_default_workspace()
-    payload: dict[str, Any] = {
-        "ok": False,
-        "current_directory": str(Path.cwd()),
-        "resolved_workspace": str(resolution.path) if resolution.path else None,
-        "resolution_source": resolution.source,
-        "default_workspace": str(default_workspace) if default_workspace else None,
-        "environment_workspace": os.getenv("ATLAS_WORKSPACE"),
-        "warning": resolution.warning,
-        "missing_paths": [],
-        "guidance": [],
-    }
-    if resolution.path is None:
-        payload["guidance"] = [
-            "Create a workspace: atlas init my-trader --template routine-trader --set-default",
-            "or set one: atlas workspace set <path>",
-        ]
-        return payload
-
-    expected = (
-        "memory",
-        "routines",
-        "skills",
-        "reports",
-        "pending_orders",
-        "audit",
-        "events",
-        "configs",
-    )
-    missing = [
-        name for name in expected if not (resolution.path / name).exists()
-    ]
-    payload["missing_paths"] = missing
-    payload["ok"] = not missing
-    return payload
 
 
 def _print_workspace_setup_guidance(*, warning: str | None = None, stream=None) -> None:
@@ -3043,6 +2504,11 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         raise
 
+    # Normalize research command aliases so handlers receive canonical names.
+    _research_cmd = getattr(args, "research_command", None)
+    if _research_cmd in RESEARCH_COMMAND_ALIAS_MAP:
+        args.research_command = RESEARCH_COMMAND_ALIAS_MAP[_research_cmd]
+
     if args.command == "config":
         from atlas_agent.config import (
             get_config, get_raw_config, get_raw_value, set_raw_value, unset_raw_value,
@@ -3216,7 +2682,7 @@ def main(argv: list[str] | None = None) -> int:
                 redact_secrets_in_dict(payload)
             except AtlasConfigError:
                 if getattr(args, "json", False):
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas config check",
                         code="config_load_failed",
                         message="Configuration check failed.",
@@ -3224,7 +2690,7 @@ def main(argv: list[str] | None = None) -> int:
                 return _emit_config_error(None)
             except Exception:
                 if getattr(args, "json", False):
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas config check",
                         code="config_check_failed",
                         message="Configuration check failed.",
@@ -3232,7 +2698,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("Configuration check failed.", file=sys.stderr)
                 return 1
             if getattr(args, "json", False):
-                return _emit_json_success("atlas config check", payload)
+                return emit_cli_success("atlas config check", payload)
             print("Config is valid.")
             return 0
 
@@ -3472,53 +2938,6 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Set as default workspace: {result.path}")
         return 0
 
-    if args.command == "workspace":
-        resolution = resolve_workspace(getattr(args, "workspace", None))
-        if args.workspace_command == "show":
-            default_ws = get_default_workspace()
-            resolved = resolution.path
-            print(f"Current directory: {Path.cwd()}")
-            print(f"Resolved workspace: {resolved or 'not resolved'}")
-            print(f"Resolution source: {resolution.source or 'none'}")
-            print(f"Default workspace: {default_ws or 'not set'}")
-            if resolution.warning:
-                print(f"Warning: {resolution.warning}")
-            return 0
-        if args.workspace_command == "set":
-            path = Path(args.path).resolve()
-            if not is_workspace(path):
-                print(f"Error: {path} does not look like a valid Atlas workspace.")
-                return 2
-            set_default_workspace(path)
-            print(f"Default workspace set to: {path}")
-            return 0
-        if args.workspace_command == "clear":
-            clear_default_workspace()
-            print("Default workspace cleared.")
-            return 0
-        if args.workspace_command == "doctor":
-            payload = _workspace_doctor_payload(resolution)
-            if getattr(args, "json", False):
-                return _emit_json_success("atlas workspace doctor", payload)
-            print("Workspace Doctor")
-            print(f"Current directory: {payload['current_directory']}")
-            print(f"Resolved workspace: {payload['resolved_workspace'] or 'not resolved'}")
-            print(f"Resolution source: {payload['resolution_source'] or 'none'}")
-            print(f"Default workspace: {payload['default_workspace'] or 'not set'}")
-            if payload["warning"]:
-                print(f"Warning: {payload['warning']}")
-            if payload["resolved_workspace"] and not payload["missing_paths"]:
-                print("Workspace structure looks valid.")
-                return 0
-            if payload["missing_paths"]:
-                print("Missing paths:")
-                for missing in payload["missing_paths"]:
-                    print(f"- {missing}")
-            for guidance in payload["guidance"]:
-                print(guidance)
-            return 2
-        return 0
-
     if args.command is None:
         from atlas_agent.setup.wizard import run_wizard, is_interactive
         from atlas_agent.setup.state import WizardState
@@ -3579,184 +2998,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     # Configless local research commands: resolve workspace only, never load secrets
-    _CONFIGLESS_RESEARCH_COMMANDS = {
-        "run",
-        "list",
-        "show",
-        "plan",
-        "verify",
-        "evaluate",
-        "summary",
-        "check-artifacts",
-        "timeline",
-        "providers",
-        "prompt",
-        "simulate-provider",
-        "review-response",
-        "dossier",
-        "sandbox",
-        "sandbox-list",
-        "sandbox-show",
-        "sandbox-validate",
-        "sandbox-replay",
-        "import-provider-response",
-        "provider-targets",
-        "provider-plan",
-        "provider-plan-list",
-        "provider-plan-show",
-        "provider-plan-validate",
-        "provider-plan-replay",
-        "provider-execution-dry-run",
-        "provider-execution-list",
-        "provider-execution-show",
-        "provider-execution-validate",
-        "provider-execution-replay",
-        "provider-execution-state",
-        "provider-execution-state-list",
-        "provider-execution-state-show",
-        "provider-execution-state-validate",
-        "provider-execution-state-replay",
-        "provider-execution-audit",
-        "provider-execution-audit-list",
-        "provider-execution-audit-show",
-        "provider-execution-audit-validate",
-        "provider-execution-audit-replay",
-        "provider-execution-readiness",
-        "provider-execution-readiness-list",
-        "provider-execution-readiness-show",
-        "provider-execution-readiness-validate",
-        "provider-execution-readiness-replay",
-        "provider-execution-chain-doctor",
-        "provider-preflight-freeze",
-        "provider-preflight-freeze-list",
-        "provider-preflight-freeze-show",
-        "provider-preflight-freeze-validate",
-        "provider-preflight-freeze-replay",
-        "provider-preflight-freeze-summary",
-        "provider-opt-in-policy",
-        "provider-opt-in-policy-list",
-        "provider-opt-in-policy-show",
-        "provider-opt-in-policy-validate",
-        "provider-opt-in-policy-replay",
-        "provider-opt-in-policy-summary",
-        "provider-credential-boundary",
-        "provider-credential-boundary-list",
-        "provider-credential-boundary-show",
-        "provider-credential-boundary-validate",
-        "provider-credential-boundary-replay",
-        "provider-credential-boundary-summary",
-        "provider-payload-preview",
-        "provider-payload-preview-list",
-        "provider-payload-preview-show",
-        "provider-payload-preview-validate",
-        "provider-payload-preview-replay",
-        "provider-payload-preview-summary",
-        "provider-response-intake-policy",
-        "provider-response-intake-policy-list",
-        "provider-response-intake-policy-show",
-        "provider-response-intake-policy-validate",
-        "provider-response-intake-policy-replay",
-        "provider-response-intake-policy-summary",
-        "provider-request-response-pairing",
-        "provider-request-response-pairing-list",
-        "provider-request-response-pairing-show",
-        "provider-request-response-pairing-validate",
-        "provider-request-response-pairing-replay",
-        "provider-request-response-pairing-summary",
-        "provider-request-response-pairing-doctor",
-        "provider-response-schema-contract",
-        "provider-response-schema-contract-list",
-        "provider-response-schema-contract-show",
-        "provider-response-schema-contract-validate",
-        "provider-response-schema-contract-replay",
-        "provider-response-schema-contract-summary",
-        "provider-response-schema-contract-doctor",
-        "provider-response-review-result",
-        "provider-response-review-result-list",
-        "provider-response-review-result-show",
-        "provider-response-review-result-validate",
-        "provider-response-review-result-replay",
-        "provider-response-review-result-summary",
-        "provider-response-review-result-doctor",
-        "provider-execution-unlock-state",
-        "provider-execution-unlock-state-list",
-        "provider-execution-unlock-state-show",
-        "provider-execution-unlock-state-validate",
-        "provider-execution-unlock-state-replay",
-        "provider-execution-unlock-state-summary",
-        "provider-execution-unlock-state-doctor",
-        "provider-adapter-interface-contract",
-        "provider-adapter-interface-contract-list",
-        "provider-adapter-interface-contract-show",
-        "provider-adapter-interface-contract-validate",
-        "provider-adapter-interface-contract-replay",
-        "provider-adapter-interface-contract-summary",
-        "provider-adapter-interface-contract-doctor",
-        "provider-adapter-disabled-smoke",
-        "provider-mock-response-simulate",
-        "provider-mock-response-list",
-        "provider-mock-response-show",
-        "provider-mock-response-validate",
-        "provider-mock-response-replay",
-        "provider-mock-response-summary",
-        "provider-mock-response-doctor",
-        "provider-mock-response-import-candidate",
-        "provider-mock-response-import-candidate-list",
-        "provider-mock-response-import-candidate-show",
-        "provider-mock-response-import-candidate-validate",
-        "provider-mock-response-import-candidate-replay",
-        "provider-mock-response-import-candidate-summary",
-        "provider-mock-response-import-candidate-doctor",
-        "provider-mock-response-review-sandbox",
-        "provider-mock-response-review-sandbox-list",
-        "provider-mock-response-review-sandbox-show",
-        "provider-mock-response-review-sandbox-validate",
-        "provider-mock-response-review-sandbox-replay",
-        "provider-mock-response-review-sandbox-summary",
-        "provider-mock-response-review-sandbox-doctor",
-        "provider-mock-response-trust-decision-blocker",
-        "provider-mock-response-trust-decision-blocker-list",
-        "provider-mock-response-trust-decision-blocker-show",
-        "provider-mock-response-trust-decision-blocker-validate",
-        "provider-mock-response-trust-decision-blocker-replay",
-        "provider-mock-response-trust-decision-blocker-summary",
-        "provider-mock-response-trust-decision-blocker-doctor",
-        "provider-mock-response-final-safety-seal",
-        "provider-mock-response-final-safety-seal-list",
-        "provider-mock-response-final-safety-seal-show",
-        "provider-mock-response-final-safety-seal-validate",
-        "provider-mock-response-final-safety-seal-replay",
-        "provider-mock-response-final-safety-seal-summary",
-        "provider-mock-response-final-safety-seal-doctor",
-        "provider-safety-dossier",
-        "provider-safety-dossier-list",
-        "provider-safety-dossier-latest",
-        "provider-safety-dossier-show",
-        "provider-safety-dossier-validate",
-        "provider-safety-dossier-replay",
-        "provider-safety-dossier-summary",
-        "provider-safety-dossier-doctor",
-        "provider-safety-dossier-export",
-        "release-candidate-readiness",
-        "release-candidate-readiness-list",
-        "release-candidate-readiness-show",
-        "release-candidate-readiness-validate",
-        "release-candidate-readiness-summary",
-        "release-candidate-readiness-doctor",
-        "release-candidate-cutover-dry-run",
-        "release-candidate-cutover-dry-run-list",
-        "release-candidate-cutover-dry-run-validate",
-        "release-candidate-cutover-dry-run-summary",
-        "release-candidate-cutover-dry-run-doctor",
-        "mock-response-final-safety-seal",
-    }
+    _CONFIGLESS_RESEARCH_COMMANDS = CONFIGLESS_RESEARCH_COMMANDS
     if args.command == "research" and getattr(args, "research_command", None) in _CONFIGLESS_RESEARCH_COMMANDS:
         resolution = resolve_workspace(getattr(args, "workspace", None))
         if resolution.path is not None:
             os.chdir(resolution.path)
         if resolution.path is None:
             if getattr(args, "json", False):
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas",
                     code="workspace_not_configured",
                     message="Atlas Agent needs a workspace before it can run.",
@@ -3785,7 +3034,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 return 2
             if getattr(args, "json", False):
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas",
                     code="workspace_not_configured",
                     message="Atlas Agent needs a workspace before it can run.",
@@ -3801,7 +3050,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         if load_error:
             if args.command == "validate" and getattr(args, "json", False):
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas validate",
                     code="config_load_failed",
                     message=load_error,
@@ -3810,7 +3059,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         if config is None:
             if args.command == "validate" and getattr(args, "json", False):
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas validate",
                     code="config_load_failed",
                     message="Configuration error: unable to load AtlasConfig.",
@@ -3903,109 +3152,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     if dispatched is not None:
         return dispatched
-
-    if args.command == "update":
-        manager = SafeUpdateManager(
-            config=config,
-            workspace_root=Path.cwd(),
-            repo_root=Path.cwd(),
-        )
-        if args.update_command == "check":
-            report = manager.check()
-            print("Atlas Update Check")
-            print(f"Current version: {report.current_version}")
-            print(f"Latest version: {report.latest_version or 'n/a'}")
-            print(f"Source: {report.source or 'n/a'}")
-            print(f"Update available: {'yes' if report.update_available else 'no'}")
-            print(f"Checked at: {report.checked_at}")
-            if report.notes:
-                print(f"Notes: {report.notes}")
-            for warning in report.warnings:
-                print(f"Warning: {warning}")
-            return 0
-        if args.update_command == "status":
-            report = manager.status()
-            print("Atlas Update Status")
-            print(f"Current version: {report.current_version}")
-            print(f"Last checked at: {report.last_checked_at or 'n/a'}")
-            print(f"Latest version: {report.latest_version or 'n/a'}")
-            print(f"Latest source: {report.latest_source or 'n/a'}")
-            print(f"Auto-apply enabled: {'yes' if report.auto_apply_enabled else 'no'}")
-            print(f"Auto-check schedule: {report.auto_check_schedule}")
-            print(f"Safe to apply now: {'yes' if report.safe_to_apply else 'no'}")
-            if report.blockers:
-                print("Blockers:")
-                for blocker in report.blockers:
-                    print(f"- {blocker}")
-            if report.warnings:
-                print("Warnings:")
-                for warning in report.warnings:
-                    print(f"- {warning}")
-            return 0
-        if args.update_command == "apply":
-            if args.force:
-                print("WARNING: --force bypasses safety blockers. Use only with full human review.")
-            report = manager.apply(force=args.force, auto=False)
-            print(report.message)
-            if report.blockers:
-                print("Blockers:")
-                for blocker in report.blockers:
-                    print(f"- {blocker}")
-            if report.warnings:
-                print("Warnings:")
-                for warning in report.warnings:
-                    print(f"- {warning}")
-            return 0 if report.applied else 2
-        if args.update_command == "rollback":
-            if not args.yes:
-                print("Rollback refused: pass --yes to confirm.")
-                return 2
-            report = manager.rollback(confirm=args.yes)
-            print(report.message)
-            if report.warnings:
-                print("Warnings:")
-                for warning in report.warnings:
-                    print(f"- {warning}")
-            return 0 if report.rolled_back else 2
-        if args.update_command == "config":
-            auto_check = args.auto_check
-            auto_apply = None
-            if args.auto_apply is not None:
-                auto_apply = args.auto_apply == "on"
-            if auto_check is None and auto_apply is None:
-                status = manager.status()
-                print("Update configuration")
-                print(f"auto-check: {status.auto_check_schedule}")
-                print(f"auto-apply: {'on' if status.auto_apply_enabled else 'off'}")
-                return 0
-            state = manager.configure(auto_check=auto_check, auto_apply=auto_apply)
-            print("Update configuration saved")
-            print(f"auto-check: {state.auto_check_schedule}")
-            print(f"auto-apply: {'on' if state.auto_apply_enabled else 'off'}")
-            return 0
-        print("Use one of: atlas update check|status|apply|rollback|config")
-        return 0
-
-    if args.command == "risk":
-        from atlas_agent.risk.limits import RiskLimits
-        
-        if args.risk_command == "status":
-            limits = RiskLimits(
-                max_position_notional=config.max_position_size,
-                max_single_trade_notional=config.max_order_notional,
-                allowed_symbols=config.symbol_allowlist,
-                blocked_symbols=config.symbol_blocklist or set(),
-                live_trading_enabled=config.enable_live_trading
-            )
-            manager = RiskManager(limits=limits, kill_switch_enabled=config.kill_switch_enabled)
-            print("Risk Management Status:")
-            print(f"  Live Trading: {'ENABLED' if limits.live_trading_enabled else 'DISABLED'}")
-            print(f"  Kill Switch: {'ACTIVE' if manager.kill_switch_enabled else 'Inactive'}")
-            print(f"  Max Position Notional: ${limits.max_position_notional}")
-            print(f"  Max Order Notional: ${limits.max_single_trade_notional}")
-            print(f"  Allowed Symbols: {limits.allowed_symbols if limits.allowed_symbols else 'All'}")
-            print(f"  Blocked Symbols: {list(limits.blocked_symbols) if limits.blocked_symbols else 'None'}")
-            return 0
 
     if args.command == "kill":
         from atlas_agent.safety.kill_switch import AdvancedKillSwitch
@@ -4178,7 +3324,7 @@ def main(argv: list[str] | None = None) -> int:
             report = run_diagnostics(config)
         except Exception:
             if getattr(args, "json", False):
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas validate",
                     code="validate_failed",
                     message="Readiness diagnostics failed.",
@@ -4363,7 +3509,7 @@ def main(argv: list[str] | None = None) -> int:
         
         if args.agent_command == "status":
             if getattr(args, "json", False):
-                return _emit_json_success(
+                return emit_cli_success(
                     "atlas agent status",
                     get_agent_status_payload(config),
                 )
@@ -4371,7 +3517,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         elif args.agent_command == "plan":
             if getattr(args, "json", False):
-                return _emit_json_success(
+                return emit_cli_success(
                     "atlas agent plan",
                     get_agent_plan_payload(config),
                 )
@@ -4470,7 +3616,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.skills_command == "list":
             skills = list_skills(skills_dir)
             if getattr(args, "json", False):
-                return _emit_json_success("atlas skills list", skills)
+                return emit_cli_success("atlas skills list", skills)
             for cat, files in skills.items():
                 print(f"{cat.upper()}:")
                 for f in files:
@@ -4525,7 +3671,7 @@ def main(argv: list[str] | None = None) -> int:
                     mode="paper",
                     payload={"skill": path.name},
                 )
-                print(f"- {_display_path(path)}")
+                print(f"- {display_path(path)}")
             return 0
         elif args.skills_command == "show":
             try:
@@ -4561,7 +3707,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         if args.user_command == "show":
-            print(_redact_sensitive_text(format_user_model_summary(config.memory_dir)))
+            print(redact_cli_text(format_user_model_summary(config.memory_dir)))
             return 0
         if args.user_command == "remember":
             path = remember_user_note(config.memory_dir, args.text)
@@ -4757,56 +3903,6 @@ def main(argv: list[str] | None = None) -> int:
             print("Commands: " + ", ".join(TELEGRAM_COMMANDS))
             return 0
 
-    if args.command == "deploy":
-        if args.deploy_command in {"docker", "systemd", "vps", "serverless"}:
-            return _handle_deploy(args.deploy_command)
-
-    if args.command == "events":
-        if args.events_command == "list":
-            latest = latest_event_file(config.events_dir)
-            events = read_event_file(latest) if latest else []
-            if len(events) > max(args.limit, 1):
-                events = events[-max(args.limit, 1) :]
-            if getattr(args, "json", False):
-                return _emit_json_success("atlas events list", _events_to_payload(events))
-            if not events:
-                print(f"No event logs found under {config.events_dir}.")
-                return 0
-            for event in events:
-                print(
-                    f"{event.get('timestamp')} {event.get('event_type')} "
-                    f"run={event.get('run_id')} mode={event.get('mode')}"
-                )
-            return 0
-        if args.events_command == "tail":
-            latest = latest_event_file(config.events_dir)
-            events = read_event_file(latest) if latest else []
-            if len(events) > max(args.limit, 1):
-                events = events[-max(args.limit, 1) :]
-            if not events:
-                print(f"No event logs found under {config.events_dir}.")
-                return 0
-            for event in events:
-                print(
-                    f"{event.get('timestamp')} {event.get('event_type')} "
-                    f"run={event.get('run_id')} mode={event.get('mode')}"
-                )
-            return 0
-        if args.events_command == "doctor":
-            report = diagnose_events(config.events_dir)
-            print(f"Event Doctor: files={report.files_scanned} events={report.events_scanned}")
-            for item in report.errors:
-                print(
-                    f"[ERROR] {item.code}: {item.message} "
-                    f"({item.path or 'n/a'}{':' + str(item.line) if item.line else ''})"
-                )
-            for item in report.warnings:
-                print(
-                    f"[WARN] {item.code}: {item.message} "
-                    f"({item.path or 'n/a'}{':' + str(item.line) if item.line else ''})"
-                )
-            return 0 if report.ok else 2
-
     if args.command == "replay":
         summary = None
         if args.last:
@@ -4819,27 +3915,6 @@ def main(argv: list[str] | None = None) -> int:
             print("No replay data available yet. Run `atlas agent run --once` first.")
             return 0
         _print_replay(summary)
-        return 0
-
-    if args.command == "demo" and args.demo_command == "seed":
-        result = seed_demo_workspace(
-            workspace_dir=config.memory_dir.parent,
-            memory_dir=config.memory_dir,
-            reports_dir=config.reports_dir,
-            skills_dir=config.memory_dir.parent / "skills",
-            events_dir=config.events_dir,
-            force=args.force,
-        )
-        if result.warning:
-            print(f"demo seed warning: {result.warning}", file=sys.stderr)
-            if not result.written_paths:
-                return 2
-        if not result.written_paths:
-            print("Demo seed complete: no new files were created.")
-            return 0
-        print("Demo seed wrote:")
-        for path in result.written_paths:
-            print(f"- {_display_path(path)}")
         return 0
 
     if args.command == "routine" and args.routine_command == "run":
@@ -4905,19 +3980,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "portfolio" and args.portfolio_command == "show":
         payload = _portfolio_payload(config)
         if getattr(args, "json", False):
-            return _emit_json_success("atlas portfolio show", payload)
+            return emit_cli_success("atlas portfolio show", payload)
         print("Portfolio state is local. No live broker query is made by this command.")
         print(f"Workspace: {payload['workspace']}")
         print(f"Trading mode: {payload['trading_mode']}")
         print(f"Live enabled: {payload['live_enabled']}")
         print(f"Broker: {payload['broker']}")
         print(f"Pending orders: {payload['pending_orders']}")
-        return 0
-    if args.command == "risk" and args.risk_command == "check":
-        effective = _effective_config_with_runtime_kill_switch(config)
-        print(f"kill_switch={effective.kill_switch_enabled}")
-        print(f"max_position_size={config.max_position_size}")
-        print(f"max_trades_per_day={config.max_trades_per_day}")
         return 0
     if args.command == "kill-switch":
         controller = _kill_switch_controller(config)
@@ -5008,7 +4077,7 @@ def main(argv: list[str] | None = None) -> int:
         # --dry-run and --reconcile are mutually exclusive
         if args.dry_run and args.reconcile:
             if args.json:
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas submit-approved-order",
                     code="invalid_args",
                     message="--dry-run and --reconcile are mutually exclusive.",
@@ -5028,7 +4097,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except InvalidApprovalIdError:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --reconcile",
                         code="invalid_order_id",
                         message="Invalid pending order id.",
@@ -5037,7 +4106,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             except InvalidPendingOrderError:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --reconcile",
                         code="invalid_pending_order",
                         message="Pending order file is invalid or corrupted.",
@@ -5046,7 +4115,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             except FileNotFoundError:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --reconcile",
                         code="pending_order_not_found",
                         message="Pending order not found.",
@@ -5055,7 +4124,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             except Exception:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --reconcile",
                         code="reconcile_failed",
                         message="Reconciliation failed. Manual review required.",
@@ -5066,8 +4135,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.json:
                 payload = report.to_dict()
                 if report.ok:
-                    return _emit_json_success("atlas submit-approved-order --reconcile", payload)
-                return _emit_json_error(
+                    return emit_cli_success("atlas submit-approved-order --reconcile", payload)
+                return emit_cli_error(
                     "atlas submit-approved-order --reconcile",
                     code="reconcile_blocked",
                     message=report.message,
@@ -5093,7 +4162,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except InvalidApprovalIdError:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --dry-run",
                         code="invalid_order_id",
                         message="Invalid pending order id.",
@@ -5102,7 +4171,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             except InvalidPendingOrderError:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --dry-run",
                         code="invalid_pending_order",
                         message="Pending order file is invalid or corrupted.",
@@ -5111,7 +4180,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             except FileNotFoundError:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --dry-run",
                         code="pending_order_not_found",
                         message="Pending order not found.",
@@ -5120,7 +4189,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             except Exception:
                 if args.json:
-                    return _emit_json_error(
+                    return emit_cli_error(
                         "atlas submit-approved-order --dry-run",
                         code="dry_run_failed",
                         message="Dry-run failed. Manual review required.",
@@ -5131,8 +4200,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.json:
                 payload = report.to_dict()
                 if report.ok:
-                    return _emit_json_success("atlas submit-approved-order --dry-run", payload)
-                return _emit_json_error(
+                    return emit_cli_success("atlas submit-approved-order --dry-run", payload)
+                return emit_cli_error(
                     "atlas submit-approved-order --dry-run",
                     code="dry_run_blocked",
                     message=report.message,
@@ -5178,7 +4247,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         except InvalidApprovalIdError:
             if args.json:
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas submit-approved-order",
                     code="invalid_order_id",
                     message="Invalid pending order id.",
@@ -5187,7 +4256,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         except InvalidPendingOrderError:
             if args.json:
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas submit-approved-order",
                     code="invalid_pending_order",
                     message="Pending order file is invalid or corrupted.",
@@ -5196,7 +4265,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         except FileNotFoundError:
             if args.json:
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas submit-approved-order",
                     code="pending_order_not_found",
                     message="Pending order not found.",
@@ -5205,7 +4274,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         except Exception:
             if args.json:
-                return _emit_json_error(
+                return emit_cli_error(
                     "atlas submit-approved-order",
                     code="submit_failed",
                     message="Submit failed. Manual review required.",
@@ -5216,8 +4285,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.json:
             payload = report.to_dict()
             if report.ok:
-                return _emit_json_success("atlas submit-approved-order", payload)
-            return _emit_json_error(
+                return emit_cli_success("atlas submit-approved-order", payload)
+            return emit_cli_error(
                 "atlas submit-approved-order",
                 code="submit_blocked",
                 message=report.message,
@@ -5248,161 +4317,6 @@ def main(argv: list[str] | None = None) -> int:
     def _research_error_text(prefix: str, message: str) -> None:
         print(f"{prefix} skipped safely: {message}")
 
-    def _safe_research_session_error(exc: Exception) -> tuple[str, str]:
-        """Map a research session exception to a safe static status and message."""
-        code = str(exc)
-        mapping: dict[str, tuple[str, str]] = {
-            "artifact_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "artifact_path_not_allowed": ("research_error", "Research command failed."),
-            "artifact_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "ambiguous_run_id": ("invalid_research_id", "Invalid research identifier."),
-            "ambiguous_plan_id": ("invalid_research_id", "Invalid research identifier."),
-            "ambiguous_prompt_packet_id": ("invalid_research_id", "Invalid research identifier."),
-            "plan_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "prompt_packet_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "prompt_packet_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "provider_response_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_response_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "ambiguous_provider_response_id": ("invalid_research_id", "Invalid research identifier."),
-            "evaluation_data_invalid": ("evaluation_data_invalid", "Evaluation data is invalid."),
-            "limit_must_be_positive": ("research_error", "Research command failed."),
-            "run_id must not be empty": ("invalid_research_id", "Invalid research identifier."),
-            "run_id contains unsafe characters": ("invalid_research_id", "Invalid research identifier."),
-            "run_id exceeds maximum length": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_max_context_chars": ("invalid_max_context_chars", "Invalid max-context-chars value."),
-            "max_context_chars_exceeds_limit": ("invalid_max_context_chars", "Invalid max-context-chars value."),
-            "invalid_research_identifier": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_research_symbol": ("invalid_research_symbol", "Invalid research symbol."),
-            "invalid_source_run_id": ("invalid_source_run_id", "Invalid sandbox lineage."),
-            "invalid_prompt_packet_id": ("invalid_prompt_packet_id", "Invalid sandbox lineage."),
-            "invalid_sandbox_lineage": ("invalid_sandbox_lineage", "Invalid sandbox lineage."),
-            "sandbox_request_not_found": ("sandbox_request_not_found", "Sandbox request not found."),
-            "sandbox_request_malformed": ("sandbox_request_malformed", "Sandbox request is malformed."),
-            "unsupported_sandbox_schema": ("unsupported_sandbox_schema", "Unsupported sandbox schema."),
-            "ambiguous_sandbox_request_id": ("invalid_sandbox_request_id", "Invalid sandbox request ID."),
-            "sandbox_replay_mismatch": ("sandbox_replay_mismatch", "Sandbox replay mismatch."),
-            "provider_response_file_not_found": ("provider_response_file_not_found", "Provider response file not found."),
-            "provider_response_malformed": ("provider_response_malformed", "Provider response is malformed."),
-            "provider_response_unsafe": ("provider_response_unsafe", "Provider response is unsafe."),
-            "provider_response_import_failed": ("provider_response_import_failed", "Provider response import failed."),
-            "invalid_provider_id": ("invalid_provider_id", "Invalid provider ID."),
-            "invalid_model_id": ("invalid_model_id", "Invalid model ID."),
-            "provider_call_plan_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_call_plan_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "ambiguous_provider_call_plan_id": ("invalid_research_id", "Invalid research identifier."),
-            "unsupported_provider_call_plan_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "invalid_provider_call_plan_lineage": ("invalid_provider_call_plan_lineage", "Invalid provider call-plan artifact."),
-            "invalid_provider_call_plan_provider": ("invalid_provider_call_plan_provider", "Invalid provider call-plan artifact."),
-            "invalid_provider_call_plan_model": ("invalid_provider_call_plan_model", "Invalid provider call-plan artifact."),
-            "provider_call_plan_hash_mismatch": ("provider_call_plan_hash_mismatch", "Invalid provider call-plan artifact."),
-            "provider_call_plan_source_missing": ("provider_call_plan_source_missing", "Invalid provider call-plan artifact."),
-            "provider_call_plan_source_hash_mismatch": ("provider_call_plan_source_hash_mismatch", "Invalid provider call-plan artifact."),
-            "provider_execution_dry_run_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_execution_dry_run_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "ambiguous_provider_execution_dry_run_id": ("invalid_research_id", "Invalid research identifier."),
-            "unsupported_provider_execution_dry_run_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "invalid_provider_execution_dry_run_lineage": ("invalid_provider_execution_dry_run_lineage", "Invalid provider execution dry-run artifact."),
-            "invalid_provider_execution_dry_run_provider": ("invalid_provider_execution_dry_run_provider", "Invalid provider execution dry-run artifact."),
-            "invalid_provider_execution_dry_run_model": ("invalid_provider_execution_dry_run_model", "Invalid provider execution dry-run artifact."),
-            "provider_execution_dry_run_hash_mismatch": ("provider_execution_dry_run_hash_mismatch", "Invalid provider execution dry-run artifact."),
-            "provider_execution_dry_run_source_missing": ("provider_execution_dry_run_source_missing", "Invalid provider execution dry-run artifact."),
-            "provider_execution_dry_run_source_hash_mismatch": ("provider_execution_dry_run_source_hash_mismatch", "Invalid provider execution dry-run artifact."),
-            "provider_execution_dry_run_impossible_boolean": ("provider_execution_dry_run_impossible_boolean", "Invalid provider execution dry-run artifact."),
-            "invalid_provider_execution_state_name": ("invalid_provider_execution_state_name", "Invalid provider execution state."),
-            "provider_execution_state_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_execution_state_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "ambiguous_provider_execution_state_id": ("invalid_research_id", "Invalid research identifier."),
-            "unsupported_provider_execution_state_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "invalid_provider_execution_state_lineage": ("invalid_provider_execution_state_lineage", "Invalid provider execution state artifact."),
-            "invalid_provider_execution_state_provider": ("invalid_provider_execution_state_provider", "Invalid provider execution state artifact."),
-            "invalid_provider_execution_state_model": ("invalid_provider_execution_state_model", "Invalid provider execution state artifact."),
-            "provider_execution_state_hash_mismatch": ("provider_execution_state_hash_mismatch", "Invalid provider execution state artifact."),
-            "provider_execution_state_source_dry_run_missing": ("provider_execution_state_source_dry_run_missing", "Invalid provider execution state artifact."),
-            "provider_execution_state_source_dry_run_hash_mismatch": ("provider_execution_state_source_dry_run_hash_mismatch", "Invalid provider execution state artifact."),
-            "provider_execution_state_impossible_boolean": ("provider_execution_state_impossible_boolean", "Invalid provider execution state artifact."),
-            "invalid_provider_execution_audit_packet_status": ("invalid_provider_execution_audit_packet_status", "Invalid provider execution audit packet."),
-            "invalid_provider_execution_audit_packet_lineage": ("invalid_provider_execution_audit_packet_lineage", "Invalid provider execution audit packet artifact."),
-            "invalid_provider_execution_audit_packet_provider": ("invalid_provider_execution_audit_packet_provider", "Invalid provider execution audit packet artifact."),
-            "invalid_provider_execution_audit_packet_model": ("invalid_provider_execution_audit_packet_model", "Invalid provider execution audit packet artifact."),
-            "provider_execution_audit_packet_hash_mismatch": ("provider_execution_audit_packet_hash_mismatch", "Invalid provider execution audit packet artifact."),
-            "provider_execution_audit_packet_source_state_missing": ("provider_execution_audit_packet_source_state_missing", "Invalid provider execution audit packet artifact."),
-            "provider_execution_audit_packet_source_state_hash_mismatch": ("provider_execution_audit_packet_source_state_hash_mismatch", "Invalid provider execution audit packet artifact."),
-            "provider_execution_audit_packet_impossible_boolean": ("provider_execution_audit_packet_impossible_boolean", "Invalid provider execution audit packet artifact."),
-            "provider_execution_audit_packet_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_execution_audit_packet_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "ambiguous_provider_execution_audit_packet_id": ("invalid_research_id", "Invalid research identifier."),
-            "unsupported_provider_execution_audit_packet_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "invalid_provider_execution_readiness_report_status": ("invalid_provider_execution_readiness_report_status", "Invalid provider execution readiness report."),
-            "invalid_provider_execution_readiness_report_lineage": ("invalid_provider_execution_readiness_report_lineage", "Invalid provider execution readiness report artifact."),
-            "invalid_provider_execution_readiness_report_provider": ("invalid_provider_execution_readiness_report_provider", "Invalid provider execution readiness report artifact."),
-            "invalid_provider_execution_readiness_report_model": ("invalid_provider_execution_readiness_report_model", "Invalid provider execution readiness report artifact."),
-            "provider_execution_readiness_report_hash_mismatch": ("provider_execution_readiness_report_hash_mismatch", "Invalid provider execution readiness report artifact."),
-            "provider_execution_readiness_report_source_audit_packet_missing": ("provider_execution_readiness_report_source_audit_packet_missing", "Invalid provider execution readiness report artifact."),
-            "provider_execution_readiness_report_source_audit_packet_hash_mismatch": ("provider_execution_readiness_report_source_audit_packet_hash_mismatch", "Invalid provider execution readiness report artifact."),
-            "provider_execution_readiness_report_impossible_boolean": ("provider_execution_readiness_report_impossible_boolean", "Invalid provider execution readiness report artifact."),
-            "provider_execution_readiness_report_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_execution_readiness_report_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "ambiguous_provider_execution_readiness_report_id": ("invalid_research_id", "Invalid research identifier."),
-            "unsupported_provider_execution_readiness_report_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "invalid_provider_preflight_freeze_id": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_preflight_freeze_lineage": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_preflight_freeze_status": ("invalid_provider_preflight_freeze_status", "Invalid provider preflight freeze artifact."),
-            "invalid_provider_preflight_freeze_model": ("invalid_provider_preflight_freeze_model", "Invalid provider preflight freeze artifact."),
-            "invalid_provider_preflight_freeze_provider": ("invalid_provider_preflight_freeze_provider", "Invalid provider preflight freeze artifact."),
-            "provider_preflight_freeze_hash_mismatch": ("provider_preflight_freeze_hash_mismatch", "Invalid provider preflight freeze artifact."),
-            "provider_preflight_freeze_source_readiness_missing": ("provider_preflight_freeze_source_readiness_missing", "Invalid provider preflight freeze artifact."),
-            "provider_preflight_freeze_source_readiness_hash_mismatch": ("provider_preflight_freeze_source_readiness_hash_mismatch", "Invalid provider preflight freeze artifact."),
-            "provider_preflight_freeze_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "unsupported_provider_preflight_freeze_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "provider_preflight_freeze_impossible_boolean": ("provider_preflight_freeze_impossible_boolean", "Invalid provider preflight freeze artifact."),
-            "provider_preflight_freeze_impossible_attestation": ("provider_preflight_freeze_impossible_boolean", "Invalid provider preflight freeze artifact."),
-            "provider_preflight_freeze_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "ambiguous_provider_preflight_freeze_id": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_opt_in_policy_id": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_opt_in_policy_lineage": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_opt_in_policy_status": ("invalid_provider_opt_in_policy_status", "Invalid provider opt-in policy artifact."),
-            "invalid_provider_opt_in_policy_model": ("invalid_provider_opt_in_policy_model", "Invalid provider opt-in policy artifact."),
-            "invalid_provider_opt_in_policy_provider": ("invalid_provider_opt_in_policy_provider", "Invalid provider opt-in policy artifact."),
-            "provider_opt_in_policy_hash_mismatch": ("provider_opt_in_policy_hash_mismatch", "Invalid provider opt-in policy artifact."),
-            "provider_opt_in_policy_source_freeze_missing": ("provider_opt_in_policy_source_freeze_missing", "Invalid provider opt-in policy artifact."),
-            "provider_opt_in_policy_source_freeze_hash_mismatch": ("provider_opt_in_policy_source_freeze_hash_mismatch", "Invalid provider opt-in policy artifact."),
-            "provider_opt_in_policy_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "unsupported_provider_opt_in_policy_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "provider_opt_in_policy_impossible_boolean": ("provider_opt_in_policy_impossible_boolean", "Invalid provider opt-in policy artifact."),
-            "provider_opt_in_policy_forbidden_claim": ("provider_opt_in_policy_forbidden_claim", "Invalid provider opt-in policy artifact."),
-            "provider_opt_in_policy_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "ambiguous_provider_opt_in_policy_id": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_response_intake_policy_provider": ("invalid_provider_response_intake_policy_provider", "Invalid provider response intake policy artifact."),
-            "invalid_provider_response_intake_policy_model": ("invalid_provider_response_intake_policy_model", "Invalid provider response intake policy artifact."),
-            "invalid_provider_response_intake_policy_status": ("invalid_provider_response_intake_policy_status", "Invalid provider response intake policy artifact."),
-            "provider_response_intake_policy_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "unsupported_provider_response_intake_policy_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "provider_response_intake_policy_hash_mismatch": ("provider_response_intake_policy_hash_mismatch", "Invalid provider response intake policy artifact."),
-            "provider_response_intake_policy_source_payload_preview_missing": ("provider_response_intake_policy_source_payload_preview_missing", "Invalid provider response intake policy artifact."),
-            "provider_response_intake_policy_source_payload_preview_hash_mismatch": ("provider_response_intake_policy_source_payload_preview_hash_mismatch", "Invalid provider response intake policy artifact."),
-            "invalid_provider_response_intake_policy_lineage": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_response_intake_policy_artifact": ("research_artifact_malformed", "Research artifact is malformed."),
-            "provider_response_intake_policy_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_response_intake_policy_impossible_boolean": ("provider_response_intake_policy_impossible_boolean", "Invalid provider response intake policy artifact."),
-            "provider_response_intake_policy_forbidden_response_claim": ("provider_response_intake_policy_forbidden_response_claim", "Invalid provider response intake policy artifact."),
-            "invalid_provider_request_response_pairing_provider": ("invalid_provider_request_response_pairing_provider", "Invalid provider request/response pairing artifact."),
-            "invalid_provider_request_response_pairing_model": ("invalid_provider_request_response_pairing_model", "Invalid provider request/response pairing artifact."),
-            "invalid_provider_request_response_pairing_status": ("invalid_provider_request_response_pairing_status", "Invalid provider request/response pairing artifact."),
-            "provider_request_response_pairing_malformed": ("research_artifact_malformed", "Research artifact is malformed."),
-            "unsupported_provider_request_response_pairing_schema": ("unsupported_research_artifact_schema", "Unsupported research artifact schema."),
-            "provider_request_response_pairing_hash_mismatch": ("provider_request_response_pairing_hash_mismatch", "Invalid provider request/response pairing artifact."),
-            "provider_request_response_pairing_source_response_intake_missing": ("provider_request_response_pairing_source_response_intake_missing", "Invalid provider request/response pairing artifact."),
-            "provider_request_response_pairing_source_response_intake_hash_mismatch": ("provider_request_response_pairing_source_response_intake_hash_mismatch", "Invalid provider request/response pairing artifact."),
-            "provider_request_response_pairing_source_payload_preview_missing": ("provider_request_response_pairing_source_payload_preview_missing", "Invalid provider request/response pairing artifact."),
-            "provider_request_response_pairing_source_payload_preview_hash_mismatch": ("provider_request_response_pairing_source_payload_preview_hash_mismatch", "Invalid provider request/response pairing artifact."),
-            "invalid_provider_request_response_pairing_lineage": ("invalid_research_id", "Invalid research identifier."),
-            "invalid_provider_request_response_pairing_artifact": ("research_artifact_malformed", "Research artifact is malformed."),
-            "provider_request_response_pairing_not_found": ("research_artifact_not_found", "Research artifact not found."),
-            "provider_request_response_pairing_impossible_boolean": ("provider_request_response_pairing_impossible_boolean", "Invalid provider request/response pairing artifact."),
-            "provider_request_response_pairing_forbidden_pairing_claim": ("provider_request_response_pairing_forbidden_pairing_claim", "Invalid provider request/response pairing artifact."),
-            "artifact_path_not_allowed": ("research_error", "Research command failed."),
-        }
-        return mapping.get(code, ("research_error", "Research command failed."))
 
     if args.command == "research" and args.research_command == "market":
         if args.json:
@@ -5452,7 +4366,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research run skipped safely: unsupported research provider")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -5551,7 +4465,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -5635,7 +4549,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research show", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -5694,7 +4608,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research plan", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -5756,7 +4670,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research summary", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -5848,7 +4762,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research verify", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -5938,7 +4852,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research evaluate", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6019,7 +4933,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research check-artifacts", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6121,7 +5035,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research timeline", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6316,7 +5230,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research prompt", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6387,7 +5301,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research simulate-provider", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6467,7 +5381,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research review-response", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6548,7 +5462,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research dossier", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6624,7 +5538,7 @@ def main(argv: list[str] | None = None) -> int:
                 _research_error_text("research sandbox", "unsupported research artifact schema")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6689,7 +5603,7 @@ def main(argv: list[str] | None = None) -> int:
             items = _iter_sandbox_request_artifacts(ws, symbol=args.symbol)
             items = items[:limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6739,7 +5653,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("sandbox_request_not_found")
             artifact = load_sandbox_request(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6794,7 +5708,7 @@ def main(argv: list[str] | None = None) -> int:
             artifact = load_sandbox_request(path, ws)
             result = validate_sandbox_request_artifact(artifact)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -6874,7 +5788,7 @@ def main(argv: list[str] | None = None) -> int:
                 {"name": "hash_matches", "passed": match, "message": "Hash matches." if match else "Hash mismatch detected."},
             ]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7031,7 +5945,7 @@ def main(argv: list[str] | None = None) -> int:
 
             artifact_path.write_text(json.dumps(response_payload, indent=2, sort_keys=True), encoding="utf-8")
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7068,7 +5982,7 @@ def main(argv: list[str] | None = None) -> int:
 
             targets = list_disabled_provider_call_targets()
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7125,7 +6039,7 @@ def main(argv: list[str] | None = None) -> int:
 
             artifact = create_provider_call_plan(ws, safe_sandbox_request_id, provider_id, model_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7196,7 +6110,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-plan-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7248,7 +6162,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_call_plan_not_found")
             artifact = load_and_validate_provider_call_plan(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7305,7 +6219,7 @@ def main(argv: list[str] | None = None) -> int:
             plan_data = load_provider_call_plan(path, ws)
             result = validate_provider_call_plan_artifact(plan_data, workspace_path=ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7357,7 +6271,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_call_plan_id)
             replay_result = replay_provider_call_plan(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7410,7 +6324,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_plan_id = validate_run_id(args.provider_call_plan_id)
             artifact = create_provider_execution_dry_run(ws, safe_plan_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7483,7 +6397,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-execution-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7535,7 +6449,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_execution_dry_run_not_found")
             artifact = load_and_validate_provider_execution_dry_run(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7592,7 +6506,7 @@ def main(argv: list[str] | None = None) -> int:
             dry_run_data = load_provider_execution_dry_run(path, ws)
             result = validate_provider_execution_dry_run_artifact(dry_run_data, workspace_path=ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7644,7 +6558,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_execution_dry_run_id)
             replay_result = replay_provider_execution_dry_run(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7696,7 +6610,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_execution_dry_run_id)
             result = create_provider_execution_state(ws, safe_id, args.requested_state)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7786,7 +6700,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_execution_state_not_found")
             artifact = load_and_validate_provider_execution_state(state_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7838,7 +6752,7 @@ def main(argv: list[str] | None = None) -> int:
             data = json.loads(state_path.read_text(encoding="utf-8"))
             result = validate_provider_execution_state_artifact(data, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7891,7 +6805,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_execution_state_id)
             replay_result = replay_provider_execution_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -7943,7 +6857,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_execution_state_id)
             result = create_provider_execution_audit_packet(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8023,7 +6937,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_execution_audit_packet_not_found")
             artifact = load_and_validate_provider_execution_audit_packet(audit_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8077,7 +6991,7 @@ def main(argv: list[str] | None = None) -> int:
             data = json.loads(audit_path.read_text(encoding="utf-8"))
             result = validate_provider_execution_audit_packet_artifact(data, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8130,7 +7044,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_execution_audit_packet_id)
             replay_result = replay_provider_execution_audit_packet(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8178,7 +7092,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = create_provider_execution_readiness_report(ws, args.provider_execution_audit_packet_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8234,7 +7148,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-execution-readiness-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8290,7 +7204,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_execution_readiness_report_not_found")
             artifact = load_and_validate_provider_execution_readiness_report(report_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8349,7 +7263,7 @@ def main(argv: list[str] | None = None) -> int:
             data = _json.loads(report_path.read_text(encoding="utf-8"))
             result = validate_provider_execution_readiness_report_artifact(data, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8403,7 +7317,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_execution_readiness_report_id)
             replay_result = replay_provider_execution_readiness_report(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8455,7 +7369,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = provider_execution_chain_doctor(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8504,7 +7418,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = create_provider_preflight_freeze(ws, args.provider_execution_readiness_report_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8559,7 +7473,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-preflight-freeze-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8614,7 +7528,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_preflight_freeze_not_found")
             artifact = load_and_validate_provider_preflight_freeze(freeze_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8670,7 +7584,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_preflight_freeze_not_found")
             validation = validate_provider_preflight_freeze_artifact(freeze_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8724,7 +7638,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_preflight_freeze_id)
             replay_result = replay_provider_preflight_freeze(safe_id, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8776,7 +7690,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_preflight_freeze_for_run(safe_id, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8822,7 +7736,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = create_provider_opt_in_policy(ws, args.provider_preflight_freeze_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8872,7 +7786,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-opt-in-policy-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8924,7 +7838,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_opt_in_policy_not_found")
             artifact = load_provider_opt_in_policy(policy_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -8978,7 +7892,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_opt_in_policy_not_found")
             validation = validate_provider_opt_in_policy_artifact(policy_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9031,7 +7945,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_opt_in_policy_id)
             replay_result = replay_provider_opt_in_policy(safe_id, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9084,7 +7998,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_opt_in_policy_for_run(safe_id, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9130,7 +8044,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = create_provider_credential_boundary(ws, args.provider_opt_in_policy_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9180,7 +8094,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-credential-boundary-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9232,7 +8146,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_credential_boundary_not_found")
             artifact = load_provider_credential_boundary(boundary_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9286,7 +8200,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_credential_boundary_not_found")
             validation = validate_provider_credential_boundary_artifact(boundary_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9339,7 +8253,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_credential_boundary_id)
             replay_result = replay_provider_credential_boundary(safe_id, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9392,7 +8306,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_credential_boundary_for_run(safe_id, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9441,7 +8355,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = create_provider_outbound_payload_preview(ws, args.provider_credential_boundary_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9494,7 +8408,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-payload-preview-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9546,7 +8460,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_outbound_payload_preview_not_found")
             artifact = load_provider_outbound_payload_preview(preview_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9603,7 +8517,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ResearchSessionError("provider_outbound_payload_preview_not_found")
             validation = validate_provider_outbound_payload_preview_artifact(preview_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9656,7 +8570,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_outbound_payload_preview_id)
             replay_result = replay_provider_outbound_payload_preview(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9707,7 +8621,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_outbound_payload_preview_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9752,7 +8666,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = create_provider_response_intake_policy(ws, args.provider_outbound_payload_preview_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9803,7 +8717,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("research provider-response-intake-policy-list skipped safely: invalid research symbol")
             return 1
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9854,7 +8768,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_response_intake_policy(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9914,7 +8828,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_response_intake_policy_artifact(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -9967,7 +8881,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.provider_response_intake_policy_id)
             replay_result = replay_provider_response_intake_policy(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10018,7 +8932,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_response_intake_policy_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10065,7 +8979,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.intake_policy_id)
             result = create_provider_request_response_pairing(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10112,7 +9026,7 @@ def main(argv: list[str] | None = None) -> int:
             items = iter_provider_request_response_pairing_artifacts(ws, symbol=safe_symbol)
             items = items[:limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10166,7 +9080,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_request_response_pairing(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10230,7 +9144,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_request_response_pairing_artifact(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10283,7 +9197,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.pairing_id)
             replay_result = replay_provider_request_response_pairing(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10334,7 +9248,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_request_response_pairing_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10383,7 +9297,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_request_response_pairing(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10430,7 +9344,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.pairing_id)
             result = create_provider_response_schema_contract(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10477,7 +9391,7 @@ def main(argv: list[str] | None = None) -> int:
             items = iter_provider_response_schema_contract_artifacts(ws, symbol=safe_symbol)
             items = items[:limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10531,7 +9445,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_response_schema_contract(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10595,7 +9509,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_response_schema_contract_artifact(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10648,7 +9562,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.contract_id)
             replay_result = replay_provider_response_schema_contract(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10699,7 +9613,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_response_schema_contract_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10748,7 +9662,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_response_schema_contract(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10795,7 +9709,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.schema_contract_id)
             result = create_provider_response_review_result(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10843,7 +9757,7 @@ def main(argv: list[str] | None = None) -> int:
             items = iter_provider_response_review_result_artifacts(ws, symbol=safe_symbol)
             items = items[:limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10897,7 +9811,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_response_review_result(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -10963,7 +9877,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_response_review_result_artifact(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11016,7 +9930,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.review_result_id)
             replay_result = replay_provider_response_review_result(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11067,7 +9981,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_response_review_result_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11117,7 +10031,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_response_review_result(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11164,7 +10078,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.review_result_id)
             result = create_provider_execution_unlock_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11213,7 +10127,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.limit:
                 items = items[:args.limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11267,7 +10181,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_execution_unlock_state(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11335,7 +10249,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_execution_unlock_state_artifact(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11389,7 +10303,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.unlock_state_id)
             result = replay_provider_execution_unlock_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11433,7 +10347,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_execution_unlock_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11480,7 +10394,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_execution_unlock_state(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11527,7 +10441,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.unlock_state_id)
             result = create_provider_adapter_interface_contract(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11575,7 +10489,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.limit:
                 items = items[:args.limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11629,7 +10543,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_adapter_interface_contract(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11691,7 +10605,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_adapter_interface_contract_artifact(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11746,7 +10660,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.contract_id)
             result = replay_provider_adapter_interface_contract(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11790,7 +10704,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_adapter_interface_contract(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11837,7 +10751,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_adapter_interface_contract(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11875,7 +10789,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.contract_id)
             result = run_disabled_adapter_smoke(safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11922,7 +10836,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.contract_id)
             result = create_provider_mock_response_simulation(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -11995,7 +10909,7 @@ def main(argv: list[str] | None = None) -> int:
                         print(f"{created:<24} {item['symbol']:<8} {item['source_run_id']:<34} {item['provider_id']:<14} {item['mock_simulation_status']:<24} {item['artifact_path']}")
             return 0
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12039,7 +10953,7 @@ def main(argv: list[str] | None = None) -> int:
 
             data = load_provider_mock_response_simulation(path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12101,7 +11015,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = validate_provider_mock_response_simulation_artifact(path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12157,7 +11071,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.simulation_id)
             result = replay_provider_mock_response_simulation(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12201,7 +11115,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_mock_response_simulation(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12250,7 +11164,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_mock_response_simulation(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12304,7 +11218,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.simulation_id)
             result = create_provider_mock_response_import_candidate(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12377,7 +11291,7 @@ def main(argv: list[str] | None = None) -> int:
                         created = item.get("created_at", "")[:19]
                         print(f"{created:<24} {item['symbol']:<8} {item['source_run_id']:<34} {item['provider_id']:<14} {item['mock_import_candidate_status']:<24} {item['artifact_path']}")
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12422,7 +11336,7 @@ def main(argv: list[str] | None = None) -> int:
 
             data = load_and_validate_provider_mock_response_import_candidate(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12478,7 +11392,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = validate_provider_mock_response_import_candidate_artifact(artifact_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12535,7 +11449,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.candidate_id)
             result = replay_provider_mock_response_import_candidate(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12579,7 +11493,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_mock_response_import_candidate(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12627,7 +11541,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_mock_response_import_candidate(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12680,7 +11594,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.import_candidate_id)
             result = create_provider_mock_response_review_sandbox(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12753,7 +11667,7 @@ def main(argv: list[str] | None = None) -> int:
                         created = item.get("created_at", "")[:19]
                         print(f"{created:<24} {item['symbol']:<8} {item['source_run_id']:<34} {item['provider_id']:<14} {item['mock_review_sandbox_status']:<24} {item['artifact_path']}")
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12798,7 +11712,7 @@ def main(argv: list[str] | None = None) -> int:
 
             data = load_and_validate_provider_mock_response_review_sandbox(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12854,7 +11768,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = validate_provider_mock_response_review_sandbox_artifact(artifact_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12911,7 +11825,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.sandbox_id)
             result = replay_provider_mock_response_review_sandbox(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -12955,7 +11869,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_mock_response_review_sandbox(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13004,7 +11918,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_mock_response_review_sandbox(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13055,7 +11969,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.review_sandbox_id)
             result = create_provider_mock_response_trust_decision_blocker(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13104,7 +12018,7 @@ def main(argv: list[str] | None = None) -> int:
             limit = max(1, min(args.limit, 100))
             items = items[:limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13154,7 +12068,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_mock_response_trust_decision_blocker(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13204,7 +12118,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_mock_response_trust_decision_blocker_artifact(artifact_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13256,7 +12170,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.blocker_id)
             result = replay_provider_mock_response_trust_decision_blocker(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13295,7 +12209,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_mock_response_trust_decision_blocker(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13342,7 +12256,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_mock_response_trust_decision_blocker(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13394,7 +12308,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.blocker_id)
             result = create_provider_mock_response_final_safety_seal(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13445,7 +12359,7 @@ def main(argv: list[str] | None = None) -> int:
             limit = max(1, min(args.limit, 100))
             items = items[:limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13495,7 +12409,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_mock_response_final_safety_seal(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13545,7 +12459,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_mock_response_final_safety_seal_artifact(artifact_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13597,7 +12511,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.seal_id)
             result = replay_provider_mock_response_final_safety_seal(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13636,7 +12550,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_mock_response_final_safety_seal(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13684,7 +12598,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_mock_response_final_safety_seal(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13738,7 +12652,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.seal_id)
             result = create_provider_safety_dossier(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13782,7 +12696,7 @@ def main(argv: list[str] | None = None) -> int:
             limit = max(1, min(args.limit, 100))
             items = items[:limit]
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13821,7 +12735,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = latest_provider_safety_dossier(ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13878,7 +12792,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_provider_safety_dossier(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13927,7 +12841,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_provider_safety_dossier_artifact(artifact_path, ws, strict=args.strict)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -13979,7 +12893,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.dossier_id)
             result = replay_provider_safety_dossier(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14018,7 +12932,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = summarize_provider_safety_dossier(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14057,7 +12971,7 @@ def main(argv: list[str] | None = None) -> int:
             safe_id = validate_run_id(args.run_id)
             result = doctor_provider_safety_dossier(ws, safe_id)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14108,7 +13022,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = export_provider_safety_dossier_markdown(ws, safe_id, output_path)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14146,7 +13060,7 @@ def main(argv: list[str] | None = None) -> int:
             from atlas_agent import __version__
             result = create_release_candidate_readiness(ws, args.symbol, __version__)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14188,7 +13102,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = iter_release_candidate_readiness_artifacts(ws, symbol=args.symbol)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14235,7 +13149,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             data = load_release_candidate_readiness(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14288,7 +13202,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_release_candidate_readiness_artifact(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14354,7 +13268,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = summarize_release_candidate_readiness(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14406,7 +13320,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = doctor_release_candidate_readiness(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14454,7 +13368,7 @@ def main(argv: list[str] | None = None) -> int:
 
             result = create_release_candidate_cutover_dry_run(ws, args.target_version)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14531,7 +13445,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = validate_release_candidate_cutover_artifact(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14594,7 +13508,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = summarize_release_candidate_cutover(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
@@ -14643,7 +13557,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             result = doctor_release_candidate_cutover(artifact_path, ws)
         except ResearchSessionError as exc:
-            status, message = _safe_research_session_error(exc)
+            status, message = safe_research_session_error(exc)
             if args.json:
                 _research_error_json(status, message)
             else:
