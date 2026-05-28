@@ -28,6 +28,10 @@ echo "4. feedback intake check"
 "$PYTHON_BIN" scripts/check_feedback_intake.py
 
 echo ""
+echo "5. feedback taxonomy check"
+"$PYTHON_BIN" scripts/check_feedback_taxonomy.py
+
+echo ""
 echo "5. public docs consistency"
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py
 

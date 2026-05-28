@@ -41,6 +41,10 @@ echo "4. feedback intake check"
 "$PYTHON_BIN" scripts/check_feedback_intake.py
 
 echo ""
+echo "5. feedback taxonomy check"
+"$PYTHON_BIN" scripts/check_feedback_taxonomy.py
+
+echo ""
 echo "5. research sandbox CLI tests"
 "$PYTHON_BIN" -m pytest tests/research/test_research_sandbox_cli.py -q "${PYTEST_EXTRA_ARGS[@]}"
 

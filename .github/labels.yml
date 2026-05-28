@@ -1,0 +1,124 @@
+# Atlas Agent Feedback Label Taxonomy
+# Static local manifest — does not call the GitHub API.
+#
+# This file documents the label taxonomy used for triaging public reviewer
+# feedback. Labels are grouped by category for readability. Descriptions are
+# conservative and do not imply that any restricted feature is enabled.
+
+# ---------------------------------------------------------------------------
+# Type labels — what kind of issue is this?
+# ---------------------------------------------------------------------------
+type:
+  - name: "type: bug"
+    color: "d73a4a"
+    description: "A reproducible defect in local-only paths"
+  - name: "type: docs"
+    color: "0075ca"
+    description: "Documentation clarity, accuracy, or missing coverage"
+  - name: "type: feedback"
+    color: "a2eeef"
+    description: "General structured reviewer feedback"
+  - name: "type: safety"
+    color: "ff7619"
+    description: "Safety gate or trust-boundary concern"
+  - name: "type: feature"
+    color: "1d76db"
+    description: "Capability suggestion or enhancement request"
+  - name: "type: chore"
+    color: "cfd3d7"
+    description: "Maintenance, hygiene, or release-engineering task"
+
+# ---------------------------------------------------------------------------
+# Area labels — which part of the project does this affect?
+# ---------------------------------------------------------------------------
+area:
+  - name: "area: cli"
+    color: "0e8a16"
+    description: "Command-line interface, commands, or help text"
+  - name: "area: install"
+    color: "0e8a16"
+    description: "Installation, packaging, or dependency issues"
+  - name: "area: docs"
+    color: "0075ca"
+    description: "Documentation site, README, or guides"
+  - name: "area: research"
+    color: "5319e7"
+    description: "Research workflow, sandbox, or paper-only analysis"
+  - name: "area: release-gate"
+    color: "5319e7"
+    description: "Check scripts, test gates, or release automation"
+  - name: "area: safety-model"
+    color: "ff7619"
+    description: "Safety gate design, kill switch, or risk controls"
+  - name: "area: feedback-intake"
+    color: "a2eeef"
+    description: "Issue templates, triage process, or label taxonomy"
+  - name: "area: github-hygiene"
+    color: "cfd3d7"
+    description: "Repository hygiene, CI, templates, or GitHub settings"
+
+# ---------------------------------------------------------------------------
+# Priority labels — how urgent is this?
+# ---------------------------------------------------------------------------
+priority:
+  - name: "priority: blocker"
+    color: "b60205"
+    description: "Must fix before next release; affects install, safety, or deterministic checks"
+  - name: "priority: high"
+    color: "d93f0b"
+    description: "Significant impact but does not block release"
+  - name: "priority: normal"
+    color: "fbca04"
+    description: "Standard priority; typical docs or UX improvement"
+  - name: "priority: low"
+    color: "0e8a16"
+    description: "Minor polish or backlog item"
+
+# ---------------------------------------------------------------------------
+# Risk labels — what boundaries does this touch?
+# ---------------------------------------------------------------------------
+# NOTE: Risk labels describe the *topic* of the feedback. They do NOT mean
+# the feature is enabled, recommended, or changed.
+# ---------------------------------------------------------------------------
+risk:
+  - name: "risk: protected-boundary"
+    color: "b60205"
+    description: "Touches config, brokers, execution, safety, or risk modules. Does not mean the change is enabled."
+  - name: "risk: safety-sensitive"
+    color: "b60205"
+    description: "May affect safety gates or trust boundaries. Does not mean live trading is enabled."
+  - name: "risk: credentials"
+    color: "b60205"
+    description: "Involves credential handling or configuration. Does not mean credentials are required by default."
+  - name: "risk: live-trading"
+    color: "b60205"
+    description: "Relates to live trading paths. Does not mean live trading is enabled or recommended."
+  - name: "risk: provider-execution"
+    color: "b60205"
+    description: "Relates to provider execution paths. Does not mean provider execution is unlocked."
+  - name: "risk: broker-execution"
+    color: "b60205"
+    description: "Relates to broker execution paths. Does not mean broker execution is enabled."
+
+# ---------------------------------------------------------------------------
+# Status labels — where is this in the workflow?
+# ---------------------------------------------------------------------------
+status:
+  - name: "status: needs-triage"
+    color: "fef2c0"
+    description: "New issue awaiting classification"
+  - name: "status: accepted"
+    color: "0e8a16"
+    description: "Accepted for work or documentation"
+  - name: "status: needs-info"
+    color: "fbca04"
+    description: "Awaiting additional information from reporter"
+  - name: "status: rejected-out-of-scope"
+    color: "cccccc"
+    description: "Closed as out of scope per feedback policy"
+  - name: "status: duplicate"
+    color: "cccccc"
+    description: "Duplicate of existing issue"
+  - name: "status: wontfix"
+    color: "cccccc"
+    description: "Closed without action; does not fit roadmap"

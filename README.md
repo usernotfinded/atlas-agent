@@ -106,6 +106,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **[Release Evidence Bundle](docs/release-evidence-bundle.md)** — local JSON/Markdown release snapshot
 - **[Feedback Intake Process](docs/feedback-intake-process.md)** — how to submit structured reviewer feedback
 - **[Public Feedback Checklist](docs/public-feedback-checklist.md)** — pre-outreach safety checklist
+- **[Feedback Triage Taxonomy](docs/feedback-triage-taxonomy.md)** — label taxonomy and triage rules for incoming reviewer feedback
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 
