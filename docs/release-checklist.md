@@ -14,6 +14,7 @@ Run this before pushing a public GitHub release.
 - `python3.11 scripts/check_version_consistency.py`
 - `python3.11 scripts/check_cli_command_compatibility.py`
 - `python3.11 scripts/smoke_reviewer_golden_path.py`
+- `python3.11 scripts/build_release_evidence_bundle.py`
 - `python3.11 scripts/check_forbidden_claims.py`
 - `python3.11 scripts/verify_readme_quickstart.py`
 - `python3.11 scripts/check_public_docs_consistency.py`
