@@ -32,15 +32,19 @@ echo "5. feedback taxonomy check"
 "$PYTHON_BIN" scripts/check_feedback_taxonomy.py
 
 echo ""
-echo "5. public docs consistency"
+echo "6. reviewer outreach check"
+"$PYTHON_BIN" scripts/check_reviewer_outreach.py
+
+echo ""
+echo "7. public docs consistency"
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py
 
 echo ""
-echo "6. README quickstart verification"
+echo "8. README quickstart verification"
 "$PYTHON_BIN" scripts/verify_readme_quickstart.py
 
 echo ""
-echo "7. RC cutover check"
+echo "9. RC cutover check"
 "$PYTHON_BIN" scripts/check_rc1_cutover.py
 
 echo ""

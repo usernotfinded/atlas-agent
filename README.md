@@ -107,6 +107,8 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **[Feedback Intake Process](docs/feedback-intake-process.md)** — how to submit structured reviewer feedback
 - **[Public Feedback Checklist](docs/public-feedback-checklist.md)** — pre-outreach safety checklist
 - **[Feedback Triage Taxonomy](docs/feedback-triage-taxonomy.md)** — label taxonomy and triage rules for incoming reviewer feedback
+- **[Controlled Reviewer Outreach](docs/controlled-reviewer-outreach.md)** — safe copy-paste review requests and outreach process for 5–10 technical reviewers
+- **[Reviewer Outreach Checklist](docs/reviewer-outreach-checklist.md)** — pre-outreach safety and readiness checklist
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 

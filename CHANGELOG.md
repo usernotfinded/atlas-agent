@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a local release evidence bundle generator that writes JSON and Markdown reports for reviewer/release verification.
 - Added public feedback intake templates, docs, and checks for structured reviewer feedback.
 - Added a local feedback label taxonomy and triage checker for public reviewer issues.
+- Added a controlled reviewer outreach pack with safe copy-paste review requests, outreach checklist, and local validation checks.
 
 ### Fixed
 - Updated the legacy RC cutover check so post-v0.5.7 development versions such as `0.5.8.dev0` are accepted while the historical `v0.5.7` tag remains verified.
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The historical release record check is local-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
 - Feedback intake docs and templates explicitly reject credential sharing, safety-bypass requests, real-money broker setup, and profitability/trading-signal evaluation.
 - Feedback taxonomy docs classify live-trading, broker, provider, credential, and safety-bypass requests as safety-sensitive or out-of-scope by default.
+- Reviewer outreach drafts explicitly avoid profitability claims, live-trading readiness claims, broker setup requests, credential sharing, and safety-bypass requests.
 
 ## [0.5.7] - 2026-05-26
 
