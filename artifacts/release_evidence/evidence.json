@@ -1,0 +1,176 @@
+{
+  "changed_since_v0_5_7": [
+    "M\t.github/workflows/ci.yml",
+    "M\tCHANGELOG.md",
+    "M\tREADME.md",
+    "A\tdocs/cli-command-compatibility.md",
+    "M\tdocs/feedback-request-guide.md",
+    "M\tdocs/final-rc-audit.md",
+    "M\tdocs/package-distribution-verification.md",
+    "M\tdocs/public-faq.md",
+    "M\tdocs/public-launch-messaging.md",
+    "M\tdocs/public-launch-readiness.md",
+    "M\tdocs/release-checklist.md",
+    "A\tdocs/release-evidence-bundle.md",
+    "A\tdocs/reviewer-golden-path.md",
+    "M\tpyproject.toml",
+    "A\tscripts/build_release_evidence_bundle.py",
+    "A\tscripts/check_cli_command_compatibility.py",
+    "M\tscripts/check_public_docs_consistency.py",
+    "M\tscripts/check_public_launch_messaging.py",
+    "M\tscripts/check_public_launch_readiness.py",
+    "M\tscripts/check_stable_release_decision.py",
+    "M\tscripts/check_version_consistency.py",
+    "M\tscripts/ci_check.sh",
+    "M\tscripts/dev_check.sh",
+    "M\tscripts/release_check.sh",
+    "A\tscripts/smoke_reviewer_golden_path.py",
+    "M\tsrc/atlas_agent/__init__.py",
+    "M\tsrc/atlas_agent/cli.py",
+    "M\tsrc/atlas_agent/cli_commands/__init__.py",
+    "A\tsrc/atlas_agent/cli_commands/demo.py",
+    "A\tsrc/atlas_agent/cli_commands/deploy.py",
+    "A\tsrc/atlas_agent/cli_commands/events.py",
+    "M\tsrc/atlas_agent/cli_commands/memory.py",
+    "A\tsrc/atlas_agent/cli_commands/risk.py",
+    "A\tsrc/atlas_agent/cli_commands/update.py",
+    "A\tsrc/atlas_agent/cli_commands/workspace.py",
+    "A\tsrc/atlas_agent/cli_io.py",
+    "A\tsrc/atlas_agent/cli_safety.py",
+    "M\tsrc/atlas_agent/config/schema.py",
+    "M\tsrc/atlas_agent/events/log.py",
+    "M\tsrc/atlas_agent/execution/audit.py",
+    "A\tsrc/atlas_agent/research/artifact_store.py",
+    "A\tsrc/atlas_agent/research/command_specs.py",
+    "A\tsrc/atlas_agent/research/errors.py",
+    "M\tsrc/atlas_agent/research/session.py",
+    "A\ttests/fixtures/cli_command_contract.json",
+    "M\ttests/research/test_research_sandbox_cli.py",
+    "A\ttests/test_cli_command_compatibility.py",
+    "M\ttests/test_output_safety.py",
+    "M\ttests/test_public_launch_messaging.py",
+    "M\ttests/test_public_launch_readiness.py",
+    "A\ttests/test_release_evidence_bundle.py",
+    "A\ttests/test_reviewer_golden_path_smoke.py",
+    "M\ttests/test_stable_release_decision.py"
+  ],
+  "checks": [
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "scripts/check_version_consistency.py"
+      ],
+      "exit_code": 0,
+      "name": "check_version_consistency",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "Version consistency OK: package=0.5.8.dev0 public_tag=v0.5.7\n"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "scripts/check_forbidden_claims.py"
+      ],
+      "exit_code": 0,
+      "name": "check_forbidden_claims",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "Forbidden claims scan clean.\n"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "scripts/check_public_docs_consistency.py"
+      ],
+      "exit_code": 0,
+      "name": "check_public_docs_consistency",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "Public docs consistency check PASSED\n  Scanned 21 public doc file(s)\n"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "scripts/check_public_launch_readiness.py"
+      ],
+      "exit_code": 0,
+      "name": "check_public_launch_readiness",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "Public launch readiness check PASSED\n  Package version: 0.5.8.dev0\n  Public tag: v0.5.7\n  Required files: 17 present\n  Public docs safe: yes\n  No staged artifacts: yes\n"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "scripts/check_stable_release_decision.py"
+      ],
+      "exit_code": 0,
+      "name": "check_stable_release_decision",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "Stable release decision check PASSED\n  Package version: 0.5.8.dev0\n  Public tag: v0.5.7\n  Required files: 24 present\n  Public docs safe: yes\n  No staged artifacts: yes\n"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "scripts/check_cli_command_compatibility.py"
+      ],
+      "exit_code": 0,
+      "name": "check_cli_command_compatibility",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "==================================================\nCLI Command Compatibility Check\n==================================================\nTop-level commands: 41\nSubcommand families: 28\nResearch commands: 174\nConfigless research commands: 173\n==================================================\nResult: PASSED\n==================================================\n"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "scripts/smoke_reviewer_golden_path.py",
+        "--json",
+        "--skip-release-check"
+      ],
+      "exit_code": 0,
+      "name": "smoke_reviewer_golden_path",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "{\n  \"errors\": [],\n  \"keep_temp\": false,\n  \"passed\": true,\n  \"steps\": [\n    {\n      \"command\": \"atlas --help\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas init atlas-smoke-i4t1ie8t --template routine-trader\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas discipline setup --manual --yes\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas config set market.symbol DEMO-SYMBOL\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas validate\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas backtest run --data <REPO_ROOT>/data/sample/ohlcv.csv --symbol DEMO-SYMBOL --json\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas research run --symbol DEMO-SYMBOL --json\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas research summary --json\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas memory doctor --json\",\n      \"ok\": true,\n      \"returncode\": 0\n    },\n    {\n      \"command\": \"atlas events doctor\",\n      \"ok\": true,\n      \"returncode\": 0\n    }\n  ],\n  \"temp_workspace\": null\n}\n"
+    },
+    {
+      "command": [
+        "./scripts/release_check.sh",
+        "--quick"
+      ],
+      "exit_code": 0,
+      "name": "release_check_quick",
+      "passed": true,
+      "stderr_redacted": "",
+      "stdout_redacted": "========================================\nrelease check \u2014 mode: quick\n========================================\n========================================\ndev check \u2014 fast local development gate\n========================================\n\n1. version consistency\nVersion consistency OK: package=0.5.8.dev0 public_tag=v0.5.7\n\n2. CLI command compatibility\n==================================================\nCLI Command Compatibility Check\n==================================================\nTop-level commands: 41\nSubcommand families: 28\nResearch commands: 174\nConfigless research commands: 173\n==================================================\nResult: PASSED\n==================================================\n\n3. forbidden claims scan\nForbidden claims scan clean.\n\n4. research sandbox CLI tests\n........................................................................ [ 36%]\n........................................................................ [ 73%]\n.....................................................                    [100%]\n197 passed in 24.33s\n\n5. reviewer golden-path smoke tests\n.........                                                                [100%]\n9 passed in 11.19s\n\n6. release check script tests\n...........................................                              [100%]\n43 passed in 6.43s\n\n7. git diff --check\n\n8. git diff --cached --check\n\n9. protected staged files\nNo protected staged files detected.\n\n========================================\nAll dev checks passed.\n========================================\n"
+    }
+  ],
+  "current_branch": "main",
+  "current_commit": "1377744fb196bef2ae5e85b2fbff9f5572cd5ceb",
+  "diff_check_clean": true,
+  "generated_at": "2026-05-28T18:41:29.714317+00:00",
+  "package_version": "0.5.8.dev0",
+  "passed": true,
+  "protected_boundaries": {
+    "src/atlas_agent/brokers": [],
+    "src/atlas_agent/config": [
+      "M\tsrc/atlas_agent/config/schema.py"
+    ],
+    "src/atlas_agent/execution": [
+      "M\tsrc/atlas_agent/execution/audit.py"
+    ],
+    "src/atlas_agent/risk": [],
+    "src/atlas_agent/safety": []
+  },
+  "protected_boundaries_clean": false,
+  "public_stable_tag": "v0.5.7",
+  "safety_summary": {
+    "broker_execution_enabled": false,
+    "credentials_loaded": false,
+    "live_trading_enabled_by_default": false,
+    "network_calls_required": false,
+    "provider_execution_enabled": false
+  },
+  "working_tree_clean": false
+}
