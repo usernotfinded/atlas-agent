@@ -7,49 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.8rc1] - 2026-05-29
+
+> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8rc1.md) for full details.
+
+### Added
+- Added CLI command compatibility contract and local check to guard public command families.
+- Added deterministic reviewer golden-path smoke test for safe local onboarding.
+- Added local release evidence bundle generator.
+- Added public feedback intake templates, taxonomy, and triage checker.
+- Added controlled reviewer outreach pack with safe copy-paste review requests.
+- Added product capability inventory and local gap-audit check.
+- Added v0.5.8 gap prioritization plan.
+- Added v0.5.8 RC1 readiness dry-run gate and documentation.
+- Added v0.5.8 RC1 cutover checker and documentation.
+
 ### Changed
 - Refactored CLI command structure to reduce the size of the main CLI module while preserving research command compatibility.
-
-### Added
-- Added a CLI command compatibility contract and local check to guard public command families after the post-v0.5.7 CLI refactor.
-- Added a deterministic reviewer golden-path smoke test for safe local onboarding.
-- Added a local release evidence bundle generator that writes JSON and Markdown reports for reviewer/release verification.
-- Added public feedback intake templates, docs, and checks for structured reviewer feedback.
-- Added a local feedback label taxonomy and triage checker for public reviewer issues.
-- Added a controlled reviewer outreach pack with safe copy-paste review requests, outreach checklist, and local validation checks.
-- Added a product capability inventory and local gap-audit check for public claims, docs, CLI surface, and safety posture.
-- Added a v0.5.8 gap prioritization plan derived from the product capability inventory.
+- Enhanced reviewer golden-path smoke test with per-step diagnostic categories and suggested fixes on failure.
+- Improved product capability inventory docs with "How to read this document" section and gap-prioritization link.
 
 ### Fixed
-- Updated the legacy RC cutover check so post-v0.5.7 development versions such as `0.5.8.dev0` are accepted while the historical `v0.5.7` tag remains verified.
-- Addressed v0.5.8 must-fix release-readiness gaps from the gap prioritization plan:
-  - Clarified in README that provider execution in the research workflow is governed by artifact-based safety policy and the risk manager, not a runtime network block.
-  - Audited README, product capability inventory, and outreach docs for overclaim; confirmed no production-ready or live-trading-readiness overstatements.
-  - Enhanced `scripts/check_product_capability_inventory.py` to verify that all `safe_to_claim` capabilities have corresponding CLI commands or files that exist in the repo.
-
-### Added
-- Added a v0.5.8 RC1 readiness dry-run gate (`scripts/check_v058_rc1_readiness.py`) and documentation (`docs/v0.5.8-rc1-readiness.md`).
-
-### Changed
-- Addressed a small v0.5.8 should-fix batch focused on reviewer clarity and release-readiness polish.
-  - Enhanced `scripts/smoke_reviewer_golden_path.py` with per-step diagnostic categories and suggested fixes when steps fail.
-  - Added "How to read this document" section and gap-prioritization link to `docs/product-capability-inventory.md`.
+- Updated legacy RC cutover check to accept post-v0.5.7 development and RC versions while the historical `v0.5.7` tag remains verified.
+- Hardened tests against local environment PermissionError failures via test environment isolation.
+- Addressed v0.5.8 must-fix release-readiness gaps:
+  - Clarified provider execution boundary in README (governed by artifact-based safety policy and risk manager, not a runtime network block).
+  - Audited public docs for overclaim; confirmed no production-ready or live-trading-readiness overstatements.
+  - Enhanced capability inventory checker to verify `safe_to_claim` capabilities have corresponding CLI commands or files.
 
 ### Safety
 - No intentional live trading enablement.
 - No intentional provider execution unlock.
 - No intentional broker execution unlock.
 - Safety-critical boundaries remain conservative and require review before release.
-- The CLI compatibility check is parser-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
-- The golden-path smoke test runs in a temporary workspace and does not call providers, brokers, load credentials, submit orders, or enable live trading.
-- The release evidence bundle is local-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
-- The historical release record check is local-only and does not call providers, brokers, load credentials, submit orders, or enable live trading.
+- The CLI compatibility check, golden-path smoke test, release evidence bundle, and historical release record check are all local-only and do not call providers, brokers, load credentials, submit orders, or enable live trading.
 - Feedback intake docs and templates explicitly reject credential sharing, safety-bypass requests, real-money broker setup, and profitability/trading-signal evaluation.
 - Feedback taxonomy docs classify live-trading, broker, provider, credential, and safety-bypass requests as safety-sensitive or out-of-scope by default.
 - Reviewer outreach drafts explicitly avoid profitability claims, live-trading readiness claims, broker setup requests, credential sharing, and safety-bypass requests.
 - Capability inventory marks live trading, provider execution, broker execution, credentials, and profitability-related areas as disabled, safety-sensitive, or not safe to claim unless explicitly verified.
 - The v0.5.8 prioritization explicitly defers or rejects live trading, broker execution, provider execution, autonomous real-money operation, credential sharing, and profitability/trading-signal claims.
-- No live trading, provider execution, broker execution, credential loading, or profitability/trading-signal claims were added in this batch.
 
 ## [0.5.7] - 2026-05-26
 

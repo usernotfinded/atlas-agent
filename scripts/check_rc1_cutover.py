@@ -3,7 +3,7 @@
 
 This script ensures:
 - The historical v0.5.7 tag contains the expected stable version metadata.
-- Current main is a post-v0.5.7 development version (e.g. 0.5.8.dev0).
+- Current main is a post-v0.5.7 development version (e.g. 0.5.8rc1).
 - Public docs remain safe and do not contain forbidden claims or secrets.
 
 Deterministic and local. Does not:
@@ -29,7 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.5.8.dev0"
+CURRENT_DEV_SERIES = "0.5.8rc1"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -100,17 +100,18 @@ def _check_version_consistency() -> list[str]:
             data = tomllib.load(f)
         current_toml_version = data.get("project", {}).get("version")
         if current_toml_version != CURRENT_DEV_SERIES:
-            # Allow any dev version after 0.5.7, or explicitly the expected series
+            # Allow dev, rc, or later series after 0.5.7
             if not (
                 current_toml_version
                 and (
                     current_toml_version.startswith("0.5.8.dev")
+                    or current_toml_version.startswith("0.5.8rc")
                     or current_toml_version.startswith("0.5.9.dev")
                     or current_toml_version.startswith("0.6.")
                 )
             ):
                 errors.append(
-                    f"pyproject.toml version {current_toml_version!r} is not a recognized post-0.5.7 dev version"
+                    f"pyproject.toml version {current_toml_version!r} is not a recognized post-0.5.7 version"
                 )
     else:
         errors.append("pyproject.toml not found")
@@ -124,12 +125,13 @@ def _check_version_consistency() -> list[str]:
                 current_init_version
                 and (
                     current_init_version.startswith("0.5.8.dev")
+                    or current_init_version.startswith("0.5.8rc")
                     or current_init_version.startswith("0.5.9.dev")
                     or current_init_version.startswith("0.6.")
                 )
             ):
                 errors.append(
-                    f"__init__.py version {current_init_version!r} is not a recognized post-0.5.7 dev version"
+                    f"__init__.py version {current_init_version!r} is not a recognized post-0.5.7 version"
                 )
     else:
         errors.append("__init__.py not found")

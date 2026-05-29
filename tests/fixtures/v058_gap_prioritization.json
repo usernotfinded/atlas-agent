@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_for": "0.5.8.dev0",
+  "generated_for": "0.5.8rc1",
   "derived_from": "tests/fixtures/product_capability_inventory.json",
   "items": [
     {

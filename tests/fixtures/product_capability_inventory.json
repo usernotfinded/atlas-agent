@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_for": "0.5.8.dev0",
+  "generated_for": "0.5.8rc1",
   "groups": [
     "core-workspace",
     "paper-simulation",
@@ -767,7 +767,7 @@
       "tests_or_checks": ["scripts/check_rc1_cutover.py", "tests/test_rc1_cutover_consistency.py"],
       "safety_notes": "Local git show only. No network. Verifies v0.5.7 tag history and current dev posture.",
       "known_gaps": "",
-      "reviewer_notes": "Accepts 0.5.8.dev0 while verifying historical v0.5.7 tag."
+      "reviewer_notes": "Accepts 0.5.8rc1 while verifying historical v0.5.7 tag."
     }
   ]
 }
