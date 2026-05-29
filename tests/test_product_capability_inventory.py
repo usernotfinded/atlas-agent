@@ -277,6 +277,37 @@ def test_inventory_safe_to_claim_has_no_unsafe_phrases() -> None:
                 assert phrase not in text, f"Capability '{cap['id']}' has unsafe phrase: {phrase}"
 
 
+def test_inventory_safe_to_claim_has_files_or_commands() -> None:
+    data = json.loads((REPO_ROOT / "tests" / "fixtures" / "product_capability_inventory.json").read_text())
+    for cap in data.get("capabilities", []):
+        if cap.get("public_claim_level") == "safe_to_claim":
+            has_cli = bool(cap.get("cli_commands"))
+            has_files = any(
+                (REPO_ROOT / p).exists() or (REPO_ROOT / p).is_dir()
+                for plist in (cap.get("source_paths", []), cap.get("docs_paths", []), cap.get("tests_or_checks", []))
+                for p in plist
+            )
+            assert has_cli or has_files, f"Capability '{cap['id']}' safe_to_claim but no verified commands or files"
+
+
+def test_checker_drift_detection_fails_on_missing_files() -> None:
+    def _patched_check(inventory: dict) -> list[str]:
+        return ["Capability 'fake-cap' marked safe_to_claim has no verified CLI commands, source_paths, docs_paths, or tests_or_checks in the repo"]
+
+    with patch.object(CHECKER_MOD, "_check_safe_to_claim_files_exist", _patched_check):
+        result = CHECKER_MOD._gather()
+    assert result["passed"] is False
+    assert any("no verified CLI commands" in e for e in result["errors"])
+
+
+def test_readme_clarifies_provider_execution_boundary() -> None:
+    path = REPO_ROOT / "README.md"
+    text = path.read_text(encoding="utf-8").lower()
+    assert "artifact-based safety policy" in text or "artifact based safety policy" in text
+    assert "risk manager" in text
+    assert "no runtime network block" in text or "runtime network block" in text
+
+
 def test_inventory_safety_sensitive_has_notes() -> None:
     data = json.loads((REPO_ROOT / "tests" / "fixtures" / "product_capability_inventory.json").read_text())
     safety_statuses = {"disabled_by_default", "partial", "experimental"}

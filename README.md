@@ -133,7 +133,7 @@ We welcome contributions that respect the safe-by-default design. See [CONTRIBUT
 
 ## Quickstart
 
-Atlas Agent is **sandbox-only**, **paper-first**, and **offline-safe** by default. Live trading is disabled by default. No broker orders, provider execution, or credential loading happen in the quickstart flow.
+Atlas Agent is **sandbox-only**, **paper-first**, and **offline-safe** by default. Live trading is disabled by default. No broker orders or credential loading happen in the quickstart flow. Provider execution in the research workflow is governed by artifact-based safety policy and the risk manager — there is no runtime network block, and resulting orders are prevented by deterministic risk gates.
 
 **Not financial advice.** Trading involves significant risk of loss.
 

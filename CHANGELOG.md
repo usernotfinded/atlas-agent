@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Updated the legacy RC cutover check so post-v0.5.7 development versions such as `0.5.8.dev0` are accepted while the historical `v0.5.7` tag remains verified.
+- Addressed v0.5.8 must-fix release-readiness gaps from the gap prioritization plan:
+  - Clarified in README that provider execution in the research workflow is governed by artifact-based safety policy and the risk manager, not a runtime network block.
+  - Audited README, product capability inventory, and outreach docs for overclaim; confirmed no production-ready or live-trading-readiness overstatements.
+  - Enhanced `scripts/check_product_capability_inventory.py` to verify that all `safe_to_claim` capabilities have corresponding CLI commands or files that exist in the repo.
 
 ### Safety
 - No intentional live trading enablement.
@@ -37,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reviewer outreach drafts explicitly avoid profitability claims, live-trading readiness claims, broker setup requests, credential sharing, and safety-bypass requests.
 - Capability inventory marks live trading, provider execution, broker execution, credentials, and profitability-related areas as disabled, safety-sensitive, or not safe to claim unless explicitly verified.
 - The v0.5.8 prioritization explicitly defers or rejects live trading, broker execution, provider execution, autonomous real-money operation, credential sharing, and profitability/trading-signal claims.
+- No live trading, provider execution, broker execution, credential loading, or profitability/trading-signal claims were added in this batch.
 
 ## [0.5.7] - 2026-05-26
 

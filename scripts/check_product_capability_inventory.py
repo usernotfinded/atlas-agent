@@ -257,6 +257,41 @@ def _check_inventory_doc_safety() -> list[str]:
     return errors
 
 
+def _check_safe_to_claim_files_exist(inventory: dict) -> list[str]:
+    """Verify safe_to_claim capabilities have corresponding CLI commands or files in the repo."""
+    errors: list[str] = []
+    for cap in inventory.get("capabilities", []):
+        if cap.get("public_claim_level") != "safe_to_claim":
+            continue
+        cap_id = cap.get("id", "<unknown>")
+
+        # Non-empty cli_commands count as evidence
+        if cap.get("cli_commands"):
+            continue
+
+        # Check if any referenced file exists in the repo
+        found = False
+        for path_list in (cap.get("source_paths", []), cap.get("docs_paths", []), cap.get("tests_or_checks", [])):
+            for rel_path in path_list:
+                # Some paths may be directories or patterns; check exact file existence
+                candidate = REPO_ROOT / rel_path
+                if candidate.exists():
+                    found = True
+                    break
+                # Also check if it's a directory
+                if candidate.is_dir():
+                    found = True
+                    break
+            if found:
+                break
+
+        if not found:
+            errors.append(
+                f"Capability '{cap_id}' marked safe_to_claim has no verified CLI commands, source_paths, docs_paths, or tests_or_checks in the repo"
+            )
+    return errors
+
+
 def _gather() -> dict:
     all_errors: list[str] = []
     inventory: dict = {}
@@ -278,6 +313,7 @@ def _gather() -> dict:
         all_errors.extend(_check_readme_claims_represented(inventory))
         all_errors.extend(_check_safe_to_claim_safety(inventory))
         all_errors.extend(_check_safety_notes_present(inventory))
+        all_errors.extend(_check_safe_to_claim_files_exist(inventory))
         all_errors.extend(_check_inventory_doc_safety())
 
     cap_count = len(inventory.get("capabilities", []))
