@@ -26,8 +26,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.7"
-PUBLIC_TAG = "v0.5.7"
+CURRENT_PACKAGE_VERSION = "0.5.8.dev0"
+HISTORICAL_STABLE_TAG = "v0.5.7"
 
 REQUIRED_FILES = [
     REPO_ROOT / "README.md",
@@ -36,7 +36,7 @@ REQUIRED_FILES = [
     REPO_ROOT / "CHANGELOG.md",
     REPO_ROOT / "docs" / "final-rc-audit.md",
     REPO_ROOT / "docs" / "final-release-candidate-checklist.md",
-    REPO_ROOT / "docs" / "releases" / f"{PUBLIC_TAG}.md",
+    REPO_ROOT / "docs" / "releases" / f"{HISTORICAL_STABLE_TAG}.md",
     REPO_ROOT / "docs" / "public-launch-readiness.md",
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
     REPO_ROOT / "docs" / "reviewer-checklist.md",
@@ -158,8 +158,8 @@ def _check_readme_links() -> list[str]:
     if "public-faq.md" not in text and "public faq" not in lower:
         errors.append("README.md missing link to public FAQ")
 
-    if PUBLIC_TAG not in text:
-        errors.append("README.md missing current status reference")
+    if HISTORICAL_STABLE_TAG not in text and CURRENT_PACKAGE_VERSION not in text:
+        errors.append("README.md missing version status reference")
 
     return errors
 
@@ -206,8 +206,8 @@ def _check_changelog_entry() -> list[str]:
     changelog = REPO_ROOT / "CHANGELOG.md"
     if changelog.exists():
         text = changelog.read_text(encoding="utf-8")
-        if f"[{PACKAGE_VERSION}]" not in text:
-            errors.append(f"CHANGELOG.md missing entry for [{PACKAGE_VERSION}]")
+        if f"[{CURRENT_PACKAGE_VERSION}]" not in text and "[Unreleased]" not in text and f"[{HISTORICAL_STABLE_TAG.lstrip('v')}]" not in text:
+            errors.append(f"CHANGELOG.md missing entry for [{CURRENT_PACKAGE_VERSION}] or [Unreleased] or [{HISTORICAL_STABLE_TAG.lstrip('v')}]")
     else:
         errors.append("CHANGELOG.md not found")
     return errors
@@ -222,14 +222,14 @@ def _check_version_match() -> list[str]:
     with open(pyproject, "rb") as f:
         data = tomllib.load(f)
     toml_version = data.get("project", {}).get("version")
-    if toml_version != PACKAGE_VERSION:
-        errors.append(f"pyproject.toml version {toml_version} != {PACKAGE_VERSION}")
+    if toml_version != CURRENT_PACKAGE_VERSION:
+        errors.append(f"pyproject.toml version {toml_version} != {CURRENT_PACKAGE_VERSION}")
 
     init_text = init.read_text(encoding="utf-8")
     m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', init_text, re.MULTILINE)
     init_version = m.group(1) if m else None
-    if init_version != PACKAGE_VERSION:
-        errors.append(f"__init__.py version {init_version} != {PACKAGE_VERSION}")
+    if init_version != CURRENT_PACKAGE_VERSION:
+        errors.append(f"__init__.py version {init_version} != {CURRENT_PACKAGE_VERSION}")
 
     return errors
 
@@ -274,8 +274,8 @@ def _run_checks() -> dict:
 
     result = {
         "passed": len(all_errors) == 0,
-        "package_version": PACKAGE_VERSION,
-        "public_tag": PUBLIC_TAG,
+        "package_version": CURRENT_PACKAGE_VERSION,
+        "public_tag": HISTORICAL_STABLE_TAG,
         "errors": all_errors,
     }
     return result
@@ -312,8 +312,8 @@ def main() -> int:
         return 2
 
     print("Final RC audit check PASSED")
-    print(f"  Package version: {result['package_version']}")
-    print(f"  Public tag: {result['public_tag']}")
+    print(f"  Current package version: {result['package_version']}")
+    print(f"  Historical stable tag: {result['public_tag']}")
     print(f"  Required files: {len(REQUIRED_FILES)} present")
     print(f"  Public docs safe: yes")
     print(f"  No staged artifacts: yes")

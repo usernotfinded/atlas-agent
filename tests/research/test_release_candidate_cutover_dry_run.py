@@ -531,19 +531,19 @@ class TestRealRepoIntegration:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real")
         assert report["target_version_valid"] is True
         assert report["target_is_rc"] is True
-        # Current version is stable 0.5.7, so current_version_is_dev is False
-        assert report["current_version_is_dev"] is False
-        # dev_to_rc_transition_valid is False because stable is not a valid dev-to-RC source
+        # Current version is 0.5.8.dev0 (dev), so current_version_is_dev is True
+        assert report["current_version_is_dev"] is True
+        # dev_to_rc_transition_valid is False because 0.5.8.dev0 -> v0.5.7-rc1 is not a valid transition
         assert report["dev_to_rc_transition_valid"] is False
 
-    def test_real_repo_stable_state(self) -> None:
-        report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-stable")
-        # Stable 0.5.7 should not be treated as dev
-        assert report["current_version_is_dev"] is False
-        # dev_to_rc_transition_valid should be False for stable
+    def test_real_repo_dev_state(self) -> None:
+        report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-dev")
+        # Current 0.5.8.dev0 should be treated as dev
+        assert report["current_version_is_dev"] is True
+        # dev_to_rc_transition_valid should be False for mismatched versions
         assert report["dev_to_rc_transition_valid"] is False
-        # But release note for stable should be present
-        assert report["release_note_present"] is True
+        # Release note for current dev version is not expected to exist yet
+        assert report["release_note_present"] is False
         # Safety invariants should hold
         assert report["live_trading_disabled_by_default"] is True
         assert report["provider_execution_locked"] is True
@@ -570,9 +570,15 @@ class TestRealRepoIntegration:
         assert report["current_version_is_dev"] is False
         assert report["dev_to_rc_transition_valid"] is True
 
-    def test_real_repo_release_note_present(self) -> None:
+    def test_real_repo_release_note_missing_for_dev(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-note")
-        assert report["release_note_present"] is True
+        # Current dev version 0.5.8.dev0 does not have a release note yet
+        assert report["release_note_present"] is False
+
+    def test_historical_stable_release_note_present(self) -> None:
+        # Historical stable v0.5.7 release note should still exist
+        from atlas_agent.research.release_candidate_cutover import _file_exists
+        assert _file_exists(REPO_ROOT, "docs/releases/v0.5.7.md") is True
 
     def test_real_repo_readiness_available(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-ready")

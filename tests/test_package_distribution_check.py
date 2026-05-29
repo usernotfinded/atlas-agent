@@ -21,6 +21,8 @@ SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.7-rc7"
 
+CURRENT_PACKAGE_VERSION = "0.5.8.dev0"
+
 
 def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
@@ -240,8 +242,8 @@ class TestWheelMetadataParser:
         sys.modules["check_package_distribution_wheel"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / "atlas_agent-0.5.7-py3-none-any.whl"
-        _make_fake_wheel(wheel_path, name="atlas_agent", version="0.5.7")
+        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
         ok, errors = cpd._check_wheel_metadata(wheel_path)
         assert ok, f"Unexpected errors: {errors}"
         assert errors == []
@@ -325,8 +327,8 @@ class TestSdistMetadataParser:
         sys.modules["check_package_distribution_sdist"] = cpd
         spec.loader.exec_module(cpd)
 
-        sdist_path = tmp_path / "atlas-agent-0.5.7.tar.gz"
-        _make_fake_sdist(sdist_path, name="atlas-agent", version="0.5.7")
+        sdist_path = tmp_path / f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz"
+        _make_fake_sdist(sdist_path, name="atlas-agent", version=CURRENT_PACKAGE_VERSION)
         ok, errors = cpd._check_sdist_metadata(sdist_path)
         assert ok, f"Unexpected errors: {errors}"
         assert errors == []
@@ -387,8 +389,8 @@ class TestArtifactFilenameChecks:
         sys.modules["check_package_distribution_fn"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel = Path("atlas_agent-0.5.7-py3-none-any.whl")
-        sdist = Path("atlas-agent-0.5.7.tar.gz")
+        wheel = Path(f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl")
+        sdist = Path(f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz")
         errors = cpd._check_artifact_filenames(wheel, sdist)
         assert errors == []
 
@@ -421,7 +423,7 @@ class TestRealBuild:
             f"Package distribution check failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
         assert "Package distribution verification PASSED" in result.stdout
-        assert "Package version: 0.5.7" in result.stdout
+        assert f"Package version: {CURRENT_PACKAGE_VERSION}" in result.stdout
         assert "Build isolation: disabled" in result.stdout or "Network allowed: False" in result.stdout
 
     def test_real_build_output_has_no_absolute_paths(self) -> None:

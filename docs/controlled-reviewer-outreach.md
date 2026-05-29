@@ -95,7 +95,7 @@ Use the [Feedback Triage Taxonomy](feedback-triage-taxonomy.md) to classify inco
 
 When describing Atlas to reviewers, stick to these facts:
 
-- Atlas is a **supervised trading workspace**, not an autonomous trading bot.
+- Atlas is a **supervised trading workspace**, not an unsupervised real-money trading system.
 - Live trading is **disabled by default**.
 - Provider execution **remains locked**.
 - Broker execution **remains blocked** unless explicit opt-in gates pass.
@@ -106,7 +106,7 @@ When describing Atlas to reviewers, stick to these facts:
 Never say:
 - "Safe to trade live"
 - "Profitable trading system"
-- "AI trading bot that makes money"
+- "AI trading bot that earns returns"
 - "Production-ready live trading"
 - "Unattended trading"
 
@@ -153,7 +153,7 @@ What Atlas is:
 - A local-first tool: no cloud dependency, no mandatory credentials.
 
 What Atlas is not:
-- Not an autonomous trading bot.
+- Not an unsupervised real-money trading system.
 - Not a live trading product by default.
 - Not financial advice.
 - Not a profitability guarantee.

@@ -38,7 +38,7 @@ ARTIFACT_TYPE = "release_candidate_cutover_dry_run"
 _HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 _SAFE_INVALID_TARGET = "<invalid>"
 _TARGET_RE = re.compile(r"^v(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)-rc(?P<rc>[1-9]\d*)$")
-_CURRENT_DEV_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.dev(?P<dev>[1-9]\d*)$")
+_CURRENT_DEV_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.dev(?P<dev>\d+)$")
 _CURRENT_RC_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)rc(?P<rc>[1-9]\d*)$")
 
 

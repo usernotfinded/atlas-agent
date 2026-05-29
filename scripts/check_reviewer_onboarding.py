@@ -26,8 +26,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.7"
-PUBLIC_TAG = "v0.5.7"
+CURRENT_PACKAGE_VERSION = "0.5.8.dev0"
+HISTORICAL_STABLE_TAG = "v0.5.7"
 
 ONBOARDING_DOC_PATHS = [
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
@@ -131,14 +131,14 @@ def _check_version_match() -> list[str]:
     with open(pyproject, "rb") as f:
         data = tomllib.load(f)
     toml_version = data.get("project", {}).get("version")
-    if toml_version != PACKAGE_VERSION:
-        errors.append(f"pyproject.toml version {toml_version} != {PACKAGE_VERSION}")
+    if toml_version != CURRENT_PACKAGE_VERSION:
+        errors.append(f"pyproject.toml version {toml_version} != {CURRENT_PACKAGE_VERSION}")
 
     init_text = init.read_text(encoding="utf-8")
     m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', init_text, re.MULTILINE)
     init_version = m.group(1) if m else None
-    if init_version != PACKAGE_VERSION:
-        errors.append(f"__init__.py version {init_version} != {PACKAGE_VERSION}")
+    if init_version != CURRENT_PACKAGE_VERSION:
+        errors.append(f"__init__.py version {init_version} != {CURRENT_PACKAGE_VERSION}")
 
     return errors
 
@@ -238,8 +238,8 @@ def _run_checks() -> dict:
 
     result = {
         "passed": len(all_errors) == 0,
-        "package_version": PACKAGE_VERSION,
-        "public_tag": PUBLIC_TAG,
+        "package_version": CURRENT_PACKAGE_VERSION,
+        "public_tag": HISTORICAL_STABLE_TAG,
         "errors": all_errors,
     }
     return result
@@ -276,8 +276,8 @@ def main() -> int:
         return 2
 
     print("Reviewer onboarding check PASSED")
-    print(f"  Package version: {result['package_version']}")
-    print(f"  Public tag: {result['public_tag']}")
+    print(f"  Current package version: {result['package_version']}")
+    print(f"  Historical stable tag: {result['public_tag']}")
     print(f"  Onboarding docs present: {len(ONBOARDING_DOC_PATHS)}")
     print(f"  Docs safe: yes")
     print(f"  No staged artifacts: yes")
