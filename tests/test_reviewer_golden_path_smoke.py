@@ -69,6 +69,15 @@ def test_smoke_script_json_output_has_passed_true() -> None:
     assert data["passed"] is True
     assert data["errors"] == []
     assert len(data["steps"]) > 0
+    # Each step should have a diagnostic category and suggestion
+    for step in data["steps"]:
+        assert "category" in step
+        assert "suggestion" in step
+        assert step["category"] in {
+            "install", "config", "validate", "backtest",
+            "research", "memory", "audit", "release", "unknown",
+        }
+        assert isinstance(step["suggestion"], str) and len(step["suggestion"]) > 0
 
 
 def test_output_redacts_temp_absolute_paths() -> None:
@@ -145,6 +154,15 @@ def test_failure_path_returns_nonzero() -> None:
         result = SMOKE_MOD._smoke(keep_temp=False, skip_release_check=True)
     assert result["passed"] is False
     assert any("failed with exit code 1" in e for e in result["errors"])
+    # Errors should include category and suggestion
+    assert any("[" in e and "]" in e for e in result["errors"])
+    # Find the failing step and verify it has category/suggestion
+    failing_steps = [s for s in result["steps"] if not s["ok"]]
+    assert len(failing_steps) > 0
+    for step in failing_steps:
+        assert "category" in step
+        assert "suggestion" in step
+        assert len(step["suggestion"]) > 0
 
 
 # ---------------------------------------------------------------------------

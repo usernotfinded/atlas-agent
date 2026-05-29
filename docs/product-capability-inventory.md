@@ -16,6 +16,16 @@ This is a **complete capability inventory** for Atlas Agent `0.5.8.dev0`. It exi
 
 This is **not** a marketing document. It does not claim profitability, trading correctness, real-money safety, or production readiness.
 
+## How to read this document
+
+This inventory is organized by capability group (e.g., Core workspace, Paper trading, Safety). Each row in a group table describes one capability and its current state.
+
+- **Status** tells you whether the capability is fully implemented, partial, experimental, missing, etc. See the table below for exact meanings.
+- **Public claim** tells you whether it is safe to mention the capability in public docs and outreach. `safe_to_claim` means yes; `do_not_claim` means it exists but should not be highlighted.
+- **Notes** provide implementation details, safety boundaries, and caveats.
+
+For the roadmap that turns these capabilities into prioritized work items, see the [v0.5.8 Gap Prioritization Plan](v0.5.8-gap-prioritization.md).
+
 ## How to read capability statuses
 
 | Status | Meaning |

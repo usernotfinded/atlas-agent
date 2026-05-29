@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Audited README, product capability inventory, and outreach docs for overclaim; confirmed no production-ready or live-trading-readiness overstatements.
   - Enhanced `scripts/check_product_capability_inventory.py` to verify that all `safe_to_claim` capabilities have corresponding CLI commands or files that exist in the repo.
 
+### Changed
+- Addressed a small v0.5.8 should-fix batch focused on reviewer clarity and release-readiness polish.
+  - Enhanced `scripts/smoke_reviewer_golden_path.py` with per-step diagnostic categories and suggested fixes when steps fail.
+  - Added "How to read this document" section and gap-prioritization link to `docs/product-capability-inventory.md`.
+
 ### Safety
 - No intentional live trading enablement.
 - No intentional provider execution unlock.

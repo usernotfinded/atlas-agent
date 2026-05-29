@@ -47,6 +47,63 @@ _GOLDEN_PATH_COMMANDS: list[list[str]] = [
     ["events", "doctor"],
 ]
 
+# Diagnostic category and suggested fix for each step
+_STEP_DIAGNOSTICS: dict[str, tuple[str, str]] = {
+    "atlas --help": (
+        "install",
+        "Check that Python and the repo src/ are on PYTHONPATH. Try: python3.11 -m atlas_agent.cli --help",
+    ),
+    "atlas init": (
+        "install",
+        "Check that template files exist under src/atlas_agent/templates/ and that the temp directory is writable.",
+    ),
+    "discipline": (
+        "config",
+        "Check that discipline profile files exist under configs/ and that the workspace is initialized.",
+    ),
+    "config set": (
+        "config",
+        "Check that the workspace .atlas/ directory exists and is writable.",
+    ),
+    "validate": (
+        "validate",
+        "Check that required config files (market.yaml, strategy.yaml) are present in the workspace.",
+    ),
+    "backtest": (
+        "backtest",
+        "Check that sample data exists at data/sample/ohlcv.csv and that market.symbol is configured.",
+    ),
+    "research run": (
+        "research",
+        "Check that research artifacts directory exists and that the provider config is valid.",
+    ),
+    "research summary": (
+        "research",
+        "Check that a research session was created successfully before running summary.",
+    ),
+    "memory doctor": (
+        "memory",
+        "Check that the memory directory exists and that SQLite FTS5 is available.",
+    ),
+    "events doctor": (
+        "audit",
+        "Check that the events directory exists and is writable.",
+    ),
+    "release_check.sh": (
+        "release",
+        "Run ./scripts/release_check.sh --quick manually to see which sub-check failed.",
+    ),
+}
+
+
+def _get_diagnostic(command: str) -> tuple[str, str]:
+    """Return (category, suggestion) for a given command string."""
+    for prefix, (category, suggestion) in _STEP_DIAGNOSTICS.items():
+        if prefix in command:
+            return category, suggestion
+    return "unknown", "Review the command output and workspace state for clues."
+
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -128,30 +185,36 @@ def _smoke(
 
     # --help sanity check (from repo root, no workspace needed)
     rc, out, err = _help_check(env)
+    category, suggestion = _get_diagnostic("atlas --help")
     steps.append(
         {
             "command": "atlas --help",
             "returncode": rc,
             "ok": rc == 0,
+            "category": category,
+            "suggestion": suggestion,
         }
     )
     if rc != 0:
-        errors.append(f"atlas --help failed with exit code {rc}")
+        errors.append(f"[install] atlas --help failed with exit code {rc}. {suggestion}")
 
     # Create temp workspace
     temp_path = Path(tempfile.mkdtemp(prefix="atlas-smoke-"))
 
     try:
         rc, out, err = _init_workspace(temp_path, env)
+        category, suggestion = _get_diagnostic("atlas init")
         steps.append(
             {
                 "command": _redact(f"atlas init {temp_path.name} --template routine-trader", temp_path),
                 "returncode": rc,
                 "ok": rc == 0,
+                "category": category,
+                "suggestion": suggestion,
             }
         )
         if rc != 0:
-            errors.append(f"atlas init failed with exit code {rc}")
+            errors.append(f"[{category}] atlas init failed with exit code {rc}. {suggestion}")
             # Short-circuit: without a workspace the rest will fail
             return {
                 "passed": False,
@@ -166,14 +229,17 @@ def _smoke(
             rc, out, err = _run_atlas(args, cwd=temp_path, env=env)
             cmd_str = _redact("atlas " + " ".join(args), temp_path)
             ok = rc == 0
+            category, suggestion = _get_diagnostic(cmd_str)
             step: dict[str, Any] = {
                 "command": cmd_str,
                 "returncode": rc,
                 "ok": ok,
+                "category": category,
+                "suggestion": suggestion,
             }
             steps.append(step)
             if not ok:
-                errors.append(f"{cmd_str} failed with exit code {rc}")
+                errors.append(f"[{category}] {cmd_str} failed with exit code {rc}. {suggestion}")
 
         # Optional release check from repo root
         if not skip_release_check:
@@ -184,15 +250,18 @@ def _smoke(
                 cwd=str(REPO_ROOT),
                 env=env,
             ).returncode, "", ""
+            category, suggestion = _get_diagnostic("release_check.sh")
             steps.append(
                 {
                     "command": "./scripts/release_check.sh --quick",
                     "returncode": rc,
                     "ok": rc == 0,
+                    "category": category,
+                    "suggestion": suggestion,
                 }
             )
             if rc != 0:
-                errors.append(f"release_check.sh --quick failed with exit code {rc}")
+                errors.append(f"[{category}] release_check.sh --quick failed with exit code {rc}. {suggestion}")
 
     finally:
         if not keep_temp and temp_path is not None and temp_path.exists():
@@ -237,12 +306,16 @@ def main() -> int:
         print("=" * 60)
         for step in result["steps"]:
             status = "OK" if step["ok"] else "FAIL"
-            print(f"  [{status}] {step['command']} (exit {step['returncode']})")
+            cat = step.get("category", "unknown")
+            print(f"  [{status}] [{cat}] {step['command']} (exit {step['returncode']})")
         if result["errors"]:
             print("-" * 60)
             print("Errors:")
             for e in result["errors"]:
                 print(f"  - {e}")
+            print("-" * 60)
+            print("Diagnostics: each error above includes a category and suggested fix.")
+            print("Run the failing command in isolation to see full output.")
         print("=" * 60)
         status = "PASSED" if result["passed"] else "FAILED"
         print(f"Result: {status}")
