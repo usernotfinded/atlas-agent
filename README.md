@@ -110,6 +110,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **[Controlled Reviewer Outreach](docs/controlled-reviewer-outreach.md)** — safe copy-paste review requests and outreach process for 5–10 technical reviewers
 - **[Reviewer Outreach Checklist](docs/reviewer-outreach-checklist.md)** — pre-outreach safety and readiness checklist
 - **[Product Capability Inventory](docs/product-capability-inventory.md)** — capability matrix, implementation status, and public-claim boundaries
+- **[v0.5.8 Gap Prioritization](docs/v0.5.8-gap-prioritization.md)** — planned release scope, non-goals, and gap priorities
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md).
 
