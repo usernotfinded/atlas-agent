@@ -26,10 +26,18 @@ GOOD_PROFILE = (
 )
 
 @pytest.fixture
-def workspace():
+def workspace(monkeypatch):
     temp_dir = tempfile.mkdtemp()
+    home_dir = tempfile.mkdtemp()
     original_cwd = os.getcwd()
     os.chdir(temp_dir)
+    home = Path(home_dir) / "home"
+    atlas_home = Path(home_dir) / "atlas-home"
+    home.mkdir(exist_ok=True)
+    atlas_home.mkdir(exist_ok=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("ATLAS_HOME", str(atlas_home))
+    monkeypatch.setenv("PYTHONNOUSERSITE", "1")
     try:
         main(["init", "."])
         write_user_discipline(".", GOOD_PROFILE)
@@ -37,19 +45,29 @@ def workspace():
         yield Path(temp_dir)
     finally:
         os.chdir(original_cwd)
-        shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        shutil.rmtree(home_dir, ignore_errors=True)
 
 
 @pytest.fixture
-def non_workspace():
+def non_workspace(monkeypatch):
     temp_dir = tempfile.mkdtemp()
+    home_dir = tempfile.mkdtemp()
     original_cwd = os.getcwd()
     os.chdir(temp_dir)
+    home = Path(home_dir) / "home"
+    atlas_home = Path(home_dir) / "atlas-home"
+    home.mkdir(exist_ok=True)
+    atlas_home.mkdir(exist_ok=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("ATLAS_HOME", str(atlas_home))
+    monkeypatch.setenv("PYTHONNOUSERSITE", "1")
     try:
         yield Path(temp_dir)
     finally:
         os.chdir(original_cwd)
-        shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        shutil.rmtree(home_dir, ignore_errors=True)
 
 
 def test_help_no_agent_start(non_workspace, capsys):

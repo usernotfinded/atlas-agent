@@ -11,6 +11,21 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "demo_research_workflow.sh"
 
+def _isolated_env(tmp_path: Path, fake_atlas: Path, workspace: Path) -> dict[str, str]:
+    home = tmp_path / "home"
+    atlas_home = tmp_path / "atlas-home"
+    home.mkdir(exist_ok=True)
+    atlas_home.mkdir(exist_ok=True)
+    env = os.environ.copy()
+    env["ATLAS_BIN"] = str(fake_atlas)
+    env["PYTHONPATH"] = str(ROOT / "src")
+    env["DEMO_WORKSPACE"] = str(workspace)
+    env["HOME"] = str(home)
+    env["ATLAS_HOME"] = str(atlas_home)
+    env["PYTHONNOUSERSITE"] = "1"
+    return env
+
+
 
 def test_script_exists_and_is_executable() -> None:
     assert SCRIPT.exists()
@@ -4004,10 +4019,7 @@ sys.exit(1)
 def test_success_path_with_fake_atlas(fake_atlas_workspace: Path, tmp_path: Path) -> None:
     workspace = fake_atlas_workspace
     fake_atlas = tmp_path / "bin" / "atlas"
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -4069,10 +4081,7 @@ def test_failure_if_pending_orders_created(fake_atlas_workspace: Path, tmp_path:
     (pending_dir / "fake_order.json").write_text("{}")
 
     fake_atlas = tmp_path / "bin" / "atlas"
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -4099,10 +4108,7 @@ print(json.dumps({"ok": True, "artifact_path": "/Users/natan/secret.json"}))
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -4132,10 +4138,7 @@ print(json.dumps({
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -6426,10 +6429,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -8719,10 +8719,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -11024,10 +11021,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -13329,10 +13323,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -15637,10 +15628,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -17953,10 +17941,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -20264,10 +20249,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -22575,10 +22557,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -24900,10 +24879,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -27219,10 +27195,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -29538,10 +29511,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -31849,10 +31819,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -34189,10 +34156,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -36517,10 +36481,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -38851,10 +38812,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -41190,10 +41148,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -43533,10 +43488,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -45871,10 +45823,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -48209,10 +48158,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -50547,10 +50493,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -52884,10 +52827,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -55217,10 +55157,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -57566,10 +57503,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -59915,10 +59849,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -62285,10 +62216,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -64788,10 +64716,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -67288,10 +67213,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -69796,10 +69718,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -69815,10 +69734,7 @@ sys.exit(1)
 def test_timeline_lineage_success(fake_atlas_workspace: Path, tmp_path: Path) -> None:
     workspace = fake_atlas_workspace
     fake_atlas = tmp_path / "bin" / "atlas"
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -73323,10 +73239,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -76709,10 +76622,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -79106,10 +79016,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -82576,10 +82483,7 @@ sys.exit(1)
     )
     fake_atlas.chmod(0o755)
 
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT)],
@@ -82603,10 +82507,7 @@ sys.exit(1)
 def test_keep_workspace_flag(fake_atlas_workspace: Path, tmp_path: Path) -> None:
     workspace = fake_atlas_workspace
     fake_atlas = tmp_path / "bin" / "atlas"
-    env = os.environ.copy()
-    env["ATLAS_BIN"] = str(fake_atlas)
-    env["PYTHONPATH"] = str(ROOT / "src")
-    env["DEMO_WORKSPACE"] = str(workspace)
+    env = _isolated_env(tmp_path, fake_atlas, workspace)
 
     result = subprocess.run(
         ["bash", str(SCRIPT), "--keep-workspace"],

@@ -209,3 +209,97 @@ def test_no_user_atlas_required_when_workspace_exists(tmp_path: Path) -> None:
         assert config_dir == workspace / ".atlas"
     finally:
         os.chdir(original_cwd)
+
+
+# ---------------------------------------------------------------------------
+# Source-level regression: no hardcoded /tmp in test_runner.py
+# ---------------------------------------------------------------------------
+
+
+def test_runner_no_hardcoded_tmp() -> None:
+    """test_runner.py must not hardcode /tmp paths."""
+    test_runner = Path(__file__).resolve().parents[1] / "tests" / "agent" / "test_runner.py"
+    text = test_runner.read_text(encoding="utf-8")
+    assert 'Path("/tmp/' not in text, "test_runner.py contains hardcoded /tmp path"
+    assert "Path('/tmp/" not in text, "test_runner.py contains hardcoded /tmp path"
+
+
+# ---------------------------------------------------------------------------
+# Source-level regression: demo subprocess tests must set PYTHONNOUSERSITE
+# ---------------------------------------------------------------------------
+
+
+def test_demo_research_subprocess_sets_pythonno_usersite() -> None:
+    """test_demo_research_workflow_script.py subprocess tests must include PYTHONNOUSERSITE."""
+    demo_test = Path(__file__).resolve().parents[1] / "tests" / "test_demo_research_workflow_script.py"
+    text = demo_test.read_text(encoding="utf-8")
+    assert "PYTHONNOUSERSITE" in text, "demo research workflow tests missing PYTHONNOUSERSITE isolation"
+
+
+# ---------------------------------------------------------------------------
+# Source-level regression: CLI fixtures set isolated HOME/ATLAS_HOME
+# ---------------------------------------------------------------------------
+
+
+def test_cli_fixtures_set_isolated_home() -> None:
+    """test_cli.py must set HOME and ATLAS_HOME to temp dirs in tests that call main()."""
+    cli_test = Path(__file__).resolve().parents[1] / "tests" / "test_cli.py"
+    text = cli_test.read_text(encoding="utf-8")
+    assert 'monkeypatch.setenv("HOME"' in text, "test_cli.py missing HOME isolation"
+    assert 'monkeypatch.setenv("ATLAS_HOME"' in text, "test_cli.py missing ATLAS_HOME isolation"
+    assert 'monkeypatch.setenv("PYTHONNOUSERSITE"' in text, "test_cli.py missing PYTHONNOUSERSITE"
+
+
+def test_cli_top_level_fixtures_set_isolated_home() -> None:
+    """test_cli_top_level.py fixtures must set HOME and ATLAS_HOME to temp dirs."""
+    cli_test = Path(__file__).resolve().parents[1] / "tests" / "test_cli_top_level.py"
+    text = cli_test.read_text(encoding="utf-8")
+    assert 'monkeypatch.setenv("HOME"' in text, "test_cli_top_level.py fixtures missing HOME isolation"
+    assert 'monkeypatch.setenv("ATLAS_HOME"' in text, "test_cli_top_level.py fixtures missing ATLAS_HOME isolation"
+    assert 'monkeypatch.setenv("PYTHONNOUSERSITE"' in text, "test_cli_top_level.py fixtures missing PYTHONNOUSERSITE"
+
+
+# ---------------------------------------------------------------------------
+# Integration: key tests run without PermissionError in restricted env
+# ---------------------------------------------------------------------------
+
+
+def test_key_tests_pass_with_restricted_home(tmp_path: Path) -> None:
+    """Run isolated CLI and runner tests with a temp HOME to prove no PermissionError."""
+    import subprocess
+
+    home = tmp_path / "home"
+    atlas_home = tmp_path / "atlas-home"
+    home.mkdir()
+    atlas_home.mkdir()
+
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["ATLAS_HOME"] = str(atlas_home)
+    env["PYTHONNOUSERSITE"] = "1"
+    # Remove any user-global Python path leakage
+    env.pop("PYTHONPATH", None)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/test_cli.py::test_submit_approved_order_execution_invalid_order_id",
+            "tests/test_cli.py::test_submit_approved_order_execution_invalid_order_id_json",
+            "tests/test_cli.py::test_submit_approved_order_execution_fake_secret_not_leaked",
+            "tests/test_cli_top_level.py::test_help_no_agent_start",
+            "tests/agent/test_runner.py::test_run_agent_live_not_enabled_fails_closed",
+            "-v",
+            "--tb=short",
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(Path(__file__).resolve().parents[1]),
+    )
+    assert result.returncode == 0, (
+        f"Isolated test run failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
+    assert "PermissionError" not in result.stdout
+    assert "PermissionError" not in result.stderr

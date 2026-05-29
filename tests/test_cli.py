@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
@@ -14,7 +15,10 @@ from atlas_agent.config import get_config
 from atlas_agent.execution.order import Order
 
 
-def test_atlas_help_works(capsys) -> None:
+def test_atlas_help_works(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("ATLAS_HOME", str(tmp_path / "atlas-home"))
+    monkeypatch.setenv("PYTHONNOUSERSITE", "1")
     assert main(["--help"]) == 0
     assert "atlas" in capsys.readouterr().out
 
@@ -23,12 +27,21 @@ def test_atlas_package_imports() -> None:
     assert atlas_agent.__name__ == "atlas_agent"
 
 
-def test_python_module_help_works() -> None:
+def test_python_module_help_works(tmp_path) -> None:
+    home = tmp_path / "home"
+    atlas_home = tmp_path / "atlas-home"
+    home.mkdir(exist_ok=True)
+    atlas_home.mkdir(exist_ok=True)
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["ATLAS_HOME"] = str(atlas_home)
+    env["PYTHONNOUSERSITE"] = "1"
     result = subprocess.run(
         [sys.executable, "-m", "atlas_agent.cli", "--help"],
         text=True,
         capture_output=True,
         check=False,
+        env=env,
     )
 
     assert result.returncode == 0
@@ -2025,7 +2038,13 @@ def test_submit_approved_order_execution_kill_switch_active(tmp_path, monkeypatc
     assert "kill_switch_active" in captured.out
 
 
-def test_submit_approved_order_execution_invalid_order_id(capsys) -> None:
+def test_submit_approved_order_execution_invalid_order_id(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("ATLAS_HOME", str(tmp_path / "atlas-home"))
+    monkeypatch.setenv("PYTHONNOUSERSITE", "1")
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
     code = main(["submit-approved-order", "../../etc/passwd"])
     captured = capsys.readouterr()
     assert code == 2
@@ -2034,7 +2053,13 @@ def test_submit_approved_order_execution_invalid_order_id(capsys) -> None:
     assert "etc/passwd" not in captured.out
 
 
-def test_submit_approved_order_execution_invalid_order_id_json(capsys) -> None:
+def test_submit_approved_order_execution_invalid_order_id_json(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("ATLAS_HOME", str(tmp_path / "atlas-home"))
+    monkeypatch.setenv("PYTHONNOUSERSITE", "1")
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
     code = main(["submit-approved-order", "../../etc/passwd", "--json"])
     captured = capsys.readouterr()
     assert code == 2
@@ -2046,8 +2071,14 @@ def test_submit_approved_order_execution_invalid_order_id_json(capsys) -> None:
     assert "etc/passwd" not in captured.out
 
 
-def test_submit_approved_order_execution_fake_secret_not_leaked(capsys) -> None:
+def test_submit_approved_order_execution_fake_secret_not_leaked(tmp_path, monkeypatch, capsys) -> None:
     # Path-traversal + fake secret combination triggers InvalidApprovalIdError
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("ATLAS_HOME", str(tmp_path / "atlas-home"))
+    monkeypatch.setenv("PYTHONNOUSERSITE", "1")
+    assert main(["init", "."]) == 0
+    capsys.readouterr()
     code = main(["submit-approved-order", "../../etc/FAKE_API_KEY_12345"])
     captured = capsys.readouterr()
     assert code == 2

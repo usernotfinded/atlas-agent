@@ -128,9 +128,15 @@ class ProposeOrderMockProvider:
 # Live mode opt-in and sync consumption
 # ---------------------------------------------------------------------------
 
-def test_run_agent_live_not_enabled_fails_closed() -> None:
-    tmp_path = Path("/tmp/test_runner_live_not_enabled")
-    tmp_path.mkdir(exist_ok=True)
+def test_run_agent_live_not_enabled_fails_closed(tmp_path: Path, monkeypatch) -> None:
+    home = tmp_path / "home"
+    atlas_home = tmp_path / "atlas-home"
+    home.mkdir(exist_ok=True)
+    atlas_home.mkdir(exist_ok=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("ATLAS_HOME", str(atlas_home))
+    monkeypatch.setenv("PYTHONNOUSERSITE", "1")
+
     config = AtlasConfig(
         trading_mode="live",
         broker={"provider": "alpaca", "enable_live_trading": False},
