@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Audited README, product capability inventory, and outreach docs for overclaim; confirmed no production-ready or live-trading-readiness overstatements.
   - Enhanced `scripts/check_product_capability_inventory.py` to verify that all `safe_to_claim` capabilities have corresponding CLI commands or files that exist in the repo.
 
+### Added
+- Added a v0.5.8 RC1 readiness dry-run gate (`scripts/check_v058_rc1_readiness.py`) and documentation (`docs/v0.5.8-rc1-readiness.md`).
+
 ### Changed
 - Addressed a small v0.5.8 should-fix batch focused on reviewer clarity and release-readiness polish.
   - Enhanced `scripts/smoke_reviewer_golden_path.py` with per-step diagnostic categories and suggested fixes when steps fail.

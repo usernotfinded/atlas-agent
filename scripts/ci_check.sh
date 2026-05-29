@@ -44,6 +44,10 @@ echo "8. v0.5.8 gap prioritization check"
 "$PYTHON_BIN" scripts/check_v058_gap_prioritization.py
 
 echo ""
+echo "8a. v0.5.8 RC1 readiness dry run"
+"$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
+
+echo ""
 echo "9. public docs consistency"
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py
 

@@ -91,6 +91,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Review and Feedback
 
+- **[v0.5.8 RC1 Readiness](docs/v0.5.8-rc1-readiness.md)** — dry-run readiness gate before any RC tag is created
 - **[External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md)** — 10–15 minute safe review path
 - **[Reviewer Checklist](docs/reviewer-checklist.md)** — checklist before trusting or recommending
 - **[Public Launch Readiness](docs/public-launch-readiness.md)** — verified checks and disabled features
