@@ -40,9 +40,13 @@ def canonical_env_var(dotted_path: str) -> str:
 def load_atlas_secrets() -> None:
     """Load secrets from .env.atlas into environment. Process env wins."""
     env_path = get_env_atlas_path()
-    if env_path.exists():
-        # override=False ensures process environment variables take precedence
-        load_dotenv(env_path, override=False)
+    try:
+        if env_path.exists():
+            # override=False ensures process environment variables take precedence
+            load_dotenv(env_path, override=False)
+    except PermissionError:
+        # Sandbox/local environments may restrict access to user-global secrets
+        pass
 
 def set_secret(key: str, value: str) -> None:
     """Write a secret to .env.atlas."""

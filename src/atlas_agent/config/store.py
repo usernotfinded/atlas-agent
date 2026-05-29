@@ -24,6 +24,9 @@ def load_raw_config() -> dict:
     try:
         with open(path, "rb") as f:
             return tomllib.load(f)
+    except PermissionError:
+        # Sandbox/local environments may restrict access to user-global config
+        return {}
     except Exception as exc:
         if exc.__class__.__name__ == "TOMLDecodeError":
             raise format_toml_syntax_error(path, exc) from exc

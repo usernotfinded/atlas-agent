@@ -7,8 +7,12 @@ def get_workspace_root() -> Path:
     current = Path.cwd()
     for parent in [current] + list(current.parents):
         candidate = parent / ".atlas"
-        if candidate.is_dir():
-            return parent
+        try:
+            if candidate.is_dir():
+                return parent
+        except PermissionError:
+            # Sandbox/local environments may restrict directory traversal
+            continue
     
     # 2. Fallback to CWD
     return Path.cwd()
