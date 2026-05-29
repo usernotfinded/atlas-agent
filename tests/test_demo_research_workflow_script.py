@@ -11,11 +11,37 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "demo_research_workflow.sh"
 
+
+def _make_python_wrappers(tmp_path: Path) -> Path:
+    """Create wrapper scripts for python/python3/python3.11 that bypass pyenv shims.
+
+    The wrappers delegate directly to the Python executable running the test
+    suite, avoiding host-global pyvenv.cfg inspection that causes
+    PermissionError in sandboxed environments.
+    """
+    bin_dir = tmp_path / "pywrappers"
+    bin_dir.mkdir()
+    target = Path(sys.executable)
+    for name in ("python", "python3", "python3.11"):
+        wrapper = bin_dir / name
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f'exec "{target}" "$@"\n',
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+    return bin_dir
+
+
 def _isolated_env(tmp_path: Path, fake_atlas: Path, workspace: Path) -> dict[str, str]:
     home = tmp_path / "home"
     atlas_home = tmp_path / "atlas-home"
     home.mkdir(exist_ok=True)
     atlas_home.mkdir(exist_ok=True)
+
+    python_bin = _make_python_wrappers(tmp_path)
+
     env = os.environ.copy()
     env["ATLAS_BIN"] = str(fake_atlas)
     env["PYTHONPATH"] = str(ROOT / "src")
@@ -23,8 +49,35 @@ def _isolated_env(tmp_path: Path, fake_atlas: Path, workspace: Path) -> dict[str
     env["HOME"] = str(home)
     env["ATLAS_HOME"] = str(atlas_home)
     env["PYTHONNOUSERSITE"] = "1"
+    env["PATH"] = f"{python_bin}{os.pathsep}{env.get('PATH', '')}"
     return env
 
+
+
+def test_python_wrapper_avoids_host_pyvenv(tmp_path: Path) -> None:
+    """Subprocess env must resolve python3.11 through the temp wrapper, not host pyenv."""
+    python_bin = _make_python_wrappers(tmp_path)
+    env = os.environ.copy()
+    env["PATH"] = f"{python_bin}{os.pathsep}{env.get('PATH', '')}"
+
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            "command -v python3.11 && python3.11 -c 'import sys; print(sys.executable)'",
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 0, f"Wrapper failed: {result.stderr}"
+    wrapper_path = python_bin / "python3.11"
+    assert str(wrapper_path) in result.stdout, (
+        f"Expected wrapper path {wrapper_path} in stdout, got: {result.stdout}"
+    )
+    assert "/Users/" not in result.stderr, (
+        f"stderr leaked host path: {result.stderr}"
+    )
 
 
 def test_script_exists_and_is_executable() -> None:
