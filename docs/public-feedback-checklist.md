@@ -6,7 +6,7 @@ Use this checklist before opening the repo for broader public feedback or outrea
 
 ## Repository state
 
-- [ ] `README.md` current development status is clear (post-v0.5.7 development, `0.5.8rc2`).
+- [ ] `README.md` current development status is clear (post-v0.5.7 development, `0.5.8rc3`).
 - [ ] `CHANGELOG.md` has an `[Unreleased]` section.
 - [ ] `v0.5.7` tag exists and is untouched.
 - [ ] No forbidden claims in public docs.

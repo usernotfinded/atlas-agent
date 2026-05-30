@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_for": "0.5.8rc2",
+  "generated_for": "0.5.8rc3",
   "groups": [
     "core-workspace",
     "paper-simulation",

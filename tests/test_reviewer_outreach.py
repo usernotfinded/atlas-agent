@@ -247,7 +247,7 @@ def test_checklist_doc_exists() -> None:
 def test_checklist_covers_version_and_tag() -> None:
     path = REPO_ROOT / "docs" / "reviewer-outreach-checklist.md"
     text = path.read_text(encoding="utf-8").lower()
-    assert "0.5.8rc2" in text
+    assert "0.5.8rc3" in text
     assert "v0.5.7" in text
 
 

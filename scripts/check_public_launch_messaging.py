@@ -27,7 +27,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.8rc2"
+PACKAGE_VERSION = "0.5.8rc3"
 PUBLIC_TAG = "v0.5.7"
 
 LAUNCH_DOC_PATHS = [
