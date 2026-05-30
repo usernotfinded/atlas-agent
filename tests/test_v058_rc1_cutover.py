@@ -74,6 +74,11 @@ def test_cutover_script_json_output() -> None:
     assert data["errors"] == []
     assert data["expected_version"] == "0.5.8rc1"
     assert data["stable_tag"] == "v0.5.7"
+    assert "tag_state" in data
+    assert data["tag_state"] in {"absent_pre_tag", "present_matches_head"}
+    assert "tag_commit" in data
+    assert "head_commit" in data
+    assert "tag_matches_head" in data
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +156,68 @@ def test_historical_v057_record_required() -> None:
     result = CUTOVER_MOD._check_historical_tag()
     # This should pass because v0.5.7 tag exists in the repo
     assert result == [], f"Historical v0.5.7 check failed: {result}"
+
+
+def test_pre_tag_absent_state_passes() -> None:
+    def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
+        return [], "absent_pre_tag", None, "abc123", False
+
+    with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
+        result = CUTOVER_MOD._gather()
+    assert result["passed"] is True
+    assert result["tag_state"] == "absent_pre_tag"
+    assert result["tag_commit"] is None
+    assert result["tag_matches_head"] is False
+
+
+def test_post_tag_matches_head_passes() -> None:
+    def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
+        return [], "present_matches_head", "abc123", "abc123", True
+
+    with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
+        result = CUTOVER_MOD._gather()
+    assert result["passed"] is True
+    assert result["tag_state"] == "present_matches_head"
+    assert result["tag_commit"] == "abc123"
+    assert result["head_commit"] == "abc123"
+    assert result["tag_matches_head"] is True
+
+
+def test_tag_mismatch_fails() -> None:
+    def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
+        return (
+            ["v0.5.8rc1 tag exists locally but points to deadbeef, while HEAD is abc123. Force-pushing or moving RC tags is not allowed."],
+            "present_mismatch",
+            "deadbeef",
+            "abc123",
+            False,
+        )
+
+    with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
+        result = CUTOVER_MOD._gather()
+    assert result["passed"] is False
+    assert result["tag_state"] == "present_mismatch"
+    assert result["tag_commit"] == "deadbeef"
+    assert result["head_commit"] == "abc123"
+    assert result["tag_matches_head"] is False
+    assert any("Force-pushing" in e for e in result["errors"])
+
+
+def test_tag_unresolvable_fails() -> None:
+    def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
+        return (
+            ["v0.5.8rc1 tag exists locally but cannot be resolved."],
+            "unresolvable",
+            None,
+            "abc123",
+            False,
+        )
+
+    with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
+        result = CUTOVER_MOD._gather()
+    assert result["passed"] is False
+    assert result["tag_state"] == "unresolvable"
+    assert result["tag_commit"] is None
 
 
 # ---------------------------------------------------------------------------

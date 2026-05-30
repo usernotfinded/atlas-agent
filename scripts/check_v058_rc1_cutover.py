@@ -252,20 +252,58 @@ def _check_no_generated_artifacts_staged() -> list[str]:
     return errors
 
 
-def _check_no_tag_created() -> list[str]:
+def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
+    """Check whether the RC tag exists and whether it points to current HEAD.
+
+    Returns:
+        (errors, tag_state, tag_commit, head_commit, tag_matches_head)
+    """
     errors: list[str] = []
-    result = subprocess.run(
+
+    head_result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    head_commit = head_result.stdout.strip() if head_result.returncode == 0 else None
+
+    tag_result = subprocess.run(
         ["git", "tag", "--list", "v0.5.8rc1"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
     )
-    if result.stdout.strip():
+    tag_exists = bool(tag_result.stdout.strip())
+
+    if not tag_exists:
+        return errors, "absent_pre_tag", None, head_commit, False
+
+    # Tag exists — verify it resolves to HEAD
+    tag_rev_result = subprocess.run(
+        ["git", "rev-parse", "v0.5.8rc1^{}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    tag_commit = tag_rev_result.stdout.strip() if tag_rev_result.returncode == 0 else None
+
+    if tag_commit is None:
         errors.append(
-            "v0.5.8rc1 tag already exists locally. "
-            "This checker verifies the pre-tag state; do not create the tag until after explicit approval."
+            "v0.5.8rc1 tag exists locally but cannot be resolved."
         )
-    return errors
+        return errors, "unresolvable", None, head_commit, False
+
+    tag_matches_head = tag_commit == head_commit
+    if not tag_matches_head:
+        errors.append(
+            f"v0.5.8rc1 tag exists locally but points to {tag_commit[:12]}, "
+            f"while HEAD is {head_commit[:12] if head_commit else 'unknown'}. "
+            "Force-pushing or moving RC tags is not allowed."
+        )
+        return errors, "present_mismatch", tag_commit, head_commit, False
+
+    return errors, "present_matches_head", tag_commit, head_commit, True
 
 
 def _gather() -> dict:
@@ -279,13 +317,19 @@ def _gather() -> dict:
     all_errors.extend(_check_public_docs_safe())
     all_errors.extend(_check_protected_boundaries_clean())
     all_errors.extend(_check_no_generated_artifacts_staged())
-    all_errors.extend(_check_no_tag_created())
+
+    tag_errors, tag_state, tag_commit, head_commit, tag_matches_head = _check_tag_state()
+    all_errors.extend(tag_errors)
 
     return {
         "passed": len(all_errors) == 0,
         "errors": all_errors,
         "expected_version": EXPECTED_VERSION,
         "stable_tag": HISTORICAL_STABLE_TAG,
+        "tag_state": tag_state,
+        "tag_commit": tag_commit,
+        "head_commit": head_commit,
+        "tag_matches_head": tag_matches_head,
     }
 
 
