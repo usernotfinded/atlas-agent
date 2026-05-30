@@ -103,6 +103,18 @@ class TestCiWorkflow:
     def test_has_timeout(self, ci_content: str) -> None:
         assert "timeout-minutes:" in ci_content
 
+    def test_checkout_uses_fetch_depth_zero(self, ci_content: str) -> None:
+        assert "fetch-depth: 0" in ci_content
+
+    def test_checkout_uses_fetch_tags_true(self, ci_content: str) -> None:
+        assert "fetch-tags: true" in ci_content
+
+    def test_has_explicit_tag_fetch_step(self, ci_content: str) -> None:
+        assert "git fetch --force --tags origin" in ci_content
+
+    def test_clean_install_uses_allow_network(self, ci_content: str) -> None:
+        assert "check_clean_install.py --allow-network" in ci_content
+
 
 class TestResearchCiWorkflow:
     @pytest.fixture
@@ -188,6 +200,18 @@ class TestReleaseGateWorkflow:
 
     def test_has_timeout(self, release_gate_content: str) -> None:
         assert "timeout-minutes:" in release_gate_content
+
+    def test_checkout_uses_fetch_depth_zero(self, release_gate_content: str) -> None:
+        assert "fetch-depth: 0" in release_gate_content
+
+    def test_checkout_uses_fetch_tags_true(self, release_gate_content: str) -> None:
+        assert "fetch-tags: true" in release_gate_content
+
+    def test_has_explicit_tag_fetch_step(self, release_gate_content: str) -> None:
+        assert "git fetch --force --tags origin" in release_gate_content
+
+    def test_clean_install_uses_allow_network(self, release_gate_content: str) -> None:
+        assert "check_clean_install.py --allow-network" in release_gate_content
 
 
 class TestCiCheckScript:

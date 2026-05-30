@@ -19,6 +19,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Fetch release tags
+        run: git fetch --force --tags origin
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -35,6 +40,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Fetch release tags
+        run: git fetch --force --tags origin
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -51,6 +61,11 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Fetch release tags
+        run: git fetch --force --tags origin
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -67,6 +82,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Fetch release tags
+        run: git fetch --force --tags origin
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -75,13 +95,18 @@ jobs:
           python3.11 -m pip install --upgrade pip
           python3.11 -m pip install build
       - name: Clean install verification
-        run: python3.11 scripts/check_clean_install.py
+        run: python3.11 scripts/check_clean_install.py --allow-network
 
   package-distribution-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Fetch release tags
+        run: git fetch --force --tags origin
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

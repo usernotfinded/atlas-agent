@@ -226,13 +226,37 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Missing live broker credentials block opt-in before any opt-in record is written.
 - Protected untracked files (`AUDIT_ENHANCEMENTS_2026-05-13.md`, `BATCH2_PLAN.md`, `memory/kill_switch_state.json.lock`) must not be staged.
 
+## Historical Tag Checks in CI
+
+Release checks inspect historical tags such as `v0.5.7` with `git show`.
+CI jobs that run release checks must use full-depth checkout and fetch tags:
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+    fetch-tags: true
+
+- name: Fetch release tags
+  run: git fetch --force --tags origin
+```
+
+Local equivalent:
+
+```bash
+git fetch --tags origin
+```
+
 ## Clean Install Verification
 
 Before tagging a release candidate, verify the package installs cleanly from the current worktree without credentials or network calls:
 
 ```bash
-python3.11 scripts/check_clean_install.py --dry-run
+# local/offline default
 python3.11 scripts/check_clean_install.py
+
+# CI or explicit dependency-resolution verification
+python3.11 scripts/check_clean_install.py --allow-network
 ```
 
 Expectation:
@@ -247,6 +271,17 @@ Optional flags:
 - `--allow-network` to permit pip index access if local build dependencies are missing.
 - `--skip-venv` (dry-run only) to show the plan without creating a virtual environment.
 - `--keep-temp` to preserve the temporary directory for debugging.
+
+### Clean Install Dependency Resolution
+
+By default, `scripts/check_clean_install.py` is conservative/offline.
+CI clean-install verification may use:
+
+```bash
+python3.11 scripts/check_clean_install.py --allow-network
+```
+
+This is only for Python dependency resolution and does not enable product runtime networking, providers, brokers, credentials, or live trading.
 
 ## Package Artifact Verification
 

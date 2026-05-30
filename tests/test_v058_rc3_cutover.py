@@ -159,12 +159,26 @@ def test_historical_v057_record_required() -> None:
     assert result == [], f"Historical v0.5.7 check failed: {result}"
 
 
+def test_missing_historical_tag_includes_fetch_hint() -> None:
+    def _patched_git_show(tag: str, path: str) -> str:
+        return ""  # Simulate missing tag
+
+    with patch.object(CUTOVER_MOD, "_git_show", _patched_git_show):
+        result = CUTOVER_MOD._check_historical_tag()
+    assert len(result) >= 2, f"Expected at least 2 errors, got: {result}"
+    combined = " ".join(result)
+    assert "git fetch --tags origin" in combined
+    assert "fetch-depth: 0" in combined
+    assert "fetch-tags: true" in combined
+
+
 def test_pre_tag_absent_state_passes() -> None:
     def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
         return [], "absent_pre_tag", None, "abc123", False
 
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
-        result = CUTOVER_MOD._gather()
+        with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
+            result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "absent_pre_tag"
     assert result["tag_commit"] is None
@@ -176,7 +190,8 @@ def test_post_tag_matches_head_passes() -> None:
         return [], "present_matches_head", "abc123", "abc123", True
 
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
-        result = CUTOVER_MOD._gather()
+        with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
+            result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "present_matches_head"
     assert result["tag_commit"] == "abc123"

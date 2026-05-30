@@ -139,7 +139,11 @@ def _check_version_consistency() -> list[str]:
     # 2. Historical v0.5.7 tag must contain version 0.5.7
     tag_pyproject = _git_show(HISTORICAL_STABLE_TAG, "pyproject.toml")
     if not tag_pyproject:
-        errors.append(f"Could not read pyproject.toml from tag {HISTORICAL_STABLE_TAG}")
+        errors.append(
+            f"Could not read pyproject.toml from tag {HISTORICAL_STABLE_TAG}. "
+            "Run `git fetch --tags origin` locally, or ensure GitHub Actions checkout "
+            "uses `fetch-depth: 0`, `fetch-tags: true`, and `git fetch --force --tags origin`."
+        )
     else:
         tag_toml_version = None
         try:
@@ -153,7 +157,11 @@ def _check_version_consistency() -> list[str]:
 
     tag_init = _git_show(HISTORICAL_STABLE_TAG, "src/atlas_agent/__init__.py")
     if not tag_init:
-        errors.append(f"Could not read __init__.py from tag {HISTORICAL_STABLE_TAG}")
+        errors.append(
+            f"Could not read __init__.py from tag {HISTORICAL_STABLE_TAG}. "
+            "Run `git fetch --tags origin` locally, or ensure GitHub Actions checkout "
+            "uses `fetch-depth: 0`, `fetch-tags: true`, and `git fetch --force --tags origin`."
+        )
     else:
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', tag_init, re.MULTILINE)
         tag_init_version = m.group(1) if m else None
