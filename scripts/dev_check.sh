@@ -61,8 +61,8 @@ echo "8a. v0.5.8 RC1 readiness dry run"
 "$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
 
 echo ""
-echo "8b. v0.5.8rc1 cutover check"
-"$PYTHON_BIN" scripts/check_v058_rc1_cutover.py
+echo "8b. v0.5.8rc2 cutover check"
+"$PYTHON_BIN" scripts/check_v058_rc2_cutover.py
 
 echo ""
 echo "9. research sandbox CLI tests"

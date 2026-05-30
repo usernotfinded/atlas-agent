@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.8rc2] - 2026-05-29
+
+> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8rc2.md) for full details.
+
 ### Fixed
-- Updated the v0.5.8rc1 cutover check to support both pre-tag and post-tag verification, accepting an existing tag only when it resolves to the current HEAD.
+- Fixed RC cutover verification so an existing RC tag is accepted only when it resolves to the current HEAD. Historical RC tags (e.g., `v0.5.8rc1`) are allowed without requiring them to match current HEAD.
 
 ### Safety
-- The cutover check remains local-only and does not publish, tag, call GitHub APIs, load credentials, or enable live/provider/broker execution.
+- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, or GitHub release creation was performed.
+- No protected boundaries were changed.
+- No network calls were added.
 
 ## [0.5.8rc1] - 2026-05-29
 

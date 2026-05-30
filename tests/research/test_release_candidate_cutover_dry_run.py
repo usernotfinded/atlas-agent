@@ -531,14 +531,14 @@ class TestRealRepoIntegration:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real")
         assert report["target_version_valid"] is True
         assert report["target_is_rc"] is True
-        # Current version is 0.5.8rc1 (RC), so current_version_is_dev is False
+        # Current version is 0.5.8rc2 (RC), so current_version_is_dev is False
         assert report["current_version_is_dev"] is False
-        # dev_to_rc_transition_valid is False because 0.5.8rc1 -> v0.5.7-rc1 is not a valid transition
+        # dev_to_rc_transition_valid is False because 0.5.8rc2 -> v0.5.7-rc1 is not a valid transition
         assert report["dev_to_rc_transition_valid"] is False
 
     def test_real_repo_rc_state(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-dev")
-        # Current 0.5.8rc1 is an RC, not dev
+        # Current 0.5.8rc2 is an RC, not dev
         assert report["current_version_is_dev"] is False
         # dev_to_rc_transition_valid should be False for mismatched versions
         assert report["dev_to_rc_transition_valid"] is False
@@ -572,7 +572,7 @@ class TestRealRepoIntegration:
 
     def test_real_repo_release_note_present_for_rc(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-note")
-        # Current RC version 0.5.8rc1 should have a release note
+        # Current RC version 0.5.8rc2 should have a release note
         assert report["release_note_present"] is True
 
     def test_historical_stable_release_note_present(self) -> None:

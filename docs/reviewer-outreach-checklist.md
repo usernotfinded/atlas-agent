@@ -8,7 +8,7 @@ Use this checklist before starting controlled reviewer outreach.
 
 ## Repository state
 
-- [ ] `main` remains at `0.5.8rc1` (no premature version bump).
+- [ ] `main` remains at `0.5.8rc2` (no premature version bump).
 - [ ] `v0.5.7` tag remains untouched (no tag recreation or force-push).
 - [ ] Working tree is clean or only contains intentional changes.
 - [ ] No protected boundary changes staged (`git diff -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk`).
@@ -41,7 +41,7 @@ Use this checklist before starting controlled reviewer outreach.
 
 ## README and messaging
 
-- [ ] README current development status is clear (`0.5.8rc1`, post-v0.5.7).
+- [ ] README current development status is clear (`0.5.8rc2`, post-v0.5.7).
 - [ ] README links to reviewer walkthrough, checklist, and outreach docs.
 - [ ] Outreach message drafts do not claim profitability, live readiness, or production safety.
 - [ ] Outreach message drafts do not invite broker setup, credential sharing, or live trading.
