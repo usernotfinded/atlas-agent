@@ -37,6 +37,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 EXPECTED_VERSION = "0.5.8rc5"
 STABLE_SUCCESSOR_VERSION = "0.5.8"
+CURRENT_SUCCESSOR_DEV_PREFIX = "0.5.9.dev"
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 ACTIVE_RC_TAG = "v0.5.8rc5"
@@ -80,16 +81,20 @@ def _check_current_version() -> list[str]:
     pyproject_path = REPO_ROOT / "pyproject.toml"
     init_path = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
     accepted_versions = {EXPECTED_VERSION}
+    accepted_prefixes: tuple[str, ...] = ()
     if EXPECTED_VERSION == "0.5.8rc5":
         accepted_versions.add(STABLE_SUCCESSOR_VERSION)
+        accepted_prefixes = (CURRENT_SUCCESSOR_DEV_PREFIX,)
 
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
         version = data.get("project", {}).get("version")
-        if version not in accepted_versions:
+        if version not in accepted_versions and not (
+            isinstance(version, str) and version.startswith(accepted_prefixes)
+        ):
             errors.append(
-                f"pyproject.toml version {version!r} != expected {EXPECTED_VERSION!r} or {STABLE_SUCCESSOR_VERSION!r}"
+                f"pyproject.toml version {version!r} != expected {EXPECTED_VERSION!r}, {STABLE_SUCCESSOR_VERSION!r}, or {CURRENT_SUCCESSOR_DEV_PREFIX}*"
             )
     else:
         errors.append("pyproject.toml not found")
@@ -98,9 +103,11 @@ def _check_current_version() -> list[str]:
         text = init_path.read_text(encoding="utf-8")
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         version = m.group(1) if m else None
-        if version not in accepted_versions:
+        if version not in accepted_versions and not (
+            isinstance(version, str) and version.startswith(accepted_prefixes)
+        ):
             errors.append(
-                f"__init__.py version {version!r} != expected {EXPECTED_VERSION!r} or {STABLE_SUCCESSOR_VERSION!r}"
+                f"__init__.py version {version!r} != expected {EXPECTED_VERSION!r}, {STABLE_SUCCESSOR_VERSION!r}, or {CURRENT_SUCCESSOR_DEV_PREFIX}*"
             )
     else:
         errors.append("src/atlas_agent/__init__.py not found")
@@ -328,7 +335,9 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
     current_version = _current_package_version()
     tag_matches_head = tag_commit == head_commit
     if not tag_matches_head:
-        if current_version == STABLE_SUCCESSOR_VERSION:
+        if current_version == STABLE_SUCCESSOR_VERSION or (
+            isinstance(current_version, str) and current_version.startswith(CURRENT_SUCCESSOR_DEV_PREFIX)
+        ):
             return errors, "historical_superseded", tag_commit, head_commit, False
         errors.append(
             f"{ACTIVE_RC_TAG} tag exists locally but points to {tag_commit[:12]}, "

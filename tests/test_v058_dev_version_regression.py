@@ -1,11 +1,12 @@
-"""Regression tests for v0.5.8 transition.
+"""Regression tests for post-v0.5.8 development transition.
 
 Verifies the correct lifecycle model:
-- current main = 0.5.8
+- current main = 0.5.9.dev0
+- public stable = v0.5.8
 - historical stable = v0.5.7
-- no stale 0.5.7 assertions on current main
+- no stale 0.5.8 assertions on current main
 - forbidden phrases removed
-- historical docs can still mention 0.5.7
+- historical docs can still mention 0.5.7 and 0.5.8
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ def test_pyproject_version_is_current_dev() -> None:
     import tomllib
     with open(ROOT / "pyproject.toml", "rb") as f:
         data = tomllib.load(f)
-    assert data.get("project", {}).get("version") == "0.5.8"
+    assert data.get("project", {}).get("version") == "0.5.9.dev0"
 
 
 def test_init_version_is_current_dev() -> None:
@@ -38,7 +39,22 @@ def test_init_version_is_current_dev() -> None:
     text = init.read_text(encoding="utf-8")
     m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
     assert m is not None
-    assert m.group(1) == "0.5.8"
+    assert m.group(1) == "0.5.9.dev0"
+
+
+def test_public_stable_v058_tag_exists() -> None:
+    result = subprocess.run(
+        ["git", "show", "v0.5.8:src/atlas_agent/__init__.py"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"v0.5.8 tag not found or missing expected file: {result.stderr}"
+    assert "0.5.8" in result.stdout
+
+
+def test_public_stable_v058_release_note_exists() -> None:
+    assert (ROOT / "docs" / "releases" / "v0.5.8.md").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +165,7 @@ def test_version_consistency_script_accepts_dev() -> None:
     assert result.returncode == 0, (
         f"Version consistency check failed:\n{result.stdout}\n{result.stderr}"
     )
-    assert "0.5.8" in result.stdout
+    assert "0.5.9.dev0" in result.stdout
     assert "v0.5.8" in result.stdout
 
 

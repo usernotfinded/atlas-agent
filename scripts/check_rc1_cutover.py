@@ -3,7 +3,7 @@
 
 This script ensures:
 - The historical v0.5.7 tag contains the expected stable version metadata.
-- Current main is a post-v0.5.7 version (including stable 0.5.8).
+- Current main is the active post-v0.5.8 development version.
 - Public docs remain safe and do not contain forbidden claims or secrets.
 
 Deterministic and local. Does not:
@@ -29,7 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.5.8"
+CURRENT_DEV_SERIES = "0.5.9.dev0"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -94,7 +94,7 @@ def _check_version_consistency() -> list[str]:
     release_note_path = REPO_ROOT / "docs" / "releases" / f"{HISTORICAL_STABLE_TAG}.md"
     checklist_path = REPO_ROOT / "docs" / "release-checklist.md"
 
-    # 1. Current main version should be a dev version after 0.5.7
+    # 1. Current main version should be the active dev version after v0.5.8.
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
@@ -104,10 +104,7 @@ def _check_version_consistency() -> list[str]:
             if not (
                 current_toml_version
                 and (
-                    current_toml_version == "0.5.8"
-                    or current_toml_version.startswith("0.5.8.dev")
-                    or current_toml_version.startswith("0.5.8rc")
-                    or current_toml_version.startswith("0.5.9.dev")
+                    current_toml_version.startswith("0.5.9.dev")
                     or current_toml_version.startswith("0.6.")
                 )
             ):
@@ -125,10 +122,7 @@ def _check_version_consistency() -> list[str]:
             if not (
                 current_init_version
                 and (
-                    current_init_version == "0.5.8"
-                    or current_init_version.startswith("0.5.8.dev")
-                    or current_init_version.startswith("0.5.8rc")
-                    or current_init_version.startswith("0.5.9.dev")
+                    current_init_version.startswith("0.5.9.dev")
                     or current_init_version.startswith("0.6.")
                 )
             ):

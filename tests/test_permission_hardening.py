@@ -175,7 +175,7 @@ def test_subprocess_atlas_uses_isolated_env(tmp_path: Path) -> None:
         env=env,
     )
     assert result.returncode == 0, f"Subprocess failed: {result.stderr}"
-    assert "0.5.8" in result.stdout
+    assert "0.5.9.dev0" in result.stdout
 
 
 # ---------------------------------------------------------------------------

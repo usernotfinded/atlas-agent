@@ -70,7 +70,7 @@ def test_readiness_script_json_output() -> None:
     data = json.loads(result.stdout)
     assert data["passed"] is True
     assert data["errors"] == []
-    assert data["current_dev_version"] == "0.5.8"
+    assert data["current_dev_version"] == "0.5.9.dev0"
     assert data["stable_tag"] == "v0.5.7"
 
 
@@ -82,10 +82,10 @@ def test_readiness_script_json_output() -> None:
 def test_wrong_current_version_fails() -> None:
     original = READINESS_MOD.CURRENT_DEV_VERSION
     try:
-        READINESS_MOD.CURRENT_DEV_VERSION = "0.5.9.dev0"
+        READINESS_MOD.CURRENT_DEV_VERSION = "0.5.8"
         result = READINESS_MOD._gather()
         assert result["passed"] is False
-        assert any("0.5.9.dev0" in e for e in result["errors"])
+        assert any("0.5.8" in e for e in result["errors"])
     finally:
         READINESS_MOD.CURRENT_DEV_VERSION = original
 

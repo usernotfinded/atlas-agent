@@ -24,8 +24,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Expected package version (PEP 440). Updated during RC cutover.
-EXPECTED_PACKAGE_VERSION = "0.5.8"
+# Expected package version (PEP 440).
+EXPECTED_PACKAGE_VERSION = "0.5.9.dev0"
 
 # Safety phrases expected in ``atlas validate`` output when run without config.
 EXPECTED_VALIDATE_PHRASES = (

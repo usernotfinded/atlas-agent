@@ -169,7 +169,7 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.8"
+        assert data["package_version"] == "0.5.9.dev0"
         assert data["public_tag"] == "v0.5.8"
         assert data["errors"] == []
 
@@ -222,7 +222,7 @@ class TestStaleRCReferencesBlocked:
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current development version is 0.5.8.dev0.\n"
+            "Current development version is 0.5.9.dev0.\n"
         )
         result = _run_script_on_text(text)
         assert result.returncode == 0, (

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""v0.5.8 stable cutover verification checker.
+"""v0.5.8 stable release verification checker.
 
-Deterministic local checks that verify the repo is correctly prepared
-for the stable v0.5.8 release state.
+Deterministic local checks that verify the stable v0.5.8 release record remains
+intact after main has moved on to the next development version.
 
 Historical RC tags (v0.5.8rc1 through v0.5.8rc5) are allowed to exist and do not
-need to match current HEAD. Only the active stable tag (v0.5.8) is verified
-against HEAD.
+need to match current HEAD. The stable tag (v0.5.8) is verified as a protected
+historical release tag and is not expected to match current HEAD after the next
+development cycle opens.
 
 This script does NOT:
 - create tags
@@ -35,7 +36,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-EXPECTED_VERSION = "0.5.8"
+EXPECTED_VERSION = "0.5.9.dev0"
+STABLE_RELEASE_VERSION = "0.5.8"
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 ACTIVE_RELEASE_TAG = "v0.5.8"
@@ -143,7 +145,7 @@ def _check_historical_tag() -> list[str]:
 
 def _check_release_notes_exist() -> list[str]:
     errors: list[str] = []
-    path = REPO_ROOT / "docs" / "releases" / "v0.5.8.md"
+    path = REPO_ROOT / "docs" / "releases" / f"{ACTIVE_RELEASE_TAG}.md"
     if not path.exists():
         errors.append(f"Missing release notes: {path.relative_to(REPO_ROOT)}")
     return errors
@@ -156,8 +158,8 @@ def _check_changelog_has_stable_section() -> list[str]:
         errors.append("CHANGELOG.md not found")
         return errors
     text = path.read_text(encoding="utf-8")
-    if "[0.5.8]" not in text:
-        errors.append("CHANGELOG.md missing [0.5.8] section")
+    if f"[{STABLE_RELEASE_VERSION}]" not in text:
+        errors.append(f"CHANGELOG.md missing [{STABLE_RELEASE_VERSION}] section")
     return errors
 
 
@@ -168,11 +170,12 @@ def _check_readme_current_status() -> list[str]:
         errors.append("README.md not found")
         return errors
     text = path.read_text(encoding="utf-8")
-    public_label = "v" + EXPECTED_VERSION
-    if EXPECTED_VERSION not in text and public_label not in text:
+    if EXPECTED_VERSION not in text:
+        errors.append("README.md missing current development version reference")
+    if ACTIVE_RELEASE_TAG not in text:
         errors.append("README.md missing current version reference")
     if "latest stable public release" not in text.lower():
-        errors.append("README.md should indicate this is the latest stable public release")
+        errors.append("README.md should indicate v0.5.8 is the latest stable public release")
     return errors
 
 
@@ -276,9 +279,9 @@ def _list_historical_rc_tags() -> list[str]:
 
 
 def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
-    """Check whether the active release tag exists and whether it points to current HEAD.
+    """Check whether the stable release tag exists and still contains v0.5.8.
 
-    Historical release tags are allowed and do not need to match HEAD.
+    The stable release tag is allowed to differ from HEAD after main advances.
 
     Returns:
         (errors, tag_state, tag_commit, head_commit, tag_matches_head)
@@ -302,9 +305,10 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
     tag_exists = bool(tag_result.stdout.strip())
 
     if not tag_exists:
-        return errors, "absent_pre_tag", None, head_commit, False
+        errors.append(f"{ACTIVE_RELEASE_TAG} tag is missing.")
+        return errors, "missing", None, head_commit, False
 
-    # Tag exists — verify it resolves to HEAD
+    # Tag exists; verify it resolves and has the stable release version.
     tag_rev_result = subprocess.run(
         ["git", "rev-parse", f"{ACTIVE_RELEASE_TAG}" + "^{}"],
         cwd=REPO_ROOT,
@@ -319,14 +323,29 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
         )
         return errors, "unresolvable", None, head_commit, False
 
-    tag_matches_head = tag_commit == head_commit
-    if not tag_matches_head:
+    tag_pyproject = _git_show(ACTIVE_RELEASE_TAG, "pyproject.toml")
+    try:
+        tag_version = tomllib.loads(tag_pyproject).get("project", {}).get("version")
+    except Exception:
+        tag_version = None
+    if tag_version != STABLE_RELEASE_VERSION:
         errors.append(
-            f"{ACTIVE_RELEASE_TAG} tag exists locally but points to {tag_commit[:12]}, "
-            f"while HEAD is {head_commit[:12] if head_commit else 'unknown'}. "
-            "Force-pushing or moving release tags is not allowed."
+            f"Tag {ACTIVE_RELEASE_TAG} pyproject.toml version {tag_version!r} != {STABLE_RELEASE_VERSION!r}"
         )
-        return errors, "present_mismatch", tag_commit, head_commit, False
+
+    tag_init = _git_show(ACTIVE_RELEASE_TAG, "src/atlas_agent/__init__.py")
+    m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', tag_init, re.MULTILINE)
+    init_version = m.group(1) if m else None
+    if init_version != STABLE_RELEASE_VERSION:
+        errors.append(
+            f"Tag {ACTIVE_RELEASE_TAG} __init__.py version {init_version!r} != {STABLE_RELEASE_VERSION!r}"
+        )
+
+    tag_matches_head = tag_commit == head_commit
+    if errors:
+        return errors, "present_invalid", tag_commit, head_commit, tag_matches_head
+    if not tag_matches_head:
+        return errors, "present_historical", tag_commit, head_commit, False
 
     return errors, "present_matches_head", tag_commit, head_commit, True
 
@@ -352,6 +371,7 @@ def _gather() -> dict:
         "passed": len(all_errors) == 0,
         "errors": all_errors,
         "expected_version": EXPECTED_VERSION,
+        "stable_release_version": STABLE_RELEASE_VERSION,
         "stable_tag": HISTORICAL_STABLE_TAG,
         "active_release": ACTIVE_RELEASE_TAG,
         "historical_rc_tags": historical_rc_tags,
@@ -381,7 +401,7 @@ def main() -> int:
         else:
             print(
                 f"v0.5.8 stable cutover check PASSED: "
-                f"version={result['expected_version']} stable_tag={result['stable_tag']}"
+                f"current={result['expected_version']} stable_tag={result['active_release']}"
             )
 
     return 0 if result["passed"] else 2

@@ -1,13 +1,13 @@
-"""Tests for the v0.5.8 stable cutover verification checker.
+"""Tests for the v0.5.8 stable release verification checker.
 
 These tests verify that:
 - The checker passes on the current repo state.
 - JSON output works.
-- Wrong package version fails.
+- Wrong current package version fails.
 - Missing release notes fails.
 - Missing changelog section fails.
 - Unsafe live/profit wording fails.
-- Historical v0.5.8rc1, v0.5.8rc2, v0.5.8rc3, and v0.5.8rc4 tags do not cause failure.
+- Historical v0.5.8 and RC tags do not need to match current HEAD.
 - Script source does not contain shell=True.
 - Script source does not contain network/GitHub API calls.
 - Checker does not mutate files.
@@ -71,12 +71,13 @@ def test_cutover_script_json_output() -> None:
     data = json.loads(result.stdout)
     assert data["passed"] is True
     assert data["errors"] == []
-    assert data["expected_version"] == "0.5.8"
+    assert data["expected_version"] == "0.5.9.dev0"
+    assert data["stable_release_version"] == "0.5.8"
     assert data["stable_tag"] == "v0.5.7"
     assert data["active_release"] == "v0.5.8"
     assert "historical_rc_tags" in data
     assert "tag_state" in data
-    assert data["tag_state"] in {"absent_pre_tag", "present_matches_head"}
+    assert data["tag_state"] in {"present_historical", "present_matches_head"}
     assert "tag_commit" in data
     assert "head_commit" in data
     assert "tag_matches_head" in data
@@ -90,10 +91,10 @@ def test_cutover_script_json_output() -> None:
 def test_wrong_package_version_fails() -> None:
     original = CUTOVER_MOD.EXPECTED_VERSION
     try:
-        CUTOVER_MOD.EXPECTED_VERSION = "0.5.9rc3"
+        CUTOVER_MOD.EXPECTED_VERSION = "0.5.8"
         result = CUTOVER_MOD._gather()
         assert result["passed"] is False
-        assert any("0.5.9rc3" in e for e in result["errors"])
+        assert any("0.5.8" in e for e in result["errors"])
     finally:
         CUTOVER_MOD.EXPECTED_VERSION = original
 
@@ -172,17 +173,18 @@ def test_missing_historical_tag_includes_fetch_hint() -> None:
     assert "fetch-tags: true" in combined
 
 
-def test_pre_tag_absent_state_passes() -> None:
+def test_missing_stable_tag_fails() -> None:
     def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
-        return [], "absent_pre_tag", None, "abc123", False
+        return ["v0.5.8 tag is missing."], "missing", None, "abc123", False
 
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
             result = CUTOVER_MOD._gather()
-    assert result["passed"] is True
-    assert result["tag_state"] == "absent_pre_tag"
+    assert result["passed"] is False
+    assert result["tag_state"] == "missing"
     assert result["tag_commit"] is None
     assert result["tag_matches_head"] is False
+    assert any("missing" in e for e in result["errors"])
 
 
 def test_post_tag_matches_head_passes() -> None:
@@ -199,11 +201,25 @@ def test_post_tag_matches_head_passes() -> None:
     assert result["tag_matches_head"] is True
 
 
-def test_tag_mismatch_fails() -> None:
+def test_stable_tag_historical_head_mismatch_passes() -> None:
+    def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
+        return [], "present_historical", "deadbeef", "abc123", False
+
+    with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
+        with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
+            result = CUTOVER_MOD._gather()
+    assert result["passed"] is True
+    assert result["tag_state"] == "present_historical"
+    assert result["tag_commit"] == "deadbeef"
+    assert result["head_commit"] == "abc123"
+    assert result["tag_matches_head"] is False
+
+
+def test_stable_tag_invalid_version_fails() -> None:
     def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
         return (
-            ["v0.5.8 tag exists locally but points to deadbeef, while HEAD is abc123. Force-pushing or moving release tags is not allowed."],
-            "present_mismatch",
+            ["Tag v0.5.8 pyproject.toml version '0.5.9.dev0' != '0.5.8'"],
+            "present_invalid",
             "deadbeef",
             "abc123",
             False,
@@ -212,11 +228,8 @@ def test_tag_mismatch_fails() -> None:
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         result = CUTOVER_MOD._gather()
     assert result["passed"] is False
-    assert result["tag_state"] == "present_mismatch"
-    assert result["tag_commit"] == "deadbeef"
-    assert result["head_commit"] == "abc123"
-    assert result["tag_matches_head"] is False
-    assert any("Force-pushing" in e for e in result["errors"])
+    assert result["tag_state"] == "present_invalid"
+    assert any("Tag v0.5.8" in e for e in result["errors"])
 
 
 def test_tag_unresolvable_fails() -> None:

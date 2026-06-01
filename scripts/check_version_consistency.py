@@ -12,7 +12,7 @@ import tomllib
 from pathlib import Path
 
 
-PACKAGE_VERSION = "0.5.8"
+PACKAGE_VERSION = "0.5.9.dev0"
 PUBLIC_TAG = "v0.5.8"
 
 
@@ -60,7 +60,7 @@ def main() -> int:
                 f"pyproject.toml ({toml_version!r}) and __init__.py ({init_version!r}) versions do not match"
             )
         elif toml_version != PACKAGE_VERSION:
-            # Versions match but are not the expected RC1 version.
+            # Versions match but are not the expected current version.
             # This is allowed in tests; only warn.
             print(f"Version consistency OK: {toml_version} (not the expected {PACKAGE_VERSION})")
             return 0
