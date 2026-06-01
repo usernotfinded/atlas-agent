@@ -166,6 +166,89 @@ def test_failure_path_returns_nonzero() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Release-check capture tests
+# ---------------------------------------------------------------------------
+
+
+def test_release_check_step_captures_stdout_stderr() -> None:
+    """Verify the release-check step stores redacted stdout/stderr in the envelope."""
+
+    def _fake_run(
+        args: list[str],
+        cwd: Path,
+        env: dict[str, str],
+    ) -> tuple[int, str, str]:
+        # Let all atlas commands pass quickly
+        return 0, "", ""
+
+    fake_proc = subprocess.CompletedProcess(
+        args=["./scripts/release_check.sh", "--quick"],
+        returncode=0,
+        stdout="release ok\n",
+        stderr="",
+    )
+
+    with patch.object(SMOKE_MOD, "_run_atlas", _fake_run):
+        with patch.object(SMOKE_MOD.subprocess, "run", return_value=fake_proc):
+            result = SMOKE_MOD._smoke(keep_temp=False, skip_release_check=False)
+
+    release_steps = [s for s in result["steps"] if "release_check.sh" in s["command"]]
+    assert len(release_steps) == 1
+    step = release_steps[0]
+    assert step["ok"] is True
+    assert "stdout_redacted" in step
+    assert "stderr_redacted" in step
+    assert "release ok" in step["stdout_redacted"]
+
+
+def test_failing_release_check_includes_diagnostics() -> None:
+    """Verify a failing release-check step includes captured output for diagnostics."""
+
+    def _fake_run(
+        args: list[str],
+        cwd: Path,
+        env: dict[str, str],
+    ) -> tuple[int, str, str]:
+        return 0, "", ""
+
+    fake_proc = subprocess.CompletedProcess(
+        args=["./scripts/release_check.sh", "--quick"],
+        returncode=1,
+        stdout="",
+        stderr="release failed\n",
+    )
+
+    with patch.object(SMOKE_MOD, "_run_atlas", _fake_run):
+        with patch.object(SMOKE_MOD.subprocess, "run", return_value=fake_proc):
+            result = SMOKE_MOD._smoke(keep_temp=False, skip_release_check=False)
+
+    release_steps = [s for s in result["steps"] if "release_check.sh" in s["command"]]
+    assert len(release_steps) == 1
+    step = release_steps[0]
+    assert step["ok"] is False
+    assert "stderr_redacted" in step
+    assert "release failed" in step["stderr_redacted"]
+    assert any("release_check.sh" in e for e in result["errors"])
+
+
+def test_skip_release_check_omits_release_step() -> None:
+    """Verify --skip-release-check omits the release-check step entirely."""
+
+    def _fake_run(
+        args: list[str],
+        cwd: Path,
+        env: dict[str, str],
+    ) -> tuple[int, str, str]:
+        return 0, "", ""
+
+    with patch.object(SMOKE_MOD, "_run_atlas", _fake_run):
+        result = SMOKE_MOD._smoke(keep_temp=False, skip_release_check=True)
+
+    release_steps = [s for s in result["steps"] if "release_check.sh" in s["command"]]
+    assert len(release_steps) == 0
+
+
+# ---------------------------------------------------------------------------
 # Temp workspace lifecycle tests
 # ---------------------------------------------------------------------------
 

@@ -48,8 +48,8 @@ echo "8a. v0.5.8 RC1 readiness dry run"
 "$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
 
 echo ""
-echo "8b. v0.5.8rc4 cutover check"
-"$PYTHON_BIN" scripts/check_v058_rc4_cutover.py
+echo "8b. v0.5.8rc5 cutover check"
+"$PYTHON_BIN" scripts/check_v058_rc5_cutover.py
 
 echo ""
 echo "9. public docs consistency"

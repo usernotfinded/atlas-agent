@@ -12,7 +12,7 @@ import tomllib
 from pathlib import Path
 
 
-PACKAGE_VERSION = "0.5.8rc4"
+PACKAGE_VERSION = "0.5.8rc5"
 PUBLIC_TAG = "v0.5.7"
 
 

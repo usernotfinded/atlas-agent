@@ -59,7 +59,7 @@ def test_cutover_script_fails_on_rc3_repo() -> None:
     )
     assert result.returncode == 2, result.stdout + result.stderr
     assert "FAILED" in result.stdout
-    assert "0.5.8rc4" in result.stdout or "0.5.8rc2" in result.stdout
+    assert "0.5.8rc5" in result.stdout or "0.5.8rc2" in result.stdout
 
 
 def test_cutover_script_json_fails_on_rc3_repo() -> None:

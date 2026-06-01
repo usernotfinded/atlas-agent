@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.8-rc4)** — see [release notes](docs/releases/v0.5.7.md) for the latest stable version.
+> **Current Status (v0.5.8-rc5)** — see [release notes](docs/releases/v0.5.8-rc5.md) for the current release candidate. Latest stable remains [v0.5.7](docs/releases/v0.5.7.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -81,8 +81,9 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`main` is now post-`v0.5.7` development. The latest stable public release is `v0.5.7`; unreleased changes on `main` are tracked in the `[Unreleased]` section of `CHANGELOG.md`.
+`v0.5.8-rc5` is the current release candidate under reviewer validation. `v0.5.7` remains the latest stable public release. Unreleased post-RC changes belong under `[Unreleased]` in `CHANGELOG.md`.
 
+- This is a release candidate, not a stable final release.
 - Live trading is disabled by default.
 - Provider execution remains locked.
 - Trust remains blocked.
@@ -180,6 +181,15 @@ atlas research provider-safety-dossier-list --status sandbox_chain_complete --li
 ```
 
 If no dossier exists, the command returns `found: false` safely. No errors, no leaks, no broker/order path, no credentials loaded.
+
+### 6. Run local diagnostics (safe, no credentials)
+
+```bash
+atlas memory doctor --json
+atlas events doctor
+```
+
+These are local diagnostics. They do not submit orders, enable live trading, or load credentials.
 
 ### What is intentionally disabled
 
@@ -350,6 +360,8 @@ Atlas is designed for local-first operation but can be deployed to a VPS, Docker
 | `atlas backtest run` | Run a deterministic backtest on historical CSV data. |
 | `atlas broker sync` | Synchronize account, positions, and orders from the broker. |
 | `atlas audit verify` | Verify the JSONL audit log hash-chain. |
+| `atlas memory doctor --json` | Local diagnostic: inspect workspace memory health. No broker, no credentials. |
+| `atlas events doctor` | Local diagnostic: inspect workspace events health. No broker, no credentials. |
 
 ## Disclaimer
 

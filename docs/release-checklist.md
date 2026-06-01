@@ -303,7 +303,7 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.8-rc4
+./scripts/smoke_release_tag.sh v0.5.8-rc5
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
@@ -328,7 +328,8 @@ Runs fast, safe checks without heavy demos or full pytest:
 - `python3.11 scripts/check_product_capability_inventory.py`
 - `python3.11 scripts/check_v058_gap_prioritization.py`
 - `python3.11 scripts/check_v058_rc1_readiness.py` — v0.5.8 RC readiness dry run (does not tag or publish)
-- `python3.11 scripts/check_v058_rc4_cutover.py` — v0.5.8rc4 cutover verification (supports both pre-tag and post-tag states; does not tag or publish)
+- `python3.11 scripts/check_v058_rc5_cutover.py` — v0.5.8rc5 cutover verification (supports both pre-tag and post-tag states; does not tag or publish)
+- `python3.11 scripts/check_v058_rc4_cutover.py` — historical v0.5.8rc4 cutover verification (kept for historical testing)
 - `python3.11 scripts/check_v058_rc2_cutover.py` — historical v0.5.8rc2 cutover verification (kept for historical testing)
 - `python3.11 scripts/check_v058_rc1_cutover.py` — historical v0.5.8rc1 cutover verification (kept for historical testing)
 - `python3.11 scripts/check_public_docs_consistency.py`

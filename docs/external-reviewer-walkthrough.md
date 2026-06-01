@@ -83,16 +83,16 @@ python3.11 scripts/check_package_distribution.py
 ## What to inspect in the repo
 
 1. README.md — "What this is" and "What this is not" sections
-2. SECURITY.md — security policy and reporting path
-3. CONTRIBUTING.md — safety boundaries for contributors
-4. docs/public-launch-readiness.md — verified checks and disabled features
-5. docs/reviewer-checklist.md — structured checklist for review
-6. docs/public-faq.md — answers to common questions
-7. docs/feedback-request-guide.md — how to ask for feedback safely
-8. docs/provider-safety-dossier.md — sandbox-only safety workflow
-7. src/atlas_agent/brokers/ — broker adapter boundaries
-8. src/atlas_agent/risk/ — deterministic risk gate implementations
-9. src/atlas_agent/safety/ — safety invariants and kill switch
+1. SECURITY.md — security policy and reporting path
+1. CONTRIBUTING.md — safety boundaries for contributors
+1. docs/public-launch-readiness.md — verified checks and disabled features
+1. docs/reviewer-checklist.md — structured checklist for review
+1. docs/public-faq.md — answers to common questions
+1. docs/feedback-request-guide.md — how to ask for feedback safely
+1. docs/provider-safety-dossier.md — sandbox-only safety workflow
+1. src/atlas_agent/brokers/ — broker adapter boundaries
+1. src/atlas_agent/risk/ — deterministic risk gate implementations
+1. src/atlas_agent/safety/ — safety invariants and kill switch
 
 ## Safety boundaries to verify
 

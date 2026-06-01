@@ -21,7 +21,7 @@ SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.7-rc7"
 
-CURRENT_PACKAGE_VERSION = "0.5.8rc4"
+CURRENT_PACKAGE_VERSION = "0.5.8rc5"
 
 
 def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:

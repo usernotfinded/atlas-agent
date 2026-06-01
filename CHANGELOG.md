@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.8rc5] - 2026-06-01
+
+> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8-rc5.md) for full details.
+
+### Fixed
+- Fixed reviewer golden-path smoke diagnostics so the optional `release_check.sh --quick` step preserves captured stdout/stderr.
+- Fixed reviewer-facing README and walkthrough documentation inconsistencies.
+
+### Documentation
+- Updated README current RC status and release-notes link.
+- Documented local safe diagnostic commands used by the reviewer golden path.
+
+### Safety
+- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, or GitHub release creation was performed.
+- No protected runtime boundaries were changed.
+- No network calls were added.
+
 ## [0.5.8rc4] - 2026-06-01
 
 > **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8-rc4.md) for full details.

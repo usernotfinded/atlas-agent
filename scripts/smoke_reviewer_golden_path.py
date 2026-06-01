@@ -243,23 +243,26 @@ def _smoke(
 
         # Optional release check from repo root
         if not skip_release_check:
-            rc, out, err = subprocess.run(
+            proc = subprocess.run(
                 ["./scripts/release_check.sh", "--quick"],
                 capture_output=True,
                 text=True,
                 cwd=str(REPO_ROOT),
                 env=env,
-            ).returncode, "", ""
-            category, suggestion = _get_diagnostic("release_check.sh")
-            steps.append(
-                {
-                    "command": "./scripts/release_check.sh --quick",
-                    "returncode": rc,
-                    "ok": rc == 0,
-                    "category": category,
-                    "suggestion": suggestion,
-                }
             )
+            rc, out, err = proc.returncode, proc.stdout, proc.stderr
+            category, suggestion = _get_diagnostic("release_check.sh")
+            step = {
+                "command": "./scripts/release_check.sh --quick",
+                "returncode": rc,
+                "ok": rc == 0,
+                "category": category,
+                "suggestion": suggestion,
+            }
+            if temp_path is not None:
+                step["stdout_redacted"] = _redact(out, temp_path)
+                step["stderr_redacted"] = _redact(err, temp_path)
+            steps.append(step)
             if rc != 0:
                 errors.append(f"[{category}] release_check.sh --quick failed with exit code {rc}. {suggestion}")
 
