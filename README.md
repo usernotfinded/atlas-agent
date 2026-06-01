@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.8)** — see [release notes](docs/releases/v0.5.8.md) for the latest stable public release.
+> **Current Status (v0.5.8.1)** — see [release notes](docs/releases/v0.5.8.1.md) for the latest stable public release.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -81,7 +81,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`v0.5.8` is the latest stable public release, promoted from the final green `v0.5.8rc5` release candidate. Unreleased post-stable changes belong under `[Unreleased]` in `CHANGELOG.md`.
+`v0.5.8.1` is the latest stable public release, a packaging/install hotfix for `v0.5.8`. The `v0.5.8` release was promoted from the final green `v0.5.8rc5` release candidate. Unreleased post-stable changes belong under `[Unreleased]` in `CHANGELOG.md`.
 
 - Live trading is disabled by default.
 - Provider execution remains locked.
@@ -163,6 +163,10 @@ atlas validate
 ```
 
 Expected: a readiness report. Missing provider API keys are expected and safe — Atlas does not require real credentials for paper and backtest workflows.
+
+The `routine-trader` workspace template is packaged with Atlas Agent, so
+`atlas init --template routine-trader` works from editable, wheel, and source
+distribution installs without relying on the source repository checkout.
 
 ### 4. Run a safe local backtest
 

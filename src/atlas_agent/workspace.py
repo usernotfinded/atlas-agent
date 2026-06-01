@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import sysconfig
 from dataclasses import dataclass
+from importlib import resources
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any
 
@@ -185,21 +186,15 @@ def init_workspace(
     if not force and target_path.exists() and any(target_path.iterdir()):
         raise WorkspaceInitError(f"workspace path already exists and is not empty: {target_path}")
 
-    template_path = Path(sysconfig.get_path("purelib")) / "atlas_agent" / "templates" / template
-    if not template_path.exists():
-        # Fallback for local development
-        template_path = Path(__file__).parent.parent.parent / "templates" / template
-    
-    if not template_path.exists():
-        raise WorkspaceInitError(f"template not found: {template}")
-
     target_path.mkdir(parents=True, exist_ok=True)
-    for source in template_path.iterdir():
-        destination = target_path / source.name
-        if source.is_dir():
-            shutil.copytree(source, destination, dirs_exist_ok=True)
-        else:
-            shutil.copy2(source, destination)
+    template_source = _resolve_template(template)
+    if template_source is None:
+        raise WorkspaceInitError(
+            f"template not found: {template}. Expected packaged resource "
+            f"atlas_agent/templates/{template} or repo fallback templates/{template}."
+        )
+
+    _copy_template_tree(template_source, target_path)
 
     _ensure_runtime_dirs(target_path)
     return WorkspaceResolution(
@@ -209,6 +204,31 @@ def init_workspace(
         overwritten=overwritten,
         template=template
     )
+
+
+def _resolve_template(template: str) -> Traversable | Path | None:
+    try:
+        packaged_template = resources.files("atlas_agent").joinpath("templates", template)
+        if packaged_template.is_dir():
+            return packaged_template
+    except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+        pass
+
+    fallback = Path(__file__).parent.parent.parent / "templates" / template
+    if fallback.is_dir():
+        return fallback
+    return None
+
+
+def _copy_template_tree(source_root: Traversable | Path, target_path: Path) -> None:
+    for source in source_root.iterdir():
+        destination = target_path / source.name
+        if source.is_dir():
+            destination.mkdir(parents=True, exist_ok=True)
+            _copy_template_tree(source, destination)
+        elif source.is_file():
+            with source.open("rb") as src, destination.open("wb") as dst:
+                shutil.copyfileobj(src, dst)
 
 
 def _ensure_runtime_dirs(target_path: Path) -> None:

@@ -4,6 +4,10 @@
 
 The `scripts/check_clean_install.py` script verifies that a fresh user can install Atlas Agent from the current worktree without credentials, network calls, or live-trading enablement.
 
+It also creates a workspace with `atlas init --template routine-trader` from a
+temporary directory outside the repository, so clean installs cannot pass by
+accidentally relying on repository-root template fallback paths.
+
 ## What it checks
 
 1. **No-network editable install** — `pip install --no-index --no-build-isolation -e .` succeeds in a temporary virtual environment. PyPI is not contacted by default.

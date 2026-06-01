@@ -1,0 +1,13 @@
+risk:
+  max_daily_loss: 100
+  max_position_size: 100
+  max_trades_per_day: 5
+  max_portfolio_exposure: 1000
+  max_order_notional: 100
+  minimum_confidence: 0.55
+  allow_leverage: false
+  kill_switch_enabled: false
+  require_stop_loss_live: true
+  enforce_market_hours: false
+  symbol_allowlist: []
+  symbol_blocklist: []

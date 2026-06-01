@@ -20,6 +20,7 @@ Run this before pushing a public GitHub release.
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/check_package_distribution.py --dry-run`
 - `python3.11 scripts/check_package_distribution.py`
+- `python3.11 scripts/check_package_distribution.py` verifies packaged `routine-trader` templates from wheel/sdist artifacts and wheel-installed `atlas init` outside the source repository.
 - `python3.11 scripts/check_no_protected_staged.py`
 - `./scripts/release_check.sh --quick`
 - `./scripts/release_check.sh --research`
@@ -303,7 +304,7 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.8-rc5
+./scripts/smoke_release_tag.sh v0.5.8.1
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
@@ -328,6 +329,7 @@ Runs fast, safe checks without heavy demos or full pytest:
 - `python3.11 scripts/check_product_capability_inventory.py`
 - `python3.11 scripts/check_v058_gap_prioritization.py`
 - `python3.11 scripts/check_v058_rc1_readiness.py` — v0.5.8 RC readiness dry run (does not tag or publish)
+- `python3.11 scripts/check_v0581_hotfix_cutover.py` — v0.5.8.1 hotfix cutover verification (supports both pre-tag and post-tag states; does not tag or publish)
 - `python3.11 scripts/check_v058_stable_cutover.py` — v0.5.8 stable cutover verification (supports both pre-tag and post-tag states; does not tag or publish)
 - `python3.11 scripts/check_v058_rc5_cutover.py` — historical v0.5.8rc5 cutover verification (kept for historical testing)
 - `python3.11 scripts/check_v058_rc4_cutover.py` — historical v0.5.8rc4 cutover verification (kept for historical testing)

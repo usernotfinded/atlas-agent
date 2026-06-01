@@ -29,7 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.5.8"
+CURRENT_DEV_SERIES = "0.5.8.1"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -105,6 +105,7 @@ def _check_version_consistency() -> list[str]:
                 current_toml_version
                 and (
                     current_toml_version == "0.5.8"
+                    or current_toml_version == "0.5.8.1"
                     or current_toml_version.startswith("0.5.8.dev")
                     or current_toml_version.startswith("0.5.8rc")
                     or current_toml_version.startswith("0.5.9.dev")
@@ -126,6 +127,7 @@ def _check_version_consistency() -> list[str]:
                 current_init_version
                 and (
                     current_init_version == "0.5.8"
+                    or current_init_version == "0.5.8.1"
                     or current_init_version.startswith("0.5.8.dev")
                     or current_init_version.startswith("0.5.8rc")
                     or current_init_version.startswith("0.5.9.dev")

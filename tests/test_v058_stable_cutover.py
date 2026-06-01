@@ -44,12 +44,22 @@ def _load_cutover_module() -> ModuleType:
 CUTOVER_MOD = _load_cutover_module()
 
 
+def _current_package_version() -> str:
+    import tomllib
+
+    with open(REPO_ROOT / "pyproject.toml", "rb") as f:
+        data = tomllib.load(f)
+    return data.get("project", {}).get("version", "")
+
+
 # ---------------------------------------------------------------------------
 # Positive tests
 # ---------------------------------------------------------------------------
 
 
 def test_cutover_script_passes() -> None:
+    if _current_package_version() != "0.5.8":
+        pytest.skip("historical v0.5.8 stable checker is not current on this branch")
     result = subprocess.run(
         [sys.executable, str(CUTOVER_SCRIPT)],
         capture_output=True,
@@ -61,6 +71,8 @@ def test_cutover_script_passes() -> None:
 
 
 def test_cutover_script_json_output() -> None:
+    if _current_package_version() != "0.5.8":
+        pytest.skip("historical v0.5.8 stable checker is not current on this branch")
     result = subprocess.run(
         [sys.executable, str(CUTOVER_SCRIPT), "--json"],
         capture_output=True,
@@ -178,7 +190,8 @@ def test_pre_tag_absent_state_passes() -> None:
 
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-            result = CUTOVER_MOD._gather()
+            with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
+                result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "absent_pre_tag"
     assert result["tag_commit"] is None
@@ -191,7 +204,8 @@ def test_post_tag_matches_head_passes() -> None:
 
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-            result = CUTOVER_MOD._gather()
+            with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
+                result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "present_matches_head"
     assert result["tag_commit"] == "abc123"

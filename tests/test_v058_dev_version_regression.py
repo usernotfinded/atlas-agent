@@ -1,8 +1,8 @@
-"""Regression tests for v0.5.8 transition.
+"""Regression tests for v0.5.8.1 hotfix transition.
 
 Verifies the correct lifecycle model:
-- current main = 0.5.8
-- historical stable = v0.5.7
+- current hotfix branch = 0.5.8.1
+- historical stable = v0.5.8
 - no stale 0.5.7 assertions on current main
 - forbidden phrases removed
 - historical docs can still mention 0.5.7
@@ -30,7 +30,7 @@ def test_pyproject_version_is_current_dev() -> None:
     import tomllib
     with open(ROOT / "pyproject.toml", "rb") as f:
         data = tomllib.load(f)
-    assert data.get("project", {}).get("version") == "0.5.8"
+    assert data.get("project", {}).get("version") == "0.5.8.1"
 
 
 def test_init_version_is_current_dev() -> None:
@@ -38,7 +38,7 @@ def test_init_version_is_current_dev() -> None:
     text = init.read_text(encoding="utf-8")
     m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
     assert m is not None
-    assert m.group(1) == "0.5.8"
+    assert m.group(1) == "0.5.8.1"
 
 
 # ---------------------------------------------------------------------------
@@ -149,8 +149,8 @@ def test_version_consistency_script_accepts_dev() -> None:
     assert result.returncode == 0, (
         f"Version consistency check failed:\n{result.stdout}\n{result.stderr}"
     )
-    assert "0.5.8" in result.stdout
-    assert "v0.5.8" in result.stdout
+    assert "0.5.8.1" in result.stdout
+    assert "v0.5.8.1" in result.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +168,6 @@ def test_release_checklist_can_mention_historical_stable() -> None:
     checklist = ROOT / "docs" / "release-checklist.md"
     text = checklist.read_text(encoding="utf-8")
     # Must mention current version
-    assert "0.5.8" in text
+    assert "0.5.8.1" in text
     # Can also mention historical stable
     assert "v0.5.8" in text or "0.5.7" in text

@@ -21,7 +21,7 @@ SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.8-rc7"
 
-CURRENT_PACKAGE_VERSION = "0.5.8"
+CURRENT_PACKAGE_VERSION = "0.5.8.1"
 
 
 def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
@@ -48,7 +48,25 @@ def _make_fake_wheel(path: Path, name: str = "atlas_agent", version: str = PACKA
         zf.writestr("atlas_agent-0.0.0.dist-info/entry_points.txt", entry_points)
 
 
-def _make_fake_sdist(path: Path, name: str = "atlas-agent", version: str = PACKAGE_VERSION) -> None:
+def _write_fake_wheel_templates(zf: zipfile.ZipFile) -> None:
+    for rel in (
+        "templates/routine-trader/README.md",
+        "templates/routine-trader/.env.example",
+        "templates/routine-trader/.gitignore",
+        "templates/routine-trader/configs/market.example.yaml",
+        "templates/routine-trader/memory/portfolio.md",
+        "templates/routine-trader/routines/prompts/pre_market.md",
+        "templates/routine-trader/skills/risk_review.md",
+    ):
+        zf.writestr(f"atlas_agent/{rel}", f"test resource: {rel}\n")
+
+
+def _make_fake_sdist(
+    path: Path,
+    name: str = "atlas-agent",
+    version: str = PACKAGE_VERSION,
+    include_templates: bool = False,
+) -> None:
     """Create a minimal fake sdist with PKG-INFO."""
     pkg_info = (
         f"Metadata-Version: 2.1\n"
@@ -61,6 +79,20 @@ def _make_fake_sdist(path: Path, name: str = "atlas-agent", version: str = PACKA
         data = pkg_info.encode("utf-8")
         info.size = len(data)
         tf.addfile(info, io.BytesIO(data))
+        if include_templates:
+            for rel in (
+                "templates/routine-trader/README.md",
+                "templates/routine-trader/.env.example",
+                "templates/routine-trader/.gitignore",
+                "templates/routine-trader/configs/market.example.yaml",
+                "templates/routine-trader/memory/portfolio.md",
+                "templates/routine-trader/routines/prompts/pre_market.md",
+                "templates/routine-trader/skills/risk_review.md",
+            ):
+                member = tarfile.TarInfo(name=f"atlas-agent-{version}/src/atlas_agent/{rel}")
+                data = f"test resource: {rel}\n".encode("utf-8")
+                member.size = len(data)
+                tf.addfile(member, io.BytesIO(data))
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +190,9 @@ class TestDryRun:
         assert "Package distribution verification plan" in result.stdout
         assert "verify wheel exists" in result.stdout
         assert "verify sdist exists" in result.stdout
+        assert "verify wheel contains packaged routine-trader templates" in result.stdout
+        assert "verify sdist contains packaged routine-trader templates" in result.stdout
+        assert "run atlas init outside repo" in result.stdout
 
     def test_dry_run_does_not_create_artifacts(self, tmp_path: Path) -> None:
         result = _run_script("--dry-run", cwd=tmp_path)
@@ -312,6 +347,39 @@ class TestWheelMetadataParser:
         assert any("live trading ready" in e.lower() for e in errors)
 
 
+class TestWheelTemplateParser:
+    def test_parses_wheel_templates(self, tmp_path: Path) -> None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_wheel_templates", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_wheel_templates"] = cpd
+        spec.loader.exec_module(cpd)
+
+        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        with zipfile.ZipFile(wheel_path, "a") as zf:
+            _write_fake_wheel_templates(zf)
+        ok, errors = cpd._check_wheel_templates(wheel_path)
+        assert ok, f"Unexpected errors: {errors}"
+
+    def test_rejects_wheel_missing_templates(self, tmp_path: Path) -> None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_wheel_templates_missing", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_wheel_templates_missing"] = cpd
+        spec.loader.exec_module(cpd)
+
+        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        ok, errors = cpd._check_wheel_templates(wheel_path)
+        assert not ok
+        assert any("Template file missing from wheel" in e for e in errors)
+
+
 # ---------------------------------------------------------------------------
 # Sdist metadata parser (fake sdists)
 # ---------------------------------------------------------------------------
@@ -374,6 +442,42 @@ class TestSdistMetadataParser:
         assert any("guaranteed profit" in e.lower() for e in errors)
 
 
+class TestSdistTemplateParser:
+    def test_parses_sdist_templates(self, tmp_path: Path) -> None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_sdist_templates", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_sdist_templates"] = cpd
+        spec.loader.exec_module(cpd)
+
+        sdist_path = tmp_path / f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz"
+        _make_fake_sdist(
+            sdist_path,
+            name="atlas-agent",
+            version=CURRENT_PACKAGE_VERSION,
+            include_templates=True,
+        )
+        ok, errors = cpd._check_sdist_templates(sdist_path)
+        assert ok, f"Unexpected errors: {errors}"
+
+    def test_rejects_sdist_missing_templates(self, tmp_path: Path) -> None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_sdist_templates_missing", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_sdist_templates_missing"] = cpd
+        spec.loader.exec_module(cpd)
+
+        sdist_path = tmp_path / f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz"
+        _make_fake_sdist(sdist_path, name="atlas-agent", version=CURRENT_PACKAGE_VERSION)
+        ok, errors = cpd._check_sdist_templates(sdist_path)
+        assert not ok
+        assert any("Template file missing from sdist" in e for e in errors)
+
+
 # ---------------------------------------------------------------------------
 # Artifact filename checks
 # ---------------------------------------------------------------------------
@@ -424,6 +528,8 @@ class TestRealBuild:
         )
         assert "Package distribution verification PASSED" in result.stdout
         assert f"Package version: {CURRENT_PACKAGE_VERSION}" in result.stdout
+        assert "Template resources checked: yes" in result.stdout
+        assert "Wheel-installed template init checked: yes" in result.stdout
         assert "Build isolation: disabled" in result.stdout or "Network allowed: False" in result.stdout
 
     def test_real_build_output_has_no_absolute_paths(self) -> None:

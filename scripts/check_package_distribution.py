@@ -31,10 +31,19 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Expected package version (PEP 440). Updated during RC cutover.
-EXPECTED_PACKAGE_VERSION = "0.5.8"
+EXPECTED_PACKAGE_VERSION = "0.5.8.1"
 EXPECTED_PUBLIC_TAG = "v0.5.8"
 EXPECTED_NAME = "atlas-agent"
 EXPECTED_NORMALIZED_NAME = "atlas_agent"
+EXPECTED_TEMPLATE_FILES = (
+    "templates/routine-trader/README.md",
+    "templates/routine-trader/.env.example",
+    "templates/routine-trader/.gitignore",
+    "templates/routine-trader/configs/market.example.yaml",
+    "templates/routine-trader/memory/portfolio.md",
+    "templates/routine-trader/routines/prompts/pre_market.md",
+    "templates/routine-trader/skills/risk_review.md",
+)
 
 # Forbidden output fragments.
 FORBIDDEN_OUTPUT_FRAGMENTS = (
@@ -210,6 +219,22 @@ def _check_wheel_metadata(wheel_path: Path) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
+def _check_wheel_templates(wheel_path: Path) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+    try:
+        with zipfile.ZipFile(wheel_path, "r") as zf:
+            names = set(zf.namelist())
+            for rel in EXPECTED_TEMPLATE_FILES:
+                member = f"atlas_agent/{rel}"
+                if member not in names:
+                    errors.append(f"Template file missing from wheel: {member}")
+    except zipfile.BadZipFile as exc:
+        errors.append(f"Bad wheel file: {exc}")
+    except Exception as exc:
+        errors.append(f"Error reading wheel templates: {exc}")
+    return len(errors) == 0, errors
+
+
 def _check_sdist_metadata(sdist_path: Path) -> tuple[bool, list[str]]:
     errors: list[str] = []
     try:
@@ -276,6 +301,96 @@ def _check_sdist_metadata(sdist_path: Path) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
+def _check_sdist_templates(sdist_path: Path) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+    try:
+        with tarfile.open(sdist_path, "r:gz") as tf:
+            names = {m.name for m in tf.getmembers()}
+            for rel in EXPECTED_TEMPLATE_FILES:
+                suffix = f"/src/atlas_agent/{rel}"
+                if not any(name.endswith(suffix) for name in names):
+                    errors.append(f"Template file missing from sdist: src/atlas_agent/{rel}")
+    except tarfile.TarError as exc:
+        errors.append(f"Bad sdist file: {exc}")
+    except Exception as exc:
+        errors.append(f"Error reading sdist templates: {exc}")
+    return len(errors) == 0, errors
+
+
+def _find_venv_bin(venv_dir: Path, name: str) -> Path:
+    candidates = [
+        venv_dir / "bin" / name,
+        venv_dir / "Scripts" / f"{name}.exe",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(f"Could not find {name} in venv: {venv_dir}")
+
+
+def _check_wheel_template_install(wheel_path: Path) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+    temp_dir = Path(tempfile.mkdtemp(prefix="atlas-wheel-template-check-"))
+    global _CURRENT_TEMP_DIR
+    previous_temp = _CURRENT_TEMP_DIR
+    _CURRENT_TEMP_DIR = str(temp_dir)
+    try:
+        venv_dir = temp_dir / "venv"
+        workspace = temp_dir / "workspace"
+        venv_result = _run(
+            [sys.executable, "-m", "venv", "--system-site-packages", str(venv_dir)]
+        )
+        if venv_result.returncode != 0:
+            return False, [f"venv creation failed: {_redact(venv_result.stderr or '')}"]
+
+        python = _find_venv_bin(venv_dir, "python")
+        install_result = _run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--quiet",
+                "--no-index",
+                "--no-deps",
+                "--force-reinstall",
+                str(wheel_path),
+            ]
+        )
+        if install_result.returncode != 0:
+            return False, [f"wheel install failed: {_redact(install_result.stderr or '')}"]
+
+        atlas_bin = _find_venv_bin(venv_dir, "atlas")
+        init_result = _run(
+            [str(atlas_bin), "init", str(workspace), "--template", "routine-trader"],
+            cwd=temp_dir,
+        )
+        if init_result.returncode != 0:
+            return False, [
+                f"atlas init from wheel failed: {_redact((init_result.stdout or '') + (init_result.stderr or ''))}"
+            ]
+
+        expected_workspace_files = (
+            "README.md",
+            ".env.example",
+            "configs/market.example.yaml",
+            "memory/portfolio.md",
+            "routines/prompts/pre_market.md",
+            "skills/risk_review.md",
+        )
+        missing = [rel for rel in expected_workspace_files if not (workspace / rel).exists()]
+        if missing:
+            errors.append(f"wheel-installed template workspace missing files: {', '.join(missing)}")
+        if (workspace / ".env").exists():
+            errors.append("wheel-installed template workspace unexpectedly contains .env")
+    except Exception as exc:
+        errors.append(f"wheel template install check failed: {_redact(str(exc))}")
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        _CURRENT_TEMP_DIR = previous_temp
+    return len(errors) == 0, errors
+
+
 def _check_artifact_filenames(wheel: Path | None, sdist: Path | None) -> list[str]:
     errors: list[str] = []
     if wheel is not None:
@@ -316,7 +431,10 @@ def _build_plan(args: argparse.Namespace) -> dict:
             "verify sdist exists",
             "verify artifact filenames contain expected version",
             "verify wheel METADATA (name, version, entry points)",
+            "verify wheel contains packaged routine-trader templates",
             "verify sdist PKG-INFO (name, version)",
+            "verify sdist contains packaged routine-trader templates",
+            "install wheel into a temporary venv and run atlas init outside repo",
             "verify no forbidden claims in metadata",
             "verify no package artifacts staged",
             *(["python -m twine check <dist>/*"] if not args.skip_twine else []),
@@ -452,6 +570,15 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("  wheel metadata: OK")
 
+            print("Checking wheel template resources...")
+            wheel_templates_ok, wheel_template_errors = _check_wheel_templates(wheel)
+            if not wheel_templates_ok:
+                errors.extend(wheel_template_errors)
+                for e in wheel_template_errors:
+                    print(f"  wheel template error: {e}")
+            else:
+                print("  wheel templates: OK")
+
         # 6. Check sdist metadata
         if sdist is not None:
             print("Checking sdist metadata...")
@@ -463,7 +590,27 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print("  sdist metadata: OK")
 
-        # 7. Check no staged artifacts
+            print("Checking sdist template resources...")
+            sdist_templates_ok, sdist_template_errors = _check_sdist_templates(sdist)
+            if not sdist_templates_ok:
+                errors.extend(sdist_template_errors)
+                for e in sdist_template_errors:
+                    print(f"  sdist template error: {e}")
+            else:
+                print("  sdist templates: OK")
+
+        # 7. Check wheel-installed template initialization
+        if wheel is not None:
+            print("Checking wheel-installed template initialization...")
+            wheel_install_ok, wheel_install_errors = _check_wheel_template_install(wheel)
+            if not wheel_install_ok:
+                errors.extend(wheel_install_errors)
+                for e in wheel_install_errors:
+                    print(f"  wheel install template error: {e}")
+            else:
+                print("  wheel-installed template init: OK")
+
+        # 8. Check no staged artifacts
         print("Checking for staged package artifacts...")
         staged_errors = _check_no_staged_artifacts()
         if staged_errors:
@@ -473,7 +620,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print("  no staged artifacts: OK")
 
-        # 8. Optional twine check
+        # 9. Optional twine check
         if not args.skip_twine:
             print("Checking twine availability...")
             twine_ok, twine_msg = _check_twine_available()
@@ -522,6 +669,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  Sdist: {sdist.name if sdist else 'N/A'}")
         print(f"  Build isolation: {'enabled' if args.allow_network_build else 'disabled'}")
         print(f"  Network allowed: {args.allow_network_build}")
+        print(f"  Template resources checked: yes")
+        print(f"  Wheel-installed template init checked: yes")
         print(f"  No forbidden claims in metadata")
         print(f"  No package artifacts staged")
         return 0

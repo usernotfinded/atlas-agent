@@ -90,6 +90,7 @@ class TestDryRun:
         assert "Clean install verification plan" in result.stdout
         assert "atlas --help" in result.stdout
         assert "atlas validate" in result.stdout
+        assert "atlas init --template routine-trader outside repo" in result.stdout
 
     def test_dry_run_shows_no_network_default(self) -> None:
         result = _run_script("--dry-run")
@@ -120,6 +121,7 @@ class TestConsoleEntrypoint:
         text = SCRIPT.read_text(encoding="utf-8")
         assert "_find_venv_atlas" in text, "Script must locate venv atlas entrypoint"
         assert "atlas_bin" in text, "Script must use atlas_bin for CLI checks"
+        assert "_check_template_init" in text, "Script must verify template init"
 
     def test_script_does_not_use_python_m_as_primary(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
