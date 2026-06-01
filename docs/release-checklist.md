@@ -20,6 +20,7 @@ Run this before pushing a public GitHub release.
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/check_package_distribution.py --dry-run`
 - `python3.11 scripts/check_package_distribution.py`
+- `python3.11 scripts/check_package_distribution.py` verifies packaged `routine-trader` templates from wheel/sdist artifacts and wheel-installed `atlas init` outside the source repository.
 - `python3.11 scripts/check_no_protected_staged.py`
 - `./scripts/release_check.sh --quick`
 - `./scripts/release_check.sh --research`

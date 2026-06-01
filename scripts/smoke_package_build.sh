@@ -196,12 +196,6 @@ if [[ "$OFFLINE" != "1" ]]; then
     "$INSTALLED_PYTHON" -m pip install --quiet --upgrade pip
 fi
 "$INSTALLED_PYTHON" -m pip install --quiet "$WHEEL_PATH"
-# Copy templates into expected location so atlas init works from wheel install
-PURELIB="$("$INSTALLED_PYTHON" -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
-DATA="$("$INSTALLED_PYTHON" -c 'import sysconfig; print(sysconfig.get_path("data"))')"
-if [[ -d "$DATA/share/atlas-agent/templates" && ! -d "$PURELIB/atlas_agent/templates" ]]; then
-    cp -r "$DATA/share/atlas-agent/templates" "$PURELIB/atlas_agent/templates"
-fi
 "$INSTALLED_PYTHON" -m pip check
 echo "OK: pip check passed"
 

@@ -29,58 +29,23 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.data-files]
-"share/atlas-agent/templates/routine-trader" = [
+[tool.setuptools.package-data]
+"atlas_agent" = [
+  "templates/routine-trader/**",
   "templates/routine-trader/.env.example",
   "templates/routine-trader/.gitignore",
-  "templates/routine-trader/README.md",
-]
-"share/atlas-agent/templates/routine-trader/memory" = [
-  "templates/routine-trader/memory/*.md",
-]
-"share/atlas-agent/templates/routine-trader/routines" = [
-  "templates/routine-trader/routines/README.md",
-]
-"share/atlas-agent/templates/routine-trader/routines/prompts" = [
-  "templates/routine-trader/routines/prompts/*.md",
-]
-"share/atlas-agent/templates/routine-trader/routines/schedules" = [
-  "templates/routine-trader/routines/schedules/*",
-]
-"share/atlas-agent/templates/routine-trader/skills" = [
-  "templates/routine-trader/skills/*.md",
-]
-"share/atlas-agent/templates/routine-trader/reports/daily" = [
-  "templates/routine-trader/reports/daily/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/reports/agent" = [
-  "templates/routine-trader/reports/agent/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/reports/learning" = [
-  "templates/routine-trader/reports/learning/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/reports/reflections" = [
-  "templates/routine-trader/reports/reflections/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/reports/weekly" = [
-  "templates/routine-trader/reports/weekly/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/pending_orders" = [
-  "templates/routine-trader/pending_orders/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/audit" = [
   "templates/routine-trader/audit/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/events" = [
   "templates/routine-trader/events/.gitkeep",
-]
-"share/atlas-agent/templates/routine-trader/configs" = [
-  "templates/routine-trader/configs/brokers.example.yaml",
-  "templates/routine-trader/configs/market.example.yaml",
-  "templates/routine-trader/configs/providers.example.yaml",
-  "templates/routine-trader/configs/risk.example.yaml",
-  "templates/routine-trader/configs/scheduler.example.yaml",
-  "templates/routine-trader/configs/strategy.example.yaml",
+  "templates/routine-trader/memory/conversations/.gitkeep",
+  "templates/routine-trader/pending_orders/.gitkeep",
+  "templates/routine-trader/reports/agent/.gitkeep",
+  "templates/routine-trader/reports/daily/.gitkeep",
+  "templates/routine-trader/reports/learning/.gitkeep",
+  "templates/routine-trader/reports/reflections/.gitkeep",
+  "templates/routine-trader/reports/weekly/.gitkeep",
+  "templates/routine-trader/skills/active/.gitkeep",
+  "templates/routine-trader/skills/archived/.gitkeep",
+  "templates/routine-trader/skills/proposed/.gitkeep",
 ]
 
 [tool.pytest.ini_options]

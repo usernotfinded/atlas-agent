@@ -33,6 +33,15 @@ EXPECTED_VALIDATE_PHRASES = (
     "risk gates",
 )
 
+EXPECTED_TEMPLATE_FILES = (
+    "README.md",
+    ".env.example",
+    "configs/market.example.yaml",
+    "memory/portfolio.md",
+    "routines/prompts/pre_market.md",
+    "skills/risk_review.md",
+)
+
 # Fragments indicating local absolute paths that must not leak.
 FORBIDDEN_OUTPUT_FRAGMENTS = (
     "/Users/",
@@ -145,6 +154,36 @@ def _check_atlas_validate(atlas_bin: Path, cwd: Path | None = None) -> tuple[boo
     return True, ""
 
 
+def _check_template_init(atlas_bin: Path, parent_dir: Path) -> tuple[bool, str]:
+    workspace = parent_dir / "template-workspace"
+    result = _run(
+        [str(atlas_bin), "init", str(workspace), "--template", "routine-trader"],
+        cwd=parent_dir,
+    )
+    if result.returncode != 0:
+        return False, f"atlas init failed: {result.stdout}{result.stderr}"
+
+    missing = [
+        rel for rel in EXPECTED_TEMPLATE_FILES if not (workspace / rel).exists()
+    ]
+    if missing:
+        return False, f"template workspace missing files: {', '.join(missing)}"
+    if (workspace / ".env").exists():
+        return False, "template workspace unexpectedly contains .env"
+
+    validate_result = _run(
+        [str(atlas_bin), "--workspace", str(workspace), "validate"],
+        cwd=parent_dir,
+    )
+    validate_combined = validate_result.stdout + validate_result.stderr
+    if validate_result.returncode != 0:
+        return False, f"atlas validate --workspace failed: {validate_combined}"
+    violations = _check_forbidden_in_output(_redact(validate_combined))
+    if violations:
+        return False, "; ".join(violations)
+    return True, ""
+
+
 def _check_package_version(python: Path) -> tuple[bool, str]:
     result = _run(
         [str(python), "-c", "import atlas_agent; print(atlas_agent.__version__)"]
@@ -184,6 +223,7 @@ def _build_plan(args: argparse.Namespace) -> dict:
             "pip install --no-index --no-build-isolation -e <repo>" if not args.allow_network else "pip install -e <repo>",
             "verify installed atlas console entrypoint: atlas --help",
             "verify installed atlas console entrypoint: atlas validate",
+            "verify atlas init --template routine-trader outside repo",
             "verify package version",
             "verify README quickstart",
             *([] if args.keep_temp else ["remove temporary directory"]),
@@ -250,6 +290,7 @@ def main(argv: list[str] | None = None) -> int:
     network_allowed = args.allow_network
     console_entrypoint_checked = False
     atlas_validate_checked = False
+    template_init_checked = False
 
     try:
         temp_dir = Path(tempfile.mkdtemp(prefix="atlas-clean-install-"))
@@ -315,6 +356,15 @@ def main(argv: list[str] | None = None) -> int:
             print("  atlas validate: OK")
 
         # 3. Package version
+        print("Checking atlas init template from outside repo...")
+        ok, msg = _check_template_init(atlas_bin, temp_dir)
+        if not ok:
+            errors.append(f"atlas init template: {msg}")
+        else:
+            template_init_checked = True
+            print("  atlas init template: OK")
+
+        # 4. Package version
         print("Checking package version...")
         ok, msg = _check_package_version(python)
         if not ok:
@@ -322,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"  package version: OK")
 
-        # 4. README quickstart
+        # 5. README quickstart
         print("Checking README quickstart...")
         ok, msg = _check_readme_quickstart(REPO_ROOT)
         if not ok:
@@ -341,6 +391,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  Network allowed: {network_allowed}")
         print(f"  Console entrypoint checked: {console_entrypoint_checked}")
         print(f"  atlas validate checked: {atlas_validate_checked}")
+        print(f"  atlas init template checked: {template_init_checked}")
         print(f"  No forbidden fragments in output")
         return 0
 

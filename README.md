@@ -164,6 +164,10 @@ atlas validate
 
 Expected: a readiness report. Missing provider API keys are expected and safe — Atlas does not require real credentials for paper and backtest workflows.
 
+The `routine-trader` workspace template is packaged with Atlas Agent, so
+`atlas init --template routine-trader` works from editable, wheel, and source
+distribution installs without relying on the source repository checkout.
+
 ### 4. Run a safe local backtest
 
 ```bash

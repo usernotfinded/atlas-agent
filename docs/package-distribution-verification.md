@@ -6,6 +6,12 @@
 
 The package distribution verification script (`scripts/check_package_distribution.py`) performs a **local-only** dry-run to confirm that Atlas Agent can be built as distribution artifacts (wheel and sdist) and that their metadata is correct, without publishing or uploading anything.
 
+The check also verifies that runtime workspace templates are packaged as
+`atlas_agent` resources. It inspects wheel and sdist contents for
+`templates/routine-trader`, installs the built wheel into a temporary virtual
+environment, and runs `atlas init --template routine-trader` from outside the
+source repository.
+
 It answers:
 
 > "Can this repo produce distribution artifacts locally and verify their metadata safely, without publishing or uploading anything?"

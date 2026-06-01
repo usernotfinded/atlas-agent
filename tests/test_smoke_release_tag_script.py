@@ -225,6 +225,11 @@ class TestSmokeReleaseTagScript:
         for cmd in forbidden:
             assert cmd not in content, f"Forbidden mutation command found: {cmd!r}"
 
+    def test_no_manual_template_copy_workaround(self) -> None:
+        content = SCRIPT_PATH.read_text(encoding="utf-8")
+        assert "CLONE_DIR/templates" not in content
+        assert "cp -r" not in content
+
     def test_clone_uses_git_clone_not_checkout(self) -> None:
         content = SCRIPT_PATH.read_text(encoding="utf-8")
         assert "git clone" in content

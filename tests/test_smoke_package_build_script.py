@@ -255,6 +255,11 @@ class TestSmokePackageBuildScript:
         for cmd in forbidden:
             assert cmd not in content, f"Forbidden mutation command found: {cmd!r}"
 
+    def test_no_manual_template_copy_workaround(self) -> None:
+        content = SCRIPT_PATH.read_text(encoding="utf-8")
+        assert "share/atlas-agent/templates" not in content
+        assert "cp -r" not in content
+
     def test_build_uses_outdir_or_temp(self) -> None:
         content = SCRIPT_PATH.read_text(encoding="utf-8")
         assert "--outdir" in content, "Script must use --outdir to avoid polluting repo ./dist"

@@ -251,11 +251,6 @@ source "$VENV_DIR/bin/activate"
 
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet .
-# Copy templates into the venv so atlas init works from pip install
-PURELIB="$(python -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
-if [[ -d "$CLONE_DIR/templates" && ! -d "$PURELIB/atlas_agent/templates" ]]; then
-    cp -r "$CLONE_DIR/templates" "$PURELIB/atlas_agent/templates"
-fi
 python -m pip check
 echo "OK: pip check passed"
 
