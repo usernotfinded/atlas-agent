@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.8rc3] - 2026-05-29
+## [0.5.8rc4] - 2026-06-01
 
-> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8rc3.md) for full details.
+> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8-rc4.md) for full details.
 
 ### Fixed
-- Superseded the incorrectly tagged `v0.5.8rc2` by preparing `v0.5.8rc3` as the active release candidate.
+- Superseded the already-consumed `v0.5.8rc3` tag by preparing `v0.5.8rc4` as the active release candidate.
 - Updated RC cutover checks and docs so historical RC tags do not block the active RC line.
 
 ### Safety

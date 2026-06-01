@@ -101,10 +101,10 @@ def test_wrong_package_version_fails() -> None:
 def test_wrong_init_version_fails() -> None:
     original = CUTOVER_MOD.EXPECTED_VERSION
     try:
-        CUTOVER_MOD.EXPECTED_VERSION = "0.5.8rc4"
+        CUTOVER_MOD.EXPECTED_VERSION = "0.5.8rc9"
         result = CUTOVER_MOD._gather()
         assert result["passed"] is False
-        assert any("0.5.8rc4" in e for e in result["errors"])
+        assert any("0.5.8rc9" in e for e in result["errors"])
     finally:
         CUTOVER_MOD.EXPECTED_VERSION = original
 

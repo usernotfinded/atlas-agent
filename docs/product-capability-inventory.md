@@ -4,7 +4,7 @@
 
 ## What this document is
 
-This is a **complete capability inventory** for Atlas Agent `0.5.8rc3`. It exists so reviewers and maintainers can see, in one place:
+This is a **complete capability inventory** for Atlas Agent `0.5.8rc4`. It exists so reviewers and maintainers can see, in one place:
 
 - What capabilities exist
 - What is partially implemented

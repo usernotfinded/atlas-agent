@@ -26,7 +26,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-CURRENT_PACKAGE_VERSION = "0.5.8rc3"
+CURRENT_PACKAGE_VERSION = "0.5.8rc4"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 
 ONBOARDING_DOC_PATHS = [

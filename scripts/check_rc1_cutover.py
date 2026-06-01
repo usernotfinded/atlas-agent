@@ -3,7 +3,7 @@
 
 This script ensures:
 - The historical v0.5.7 tag contains the expected stable version metadata.
-- Current main is a post-v0.5.7 development version (e.g. 0.5.8rc3).
+- Current main is a post-v0.5.7 development version (e.g. 0.5.8rc4).
 - Public docs remain safe and do not contain forbidden claims or secrets.
 
 Deterministic and local. Does not:
@@ -29,7 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.5.8rc3"
+CURRENT_DEV_SERIES = "0.5.8rc4"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [

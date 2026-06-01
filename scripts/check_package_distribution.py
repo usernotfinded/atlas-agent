@@ -31,7 +31,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Expected package version (PEP 440). Updated during RC cutover.
-EXPECTED_PACKAGE_VERSION = "0.5.8rc3"
+EXPECTED_PACKAGE_VERSION = "0.5.8rc4"
 EXPECTED_PUBLIC_TAG = "v0.5.7"
 EXPECTED_NAME = "atlas-agent"
 EXPECTED_NORMALIZED_NAME = "atlas_agent"
