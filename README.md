@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.8-rc5)** — see [release notes](docs/releases/v0.5.8-rc5.md) for the current release candidate. Latest stable remains [v0.5.7](docs/releases/v0.5.7.md).
+> **Current Status (v0.5.8)** — see [release notes](docs/releases/v0.5.8.md) for the latest stable public release.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -81,9 +81,8 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`v0.5.8-rc5` is the current release candidate under reviewer validation. `v0.5.7` remains the latest stable public release. Unreleased post-RC changes belong under `[Unreleased]` in `CHANGELOG.md`.
+`v0.5.8` is the latest stable public release, promoted from the final green `v0.5.8rc5` release candidate. Unreleased post-stable changes belong under `[Unreleased]` in `CHANGELOG.md`.
 
-- This is a release candidate, not a stable final release.
 - Live trading is disabled by default.
 - Provider execution remains locked.
 - Trust remains blocked.
@@ -100,9 +99,9 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **[Feedback Request Guide](docs/feedback-request-guide.md)** — how to ask for feedback safely
 - **[Public FAQ](docs/public-faq.md)** — answers to common questions
 - **[Final RC Audit](docs/final-rc-audit.md)** — release-manager audit of the RC series
-- **[Final Release Candidate Checklist](docs/final-release-candidate-checklist.md)** — go/no-go checklist for v0.5.7 final
-- **[Stable Release Decision](docs/stable-release-decision.md)** — decision record for stable v0.5.7
-- **[Stable Release Checklist](docs/stable-release-checklist.md)** — pre-tag checklist for stable v0.5.7
+- **[Final Release Candidate Checklist](docs/final-release-candidate-checklist.md)** — go/no-go checklist for v0.5.8 final
+- **[Stable Release Decision](docs/stable-release-decision.md)** — decision record for stable v0.5.8
+- **[Stable Release Checklist](docs/stable-release-checklist.md)** — pre-tag checklist for stable v0.5.8
 - **[CLI Command Compatibility](docs/cli-command-compatibility.md)** — parser contract and regression guard for public CLI commands
 - **[Reviewer Golden Path](docs/reviewer-golden-path.md)** — safe local onboarding smoke test
 - **[Release Evidence Bundle](docs/release-evidence-bundle.md)** — local JSON/Markdown release snapshot

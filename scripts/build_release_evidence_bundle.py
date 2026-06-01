@@ -30,8 +30,8 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_BIN = os.environ.get("PYTHON_BIN", sys.executable)
-PUBLIC_STABLE_TAG = "v0.5.7"
-PACKAGE_VERSION = "0.5.8rc5"
+PUBLIC_STABLE_TAG = "v0.5.8"
+PACKAGE_VERSION = "0.5.8"
 
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "artifacts" / "release_evidence"
 
@@ -307,7 +307,7 @@ def _build_markdown(evidence: dict[str, Any]) -> str:
             lines.append("```")
             lines.append("")
 
-    lines.append("## Changed Files Since v0.5.7")
+    lines.append("## Changed Files Since v0.5.8")
     lines.append("")
     if evidence["changed_since_v0_5_7"]:
         lines.append("```")
@@ -315,7 +315,7 @@ def _build_markdown(evidence: dict[str, Any]) -> str:
             lines.append(line)
         lines.append("```")
     else:
-        lines.append("No changes since v0.5.7.")
+        lines.append("No changes since v0.5.8.")
     lines.append("")
 
     lines.append("## Protected Boundary Status")

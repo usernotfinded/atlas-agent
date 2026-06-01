@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""v0.5.8rc5 cutover verification checker.
+"""v0.5.8 stable cutover verification checker.
 
 Deterministic local checks that verify the repo is correctly prepared
-for the v0.5.8rc5 release candidate state.
+for the stable v0.5.8 release state.
 
-Historical RC tags (v0.5.8rc1, v0.5.8rc2, v0.5.8rc3, v0.5.8rc4) are allowed to exist and do not
-need to match current HEAD. Only the active RC tag (v0.5.8rc5) is verified
+Historical RC tags (v0.5.8rc1 through v0.5.8rc5) are allowed to exist and do not
+need to match current HEAD. Only the active stable tag (v0.5.8) is verified
 against HEAD.
 
 This script does NOT:
@@ -35,11 +35,10 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-EXPECTED_VERSION = "0.5.8rc5"
-STABLE_SUCCESSOR_VERSION = "0.5.8"
+EXPECTED_VERSION = "0.5.8"
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-ACTIVE_RC_TAG = "v0.5.8rc5"
+ACTIVE_RELEASE_TAG = "v0.5.8"
 
 # Forbidden positive claims about live trading / profit / autonomy.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -79,17 +78,14 @@ def _check_current_version() -> list[str]:
     errors: list[str] = []
     pyproject_path = REPO_ROOT / "pyproject.toml"
     init_path = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
-    accepted_versions = {EXPECTED_VERSION}
-    if EXPECTED_VERSION == "0.5.8rc5":
-        accepted_versions.add(STABLE_SUCCESSOR_VERSION)
 
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
         version = data.get("project", {}).get("version")
-        if version not in accepted_versions:
+        if version != EXPECTED_VERSION:
             errors.append(
-                f"pyproject.toml version {version!r} != expected {EXPECTED_VERSION!r} or {STABLE_SUCCESSOR_VERSION!r}"
+                f"pyproject.toml version {version!r} != expected {EXPECTED_VERSION!r}"
             )
     else:
         errors.append("pyproject.toml not found")
@@ -98,9 +94,9 @@ def _check_current_version() -> list[str]:
         text = init_path.read_text(encoding="utf-8")
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         version = m.group(1) if m else None
-        if version not in accepted_versions:
+        if version != EXPECTED_VERSION:
             errors.append(
-                f"__init__.py version {version!r} != expected {EXPECTED_VERSION!r} or {STABLE_SUCCESSOR_VERSION!r}"
+                f"__init__.py version {version!r} != expected {EXPECTED_VERSION!r}"
             )
     else:
         errors.append("src/atlas_agent/__init__.py not found")
@@ -147,21 +143,21 @@ def _check_historical_tag() -> list[str]:
 
 def _check_release_notes_exist() -> list[str]:
     errors: list[str] = []
-    path = REPO_ROOT / "docs" / "releases" / "v0.5.8-rc5.md"
+    path = REPO_ROOT / "docs" / "releases" / "v0.5.8.md"
     if not path.exists():
         errors.append(f"Missing release notes: {path.relative_to(REPO_ROOT)}")
     return errors
 
 
-def _check_changelog_has_rc5_section() -> list[str]:
+def _check_changelog_has_stable_section() -> list[str]:
     errors: list[str] = []
     path = REPO_ROOT / "CHANGELOG.md"
     if not path.exists():
         errors.append("CHANGELOG.md not found")
         return errors
     text = path.read_text(encoding="utf-8")
-    if "[0.5.8rc5]" not in text:
-        errors.append("CHANGELOG.md missing [0.5.8rc5] section")
+    if "[0.5.8]" not in text:
+        errors.append("CHANGELOG.md missing [0.5.8] section")
     return errors
 
 
@@ -172,12 +168,11 @@ def _check_readme_current_status() -> list[str]:
         errors.append("README.md not found")
         return errors
     text = path.read_text(encoding="utf-8")
-    # Accept either package version (0.5.8rc5) or public label (v0.5.8-rc5)
-    public_label = "v" + EXPECTED_VERSION.replace("rc", "-rc")
+    public_label = "v" + EXPECTED_VERSION
     if EXPECTED_VERSION not in text and public_label not in text:
         errors.append("README.md missing current version reference")
-    if "release candidate" not in text.lower() and "rc" not in text.lower():
-        errors.append("README.md should indicate this is a release candidate")
+    if "latest stable public release" not in text.lower():
+        errors.append("README.md should indicate this is the latest stable public release")
     return errors
 
 
@@ -211,7 +206,7 @@ def _check_public_docs_safe() -> list[str]:
     scan_targets = [
         REPO_ROOT / "README.md",
         REPO_ROOT / "CHANGELOG.md",
-        REPO_ROOT / "docs" / "releases" / "v0.5.8-rc5.md",
+        REPO_ROOT / "docs" / "releases" / "v0.5.8.md",
         REPO_ROOT / "docs" / "public-launch-readiness.md",
         REPO_ROOT / "docs" / "public-launch-messaging.md",
         REPO_ROOT / "docs" / "product-capability-inventory.md",
@@ -277,14 +272,13 @@ def _list_historical_rc_tags() -> list[str]:
         text=True,
     )
     all_tags = [t.strip() for t in result.stdout.splitlines() if t.strip()]
-    # Exclude the active RC tag
-    return sorted([t for t in all_tags if t != ACTIVE_RC_TAG])
+    return sorted(all_tags)
 
 
 def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
-    """Check whether the active RC tag exists and whether it points to current HEAD.
+    """Check whether the active release tag exists and whether it points to current HEAD.
 
-    Historical RC tags are allowed and do not need to match HEAD.
+    Historical release tags are allowed and do not need to match HEAD.
 
     Returns:
         (errors, tag_state, tag_commit, head_commit, tag_matches_head)
@@ -300,7 +294,7 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
     head_commit = head_result.stdout.strip() if head_result.returncode == 0 else None
 
     tag_result = subprocess.run(
-        ["git", "tag", "--list", ACTIVE_RC_TAG],
+        ["git", "tag", "--list", ACTIVE_RELEASE_TAG],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -312,7 +306,7 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
 
     # Tag exists — verify it resolves to HEAD
     tag_rev_result = subprocess.run(
-        ["git", "rev-parse", f"{ACTIVE_RC_TAG}" + "^{}"],
+        ["git", "rev-parse", f"{ACTIVE_RELEASE_TAG}" + "^{}"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -321,33 +315,20 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
 
     if tag_commit is None:
         errors.append(
-            f"{ACTIVE_RC_TAG} tag exists locally but cannot be resolved."
+            f"{ACTIVE_RELEASE_TAG} tag exists locally but cannot be resolved."
         )
         return errors, "unresolvable", None, head_commit, False
 
-    current_version = _current_package_version()
     tag_matches_head = tag_commit == head_commit
     if not tag_matches_head:
-        if current_version == STABLE_SUCCESSOR_VERSION:
-            return errors, "historical_superseded", tag_commit, head_commit, False
         errors.append(
-            f"{ACTIVE_RC_TAG} tag exists locally but points to {tag_commit[:12]}, "
+            f"{ACTIVE_RELEASE_TAG} tag exists locally but points to {tag_commit[:12]}, "
             f"while HEAD is {head_commit[:12] if head_commit else 'unknown'}. "
-            "Force-pushing or moving RC tags is not allowed."
+            "Force-pushing or moving release tags is not allowed."
         )
         return errors, "present_mismatch", tag_commit, head_commit, False
 
     return errors, "present_matches_head", tag_commit, head_commit, True
-
-
-def _current_package_version() -> str | None:
-    pyproject_path = REPO_ROOT / "pyproject.toml"
-    if not pyproject_path.exists():
-        return None
-    with open(pyproject_path, "rb") as f:
-        data = tomllib.load(f)
-    version = data.get("project", {}).get("version")
-    return version if isinstance(version, str) else None
 
 
 def _gather() -> dict:
@@ -356,7 +337,7 @@ def _gather() -> dict:
     all_errors.extend(_check_current_version())
     all_errors.extend(_check_historical_tag())
     all_errors.extend(_check_release_notes_exist())
-    all_errors.extend(_check_changelog_has_rc5_section())
+    all_errors.extend(_check_changelog_has_stable_section())
     all_errors.extend(_check_readme_current_status())
     all_errors.extend(_check_public_docs_safe())
     all_errors.extend(_check_protected_boundaries_clean())
@@ -372,7 +353,7 @@ def _gather() -> dict:
         "errors": all_errors,
         "expected_version": EXPECTED_VERSION,
         "stable_tag": HISTORICAL_STABLE_TAG,
-        "active_rc": ACTIVE_RC_TAG,
+        "active_release": ACTIVE_RELEASE_TAG,
         "historical_rc_tags": historical_rc_tags,
         "tag_state": tag_state,
         "tag_commit": tag_commit,
@@ -383,7 +364,7 @@ def _gather() -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="v0.5.8rc5 cutover verification checker"
+        description="v0.5.8 stable cutover verification checker"
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON envelope")
     args = parser.parse_args()
@@ -394,12 +375,12 @@ def main() -> int:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
         if result["errors"]:
-            print("v0.5.8rc5 cutover check FAILED")
+            print("v0.5.8 stable cutover check FAILED")
             for e in result["errors"]:
                 print(f"  - {e}")
         else:
             print(
-                f"v0.5.8rc5 cutover check PASSED: "
+                f"v0.5.8 stable cutover check PASSED: "
                 f"version={result['expected_version']} stable_tag={result['stable_tag']}"
             )
 

@@ -21,7 +21,7 @@ VERSION_SCRIPT = REPO_ROOT / "scripts" / "check_version_consistency.py"
 
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.5.8rc5"
+CURRENT_DEV_SERIES = "0.5.8"
 
 
 class TestScriptExists:
@@ -137,7 +137,7 @@ class TestReadme:
     def test_readme_references_stable_tag(self) -> None:
         readme = REPO_ROOT / "README.md"
         text = readme.read_text(encoding="utf-8")
-        assert HISTORICAL_STABLE_TAG in text
+        assert "v0.5.8" in text
 
     def test_readme_no_stale_rc_status(self) -> None:
         readme = REPO_ROOT / "README.md"

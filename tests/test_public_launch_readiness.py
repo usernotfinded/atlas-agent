@@ -64,7 +64,7 @@ class TestScriptAndDocsExist:
         assert (ROOT / "docs" / "github-repo-settings.md").exists()
 
     def test_release_note_exists(self) -> None:
-        assert (ROOT / "docs" / "releases" / "v0.5.7.md").exists()
+        assert (ROOT / "docs" / "releases" / "v0.5.8.md").exists()
 
 
 class TestReadmePublicLaunch:
@@ -91,7 +91,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.5.7" in readme_text
+        assert "v0.5.8" in readme_text
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -169,8 +169,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.8rc5"
-        assert data["public_tag"] == "v0.5.7"
+        assert data["package_version"] == "0.5.8"
+        assert data["public_tag"] == "v0.5.8"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -185,13 +185,13 @@ class TestStaleRCReferencesBlocked:
         from tests.test_public_docs_consistency import _run_script_on_text
         text = (
             "# README\n\n```bash\natlas --help\n```\n\n"
-            "## Current Status (v0.5.7-rc9)\n\n"
+            "## Current Status (v0.5.8-rc9)\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
         )
         result = _run_script_on_text(text)
         assert result.returncode != 0, "Expected failure on stale RC current-status reference"
-        assert "v0.5.7-rc9" in result.stdout or "stale" in result.stdout.lower()
+        assert "v0.5.8-rc9" in result.stdout or "stale" in result.stdout.lower()
 
     def test_public_launch_readiness_saying_release_candidate_fails(self) -> None:
         from tests.test_public_docs_consistency import _run_script_on_text
@@ -208,7 +208,7 @@ class TestStaleRCReferencesBlocked:
         from tests.test_public_docs_consistency import _run_script_on_text
         text = (
             "# Changelog\n\n## [0.5.7rc9] - 2026-05-26\n\n"
-            "Ninth release candidate for the v0.5.7 line.\n\n"
+            "Ninth release candidate for the v0.5.8 line.\n\n"
             "Not financial advice.\n"
         )
         result = _run_script_on_text(text)

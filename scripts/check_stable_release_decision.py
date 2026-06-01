@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static/local check for stable v0.5.7 release decision readiness.
+"""Static/local check for stable v0.5.8 release decision readiness.
 
 Deterministic and local. Does not:
 - call network
@@ -26,8 +26,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.8rc5"
-PUBLIC_TAG = "v0.5.7"
+PACKAGE_VERSION = "0.5.8"
+PUBLIC_TAG = "v0.5.8"
 
 REQUIRED_FILES = [
     REPO_ROOT / "README.md",
@@ -208,7 +208,7 @@ def _check_stable_doc_clarity() -> list[str]:
     if decision.exists():
         text = decision.read_text(encoding="utf-8").lower()
         required_phrases = [
-            ("stable v0.5.7", "release/documentation/process stability"),
+            ("stable v0.5.8", "release/documentation/process stability"),
             ("live trading", "disabled by default"),
             ("provider execution remains locked",),
             ("trust remains blocked",),

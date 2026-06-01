@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.8] - 2026-06-01
+
+### Added
+- Stable v0.5.8 release notes and final public-release metadata.
+
+### Fixed
+- Promoted the final green `v0.5.8rc5` release candidate to stable `v0.5.8`.
+
+### Safety
+- No live trading, provider execution, broker execution, credential loading, package publishing, or GitHub release creation was performed.
+- No protected runtime boundaries were changed.
+- Stable status does not imply profitability, live-trading readiness, or financial advice.
+
 ## [0.5.8rc5] - 2026-06-01
 
 > **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8-rc5.md) for full details.

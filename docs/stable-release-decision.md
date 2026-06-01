@@ -1,16 +1,16 @@
-# Stable Release Decision — Atlas Agent v0.5.7
+# Stable Release Decision — Atlas Agent v0.5.8
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
 ## Decision Summary
 
-The Atlas Agent repository is ready to prepare a **stable v0.5.7** release.
+The Atlas Agent repository is ready to prepare a **stable v0.5.8** release.
 
-This decision is based on the RC series (rc1–rc9) verification and the final RC audit. All release gates pass. No blockers remain. The repository has stable documentation, CI, release process, and public-facing materials.
+This decision is based on the RC series (rc1-rc5) verification and the final RC audit. All release gates pass. No blockers remain. The repository has stable documentation, CI, release process, and public-facing materials.
 
-## What "Stable" Means for v0.5.7
+## What "Stable" Means for v0.5.8
 
-A stable v0.5.7 release means:
+A stable v0.5.8 release means:
 
 - **Documentation stability** — public docs, README, changelogs, and release notes are consistent and complete.
 - **Release process stability** — version consistency, CI gates, check scripts, and checklists are aligned and passing.
@@ -18,11 +18,11 @@ A stable v0.5.7 release means:
 - **Public repo readiness** — SECURITY.md, CONTRIBUTING.md, issue templates, PR templates, and reviewer materials are present.
 - **Conservative safety posture** — all safety claims remain disabled by default; no live trading enablement; no provider execution unlock.
 
-Stable v0.5.7 refers to **release/documentation/process stability**, not trading performance or market safety.
+Stable v0.5.8 refers to **release/documentation/process stability**, not trading performance or market safety.
 
 ## What "Stable" Does Not Mean
 
-Stable v0.5.7 **does not** mean:
+Stable v0.5.8 **does not** mean:
 
 - Live trading readiness.
 - Production trading readiness.
@@ -36,7 +36,7 @@ Atlas Agent remains a **sandbox/paper/preflight-first** research workbench. Live
 
 ## Evidence from RC Series
 
-The following were verified across rc1–rc9:
+The following were verified across rc1-rc5:
 
 - Version consistency maintained across all release candidates.
 - README clarity improved with "What this is" and "What this is not" sections.
@@ -155,9 +155,9 @@ All public docs exist, are cross-linked, and contain safe wording:
 
 - [x] All release gates pass.
 - [x] No blockers remain.
-- [x] Version cutover to `0.5.7` / `v0.5.7` complete.
-- [x] CHANGELOG has stable v0.5.7 entry.
-- [x] Release note `docs/releases/v0.5.7.md` exists.
+- [x] Version cutover to `0.5.8` / `v0.5.8` complete.
+- [x] CHANGELOG has stable v0.5.8 entry.
+- [x] Release note `docs/releases/v0.5.8.md` exists.
 - [x] Stable release decision doc exists.
 - [x] Stable release checklist exists.
 - [x] Public docs contain no forbidden claims.
@@ -169,7 +169,7 @@ All public docs exist, are cross-linked, and contain safe wording:
 
 ## Recommendation
 
-**Go.** Tag v0.5.7 as a stable public repository release.
+**Go.** Tag v0.5.8 as a stable public repository release.
 
 This stable release documents the state of the codebase, the release process, and the public-facing materials. It does not claim live trading readiness, profitability, trading correctness, or real-money safety.
 
@@ -177,4 +177,4 @@ Atlas Agent remains a sandbox/paper/preflight-first research workbench. Users sh
 
 ---
 
-**This document does not claim that v0.5.7 has already been published externally.** It is a decision record to inform the tagging action.
+**This document does not claim that v0.5.8 has already been published externally.** It is a decision record to inform the tagging action.

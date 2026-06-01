@@ -148,8 +148,8 @@ class TestAuditDocSafety:
         text = AUDIT_DOC.read_text(encoding="utf-8").lower()
         # The doc should use conditional language about preparing a stable release,
         # not claim it has already happened.
-        assert "stable v0.5.7 has been released" not in text
-        assert "v0.5.7 is now stable" not in text
+        assert "stable v0.5.8 has been released" not in text
+        assert "v0.5.8 is now stable" not in text
 
     def test_mentions_live_trading_disabled(self) -> None:
         text = AUDIT_DOC.read_text(encoding="utf-8").lower()
@@ -169,7 +169,7 @@ class TestAuditDocSafety:
 
     def test_suggests_rc10_or_final_framework(self) -> None:
         text = AUDIT_DOC.read_text(encoding="utf-8").lower()
-        assert "rc10" in text or "v0.5.7 final" in text
+        assert "rc10" in text or "v0.5.8 final" in text
 
 
 class TestChecklistDoc:
@@ -216,8 +216,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.8rc5"
-        assert data["public_tag"] == "v0.5.7"
+        assert data["package_version"] == "0.5.8"
+        assert data["public_tag"] == "v0.5.8"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -258,7 +258,7 @@ class TestVersionConsistency:
         pyproject = ROOT / "pyproject.toml"
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
-        assert data.get("project", {}).get("version") == "0.5.8rc5"
+        assert data.get("project", {}).get("version") == "0.5.8"
 
     def test_init_version_is_current_dev(self) -> None:
         init = ROOT / "src" / "atlas_agent" / "__init__.py"
@@ -266,7 +266,7 @@ class TestVersionConsistency:
         import re
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         assert m is not None
-        assert m.group(1) == "0.5.8rc5"
+        assert m.group(1) == "0.5.8"
 
     def test_release_note_exists(self) -> None:
-        assert (ROOT / "docs" / "releases" / "v0.5.7-rc9.md").exists()
+        assert (ROOT / "docs" / "releases" / "v0.5.8.md").exists()

@@ -1,20 +1,20 @@
-# Stable Release Checklist — v0.5.7
+# Stable Release Checklist — v0.5.8
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
-Use this checklist to verify the repo is ready before committing/tagging stable **v0.5.7**.
+Use this checklist to verify the repo is ready before committing/tagging stable **v0.5.8**.
 
-Stable v0.5.7 means documentation/release/process stability, not trading profitability or real-money safety.
+Stable v0.5.8 means documentation/release/process stability, not trading profitability or real-money safety.
 
 ---
 
 ## Version Cutover
 
-- [ ] `pyproject.toml` version is `0.5.7`
-- [ ] `src/atlas_agent/__init__.py` `__version__` is `0.5.7`
-- [ ] README current status references `v0.5.7`
-- [ ] CHANGELOG has `[0.5.7]` entry
-- [ ] Release note `docs/releases/v0.5.7.md` exists
+- [ ] `pyproject.toml` version is `0.5.8`
+- [ ] `src/atlas_agent/__init__.py` `__version__` is `0.5.8`
+- [ ] README current status references `v0.5.8`
+- [ ] CHANGELOG has `[0.5.8]` entry
+- [ ] Release note `docs/releases/v0.5.8.md` exists
 
 **Command:**
 ```bash
@@ -39,16 +39,16 @@ python3.11 scripts/verify_readme_quickstart.py
 
 ## Changelog
 
-- [ ] `[0.5.7]` entry present
+- [ ] `[0.5.8]` entry present
 - [ ] Mentions stable release decision docs/checks
 - [ ] Mentions no runtime behavior changes
-- [ ] Historical rc1–rc9 entries preserved
+- [ ] Historical rc1-rc5 entries preserved
 
 ---
 
 ## Release Note
 
-- [ ] `docs/releases/v0.5.7.md` exists
+- [ ] `docs/releases/v0.5.8.md` exists
 - [ ] Contains safe wording
 - [ ] No forbidden claims
 
@@ -235,6 +235,6 @@ find . -maxdepth 2 \( -name "dist" -o -name "build" -o -name "*.egg-info" \) -pr
 - [ ] No blockers remain
 - [ ] Release manager approves
 
-If all items pass, the repo is ready to tag `v0.5.7` as a stable public repository release.
+If all items pass, the repo is ready to tag `v0.5.8` as a stable public repository release.
 
-**Remember:** Stable v0.5.7 means documentation/release/process stability. It does not imply trading profitability, real-money safety, or production trading readiness.
+**Remember:** Stable v0.5.8 means documentation/release/process stability. It does not imply trading profitability, real-money safety, or production trading readiness.

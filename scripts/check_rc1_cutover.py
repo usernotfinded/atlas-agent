@@ -3,7 +3,7 @@
 
 This script ensures:
 - The historical v0.5.7 tag contains the expected stable version metadata.
-- Current main is a post-v0.5.7 development version (e.g. 0.5.8rc5).
+- Current main is a post-v0.5.7 version (including stable 0.5.8).
 - Public docs remain safe and do not contain forbidden claims or secrets.
 
 Deterministic and local. Does not:
@@ -29,7 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.5.8rc5"
+CURRENT_DEV_SERIES = "0.5.8"
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -104,7 +104,8 @@ def _check_version_consistency() -> list[str]:
             if not (
                 current_toml_version
                 and (
-                    current_toml_version.startswith("0.5.8.dev")
+                    current_toml_version == "0.5.8"
+                    or current_toml_version.startswith("0.5.8.dev")
                     or current_toml_version.startswith("0.5.8rc")
                     or current_toml_version.startswith("0.5.9.dev")
                     or current_toml_version.startswith("0.6.")
@@ -124,7 +125,8 @@ def _check_version_consistency() -> list[str]:
             if not (
                 current_init_version
                 and (
-                    current_init_version.startswith("0.5.8.dev")
+                    current_init_version == "0.5.8"
+                    or current_init_version.startswith("0.5.8.dev")
                     or current_init_version.startswith("0.5.8rc")
                     or current_init_version.startswith("0.5.9.dev")
                     or current_init_version.startswith("0.6.")
@@ -170,11 +172,11 @@ def _check_version_consistency() -> list[str]:
                 f"Tag {HISTORICAL_STABLE_TAG} __init__.py version {tag_init_version!r} != {HISTORICAL_STABLE_VERSION!r}"
             )
 
-    # 3. README must reference stable tag and not contain stale dev wording
+    # 3. README must reference the current stable tag and not contain stale dev wording
     if readme_path.exists():
         readme_text = readme_path.read_text(encoding="utf-8")
-        if HISTORICAL_STABLE_TAG not in readme_text:
-            errors.append("README.md missing current status reference to stable tag")
+        if "v0.5.8" not in readme_text:
+            errors.append("README.md missing current status reference to v0.5.8")
         stale = [
             r"Current Status \(v0\.5\.7\.dev5[0-9]\)",
             r"Current Status \(0\.5\.7\.dev5[0-9]\)",

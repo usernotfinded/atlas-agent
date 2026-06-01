@@ -86,7 +86,7 @@ class TestReadmeLinks:
         )
 
     def test_readme_current_status_is_v0507(self, readme_text: str) -> None:
-        assert "v0.5.7" in readme_text
+        assert "v0.5.8" in readme_text
 
 
 class TestDecisionDocSafety:
@@ -144,11 +144,11 @@ class TestDecisionDocSafety:
 
     def test_does_not_claim_stable_release_published_externally(self) -> None:
         text = DECISION_DOC.read_text(encoding="utf-8").lower()
-        # Allow negative contexts like "does not claim that v0.5.7 has already been published"
+        # Allow negative contexts like "does not claim that v0.5.8 has already been published"
         positive_claims = [
-            "v0.5.7 has been released externally",
-            "v0.5.7 is now live",
-            "v0.5.7 is already published",
+            "v0.5.8 has been released externally",
+            "v0.5.8 is now live",
+            "v0.5.8 is already published",
         ]
         for claim in positive_claims:
             assert claim not in text, f"Doc contains positive publication claim: {claim}"
@@ -214,8 +214,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.8rc5"
-        assert data["public_tag"] == "v0.5.7"
+        assert data["package_version"] == "0.5.8"
+        assert data["public_tag"] == "v0.5.8"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -256,7 +256,7 @@ class TestVersionConsistency:
         pyproject = ROOT / "pyproject.toml"
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
-        assert data.get("project", {}).get("version") == "0.5.8rc5"
+        assert data.get("project", {}).get("version") == "0.5.8"
 
     def test_init_version_is_dev(self) -> None:
         init = ROOT / "src" / "atlas_agent" / "__init__.py"
@@ -264,10 +264,10 @@ class TestVersionConsistency:
         import re
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         assert m is not None
-        assert m.group(1) == "0.5.8rc5"
+        assert m.group(1) == "0.5.8"
 
     def test_release_note_exists(self) -> None:
-        assert (ROOT / "docs" / "releases" / "v0.5.7.md").exists()
+        assert (ROOT / "docs" / "releases" / "v0.5.8.md").exists()
 
     def test_changelog_has_stable_entry(self) -> None:
         changelog = ROOT / "CHANGELOG.md"

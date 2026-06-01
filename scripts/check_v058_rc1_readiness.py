@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""v0.5.8 RC1 readiness dry-run gate.
+"""v0.5.8 release readiness dry-run gate.
 
 Deterministic local checks that answer:
-"Is main ready to be considered for a future v0.5.8rc5 cutover?"
+"Is main ready to be considered for the v0.5.8 stable cutover?"
 
 This script does NOT:
 - create tags
@@ -31,7 +31,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-CURRENT_DEV_VERSION = "0.5.8rc5"
+CURRENT_DEV_VERSION = "0.5.8"
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 

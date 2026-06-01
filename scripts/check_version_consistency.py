@@ -2,7 +2,7 @@
 """Validate version consistency across package, code, docs, and release notes.
 
 Accepts PEP 440 rc versions (e.g. 0.5.7rc1) and public tag versions
-(e.g. v0.5.7-rc1). Rejects inconsistent mixes and stale current-version
+(e.g. v0.5.8-rc1). Rejects inconsistent mixes and stale current-version
 references.
 """
 
@@ -12,8 +12,8 @@ import tomllib
 from pathlib import Path
 
 
-PACKAGE_VERSION = "0.5.8rc5"
-PUBLIC_TAG = "v0.5.7"
+PACKAGE_VERSION = "0.5.8"
+PUBLIC_TAG = "v0.5.8"
 
 
 def main() -> int:

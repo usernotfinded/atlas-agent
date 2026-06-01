@@ -111,6 +111,8 @@ STALE_VERSION_PATTERNS = [
     r"Current Status \(0\.5\.7\.dev4[0-9]\)",
     r"Current Status \(v0\.5\.7-rc\d+\)",
     r"Current Status \(0\.5\.7rc\d+\)",
+    r"Current Status \(v0\.5\.8-rc\d+\)",
+    r"Current Status \(0\.5\.8rc\d+\)",
     r"v0\.5\.7\.dev5[0-9](?!\d)",
     r"v0\.5\.7\.dev4[0-9](?!\d)",
     r"0\.5\.7\.dev5[0-9](?!\d)",
@@ -118,7 +120,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.5.8.dev0"
+CURRENT_VERSION = "v0.5.8"
 
 
 def _read(path: Path) -> str:
