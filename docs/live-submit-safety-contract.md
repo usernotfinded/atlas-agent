@@ -86,6 +86,47 @@ Market orders require a fresh validated quote before risk revalidation. This gat
 - Quote freshness defaults to a conservative small window (e.g., 15 seconds). Stale quotes block submission.
 - This gate does **not** make market orders safe. It provides a bounded price for risk evaluation only. Market orders still carry execution risk, including slippage and price movement between quote and fill.
 
+### C. Machine-Checkable End-to-End Gate List
+
+The local `scripts/check_submit_execution_safety.py` check treats the following identifiers as the live-submit gate contract. These names are intentionally stable so tests and static checks can verify that the submit path and this document remain aligned.
+
+| Gate ID | Required condition before broker placement |
+|---------|--------------------------------------------|
+| `explicit_live_submit_opt_in` | Resolver-level live submit opt-in is valid and current. |
+| `live_trading_enabled` | Live trading is explicitly enabled; live submit remains disabled by default. |
+| `trading_mode_live` | Runtime trading mode is explicitly `live`. |
+| `real_broker_selected` | A supported live broker is explicitly configured. |
+| `provider_execution_not_used` | Provider analysis/output is never treated as broker execution authority. |
+| `pending_order_exists` | A pending order file exists for the requested order id. |
+| `pending_order_id_path_safe` | The pending order id passes path-safety validation. |
+| `order_hash_valid` | The pending order body matches its stored `order_hash`. |
+| `approval_hash_valid` | The approval decision fields match `approval_hash`. |
+| `approval_not_expired` | The approval expiry timestamp is present, parseable, and not expired. |
+| `approval_actor_valid` | The approval actor is present and is not `unknown`. |
+| `approval_manager_integrity` | Pending order integrity is validated through the ApprovalManager schema/integrity helpers before submit. |
+| `live_sync_available` | The live broker resolver reports sync capability. |
+| `fresh_live_sync_valid` | A fresh live sync completes and passes sync validation. |
+| `quote_required_for_market` | Live market orders require a quote provider result. |
+| `quote_symbol_matches` | Quote symbol matches the pending order symbol. |
+| `quote_bid_ask_positive_finite` | Quote bid and ask are positive finite numbers. |
+| `quote_not_crossed` | Quote ask is not below quote bid. |
+| `quote_not_stale` | Quote timestamp is within the configured freshness window. |
+| `conservative_price_by_side` | Buy risk uses ask; sell risk uses bid. |
+| `risk_revalidated_before_submit` | RiskManager revalidates the order immediately before submit preparation. |
+| `notional_position_loss_limits` | Single-order, exposure, and live-submit hard limits are enforced before broker placement. |
+| `kill_switch_initial_normal` | The kill switch is readable and normal before sync/risk work proceeds. |
+| `can_submit_true` | Resolver `can_submit` is true before submit preparation can mutate state. |
+| `submit_state_mutation_succeeds` | `submit_requested` evidence is written before any broker placement attempt. |
+| `execution_broker_resolved` | A live execution broker resolves only after `can_submit=true`. |
+| `execution_broker_place_order_callable` | The resolved execution broker exposes a callable `place_order`. |
+| `kill_switch_final_normal` | The kill switch is checked again immediately before broker contact. |
+| `audit_attempt_written_without_secrets` | A bounded `live_submit_attempted` audit event is emitted without credentials, headers, raw broker bodies, or local paths. |
+| `broker_place_order_called_once` | In fake-broker tests, `place_order` is called exactly once only when every prior gate passes. |
+
+Approval integrity is local tamper evidence and fail-closed validation for Atlas pending-order files. It is not a remote security guarantee and does not prove that an external system or account is protected from compromise.
+
+Fake-broker and dry-run tests prove local gate ordering and broker-call suppression in controlled test conditions. They do not prove profitable trading, favorable fills, or suitability for any user or account.
+
 ---
 
 ## 5. Commands and Capabilities
@@ -204,4 +245,4 @@ Atlas Agent does not recommend or endorse a specific broker. Broker selection an
 
 ---
 
-*Last updated: 2026-05-14*
+*Last updated: 2026-06-02*

@@ -4298,3 +4298,189 @@ def test_quote_failure_report_contains_no_forbidden_fragments(tmp_path: Path) ->
     assert "TOKEN" not in report_str
     assert "broker.example.com" not in report_str
     assert "raw JSON" not in report_str
+
+
+# ---------------------------------------------------------------------------
+# Security Batch 4: end-to-end gate audit
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "case_name,expected_reason",
+    [
+        ("no_pending_order", "pending_order_not_found"),
+        ("not_approved", "not_approved"),
+        ("invalid_approval_hash", "invalid_pending_order"),
+        ("unknown_approval_actor", "invalid_pending_order"),
+        ("expired", "approval_expired"),
+        ("tampered_order_body", "invalid_pending_order"),
+        ("missing_market_quote", "market_price_unavailable"),
+        ("risk_denied", "risk_revalidation_failed"),
+        ("live_submit_limit", "live_submit_symbol_not_allowed"),
+        ("initial_kill_switch", "kill_switch_active"),
+        ("final_kill_switch", "kill_switch_active"),
+    ],
+)
+def test_submit_execution_batch4_failed_gate_matrix_never_places_order(
+    tmp_path: Path,
+    case_name: str,
+    expected_reason: str,
+) -> None:
+    from atlas_agent.execution.order import OrderResult
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id=f"batch4-{case_name}", symbol="TEST")
+    config: Any = FakeConfigCanSubmit()
+    quote_provider = None
+    risk_allowed = True
+    kill_statuses = [MagicMock(enabled=False, mode="normal")]
+
+    if case_name == "no_pending_order":
+        order_id = order.id
+    else:
+        if case_name == "not_approved":
+            path = manager.create_pending_order(order)
+            order_id = order.id
+        else:
+            if case_name == "missing_market_quote":
+                order = _make_order(id=f"batch4-{case_name}", order_type="market", limit_price=None)
+            if case_name == "live_submit_limit":
+                order = _make_order(id=f"batch4-{case_name}", symbol="UNAUTHORIZED")
+            payload = _make_v2_payload(order)
+            path = manager.path_for(order.id)
+            _write_payload(path, payload)
+            order_id = order.id
+
+            if case_name == "invalid_approval_hash":
+                payload["approval_hash"] = "0" * 64
+                path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+            elif case_name == "unknown_approval_actor":
+                payload["approval_actor"] = "unknown"
+                _write_payload(path, payload)
+            elif case_name == "expired":
+                payload["expires_at"] = (datetime.now(UTC) - timedelta(minutes=1)).isoformat()
+                _write_payload(path, payload)
+            elif case_name == "tampered_order_body":
+                payload["order"]["quantity"] = 99.0
+                path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+            elif case_name == "risk_denied":
+                risk_allowed = False
+            elif case_name == "initial_kill_switch":
+                kill_statuses = [MagicMock(enabled=True, mode="soft_pause")]
+            elif case_name == "final_kill_switch":
+                kill_statuses = [
+                    MagicMock(enabled=False, mode="normal"),
+                    MagicMock(enabled=True, mode="soft_pause"),
+                ]
+
+    mock_broker = _mock_execution_broker(
+        result=OrderResult(accepted=True, filled=False, order_id="broker-1", status="new", message="ok")
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        _setup_resolver_with_broker(mock_resolver_cls, mock_broker)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=risk_allowed)
+        mock_ks = MagicMock()
+        mock_ks.status.side_effect = kill_statuses
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order_id, config, manager, quote_provider=quote_provider)
+
+    assert report.ok is False
+    assert report.blocked_reason == expected_reason
+    mock_broker.place_order.assert_not_called()
+
+
+def test_submit_execution_batch4_all_gates_pass_fake_broker_called_once(tmp_path: Path) -> None:
+    from atlas_agent.execution.order import OrderResult
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="batch4-success", symbol="TEST", side="buy", quantity=1.0, limit_price=100.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    mock_broker = _mock_execution_broker(
+        result=OrderResult(accepted=True, filled=False, order_id="broker-batch4", status="new", message="ok")
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        _setup_resolver_with_broker(mock_resolver_cls, mock_broker)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(order.id, FakeConfigCanSubmit(), manager)
+
+    assert report.ok is True
+    assert report.status == "acknowledged"
+    assert report.gates["approved"] == "pass"
+    assert report.gates["not_expired"] == "pass"
+    assert report.gates["live_trading_enabled"] == "pass"
+    assert report.gates["kill_switch"] == "pass"
+    assert report.gates["fresh_sync"] == "pass"
+    assert report.gates["risk_revalidation"] == "pass"
+    assert report.gates["live_submit_limits"] == "pass"
+    assert report.gates["can_submit"] == "pass"
+    assert report.gates["broker_submit"] == "acknowledged"
+    mock_broker.place_order.assert_called_once()
+
+
+def test_submit_execution_batch4_attempt_audit_payload_has_no_secrets(tmp_path: Path) -> None:
+    from atlas_agent.execution.order import OrderResult
+
+    manager = ApprovalManager(tmp_path / "pending")
+    order = _make_order(id="batch4-audit", symbol="TEST", side="buy", quantity=1.0, limit_price=100.0)
+    payload = _make_v2_payload(order)
+    path = manager.path_for(order.id)
+    _write_payload(path, payload)
+
+    mock_audit = _mock_audit_writer()
+    mock_broker = _mock_execution_broker(
+        result=OrderResult(accepted=True, filled=False, order_id="broker-batch4", status="new", message="ok")
+    )
+
+    with patch("atlas_agent.execution.submit_execution.BrokerResolver") as mock_resolver_cls, \
+         patch("atlas_agent.execution.submit_execution.BrokerSyncService") as mock_sync_cls, \
+         patch("atlas_agent.execution.submit_execution.validate_live_sync") as mock_validate, \
+         patch("atlas_agent.execution.submit_execution.RiskManager") as mock_risk_cls, \
+         patch("atlas_agent.execution.submit_execution.KillSwitchController") as mock_ks_cls:
+        _setup_resolver_with_broker(mock_resolver_cls, mock_broker)
+        mock_sync_cls.return_value = _mock_sync_service()
+        mock_validate.return_value = ([], None)
+        mock_risk_cls.return_value = _mock_risk_manager(allowed=True)
+        mock_ks = MagicMock()
+        mock_ks.status.return_value = MagicMock(enabled=False, mode="normal")
+        mock_ks_cls.return_value = mock_ks
+
+        report = run_submit_execution(
+            order.id,
+            FakeConfigCanSubmit(),
+            manager,
+            audit_writer=mock_audit,
+        )
+
+    assert report.ok is True
+    attempted_events = [e for e in mock_audit.events if e["event_type"] == "live_submit_attempted"]
+    assert len(attempted_events) == 1
+    payload_text = str(attempted_events[0]["payload"])
+    assert "Authorization" not in payload_text
+    assert "Bearer" not in payload_text
+    assert "APCA" not in payload_text
+    assert "SECRET" not in payload_text
+    assert "TOKEN" not in payload_text
+    assert "headers" not in payload_text.lower()
+    assert "raw" not in payload_text.lower()
+    assert "/Users/" not in payload_text

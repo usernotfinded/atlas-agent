@@ -9,15 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - Hardened pending-order approval integrity so approval decisions are tamper-evident and fail closed when approval metadata is modified or legacy approved records lack accountable approval state.
+- Added end-to-end submit-execution safety coverage to verify live broker placement cannot occur unless approval integrity, quote validation, risk revalidation, kill switch, and explicit live-mode gates pass.
 
 ### Fixed
 - Reconciled risk limit default documentation/configuration to avoid drift between `RiskLimits` and `.env.example`.
 
 ### Tests
 - Added regression tests for approval-state tampering, legacy approved pending-order upgrades, and risk limit default drift.
+- Added regression tests for submit-execution gate ordering, failed-gate broker-call suppression, and output redaction.
 
 ### Safety
-- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, GitHub Release creation, or PyPI publish was not performed.
+- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, GitHub Release creation, or PyPI publish was performed.
 
 ### Changed
 - Opened the `0.5.9.dev0` development cycle after the public `v0.5.8.1` hotfix release.
