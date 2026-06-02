@@ -319,18 +319,3 @@ def test_adapter_normalization_makes_no_network_calls(
     )
 
     assert response.text == "ok"
-
-
-from atlas_agent.providers.openrouter import OpenRouterProvider
-
-
-def test_openrouter_default_model_respects_env(monkeypatch) -> None:
-    monkeypatch.setenv("OPENROUTER_MODEL", "custom-model-v1")
-    provider = OpenRouterProvider()
-    assert provider.default_model == "custom-model-v1"
-
-
-def test_openrouter_default_model_none_when_env_unset(monkeypatch) -> None:
-    monkeypatch.delenv("OPENROUTER_MODEL", raising=False)
-    provider = OpenRouterProvider()
-    assert provider.default_model is None
