@@ -3381,7 +3381,6 @@ def main(argv: list[str] | None = None) -> int:
                     code="preflight_validation_error",
                     message=str(exc)
                 )
-            import sys
             print(f"Validation error: {exc}", file=sys.stderr)
             return 2
 
