@@ -20,6 +20,8 @@ import importlib.util
 import json
 import subprocess
 import sys
+from contextlib import ExitStack, contextmanager
+from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 from unittest.mock import patch
@@ -50,6 +52,26 @@ def _current_package_version() -> str:
     with open(REPO_ROOT / "pyproject.toml", "rb") as f:
         data = tomllib.load(f)
     return data.get("project", {}).get("version", "")
+
+
+@contextmanager
+def _historical_rc5_non_tag_checks_pass() -> Iterator[None]:
+    """Isolate RC5 tag-state behavior from the current active branch version."""
+    check_names = (
+        "_check_current_version",
+        "_check_historical_tag",
+        "_check_release_notes_exist",
+        "_check_changelog_has_rc5_section",
+        "_check_readme_current_status",
+        "_check_public_docs_safe",
+        "_check_protected_boundaries_clean",
+        "_check_no_generated_artifacts_staged",
+    )
+    with ExitStack() as stack:
+        for name in check_names:
+            stack.enter_context(patch.object(CUTOVER_MOD, name, lambda: []))
+        stack.enter_context(patch.object(CUTOVER_MOD, "_list_historical_rc_tags", lambda: []))
+        yield
 
 
 # ---------------------------------------------------------------------------
@@ -192,10 +214,9 @@ def test_pre_tag_absent_state_passes() -> None:
     def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
         return [], "absent_pre_tag", None, "abc123", False
 
-    with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
-        with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-            with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
-                result = CUTOVER_MOD._gather()
+    with _historical_rc5_non_tag_checks_pass():
+        with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
+            result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "absent_pre_tag"
     assert result["tag_commit"] is None
@@ -206,10 +227,9 @@ def test_post_tag_matches_head_passes() -> None:
     def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
         return [], "present_matches_head", "abc123", "abc123", True
 
-    with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
-        with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-            with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
-                result = CUTOVER_MOD._gather()
+    with _historical_rc5_non_tag_checks_pass():
+        with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
+            result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "present_matches_head"
     assert result["tag_commit"] == "abc123"

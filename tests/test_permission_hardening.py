@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import atlas_agent
 import pytest
 
 
@@ -175,7 +176,7 @@ def test_subprocess_atlas_uses_isolated_env(tmp_path: Path) -> None:
         env=env,
     )
     assert result.returncode == 0, f"Subprocess failed: {result.stderr}"
-    assert "0.5.8" in result.stdout
+    assert result.stdout.strip() == atlas_agent.__version__
 
 
 # ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@ No execution code, no network calls, no credentials, no provider SDKs, no broker
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -18,6 +19,7 @@ from atlas_agent.research.release_candidate_cutover import (
     RESEARCH_ARTIFACT_SCHEMA_VERSION,
     _compute_expected_cutover_core,
     _find_mismatched_derived_fields,
+    _package_version_to_tag,
     build_release_candidate_cutover_dict,
     create_release_candidate_cutover_dry_run,
     doctor_release_candidate_cutover,
@@ -34,6 +36,51 @@ from atlas_agent.research.session import ResearchSessionError
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_CURRENT_DEV_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.dev\d+$")
+_CURRENT_RC_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)rc[1-9]\d*$")
+_CURRENT_STABLE_RE = re.compile(r"^\d+\.\d+\.\d+(?:\.\d+)?$")
+
+
+def _current_version_state(
+    version: str = __version__,
+) -> tuple[bool, bool, bool, tuple[str, str, str] | None]:
+    dev_match = _CURRENT_DEV_RE.fullmatch(version)
+    if dev_match is not None:
+        return (
+            True,
+            False,
+            False,
+            (dev_match.group("major"), dev_match.group("minor"), dev_match.group("patch")),
+        )
+
+    rc_match = _CURRENT_RC_RE.fullmatch(version)
+    if rc_match is not None:
+        return (
+            False,
+            True,
+            False,
+            (rc_match.group("major"), rc_match.group("minor"), rc_match.group("patch")),
+        )
+
+    return False, False, bool(_CURRENT_STABLE_RE.fullmatch(version)), None
+
+
+def _expected_dev_to_rc_transition(
+    target_version: str,
+    current_version: str = __version__,
+) -> bool:
+    current_is_dev, current_is_rc, _current_is_stable, current_tuple = _current_version_state(current_version)
+    target = validate_target_version(target_version)
+    return (
+        target.target_version_valid
+        and current_tuple is not None
+        and current_tuple == target.target_tuple
+        and (current_is_dev or current_is_rc)
+    )
+
+
+def _current_release_note_exists(current_version: str = __version__) -> bool:
+    return (REPO_ROOT / "docs" / "releases" / f"{_package_version_to_tag(current_version)}.md").exists()
 
 
 @pytest.fixture
@@ -531,19 +578,22 @@ class TestRealRepoIntegration:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real")
         assert report["target_version_valid"] is True
         assert report["target_is_rc"] is True
-        # Current version on main is dev (0.5.9.dev0), so current_version_is_dev is True
-        assert report["current_version_is_dev"] is True
-        # dev_to_rc_transition_valid is False because 0.5.9.dev0 -> v0.5.7-rc1 is not a valid transition
-        assert report["dev_to_rc_transition_valid"] is False
+        current_is_dev, current_is_rc, current_is_stable, _current_tuple = _current_version_state()
+        assert sum((current_is_dev, current_is_rc, current_is_stable)) == 1
+        assert report["current_version_is_dev"] is current_is_dev
+        assert report["dev_to_rc_transition_valid"] is _expected_dev_to_rc_transition("v0.5.7-rc1")
 
     def test_real_repo_rc_state(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-dev")
-        # Current version on main is dev (0.5.9.dev0)
-        assert report["current_version_is_dev"] is True
-        # dev_to_rc_transition_valid should be False for mismatched versions
-        assert report["dev_to_rc_transition_valid"] is False
-        # Release note for current dev version does not need to exist
-        assert report["release_note_present"] is False
+        current_is_dev, current_is_rc, current_is_stable, _current_tuple = _current_version_state()
+        assert sum((current_is_dev, current_is_rc, current_is_stable)) == 1
+        assert report["current_version_is_dev"] is current_is_dev
+        assert report["dev_to_rc_transition_valid"] is _expected_dev_to_rc_transition("v0.5.7-rc1")
+        assert report["release_note_present"] is _current_release_note_exists()
+        if current_is_dev:
+            assert "missing_release_note" in report["blockers"]
+        else:
+            assert report["release_note_present"] is True
         # Safety invariants should hold
         assert report["live_trading_disabled_by_default"] is True
         assert report["provider_execution_locked"] is True
@@ -572,8 +622,12 @@ class TestRealRepoIntegration:
 
     def test_real_repo_release_note_state(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-note")
-        # Current version on main is dev (0.5.9.dev0); dev versions do not require release notes
-        assert report["release_note_present"] is False
+        current_is_dev, _current_is_rc, _current_is_stable, _current_tuple = _current_version_state()
+        assert report["release_note_present"] is _current_release_note_exists()
+        if current_is_dev:
+            assert "missing_release_note" in report["blockers"]
+        else:
+            assert report["release_note_present"] is True
 
     def test_historical_stable_release_note_present(self) -> None:
         # Historical stable v0.5.7 release note should still exist
