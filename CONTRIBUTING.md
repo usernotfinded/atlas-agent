@@ -9,8 +9,8 @@ Atlas Agent is a broker-neutral supervised trading workspace with market researc
 ## Development Setup
 
 ```bash
-# Install in editable mode with dev dependencies
-python3.11 -m pip install -e '.[dev]'
+# Install in editable mode
+python3.11 -m pip install -e .
 
 # Run fast safety checks
 python3.11 scripts/check_version_consistency.py

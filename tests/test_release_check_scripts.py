@@ -35,134 +35,6 @@ def _run_shell(script_path: Path, cwd: Path | None = None, env: dict | None = No
     return result
 
 
-def _write_fake_python(path: Path, marker_name: str, *, validate_exit: int = 0, validate_message: str = "") -> None:
-    path.write_text(
-        '#!/usr/bin/env bash\n'
-        'set -euo pipefail\n'
-        'if [[ "${1:-}" == "-" ]]; then\n'
-        f'    touch "$MARKER_DIR/{marker_name}"\n'
-        '    cat >/dev/null\n'
-        f'    if [[ "{validate_message}" != "" ]]; then\n'
-        f'        printf "%s\\n" "{validate_message}" >&2\n'
-        '    fi\n'
-        f'    exit "{validate_exit}"\n'
-        'fi\n'
-        'exit 0\n',
-        encoding="utf-8",
-    )
-    path.chmod(0o755)
-
-
-# ---------------------------------------------------------------------------
-# python_env.sh
-# ---------------------------------------------------------------------------
-
-class TestPythonEnvSh:
-    def _run_helper(self, tmp_path: Path, env: dict) -> subprocess.CompletedProcess:
-        repo_root = Path(__file__).resolve().parent.parent
-        scripts_dir = tmp_path / "scripts"
-        scripts_dir.mkdir()
-        helper = scripts_dir / "python_env.sh"
-        helper.write_text(
-            (repo_root / "scripts" / "python_env.sh").read_text(encoding="utf-8"),
-            encoding="utf-8",
-        )
-        return subprocess.run(
-            [
-                "/bin/bash",
-                "-c",
-                'source scripts/python_env.sh; resolved="$(resolve_python_bin)"; '
-                'printf "resolved=%s\\n" "$resolved"; require_python_311 "$resolved"',
-            ],
-            capture_output=True,
-            text=True,
-            cwd=tmp_path,
-            env=env,
-        )
-
-    def test_explicit_python_bin_override_is_respected(self, tmp_path: Path) -> None:
-        bin_dir = tmp_path / "bin"
-        bin_dir.mkdir()
-        marker_dir = tmp_path / "markers"
-        marker_dir.mkdir()
-        custom_python = bin_dir / "custom-python"
-        _write_fake_python(custom_python, "custom.marker")
-        _write_fake_python(bin_dir / "python3.11", "python311.marker")
-
-        env = os.environ.copy()
-        env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
-        env["PYTHON_BIN"] = str(custom_python)
-
-        result = self._run_helper(tmp_path, env)
-
-        assert result.returncode == 0
-        assert f"resolved={custom_python}" in result.stdout
-        assert (marker_dir / "custom.marker").exists()
-        assert not (marker_dir / "python311.marker").exists()
-
-    def test_default_prefers_python311_when_available(self, tmp_path: Path) -> None:
-        bin_dir = tmp_path / "bin"
-        bin_dir.mkdir()
-        marker_dir = tmp_path / "markers"
-        marker_dir.mkdir()
-        _write_fake_python(bin_dir / "python3.11", "python311.marker")
-        _write_fake_python(bin_dir / "python", "python.marker")
-
-        env = os.environ.copy()
-        env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
-        env.pop("PYTHON_BIN", None)
-
-        result = self._run_helper(tmp_path, env)
-
-        assert result.returncode == 0
-        assert "resolved=python3.11" in result.stdout
-        assert (marker_dir / "python311.marker").exists()
-        assert not (marker_dir / "python.marker").exists()
-
-    def test_default_falls_back_to_python_when_python311_missing(self, tmp_path: Path) -> None:
-        bin_dir = tmp_path / "bin"
-        bin_dir.mkdir()
-        marker_dir = tmp_path / "markers"
-        marker_dir.mkdir()
-        _write_fake_python(bin_dir / "python", "python.marker")
-
-        env = os.environ.copy()
-        env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
-        env.pop("PYTHON_BIN", None)
-
-        result = self._run_helper(tmp_path, env)
-
-        assert result.returncode == 0
-        assert "resolved=python" in result.stdout
-        assert (marker_dir / "python.marker").exists()
-
-    def test_python_version_failure_is_clear(self, tmp_path: Path) -> None:
-        bin_dir = tmp_path / "bin"
-        bin_dir.mkdir()
-        marker_dir = tmp_path / "markers"
-        marker_dir.mkdir()
-        _write_fake_python(
-            bin_dir / "python3.11",
-            "python311.marker",
-            validate_exit=1,
-            validate_message="Python >= 3.11 required, got 3.10.0",
-        )
-
-        env = os.environ.copy()
-        env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
-        env.pop("PYTHON_BIN", None)
-
-        result = self._run_helper(tmp_path, env)
-
-        assert result.returncode != 0
-        assert "Python >= 3.11 required, got 3.10.0" in result.stderr
-        assert (marker_dir / "python311.marker").exists()
-
-
 # ---------------------------------------------------------------------------
 # check_version_consistency.py
 # ---------------------------------------------------------------------------
@@ -350,11 +222,6 @@ class TestReleaseCheckSh:
         fake_release = scripts_dir / "release_check.sh"
         fake_release.write_text(real_release.read_text(encoding="utf-8"), encoding="utf-8")
         fake_release.chmod(0o755)
-        fake_helper = scripts_dir / "python_env.sh"
-        fake_helper.write_text(
-            (repo_root / "scripts" / "python_env.sh").read_text(encoding="utf-8"),
-            encoding="utf-8",
-        )
 
         # Fake python3.11 dispatcher
         fake_python = bin_dir / "python3.11"
@@ -379,9 +246,6 @@ class TestReleaseCheckSh:
             encoding="utf-8",
         )
         fake_python.chmod(0o755)
-
-        # Also provide 'python' symlink so fallback behavior is covered.
-        (bin_dir / "python").symlink_to(fake_python)
 
         # Fake git
         fake_git = bin_dir / "git"

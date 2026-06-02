@@ -3,12 +3,15 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-source "$SCRIPT_DIR/python_env.sh"
-PYTHON_BIN="$(resolve_python_bin)"
-require_python_311 "$PYTHON_BIN"
+PYTHON_BIN="${PYTHON_BIN:-python3.11}"
 DEMO_SYMBOL="${DEMO_SYMBOL:-ATLAS-DEMO}"
 BACKTEST_SYMBOL="${BACKTEST_SYMBOL:-DEMO-SYMBOL}"
 SAMPLE_DATA="$REPO_ROOT/data/sample/ohlcv.csv"
+
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  printf 'Missing prerequisite: %s is not available on PATH.\n' "$PYTHON_BIN" >&2
+  exit 1
+fi
 
 if [ ! -f "$SAMPLE_DATA" ]; then
   printf 'Missing prerequisite: sample data not found at %s\n' "$SAMPLE_DATA" >&2

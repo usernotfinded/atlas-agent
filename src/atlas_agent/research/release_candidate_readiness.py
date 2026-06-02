@@ -12,7 +12,6 @@ import hashlib
 import json
 import re
 import subprocess
-import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -198,7 +197,7 @@ def _check_version_consistency(repo_root: Path) -> tuple[bool, str]:
         return False, "check_version_consistency.py not found"
     try:
         result = subprocess.run(
-            [sys.executable, str(script)],
+            ["python3.11", str(script)],
             capture_output=True,
             text=True,
             cwd=str(repo_root),
@@ -216,7 +215,7 @@ def _check_forbidden_claims(repo_root: Path) -> tuple[bool, str]:
         return False, "check_forbidden_claims.py not found"
     try:
         result = subprocess.run(
-            [sys.executable, str(script)],
+            ["python3.11", str(script)],
             capture_output=True,
             text=True,
             cwd=str(repo_root),

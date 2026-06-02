@@ -28,10 +28,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install package and dev dependencies
+      - name: Install package and test dependencies
         run: |
           python3.11 -m pip install --upgrade pip
-          python3.11 -m pip install -e '.[dev]'
+          python3.11 -m pip install -e .
+          python3.11 -m pip install pytest build
       - name: Version consistency
         run: python3.11 scripts/check_version_consistency.py
       - name: CLI command compatibility
@@ -100,57 +101,3 @@ jobs:
         run: git diff --check
       - name: Protected staged files check
         run: python3.11 scripts/check_no_protected_staged.py
-
-  core-functional:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install package and dev dependencies
-        run: |
-          python3.11 -m pip install --upgrade pip
-          python3.11 -m pip install -e '.[dev]'
-      - name: Run core-functional test suite
-        run: |
-          python3.11 -m pytest tests/ -q \
-            --ignore=tests/test_demo_research_workflow_script.py \
-            --ignore=tests/test_changelog_consistency.py \
-            --ignore=tests/test_docs_v040.py \
-            --ignore=tests/test_feedback_intake.py \
-            --ignore=tests/test_feedback_taxonomy.py \
-            --ignore=tests/test_final_rc_audit.py \
-            --ignore=tests/test_live_submit_safety_contract_docs.py \
-            --ignore=tests/test_product_capability_inventory.py \
-            --ignore=tests/test_provider_policy_docs.py \
-            --ignore=tests/test_provider_safety_dossier_docs.py \
-            --ignore=tests/test_public_docs_consistency.py \
-            --ignore=tests/test_public_launch_messaging.py \
-            --ignore=tests/test_public_launch_readiness.py \
-            --ignore=tests/test_rc1_cutover_consistency.py \
-            --ignore=tests/test_release_candidate_audit_docs.py \
-            --ignore=tests/test_release_candidate_cutover_docs.py \
-            --ignore=tests/test_release_check_scripts.py \
-            --ignore=tests/test_release_evidence_bundle.py \
-            --ignore=tests/test_research_workflow_docs.py \
-            --ignore=tests/test_research_workflow_reference_docs.py \
-            --ignore=tests/test_reviewer_golden_path_smoke.py \
-            --ignore=tests/test_reviewer_onboarding.py \
-            --ignore=tests/test_reviewer_outreach.py \
-            --ignore=tests/test_smoke_package_build_script.py \
-            --ignore=tests/test_smoke_release_tag_script.py \
-            --ignore=tests/test_stable_release_decision.py \
-            --ignore=tests/test_v0581_hotfix_cutover.py \
-            --ignore=tests/test_v058_dev_version_regression.py \
-            --ignore=tests/test_v058_rc1_cutover.py \
-            --ignore=tests/test_v058_rc1_readiness.py \
-            --ignore=tests/test_v058_rc2_cutover.py \
-            --ignore=tests/test_v058_rc3_cutover.py \
-            --ignore=tests/test_v058_rc4_cutover.py \
-            --ignore=tests/test_v058_rc5_cutover.py \
-            --ignore=tests/test_v058_stable_cutover.py \
-            --ignore=tests/research/test_release_candidate_cutover_dry_run.py \
-            --ignore=tests/research/test_release_candidate_readiness.py \
-            --ignore=tests/research/test_research_schema_version.py

@@ -34,9 +34,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install package and dev dependencies
+      - name: Install package and test dependencies
         run: |
           python3.11 -m pip install --upgrade pip
-          python3.11 -m pip install -e '.[dev]'
+          python3.11 -m pip install -e .
+          python3.11 -m pip install pytest
       - name: Research check
         run: ./scripts/release_check.sh --research
