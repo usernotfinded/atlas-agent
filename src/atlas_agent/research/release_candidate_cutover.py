@@ -12,6 +12,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -261,7 +262,7 @@ def _run_local_script(repo_root: Path, rel_path: str) -> bool:
         return False
     try:
         result = subprocess.run(
-            ["python3.11", str(script)],
+            [sys.executable, str(script)],
             capture_output=True,
             text=True,
             cwd=str(repo_root),
