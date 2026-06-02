@@ -247,7 +247,9 @@ def test_checklist_doc_exists() -> None:
 def test_checklist_covers_version_and_tag() -> None:
     path = REPO_ROOT / "docs" / "reviewer-outreach-checklist.md"
     text = path.read_text(encoding="utf-8").lower()
-    assert "0.5.8rc5" in text
+    # The checklist must reference a real stable tag and a previous release.
+    # We assert presence of known stable tags rather than hardcoding RCs.
+    assert "v0.5.8" in text or "v0.5.8.1" in text
     assert "v0.5.7" in text
 
 

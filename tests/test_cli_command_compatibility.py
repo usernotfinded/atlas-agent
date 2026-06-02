@@ -90,6 +90,20 @@ def test_contract_has_required_fields(contract: dict) -> None:
     assert "forbidden_default_behaviors" in contract
 
 
+def test_contract_package_series_matches_current_version(contract: dict) -> None:
+    """Contract package_series must match the current package version.
+
+    Prevents stale contract metadata after version bumps.
+    """
+    from atlas_agent import __version__
+
+    assert contract["package_series"] == __version__, (
+        f"CLI contract package_series ({contract['package_series']!r}) "
+        f"does not match current package version ({__version__!r}). "
+        f"Update tests/fixtures/cli_command_contract.json after version bumps."
+    )
+
+
 def test_contract_forbidden_default_behaviors_present(contract: dict) -> None:
     forbidden = contract["forbidden_default_behaviors"]
     required = {

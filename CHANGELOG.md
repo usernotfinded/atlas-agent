@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Opened the `0.5.9.dev0` development cycle after the public `v0.5.8.1` hotfix release.
+- Hardened `0.5.9.dev0` command-surface and live-path audit checks.
+
+### Fixed
+- Fixed stale version references in CLI contract (`0.5.8rc5` → `0.5.9.dev0`), product capability inventory (`0.5.8rc5` → `0.5.9.dev0`), and related docs.
+- Fixed contradictory dead-man action values in `docs/kill-switch.md` to align with `deadman.py` validation (`soft|cancel|flatten`).
+
+### Tests
+- Added regression coverage for CLI command-surface version hygiene, live-path safety claims, kill-switch status drift, and release/checklist version hygiene.
+
+### Safety
+- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, or GitHub Release creation was performed.
+- No protected runtime boundaries were changed.
 
 ### Fixed
 - Fixed runtime template packaging so `atlas init --template routine-trader` resolves package-owned templates after clean wheel/sdist installs instead of relying on repository-root fallback paths.

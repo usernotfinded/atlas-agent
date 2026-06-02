@@ -173,4 +173,4 @@ This contract is versioned independently of the package version. Update the cont
 - The research command spec layer changes.
 
 Current contract version: `1`  
-Package series: `0.5.8rc4`
+Package series: `0.5.9.dev0`

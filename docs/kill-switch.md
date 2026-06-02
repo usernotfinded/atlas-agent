@@ -4,6 +4,7 @@ Atlas Agent supports hierarchical kill-switch modes, plus a dead-man heartbeat s
 
 ## Modes
 
+- `normal`: No kill switch active; trading proceeds normally.
 - `soft_pause`: Blocks new orders. Existing positions remain open.
 - `cancel_all`: `soft_pause` + cancels working/pending simulated/broker orders.
 - `flatten_all`: `cancel_all` + attempts to close all open positions safely.
@@ -53,7 +54,7 @@ Environment variables (typically in `.env.atlas`):
 
 ```bash
 DEADMAN_TIMEOUT_MINUTES=15          # 0 disables deadman
-DEADMAN_ACTION=soft_pause           # soft_pause|cancel_all|flatten_all
+DEADMAN_ACTION=soft                 # soft|cancel|flatten
 DEADMAN_AUTO_RESET=true             # reset timer on user interaction
 ```
 

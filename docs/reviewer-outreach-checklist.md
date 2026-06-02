@@ -41,7 +41,7 @@ Use this checklist before starting controlled reviewer outreach.
 
 ## README and messaging
 
-- [ ] README current status is clear (`v0.5.8` latest stable, promoted from `v0.5.8rc5`).
+- [ ] README current status is clear (`v0.5.8.1` latest stable, promoted from `v0.5.8`).
 - [ ] README links to reviewer walkthrough, checklist, and outreach docs.
 - [ ] Outreach message drafts do not claim profitability, live readiness, or production safety.
 - [ ] Outreach message drafts do not invite broker setup, credential sharing, or live trading.

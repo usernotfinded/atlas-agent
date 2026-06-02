@@ -269,6 +269,21 @@ def test_inventory_json_exists() -> None:
     assert path.exists()
 
 
+def test_inventory_generated_for_matches_current_version() -> None:
+    """Inventory generated_for must match the current package version.
+
+    Prevents stale inventory metadata after version bumps.
+    """
+    from atlas_agent import __version__
+
+    data = json.loads((REPO_ROOT / "tests" / "fixtures" / "product_capability_inventory.json").read_text())
+    assert data.get("generated_for") == __version__, (
+        f"product_capability_inventory.json generated_for ({data.get('generated_for')!r}) "
+        f"does not match current package version ({__version__!r}). "
+        f"Update tests/fixtures/product_capability_inventory.json after version bumps."
+    )
+
+
 def test_inventory_has_all_groups() -> None:
     data = json.loads((REPO_ROOT / "tests" / "fixtures" / "product_capability_inventory.json").read_text())
     actual_groups = {cap["group"] for cap in data.get("capabilities", [])}
