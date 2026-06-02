@@ -67,6 +67,12 @@ class TestCiWorkflow:
     def test_includes_stable_release_decision(self, ci_content: str) -> None:
         assert "check_stable_release_decision.py" in ci_content
 
+    def test_includes_hotfix_cutover_gate(self, ci_content: str) -> None:
+        assert "check_v0581_hotfix_cutover.py" in ci_content
+
+    def test_obsolete_rc5_cutover_not_direct_ci_gate(self, ci_content: str) -> None:
+        assert "python3.11 scripts/check_v058_rc5_cutover.py" not in ci_content
+
     def test_includes_release_check_quick(self, ci_content: str) -> None:
         assert "release_check.sh --quick" in ci_content
 
