@@ -82,10 +82,10 @@ def test_readiness_script_json_output() -> None:
 def test_wrong_current_version_fails() -> None:
     original = READINESS_MOD.CURRENT_DEV_VERSION
     try:
-        READINESS_MOD.CURRENT_DEV_VERSION = "0.5.8"
+        READINESS_MOD.CURRENT_DEV_VERSION = "0.5.8.1"
         result = READINESS_MOD._gather()
         assert result["passed"] is False
-        assert any("0.5.8" in e for e in result["errors"])
+        assert any("0.5.8.1" in e for e in result["errors"])
     finally:
         READINESS_MOD.CURRENT_DEV_VERSION = original
 

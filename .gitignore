@@ -31,6 +31,10 @@ reports/*.md
 reports/*.csv
 !reports/.gitkeep
 memory/
+!templates/routine-trader/memory/
+!templates/routine-trader/memory/**
+!src/atlas_agent/templates/routine-trader/memory/
+!src/atlas_agent/templates/routine-trader/memory/**
 skills/proposed/*.md
 
 # Build/package artifacts

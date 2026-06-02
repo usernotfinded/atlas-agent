@@ -48,8 +48,8 @@ echo "8a. v0.5.8 RC1 readiness dry run"
 "$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
 
 echo ""
-echo "8b. v0.5.8 stable cutover check"
-"$PYTHON_BIN" scripts/check_v058_stable_cutover.py
+echo "8b. v0.5.8.1 hotfix cutover check"
+"$PYTHON_BIN" scripts/check_v0581_hotfix_cutover.py
 
 echo ""
 echo "9. public docs consistency"
@@ -115,6 +115,7 @@ echo "21. focused pytest subset"
 "$PYTHON_BIN" -m pytest tests/test_public_launch_messaging.py -q
 "$PYTHON_BIN" -m pytest tests/test_final_rc_audit.py -q
 "$PYTHON_BIN" -m pytest tests/test_stable_release_decision.py -q
+"$PYTHON_BIN" -m pytest tests/test_v0581_hotfix_cutover.py -q
 
 echo ""
 echo "22. pip check"

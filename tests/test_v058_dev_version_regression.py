@@ -1,10 +1,10 @@
-"""Regression tests for post-v0.5.8 development transition.
+"""Regression tests for post-v0.5.8.1 development transition.
 
 Verifies the correct lifecycle model:
 - current main = 0.5.9.dev0
-- public stable = v0.5.8
-- historical stable = v0.5.7
-- no stale 0.5.8 assertions on current main
+- public stable = v0.5.8.1
+- historical stable = v0.5.8
+- no stale 0.5.7 assertions on current main
 - forbidden phrases removed
 - historical docs can still mention 0.5.7 and 0.5.8
 """
@@ -55,6 +55,10 @@ def test_public_stable_v058_tag_exists() -> None:
 
 def test_public_stable_v058_release_note_exists() -> None:
     assert (ROOT / "docs" / "releases" / "v0.5.8.md").exists()
+
+
+def test_public_stable_v0581_release_note_exists() -> None:
+    assert (ROOT / "docs" / "releases" / "v0.5.8.1.md").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -166,7 +170,7 @@ def test_version_consistency_script_accepts_dev() -> None:
         f"Version consistency check failed:\n{result.stdout}\n{result.stderr}"
     )
     assert "0.5.9.dev0" in result.stdout
-    assert "v0.5.8" in result.stdout
+    assert "v0.5.8.1" in result.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +188,6 @@ def test_release_checklist_can_mention_historical_stable() -> None:
     checklist = ROOT / "docs" / "release-checklist.md"
     text = checklist.read_text(encoding="utf-8")
     # Must mention current version
-    assert "0.5.8" in text
+    assert "0.5.8.1" in text
     # Can also mention historical stable
     assert "v0.5.8" in text or "0.5.7" in text

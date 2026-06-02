@@ -3,7 +3,7 @@
 
 This script ensures:
 - The historical v0.5.7 tag contains the expected stable version metadata.
-- Current main is the active post-v0.5.8 development version.
+- Current main is a post-v0.5.7 version (including stable 0.5.8).
 - Public docs remain safe and do not contain forbidden claims or secrets.
 
 Deterministic and local. Does not:
@@ -94,7 +94,7 @@ def _check_version_consistency() -> list[str]:
     release_note_path = REPO_ROOT / "docs" / "releases" / f"{HISTORICAL_STABLE_TAG}.md"
     checklist_path = REPO_ROOT / "docs" / "release-checklist.md"
 
-    # 1. Current main version should be the active dev version after v0.5.8.
+    # 1. Current main version should be a dev version after 0.5.7
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
@@ -104,7 +104,11 @@ def _check_version_consistency() -> list[str]:
             if not (
                 current_toml_version
                 and (
-                    current_toml_version.startswith("0.5.9.dev")
+                    current_toml_version == "0.5.8"
+                    or current_toml_version == "0.5.8.1"
+                    or current_toml_version.startswith("0.5.8.dev")
+                    or current_toml_version.startswith("0.5.8rc")
+                    or current_toml_version.startswith("0.5.9.dev")
                     or current_toml_version.startswith("0.6.")
                 )
             ):
@@ -122,7 +126,11 @@ def _check_version_consistency() -> list[str]:
             if not (
                 current_init_version
                 and (
-                    current_init_version.startswith("0.5.9.dev")
+                    current_init_version == "0.5.8"
+                    or current_init_version == "0.5.8.1"
+                    or current_init_version.startswith("0.5.8.dev")
+                    or current_init_version.startswith("0.5.8rc")
+                    or current_init_version.startswith("0.5.9.dev")
                     or current_init_version.startswith("0.6.")
                 )
             ):

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Opened the `0.5.9.dev0` development cycle after the public `v0.5.8` GitHub Release.
+- Opened the `0.5.9.dev0` development cycle after the public `v0.5.8.1` hotfix release.
 
 ### Fixed
 - Fixed runtime template packaging so `atlas init --template routine-trader` resolves package-owned templates after clean wheel/sdist installs instead of relying on repository-root fallback paths.
@@ -18,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 - No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, or GitHub Release creation was performed.
+
+## [0.5.8.1] - 2026-06-01
+
+### Fixed
+- Fixed runtime template packaging so `atlas init --template routine-trader` works from clean wheel/sdist installs outside the source checkout.
+
+### Tests
+- Added/updated artifact install checks covering packaged templates.
+
+### Safety
+- No live trading, provider execution, broker execution, credential loading, package publishing, or GitHub Release creation was performed.
+- No protected runtime boundaries were changed.
 
 ## [0.5.8] - 2026-06-01
 

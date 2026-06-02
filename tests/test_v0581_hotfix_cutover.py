@@ -1,4 +1,4 @@
-"""Tests for the v0.5.8 stable cutover verification checker.
+"""Tests for the v0.5.8.1 hotfix cutover verification checker.
 
 These tests verify that:
 - The checker passes on the current repo state.
@@ -7,7 +7,9 @@ These tests verify that:
 - Missing release notes fails.
 - Missing changelog section fails.
 - Unsafe live/profit wording fails.
-- Historical v0.5.8rc1, v0.5.8rc2, v0.5.8rc3, and v0.5.8rc4 tags do not cause failure.
+- Historical v0.5.8 remains intact.
+- Active v0.5.8.1 tag absence passes before tagging.
+- Active v0.5.8.1 tag must match HEAD when present.
 - Script source does not contain shell=True.
 - Script source does not contain network/GitHub API calls.
 - Checker does not mutate files.
@@ -27,29 +29,21 @@ from unittest.mock import patch
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "check_v058_stable_cutover.py"
+CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "check_v0581_hotfix_cutover.py"
 
 
 def _load_cutover_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(
-        "check_v058_stable_cutover", CUTOVER_SCRIPT
+        "check_v0581_hotfix_cutover", CUTOVER_SCRIPT
     )
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["check_v058_stable_cutover"] = mod
+    sys.modules["check_v0581_hotfix_cutover"] = mod
     spec.loader.exec_module(mod)
     return mod
 
 
 CUTOVER_MOD = _load_cutover_module()
-
-
-def _current_package_version() -> str:
-    import tomllib
-
-    with open(REPO_ROOT / "pyproject.toml", "rb") as f:
-        data = tomllib.load(f)
-    return data.get("project", {}).get("version", "")
 
 
 # ---------------------------------------------------------------------------
@@ -58,8 +52,6 @@ def _current_package_version() -> str:
 
 
 def test_cutover_script_passes() -> None:
-    if _current_package_version() != "0.5.8":
-        pytest.skip("historical v0.5.8 stable checker is not current on this branch")
     result = subprocess.run(
         [sys.executable, str(CUTOVER_SCRIPT)],
         capture_output=True,
@@ -71,8 +63,6 @@ def test_cutover_script_passes() -> None:
 
 
 def test_cutover_script_json_output() -> None:
-    if _current_package_version() != "0.5.8":
-        pytest.skip("historical v0.5.8 stable checker is not current on this branch")
     result = subprocess.run(
         [sys.executable, str(CUTOVER_SCRIPT), "--json"],
         capture_output=True,
@@ -83,12 +73,16 @@ def test_cutover_script_json_output() -> None:
     data = json.loads(result.stdout)
     assert data["passed"] is True
     assert data["errors"] == []
-    assert data["expected_version"] == "0.5.8"
-    assert data["stable_tag"] == "v0.5.7"
-    assert data["active_release"] == "v0.5.8"
+    assert data["expected_version"] == "0.5.8.1"
+    assert data["stable_tag"] == "v0.5.8"
+    assert data["active_release"] == "v0.5.8.1"
     assert "historical_rc_tags" in data
     assert "tag_state" in data
-    assert data["tag_state"] in {"absent_pre_tag", "present_matches_head"}
+    assert data["tag_state"] in {
+        "absent_pre_tag",
+        "present_matches_head",
+        "present_historical_release",
+    }
     assert "tag_commit" in data
     assert "head_commit" in data
     assert "tag_matches_head" in data
@@ -113,10 +107,10 @@ def test_wrong_package_version_fails() -> None:
 def test_wrong_init_version_fails() -> None:
     original = CUTOVER_MOD.EXPECTED_VERSION
     try:
-        CUTOVER_MOD.EXPECTED_VERSION = "0.5.8rc2"
+        CUTOVER_MOD.EXPECTED_VERSION = "0.5.8.2"
         result = CUTOVER_MOD._gather()
         assert result["passed"] is False
-        assert any("0.5.8rc2" in e for e in result["errors"])
+        assert any("0.5.8.2" in e for e in result["errors"])
     finally:
         CUTOVER_MOD.EXPECTED_VERSION = original
 
@@ -125,7 +119,7 @@ def test_missing_release_notes_fails() -> None:
     original = CUTOVER_MOD._check_release_notes_exist
 
     def _patched() -> list[str]:
-        return ["Missing release notes: docs/releases/v0.5.8.md"]
+        return ["Missing release notes: docs/releases/v0.5.8.1.md"]
 
     with patch.object(CUTOVER_MOD, "_check_release_notes_exist", _patched):
         result = CUTOVER_MOD._gather()
@@ -137,7 +131,7 @@ def test_missing_changelog_section_fails() -> None:
     original = CUTOVER_MOD._check_changelog_has_stable_section
 
     def _patched() -> list[str]:
-        return ["CHANGELOG.md missing [0.5.8] section"]
+        return ["CHANGELOG.md missing [0.5.8.1] section"]
 
     with patch.object(CUTOVER_MOD, "_check_changelog_has_stable_section", _patched):
         result = CUTOVER_MOD._gather()
@@ -165,10 +159,10 @@ def test_staged_generated_evidence_artifact_fails() -> None:
     assert any("Generated evidence artifact staged" in e for e in result["errors"])
 
 
-def test_historical_v057_record_required() -> None:
+def test_historical_v058_record_required() -> None:
     result = CUTOVER_MOD._check_historical_tag()
-    # This should pass because v0.5.7 tag exists in the repo
-    assert result == [], f"Historical v0.5.7 check failed: {result}"
+    # This should pass because v0.5.8 tag exists in the repo
+    assert result == [], f"Historical v0.5.8 check failed: {result}"
 
 
 def test_missing_historical_tag_includes_fetch_hint() -> None:
@@ -190,8 +184,7 @@ def test_pre_tag_absent_state_passes() -> None:
 
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-            with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
-                result = CUTOVER_MOD._gather()
+            result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "absent_pre_tag"
     assert result["tag_commit"] is None
@@ -204,8 +197,7 @@ def test_post_tag_matches_head_passes() -> None:
 
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-            with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
-                result = CUTOVER_MOD._gather()
+            result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "present_matches_head"
     assert result["tag_commit"] == "abc123"
@@ -213,10 +205,34 @@ def test_post_tag_matches_head_passes() -> None:
     assert result["tag_matches_head"] is True
 
 
+def test_post_hotfix_main_tag_mismatch_is_historical() -> None:
+    def _patched_version() -> str:
+        return CUTOVER_MOD.POST_HOTFIX_DEV_VERSION
+
+    def _run(args: list[str], **_: object) -> subprocess.CompletedProcess:
+        if args[:2] == ["git", "rev-parse"] and args[2] == "HEAD":
+            return subprocess.CompletedProcess(args, 0, "main123\n", "")
+        if args[:3] == ["git", "tag", "--list"]:
+            return subprocess.CompletedProcess(args, 0, "v0.5.8.1\n", "")
+        if args[:2] == ["git", "rev-parse"] and args[2] == "v0.5.8.1^{}":
+            return subprocess.CompletedProcess(args, 0, "tag123\n", "")
+        return subprocess.CompletedProcess(args, 1, "", "")
+
+    with patch.object(CUTOVER_MOD, "_current_pyproject_version", _patched_version):
+        with patch.object(CUTOVER_MOD.subprocess, "run", _run):
+            errors, state, tag_commit, head_commit, matches_head = CUTOVER_MOD._check_tag_state()
+
+    assert errors == []
+    assert state == "present_historical_release"
+    assert tag_commit == "tag123"
+    assert head_commit == "main123"
+    assert matches_head is False
+
+
 def test_tag_mismatch_fails() -> None:
     def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
         return (
-            ["v0.5.8 tag exists locally but points to deadbeef, while HEAD is abc123. Force-pushing or moving release tags is not allowed."],
+            ["v0.5.8.1 tag exists locally but points to deadbeef, while HEAD is abc123. Force-pushing or moving release tags is not allowed."],
             "present_mismatch",
             "deadbeef",
             "abc123",
@@ -236,7 +252,7 @@ def test_tag_mismatch_fails() -> None:
 def test_tag_unresolvable_fails() -> None:
     def _patched_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
         return (
-            ["v0.5.8 tag exists locally but cannot be resolved."],
+            ["v0.5.8.1 tag exists locally but cannot be resolved."],
             "unresolvable",
             None,
             "abc123",
