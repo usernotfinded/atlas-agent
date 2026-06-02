@@ -305,6 +305,20 @@ class TestFailedSubprocessRedaction:
         )
 
 
+class TestExpectedTemplateFiles:
+    def test_memory_portfolio_md_is_required(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        assert '"memory/portfolio.md"' in text, (
+            "check_clean_install.py must require memory/portfolio.md"
+        )
+
+    def test_expected_template_files_list_is_nonempty(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        assert "EXPECTED_TEMPLATE_FILES" in text
+        # Expect at least README, .env.example, configs, memory, routines, skills
+        assert text.count('"') >= 12, "EXPECTED_TEMPLATE_FILES should list multiple files"
+
+
 class TestVersionReporting:
     def test_expected_version_matches_pyproject(self) -> None:
         import tomllib
