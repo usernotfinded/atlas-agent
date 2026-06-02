@@ -531,19 +531,19 @@ class TestRealRepoIntegration:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real")
         assert report["target_version_valid"] is True
         assert report["target_is_rc"] is True
-        # Current version is 0.5.8rc4 (RC), so current_version_is_dev is False
-        assert report["current_version_is_dev"] is False
-        # dev_to_rc_transition_valid is False because 0.5.8rc4 -> v0.5.7-rc1 is not a valid transition
+        # Current version on main is dev (0.5.9.dev0), so current_version_is_dev is True
+        assert report["current_version_is_dev"] is True
+        # dev_to_rc_transition_valid is False because 0.5.9.dev0 -> v0.5.7-rc1 is not a valid transition
         assert report["dev_to_rc_transition_valid"] is False
 
     def test_real_repo_rc_state(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-dev")
-        # Current 0.5.8rc4 is an RC, not dev
-        assert report["current_version_is_dev"] is False
+        # Current version on main is dev (0.5.9.dev0)
+        assert report["current_version_is_dev"] is True
         # dev_to_rc_transition_valid should be False for mismatched versions
         assert report["dev_to_rc_transition_valid"] is False
-        # Release note for current RC version should exist
-        assert report["release_note_present"] is True
+        # Release note for current dev version does not need to exist
+        assert report["release_note_present"] is False
         # Safety invariants should hold
         assert report["live_trading_disabled_by_default"] is True
         assert report["provider_execution_locked"] is True
@@ -570,10 +570,10 @@ class TestRealRepoIntegration:
         assert report["current_version_is_dev"] is False
         assert report["dev_to_rc_transition_valid"] is True
 
-    def test_real_repo_release_note_present_for_rc(self) -> None:
+    def test_real_repo_release_note_state(self) -> None:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-note")
-        # Current RC version 0.5.8rc4 should have a release note
-        assert report["release_note_present"] is True
+        # Current version on main is dev (0.5.9.dev0); dev versions do not require release notes
+        assert report["release_note_present"] is False
 
     def test_historical_stable_release_note_present(self) -> None:
         # Historical stable v0.5.7 release note should still exist

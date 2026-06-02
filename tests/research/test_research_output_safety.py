@@ -218,9 +218,19 @@ class TestVersionHygiene:
         pytest.skip("No Current Status heading found in README.md")
 
     def test_release_checklist_smoke_example_matches_package_version(self) -> None:
+        import re
         from atlas_agent import __version__
 
-        expected_tag = self._package_to_tag(__version__)
+        dev_match = re.match(r"^(\d+\.\d+\.\d+)\.dev\d+$", __version__)
+        if dev_match is not None:
+            # For dev versions, the smoke example should use the latest public stable tag,
+            # not a non-existent dev tag. Source of truth: scripts/check_version_consistency.py
+            consistency_text = Path("scripts/check_version_consistency.py").read_text(encoding="utf-8")
+            m = re.search(r'PUBLIC_TAG = "([^"]+)"', consistency_text)
+            expected_tag = m.group(1) if m else f"v{__version__}"
+        else:
+            expected_tag = self._package_to_tag(__version__)
+
         checklist = Path("docs/release-checklist.md").read_text(encoding="utf-8")
         found = False
         for line in checklist.splitlines():
