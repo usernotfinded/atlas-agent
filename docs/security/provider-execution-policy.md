@@ -150,3 +150,11 @@ Every future provider call must produce or reference:
 - Tests that prove review result cannot authorize trading.
 - CI must remain **secret-free by default**.
 - Documentation must be updated to reflect new capabilities **without overclaiming**.
+
+## 13. Preflight Dry-Run Policy
+
+- The `atlas providers preflight` command must remain purely a local dry-run feature.
+- It must generate a local call-plan artifact with all safety flags set to `false`.
+- It must **not** make network calls, read API keys, load `.env.atlas`, or touch broker paths.
+- It does **not** authorize any actual provider execution.
+- See [Provider Preflight](provider-preflight.md) for full usage and schema details.
