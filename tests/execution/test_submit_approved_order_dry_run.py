@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from atlas_agent.execution.approval import ApprovalManager, _compute_order_hash, _order_to_dict
+from atlas_agent.execution.approval import ApprovalManager, _compute_approval_hash, _compute_order_hash, _order_to_dict
 from atlas_agent.execution.order import Order
 from atlas_agent.execution.submit_dry_run import run_submit_dry_run, DryRunReport
 
@@ -28,6 +28,19 @@ def _make_order(**kwargs) -> Order:
 def _valid_v2_payload(manager: ApprovalManager, order: Order) -> dict:
     path = manager.create_pending_order(order)
     return json.loads(path.read_text(encoding="utf-8"))
+
+def _inject_approval_hash(payload: dict) -> dict:
+    payload["approval_hash"] = _compute_approval_hash(
+        order_hash=payload.get("order_hash", ""),
+        approved=payload.get("approved", False),
+        approved_at=payload.get("approved_at"),
+        approval_actor=payload.get("approval_actor"),
+        status=payload.get("status", ""),
+        status_transitions=payload.get("status_transitions", []),
+        expires_at=payload.get("expires_at", ""),
+    )
+    return payload
+
 
 
 def _mock_broker_resolver(
@@ -142,6 +155,7 @@ def test_dry_run_expired_order(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
     assert report.ok is False
@@ -158,6 +172,7 @@ def test_dry_run_client_order_id_present(tmp_path: Path) -> None:
     payload["approval_actor"] = "test"
     payload["client_order_id"] = "already-set"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
     assert report.ok is False
@@ -175,6 +190,7 @@ def test_dry_run_broker_order_id_present(tmp_path: Path) -> None:
     payload["approval_actor"] = "test"
     payload["broker_order_id"] = "already-set"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
     assert report.ok is False
@@ -191,6 +207,7 @@ def test_dry_run_submit_attempts_present(tmp_path: Path) -> None:
     payload["approval_actor"] = "test"
     payload["submit_attempts"] = [{"at": datetime.now(UTC).isoformat()}]
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
     assert report.ok is False
@@ -206,6 +223,7 @@ def test_dry_run_live_trading_disabled(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     config = FakeConfig()
     config.enable_live_trading = False
@@ -223,6 +241,7 @@ def test_dry_run_can_sync_false_blocks(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_cls:
@@ -243,6 +262,7 @@ def test_dry_run_can_submit_false_does_not_block(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -269,6 +289,7 @@ def test_dry_run_sync_critical_failure_blocks(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -299,6 +320,7 @@ def test_dry_run_sync_balances_warning_proceeds(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -328,6 +350,7 @@ def test_dry_run_risk_rejection_blocks(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -354,6 +377,7 @@ def test_dry_run_happy_path(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -394,6 +418,7 @@ def test_dry_run_does_not_modify_pending_file(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     before = path.read_text(encoding="utf-8")
 
@@ -421,6 +446,7 @@ def test_dry_run_tampered_hash_blocks(tmp_path: Path) -> None:
     payload["approval_actor"] = "test"
     payload["order"]["quantity"] = 999.0
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
     assert report.ok is False
@@ -451,6 +477,7 @@ def test_dry_run_invalid_order_fields_blocks(tmp_path: Path) -> None:
         "submitted_at": None,
     }
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
     assert report.ok is False
@@ -485,6 +512,7 @@ def test_dry_run_still_does_not_call_place_order(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -515,6 +543,7 @@ def test_dry_run_never_calls_manager_create_pending_order(tmp_path: Path) -> Non
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -541,6 +570,7 @@ def test_dry_run_never_calls_manager_approve(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -569,6 +599,7 @@ def test_dry_run_never_calls_order_router_route(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -599,6 +630,7 @@ def test_dry_run_includes_client_order_id_preview(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -625,6 +657,7 @@ def test_dry_run_does_not_persist_client_order_id(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -650,6 +683,7 @@ def test_dry_run_blocks_submit_uncertain(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
@@ -668,6 +702,7 @@ def test_dry_run_blocks_reconciliation_required(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
@@ -688,6 +723,7 @@ def test_dry_run_does_not_call_get_order_by_client_order_id(tmp_path: Path) -> N
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with patch("atlas_agent.execution.submit_dry_run.BrokerResolver") as mock_resolver_cls, \
@@ -715,6 +751,7 @@ def test_dry_run_unchanged(tmp_path: Path) -> None:
     payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_actor"] = "test"
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     before = path.read_text(encoding="utf-8")
 
@@ -759,6 +796,7 @@ def test_dry_run_blocks_submit_requested(tmp_path: Path) -> None:
         "error_code": None,
     }]
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     report = run_submit_dry_run(order.id, FakeConfig(), manager)
@@ -789,6 +827,7 @@ def test_dry_run_submit_requested_no_mutation(tmp_path: Path) -> None:
         "error_code": None,
     }]
     path = manager.path_for(order.id)
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     before = path.read_text(encoding="utf-8")
 

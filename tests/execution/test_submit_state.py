@@ -12,6 +12,7 @@ import pytest
 from atlas_agent.execution.approval import (
     ApprovalManager,
     InvalidPendingOrderError,
+    _compute_approval_hash,
     _compute_order_hash,
     _order_to_dict,
 )
@@ -84,7 +85,21 @@ def _make_v2_payload(order: Order, **overrides) -> dict:
     return payload
 
 
+def _inject_approval_hash(payload: dict) -> dict:
+    payload["approval_hash"] = _compute_approval_hash(
+        order_hash=payload.get("order_hash", ""),
+        approved=payload.get("approved", False),
+        approved_at=payload.get("approved_at"),
+        approval_actor=payload.get("approval_actor"),
+        status=payload.get("status", ""),
+        status_transitions=payload.get("status_transitions", []),
+        expires_at=payload.get("expires_at", ""),
+    )
+    return payload
+
+
 def _write_payload(path: Path, payload: dict) -> None:
+    _inject_approval_hash(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
 

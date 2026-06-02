@@ -49,8 +49,14 @@ def _make_order(**kwargs) -> Order:
 
 
 def _make_v2_payload(order: Order, **overrides) -> dict:
+    from atlas_agent.execution.approval import _compute_approval_hash
+
     order_dict = _order_to_dict(order)
     now = datetime.now(UTC)
+    transitions = [
+        {"status": "pending_approval", "at": now.isoformat(), "actor": "system"},
+        {"status": "approved", "at": now.isoformat(), "actor": "test"},
+    ]
     payload = {
         "schema_version": "2",
         "order": order_dict,
@@ -61,10 +67,7 @@ def _make_v2_payload(order: Order, **overrides) -> dict:
         "approval_actor": "test",
         "order_hash": _compute_order_hash(order_dict),
         "status": "approved",
-        "status_transitions": [
-            {"status": "pending_approval", "at": now.isoformat(), "actor": "system"},
-            {"status": "approved", "at": now.isoformat(), "actor": "test"},
-        ],
+        "status_transitions": transitions,
         "submit_attempts": [],
         "broker_order_id": None,
         "client_order_id": None,
@@ -72,7 +75,27 @@ def _make_v2_payload(order: Order, **overrides) -> dict:
         "fill_price": None,
         "submitted_at": None,
     }
+    payload["approval_hash"] = _compute_approval_hash(
+        order_hash=payload["order_hash"],
+        approved=payload["approved"],
+        approved_at=payload["approved_at"],
+        approval_actor=payload["approval_actor"],
+        status=payload["status"],
+        status_transitions=transitions,
+        expires_at=payload["expires_at"],
+    )
     payload.update(overrides)
+    # Recompute approval_hash if overrides changed decision fields
+    if payload.get("approved") and payload.get("status") == "approved":
+        payload["approval_hash"] = _compute_approval_hash(
+            order_hash=payload["order_hash"],
+            approved=payload["approved"],
+            approved_at=payload["approved_at"],
+            approval_actor=payload["approval_actor"],
+            status=payload["status"],
+            status_transitions=payload["status_transitions"],
+            expires_at=payload["expires_at"],
+        )
     return payload
 
 

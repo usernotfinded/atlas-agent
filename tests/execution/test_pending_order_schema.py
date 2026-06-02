@@ -214,7 +214,7 @@ def test_v1_pending_order_upgraded_to_v2_on_approval(tmp_path: Path) -> None:
     assert upgraded["submit_attempts"] == []
 
 
-def test_v1_already_approved_read_correctly_by_is_approved(tmp_path: Path) -> None:
+def test_v1_already_approved_fails_closed_and_can_be_reapproved(tmp_path: Path) -> None:
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="v1-already-approved")
     order_dict = _order_to_dict(order)
@@ -231,20 +231,22 @@ def test_v1_already_approved_read_correctly_by_is_approved(tmp_path: Path) -> No
     path = manager.path_for(order.id)
     path.write_text(json.dumps(v1_payload, indent=2, sort_keys=True), encoding="utf-8")
 
-    # is_approved reads v1 and upgrades in-memory, but does NOT rewrite the file
-    assert manager.is_approved(order.id) is True
+    # v1 approved orders are NOT automatically trusted; they fail closed
+    assert manager.is_approved(order.id) is False
 
     # File on disk remains v1 until approve() is called
     on_disk = json.loads(path.read_text(encoding="utf-8"))
     assert "schema_version" not in on_disk  # still v1 on disk
 
-    # Calling approve() upgrades the file to v2
+    # Calling approve() upgrades the file to v2 and re-approves it properly
     manager.approve(order.id, actor="test:user")
     upgraded = json.loads(path.read_text(encoding="utf-8"))
     assert upgraded["schema_version"] == "2"
     assert upgraded["approved"] is True
     assert upgraded["status"] == "approved"
     assert upgraded["order_hash"] == _compute_order_hash(order_dict)
+    assert upgraded["approval_actor"] == "test:user"
+    assert "approval_hash" in upgraded
 
 
 def test_v1_missing_expires_at_fails_closed_in_is_approved(tmp_path: Path) -> None:

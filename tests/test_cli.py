@@ -885,6 +885,16 @@ def test_submit_approved_order_dry_run_rejects_expired(tmp_path, monkeypatch, ca
     path = manager.path_for(order.id)
     payload = json.loads(path.read_text(encoding="utf-8"))
     payload["expires_at"] = (datetime.now(UTC) - timedelta(minutes=1)).isoformat()
+    from atlas_agent.execution.approval import _compute_approval_hash
+    payload["approval_hash"] = _compute_approval_hash(
+        order_hash=payload["order_hash"],
+        approved=payload["approved"],
+        approved_at=payload["approved_at"],
+        approval_actor=payload["approval_actor"],
+        status=payload["status"],
+        status_transitions=payload["status_transitions"],
+        expires_at=payload["expires_at"],
+    )
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     with _mock_dry_run_services()():
@@ -1581,7 +1591,7 @@ def _make_order(**kwargs):
 
 
 def _write_v2_pending_with_cid(tmp_path: Path, order_id: str, cid: str, status: str = "approved", broker_order_id: str | None = None):
-    from atlas_agent.execution.approval import ApprovalManager, _compute_order_hash, _order_to_dict
+    from atlas_agent.execution.approval import ApprovalManager, _compute_approval_hash, _compute_order_hash, _order_to_dict
     from datetime import UTC, datetime, timedelta
     import json
 
@@ -1590,6 +1600,10 @@ def _write_v2_pending_with_cid(tmp_path: Path, order_id: str, cid: str, status: 
     path = manager.path_for(order.id)
     order_dict = _order_to_dict(order)
     now = datetime.now(UTC)
+    transitions = [
+        {"status": "pending_approval", "at": now.isoformat(), "actor": "system"},
+        {"status": status, "at": now.isoformat(), "actor": "test"},
+    ]
     payload = {
         "schema_version": "2",
         "order": order_dict,
@@ -1600,10 +1614,7 @@ def _write_v2_pending_with_cid(tmp_path: Path, order_id: str, cid: str, status: 
         "approval_actor": "test",
         "order_hash": _compute_order_hash(order_dict),
         "status": status,
-        "status_transitions": [
-            {"status": "pending_approval", "at": now.isoformat(), "actor": "system"},
-            {"status": status, "at": now.isoformat(), "actor": "test"},
-        ],
+        "status_transitions": transitions,
         "submit_attempts": [],
         "broker_order_id": broker_order_id,
         "client_order_id": cid,
@@ -1611,6 +1622,15 @@ def _write_v2_pending_with_cid(tmp_path: Path, order_id: str, cid: str, status: 
         "fill_price": None,
         "submitted_at": None,
     }
+    payload["approval_hash"] = _compute_approval_hash(
+        order_hash=payload["order_hash"],
+        approved=payload["approved"],
+        approved_at=payload["approved_at"],
+        approval_actor=payload["approval_actor"],
+        status=payload["status"],
+        status_transitions=transitions,
+        expires_at=payload["expires_at"],
+    )
     # Add realistic submit_attempt for post-submit statuses
     if status in ("submit_requested", "submit_uncertain", "reconciliation_required", "acknowledged", "failed", "submit_prepare_failed"):
         payload["status_transitions"].insert(1, {

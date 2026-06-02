@@ -33,6 +33,9 @@ class ApprovalManager:
         expires_at = now + timedelta(minutes=ttl_minutes)
         order_dict = _order_to_dict(order)
         order_hash = _compute_order_hash(order_dict)
+        transitions = [
+            {"status": "pending_approval", "at": now.isoformat(), "actor": "system"}
+        ]
         payload: dict[str, Any] = {
             "schema_version": "2",
             "order": order_dict,
@@ -43,9 +46,7 @@ class ApprovalManager:
             "approval_actor": None,
             "order_hash": order_hash,
             "status": "pending_approval",
-            "status_transitions": [
-                {"status": "pending_approval", "at": now.isoformat(), "actor": "system"}
-            ],
+            "status_transitions": transitions,
             "submit_attempts": [],
             "broker_order_id": None,
             "client_order_id": None,
@@ -53,6 +54,15 @@ class ApprovalManager:
             "fill_price": None,
             "submitted_at": None,
         }
+        payload["approval_hash"] = _compute_approval_hash(
+            order_hash=order_hash,
+            approved=False,
+            approved_at=None,
+            approval_actor=None,
+            status="pending_approval",
+            status_transitions=transitions,
+            expires_at=expires_at.isoformat(),
+        )
         path = self.path_for(order.id)
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return path
@@ -83,6 +93,15 @@ class ApprovalManager:
         payload["status_transitions"].append(
             {"status": "approved", "at": now.isoformat(), "actor": actor}
         )
+        payload["approval_hash"] = _compute_approval_hash(
+            order_hash=payload["order_hash"],
+            approved=True,
+            approved_at=now.isoformat(),
+            approval_actor=actor,
+            status="approved",
+            status_transitions=payload["status_transitions"],
+            expires_at=payload["expires_at"],
+        )
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return path
 
@@ -100,7 +119,26 @@ class ApprovalManager:
                 expires_at = expires_at.replace(tzinfo=UTC)
             if datetime.now(UTC) > expires_at:
                 return False
-            return bool(payload.get("approved")) and payload.get("status") == "approved"
+            if not payload.get("approved") or payload.get("status") != "approved":
+                return False
+            actor = payload.get("approval_actor")
+            if not actor or actor == "unknown":
+                return False
+            approval_hash = payload.get("approval_hash")
+            if not approval_hash or not isinstance(approval_hash, str):
+                return False
+            recomputed = _compute_approval_hash(
+                order_hash=payload.get("order_hash", ""),
+                approved=payload.get("approved"),
+                approved_at=payload.get("approved_at"),
+                approval_actor=actor,
+                status=payload.get("status", ""),
+                status_transitions=payload.get("status_transitions", []),
+                expires_at=payload.get("expires_at", ""),
+            )
+            if approval_hash != recomputed:
+                return False
+            return True
         except (
             json.JSONDecodeError,
             InvalidPendingOrderError,
@@ -152,6 +190,38 @@ def _order_to_dict(order: Order) -> dict[str, object]:
 def _compute_order_hash(order_dict: dict[str, Any]) -> str:
     """Compute sha256 of canonical JSON of the immutable order payload only."""
     canonical = json.dumps(order_dict, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _compute_approval_hash(
+    order_hash: str,
+    approved: bool,
+    approved_at: str | None,
+    approval_actor: str | None,
+    status: str,
+    status_transitions: list[dict[str, Any]],
+    expires_at: str,
+) -> str:
+    """Compute sha256 of canonical JSON of approval decision fields.
+
+    This binds order_hash, approved, approved_at, approval_actor, status,
+    status_transitions, and expires_at into a single tamper-evident value.
+    It is NOT cryptographic authentication against a local write-capable
+    attacker; it only detects accidental or naive tampering.
+    """
+    canonical = json.dumps(
+        {
+            "order_hash": order_hash,
+            "approved": approved,
+            "approved_at": approved_at,
+            "approval_actor": approval_actor,
+            "status": status,
+            "status_transitions": status_transitions,
+            "expires_at": expires_at,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
@@ -298,6 +368,10 @@ def _validate_v2_top_level_schema(payload: dict[str, Any]) -> None:
     _require_iso_datetime(payload.get("expires_at"), "pending order schema invalid")
     _require_optional_non_empty_string(payload.get("approval_actor"), "pending order schema invalid")
 
+    approval_hash = payload.get("approval_hash")
+    if approval_hash is not None and (not isinstance(approval_hash, str) or not approval_hash.strip()):
+        raise InvalidPendingOrderError("pending order schema invalid")
+
     order_hash = payload.get("order_hash")
     if not isinstance(order_hash, str) or not order_hash.strip():
         raise InvalidPendingOrderError("missing order_hash")
@@ -327,6 +401,9 @@ def _validate_v2_payload_integrity(payload: dict[str, Any]) -> None:
     """Validate that a v2 pending order's order_hash matches its order payload
     and that the order payload is structurally valid.
 
+    For approved orders, also validates the approval_hash to detect tampering
+    with approval decision fields.
+
     Raises InvalidPendingOrderError on any mismatch or missing required field.
     """
     _validate_v2_top_level_schema(payload)
@@ -341,12 +418,38 @@ def _validate_v2_payload_integrity(payload: dict[str, Any]) -> None:
         raise InvalidPendingOrderError("order hash mismatch")
     _validate_order_payload(order)
 
+    # Approval decision integrity: required for approved orders
+    approved = payload.get("approved")
+    status = payload.get("status")
+    if approved and status == "approved":
+        approval_hash = payload.get("approval_hash")
+        if not approval_hash or not isinstance(approval_hash, str):
+            raise InvalidPendingOrderError("missing approval_hash for approved order")
+        actor = payload.get("approval_actor")
+        if not actor or actor == "unknown":
+            raise InvalidPendingOrderError("invalid approval_actor for approved order")
+        recomputed_approval = _compute_approval_hash(
+            order_hash=stored_hash,
+            approved=approved,
+            approved_at=payload.get("approved_at"),
+            approval_actor=actor,
+            status=status,
+            status_transitions=payload.get("status_transitions", []),
+            expires_at=payload.get("expires_at", ""),
+        )
+        if approval_hash != recomputed_approval:
+            raise InvalidPendingOrderError("approval hash mismatch")
+
 
 def _upgrade_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
     """Safely upgrade a v1 pending order payload to v2.
 
     Preserves existing created_at and expires_at when present.
     Missing expires_at is preserved as None (callers should fail closed).
+
+    v1 approved orders are NOT automatically trusted; approval is stripped
+    and the order reverts to pending_approval so it must be re-approved
+    through the proper v2 approval flow with integrity.
     """
     order_dict = payload.get("order")
     if not isinstance(order_dict, dict):
@@ -356,24 +459,28 @@ def _upgrade_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
     approved = payload.get("approved", False)
     approved_at = payload.get("approved_at")
     expires_at = payload.get("expires_at")
-    status = "approved" if approved else "pending_approval"
+
+    # Fail closed: strip v1 approval. v1 approved orders must be re-approved.
+    if approved:
+        approved = False
+        approved_at = None
+
+    status = "pending_approval"
+    approval_actor = None
     transitions: list[dict[str, Any]] = []
     if created_at:
         transitions.append(
             {"status": "pending_approval", "at": created_at, "actor": "system"}
         )
-    if approved and approved_at:
-        transitions.append(
-            {"status": "approved", "at": approved_at, "actor": "unknown"}
-        )
-    return {
+
+    result: dict[str, Any] = {
         "schema_version": "2",
         "order": order_dict,
         "approved": approved,
         "created_at": created_at,
         "approved_at": approved_at,
         "expires_at": expires_at,
-        "approval_actor": "unknown" if approved else None,
+        "approval_actor": approval_actor,
         "order_hash": order_hash,
         "status": status,
         "status_transitions": transitions,
@@ -384,6 +491,18 @@ def _upgrade_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
         "fill_price": None,
         "submitted_at": None,
     }
+
+    result["approval_hash"] = _compute_approval_hash(
+        order_hash=order_hash,
+        approved=approved,
+        approved_at=approved_at,
+        approval_actor=approval_actor,
+        status=status,
+        status_transitions=transitions,
+        expires_at=expires_at or "",
+    )
+
+    return result
 
 
 def _validate_approval_id(order_id: str) -> str:

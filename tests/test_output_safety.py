@@ -582,11 +582,17 @@ class TestReconcileBrokerLookupSafety:
         from atlas_agent.execution.order import Order
 
         def _write(order_id: str, status: str = "submit_uncertain", cid: str = "atlas-test-cid"):
+            from atlas_agent.execution.approval import _compute_approval_hash
             order = Order(symbol="TEST", side="buy", quantity=1.0, limit_price=100.0, confidence=1.0, stop_loss=95.0)
             manager = ApprovalManager(tmp_path / "pending")
             path = manager.path_for(order_id)
             order_dict = _order_to_dict(order)
             now = datetime.now(UTC).isoformat()
+            transitions = [
+                {"status": "pending_approval", "at": now, "actor": "system"},
+                {"status": "approved", "at": now, "actor": "test"},
+                {"status": "submit_requested", "at": now, "actor": "submit:cli"},
+            ]
             payload = {
                 "schema_version": "2",
                 "order": order_dict,
@@ -597,11 +603,7 @@ class TestReconcileBrokerLookupSafety:
                 "approval_actor": "test",
                 "order_hash": _compute_order_hash(order_dict),
                 "status": status,
-                "status_transitions": [
-                    {"status": "pending_approval", "at": now, "actor": "system"},
-                    {"status": "approved", "at": now, "actor": "test"},
-                    {"status": "submit_requested", "at": now, "actor": "submit:cli"},
-                ],
+                "status_transitions": transitions,
                 "submit_attempts": [{
                     "attempt_id": "b1d7ed33-8092-4eca-beed-ddef20ae4319",
                     "client_order_id": cid,
@@ -619,6 +621,15 @@ class TestReconcileBrokerLookupSafety:
                 "fill_price": None,
                 "submitted_at": None,
             }
+            payload["approval_hash"] = _compute_approval_hash(
+                order_hash=payload["order_hash"],
+                approved=payload["approved"],
+                approved_at=payload["approved_at"],
+                approval_actor=payload["approval_actor"],
+                status=payload["status"],
+                status_transitions=transitions,
+                expires_at=payload["expires_at"],
+            )
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
             return manager, path

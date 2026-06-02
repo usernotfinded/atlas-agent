@@ -116,7 +116,7 @@ class RiskConfig(BaseModel):
     max_portfolio_exposure: float = 1000.0
     max_order_notional: float = 100.0
     allow_leverage: bool = False
-    minimum_confidence: float = 0.55
+    minimum_confidence: float = 0.6
     require_stop_loss_live: bool = True
     enforce_market_hours: bool = False
     symbol_allowlist: Optional[Set[str]] = None
