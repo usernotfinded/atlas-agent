@@ -3,7 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PYTHON_BIN="${PYTHON_BIN:-python3.11}"
+source "$SCRIPT_DIR/python_env.sh"
+PYTHON_BIN="$(resolve_python_bin)"
+require_python_311 "$PYTHON_BIN"
 
 cd "$REPO_ROOT"
 
