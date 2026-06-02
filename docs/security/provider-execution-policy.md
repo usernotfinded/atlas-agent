@@ -124,7 +124,19 @@ Every future provider call must produce or reference:
 - No raw response body, raw prompt body, or raw request body is stored in the schema contract.
 - Forbidden fragments are rejected, not redacted, in schema contract content.
 
-## 11. Release Gate Policy
+## 11. Provider Response Review Result Policy
+
+- Review result contract artifacts are local-only and configless.
+- Review result contract defines how a future manual review result must be recorded, bounded, redacted, validated, and kept non-authorizing.
+- **No review result is present in this batch.** Missing future response artifact is expected.
+- Manual review gate remains **closed**. No review result can open it.
+- Review result does **not** make any provider response trusted.
+- Review result does **not** authorize trading, order creation, order approval, or broker calls.
+- No raw review notes, raw response body, or raw prompt body is stored in the review result.
+- Trust upgrade is **not implemented** and cannot be triggered by a review result.
+- Forbidden fragments are rejected, not redacted, in review result content.
+
+## 12. Release Gate Policy
 
 - The **full release gate** (`scripts/release_check.sh --full`) remains required before any push or tag.
 - Provider integration requires **new focused gates**:
@@ -133,5 +145,8 @@ Every future provider call must produce or reference:
   - Tests that prove provider responses cannot create orders.
   - Tests that prove outbound payloads are denylist-clean.
   - Tests that prove schema contract manual review gate is closed.
+- Tests that prove review result contract manual review gate is closed.
+- Tests that prove review result cannot make response trusted.
+- Tests that prove review result cannot authorize trading.
 - CI must remain **secret-free by default**.
 - Documentation must be updated to reflect new capabilities **without overclaiming**.
