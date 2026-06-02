@@ -20,6 +20,17 @@ dependencies = [
 license = { text = "MIT" }
 authors = [{ name = "Atlas Agent Contributors" }]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-xdist>=3.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.6",
+    "mypy>=1.0",
+    "build>=1.0",
+    "pip-audit>=2.0",
+]
+
 [project.scripts]
 atlas = "atlas_agent.cli:main"
 

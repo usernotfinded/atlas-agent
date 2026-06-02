@@ -95,7 +95,11 @@ class TestCiWorkflow:
         assert "git add ." not in ci_content
 
     def test_does_not_run_live_trading(self, ci_content: str) -> None:
-        assert "live" not in ci_content.lower() or "mode: paper" in ci_content.lower()
+        ci_lower = ci_content.lower()
+        # Reject explicit live-trading mode references, not innocent substrings
+        # like filenames containing "live" (e.g. test_live_submit_safety_contract_docs.py)
+        forbidden = ["mode: live", "atlas_mode=live", "--mode live", "run --live"]
+        assert not any(f in ci_lower for f in forbidden)
 
     def test_no_cached_diff(self, ci_content: str) -> None:
         assert "git diff --cached --check" not in ci_content
@@ -218,6 +222,37 @@ class TestReleaseGateWorkflow:
 
     def test_clean_install_uses_allow_network(self, release_gate_content: str) -> None:
         assert "check_clean_install.py --allow-network" in release_gate_content
+
+
+class TestFullTestWorkflow:
+    @pytest.fixture
+    def full_test_content(self) -> str:
+        path = _repo_root() / ".github" / "workflows" / "full-test.yml"
+        assert path.exists(), "full-test.yml must exist"
+        return path.read_text(encoding="utf-8")
+
+    def test_exists(self, full_test_content: str) -> None:
+        assert full_test_content
+
+    def test_uses_python_311(self, full_test_content: str) -> None:
+        assert "3.11" in full_test_content
+
+    def test_is_label_gated_for_pull_requests(self, full_test_content: str) -> None:
+        assert "full-ci" in full_test_content
+        assert "contains(github.event.pull_request.labels.*.name, 'full-ci')" in full_test_content
+
+    def test_runs_full_pytest(self, full_test_content: str) -> None:
+        assert "python3.11 -m pytest tests/ -q -n auto" in full_test_content
+
+    def test_does_not_require_secrets(self, full_test_content: str) -> None:
+        assert "secrets." not in full_test_content.lower()
+
+    def test_does_not_publish_or_create_release(self, full_test_content: str) -> None:
+        content = full_test_content.lower()
+        assert "twine upload" not in content
+        assert "gh release create" not in content
+        assert "git push" not in full_test_content
+        assert "git tag" not in full_test_content
 
 
 class TestCiCheckScript:

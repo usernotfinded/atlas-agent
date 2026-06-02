@@ -3,7 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PYTHON_BIN="${PYTHON_BIN:-python3.11}"
+source "$SCRIPT_DIR/python_env.sh"
+PYTHON_BIN="$(resolve_python_bin)"
+require_python_311 "$PYTHON_BIN"
 
 cd "$REPO_ROOT"
 
@@ -42,7 +44,7 @@ Options:
   --help, -h  Show this help message.
 
 Environment:
-  PYTHON_BIN                    Python interpreter to use (default: python3.11).
+  PYTHON_BIN                    Python interpreter to use (default: python3.11, then python).
   ATLAS_CHECK_FAIL_FAST=1       Pass -x to pytest invocations.
   ATLAS_CHECK_LAST_FAILED=1     Pass --lf to pytest invocations.
   ATLAS_CHECK_PYTEST_ARGS       Extra arguments appended to pytest invocations.
@@ -84,19 +86,19 @@ echo ""
 echo "========================================"
 echo "1. pytest"
 echo "========================================"
-$PYTHON_BIN -m pytest -q
+"$PYTHON_BIN" -m pytest -q
 
 echo ""
 echo "========================================"
 echo "2. pip check"
 echo "========================================"
-$PYTHON_BIN -m pip check
+"$PYTHON_BIN" -m pip check
 
 echo ""
 echo "========================================"
 echo "3. reviewer golden-path smoke"
 echo "========================================"
-$PYTHON_BIN scripts/smoke_reviewer_golden_path.py --skip-release-check
+"$PYTHON_BIN" scripts/smoke_reviewer_golden_path.py --skip-release-check
 
 echo ""
 echo "========================================"
@@ -126,19 +128,19 @@ echo ""
 echo "========================================"
 echo "8. protected staged files"
 echo "========================================"
-$PYTHON_BIN scripts/check_no_protected_staged.py
+"$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""
 echo "========================================"
 echo "9. version consistency"
 echo "========================================"
-$PYTHON_BIN scripts/check_version_consistency.py
+"$PYTHON_BIN" scripts/check_version_consistency.py
 
 echo ""
 echo "========================================"
 echo "10. forbidden claims scan"
 echo "========================================"
-$PYTHON_BIN scripts/check_forbidden_claims.py
+"$PYTHON_BIN" scripts/check_forbidden_claims.py
 
 echo ""
 echo "========================================"

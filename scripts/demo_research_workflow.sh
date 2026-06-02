@@ -3,13 +3,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PYTHON_BIN="${PYTHON_BIN:-python3.11}"
+source "$SCRIPT_DIR/python_env.sh"
+PYTHON_BIN="$(resolve_python_bin)"
+require_python_311 "$PYTHON_BIN"
 DEMO_SYMBOL="${DEMO_SYMBOL:-ATLAS-DEMO}"
-
-if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
-  printf 'Missing prerequisite: %s is not available on PATH.\n' "$PYTHON_BIN" >&2
-  exit 1
-fi
 
 KEEP_WORKSPACE=0
 if [ "${1:-}" = "--keep-workspace" ] || [ "${ATLAS_KEEP_RESEARCH_DEMO_DIR:-}" = "1" ]; then
