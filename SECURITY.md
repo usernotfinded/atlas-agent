@@ -81,5 +81,6 @@ Atlas Agent maintains a safe-by-default posture:
 - The kill switch provides hierarchical emergency stop modes.
 - Audit logs are tamper-evident with cryptographic hash-chains.
 - The dashboard is strictly read-only and does not expose secrets.
+- The Telegram remote control plane is strictly opt-in, disabled by default, and requires the operator to supply their own authenticated webhook routing. It does not bypass local risk gates or human approval.
 
 This project does **not** claim live trading readiness, production trading readiness, or safe-to-trade status. Always use paper mode until you are fully confident in your configuration.
