@@ -383,3 +383,57 @@ class TestProviderAuditPackWorkflow:
         assert "TRADING_MODE: paper" in audit_pack_content
         assert "ENABLE_LIVE_TRADING: \"false\"" in audit_pack_content
         assert "PROVIDER_EXECUTION_ENABLED: \"false\"" in audit_pack_content
+
+class TestReleaseAssuranceWorkflow:
+    @pytest.fixture
+    def release_assurance_content(self) -> str:
+        path = _repo_root() / ".github" / "workflows" / "release-assurance.yml"
+        assert path.exists(), "release-assurance.yml must exist"
+        return path.read_text(encoding="utf-8")
+
+    def test_exists(self, release_assurance_content: str) -> None:
+        assert release_assurance_content
+
+    def test_triggers_workflow_dispatch_only(self, release_assurance_content: str) -> None:
+        assert "workflow_dispatch:" in release_assurance_content
+        assert "push:" not in release_assurance_content
+        assert "pull_request:" not in release_assurance_content
+        assert "schedule:" not in release_assurance_content
+
+    def test_permissions_read_only(self, release_assurance_content: str) -> None:
+        assert "permissions:" in release_assurance_content
+        assert "contents: read" in release_assurance_content
+
+    def test_does_not_reference_secrets(self, release_assurance_content: str) -> None:
+        assert "secrets." not in release_assurance_content.lower()
+
+    def test_does_not_publish_or_release(self, release_assurance_content: str) -> None:
+        content = release_assurance_content.lower()
+        assert "twine upload" not in content
+        assert "gh release create" not in content
+        assert "git push" not in content
+        assert "git tag" not in content
+
+    def test_runs_version_consistency(self, release_assurance_content: str) -> None:
+        assert "scripts/check_version_consistency.py" in release_assurance_content
+
+    def test_runs_forbidden_claims(self, release_assurance_content: str) -> None:
+        assert "scripts/check_forbidden_claims.py" in release_assurance_content
+
+    def test_runs_release_check_quick(self, release_assurance_content: str) -> None:
+        assert "release_check.sh --quick" in release_assurance_content
+
+    def test_runs_release_assurance(self, release_assurance_content: str) -> None:
+        assert "scripts/release_assurance.py" in release_assurance_content
+
+    def test_uploads_artifact(self, release_assurance_content: str) -> None:
+        assert "actions/upload-artifact" in release_assurance_content
+        assert "release-assurance-" in release_assurance_content
+
+    def test_fetches_tags(self, release_assurance_content: str) -> None:
+        assert "fetch-tags: true" in release_assurance_content
+
+    def test_disables_trading(self, release_assurance_content: str) -> None:
+        assert "ENABLE_LIVE_TRADING: \"false\"" in release_assurance_content
+        assert "PROVIDER_EXECUTION_ENABLED: \"false\"" in release_assurance_content
+        assert "BROKER_EXECUTION_ENABLED: \"false\"" in release_assurance_content

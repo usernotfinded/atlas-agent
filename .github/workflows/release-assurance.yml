@@ -1,0 +1,60 @@
+name: Release Assurance
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release tag to verify"
+        required: true
+        default: "v0.5.9"
+
+permissions:
+  contents: read
+
+jobs:
+  release-assurance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      ENABLE_LIVE_TRADING: "false"
+      PROVIDER_EXECUTION_ENABLED: "false"
+      BROKER_EXECUTION_ENABLED: "false"
+      RELEASE_TAG: "${{ inputs.release }}"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run static release checks
+        run: |
+          python scripts/check_version_consistency.py
+          python scripts/check_forbidden_claims.py
+          ./scripts/release_check.sh --quick
+
+      - name: Generate release assurance pack
+        run: |
+          python scripts/release_assurance.py \
+            --version "${RELEASE_TAG}" \
+            --output "artifacts/release_assurance/${RELEASE_TAG}-ci"
+
+      - name: Upload release assurance artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assurance-${{ inputs.release }}
+          path: artifacts/release_assurance/${{ inputs.release }}-ci
+          if-no-files-found: error
+          retention-days: 14

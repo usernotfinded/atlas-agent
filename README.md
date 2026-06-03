@@ -438,3 +438,11 @@ python scripts/release_assurance.py --version v0.5.9 --output artifacts/release_
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
 
 It does not create tags, publish packages, call providers, enable trading, or modify runtime behavior.
+
+## CI release assurance
+
+`.github/workflows/release-assurance.yml` can be run manually with `workflow_dispatch` to generate a fresh release assurance pack in GitHub Actions.
+
+The workflow verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims, then uploads the generated assurance pack as an artifact.
+
+It is read-only and non-publishing. It does not create tags, create GitHub releases, publish to PyPI, use secrets, call providers, touch brokers, or enable trading.
