@@ -174,3 +174,113 @@ def test_provider_preflight_does_not_touch_protected_boundaries():
             purpose="test",
         )
     mock_resolver.assert_not_called()
+
+
+def test_validate_valid_artifact():
+    from atlas_agent.providers.provider_preflight import generate_call_plan_artifact, validate_call_plan_artifact
+    artifact = generate_call_plan_artifact(
+        provider_id="openrouter", model_id="openrouter/auto", purpose="research-summary"
+    )
+    # Should not raise
+    validate_call_plan_artifact(artifact)
+
+def test_validate_missing_or_true_safety_flag():
+    from atlas_agent.providers.provider_preflight import generate_call_plan_artifact, validate_call_plan_artifact, PreflightValidationError
+    import pytest
+    artifact = generate_call_plan_artifact(
+        provider_id="openrouter", model_id="openrouter/auto", purpose="research-summary"
+    )
+    artifact["safety_flags"]["provider_enabled"] = True
+    with pytest.raises(PreflightValidationError, match="Safety flag provider_enabled must be false"):
+        validate_call_plan_artifact(artifact)
+
+def test_validate_raw_body_field():
+    from atlas_agent.providers.provider_preflight import generate_call_plan_artifact, validate_call_plan_artifact, PreflightValidationError
+    import pytest
+    artifact = generate_call_plan_artifact(
+        provider_id="openrouter", model_id="openrouter/auto", purpose="research-summary"
+    )
+    artifact["payload_minimization_summary"]["raw_prompt_body_stored"] = True
+    with pytest.raises(PreflightValidationError, match="raw_prompt_body_stored must be false"):
+        validate_call_plan_artifact(artifact)
+
+def test_validate_secret_looking_value():
+    from atlas_agent.providers.provider_preflight import generate_call_plan_artifact, validate_call_plan_artifact, PreflightValidationError
+    import pytest
+    artifact = generate_call_plan_artifact(
+        provider_id="openrouter", model_id="openrouter/auto", purpose="research-summary"
+    )
+    artifact["extra_notes"] = "My super password is password123"
+    with pytest.raises(PreflightValidationError, match="Artifact contains forbidden secret-like fragment in string value"):
+        validate_call_plan_artifact(artifact)
+
+def test_validate_absolute_path():
+    from atlas_agent.providers.provider_preflight import generate_call_plan_artifact, validate_call_plan_artifact, PreflightValidationError
+    import pytest
+    artifact = generate_call_plan_artifact(
+        provider_id="openrouter", model_id="openrouter/auto", purpose="research-summary"
+    )
+    artifact["path"] = "/var/secret/path"
+    with pytest.raises(PreflightValidationError, match="Artifact contains forbidden absolute path in string value"):
+        validate_call_plan_artifact(artifact)
+
+def test_validate_forbidden_field():
+    from atlas_agent.providers.provider_preflight import generate_call_plan_artifact, validate_call_plan_artifact, PreflightValidationError
+    import pytest
+    artifact = generate_call_plan_artifact(
+        provider_id="openrouter", model_id="openrouter/auto", purpose="research-summary"
+    )
+    artifact["api_key"] = "test"
+    with pytest.raises(PreflightValidationError, match="Artifact contains forbidden field: api_key"):
+        validate_call_plan_artifact(artifact)
+
+def test_cli_validate_preflight(tmp_path):
+    from atlas_agent.cli import main
+    from atlas_agent.providers.provider_preflight import generate_call_plan_artifact
+    import json
+
+    artifact = generate_call_plan_artifact(
+        provider_id="openrouter", model_id="openrouter/auto", purpose="research-summary"
+    )
+    p = tmp_path / "valid.json"
+    p.write_text(json.dumps(artifact))
+
+    # Needs a mock of sys.argv. Test via subprocess to be safe
+    import subprocess
+    import sys
+    result = subprocess.run(
+        [sys.executable, "-m", "atlas_agent.cli", "providers", "validate-preflight", str(p)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "Artifact is valid and safe." in result.stdout
+
+def test_cli_validate_preflight_invalid(tmp_path):
+    import json
+    p = tmp_path / "invalid.json"
+    p.write_text(json.dumps({"artifact_type": "wrong"}))
+
+    import subprocess
+    import sys
+    result = subprocess.run(
+        [sys.executable, "-m", "atlas_agent.cli", "providers", "validate-preflight", str(p)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "Validation failed:" in result.stderr
+
+def test_cli_validate_preflight_malformed_json(tmp_path):
+    p = tmp_path / "malformed.json"
+    p.write_text("{bad json")
+
+    import subprocess
+    import sys
+    result = subprocess.run(
+        [sys.executable, "-m", "atlas_agent.cli", "providers", "validate-preflight", str(p)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "Invalid JSON:" in result.stderr

@@ -94,10 +94,10 @@ from atlas_agent.workspace import (
 
 def build_parser() -> argparse.ArgumentParser:
     description = r"""
-      ___ _____ _      _   ___      _   ___ ___ _  _ _____ 
+      ___ _____ _      _   ___      _   ___ ___ _  _ _____
      / _ \_   _| |    /_\ / __|    /_\ / __| __| \| |_   _|
-    / ___ \| | | |__ / _ \\__ \   / _ \ (_ | _|| .` | | |  
-   /_/   \_|_| |____/_/ \_\___/  /_/ \_\___|___|_|\_| |_|  
+    / ___ \| | | |__ / _ \\__ \   / _ \ (_ | _|| .` | | |
+   /_/   \_|_| |____/_/ \_\___/  /_/ \_\___|___|_|\_| |_|
 
 Atlas Agent is a broker-neutral supervised trading workspace.
 It provides market research, paper workflows, and deterministic risk gates.
@@ -221,6 +221,14 @@ Safety First:
     providers_preflight.add_argument("--max-context-chars", type=int, default=4000, help="Maximum context characters")
     providers_preflight.add_argument("--output", type=Path, help="Output file path (default: artifacts/provider_preflight/<timestamp>-call-plan.json)")
     providers_preflight.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
+    providers_validate = providers_sub.add_parser(
+        "validate-preflight",
+        help="Validate a provider preflight call-plan artifact",
+        description="Validates that a local call-plan artifact meets strict safety requirements.",
+    )
+    providers_validate.add_argument("artifact_path", help="Path to the JSON artifact to validate")
+    providers_validate.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
@@ -1953,7 +1961,7 @@ def _command_requires_workspace(args: argparse.Namespace) -> bool:
         return False
     if args.command in {"init", "workspace", "models", "validate", "deploy", "configure", "setup", "discipline"}:
         return False
-    if args.command == "providers" and args.providers_command in ("list", "preflight"):
+    if args.command == "providers" and args.providers_command in ("list", "preflight", "validate-preflight"):
         return False
     if args.command == "broker" and args.brokers_command == "list":
         return False
@@ -2097,7 +2105,7 @@ def _print_first_run_onboarding(
     _print_welcome()
     workspace_configured = resolution.path is not None
     provider_configured = _provider_configured(resolution.path)
-    
+
     if config_error:
         trading_mode = "not configured"
         live_enabled = "no"
@@ -2529,7 +2537,7 @@ def main(argv: list[str] | None = None) -> int:
         from atlas_agent.config.secrets import InvalidSecretValueError, canonical_env_var
         from atlas_agent.config.paths import get_config_toml_path, get_env_atlas_path
         import json
-        
+
         if args.config_command == "paths":
             print(f"Config TOML: {get_config_toml_path()}")
             print(f"Secrets ENV: {get_env_atlas_path()}")
@@ -2566,13 +2574,13 @@ def main(argv: list[str] | None = None) -> int:
                 redact_recursive(redacted_raw)
                 print(tomlkit.dumps(redacted_raw))
             return 0
-            
+
         if args.config_command == "get":
             if is_secret_key(args.key):
                 env_var = canonical_env_var(args.key)
                 print(get_secret_status(env_var))
                 return 0
-                
+
             if getattr(args, "effective", False):
                 try:
                     config = get_config()
@@ -2593,7 +2601,7 @@ def main(argv: list[str] | None = None) -> int:
                     return 1
                 print(val)
             return 0
-            
+
         if args.config_command == "set":
             if args.key == "model.default":
                 args.key = "model.model"
@@ -2609,7 +2617,7 @@ def main(argv: list[str] | None = None) -> int:
                 set_raw_value(args.key, args.value)
                 print(f"Updated {args.key} in config.toml")
             return 0
-            
+
         if args.config_command == "unset":
             if is_secret_key(args.key):
                 env_var = canonical_env_var(args.key)
@@ -2619,14 +2627,14 @@ def main(argv: list[str] | None = None) -> int:
                 unset_raw_value(args.key)
                 print(f"Unset {args.key}")
             return 0
-            
+
         if args.config_command == "migrate":
             if migrate_legacy_config():
                 print("Successfully migrated legacy config.")
             else:
                 print("No legacy config found or migration failed.")
             return 0
-            
+
         if args.config_command == "doctor":
             from atlas_agent.providers.catalog import get_provider_profile, normalize_provider_id
             from atlas_agent.providers.runtime import resolve_runtime_provider
@@ -2673,7 +2681,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"raw prompt logging: {'enabled (redacted)' if config.audit.log_raw_prompts else 'disabled'}")
             print(f"provider text logging: {'enabled (redacted)' if config.audit.log_provider_text else 'disabled'}")
             return 0
-            
+
         if args.config_command == "edit":
             path = get_config_toml_path()
             editor = os.getenv("EDITOR", "vim")
@@ -2975,7 +2983,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"Setup failed: {exc}")
                     return 2
                 print(f"\nConfiguration saved to {config_path}")
-                
+
                 # Reload config and show final status
                 resolution = resolve_workspace(getattr(args, "workspace", None))
                 config = None
@@ -2983,7 +2991,7 @@ def main(argv: list[str] | None = None) -> int:
                     config = AtlasConfig.from_env()
                 except ValueError:
                     pass
-                
+
                 print("\nSetup completed successfully.\n")
                 _print_first_run_onboarding(
                     config=config,
@@ -3116,15 +3124,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "configure":
         from atlas_agent.setup.wizard import run_wizard, is_interactive
         from atlas_agent.setup.state import WizardState
-        
+
         if not is_interactive():
             print("Non-interactive mode detected. Cannot run UI wizard.")
             print("Please configure via environment variables or direct config file edits.")
             return 2
-            
+
         config_path = Path(".atlas/config.json")
         state = WizardState.load(config_path)
-        
+
         success = run_wizard(state)
         if success:
             try:
@@ -3133,7 +3141,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Setup failed: {exc}")
                 return 2
             print(f"Configuration saved to {config_path}")
-            
+
             # Show final status
             resolution = resolve_workspace(getattr(args, "workspace", None))
             config = None
@@ -3141,7 +3149,7 @@ def main(argv: list[str] | None = None) -> int:
                 config = AtlasConfig.from_env()
             except ValueError:
                 pass
-            
+
             print("\nConfiguration updated successfully.\n")
             _print_first_run_onboarding(
                 config=config,
@@ -3172,7 +3180,7 @@ def main(argv: list[str] | None = None) -> int:
             state_path=safety_dir / "kill_switch.json",
             heartbeat_path=safety_dir / "heartbeat.json"
         )
-        
+
         if args.kill_command == "status":
             decision = kill_switch.evaluate()
             status = kill_switch.state_manager.load()
@@ -3185,12 +3193,12 @@ def main(argv: list[str] | None = None) -> int:
             if decision.action_required:
                 print(f"  ACTION REQUIRED: {decision.action_required}")
             return 0
-            
+
         if args.kill_command == "heartbeat":
             kill_switch.heartbeat_manager.record(source="cli")
             print("Heartbeat recorded.")
             return 0
-            
+
         mode_map = {
             "soft-pause": "soft_pause",
             "cancel-all": "cancel_all",
@@ -3198,22 +3206,22 @@ def main(argv: list[str] | None = None) -> int:
             "lock": "locked_down",
             "reset": "normal"
         }
-        
+
         if args.kill_command in mode_map:
             new_mode = mode_map[args.kill_command]
             kill_switch.set_mode(new_mode, reason=f"CLI {args.kill_command}", actor="user")
             print(f"Kill switch mode set to: {new_mode}")
             return 0
-            
+
         if args.kill_command == "plan":
             from atlas_agent.safety.action_plan import SafetyActionPlanner
             from atlas_agent.risk.portfolio import get_portfolio_snapshot
-            
+
             # Use current state or simulated mode
             ks_mode = kill_switch.state_manager.load().mode
             if args.mode:
                 ks_mode = args.mode.replace("-", "_") # type: ignore
-                
+
             decision = kill_switch.evaluate()
             # Override mode if requested for simulation
             if args.mode:
@@ -3227,10 +3235,10 @@ def main(argv: list[str] | None = None) -> int:
             # Load dummy/current portfolio for planning
             portfolio_state = PortfolioState(cash=config.starting_cash)
             portfolio = get_portfolio_snapshot(portfolio_state)
-            
+
             planner = SafetyActionPlanner(risk_manager=RiskManager())
             plan = planner.create_plan(decision, portfolio, open_order_ids=[], mode="paper")
-            
+
             if getattr(args, "json", False):
                 print(plan.model_dump_json(indent=2))
                 return 0
@@ -3244,7 +3252,7 @@ def main(argv: list[str] | None = None) -> int:
             for action in plan.actions:
                 print(f"    - [{action.type.upper()}] {action.description}")
             return 0
-            
+
         if args.kill_command == "execute-plan":
             from atlas_agent.safety.models import SafetyActionPlan
             from atlas_agent.safety.executor import SafetyActionExecutor
@@ -3252,50 +3260,50 @@ def main(argv: list[str] | None = None) -> int:
             from atlas_agent.tools.registry import ToolRegistry
             from atlas_agent.tools.builtin import BUILTIN_TOOLS
             from atlas_agent.core.types import Session
-            
+
             plan_path = Path(args.plan)
             if not plan_path.exists():
                 print(f"Plan file not found: {plan_path}")
                 return 1
-                
+
             plan = SafetyActionPlan.model_validate_json(plan_path.read_text(encoding="utf-8"))
-            
+
             registry = ToolRegistry()
             for tool in BUILTIN_TOOLS:
                 registry.register(tool)
-                
+
             portfolio_state = PortfolioState(cash=config.starting_cash)
             portfolio = get_portfolio_snapshot(portfolio_state)
-            
+
             executor = SafetyActionExecutor(
                 tool_registry=registry,
                 kill_switch=kill_switch,
                 risk_manager=RiskManager()
             )
-            
+
             mode = "paper" if args.paper else "live"
             session = Session(id=f"cli_safety_{plan.plan_id}", turn_count=0, has_summarized=False)
-            
+
             result = executor.execute_plan(
-                plan, 
-                session, 
-                portfolio, 
+                plan,
+                session,
+                portfolio,
                 mode=mode, # type: ignore
                 approved=args.approved
             )
-            
+
             print(f"Safety Plan Execution Result (Mode: {mode.upper()}):")
             print(f"  Plan ID: {result.plan_id}")
             print(f"  Status: {result.status.upper()}")
             print(f"  Executed: {len(result.executed_actions)}")
             print(f"  Failed: {len(result.failed_actions)}")
             print(f"  Skipped: {len(result.skipped_actions)}")
-            
+
             if result.errors:
                 print("  Errors:")
                 for err in result.errors:
                     print(f"    - {err}")
-            
+
             return 0 if result.status == "completed" else 2
 
     if args.command == "plan":
@@ -3361,6 +3369,46 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "providers" and args.providers_command == "list":
         print("openai_compatible, anthropic, openrouter")
         return 0
+
+    if args.command == "providers" and args.providers_command == "validate-preflight":
+        import json
+        from atlas_agent.providers.provider_preflight import (
+            validate_call_plan_artifact,
+            PreflightValidationError,
+        )
+        artifact_path = Path(args.artifact_path)
+        if not artifact_path.exists():
+            print(f"File not found: {artifact_path}", file=sys.stderr)
+            return 2
+        try:
+            artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            if getattr(args, "json", False):
+                return emit_cli_error(
+                    "atlas providers validate-preflight",
+                    code="json_parse_error",
+                    message=f"Invalid JSON: {exc}"
+                )
+            print(f"Invalid JSON: {exc}", file=sys.stderr)
+            return 2
+
+        try:
+            validate_call_plan_artifact(artifact)
+        except PreflightValidationError as exc:
+            if getattr(args, "json", False):
+                return emit_cli_error(
+                    "atlas providers validate-preflight",
+                    code="preflight_validation_error",
+                    message=str(exc)
+                )
+            print(f"Validation failed: {exc}", file=sys.stderr)
+            return 1
+
+        if getattr(args, "json", False):
+            return emit_cli_success("atlas providers validate-preflight", {"valid": True})
+        print("Artifact is valid and safe.")
+        return 0
+
     if args.command == "providers" and args.providers_command == "preflight":
         import json
         from atlas_agent.providers.provider_preflight import (
@@ -3461,7 +3509,7 @@ def main(argv: list[str] | None = None) -> int:
                 slippage_bps=slippage_bps,
                 commission_bps=commission_bps
             )
-            
+
             ensure_sample_data(Path(data_path))
 
             # Use AuditWriter if available
@@ -3488,13 +3536,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Total Return:   {result.metrics.total_return_pct:.2f}%")
             print(f"Max Drawdown:   {result.metrics.max_drawdown_pct:.2f}%")
             print(f"Trade Count:    {result.metrics.trade_count}")
-            
+
             # Write JSON report to disk
             report_path = Path(".atlas/backtests") / result.run_id / "result.json"
             report_path.parent.mkdir(parents=True, exist_ok=True)
             report_path.write_text(result.model_dump_json(indent=2))
             print(f"Report saved to: {report_path}")
-            
+
             return 0
         else:
             print("Error: Use 'atlas backtest run --help' for usage.")
@@ -3533,17 +3581,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "dashboard":
         from atlas_agent.dashboard.collectors import collect_dashboard_snapshot
         from atlas_agent.dashboard.render import render_dashboard_html
-        
+
         snapshot = collect_dashboard_snapshot(config, Path.cwd())
-        
+
         if args.json:
             print(snapshot.model_dump_json(indent=2))
             return 0
-            
+
         dashboard_path = config.workspace_root / ".atlas" / "dashboard" / "index.html"
         render_dashboard_html(snapshot, dashboard_path)
         print(f"Dashboard generated: {dashboard_path}")
-        
+
         if args.open:
             import webbrowser
             webbrowser.open(f"file://{dashboard_path.resolve()}")
@@ -3554,7 +3602,7 @@ def main(argv: list[str] | None = None) -> int:
         from atlas_agent.agent.runner import run_agent
         from atlas_agent.agent.status import get_agent_status, get_agent_status_payload
         from atlas_agent.learning import run_learning_cycle, generate_reflection
-        
+
         if args.agent_command == "status":
             if getattr(args, "json", False):
                 return emit_cli_success(
