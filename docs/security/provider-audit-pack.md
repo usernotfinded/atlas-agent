@@ -46,3 +46,11 @@ audit-pack-manifest.json
 - No pending order is created.
 - No order is approved.
 - The generated pack is audit evidence only and does not authorize provider or broker execution.
+
+## Audit pack verification
+
+`atlas providers verify-audit-pack <pack_dir>` verifies that an existing audit pack is complete, internally consistent, and acceptable for external review.
+
+The command checks required files, validates embedded artifacts, rejects secret-like values, rejects absolute paths, rejects executable/script files, verifies closed safety summaries, and confirms that the pack is non-authorizing.
+
+The command is local-only. It does not call providers, load credentials, use the network, touch brokers, or enable execution.

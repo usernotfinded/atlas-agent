@@ -5,11 +5,11 @@
 ## Summary
 
 - **Overall status:** PASSED
-- **Generated at:** 2026-05-28T18:41:29.714317+00:00
-- **Package version:** 0.5.8.dev0
-- **Public stable tag:** v0.5.7
+- **Generated at:** 2026-06-03T16:10:35.356374+00:00
+- **Package version:** 0.5.9.dev0
+- **Public stable tag:** v0.5.8.1
 - **Current branch:** main
-- **Current commit:** `1377744fb196bef2ae5e85b2fbff9f5572cd5ceb`
+- **Current commit:** `89297a1c36242ba2bdb9d4ed9d14aea786d1d95c`
 - **Working tree clean:** False
 - **Diff check clean:** True
 - **Protected boundaries clean:** False
@@ -24,65 +24,106 @@
 | check_public_launch_readiness | 0 | ✓ |
 | check_stable_release_decision | 0 | ✓ |
 | check_cli_command_compatibility | 0 | ✓ |
-| smoke_reviewer_golden_path | 0 | ✓ |
-| release_check_quick | 0 | ✓ |
 
-## Changed Files Since v0.5.7
+## Changed Files Since v0.5.8
 
 ```
+M	.env.example
 M	.github/workflows/ci.yml
+A	.github/workflows/full-test.yml
+M	.github/workflows/release-gate.yml
+M	.github/workflows/research-ci.yml
+M	.gitignore
 M	CHANGELOG.md
+M	CONTRIBUTING.md
 M	README.md
-A	docs/cli-command-compatibility.md
-M	docs/feedback-request-guide.md
-M	docs/final-rc-audit.md
-M	docs/package-distribution-verification.md
-M	docs/public-faq.md
-M	docs/public-launch-messaging.md
+A	docs/audits/batch-7-post-incident-audit.md
+M	docs/cli-command-compatibility.md
+A	docs/demo/provider-preflight-demo.md
+M	docs/kill-switch.md
+M	docs/live-submit-safety-contract.md
+M	docs/product-capability-inventory.md
 M	docs/public-launch-readiness.md
-M	docs/release-checklist.md
-A	docs/release-evidence-bundle.md
-A	docs/reviewer-golden-path.md
+M	docs/reviewer-outreach-checklist.md
+A	docs/security/provider-audit-pack.md
+A	docs/security/provider-evidence-index.md
+M	docs/security/provider-execution-policy.md
+M	docs/security/provider-integration-requirements.md
+A	docs/security/provider-preflight.md
+A	docs/security/provider-readiness.md
 M	pyproject.toml
-A	scripts/build_release_evidence_bundle.py
-A	scripts/check_cli_command_compatibility.py
-M	scripts/check_public_docs_consistency.py
+M	scripts/build_release_evidence_bundle.py
+M	scripts/check_clean_install.py
+M	scripts/check_final_rc_audit.py
+M	scripts/check_package_distribution.py
 M	scripts/check_public_launch_messaging.py
 M	scripts/check_public_launch_readiness.py
+M	scripts/check_rc1_cutover.py
+M	scripts/check_reviewer_onboarding.py
 M	scripts/check_stable_release_decision.py
+A	scripts/check_submit_execution_safety.py
+M	scripts/check_v0581_hotfix_cutover.py
+M	scripts/check_v058_rc1_readiness.py
 M	scripts/check_version_consistency.py
 M	scripts/ci_check.sh
+M	scripts/demo_paper_workflow.sh
+M	scripts/demo_research_workflow.sh
 M	scripts/dev_check.sh
+A	scripts/python_env.sh
 M	scripts/release_check.sh
-A	scripts/smoke_reviewer_golden_path.py
+M	scripts/research_check.sh
 M	src/atlas_agent/__init__.py
 M	src/atlas_agent/cli.py
-M	src/atlas_agent/cli_commands/__init__.py
-A	src/atlas_agent/cli_commands/demo.py
-A	src/atlas_agent/cli_commands/deploy.py
-A	src/atlas_agent/cli_commands/events.py
-M	src/atlas_agent/cli_commands/memory.py
-A	src/atlas_agent/cli_commands/risk.py
-A	src/atlas_agent/cli_commands/update.py
-A	src/atlas_agent/cli_commands/workspace.py
-A	src/atlas_agent/cli_io.py
-A	src/atlas_agent/cli_safety.py
 M	src/atlas_agent/config/schema.py
-M	src/atlas_agent/events/log.py
-M	src/atlas_agent/execution/audit.py
-A	src/atlas_agent/research/artifact_store.py
-A	src/atlas_agent/research/command_specs.py
-A	src/atlas_agent/research/errors.py
-M	src/atlas_agent/research/session.py
-A	tests/fixtures/cli_command_contract.json
-M	tests/research/test_research_sandbox_cli.py
-A	tests/test_cli_command_compatibility.py
+M	src/atlas_agent/execution/approval.py
+M	src/atlas_agent/providers/openrouter.py
+A	src/atlas_agent/providers/provider_audit_pack.py
+A	src/atlas_agent/providers/provider_evidence_index.py
+A	src/atlas_agent/providers/provider_preflight.py
+A	src/atlas_agent/providers/provider_readiness.py
+M	src/atlas_agent/research/release_candidate_cutover.py
+M	src/atlas_agent/research/release_candidate_readiness.py
+M	src/atlas_agent/risk/limits.py
+M	src/atlas_agent/templates/routine-trader/configs/risk.example.yaml
+M	tests/execution/test_pending_order_schema.py
+M	tests/execution/test_submit_approved_order_dry_run.py
+M	tests/execution/test_submit_execution.py
+M	tests/execution/test_submit_reconcile.py
+M	tests/execution/test_submit_state.py
+M	tests/fixtures/cli_command_contract.json
+M	tests/fixtures/product_capability_inventory.json
+M	tests/research/test_release_candidate_cutover_dry_run.py
+M	tests/research/test_research_output_safety.py
+A	tests/test_approval_integrity.py
+M	tests/test_ci_workflows.py
+M	tests/test_cli.py
+M	tests/test_cli_command_compatibility.py
+M	tests/test_final_rc_audit.py
+A	tests/test_kill_switch_drift.py
+A	tests/test_live_path_safety_assertions.py
 M	tests/test_output_safety.py
+M	tests/test_package_distribution_check.py
+M	tests/test_permission_hardening.py
+M	tests/test_product_capability_inventory.py
+M	tests/test_provider_adapters.py
+A	tests/test_provider_audit_pack.py
+A	tests/test_provider_evidence_index.py
+A	tests/test_provider_evidence_report.py
+A	tests/test_provider_preflight.py
+A	tests/test_provider_readiness.py
 M	tests/test_public_launch_messaging.py
 M	tests/test_public_launch_readiness.py
-A	tests/test_release_evidence_bundle.py
-A	tests/test_reviewer_golden_path_smoke.py
+M	tests/test_rc1_cutover_consistency.py
+M	tests/test_release_check_scripts.py
+M	tests/test_reviewer_onboarding.py
+M	tests/test_reviewer_outreach.py
+A	tests/test_risk_defaults.py
 M	tests/test_stable_release_decision.py
+A	tests/test_submit_execution_safety_check.py
+M	tests/test_v0581_hotfix_cutover.py
+M	tests/test_v058_dev_version_regression.py
+M	tests/test_v058_rc1_readiness.py
+M	tests/test_v058_rc5_cutover.py
 ```
 
 ## Protected Boundary Status
@@ -91,9 +132,10 @@ M	tests/test_stable_release_decision.py
   - `M	src/atlas_agent/config/schema.py`
 - **src/atlas_agent/brokers**: ✓
 - **src/atlas_agent/execution**: ✗
-  - `M	src/atlas_agent/execution/audit.py`
+  - `M	src/atlas_agent/execution/approval.py`
 - **src/atlas_agent/safety**: ✓
-- **src/atlas_agent/risk**: ✓
+- **src/atlas_agent/risk**: ✗
+  - `M	src/atlas_agent/risk/limits.py`
 
 ## Safety Summary
 

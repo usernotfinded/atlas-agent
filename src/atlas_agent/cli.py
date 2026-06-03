@@ -294,6 +294,14 @@ Safety First:
     )
     providers_audit_pack.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
+    providers_verify_audit_pack = providers_sub.add_parser(
+        "verify-audit-pack",
+        help="Verify a local provider audit pack",
+        description="Verify a complete provider audit pack for safety and correctness. Local-only.",
+    )
+    providers_verify_audit_pack.add_argument("pack_dir", type=Path, help="Path to the audit pack directory")
+    providers_verify_audit_pack.add_argument("--json", action="store_true", help="Emit result as JSON")
+
     providers_capability = providers_sub.add_parser(
         "capability-inventory",
         help="Generate a local provider capability inventory.",
@@ -2241,6 +2249,60 @@ def _run_provider_smoke_preflight_chain(args: argparse.Namespace) -> int:
     return 0
 
 
+
+def _run_provider_verify_audit_pack(args: argparse.Namespace) -> int:
+    from atlas_agent.providers.provider_audit_pack import (
+        AuditPackVerificationError,
+        ProviderAuditPackIOError,
+        verify_provider_audit_pack,
+    )
+
+    command = "atlas providers verify-audit-pack"
+    try:
+        result = verify_provider_audit_pack(args.pack_dir)
+    except ProviderAuditPackIOError as exc:
+        message = f"Provider audit pack verification failed: {exc}"
+        if getattr(args, "json", False):
+            emit_json({"valid": False, "accepted_for_external_review": False, "findings": [message]})
+            return 2
+        print(message, file=sys.stderr)
+        return 2
+    except AuditPackVerificationError as exc:
+        message = f"Provider audit pack verification failed: {exc}"
+        if getattr(args, "json", False):
+            emit_json({"valid": False, "accepted_for_external_review": False, "findings": [message]})
+            return 1
+        print(message, file=sys.stderr)
+        return 1
+    except Exception as exc:
+        message = f"Provider audit pack verification failed: {exc}"
+        if getattr(args, "json", False):
+            emit_json({"valid": False, "accepted_for_external_review": False, "findings": [message]})
+            return 2
+        print(message, file=sys.stderr)
+        return 2
+
+    if not result.get("valid") or not result.get("accepted_for_external_review"):
+        if getattr(args, "json", False):
+            emit_json(result)
+            return 1
+
+        findings = result.get("findings", [])
+        if findings:
+            reason = findings[0]
+        else:
+            reason = "validation failed"
+        print(f"Provider audit pack verification failed: {reason}", file=sys.stderr)
+        return 1
+
+    if getattr(args, "json", False):
+        emit_json(result)
+        return 0
+
+    print("Provider audit pack is valid and accepted for external review.")
+    return 0
+
+
 def _run_provider_audit_pack(args: argparse.Namespace) -> int:
     from atlas_agent.providers.provider_audit_pack import (
         ProviderAuditPackIOError,
@@ -3357,6 +3419,11 @@ def main(argv: list[str] | None = None) -> int:
         if resolution.path is not None:
             os.chdir(resolution.path)
         return _run_provider_audit_pack(args)
+    if args.command == "providers" and getattr(args, "providers_command", None) == "verify-audit-pack":
+        resolution = resolve_workspace(getattr(args, "workspace", None))
+        if resolution.path is not None:
+            os.chdir(resolution.path)
+        return _run_provider_verify_audit_pack(args)
 
     # Configless local research commands: resolve workspace only, never load secrets
     _CONFIGLESS_RESEARCH_COMMANDS = CONFIGLESS_RESEARCH_COMMANDS
