@@ -244,6 +244,14 @@ Safety First:
     )
     providers_bundle.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
+    providers_verify_bundle = providers_sub.add_parser(
+        "verify-preflight-bundle",
+        help="Verify a local provider preflight evidence bundle",
+        description="Verify a local-only provider preflight evidence bundle. No provider calls, no network, no credentials.",
+    )
+    providers_verify_bundle.add_argument("bundle_dir", help="Path to the evidence bundle directory")
+    providers_verify_bundle.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
@@ -1975,7 +1983,7 @@ def _command_requires_workspace(args: argparse.Namespace) -> bool:
         return False
     if args.command in {"init", "workspace", "models", "validate", "deploy", "configure", "setup", "discipline"}:
         return False
-    if args.command == "providers" and args.providers_command in ("list", "preflight", "validate-preflight", "bundle-preflight"):
+    if args.command == "providers" and args.providers_command in ("list", "preflight", "validate-preflight", "bundle-preflight", "verify-preflight-bundle"):
         return False
     if args.command == "broker" and args.brokers_command == "list":
         return False
@@ -2029,6 +2037,48 @@ def _run_provider_bundle_preflight(args: argparse.Namespace) -> int:
         return emit_cli_success(command, result)
 
     print(f"Provider preflight evidence bundle created at {display_path(Path(result['bundle_dir']))}")
+    return 0
+
+
+def _run_provider_verify_preflight_bundle(args: argparse.Namespace) -> int:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    command = "atlas providers verify-preflight-bundle"
+    try:
+        result = verify_preflight_evidence_bundle(Path(args.bundle_dir))
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as exc:
+        message = f"Unable to read bundle: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(command, code="bundle_input_error", message=message)
+        print(f"Provider preflight evidence bundle verification failed: {message}", file=sys.stderr)
+        return 2
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        message = f"Malformed JSON: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(command, code="json_parse_error", message=message)
+        print(f"Provider preflight evidence bundle verification failed: {message}", file=sys.stderr)
+        return 2
+    except PreflightBundleVerificationError as exc:
+        message = str(exc)
+        if getattr(args, "json", False):
+            emit_json(error_envelope(command, code="bundle_verification_failed", message=message))
+            return 1
+        print(f"Provider preflight evidence bundle verification failed: {message}", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        message = f"Unable to read bundle: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(command, code="bundle_input_error", message=message)
+        print(f"Provider preflight evidence bundle verification failed: {message}", file=sys.stderr)
+        return 2
+
+    if getattr(args, "json", False):
+        return emit_cli_success(command, result)
+
+    print("Provider preflight evidence bundle is valid.")
     return 0
 
 
@@ -3084,6 +3134,11 @@ def main(argv: list[str] | None = None) -> int:
         if resolution.path is not None:
             os.chdir(resolution.path)
         return _run_provider_bundle_preflight(args)
+    if args.command == "providers" and getattr(args, "providers_command", None) == "verify-preflight-bundle":
+        resolution = resolve_workspace(getattr(args, "workspace", None))
+        if resolution.path is not None:
+            os.chdir(resolution.path)
+        return _run_provider_verify_preflight_bundle(args)
 
     # Configless local research commands: resolve workspace only, never load secrets
     _CONFIGLESS_RESEARCH_COMMANDS = CONFIGLESS_RESEARCH_COMMANDS

@@ -135,3 +135,11 @@ This ensures:
 - `sha256sums.txt`
 
 The command validates the artifact first. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
+
+## Bundle verification
+
+`atlas providers verify-preflight-bundle <bundle_dir>` verifies an existing evidence bundle.
+
+It checks required files, relative-path SHA-256 sums, manifest safety state, validation report state, and the embedded call-plan artifact.
+
+The command is local-only. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
