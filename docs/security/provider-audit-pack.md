@@ -54,3 +54,11 @@ audit-pack-manifest.json
 The command checks required files, validates embedded artifacts, rejects secret-like values, rejects absolute paths, rejects executable/script files, verifies closed safety summaries, and confirms that the pack is non-authorizing.
 
 The command is local-only. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
+
+## CI audit pack artifact
+
+`.github/workflows/provider-audit-pack.yml` can be run manually with `workflow_dispatch` to generate and verify a provider audit pack in GitHub Actions.
+
+The workflow uploads the audit pack as a CI artifact for external review.
+
+It is manual-only and non-authorizing. It does not call providers, load credentials, use secrets, touch brokers, enable execution, create orders, publish packages, create releases, or create tags.

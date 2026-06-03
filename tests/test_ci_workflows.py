@@ -332,3 +332,54 @@ class TestCiCheckScript:
         ]
         for pattern in forbidden:
             assert pattern not in ci_check_content, f"ci_check.sh contains forbidden pattern: {pattern}"
+
+class TestProviderAuditPackWorkflow:
+    @pytest.fixture
+    def audit_pack_content(self) -> str:
+        path = _repo_root() / ".github" / "workflows" / "provider-audit-pack.yml"
+        assert path.exists(), "provider-audit-pack.yml must exist"
+        return path.read_text(encoding="utf-8")
+
+    def test_exists(self, audit_pack_content: str) -> None:
+        assert audit_pack_content
+
+    def test_triggers_workflow_dispatch_only(self, audit_pack_content: str) -> None:
+        assert "workflow_dispatch:" in audit_pack_content
+        assert "push:" not in audit_pack_content
+        assert "pull_request:" not in audit_pack_content
+        assert "schedule:" not in audit_pack_content
+
+    def test_permissions_read_only(self, audit_pack_content: str) -> None:
+        assert "permissions:" in audit_pack_content
+        assert "contents: read" in audit_pack_content
+
+    def test_does_not_reference_secrets(self, audit_pack_content: str) -> None:
+        assert "secrets." not in audit_pack_content.lower()
+
+    def test_does_not_reference_provider_api_keys(self, audit_pack_content: str) -> None:
+        content = audit_pack_content.upper()
+        assert "API_KEY" not in content
+        assert "TOKEN" not in content
+        assert "PASSWORD" not in content
+
+    def test_does_not_publish_or_release(self, audit_pack_content: str) -> None:
+        content = audit_pack_content.lower()
+        assert "twine upload" not in content
+        assert "gh release create" not in content
+        assert "git push" not in content
+        assert "git tag" not in content
+
+    def test_runs_providers_audit_pack(self, audit_pack_content: str) -> None:
+        assert "providers audit-pack" in audit_pack_content
+
+    def test_runs_providers_verify_audit_pack(self, audit_pack_content: str) -> None:
+        assert "providers verify-audit-pack" in audit_pack_content
+
+    def test_uploads_artifact(self, audit_pack_content: str) -> None:
+        assert "actions/upload-artifact" in audit_pack_content
+        assert "path: artifacts/provider_audit_pack/ci-smoke" in audit_pack_content
+
+    def test_disables_live_trading(self, audit_pack_content: str) -> None:
+        assert "TRADING_MODE: paper" in audit_pack_content
+        assert "ENABLE_LIVE_TRADING: \"false\"" in audit_pack_content
+        assert "PROVIDER_EXECUTION_ENABLED: \"false\"" in audit_pack_content
