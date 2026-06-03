@@ -463,3 +463,247 @@ def inspect_provider_evidence_index(index_path: Path) -> dict[str, Any]:
         raise EvidenceIndexError("Index safety summary is not closed.")
 
     return data
+
+
+def _determine_finding_severity(finding_type: str, finding_msg: str) -> str:
+    msg_lower = finding_msg.lower()
+    t_lower = finding_type.lower()
+
+    if _SECRET_FRAGMENT_RE.search(finding_msg) or "secret" in msg_lower or "credential" in msg_lower:
+        return "critical"
+
+    if "unsafe" in msg_lower or "absolute path" in msg_lower:
+        return "error"
+
+    critical = {"secret_like_value_detected", "credentials_loaded", "provider_execution_allowed", "broker_touched", "live_trading_enabled", "pending_order_created", "order_approved"}
+    error = {"malformed_json", "invalid_artifact", "unsafe_safety_flag", "absolute_path_detected", "hash_mismatch", "unreadable_file"}
+    warning = {"unknown_json_artifact", "non_json_file", "too_large", "symlink_skipped", "orphaned_artifact", "duplicate_artifact"}
+    info = {"recognized_valid_artifact"}
+
+    for c in critical:
+        if c in msg_lower or c in t_lower:
+            return "critical"
+    for e in error:
+        if e in msg_lower or e in t_lower:
+            return "error"
+    for w in warning:
+        if w in msg_lower or w in t_lower:
+            return "warning"
+    for i in info:
+        if i in msg_lower or i in t_lower:
+            return "info"
+
+    if "error" in msg_lower or "fail" in msg_lower or "invalid" in msg_lower:
+        return "error"
+
+    return "warning"
+
+
+def export_provider_evidence_summary(index_path: Path, output: Path | None = None) -> dict[str, Any]:
+    if not index_path.exists():
+        raise EvidenceIndexError("Index file does not exist.")
+    try:
+        content_bytes = index_path.read_bytes()
+        content_str = content_bytes.decode("utf-8")
+        source_sha256 = hashlib.sha256(content_bytes).hexdigest()
+        data = json.loads(content_str)
+    except Exception as e:
+        raise EvidenceIndexError(f"Index is not parseable JSON: {e}")
+
+    if data.get("artifact_type") != "provider_evidence_index":
+        raise EvidenceIndexError("Not a provider_evidence_index artifact.")
+
+    try:
+        inspect_provider_evidence_index(index_path)
+        is_valid = True
+        err_msg = ""
+    except EvidenceIndexError as e:
+        is_valid = False
+        err_msg = str(e)
+
+    # Build summary
+    finding_counts = {"info": 0, "warning": 0, "error": 0, "critical": 0}
+    type_distribution = {}
+
+    for a in data.get("artifacts", []):
+        atype = a.get("artifact_type", "unknown")
+        type_distribution[atype] = type_distribution.get(atype, 0) + 1
+
+    for f in data.get("findings", []):
+        msg = ", ".join(f.get("validation_errors", []))
+        atype = f.get("artifact_type", "unknown")
+        sev = _determine_finding_severity(atype, msg)
+        finding_counts[sev] += 1
+
+    if not is_valid and err_msg:
+        # Ensure we count the root index failure
+        sev = _determine_finding_severity("index_error", err_msg)
+        finding_counts[sev] += 1
+
+    summary = {
+        "artifact_type": "provider_evidence_index_summary",
+        "schema_version": 1,
+        "generated_at": _utc_timestamp(),
+        "source_index_sha256": source_sha256,
+        "source_index_path": str(index_path),
+        "summary": data.get("summary", {}),
+        "artifact_type_distribution": type_distribution,
+        "finding_counts_by_severity": finding_counts,
+        "safety_summary": data.get("safety_summary", {
+            "provider_call_made": False,
+            "network_used": False,
+            "credentials_loaded": False,
+            "broker_touched": False,
+            "live_trading_enabled": False,
+            "pending_order_created": False,
+            "order_approved": False,
+        }),
+        "review_required": True,
+        "valid": is_valid
+    }
+
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(summary, indent=2))
+
+    return summary
+
+
+def render_provider_evidence_markdown_report(index_data: dict[str, Any], source_index_sha256: str, is_valid: bool, index_err_msg: str) -> str:
+    lines = [
+        "# Provider Evidence Index Report",
+        "",
+        "## Summary",
+        f"- **generated_at**: {index_data.get('generated_at', 'unknown')}",
+        f"- **root**: {index_data.get('root', 'unknown')}",
+        f"- **source_index_sha256**: {source_index_sha256[:8]}",
+        f"- **valid**: {str(is_valid).lower()}"
+    ]
+
+    if index_err_msg:
+        lines.append(f"- **index_error**: {index_err_msg}")
+
+    summary = index_data.get("summary", {})
+    for k, v in summary.items():
+        # Replace underscores with spaces for readability in some keys, or keep as is.
+        lines.append(f"- **{k.replace('_', ' ')}**: {v}")
+
+    lines.extend(["", "## Safety Summary"])
+    safety = index_data.get("safety_summary", {})
+    for k, v in safety.items():
+        lines.append(f"- **{k}**: {str(v).lower()}")
+
+    lines.extend(["", "## Artifact Type Distribution"])
+    type_distribution = {}
+    for a in index_data.get("artifacts", []):
+        atype = a.get("artifact_type", "unknown")
+        type_distribution[atype] = type_distribution.get(atype, 0) + 1
+
+    lines.extend([
+        "| Artifact Type | Count |",
+        "|---|---|"
+    ])
+    for t, c in type_distribution.items():
+        lines.append(f"| {t} | {c} |")
+
+    lines.extend(["", "## Findings"])
+    lines.extend([
+        "| Severity | Type | Path | Message |",
+        "|---|---|---|---|"
+    ])
+
+    findings = index_data.get("findings", [])
+    if not findings and is_valid:
+        lines.append("| info | none | N/A | No findings |")
+    else:
+        for f in findings:
+            msg = ", ".join(f.get("validation_errors", []))
+            # Redact secrets in markdown
+            if _SECRET_FRAGMENT_RE.search(msg) or "secret" in msg.lower():
+                msg = "[REDACTED SECRET-LIKE VALUE IN FINDING MESSAGE]"
+            # Remove absolute paths
+            if "absolute path" in msg.lower() or _is_absolute_path_string(msg) or re.search(r'(?:^|\s)(?:/|[a-zA-Z]:\\)', msg):
+                msg = "[REDACTED ABSOLUTE PATH IN FINDING MESSAGE]"
+            atype = f.get("artifact_type", "unknown")
+            sev = _determine_finding_severity(atype, msg)
+            rel_path = f.get("relative_path", "unknown")
+            lines.append(f"| {sev} | {atype} | {rel_path} | {msg} |")
+
+    lines.extend(["", "## Invalid or Unsafe Artifacts"])
+    lines.extend([
+        "| Path | Artifact Type | Validation Status | Errors |",
+        "|---|---|---|---|"
+    ])
+    unsafe = [a for a in index_data.get("artifacts", []) if not a.get("valid", False)]
+    if not unsafe:
+        lines.append("| N/A | N/A | N/A | None |")
+    else:
+        for u in unsafe:
+            msg = ", ".join(u.get("validation_errors", []))
+            if _SECRET_FRAGMENT_RE.search(msg) or "secret" in msg.lower():
+                msg = "[REDACTED SECRET-LIKE VALUE]"
+            if "absolute path" in msg.lower() or _is_absolute_path_string(msg) or re.search(r'(?:^|\s)(?:/|[a-zA-Z]:\\)', msg):
+                msg = "[REDACTED ABSOLUTE PATH]"
+            lines.append(f"| {u.get('relative_path', 'unknown')} | {u.get('artifact_type', 'unknown')} | {u.get('validation_status', 'invalid')} | {msg} |")
+
+    lines.extend(["", "## Recognized Artifacts"])
+    lines.extend([
+        "| Path | Artifact Type | Schema Version | SHA-256 | Valid |",
+        "|---|---|---|---|---|"
+    ])
+    rec = [a for a in index_data.get("artifacts", []) if a.get("recognized", False)]
+    if not rec:
+        lines.append("| N/A | N/A | N/A | N/A | N/A |")
+    else:
+        for r in rec:
+            sha = r.get("sha256", "unknown")
+            if len(sha) > 8:
+                sha = sha[:8]
+            lines.append(f"| {r.get('relative_path', 'unknown')} | {r.get('artifact_type', 'unknown')} | {r.get('schema_version', 1)} | {sha} | {str(r.get('valid', False)).lower()} |")
+
+    lines.extend([
+        "",
+        "## Reviewer Notes",
+        "- This report is generated from local evidence artifacts.",
+        "- It does not authorize provider execution.",
+        "- It does not authorize broker execution.",
+        "- It does not authorize live trading."
+    ])
+
+    return "\n".join(lines)
+
+
+def generate_provider_evidence_report(index_path: Path, output: Path | None = None) -> dict[str, Any]:
+    if not index_path.exists():
+        raise EvidenceIndexError("Index file does not exist.")
+    try:
+        content_bytes = index_path.read_bytes()
+        content_str = content_bytes.decode("utf-8")
+        source_sha256 = hashlib.sha256(content_bytes).hexdigest()
+        data = json.loads(content_str)
+    except Exception as e:
+        raise EvidenceIndexError(f"Index is not parseable JSON: {e}")
+
+    if data.get("artifact_type") != "provider_evidence_index":
+        raise EvidenceIndexError("Not a provider_evidence_index artifact.")
+
+    try:
+        inspect_provider_evidence_index(index_path)
+        is_valid = True
+        err_msg = ""
+    except EvidenceIndexError as e:
+        is_valid = False
+        err_msg = str(e)
+
+    md_content = render_provider_evidence_markdown_report(data, source_sha256, is_valid, err_msg)
+
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(md_content, encoding="utf-8")
+
+    return {
+        "is_valid": is_valid,
+        "error_message": err_msg,
+        "markdown": md_content,
+        "source_sha256": source_sha256
+    }
