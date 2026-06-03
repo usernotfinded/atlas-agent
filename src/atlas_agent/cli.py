@@ -252,6 +252,27 @@ Safety First:
     providers_verify_bundle.add_argument("bundle_dir", help="Path to the evidence bundle directory")
     providers_verify_bundle.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
+    providers_smoke = providers_sub.add_parser(
+        "smoke-preflight-chain",
+        help="Run the local dry-run provider preflight chain end-to-end",
+        description=(
+            "Run the local-only dry-run provider preflight safety chain: "
+            "generate call-plan, validate call-plan, create evidence bundle, "
+            "and verify bundle. No provider calls, no network, no credentials."
+        ),
+    )
+    providers_smoke.add_argument("--provider", required=True, help="Provider ID (e.g., openrouter, anthropic)")
+    providers_smoke.add_argument("--model", required=True, help="Model ID")
+    providers_smoke.add_argument("--purpose", required=True, help="Purpose of the call")
+    providers_smoke.add_argument("--max-context-chars", type=int, default=4000, help="Maximum context characters")
+    providers_smoke.add_argument(
+        "--output-dir",
+        required=True,
+        type=Path,
+        help="Output directory for smoke-chain artifacts",
+    )
+    providers_smoke.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
@@ -1983,7 +2004,14 @@ def _command_requires_workspace(args: argparse.Namespace) -> bool:
         return False
     if args.command in {"init", "workspace", "models", "validate", "deploy", "configure", "setup", "discipline"}:
         return False
-    if args.command == "providers" and args.providers_command in ("list", "preflight", "validate-preflight", "bundle-preflight", "verify-preflight-bundle"):
+    if args.command == "providers" and args.providers_command in (
+        "list",
+        "preflight",
+        "validate-preflight",
+        "bundle-preflight",
+        "verify-preflight-bundle",
+        "smoke-preflight-chain",
+    ):
         return False
     if args.command == "broker" and args.brokers_command == "list":
         return False
@@ -2079,6 +2107,71 @@ def _run_provider_verify_preflight_bundle(args: argparse.Namespace) -> int:
         return emit_cli_success(command, result)
 
     print("Provider preflight evidence bundle is valid.")
+    return 0
+
+
+def _run_provider_smoke_preflight_chain(args: argparse.Namespace) -> int:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightSmokeChainError,
+        PreflightValidationError,
+        run_preflight_smoke_chain,
+    )
+
+    command = "atlas providers smoke-preflight-chain"
+    try:
+        result = run_preflight_smoke_chain(
+            provider_id=args.provider,
+            model_id=args.model,
+            purpose=args.purpose,
+            max_context_chars=args.max_context_chars,
+            output_dir=args.output_dir,
+        )
+    except PreflightValidationError as exc:
+        message = f"Provider preflight smoke chain failed: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(
+                command,
+                code="preflight_smoke_input_error",
+                message=message,
+            )
+        print(message, file=sys.stderr)
+        return 2
+    except PreflightSmokeChainError as exc:
+        message = f"Provider preflight smoke chain failed: {exc}"
+        if getattr(args, "json", False):
+            emit_json(
+                error_envelope(
+                    command,
+                    code="preflight_smoke_chain_failed",
+                    message=message,
+                )
+            )
+            return 1
+        print(message, file=sys.stderr)
+        return 1
+    except OSError as exc:
+        message = f"Provider preflight smoke chain failed: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(
+                command,
+                code="preflight_smoke_output_error",
+                message=message,
+            )
+        print(message, file=sys.stderr)
+        return 2
+
+    data = {
+        "valid": result["valid"],
+        "output_dir": result["output_dir"],
+        "stages": result["stages"],
+    }
+    if getattr(args, "json", False):
+        return emit_cli_success(command, data)
+
+    print(
+        "Provider preflight smoke chain completed successfully at "
+        f"{display_path(Path(result['output_dir']))}"
+    )
     return 0
 
 
@@ -3139,6 +3232,11 @@ def main(argv: list[str] | None = None) -> int:
         if resolution.path is not None:
             os.chdir(resolution.path)
         return _run_provider_verify_preflight_bundle(args)
+    if args.command == "providers" and getattr(args, "providers_command", None) == "smoke-preflight-chain":
+        resolution = resolve_workspace(getattr(args, "workspace", None))
+        if resolution.path is not None:
+            os.chdir(resolution.path)
+        return _run_provider_smoke_preflight_chain(args)
 
     # Configless local research commands: resolve workspace only, never load secrets
     _CONFIGLESS_RESEARCH_COMMANDS = CONFIGLESS_RESEARCH_COMMANDS

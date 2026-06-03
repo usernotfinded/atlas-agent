@@ -779,3 +779,248 @@ def test_verify_preflight_bundle_does_not_touch_protected_boundaries(tmp_path: P
     mock_order_router.assert_not_called()
     mock_risk_manager.assert_not_called()
     mock_deadman.assert_not_called()
+
+
+def test_cli_smoke_preflight_chain_succeeds_and_creates_expected_files(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        validate_call_plan_artifact,
+        verify_preflight_evidence_bundle,
+    )
+
+    monkeypatch.chdir(tmp_path)
+    output_dir = tmp_path / "smoke"
+
+    code = main([
+        "providers",
+        "smoke-preflight-chain",
+        "--provider",
+        "openrouter",
+        "--model",
+        "openrouter/auto",
+        "--purpose",
+        "research-summary",
+        "--max-context-chars",
+        "4000",
+        "--output-dir",
+        str(output_dir),
+    ])
+    captured = capsys.readouterr()
+
+    assert code == 0
+    assert "Provider preflight smoke chain completed successfully at" in captured.out
+
+    expected_files = {
+        "call-plan.json",
+        "validation-report.json",
+        "manifest.json",
+        "sha256sums.txt",
+        "smoke-report.json",
+    }
+    assert {path.name for path in output_dir.iterdir() if path.is_file()} == expected_files
+
+    report = json.loads((output_dir / "smoke-report.json").read_text(encoding="utf-8"))
+    assert report["artifact_type"] == "provider_preflight_smoke_report"
+    assert report["valid"] is True
+    assert all(value is True for value in report["stages"].values())
+    assert all(value is False for value in report["safety_summary"].values())
+    assert report["manual_review_required"] is True
+
+    for rel_path in report["files"].values():
+        assert not Path(rel_path).is_absolute()
+        assert rel_path == Path(rel_path).name
+
+    report_text = (output_dir / "smoke-report.json").read_text(encoding="utf-8")
+    assert str(tmp_path) not in report_text
+
+    call_plan = json.loads((output_dir / "call-plan.json").read_text(encoding="utf-8"))
+    validate_call_plan_artifact(call_plan)
+    verification = verify_preflight_evidence_bundle(output_dir)
+    assert verification["valid"] is True
+
+
+def test_cli_smoke_preflight_chain_json_mode(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    output_dir = tmp_path / "smoke-json"
+
+    code = main([
+        "providers",
+        "smoke-preflight-chain",
+        "--provider",
+        "openrouter",
+        "--model",
+        "openrouter/auto",
+        "--purpose",
+        "research-summary",
+        "--output-dir",
+        str(output_dir),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+
+    assert code == 0
+    envelope = json.loads(captured.out)
+    assert envelope["ok"] is True
+    assert envelope["command"] == "atlas providers smoke-preflight-chain"
+    assert envelope["data"]["valid"] is True
+    assert envelope["data"]["output_dir"] == str(output_dir)
+    assert all(value is True for value in envelope["data"]["stages"].values())
+
+
+@pytest.mark.parametrize(
+    ("flag", "value"),
+    [
+        ("--provider", ""),
+        ("--model", "/etc/passwd"),
+        ("--purpose", "api_key_marker"),
+    ],
+)
+def test_cli_smoke_preflight_chain_invalid_strings_fail(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+    flag: str,
+    value: str,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    args = [
+        "providers",
+        "smoke-preflight-chain",
+        "--provider",
+        "openrouter",
+        "--model",
+        "openrouter/auto",
+        "--purpose",
+        "research-summary",
+        "--output-dir",
+        str(tmp_path / "smoke-invalid"),
+    ]
+    args[args.index(flag) + 1] = value
+
+    code = main(args)
+    captured = capsys.readouterr()
+
+    assert code == 2
+    assert "Provider preflight smoke chain failed:" in captured.err
+
+
+@pytest.mark.parametrize("max_context_chars", ["0", "200001"])
+def test_cli_smoke_preflight_chain_invalid_max_context_chars_fail(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+    max_context_chars: str,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    code = main([
+        "providers",
+        "smoke-preflight-chain",
+        "--provider",
+        "openrouter",
+        "--model",
+        "openrouter/auto",
+        "--purpose",
+        "research-summary",
+        "--max-context-chars",
+        max_context_chars,
+        "--output-dir",
+        str(tmp_path / "smoke-invalid-context"),
+    ])
+    captured = capsys.readouterr()
+
+    assert code == 2
+    assert "Provider preflight smoke chain failed:" in captured.err
+
+
+def test_cli_smoke_preflight_chain_does_not_require_api_keys(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("OPENROUTER_" + "API" + "_KEY", raising=False)
+
+    with patch("atlas_agent.cli.AtlasConfig.from_env") as mock_from_env:
+        code = main([
+            "providers",
+            "smoke-preflight-chain",
+            "--provider",
+            "openrouter",
+            "--model",
+            "openrouter/auto",
+            "--purpose",
+            "research-summary",
+            "--output-dir",
+            str(tmp_path / "smoke-no-keys"),
+        ])
+
+    captured = capsys.readouterr()
+
+    assert code == 0
+    assert "Provider preflight smoke chain completed successfully at" in captured.out
+    mock_from_env.assert_not_called()
+
+
+def test_cli_smoke_preflight_chain_fake_api_key_values_do_not_leak(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    fake_values = {
+        "OPENROUTER_" + "API" + "_KEY": "fake_smoke_value_one_123",
+        "OPENAI_" + "API" + "_KEY": "fake_smoke_value_two_456",
+    }
+    for name, value in fake_values.items():
+        monkeypatch.setenv(name, value)
+
+    output_dir = tmp_path / "smoke-fake-keys"
+    code = main([
+        "providers",
+        "smoke-preflight-chain",
+        "--provider",
+        "openrouter",
+        "--model",
+        "openrouter/auto",
+        "--purpose",
+        "research-summary",
+        "--output-dir",
+        str(output_dir),
+    ])
+    captured = capsys.readouterr()
+
+    assert code == 0
+    for value in fake_values.values():
+        assert value not in captured.out
+        assert value not in captured.err
+        for path in output_dir.iterdir():
+            if path.is_file():
+                assert value not in path.read_text(encoding="utf-8")
+
+
+def test_preflight_smoke_chain_does_not_touch_protected_boundaries(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import run_preflight_smoke_chain
+
+    with (
+        patch("atlas_agent.brokers.resolver.BrokerResolver") as mock_broker_resolver,
+        patch("atlas_agent.execution.order_router.OrderRouter") as mock_order_router,
+        patch("atlas_agent.risk.manager.RiskManager") as mock_risk_manager,
+        patch("atlas_agent.safety.write_deadman_heartbeat") as mock_deadman,
+    ):
+        result = run_preflight_smoke_chain(
+            provider_id="openrouter",
+            model_id="openrouter/auto",
+            purpose="research-summary",
+            max_context_chars=4000,
+            output_dir=tmp_path / "smoke",
+        )
+
+    assert result["valid"] is True
+    mock_broker_resolver.assert_not_called()
+    mock_order_router.assert_not_called()
+    mock_risk_manager.assert_not_called()
+    mock_deadman.assert_not_called()
