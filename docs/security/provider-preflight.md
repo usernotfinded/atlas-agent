@@ -124,3 +124,14 @@ This ensures:
 - Minimization fields (`raw_prompt_body_stored`, etc.) are `False`, and `hashes_only` is `True`.
 - No absolute paths or secret-like fragments exist anywhere in the artifact.
 - No forbidden fields (like `api_key`, `secret`, `raw_prompt`) are present.
+
+## Evidence bundles
+
+`atlas providers bundle-preflight <artifact_path>` creates a local audit bundle containing:
+
+- `call-plan.json`
+- `validation-report.json`
+- `manifest.json`
+- `sha256sums.txt`
+
+The command validates the artifact first. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
