@@ -426,3 +426,15 @@ Atlas is designed for local-first operation but can be deployed to a VPS, Docker
 
 ---
 Built by Natan Mucelli.
+
+## Release assurance
+
+After publishing a security release, maintainers can generate a local release assurance pack:
+
+```bash
+python scripts/release_assurance.py --version v0.5.9 --output artifacts/release_assurance/v0.5.9
+```
+
+The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
+
+It does not create tags, publish packages, call providers, enable trading, or modify runtime behavior.

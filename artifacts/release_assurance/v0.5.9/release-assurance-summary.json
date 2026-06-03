@@ -1,0 +1,33 @@
+{
+  "artifact_type": "release_assurance_summary",
+  "schema_version": 1,
+  "release": "v0.5.9",
+  "generated_at": "2026-06-03T20:34:16.944221+00:00",
+  "valid": true,
+  "public_release_detected": true,
+  "pypi_published": false,
+  "checks": {
+    "package_version_aligned": true,
+    "release_notes_present": true,
+    "changelog_present": true,
+    "readme_public_metadata_current": true,
+    "security_md_current": true,
+    "local_tag_present": true,
+    "remote_tag_present": true,
+    "github_release_present": true,
+    "updater_dry_run_ok": true,
+    "dev_version_not_public_stable": true,
+    "provider_audit_pack_commands_present": true,
+    "provider_audit_pack_workflow_present": true,
+    "non_claims_preserved": true,
+    "protected_boundaries_clean": true
+  },
+  "safety_summary": {
+    "live_trading_enabled_by_default": false,
+    "live_submit_enabled_by_default": false,
+    "provider_execution_enabled_by_default": false,
+    "broker_execution_enabled_by_default": false,
+    "pypi_publish_performed": false
+  },
+  "findings": []
+}

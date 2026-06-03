@@ -23,3 +23,15 @@ For v0.5.9, the expected public release is `v0.5.9`.
 PyPI publishing was intentionally skipped unless explicitly approved separately.
 
 The updater verification must not install packages, modify files, enable live trading, call providers, or require credentials.
+
+## Release assurance
+
+After publishing a security release, maintainers can generate a local release assurance pack:
+
+```bash
+python scripts/release_assurance.py --version v0.5.9 --output artifacts/release_assurance/v0.5.9
+```
+
+The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
+
+It does not create tags, publish packages, call providers, enable trading, or modify runtime behavior.
