@@ -232,17 +232,33 @@ class TestStaleRCReferencesBlocked:
             f"Expected pass for historical RC changelog entry:\n{result.stdout}"
         )
 
-    def test_current_dev_version_058dev0_accepted(self) -> None:
+    def test_current_stable_version_059_accepted(self) -> None:
         text = (
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current development version is 0.5.8.dev0.\n"
+            "Current Status (v0.5.9)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (
             f"Expected pass for current dev version:\n{result.stdout}"
         )
+
+    @pytest.mark.parametrize("stale_version", [
+        "v0.5.7.dev15",
+        "v0.5.7.dev29",
+        "0.5.9.dev0",
+    ])
+    def test_readme_with_stale_dev_status_fails(self, stale_version: str) -> None:
+        text = (
+            "# README\n\n```bash\natlas --help\n```\n\n"
+            f"## Current Status ({stale_version})\n\n"
+            "Sandbox-only, paper-first, offline-safe.\n"
+            "Live trading disabled by default. Not financial advice.\n"
+        )
+        result = _run_public_docs_script_on_text(text)
+        assert result.returncode != 0, f"Expected failure on stale {stale_version} current-status reference"
+        assert stale_version in result.stdout or "stale" in result.stdout.lower()
 
 
 class TestScriptSafety:

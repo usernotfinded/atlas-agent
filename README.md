@@ -404,7 +404,7 @@ atlas backtest run --symbol AAPL --data path/to/data.csv
 
 ## Telegram Control Plane
 
-Atlas Agent provides an optional Telegram interface for remote status updates and guarded action approval. This is a control-only layer; execution remains governed by the local risk manager.
+Atlas Agent does not enable a remote Telegram control plane by default. Any Telegram integration is optional, operator-supplied, and must remain gated by local risk controls, explicit approval, authentication, and secret redaction.
 
 ## Deployment and Cloud
 

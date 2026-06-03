@@ -105,18 +105,15 @@ FORBIDDEN_COMMAND_PATTERNS = [
 # We allow old release notes to mention their own version, but flag "Current Status (v0.5.7.dev46)"
 # when the current version is dev49.
 STALE_VERSION_PATTERNS = [
-    r"Current Status \(v0\.5\.7\.dev5[0-9]\)",
-    r"Current Status \(v0\.5\.7\.dev4[0-9]\)",
-    r"Current Status \(0\.5\.7\.dev5[0-9]\)",
-    r"Current Status \(0\.5\.7\.dev4[0-9]\)",
+    r"Current Status \(v0\.5\.7\.dev[1-5][0-9]\)",
+    r"Current Status \(0\.5\.7\.dev[1-5][0-9]\)",
+    r"Current Status \(0\.5\.9\.dev[0-9]\)",
     r"Current Status \(v0\.5\.7-rc\d+\)",
     r"Current Status \(0\.5\.7rc\d+\)",
     r"Current Status \(v0\.5\.8-rc\d+\)",
     r"Current Status \(0\.5\.8rc\d+\)",
-    r"v0\.5\.7\.dev5[0-9](?!\d)",
-    r"v0\.5\.7\.dev4[0-9](?!\d)",
-    r"0\.5\.7\.dev5[0-9](?!\d)",
-    r"0\.5\.7\.dev4[0-9](?!\d)",
+    r"v0\.5\.7\.dev[1-5][0-9](?!\d)",
+    r"0\.5\.7\.dev[1-5][0-9](?!\d)",
 ]
 
 # Current version string that public docs should reference as current.
