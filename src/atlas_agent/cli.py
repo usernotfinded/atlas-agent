@@ -273,6 +273,27 @@ Safety First:
     )
     providers_smoke.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
+    providers_audit_pack = providers_sub.add_parser(
+        "audit-pack",
+        help="Create a local provider preflight audit pack",
+        description=(
+            "Create a local-only, non-authorizing provider audit pack: dry-run "
+            "preflight chain, evidence index, Markdown report, compact summary, "
+            "and audit pack manifest. No provider calls, no network, no credentials."
+        ),
+    )
+    providers_audit_pack.add_argument("--provider", required=True, help="Provider ID (e.g., openrouter, anthropic)")
+    providers_audit_pack.add_argument("--model", required=True, help="Model ID")
+    providers_audit_pack.add_argument("--purpose", required=True, help="Purpose of the call")
+    providers_audit_pack.add_argument("--max-context-chars", type=int, default=4000, help="Maximum context characters")
+    providers_audit_pack.add_argument(
+        "--output-dir",
+        required=True,
+        type=Path,
+        help="Output directory for audit-pack artifacts",
+    )
+    providers_audit_pack.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
     providers_capability = providers_sub.add_parser(
         "capability-inventory",
         help="Generate a local provider capability inventory.",
@@ -2052,6 +2073,7 @@ def _command_requires_workspace(args: argparse.Namespace) -> bool:
         "bundle-preflight",
         "verify-preflight-bundle",
         "smoke-preflight-chain",
+        "audit-pack",
         "capability-inventory",
         "readiness-check",
         "evidence-index",
@@ -2216,6 +2238,55 @@ def _run_provider_smoke_preflight_chain(args: argparse.Namespace) -> int:
         "Provider preflight smoke chain completed successfully at "
         f"{display_path(Path(result['output_dir']))}"
     )
+    return 0
+
+
+def _run_provider_audit_pack(args: argparse.Namespace) -> int:
+    from atlas_agent.providers.provider_audit_pack import (
+        ProviderAuditPackIOError,
+        ProviderAuditPackInputError,
+        ProviderAuditPackStageError,
+        create_provider_audit_pack,
+    )
+
+    command = "atlas providers audit-pack"
+    try:
+        result = create_provider_audit_pack(
+            provider_id=args.provider,
+            model_id=args.model,
+            purpose=args.purpose,
+            max_context_chars=args.max_context_chars,
+            output_dir=args.output_dir,
+        )
+    except ProviderAuditPackInputError as exc:
+        message = f"Provider audit pack creation failed: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(command, code="audit_pack_input_error", message=message)
+        print(message, file=sys.stderr)
+        return 2
+    except ProviderAuditPackStageError as exc:
+        message = f"Provider audit pack creation failed: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(command, code="audit_pack_stage_error", message=message)
+        print(message, file=sys.stderr)
+        return 1
+    except ProviderAuditPackIOError as exc:
+        message = f"Provider audit pack creation failed: {exc}"
+        if getattr(args, "json", False):
+            return emit_cli_error(command, code="audit_pack_output_error", message=message)
+        print(message, file=sys.stderr)
+        return 2
+
+    data = {
+        "valid": result["valid"],
+        "output_dir": result["output_dir"],
+        "files": result["files"],
+        "stages": result["stages"],
+    }
+    if getattr(args, "json", False):
+        return emit_cli_success(command, data)
+
+    print(f"Provider audit pack created at {display_path(Path(result['output_dir']))}")
     return 0
 
 
@@ -3281,6 +3352,11 @@ def main(argv: list[str] | None = None) -> int:
         if resolution.path is not None:
             os.chdir(resolution.path)
         return _run_provider_smoke_preflight_chain(args)
+    if args.command == "providers" and getattr(args, "providers_command", None) == "audit-pack":
+        resolution = resolve_workspace(getattr(args, "workspace", None))
+        if resolution.path is not None:
+            os.chdir(resolution.path)
+        return _run_provider_audit_pack(args)
 
     # Configless local research commands: resolve workspace only, never load secrets
     _CONFIGLESS_RESEARCH_COMMANDS = CONFIGLESS_RESEARCH_COMMANDS

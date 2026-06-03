@@ -487,6 +487,7 @@ def _smoke_report(created_at: str, stages: dict[str, bool]) -> dict[str, Any]:
         "schema_version": 1,
         "created_at": created_at,
         "valid": all(stages.values()),
+        "smoke_chain_success": all(stages.values()),
         "stages": dict(stages),
         "files": {
             "call_plan": "call-plan.json",
