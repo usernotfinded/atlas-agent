@@ -7,43 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9] - 2026-06-03
+
 ### Security
-- Hardened pending-order approval integrity so approval decisions are tamper-evident and fail closed when approval metadata is modified or legacy approved records lack accountable approval state.
-- Added end-to-end submit-execution safety coverage to verify live broker placement cannot occur unless approval integrity, quote validation, risk revalidation, kill switch, and explicit live-mode gates pass.
+Security hardening:
+- redaction refresh after secret load/set
+- short/low-entropy secret redaction regression coverage
+- secret key-name validation
+- Alpaca live/paper endpoint consistency hardening
+- timeout reconciliation guidance
+- dashboard/read-only surface documentation
+- approval path safety documentation/tests
+- config store safety tests
+- Telegram/remote-control status clarification
 
-### Fixed
-- Reconciled risk limit default documentation/configuration to avoid drift between `RiskLimits` and `.env.example`.
-
-### Tests
-- Added regression tests for approval-state tampering, legacy approved pending-order upgrades, and risk limit default drift.
-- Added regression tests for submit-execution gate ordering, failed-gate broker-call suppression, and output redaction.
-
-### Safety
-- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, GitHub Release creation, or PyPI publish was performed.
-
-### Changed
-- Opened the `0.5.9.dev0` development cycle after the public `v0.5.8.1` hotfix release.
-- Hardened `0.5.9.dev0` command-surface and live-path audit checks.
-
-### Fixed
-- Fixed stale version references in CLI contract (`0.5.8rc5` → `0.5.9.dev0`), product capability inventory (`0.5.8rc5` → `0.5.9.dev0`), and related docs.
-- Fixed contradictory dead-man action values in `docs/kill-switch.md` to align with `deadman.py` validation (`soft|cancel|flatten`).
-
-### Tests
-- Added regression coverage for CLI command-surface version hygiene, live-path safety claims, kill-switch status drift, and release/checklist version hygiene.
-
-### Safety
-- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, or GitHub Release creation was performed.
-- No protected runtime boundaries were changed.
-
-### Fixed
-- Fixed runtime template packaging so `atlas init --template routine-trader` resolves package-owned templates after clean wheel/sdist installs instead of relying on repository-root fallback paths.
-
-### Tests
-- Added package artifact checks covering template availability from isolated installs outside the source repository.
+### Audit
+Provider audit evidence:
+- provider preflight call-plan
+- validation
+- evidence bundle
+- bundle verifier
+- smoke chain
+- capability inventory/readiness gate
+- evidence index
+- evidence report/export
+- audit pack
+- audit pack verifier
+- manual CI audit-pack artifact workflow
 
 ### Safety
-- No live trading, provider execution, broker execution, credential loading, tag publishing, package publishing, or GitHub Release creation was performed.
+- This release does not enable live trading by default.
+- This release does not enable provider execution by default.
+- This release does not authorize autonomous trading.
+- This release is not financial advice.
 
 ## [0.5.8.1] - 2026-06-01
 

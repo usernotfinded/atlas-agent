@@ -214,8 +214,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.9.dev0"
-        assert data["public_tag"] == "v0.5.8.1"
+        assert data["package_version"] == "0.5.9"
+        assert data["public_tag"] == "v0.5.9"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -256,7 +256,7 @@ class TestVersionConsistency:
         pyproject = ROOT / "pyproject.toml"
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
-        assert data.get("project", {}).get("version") == "0.5.9.dev0"
+        assert data.get("project", {}).get("version") == "0.5.9"
 
     def test_init_version_is_dev(self) -> None:
         init = ROOT / "src" / "atlas_agent" / "__init__.py"
@@ -264,7 +264,7 @@ class TestVersionConsistency:
         import re
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         assert m is not None
-        assert m.group(1) == "0.5.9.dev0"
+        assert m.group(1) == "0.5.9"
 
     def test_release_note_exists(self) -> None:
         assert (ROOT / "docs" / "releases" / "v0.5.8.1.md").exists()

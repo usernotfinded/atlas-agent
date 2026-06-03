@@ -3,12 +3,16 @@
     "M\t.env.example",
     "M\t.github/workflows/ci.yml",
     "A\t.github/workflows/full-test.yml",
+    "A\t.github/workflows/provider-audit-pack.yml",
     "M\t.github/workflows/release-gate.yml",
     "M\t.github/workflows/research-ci.yml",
     "M\t.gitignore",
     "M\tCHANGELOG.md",
     "M\tCONTRIBUTING.md",
     "M\tREADME.md",
+    "M\tSECURITY.md",
+    "M\tartifacts/release_evidence/evidence.json",
+    "M\tartifacts/release_evidence/evidence.md",
     "A\tdocs/audits/batch-7-post-incident-audit.md",
     "M\tdocs/cli-command-compatibility.md",
     "A\tdocs/demo/provider-preflight-demo.md",
@@ -17,12 +21,17 @@
     "M\tdocs/product-capability-inventory.md",
     "M\tdocs/public-launch-readiness.md",
     "M\tdocs/reviewer-outreach-checklist.md",
+    "A\tdocs/security/approval-safety.md",
+    "A\tdocs/security/broker-safety.md",
+    "A\tdocs/security/dashboard-security.md",
+    "A\tdocs/security/live-trading.md",
     "A\tdocs/security/provider-audit-pack.md",
     "A\tdocs/security/provider-evidence-index.md",
     "M\tdocs/security/provider-execution-policy.md",
     "M\tdocs/security/provider-integration-requirements.md",
     "A\tdocs/security/provider-preflight.md",
     "A\tdocs/security/provider-readiness.md",
+    "A\tdocs/security/release-readiness.md",
     "M\tpyproject.toml",
     "M\tscripts/build_release_evidence_bundle.py",
     "M\tscripts/check_clean_install.py",
@@ -45,8 +54,10 @@
     "M\tscripts/release_check.sh",
     "M\tscripts/research_check.sh",
     "M\tsrc/atlas_agent/__init__.py",
+    "M\tsrc/atlas_agent/brokers/alpaca.py",
     "M\tsrc/atlas_agent/cli.py",
     "M\tsrc/atlas_agent/config/schema.py",
+    "M\tsrc/atlas_agent/config/secrets.py",
     "M\tsrc/atlas_agent/execution/approval.py",
     "M\tsrc/atlas_agent/providers/openrouter.py",
     "A\tsrc/atlas_agent/providers/provider_audit_pack.py",
@@ -57,6 +68,10 @@
     "M\tsrc/atlas_agent/research/release_candidate_readiness.py",
     "M\tsrc/atlas_agent/risk/limits.py",
     "M\tsrc/atlas_agent/templates/routine-trader/configs/risk.example.yaml",
+    "M\ttests/brokers/test_alpaca_submit.py",
+    "M\ttests/brokers/test_alpaca_sync.py",
+    "A\ttests/config/test_config_store.py",
+    "A\ttests/execution/test_approval_safety.py",
     "M\ttests/execution/test_pending_order_schema.py",
     "M\ttests/execution/test_submit_approved_order_dry_run.py",
     "M\ttests/execution/test_submit_execution.py",
@@ -67,6 +82,7 @@
     "M\ttests/research/test_release_candidate_cutover_dry_run.py",
     "M\ttests/research/test_research_output_safety.py",
     "A\ttests/test_approval_integrity.py",
+    "A\ttests/test_broker_alpaca.py",
     "M\ttests/test_ci_workflows.py",
     "M\ttests/test_cli.py",
     "M\ttests/test_cli_command_compatibility.py",
@@ -79,6 +95,7 @@
     "M\ttests/test_product_capability_inventory.py",
     "M\ttests/test_provider_adapters.py",
     "A\ttests/test_provider_audit_pack.py",
+    "A\ttests/test_provider_audit_pack_verifier.py",
     "A\ttests/test_provider_evidence_index.py",
     "A\ttests/test_provider_evidence_report.py",
     "A\ttests/test_provider_preflight.py",
@@ -86,10 +103,12 @@
     "M\ttests/test_public_launch_messaging.py",
     "M\ttests/test_public_launch_readiness.py",
     "M\ttests/test_rc1_cutover_consistency.py",
+    "A\ttests/test_redaction.py",
     "M\ttests/test_release_check_scripts.py",
     "M\ttests/test_reviewer_onboarding.py",
     "M\ttests/test_reviewer_outreach.py",
     "A\ttests/test_risk_defaults.py",
+    "A\ttests/test_secrets.py",
     "M\ttests/test_stable_release_decision.py",
     "A\ttests/test_submit_execution_safety_check.py",
     "M\ttests/test_v0581_hotfix_cutover.py",
@@ -107,7 +126,7 @@
       "name": "check_version_consistency",
       "passed": true,
       "stderr_redacted": "",
-      "stdout_redacted": "Version consistency OK: package=0.5.9.dev0 public_tag=v0.5.8.1\n"
+      "stdout_redacted": "Version consistency OK: package=0.5.9 public_tag=v0.5.9\n"
     },
     {
       "command": [
@@ -140,7 +159,7 @@
       "name": "check_public_launch_readiness",
       "passed": true,
       "stderr_redacted": "",
-      "stdout_redacted": "Public launch readiness check PASSED\n  Package version: 0.5.9.dev0\n  Public tag: v0.5.8.1\n  Required files: 17 present\n  Public docs safe: yes\n  No staged artifacts: yes\n"
+      "stdout_redacted": "Public launch readiness check PASSED\n  Package version: 0.5.9\n  Public tag: v0.5.9\n  Required files: 17 present\n  Public docs safe: yes\n  No staged artifacts: yes\n"
     },
     {
       "command": [
@@ -151,7 +170,7 @@
       "name": "check_stable_release_decision",
       "passed": true,
       "stderr_redacted": "",
-      "stdout_redacted": "Stable release decision check PASSED\n  Package version: 0.5.9.dev0\n  Public tag: v0.5.8.1\n  Required files: 24 present\n  Public docs safe: yes\n  No staged artifacts: yes\n"
+      "stdout_redacted": "Stable release decision check PASSED\n  Package version: 0.5.9\n  Public tag: v0.5.9\n  Required files: 24 present\n  Public docs safe: yes\n  No staged artifacts: yes\n"
     },
     {
       "command": [
@@ -166,15 +185,18 @@
     }
   ],
   "current_branch": "main",
-  "current_commit": "89297a1c36242ba2bdb9d4ed9d14aea786d1d95c",
+  "current_commit": "5d3e6c805792637d3a44e8367e83fbb1a7c41c8e",
   "diff_check_clean": true,
-  "generated_at": "2026-06-03T16:10:35.356374+00:00",
-  "package_version": "0.5.9.dev0",
+  "generated_at": "2026-06-03T17:56:43.380150+00:00",
+  "package_version": "0.5.9",
   "passed": true,
   "protected_boundaries": {
-    "src/atlas_agent/brokers": [],
+    "src/atlas_agent/brokers": [
+      "M\tsrc/atlas_agent/brokers/alpaca.py"
+    ],
     "src/atlas_agent/config": [
-      "M\tsrc/atlas_agent/config/schema.py"
+      "M\tsrc/atlas_agent/config/schema.py",
+      "M\tsrc/atlas_agent/config/secrets.py"
     ],
     "src/atlas_agent/execution": [
       "M\tsrc/atlas_agent/execution/approval.py"

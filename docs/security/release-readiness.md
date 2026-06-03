@@ -2,14 +2,14 @@
 
 ## Security hardening release readiness
 
-The security hardening changes must be delivered through a future versioned release so auto-updater users can receive them.
+The security hardening changes have been delivered through the `v0.5.9` versioned release so auto-updater users can receive them.
 
-Release must be performed only after:
-- all security hardening PRs are merged;
-- version consistency checks pass;
-- forbidden claims scan passes;
-- dev/CI/research/release checks pass;
+Release was performed after:
+- all security hardening PRs were merged;
+- version consistency checks passed;
+- forbidden claims scan passed;
+- dev/CI/research/release checks passed;
 - no live trading/provider execution defaults changed;
-- no secrets are present;
-- changelog/release notes are updated;
-- tag/release/PyPI publish steps are explicitly approved.
+- no secrets were present;
+- changelog/release notes were updated;
+- tag/release steps were explicitly approved.

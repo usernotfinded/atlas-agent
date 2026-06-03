@@ -21,7 +21,7 @@ SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.8-rc7"
 
-CURRENT_PACKAGE_VERSION = "0.5.9.dev0"
+CURRENT_PACKAGE_VERSION = "0.5.9"
 
 
 def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
@@ -217,7 +217,7 @@ class TestVersionReporting:
 
     def test_expected_tag_matches_version(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
-        assert 'EXPECTED_PUBLIC_TAG = "v0.5.8.1"' in text
+        assert 'EXPECTED_PUBLIC_TAG = "v0.5.9"' in text
 
 
 # ---------------------------------------------------------------------------

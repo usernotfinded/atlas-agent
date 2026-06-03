@@ -6,7 +6,7 @@
 
 | Version | Supported |
 |---|---|
-| 0.5.9.dev0 (main) | Yes — active development |
+| 0.5.9 (main) | Yes — active development |
 | 0.5.8.1 and earlier | Best-effort security guidance only |
 
 Live trading disabled by default in all versions.

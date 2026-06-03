@@ -5,11 +5,11 @@
 ## Summary
 
 - **Overall status:** PASSED
-- **Generated at:** 2026-06-03T16:10:35.356374+00:00
-- **Package version:** 0.5.9.dev0
+- **Generated at:** 2026-06-03T17:56:43.380150+00:00
+- **Package version:** 0.5.9
 - **Public stable tag:** v0.5.8.1
 - **Current branch:** main
-- **Current commit:** `89297a1c36242ba2bdb9d4ed9d14aea786d1d95c`
+- **Current commit:** `5d3e6c805792637d3a44e8367e83fbb1a7c41c8e`
 - **Working tree clean:** False
 - **Diff check clean:** True
 - **Protected boundaries clean:** False
@@ -31,12 +31,16 @@
 M	.env.example
 M	.github/workflows/ci.yml
 A	.github/workflows/full-test.yml
+A	.github/workflows/provider-audit-pack.yml
 M	.github/workflows/release-gate.yml
 M	.github/workflows/research-ci.yml
 M	.gitignore
 M	CHANGELOG.md
 M	CONTRIBUTING.md
 M	README.md
+M	SECURITY.md
+M	artifacts/release_evidence/evidence.json
+M	artifacts/release_evidence/evidence.md
 A	docs/audits/batch-7-post-incident-audit.md
 M	docs/cli-command-compatibility.md
 A	docs/demo/provider-preflight-demo.md
@@ -45,12 +49,17 @@ M	docs/live-submit-safety-contract.md
 M	docs/product-capability-inventory.md
 M	docs/public-launch-readiness.md
 M	docs/reviewer-outreach-checklist.md
+A	docs/security/approval-safety.md
+A	docs/security/broker-safety.md
+A	docs/security/dashboard-security.md
+A	docs/security/live-trading.md
 A	docs/security/provider-audit-pack.md
 A	docs/security/provider-evidence-index.md
 M	docs/security/provider-execution-policy.md
 M	docs/security/provider-integration-requirements.md
 A	docs/security/provider-preflight.md
 A	docs/security/provider-readiness.md
+A	docs/security/release-readiness.md
 M	pyproject.toml
 M	scripts/build_release_evidence_bundle.py
 M	scripts/check_clean_install.py
@@ -73,8 +82,10 @@ A	scripts/python_env.sh
 M	scripts/release_check.sh
 M	scripts/research_check.sh
 M	src/atlas_agent/__init__.py
+M	src/atlas_agent/brokers/alpaca.py
 M	src/atlas_agent/cli.py
 M	src/atlas_agent/config/schema.py
+M	src/atlas_agent/config/secrets.py
 M	src/atlas_agent/execution/approval.py
 M	src/atlas_agent/providers/openrouter.py
 A	src/atlas_agent/providers/provider_audit_pack.py
@@ -85,6 +96,10 @@ M	src/atlas_agent/research/release_candidate_cutover.py
 M	src/atlas_agent/research/release_candidate_readiness.py
 M	src/atlas_agent/risk/limits.py
 M	src/atlas_agent/templates/routine-trader/configs/risk.example.yaml
+M	tests/brokers/test_alpaca_submit.py
+M	tests/brokers/test_alpaca_sync.py
+A	tests/config/test_config_store.py
+A	tests/execution/test_approval_safety.py
 M	tests/execution/test_pending_order_schema.py
 M	tests/execution/test_submit_approved_order_dry_run.py
 M	tests/execution/test_submit_execution.py
@@ -95,6 +110,7 @@ M	tests/fixtures/product_capability_inventory.json
 M	tests/research/test_release_candidate_cutover_dry_run.py
 M	tests/research/test_research_output_safety.py
 A	tests/test_approval_integrity.py
+A	tests/test_broker_alpaca.py
 M	tests/test_ci_workflows.py
 M	tests/test_cli.py
 M	tests/test_cli_command_compatibility.py
@@ -107,6 +123,7 @@ M	tests/test_permission_hardening.py
 M	tests/test_product_capability_inventory.py
 M	tests/test_provider_adapters.py
 A	tests/test_provider_audit_pack.py
+A	tests/test_provider_audit_pack_verifier.py
 A	tests/test_provider_evidence_index.py
 A	tests/test_provider_evidence_report.py
 A	tests/test_provider_preflight.py
@@ -114,10 +131,12 @@ A	tests/test_provider_readiness.py
 M	tests/test_public_launch_messaging.py
 M	tests/test_public_launch_readiness.py
 M	tests/test_rc1_cutover_consistency.py
+A	tests/test_redaction.py
 M	tests/test_release_check_scripts.py
 M	tests/test_reviewer_onboarding.py
 M	tests/test_reviewer_outreach.py
 A	tests/test_risk_defaults.py
+A	tests/test_secrets.py
 M	tests/test_stable_release_decision.py
 A	tests/test_submit_execution_safety_check.py
 M	tests/test_v0581_hotfix_cutover.py
@@ -130,7 +149,9 @@ M	tests/test_v058_rc5_cutover.py
 
 - **src/atlas_agent/config**: ✗
   - `M	src/atlas_agent/config/schema.py`
-- **src/atlas_agent/brokers**: ✓
+  - `M	src/atlas_agent/config/secrets.py`
+- **src/atlas_agent/brokers**: ✗
+  - `M	src/atlas_agent/brokers/alpaca.py`
 - **src/atlas_agent/execution**: ✗
   - `M	src/atlas_agent/execution/approval.py`
 - **src/atlas_agent/safety**: ✓

@@ -36,7 +36,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-EXPECTED_VERSION = "0.5.8.1"
+EXPECTED_VERSION = "0.5.9"
 POST_HOTFIX_DEV_VERSION = "0.5.9.dev0"
 HISTORICAL_STABLE_VERSION = "0.5.8"
 HISTORICAL_STABLE_TAG = "v0.5.8"
@@ -83,6 +83,7 @@ def _check_current_version() -> list[str]:
     allowed_versions = {EXPECTED_VERSION}
     if EXPECTED_VERSION == "0.5.8.1":
         allowed_versions.add(POST_HOTFIX_DEV_VERSION)
+        allowed_versions.add("0.5.9")
 
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:
@@ -339,7 +340,7 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
 
     tag_matches_head = tag_commit == head_commit
     if not tag_matches_head:
-        if _current_pyproject_version() == POST_HOTFIX_DEV_VERSION:
+        if _current_pyproject_version() in (POST_HOTFIX_DEV_VERSION, "0.5.9"):
             return errors, "present_historical_release", tag_commit, head_commit, False
         errors.append(
             f"{ACTIVE_RELEASE_TAG} tag exists locally but points to {tag_commit[:12]}, "
