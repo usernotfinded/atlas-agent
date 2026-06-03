@@ -157,4 +157,6 @@ Every future provider call must produce or reference:
 - It must generate a local call-plan artifact with all safety flags set to `false`.
 - It must **not** make network calls, read API keys, load `.env.atlas`, or touch broker paths.
 - It does **not** authorize any actual provider execution.
+- The `atlas providers smoke-preflight-chain` command may generate local audit evidence for the preflight chain, but that evidence remains non-authorizing.
 - See [Provider Preflight](provider-preflight.md) for full usage and schema details.
+- See [Provider Preflight Dry-Run Demo](../demo/provider-preflight-demo.md) for a copy-pasteable local demo.

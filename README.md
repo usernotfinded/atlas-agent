@@ -30,6 +30,30 @@ The demo creates a temporary Atlas workspace, installs a safe discipline profile
 
 It does not require live trading, real broker credentials, or private values. It is a paper-mode proof of workflow mechanics, not a live-trading setup or performance claim. No `assets/atlas-demo.gif` recording is checked in yet; the script is the reproducible demo artifact.
 
+## Provider preflight dry-run demo
+
+Run the local provider preflight smoke chain:
+
+```bash
+atlas providers smoke-preflight-chain \
+  --provider openrouter \
+  --model "openrouter/auto" \
+  --purpose "research-summary" \
+  --max-context-chars 4000 \
+  --output-dir artifacts/provider_preflight_smoke/demo
+```
+
+This creates local audit evidence only: `call-plan.json`,
+`validation-report.json`, `manifest.json`, `sha256sums.txt`, and
+`smoke-report.json`. It does not call providers, use the network, load
+credentials, import provider SDKs, touch brokers, enable live trading, create
+pending orders, or approve orders.
+
+Provider preflight artifacts are audit evidence only. They do not authorize
+provider execution, broker execution, live trading, or order approval. For the
+manual generate/validate/bundle/verify workflow, see
+[Provider Preflight Dry-Run Demo](docs/demo/provider-preflight-demo.md).
+
 ## Why Atlas?
 
 - **LLM-assisted market research**: Leverage advanced models to process market context and form data-driven theses.

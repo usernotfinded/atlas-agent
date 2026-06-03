@@ -144,7 +144,21 @@ It checks required files, relative-path SHA-256 sums, manifest safety state, val
 
 The command is local-only. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
 
-## End-to-end smoke chain
+## Provider preflight dry-run demo
+
+For a copy-pasteable reviewer workflow, see
+[Provider Preflight Dry-Run Demo](../demo/provider-preflight-demo.md).
+
+The recommended one-command smoke demo is:
+
+```bash
+atlas providers smoke-preflight-chain \
+  --provider openrouter \
+  --model "openrouter/auto" \
+  --purpose "research-summary" \
+  --max-context-chars 4000 \
+  --output-dir artifacts/provider_preflight_smoke/demo
+```
 
 `atlas providers smoke-preflight-chain` runs the local dry-run preflight chain:
 
@@ -152,5 +166,23 @@ The command is local-only. It does not call providers, load credentials, use the
 2. validate call-plan
 3. create evidence bundle
 4. verify evidence bundle
+5. write `smoke-report.json`
 
-The command is local-only. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
+The smoke command creates local audit evidence only. It does not call providers,
+load credentials, use the network, import provider SDKs, touch brokers, enable
+live trading, create pending orders, or approve orders.
+
+| Capability | Status |
+|---|---|
+| Provider call | Disabled |
+| Network use | Disabled |
+| Credentials loaded | Disabled |
+| Broker touched | Disabled |
+| Live trading | Disabled |
+| Pending orders | Disabled |
+| Order approval | Disabled |
+
+Provider preflight artifacts are audit evidence only. They do not authorize
+provider execution, broker execution, live trading, pending orders, or order
+approval. If validation or bundle verification fails, regenerate the call-plan
+instead of editing JSON manually.
