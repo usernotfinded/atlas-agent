@@ -89,11 +89,15 @@ class AlpacaBroker:
             if order.limit_price is None or isinstance(order.limit_price, bool) or not isinstance(order.limit_price, (int, float)) or not math.isfinite(order.limit_price) or order.limit_price <= 0:
                 raise BrokerOperationError("invalid order")
 
-        endpoint = (
-            self.live_endpoint
-            if os.getenv("ALPACA_ENDPOINT_MODE", "paper").strip().lower() == "live"
-            else self.paper_endpoint
-        )
+        mode = os.getenv("ALPACA_ENDPOINT_MODE", "paper").strip().lower()
+        if mode == "live":
+            if not self.config.enable_live_trading or not self.config.enable_live_submit:
+                raise BrokerConfigurationError("Live endpoint requested but live trading/submit gates are not enabled")
+            endpoint = self.live_endpoint
+        elif mode == "paper":
+            endpoint = self.paper_endpoint
+        else:
+            raise BrokerConfigurationError(f"Invalid ALPACA_ENDPOINT_MODE: {mode}")
         payload: dict[str, object] = {
             "symbol": order.symbol,
             "qty": str(order.quantity),
@@ -120,7 +124,10 @@ class AlpacaBroker:
             with urllib.request.urlopen(request, timeout=20) as response:
                 raw = json.loads(response.read().decode("utf-8"))
         except TimeoutError:
-            raise BrokerOperationError("broker transport request failed")
+            raise BrokerOperationError(
+                "broker transport request failed: timeout — execution state is unknown; "
+                "reconcile by client_order_id before retry"
+            )
         except urllib.error.HTTPError as exc:
             code = getattr(exc, "code", 0)
             if code >= 500:
@@ -276,7 +283,14 @@ class AlpacaBrokerAdapter(BrokerProvider):
     @property
     def _endpoint(self) -> str:
         mode = os.getenv("ALPACA_ENDPOINT_MODE", "paper").strip().lower()
-        return self.live_endpoint if mode == "live" else self.paper_endpoint
+        if mode == "live":
+            if not self.config.enable_live_trading or not self.config.enable_live_submit:
+                raise BrokerConfigurationError("Live endpoint requested but live trading/submit gates are not enabled")
+            return self.live_endpoint
+        elif mode == "paper":
+            return self.paper_endpoint
+        else:
+            raise BrokerConfigurationError(f"Invalid ALPACA_ENDPOINT_MODE: {mode}")
 
     def _request(self, method: str, path: str) -> dict:
         """Make an HTTP request and return parsed JSON.

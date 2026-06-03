@@ -21,7 +21,7 @@ from atlas_agent.execution.order import Order, OrderResult
 def _broker() -> AlpacaBroker:
     config = AtlasConfig(
         trading_mode="live",
-        broker={"provider": "alpaca", "enable_live_trading": True},
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
     )
     return AlpacaBroker(config)
 
@@ -29,7 +29,7 @@ def _broker() -> AlpacaBroker:
 def _adapter() -> AlpacaBrokerAdapter:
     config = AtlasConfig(
         trading_mode="live",
-        broker={"provider": "alpaca", "enable_live_trading": True},
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
     )
     return AlpacaBrokerAdapter(config)
 
