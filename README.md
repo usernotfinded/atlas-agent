@@ -68,7 +68,7 @@ atlas providers audit-pack \
 The audit pack adds an evidence index, Markdown report, compact JSON summary,
 and `audit-pack-manifest.json`. It is local-only and non-authorizing; it does
 not call providers, load credentials, use the network, touch brokers, or enable
-execution. See [Provider Audit Pack](docs/security/provider-audit-pack.md).
+execution. See [Provider Audit Pack](docs/security/provider-audit-pack.md). This pack can also be verified and generated in CI as a non-authorizing artifact.
 
 ## Provider capability inventory and readiness
 

@@ -1,0 +1,58 @@
+name: Provider Audit Pack
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provider-audit-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      TRADING_MODE: paper
+      ENABLE_LIVE_TRADING: "false"
+      PROVIDER_EXECUTION_ENABLED: "false"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run static safety checks
+        run: |
+          python scripts/check_version_consistency.py
+          python scripts/check_forbidden_claims.py
+
+      - name: Generate provider audit pack
+        run: |
+          PYTHONPATH=src python -m atlas_agent.cli providers audit-pack \
+            --provider openrouter \
+            --model "openrouter/auto" \
+            --purpose "ci-audit-pack-smoke" \
+            --max-context-chars 4000 \
+            --output-dir artifacts/provider_audit_pack/ci-smoke
+
+      - name: Verify provider audit pack
+        run: |
+          PYTHONPATH=src python -m atlas_agent.cli providers verify-audit-pack \
+            artifacts/provider_audit_pack/ci-smoke
+
+      - name: Upload provider audit pack artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-audit-pack-ci-smoke
+          path: artifacts/provider_audit_pack/ci-smoke
+          if-no-files-found: error
+          retention-days: 14
