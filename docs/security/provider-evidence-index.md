@@ -23,4 +23,12 @@ atlas providers evidence-index inspect index.json
 - **Local Only:** Scans local files. Makes no network calls.
 - **Secret Redaction Check:** It enforces that no artifact containing secret-like strings (`api_key`, `sk-`, `token`) is marked valid.
 - **Absolute Path Check:** Ensures artifacts do not leak the user's filesystem structure (using relative paths).
-- **Safety Flags Verified:** Re-verifies that all provider execution/network flags are `False` inside the artifacts. Any artifact showing an unlocked network gate is marked invalid.
+- **Safety Flags Verified:** These constraints guarantee that evidence cannot perform unauthorized network execution or leak local disk files through symlinks.
+
+## Evidence index reports
+
+`atlas providers evidence-index report <index.json>` renders a Markdown audit report for human reviewers.
+
+`atlas providers evidence-index export-summary <index.json>` writes a compact machine-readable summary.
+
+Reports are local-only and non-authorizing. They do not call providers, load credentials, use the network, touch brokers, or enable execution.

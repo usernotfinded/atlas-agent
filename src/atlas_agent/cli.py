@@ -304,6 +304,16 @@ Safety First:
     evidence_inspect.add_argument("index_path", type=Path, help="Path to the index JSON")
     evidence_inspect.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
+    evidence_report = evidence_sub.add_parser("report", help="Generate a human-readable Markdown report from the evidence index.")
+    evidence_report.add_argument("index_path", type=Path, help="Path to the index JSON")
+    evidence_report.add_argument("--output", required=True, type=Path, help="Output Markdown report path")
+    evidence_report.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
+    evidence_export_summary = evidence_sub.add_parser("export-summary", help="Export a compact machine-readable summary of the evidence index.")
+    evidence_export_summary.add_argument("index_path", type=Path, help="Path to the index JSON")
+    evidence_export_summary.add_argument("--output", required=True, type=Path, help="Output JSON summary path")
+    evidence_export_summary.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
@@ -3721,6 +3731,54 @@ def main(argv: list[str] | None = None) -> int:
                     return emit_cli_error("atlas providers evidence-index inspect", "inspection_error", str(e))
                 print(f"Provider evidence index inspection failed: {e}", file=sys.stderr)
                 return 1
+        elif args.evidence_command == "report":
+            from atlas_agent.providers.provider_evidence_index import generate_provider_evidence_report, EvidenceIndexError
+            try:
+                result = generate_provider_evidence_report(args.index_path, output=args.output)
+                is_valid = result.get("is_valid", False)
+                if not is_valid:
+                    if getattr(args, "json", False):
+                        return emit_cli_success("atlas providers evidence-index report", {"report_generated": True, "status": "unsafe_or_invalid_index", "findings": result.get("error_message")})
+                    print(f"Provider evidence report generated to {display_path(args.output)}, but index was invalid or unsafe.")
+                    return 1
+                if getattr(args, "json", False):
+                    return emit_cli_success("atlas providers evidence-index report", {"report_generated": True, "status": "valid"})
+                print(f"Provider evidence report written to {display_path(args.output)}")
+                return 0
+            except EvidenceIndexError as e:
+                if getattr(args, "json", False):
+                    return emit_cli_error("atlas providers evidence-index report", "report_generation_error", str(e))
+                print(f"Provider evidence report generation failed: {e}", file=sys.stderr)
+                return 2
+            except Exception as e:
+                if getattr(args, "json", False):
+                    return emit_cli_error("atlas providers evidence-index report", "report_generation_error", str(e))
+                print(f"Provider evidence report generation failed: {e}", file=sys.stderr)
+                return 2
+        elif args.evidence_command == "export-summary":
+            from atlas_agent.providers.provider_evidence_index import export_provider_evidence_summary, EvidenceIndexError
+            try:
+                summary = export_provider_evidence_summary(args.index_path, output=args.output)
+                is_valid = summary.get("valid", False)
+                if not is_valid:
+                    if getattr(args, "json", False):
+                        return emit_cli_success("atlas providers evidence-index export-summary", {"summary_exported": True, "status": "unsafe_or_invalid_index"})
+                    print(f"Provider evidence summary exported to {display_path(args.output)}, but index was invalid or unsafe.")
+                    return 1
+                if getattr(args, "json", False):
+                    return emit_cli_success("atlas providers evidence-index export-summary", {"summary_exported": True, "status": "valid"})
+                print(f"Provider evidence summary exported to {display_path(args.output)}")
+                return 0
+            except EvidenceIndexError as e:
+                if getattr(args, "json", False):
+                    return emit_cli_error("atlas providers evidence-index export-summary", "summary_export_error", str(e))
+                print(f"Provider evidence summary export failed: {e}", file=sys.stderr)
+                return 2
+            except Exception as e:
+                if getattr(args, "json", False):
+                    return emit_cli_error("atlas providers evidence-index export-summary", "summary_export_error", str(e))
+                print(f"Provider evidence summary export failed: {e}", file=sys.stderr)
+                return 2
 
     if args.command == "providers" and args.providers_command == "validate-preflight":
         import json
