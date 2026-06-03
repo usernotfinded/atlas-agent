@@ -21,6 +21,7 @@ import hashlib
 import json
 import re
 import shutil
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -56,6 +57,10 @@ class PreflightValidationError(ValueError):
 
 class PreflightBundleVerificationError(ValueError):
     """Raised when a provider preflight evidence bundle is invalid."""
+
+
+class PreflightSmokeChainError(ValueError):
+    """Raised when the preflight smoke chain fails after input validation."""
 
 
 def _validate_bounded_string(
@@ -341,6 +346,7 @@ _BUNDLE_HASHED_FILE_NAMES = [
 _MANIFEST_ARTIFACT_TYPE = "provider_preflight_evidence_bundle_manifest"
 _VALIDATION_REPORT_ARTIFACT_TYPE = "provider_preflight_validation_report"
 _VERIFICATION_REPORT_ARTIFACT_TYPE = "provider_preflight_bundle_verification_report"
+_SMOKE_REPORT_ARTIFACT_TYPE = "provider_preflight_smoke_report"
 _SCRIPT_SUFFIXES = {
     ".bat",
     ".cmd",
@@ -468,6 +474,101 @@ def create_preflight_evidence_bundle(
         "bundle_dir": str(output_dir),
         "files": list(_BUNDLE_FILE_NAMES),
         "valid": True,
+    }
+
+
+# ---------------------------------------------------------------------------
+# End-to-end smoke chain
+# ---------------------------------------------------------------------------
+
+def _smoke_report(created_at: str, stages: dict[str, bool]) -> dict[str, Any]:
+    return {
+        "artifact_type": _SMOKE_REPORT_ARTIFACT_TYPE,
+        "schema_version": 1,
+        "created_at": created_at,
+        "valid": all(stages.values()),
+        "stages": dict(stages),
+        "files": {
+            "call_plan": "call-plan.json",
+            "validation_report": "validation-report.json",
+            "manifest": "manifest.json",
+            "sha256sums": "sha256sums.txt",
+        },
+        "safety_summary": dict(_CLOSED_SAFETY_SUMMARY),
+        "manual_review_required": True,
+    }
+
+
+def run_preflight_smoke_chain(
+    *,
+    provider_id: str,
+    model_id: str,
+    purpose: str,
+    max_context_chars: int,
+    output_dir: Path,
+) -> dict[str, Any]:
+    """Run the local-only provider preflight safety chain end-to-end.
+
+    The chain is strictly dry-run:
+      preflight -> validate-preflight -> bundle-preflight ->
+      verify-preflight-bundle.
+
+    It only writes local artifacts and reuses the existing preflight
+    generator, validator, evidence-bundle creator, and bundle verifier.
+    It does not call providers, load credentials, use the network, touch
+    brokers, or enable execution.
+    """
+    stages = {
+        "call_plan_generated": False,
+        "call_plan_validated": False,
+        "evidence_bundle_created": False,
+        "evidence_bundle_verified": False,
+    }
+
+    artifact = generate_call_plan_artifact(
+        provider_id=provider_id,
+        model_id=model_id,
+        purpose=purpose,
+        max_context_chars=max_context_chars,
+    )
+    stages["call_plan_generated"] = True
+
+    try:
+        validate_call_plan_artifact(artifact)
+        stages["call_plan_validated"] = True
+
+        output_dir = Path(output_dir)
+        with tempfile.TemporaryDirectory(prefix="atlas-provider-preflight-") as temp_dir:
+            source_path = Path(temp_dir) / "call-plan.json"
+            _write_json(source_path, artifact)
+            create_preflight_evidence_bundle(source_path, output_dir)
+        stages["evidence_bundle_created"] = True
+
+        verification = verify_preflight_evidence_bundle(output_dir)
+        if verification.get("valid") is not True:
+            raise PreflightSmokeChainError("bundle verification returned invalid")
+        stages["evidence_bundle_verified"] = True
+    except PreflightBundleVerificationError as exc:
+        raise PreflightSmokeChainError(f"bundle verification failed: {exc}") from exc
+    except PreflightValidationError as exc:
+        raise PreflightSmokeChainError(f"call-plan validation failed: {exc}") from exc
+
+    report = _smoke_report(_utc_timestamp(), stages)
+    _write_json(Path(output_dir) / "smoke-report.json", report)
+
+    return {
+        "valid": True,
+        "output_dir": str(output_dir),
+        "stages": dict(stages),
+        "files": {
+            "call_plan": "call-plan.json",
+            "validation_report": "validation-report.json",
+            "manifest": "manifest.json",
+            "sha256sums": "sha256sums.txt",
+            "smoke_report": "smoke-report.json",
+        },
+        "safety_summary": dict(_CLOSED_SAFETY_SUMMARY),
+        "manual_review_required": True,
     }
 
 

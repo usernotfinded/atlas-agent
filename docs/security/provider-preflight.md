@@ -143,3 +143,14 @@ The command validates the artifact first. It does not call providers, load crede
 It checks required files, relative-path SHA-256 sums, manifest safety state, validation report state, and the embedded call-plan artifact.
 
 The command is local-only. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
+
+## End-to-end smoke chain
+
+`atlas providers smoke-preflight-chain` runs the local dry-run preflight chain:
+
+1. generate call-plan
+2. validate call-plan
+3. create evidence bundle
+4. verify evidence bundle
+
+The command is local-only. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
