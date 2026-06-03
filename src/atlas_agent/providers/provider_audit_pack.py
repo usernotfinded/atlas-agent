@@ -8,6 +8,8 @@ credentials, use the network, touch brokers, or authorize execution.
 from __future__ import annotations
 
 import json
+import os
+import stat
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -25,6 +27,7 @@ from atlas_agent.providers.provider_preflight import (
     PreflightValidationError,
     run_preflight_smoke_chain,
     verify_preflight_evidence_bundle,
+    validate_call_plan_artifact,
 )
 
 AUDIT_PACK_FILES = [
@@ -64,6 +67,10 @@ class ProviderAuditPackStageError(ProviderAuditPackError):
 
 class ProviderAuditPackIOError(ProviderAuditPackError):
     """Raised when local input/output operations fail."""
+
+
+class AuditPackVerificationError(ProviderAuditPackError):
+    """Raised when audit pack verification fails."""
 
 
 def _utc_timestamp() -> str:
@@ -245,6 +252,181 @@ def create_provider_audit_pack(
         "stages": dict(stages),
         "manifest": manifest,
         "safety_summary": dict(_CLOSED_SAFETY_SUMMARY),
+        "manual_review_required": True,
+        "non_authorizing": True,
+    }
+
+
+def verify_provider_audit_pack(pack_dir: Path) -> dict[str, Any]:
+    """Verify an existing provider audit pack.
+
+    Checks that the pack is complete, safe, and ready for external review.
+    Does not use network, credentials, or touch executing paths.
+    """
+    pack_dir = Path(pack_dir)
+    findings = []
+    checks = {
+        "required_files_present": False,
+        "no_symlinked_required_files": True,
+        "no_extra_executable_files": True,
+        "relative_paths_only": True,
+        "no_absolute_paths": True,
+        "no_secret_like_values": True,
+        "no_raw_payload_bodies": True,
+        "call_plan_valid": False,
+        "bundle_valid": False,
+        "smoke_report_valid": False,
+        "evidence_index_valid": False,
+        "evidence_summary_valid": False,
+        "evidence_report_present": False,
+        "audit_pack_manifest_valid": False,
+        "safety_summary_closed": False,
+    }
+
+    if not pack_dir.is_dir():
+        raise ProviderAuditPackIOError("pack directory does not exist or is not a directory")
+
+    missing_files = []
+    for f in AUDIT_PACK_FILES:
+        p = pack_dir / f
+        if not p.exists():
+            missing_files.append(f)
+            checks["no_symlinked_required_files"] = False
+        elif p.is_symlink():
+            checks["no_symlinked_required_files"] = False
+            findings.append(f"required file is a symlink: {f}")
+
+    if not missing_files:
+        checks["required_files_present"] = True
+    else:
+        findings.append(f"missing required files: {', '.join(missing_files)}")
+
+    exec_extensions = {
+        ".sh", ".bash", ".zsh", ".fish", ".py", ".pyc", ".js", ".ts",
+        ".mjs", ".cjs", ".exe", ".dll", ".dylib", ".so", ".bat", ".cmd", ".ps1"
+    }
+
+    for root, _, files in os.walk(pack_dir):
+        for f in files:
+            p = Path(root) / f
+            rel = p.relative_to(pack_dir)
+            if p.is_symlink() and rel.name not in AUDIT_PACK_FILES:
+                continue
+            if p.suffix in exec_extensions:
+                checks["no_extra_executable_files"] = False
+                findings.append(f"script/executable extension found: {rel.name}")
+            else:
+                try:
+                    mode = p.stat().st_mode
+                    if mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+                        checks["no_extra_executable_files"] = False
+                        findings.append(f"executable permission bit set: {rel.name}")
+                except OSError:
+                    pass
+
+            try:
+                content = p.read_text(encoding="utf-8").lower()
+            except UnicodeDecodeError:
+                continue
+
+            import re
+            if re.search(r'\b(raw_prompt|raw_request|raw_response|prompt_body|request_body|response_body)\b', content):
+                checks["no_raw_payload_bodies"] = False
+                findings.append(f"raw payload body found in {rel.name}")
+
+            if "/users/" in content or "/home/" in content or "c:\\" in content:
+                checks["no_absolute_paths"] = False
+                findings.append(f"absolute path found in {rel.name}")
+
+            for sec in ("sk-ant-", "sk-proj-", "ghp_", "xoxb-", "bearer "):
+                if sec in content:
+                    checks["no_secret_like_values"] = False
+                    findings.append(f"secret-like value found in {rel.name}")
+                    break
+
+    try:
+        call_plan = json.loads((pack_dir / "call-plan.json").read_text(encoding="utf-8"))
+        validate_call_plan_artifact(call_plan)
+        checks["call_plan_valid"] = True
+    except Exception:
+        findings.append("call-plan.json is invalid")
+
+    try:
+        verification = verify_preflight_evidence_bundle(pack_dir)
+        if verification.get("valid") is True:
+            checks["bundle_valid"] = True
+        else:
+            findings.append("evidence bundle is invalid")
+    except Exception:
+        findings.append("evidence bundle is invalid")
+
+    try:
+        smoke = json.loads((pack_dir / "smoke-report.json").read_text(encoding="utf-8"))
+        if smoke.get("valid") is True and all(smoke.get("stages", {}).values()):
+            checks["smoke_report_valid"] = True
+        else:
+            findings.append("smoke-report.json is invalid or not all stages are true")
+    except Exception:
+        findings.append("smoke-report.json is malformed")
+
+    try:
+        inspect_provider_evidence_index(pack_dir / "evidence-index.json")
+        checks["evidence_index_valid"] = True
+    except Exception:
+        findings.append("evidence-index.json is invalid")
+
+    try:
+        summary = json.loads((pack_dir / "evidence-summary.json").read_text(encoding="utf-8"))
+        if summary.get("artifact_type") == "provider_evidence_index_summary":
+            safety = summary.get("safety_summary", {})
+            if any(safety.values()):
+                findings.append("evidence-summary safety_summary is not closed")
+            else:
+                checks["evidence_summary_valid"] = True
+        else:
+            findings.append("evidence-summary artifact_type is invalid")
+    except Exception:
+        findings.append("evidence-summary.json is malformed")
+
+    try:
+        report_text = (pack_dir / "evidence-report.md").read_text(encoding="utf-8").lower()
+        if "reviewer" in report_text or "non-authorizing" in report_text:
+            checks["evidence_report_present"] = True
+        else:
+            findings.append("evidence-report.md missing reviewer/non-authorizing notes")
+    except Exception:
+        findings.append("evidence-report.md is unreadable")
+
+    try:
+        manifest = json.loads((pack_dir / "audit-pack-manifest.json").read_text(encoding="utf-8"))
+        if manifest.get("artifact_type") == "provider_audit_pack_manifest" and manifest.get("valid") is True:
+            if all(manifest.get("stages", {}).values()):
+                safety = manifest.get("safety_summary", {})
+                if not any(safety.values()):
+                    checks["audit_pack_manifest_valid"] = True
+                    checks["safety_summary_closed"] = True
+                else:
+                    findings.append("audit-pack-manifest safety_summary is not closed")
+            else:
+                findings.append("audit-pack-manifest has false stages")
+        else:
+            findings.append("audit-pack-manifest is not valid")
+    except Exception:
+        findings.append("audit-pack-manifest.json is malformed")
+
+    valid = not findings and all(checks.values())
+
+    return {
+        "artifact_type": "provider_audit_pack_verification_report",
+        "schema_version": 1,
+        "valid": valid,
+        "accepted_for_external_review": valid,
+        "verified_at": _utc_timestamp(),
+        "pack_dir": str(pack_dir),
+        "required_files_present": checks["required_files_present"],
+        "checks": checks,
+        "safety_summary": dict(_CLOSED_SAFETY_SUMMARY),
+        "findings": findings,
         "manual_review_required": True,
         "non_authorizing": True,
     }
