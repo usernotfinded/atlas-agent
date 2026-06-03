@@ -6,12 +6,12 @@
 
 | Version | Supported |
 |---|---|
-| 0.5.7rc6 (current RC) | Yes — active development |
-| 0.5.7rc4 and earlier | Best-effort security guidance only |
+| 0.5.9.dev0 (main) | Yes — active development |
+| 0.5.8.1 and earlier | Best-effort security guidance only |
 
 Live trading disabled by default in all versions.
 
-Atlas is in release-candidate preflight. Security updates are applied to the latest RC line.
+Atlas is in active development on the `main` branch. No public v0.5.9 release has been made. Security updates are applied to the latest development line.
 
 ## Scope
 

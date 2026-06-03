@@ -84,7 +84,7 @@ def test_require_finite_positive_rejects_negative() -> None:
 def _adapter() -> AlpacaBrokerAdapter:
     config = AtlasConfig(
         trading_mode="live",
-        broker={"provider": "alpaca", "enable_live_trading": True},
+        broker={"provider": "alpaca", "enable_live_trading": True, "enable_live_submit": True},
     )
     return AlpacaBrokerAdapter(config)
 
