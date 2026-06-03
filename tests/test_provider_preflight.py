@@ -19,6 +19,47 @@ def _write_valid_call_plan(path: Path) -> dict:
     return artifact
 
 
+def _create_valid_bundle(tmp_path: Path) -> Path:
+    from atlas_agent.providers.provider_preflight import create_preflight_evidence_bundle
+
+    artifact_path = tmp_path / "call-plan-source.json"
+    _write_valid_call_plan(artifact_path)
+    output_dir = tmp_path / "bundle"
+    create_preflight_evidence_bundle(artifact_path, output_dir)
+    return output_dir
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _rewrite_bundle_hashes(bundle_dir: Path) -> None:
+    manifest_path = bundle_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    call_plan_sha = _sha256(bundle_dir / "call-plan.json")
+    validation_report_sha = _sha256(bundle_dir / "validation-report.json")
+    manifest["source_artifact_sha256"] = call_plan_sha
+    manifest["bundle_sha256s"] = {
+        "call-plan.json": call_plan_sha,
+        "validation-report.json": validation_report_sha,
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_sha = _sha256(manifest_path)
+    (bundle_dir / "sha256sums.txt").write_text(
+        "\n".join(
+            [
+                f"{call_plan_sha}  call-plan.json",
+                f"{validation_report_sha}  validation-report.json",
+                f"{manifest_sha}  manifest.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def test_provider_preflight_success(tmp_path: Path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     output_path = tmp_path / "custom-plan.json"
@@ -534,6 +575,205 @@ def test_preflight_bundle_does_not_touch_protected_boundaries(tmp_path: Path) ->
         patch("atlas_agent.safety.write_deadman_heartbeat") as mock_deadman,
     ):
         create_preflight_evidence_bundle(artifact_path, tmp_path / "bundle")
+
+    mock_broker_resolver.assert_not_called()
+    mock_order_router.assert_not_called()
+    mock_risk_manager.assert_not_called()
+    mock_deadman.assert_not_called()
+
+
+def test_verify_preflight_bundle_valid_bundle_passes(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import verify_preflight_evidence_bundle
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+
+    result = verify_preflight_evidence_bundle(bundle_dir)
+
+    assert result["artifact_type"] == "provider_preflight_bundle_verification_report"
+    assert result["schema_version"] == 1
+    assert result["valid"] is True
+    assert result["verified_files"] == [
+        "call-plan.json",
+        "validation-report.json",
+        "manifest.json",
+        "sha256sums.txt",
+    ]
+    assert all(value is True for value in result["checks"].values())
+    assert result["provider_call_made"] is False
+    assert result["network_used"] is False
+    assert result["credentials_loaded"] is False
+    assert result["broker_touched"] is False
+    assert result["live_trading_enabled"] is False
+
+
+def test_verify_preflight_bundle_missing_call_plan_fails(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+    (bundle_dir / "call-plan.json").unlink()
+
+    with pytest.raises(PreflightBundleVerificationError, match="Required bundle file missing"):
+        verify_preflight_evidence_bundle(bundle_dir)
+
+
+def test_verify_preflight_bundle_tampered_call_plan_hash_fails(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+    call_plan = json.loads((bundle_dir / "call-plan.json").read_text(encoding="utf-8"))
+    call_plan["purpose"] = "tampered-purpose"
+    (bundle_dir / "call-plan.json").write_text(json.dumps(call_plan), encoding="utf-8")
+
+    with pytest.raises(PreflightBundleVerificationError, match="call-plan.json hash does not match"):
+        verify_preflight_evidence_bundle(bundle_dir)
+
+
+def test_verify_preflight_bundle_tampered_validation_report_hash_fails(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+    (bundle_dir / "validation-report.json").write_text(
+        (bundle_dir / "validation-report.json").read_text(encoding="utf-8") + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PreflightBundleVerificationError, match="validation-report.json hash does not match"):
+        verify_preflight_evidence_bundle(bundle_dir)
+
+
+def test_verify_preflight_bundle_absolute_path_in_sha256sums_fails(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+    call_plan_sha = _sha256(bundle_dir / "call-plan.json")
+    (bundle_dir / "sha256sums.txt").write_text(
+        f"{call_plan_sha}  /tmp/call-plan.json\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PreflightBundleVerificationError, match="absolute path"):
+        verify_preflight_evidence_bundle(bundle_dir)
+
+
+def test_verify_preflight_bundle_validation_report_false_fails(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+    report_path = bundle_dir / "validation-report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["valid"] = False
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _rewrite_bundle_hashes(bundle_dir)
+
+    with pytest.raises(PreflightBundleVerificationError, match="valid must be true"):
+        verify_preflight_evidence_bundle(bundle_dir)
+
+
+def test_verify_preflight_bundle_unsafe_call_plan_fails(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+    call_plan_path = bundle_dir / "call-plan.json"
+    call_plan = json.loads(call_plan_path.read_text(encoding="utf-8"))
+    call_plan["safety_flags"]["broker_touched"] = True
+    call_plan_path.write_text(json.dumps(call_plan, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _rewrite_bundle_hashes(bundle_dir)
+
+    with pytest.raises(PreflightBundleVerificationError, match="call-plan.json validation failed"):
+        verify_preflight_evidence_bundle(bundle_dir)
+
+
+def test_verify_preflight_bundle_extra_script_file_fails(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import (
+        PreflightBundleVerificationError,
+        verify_preflight_evidence_bundle,
+    )
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+    (bundle_dir / "extra.sh").write_text("echo no\n", encoding="utf-8")
+
+    with pytest.raises(PreflightBundleVerificationError, match="Extra executable or script file"):
+        verify_preflight_evidence_bundle(bundle_dir)
+
+
+def test_cli_verify_preflight_bundle_succeeds_for_valid_bundle(tmp_path: Path, capsys) -> None:
+    bundle_dir = _create_valid_bundle(tmp_path)
+
+    code = main(["providers", "verify-preflight-bundle", str(bundle_dir)])
+    captured = capsys.readouterr()
+
+    assert code == 0
+    assert "Provider preflight evidence bundle is valid." in captured.out
+
+
+def test_cli_verify_preflight_bundle_fails_for_invalid_bundle(tmp_path: Path, capsys) -> None:
+    bundle_dir = _create_valid_bundle(tmp_path)
+    (bundle_dir / "manifest.json").write_text("{}", encoding="utf-8")
+
+    code = main(["providers", "verify-preflight-bundle", str(bundle_dir)])
+    captured = capsys.readouterr()
+
+    assert code == 1
+    assert "Provider preflight evidence bundle verification failed:" in captured.err
+
+
+def test_cli_verify_preflight_bundle_json_mode(tmp_path: Path, capsys) -> None:
+    bundle_dir = _create_valid_bundle(tmp_path)
+
+    code = main(["providers", "verify-preflight-bundle", str(bundle_dir), "--json"])
+    captured = capsys.readouterr()
+
+    assert code == 0
+    envelope = json.loads(captured.out)
+    assert envelope["ok"] is True
+    assert envelope["command"] == "atlas providers verify-preflight-bundle"
+    assert envelope["data"]["valid"] is True
+    assert envelope["data"]["artifact_type"] == "provider_preflight_bundle_verification_report"
+
+
+def test_cli_verify_preflight_bundle_does_not_load_config_or_credentials(tmp_path: Path, capsys) -> None:
+    bundle_dir = _create_valid_bundle(tmp_path)
+
+    with patch("atlas_agent.cli.AtlasConfig.from_env") as mock_from_env:
+        code = main(["providers", "verify-preflight-bundle", str(bundle_dir)])
+
+    captured = capsys.readouterr()
+
+    assert code == 0
+    assert "Provider preflight evidence bundle is valid." in captured.out
+    mock_from_env.assert_not_called()
+
+
+def test_verify_preflight_bundle_does_not_touch_protected_boundaries(tmp_path: Path) -> None:
+    from atlas_agent.providers.provider_preflight import verify_preflight_evidence_bundle
+
+    bundle_dir = _create_valid_bundle(tmp_path)
+
+    with (
+        patch("atlas_agent.brokers.resolver.BrokerResolver") as mock_broker_resolver,
+        patch("atlas_agent.execution.order_router.OrderRouter") as mock_order_router,
+        patch("atlas_agent.risk.manager.RiskManager") as mock_risk_manager,
+        patch("atlas_agent.safety.write_deadman_heartbeat") as mock_deadman,
+    ):
+        verify_preflight_evidence_bundle(bundle_dir)
 
     mock_broker_resolver.assert_not_called()
     mock_order_router.assert_not_called()

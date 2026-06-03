@@ -54,6 +54,10 @@ class PreflightValidationError(ValueError):
     """Raised when a preflight input fails validation."""
 
 
+class PreflightBundleVerificationError(ValueError):
+    """Raised when a provider preflight evidence bundle is invalid."""
+
+
 def _validate_bounded_string(
     value: str,
     field_name: str,
@@ -329,6 +333,32 @@ _BUNDLE_FILE_NAMES = [
     "manifest.json",
     "sha256sums.txt",
 ]
+_BUNDLE_HASHED_FILE_NAMES = [
+    "call-plan.json",
+    "validation-report.json",
+    "manifest.json",
+]
+_MANIFEST_ARTIFACT_TYPE = "provider_preflight_evidence_bundle_manifest"
+_VALIDATION_REPORT_ARTIFACT_TYPE = "provider_preflight_validation_report"
+_VERIFICATION_REPORT_ARTIFACT_TYPE = "provider_preflight_bundle_verification_report"
+_SCRIPT_SUFFIXES = {
+    ".bat",
+    ".cmd",
+    ".fish",
+    ".ps1",
+    ".py",
+    ".sh",
+    ".zsh",
+}
+_CLOSED_SAFETY_SUMMARY = {
+    "provider_call_made": False,
+    "network_used": False,
+    "credentials_loaded": False,
+    "broker_touched": False,
+    "live_trading_enabled": False,
+    "pending_order_created": False,
+    "order_approved": False,
+}
 
 
 def _utc_timestamp() -> str:
@@ -348,7 +378,7 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 def _validation_report(validated_at: str) -> dict[str, Any]:
     return {
-        "artifact_type": "provider_preflight_validation_report",
+        "artifact_type": _VALIDATION_REPORT_ARTIFACT_TYPE,
         "schema_version": 1,
         "valid": True,
         "validated_at": validated_at,
@@ -407,7 +437,7 @@ def create_preflight_evidence_bundle(
     call_plan_sha = _sha256_file(call_plan_path)
     validation_report_sha = _sha256_file(validation_report_path)
     manifest = {
-        "artifact_type": "provider_preflight_evidence_bundle_manifest",
+        "artifact_type": _MANIFEST_ARTIFACT_TYPE,
         "schema_version": 1,
         "created_at": now,
         "bundle_files": list(_BUNDLE_FILE_NAMES),
@@ -416,15 +446,7 @@ def create_preflight_evidence_bundle(
             "call-plan.json": call_plan_sha,
             "validation-report.json": validation_report_sha,
         },
-        "safety_summary": {
-            "provider_call_made": False,
-            "network_used": False,
-            "credentials_loaded": False,
-            "broker_touched": False,
-            "live_trading_enabled": False,
-            "pending_order_created": False,
-            "order_approved": False,
-        },
+        "safety_summary": dict(_CLOSED_SAFETY_SUMMARY),
         "manual_review_required": True,
     }
     _write_json(manifest_path, manifest)
@@ -446,4 +468,198 @@ def create_preflight_evidence_bundle(
         "bundle_dir": str(output_dir),
         "files": list(_BUNDLE_FILE_NAMES),
         "valid": True,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Evidence bundle verification
+# ---------------------------------------------------------------------------
+
+def _raise_bundle_error(message: str) -> None:
+    raise PreflightBundleVerificationError(message)
+
+
+def _read_json_object(path: Path) -> dict[str, Any]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        _raise_bundle_error(f"{path.name} must be a JSON object")
+    return data
+
+
+def _assert_no_absolute_or_secret_string_values(data: Any, *, label: str) -> None:
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(key, str) and _ABSOLUTE_PATH_RE.search(key):
+                _raise_bundle_error(f"{label} contains an absolute path")
+            _assert_no_absolute_or_secret_string_values(value, label=label)
+    elif isinstance(data, list):
+        for item in data:
+            _assert_no_absolute_or_secret_string_values(item, label=label)
+    elif isinstance(data, str):
+        if _ABSOLUTE_PATH_RE.search(data):
+            _raise_bundle_error(f"{label} contains an absolute path")
+        if _SECRET_FRAGMENT_RE.search(data):
+            _raise_bundle_error(f"{label} contains a secret-like value")
+
+
+def _parse_sha256sums(text: str) -> dict[str, str]:
+    if _ABSOLUTE_PATH_RE.search(text):
+        _raise_bundle_error("sha256sums.txt contains an absolute path")
+    if _SECRET_FRAGMENT_RE.search(text):
+        _raise_bundle_error("sha256sums.txt contains a secret-like value")
+
+    checksums: dict[str, str] = {}
+    for line_number, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        if "  " not in line:
+            _raise_bundle_error(f"sha256sums.txt line {line_number} is malformed")
+        digest, rel_path = line.split("  ", 1)
+        if len(digest) != 64 or any(c not in "0123456789abcdefABCDEF" for c in digest):
+            _raise_bundle_error(f"sha256sums.txt line {line_number} has an invalid SHA-256 digest")
+        if (
+            Path(rel_path).is_absolute()
+            or rel_path != Path(rel_path).name
+            or "/" in rel_path
+            or "\\" in rel_path
+            or ":" in rel_path
+            or rel_path in {"", ".", ".."}
+        ):
+            _raise_bundle_error("sha256sums.txt must use relative bundle filenames only")
+        if rel_path in checksums:
+            _raise_bundle_error(f"sha256sums.txt contains duplicate entry: {rel_path}")
+        checksums[rel_path] = digest.lower()
+
+    expected = set(_BUNDLE_HASHED_FILE_NAMES)
+    if set(checksums) != expected:
+        _raise_bundle_error("sha256sums.txt must list call-plan.json, validation-report.json, and manifest.json")
+    return checksums
+
+
+def _assert_no_extra_executable_files(bundle_dir: Path) -> None:
+    expected = set(_BUNDLE_FILE_NAMES)
+    for child in bundle_dir.iterdir():
+        if child.name in expected:
+            continue
+        if child.is_dir():
+            _raise_bundle_error(f"Extra directory is not allowed in bundle: {child.name}")
+        if not child.is_file():
+            continue
+        mode = child.stat().st_mode
+        if child.suffix.lower() in _SCRIPT_SUFFIXES or mode & 0o111:
+            _raise_bundle_error(f"Extra executable or script file is not allowed in bundle: {child.name}")
+
+
+def _verify_manifest(manifest: dict[str, Any], checksums: dict[str, str], bundle_dir: Path) -> None:
+    if manifest.get("artifact_type") != _MANIFEST_ARTIFACT_TYPE:
+        _raise_bundle_error("manifest.json has unexpected artifact_type")
+    if manifest.get("schema_version") != 1:
+        _raise_bundle_error("manifest.json schema_version must be 1")
+    if manifest.get("bundle_files") != _BUNDLE_FILE_NAMES:
+        _raise_bundle_error("manifest.json bundle_files does not match expected bundle files")
+    if manifest.get("source_artifact_sha256") != checksums["call-plan.json"]:
+        _raise_bundle_error("manifest.json source_artifact_sha256 does not match call-plan.json")
+
+    bundle_hashes = manifest.get("bundle_sha256s")
+    if not isinstance(bundle_hashes, dict):
+        _raise_bundle_error("manifest.json bundle_sha256s must be an object")
+    for name in ("call-plan.json", "validation-report.json"):
+        if bundle_hashes.get(name) != checksums[name]:
+            _raise_bundle_error(f"manifest.json bundle_sha256s does not match {name}")
+
+    safety_summary = manifest.get("safety_summary")
+    if not isinstance(safety_summary, dict):
+        _raise_bundle_error("manifest.json safety_summary must be an object")
+    for key, expected in _CLOSED_SAFETY_SUMMARY.items():
+        if safety_summary.get(key) is not expected:
+            _raise_bundle_error(f"manifest.json safety_summary {key} must be false")
+
+    manifest_sha = _sha256_file(bundle_dir / "manifest.json")
+    if checksums["manifest.json"] != manifest_sha:
+        _raise_bundle_error("manifest.json hash does not match sha256sums.txt")
+
+
+def _verify_validation_report(report: dict[str, Any]) -> None:
+    if report.get("artifact_type") != _VALIDATION_REPORT_ARTIFACT_TYPE:
+        _raise_bundle_error("validation-report.json has unexpected artifact_type")
+    if report.get("schema_version") != 1:
+        _raise_bundle_error("validation-report.json schema_version must be 1")
+    if report.get("valid") is not True:
+        _raise_bundle_error("validation-report.json valid must be true")
+    if report.get("source_artifact") != "call-plan.json":
+        _raise_bundle_error("validation-report.json source_artifact must be call-plan.json")
+    for key in (
+        "provider_call_made",
+        "network_used",
+        "credentials_loaded",
+        "broker_touched",
+        "live_trading_enabled",
+    ):
+        if report.get(key) is not False:
+            _raise_bundle_error(f"validation-report.json {key} must be false")
+
+
+def verify_preflight_evidence_bundle(bundle_dir: Path) -> dict[str, Any]:
+    """Verify a local provider preflight evidence bundle.
+
+    The verifier only reads files from *bundle_dir* and reuses the existing
+    call-plan artifact validator. It does not call providers, load
+    credentials, use the network, or touch broker/execution paths.
+    """
+    bundle_dir = Path(bundle_dir)
+    if not bundle_dir.exists():
+        raise FileNotFoundError(bundle_dir)
+    if not bundle_dir.is_dir():
+        raise NotADirectoryError(bundle_dir)
+
+    missing = [name for name in _BUNDLE_FILE_NAMES if not (bundle_dir / name).is_file()]
+    if missing:
+        _raise_bundle_error(f"Required bundle file missing: {', '.join(missing)}")
+
+    _assert_no_extra_executable_files(bundle_dir)
+
+    sha256_text = (bundle_dir / "sha256sums.txt").read_text(encoding="utf-8")
+    checksums = _parse_sha256sums(sha256_text)
+    for name, expected_digest in checksums.items():
+        actual_digest = _sha256_file(bundle_dir / name)
+        if actual_digest != expected_digest:
+            _raise_bundle_error(f"{name} hash does not match sha256sums.txt")
+
+    manifest = _read_json_object(bundle_dir / "manifest.json")
+    validation_report = _read_json_object(bundle_dir / "validation-report.json")
+    call_plan = _read_json_object(bundle_dir / "call-plan.json")
+
+    _assert_no_absolute_or_secret_string_values(manifest, label="manifest.json")
+    _assert_no_absolute_or_secret_string_values(validation_report, label="validation-report.json")
+
+    _verify_manifest(manifest, checksums, bundle_dir)
+    _verify_validation_report(validation_report)
+    try:
+        validate_call_plan_artifact(call_plan)
+    except PreflightValidationError as exc:
+        _raise_bundle_error(f"call-plan.json validation failed: {exc}")
+
+    return {
+        "artifact_type": _VERIFICATION_REPORT_ARTIFACT_TYPE,
+        "schema_version": 1,
+        "valid": True,
+        "bundle_dir": str(bundle_dir),
+        "verified_files": list(_BUNDLE_FILE_NAMES),
+        "checks": {
+            "required_files_present": True,
+            "sha256sums_valid": True,
+            "manifest_valid": True,
+            "validation_report_valid": True,
+            "call_plan_valid": True,
+            "relative_paths_only": True,
+            "no_secret_like_values": True,
+            "no_absolute_paths": True,
+            "no_extra_executable_files": True,
+        },
+        "provider_call_made": False,
+        "network_used": False,
+        "credentials_loaded": False,
+        "broker_touched": False,
+        "live_trading_enabled": False,
     }
