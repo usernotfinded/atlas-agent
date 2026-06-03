@@ -273,6 +273,26 @@ Safety First:
     )
     providers_smoke.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
+    providers_capability = providers_sub.add_parser(
+        "capability-inventory",
+        help="Generate a local provider capability inventory.",
+        description="Generate a local capability inventory for providers. No network or credentials.",
+    )
+    providers_capability.add_argument("--output", type=Path, help="Output file path.")
+    providers_capability.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
+    providers_readiness = providers_sub.add_parser(
+        "readiness-check",
+        help="Evaluate a provider request against the safety policy.",
+        description="Evaluate a hypothetical provider request against the safety policy. Local-only. No network.",
+    )
+    providers_readiness.add_argument("--provider", required=True, help="Provider ID (e.g., openrouter, anthropic)")
+    providers_readiness.add_argument("--model", required=True, help="Model ID")
+    providers_readiness.add_argument("--purpose", required=True, help="Purpose of the call")
+    providers_readiness.add_argument("--max-context-chars", type=int, default=4000, help="Maximum context characters")
+    providers_readiness.add_argument("--output", type=Path, help="Output file path.")
+    providers_readiness.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
@@ -3591,6 +3611,59 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "providers" and args.providers_command == "list":
         print("openai_compatible, anthropic, openrouter")
         return 0
+
+    if args.command == "providers" and args.providers_command == "capability-inventory":
+        import json
+        from atlas_agent.providers.provider_readiness import generate_capability_inventory
+        try:
+            inventory = generate_capability_inventory()
+            if args.output:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                if not getattr(args, "json", False):
+                    print(f"Generated capability inventory at {display_path(args.output)}")
+            if getattr(args, "json", False):
+                return emit_cli_success("atlas providers capability-inventory", {"inventory": inventory})
+            elif not args.output:
+                print(json.dumps(inventory, indent=2, sort_keys=True))
+            return 0
+        except Exception as e:
+            if getattr(args, "json", False):
+                return emit_cli_error("atlas providers capability-inventory", "capability_inventory_error", str(e))
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
+    if args.command == "providers" and args.providers_command == "readiness-check":
+        import json
+        from atlas_agent.providers.provider_readiness import evaluate_provider_readiness
+        from atlas_agent.providers.provider_preflight import PreflightValidationError
+        try:
+            report = evaluate_provider_readiness(
+                provider_id=args.provider,
+                model_id=args.model,
+                purpose=args.purpose,
+                max_context_chars=args.max_context_chars,
+            )
+            if args.output:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                if not getattr(args, "json", False):
+                    print(f"Generated readiness report at {display_path(args.output)}")
+            if getattr(args, "json", False):
+                return emit_cli_success("atlas providers readiness-check", {"report": report})
+            elif not args.output:
+                print(json.dumps(report, indent=2, sort_keys=True))
+            return 0
+        except PreflightValidationError as exc:
+            if getattr(args, "json", False):
+                return emit_cli_error("atlas providers readiness-check", "preflight_validation_error", str(exc))
+            print(f"Validation error: {exc}", file=sys.stderr)
+            return 2
+        except Exception as e:
+            if getattr(args, "json", False):
+                return emit_cli_error("atlas providers readiness-check", "readiness_check_error", str(e))
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
 
     if args.command == "providers" and args.providers_command == "validate-preflight":
         import json

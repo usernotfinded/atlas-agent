@@ -21,6 +21,13 @@ When running `atlas providers preflight`:
 
 ## Usage
 
+The system's readiness to execute provider calls can be evaluated locally:
+
+```bash
+atlas providers capability-inventory
+atlas providers readiness-check --provider openrouter --model openrouter/auto --purpose research-summary
+```
+
 Generate a local dry-run call-plan artifact:
 
 ```bash

@@ -54,6 +54,20 @@ provider execution, broker execution, live trading, or order approval. For the
 manual generate/validate/bundle/verify workflow, see
 [Provider Preflight Dry-Run Demo](docs/demo/provider-preflight-demo.md).
 
+## Provider capability inventory and readiness
+
+Atlas also supports a local readiness gate to audit policy compliance:
+
+```bash
+atlas providers capability-inventory
+atlas providers readiness-check \
+  --provider openrouter \
+  --model "openrouter/auto" \
+  --purpose "research-summary"
+```
+
+These commands run strictly offline, do not load credentials, and the policy currently always evaluates to `preflight_only`.
+
 ## Why Atlas?
 
 - **LLM-assisted market research**: Leverage advanced models to process market context and form data-driven theses.
