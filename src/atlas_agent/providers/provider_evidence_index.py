@@ -27,6 +27,7 @@ KNOWN_ARTIFACT_TYPES = {
     "provider_preflight_evidence_bundle_manifest",
     "provider_preflight_bundle_verification_report",
     "provider_preflight_smoke_report",
+    "provider_preflight_sha256sums",
     "provider_readiness_report",
     "provider_capability_inventory",
 }
@@ -161,7 +162,11 @@ def _validate_artifact(artifact: dict[str, Any], file_path: Path) -> tuple[bool,
     return True, "valid", []
 
 
-def build_provider_evidence_index(root: Path, output: Path | None = None) -> dict[str, Any]:
+def build_provider_evidence_index(
+    root: Path,
+    output: Path | None = None,
+    exclude_paths: set[Path] | list[Path] | tuple[Path, ...] | None = None,
+) -> dict[str, Any]:
     """Scans the root for artifacts and builds an evidence index."""
     if not root.exists():
         root.mkdir(parents=True, exist_ok=True)
@@ -186,7 +191,9 @@ def build_provider_evidence_index(root: Path, output: Path | None = None) -> dic
     
     artifacts = []
     
-    output_abs = output.resolve() if output else None
+    excluded_abs = {Path(path).resolve() for path in (exclude_paths or [])}
+    if output:
+        excluded_abs.add(output.resolve())
 
     try:
         paths = sorted(root.rglob("*"))
@@ -207,7 +214,7 @@ def build_provider_evidence_index(root: Path, output: Path | None = None) -> dic
         except ValueError:
             continue
 
-        if output_abs and path.resolve() == output_abs:
+        if path.resolve() in excluded_abs:
             continue
             
         if not path.is_file() and not path.is_symlink():
@@ -294,6 +301,41 @@ def build_provider_evidence_index(root: Path, output: Path | None = None) -> dic
                 "valid": False,
                 "validation_status": "invalid",
                 "validation_errors": [f"Cannot read file contents: {e}"]
+            })
+            continue
+
+        if path.name == "sha256sums.txt":
+            summary["recognized_artifacts"] += 1
+            validation_errors = []
+            try:
+                verify_preflight_evidence_bundle(path.parent)
+            except Exception:
+                validation_errors.append("sha256sums.txt bundle verification failed")
+            is_valid = not validation_errors
+            if is_valid:
+                summary["valid_artifacts"] += 1
+            else:
+                summary["invalid_artifacts"] += 1
+            artifacts.append({
+                "relative_path": rel_path,
+                "artifact_type": "provider_preflight_sha256sums",
+                "schema_version": 1,
+                "sha256": file_sha256,
+                "size_bytes": size_bytes,
+                "parseable_json": False,
+                "recognized": True,
+                "valid": is_valid,
+                "validation_status": "valid" if is_valid else "invalid",
+                "validation_errors": validation_errors,
+                "safety_summary": {
+                    "provider_call_made": False,
+                    "network_used": False,
+                    "credentials_loaded": False,
+                    "broker_touched": False,
+                    "live_trading_enabled": False,
+                    "pending_order_created": False,
+                    "order_approved": False,
+                }
             })
             continue
 

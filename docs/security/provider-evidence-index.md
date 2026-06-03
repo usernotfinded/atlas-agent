@@ -32,3 +32,13 @@ atlas providers evidence-index inspect index.json
 `atlas providers evidence-index export-summary <index.json>` writes a compact machine-readable summary.
 
 Reports are local-only and non-authorizing. They do not call providers, load credentials, use the network, touch brokers, or enable execution.
+
+## Provider audit pack
+
+`atlas providers audit-pack` creates a local end-to-end audit package for provider preflight evidence.
+
+It runs the dry-run provider preflight chain, builds an evidence index, renders a Markdown report, exports a compact JSON summary, and writes an audit pack manifest.
+
+The command is local-only and non-authorizing. It does not call providers, load credentials, use the network, touch brokers, or enable execution.
+
+See [Provider Audit Pack](provider-audit-pack.md).

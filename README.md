@@ -54,6 +54,22 @@ provider execution, broker execution, live trading, or order approval. For the
 manual generate/validate/bundle/verify workflow, see
 [Provider Preflight Dry-Run Demo](docs/demo/provider-preflight-demo.md).
 
+Create a complete local provider audit pack in one run:
+
+```bash
+atlas providers audit-pack \
+  --provider openrouter \
+  --model "openrouter/auto" \
+  --purpose "research-summary" \
+  --max-context-chars 4000 \
+  --output-dir artifacts/provider_audit_pack/<timestamp>
+```
+
+The audit pack adds an evidence index, Markdown report, compact JSON summary,
+and `audit-pack-manifest.json`. It is local-only and non-authorizing; it does
+not call providers, load credentials, use the network, touch brokers, or enable
+execution. See [Provider Audit Pack](docs/security/provider-audit-pack.md).
+
 ## Provider capability inventory and readiness
 
 Atlas also supports a local readiness gate to audit policy compliance:
