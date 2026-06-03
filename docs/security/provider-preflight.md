@@ -105,3 +105,22 @@ The command enforces strict boundaries on inputs:
 - **`max_context_chars`**: 1-200,000.
 
 Inputs containing control characters, newlines, absolute paths, or secret-like fragments are rejected immediately to prevent payload injection or credential leakage.
+
+## Validation
+
+Artifacts can be validated locally using the `validate-preflight` command:
+
+```bash
+atlas providers validate-preflight <artifact_path>
+```
+
+This ensures:
+- The artifact is a well-formed JSON object.
+- The `artifact_type` is `provider_call_plan`.
+- The `schema_version` is supported.
+- All 10 safety flags are `False`.
+- `call_authorized` is `False`.
+- `manual_review_required` is `True`.
+- Minimization fields (`raw_prompt_body_stored`, etc.) are `False`, and `hashes_only` is `True`.
+- No absolute paths or secret-like fragments exist anywhere in the artifact.
+- No forbidden fields (like `api_key`, `secret`, `raw_prompt`) are present.

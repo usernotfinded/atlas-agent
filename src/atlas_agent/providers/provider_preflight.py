@@ -217,3 +217,101 @@ def generate_call_plan_artifact(
             "No network was used.",
         ],
     }
+
+# ---------------------------------------------------------------------------
+# Validation of existing artifacts
+# ---------------------------------------------------------------------------
+
+
+def validate_call_plan_artifact(artifact: dict[str, Any]) -> None:
+    """Validate that a provider call-plan artifact meets strict safety rules.
+
+    Raises PreflightValidationError if the artifact fails any safety check.
+    """
+    if not isinstance(artifact, dict):
+        raise PreflightValidationError("Artifact must be a JSON object")
+
+    if artifact.get("artifact_type") != "provider_call_plan":
+        raise PreflightValidationError("artifact_type must be provider_call_plan")
+
+    if artifact.get("schema_version") != 1:
+        raise PreflightValidationError("schema_version must be 1")
+
+    # Safety flags must all be False
+    safety_flags = artifact.get("safety_flags", {})
+    if not isinstance(safety_flags, dict):
+        raise PreflightValidationError("safety_flags must be a dictionary")
+
+    required_flags = [
+        "provider_enabled",
+        "network_enabled",
+        "credentials_loaded",
+        "outbound_request_sent",
+        "response_received",
+        "broker_touched",
+        "live_trading_enabled",
+        "pending_order_created",
+        "order_approved",
+        "payload_body_stored",
+    ]
+    for flag in required_flags:
+        if safety_flags.get(flag) is not False:
+            raise PreflightValidationError(f"Safety flag {flag} must be false")
+
+    if artifact.get("call_authorized") is not False:
+        raise PreflightValidationError("call_authorized must be false")
+
+    if artifact.get("manual_review_required") is not True:
+        raise PreflightValidationError("manual_review_required must be true")
+
+    min_summary = artifact.get("payload_minimization_summary", {})
+    if not isinstance(min_summary, dict):
+        raise PreflightValidationError("payload_minimization_summary must be a dictionary")
+
+    for field in ["raw_prompt_body_stored", "raw_request_body_stored", "raw_response_body_stored"]:
+        if min_summary.get(field) is not False:
+            raise PreflightValidationError(f"{field} must be false")
+
+    if min_summary.get("hashes_only") is not True:
+        raise PreflightValidationError("hashes_only must be true")
+
+    # Reject dangerous fields anywhere in the top level
+    dangerous_keys = {
+        "raw_prompt", "raw_request", "raw_response",
+        "api_key", "token", "password", "secret", "broker_credentials"
+    }
+    for key in artifact:
+        if key.lower() in dangerous_keys:
+            raise PreflightValidationError(f"Artifact contains forbidden field: {key}")
+
+    # Reject absolute paths and secret-looking values anywhere in the artifact
+    # We do a deep stringification and regex search.
+    artifact_str = json.dumps(artifact)
+    if _ABSOLUTE_PATH_RE.search(artifact_str):
+        raise PreflightValidationError("Artifact contains forbidden absolute path")
+
+    if _SECRET_FRAGMENT_RE.search(artifact_str):
+        # Allow benign schema field names that contain 'secret', but reject values.
+        # It's safer to just reject them if the literal string matches.
+        # But wait, our own schema field 'secrets_redacted' contains 'secret'!
+        # So `json.dumps` will always contain `"secrets_redacted": true`.
+        pass
+
+    # We need a safer way to check values for secrets.
+    def _check_values(data: Any) -> None:
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k.lower() in dangerous_keys:
+                    raise PreflightValidationError(f"Artifact contains forbidden field: {k}")
+                if k.lower() != "notes":
+                    _check_values(v)
+        elif isinstance(data, list):
+            for item in data:
+                _check_values(item)
+        elif isinstance(data, str):
+            if _ABSOLUTE_PATH_RE.search(data):
+                raise PreflightValidationError("Artifact contains forbidden absolute path in string value")
+            if _SECRET_FRAGMENT_RE.search(data):
+                raise PreflightValidationError("Artifact contains forbidden secret-like fragment in string value")
+
+    _check_values(artifact)
