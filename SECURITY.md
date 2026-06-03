@@ -11,7 +11,7 @@
 
 Live trading disabled by default in all versions.
 
-Atlas is in active development on the `main` branch. No public v0.5.9 release has been made. Security updates are applied to the latest development line.
+Atlas is in active development on the `main` branch. The v0.5.9 release is the current public stable target. Security updates are applied to the latest development line.
 
 ## Scope
 
