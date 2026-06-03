@@ -20,7 +20,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -315,3 +317,133 @@ def validate_call_plan_artifact(artifact: dict[str, Any]) -> None:
                 raise PreflightValidationError("Artifact contains forbidden secret-like fragment in string value")
 
     _check_values(artifact)
+
+
+# ---------------------------------------------------------------------------
+# Evidence bundle generation
+# ---------------------------------------------------------------------------
+
+_BUNDLE_FILE_NAMES = [
+    "call-plan.json",
+    "validation-report.json",
+    "manifest.json",
+    "sha256sums.txt",
+]
+
+
+def _utc_timestamp() -> str:
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _validation_report(validated_at: str) -> dict[str, Any]:
+    return {
+        "artifact_type": "provider_preflight_validation_report",
+        "schema_version": 1,
+        "valid": True,
+        "validated_at": validated_at,
+        "source_artifact": "call-plan.json",
+        "checks": {
+            "json_parseable": True,
+            "artifact_type_valid": True,
+            "schema_version_supported": True,
+            "safety_flags_closed": True,
+            "call_authorized_false": True,
+            "manual_review_required_true": True,
+            "no_raw_payload_bodies": True,
+            "hashes_only": True,
+            "no_forbidden_fields": True,
+            "no_secret_like_values": True,
+            "no_absolute_paths": True,
+        },
+        "provider_call_made": False,
+        "network_used": False,
+        "credentials_loaded": False,
+        "broker_touched": False,
+        "live_trading_enabled": False,
+    }
+
+
+def create_preflight_evidence_bundle(
+    artifact_path: Path,
+    output_dir: Path,
+) -> dict[str, Any]:
+    """Create a local evidence bundle for a validated preflight artifact.
+
+    Validation is performed before the bundle directory is created. The
+    function only reads the supplied JSON artifact and writes local bundle
+    files; it does not call providers, load credentials, use the network, or
+    touch broker/execution paths.
+    """
+    artifact_path = Path(artifact_path)
+    output_dir = Path(output_dir)
+
+    source_bytes = artifact_path.read_bytes()
+    artifact = json.loads(source_bytes.decode("utf-8"))
+    validate_call_plan_artifact(artifact)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    call_plan_path = output_dir / "call-plan.json"
+    validation_report_path = output_dir / "validation-report.json"
+    manifest_path = output_dir / "manifest.json"
+    sha256sums_path = output_dir / "sha256sums.txt"
+
+    shutil.copyfile(artifact_path, call_plan_path)
+
+    now = _utc_timestamp()
+    report = _validation_report(now)
+    _write_json(validation_report_path, report)
+
+    call_plan_sha = _sha256_file(call_plan_path)
+    validation_report_sha = _sha256_file(validation_report_path)
+    manifest = {
+        "artifact_type": "provider_preflight_evidence_bundle_manifest",
+        "schema_version": 1,
+        "created_at": now,
+        "bundle_files": list(_BUNDLE_FILE_NAMES),
+        "source_artifact_sha256": hashlib.sha256(source_bytes).hexdigest(),
+        "bundle_sha256s": {
+            "call-plan.json": call_plan_sha,
+            "validation-report.json": validation_report_sha,
+        },
+        "safety_summary": {
+            "provider_call_made": False,
+            "network_used": False,
+            "credentials_loaded": False,
+            "broker_touched": False,
+            "live_trading_enabled": False,
+            "pending_order_created": False,
+            "order_approved": False,
+        },
+        "manual_review_required": True,
+    }
+    _write_json(manifest_path, manifest)
+
+    manifest_sha = _sha256_file(manifest_path)
+    sha256sums_path.write_text(
+        "\n".join(
+            [
+                f"{call_plan_sha}  call-plan.json",
+                f"{validation_report_sha}  validation-report.json",
+                f"{manifest_sha}  manifest.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    return {
+        "bundle_dir": str(output_dir),
+        "files": list(_BUNDLE_FILE_NAMES),
+        "valid": True,
+    }
