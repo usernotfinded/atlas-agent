@@ -193,7 +193,8 @@ Safety First:
 
     update = subparsers.add_parser("update")
     update_sub = update.add_subparsers(dest="update_command")
-    update_sub.add_parser("check")
+    update_check = update_sub.add_parser("check")
+    update_check.add_argument("--dry-run", action="store_true", help="Perform a dry-run check without applying updates.")
     update_sub.add_parser("status")
     update_apply = update_sub.add_parser("apply")
     update_apply.add_argument("--force", action="store_true")

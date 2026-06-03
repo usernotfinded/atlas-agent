@@ -55,23 +55,28 @@ class GitHubReleaseSource:
         except Exception as exc:
             raise UpdateSourceError(f"GitHub latest release request failed: {exc}") from exc
 
+        if not isinstance(release_data, dict):
+            release_data = {}
         raw_version = str(release_data.get("tag_name") or "").strip()
         notes = _trim_note(str(release_data.get("body") or "").strip())
         page_url = str(release_data.get("html_url") or "").strip() or None
 
         if not raw_version:
-            tags_url = f"https://api.github.com/repos/{self.repo}/tags?per_page=1"
+            tags_url = f"https://api.github.com/repos/{self.repo}/tags?per_page=10"
             try:
                 tags = fetch_json(tags_url)
             except Exception as exc:
                 raise UpdateSourceError(f"GitHub tags request failed: {exc}") from exc
-            if isinstance(tags, list) and tags:
-                first = tags[0]
-                if isinstance(first, dict):
-                    raw_version = str(first.get("name") or "").strip()
+            if isinstance(tags, list):
+                for t in tags:
+                    if isinstance(t, dict):
+                        tv = str(t.get("name") or "").strip()
+                        if tv and is_public_stable(tv):
+                            raw_version = tv
+                            break
 
         latest = strip_version_prefix(raw_version)
-        if not latest:
+        if not latest or not is_public_stable(latest):
             return None
         if not is_version_newer(latest, current_version):
             return None
@@ -130,6 +135,19 @@ def discover_github_repo(repo_root: str | Path) -> str | None:
     if not remote:
         return None
     return _parse_github_slug(remote)
+
+
+
+def is_public_stable(value: str) -> bool:
+    clean = strip_version_prefix(value)
+    if Version is not None:
+        try:
+            v = Version(clean)
+            return not (v.is_prerelease or v.is_devrelease)
+        except InvalidVersion:
+            pass
+    lower = clean.lower()
+    return "dev" not in lower and "rc" not in lower and "a" not in lower and "b" not in lower
 
 
 def is_version_newer(candidate: str, current: str) -> bool:
