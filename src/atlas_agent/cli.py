@@ -293,6 +293,17 @@ Safety First:
     providers_readiness.add_argument("--output", type=Path, help="Output file path.")
     providers_readiness.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
+    providers_evidence = providers_sub.add_parser("evidence-index", help="Manage provider evidence index.")
+    evidence_sub = providers_evidence.add_subparsers(dest="evidence_command", required=True)
+    evidence_build = evidence_sub.add_parser("build", help="Build a provider evidence index.")
+    evidence_build.add_argument("--root", required=True, type=Path, help="Root directory to scan")
+    evidence_build.add_argument("--output", type=Path, help="Output JSON file path")
+    evidence_build.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
+    evidence_inspect = evidence_sub.add_parser("inspect", help="Inspect a provider evidence index.")
+    evidence_inspect.add_argument("index_path", type=Path, help="Path to the index JSON")
+    evidence_inspect.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
+
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
@@ -2031,6 +2042,9 @@ def _command_requires_workspace(args: argparse.Namespace) -> bool:
         "bundle-preflight",
         "verify-preflight-bundle",
         "smoke-preflight-chain",
+        "capability-inventory",
+        "readiness-check",
+        "evidence-index",
     ):
         return False
     if args.command == "broker" and args.brokers_command == "list":
@@ -3664,6 +3678,49 @@ def main(argv: list[str] | None = None) -> int:
                 return emit_cli_error("atlas providers readiness-check", "readiness_check_error", str(e))
             print(f"Error: {e}", file=sys.stderr)
             return 1
+
+    if args.command == "providers" and args.providers_command == "evidence-index":
+        if args.evidence_command == "build":
+            from atlas_agent.providers.provider_evidence_index import build_provider_evidence_index
+            try:
+                index = build_provider_evidence_index(root=args.root, output=args.output)
+                # Check for findings (invalid or unsafe artifacts)
+                if index.get("findings"):
+                    if getattr(args, "json", False):
+                        return emit_cli_success("atlas providers evidence-index build", {"index": index, "status": "findings"})
+                    print(f"Provider evidence index built but contains invalid artifacts.")
+                    if args.output:
+                        print(f"Index written to {display_path(args.output)}")
+                    return 1
+                else:
+                    if getattr(args, "json", False):
+                        return emit_cli_success("atlas providers evidence-index build", {"index": index, "status": "success"})
+                    if args.output:
+                        print(f"Provider evidence index written to {display_path(args.output)}")
+                    return 0
+            except Exception as e:
+                if getattr(args, "json", False):
+                    return emit_cli_error("atlas providers evidence-index build", "evidence_index_error", str(e))
+                print(f"Provider evidence index build failed: {e}", file=sys.stderr)
+                return 2
+        elif args.evidence_command == "inspect":
+            from atlas_agent.providers.provider_evidence_index import inspect_provider_evidence_index, EvidenceIndexError
+            try:
+                data = inspect_provider_evidence_index(args.index_path)
+                if getattr(args, "json", False):
+                    return emit_cli_success("atlas providers evidence-index inspect", {"index": data, "status": "valid"})
+                print("Provider evidence index is valid.")
+                return 0
+            except EvidenceIndexError as e:
+                if getattr(args, "json", False):
+                    return emit_cli_error("atlas providers evidence-index inspect", "inspection_error", str(e))
+                print(f"Provider evidence index inspection failed: {e}", file=sys.stderr)
+                return 1
+            except Exception as e:
+                if getattr(args, "json", False):
+                    return emit_cli_error("atlas providers evidence-index inspect", "inspection_error", str(e))
+                print(f"Provider evidence index inspection failed: {e}", file=sys.stderr)
+                return 1
 
     if args.command == "providers" and args.providers_command == "validate-preflight":
         import json
