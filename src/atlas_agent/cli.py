@@ -210,6 +210,17 @@ Safety First:
     providers = subparsers.add_parser("providers")
     providers_sub = providers.add_subparsers(dest="providers_command")
     providers_sub.add_parser("list")
+    providers_preflight = providers_sub.add_parser(
+        "preflight",
+        help="Generate a local dry-run provider call-plan artifact. No network or provider call made.",
+        description="Generate a local dry-run provider call-plan artifact. No provider calls, no network, no credentials.",
+    )
+    providers_preflight.add_argument("--provider", required=True, help="Provider ID (e.g., openrouter, anthropic)")
+    providers_preflight.add_argument("--model", required=True, help="Model ID")
+    providers_preflight.add_argument("--purpose", required=True, help="Purpose of the call")
+    providers_preflight.add_argument("--max-context-chars", type=int, default=4000, help="Maximum context characters")
+    providers_preflight.add_argument("--output", type=Path, help="Output file path (default: artifacts/provider_preflight/<timestamp>-call-plan.json)")
+    providers_preflight.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
 
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
@@ -1942,7 +1953,7 @@ def _command_requires_workspace(args: argparse.Namespace) -> bool:
         return False
     if args.command in {"init", "workspace", "models", "validate", "deploy", "configure", "setup", "discipline"}:
         return False
-    if args.command == "providers" and args.providers_command == "list":
+    if args.command == "providers" and args.providers_command in ("list", "preflight"):
         return False
     if args.command == "broker" and args.brokers_command == "list":
         return False
@@ -3349,6 +3360,43 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "providers" and args.providers_command == "list":
         print("openai_compatible, anthropic, openrouter")
+        return 0
+    if args.command == "providers" and args.providers_command == "preflight":
+        import json
+        from atlas_agent.providers.provider_preflight import (
+            generate_call_plan_artifact,
+            PreflightValidationError,
+        )
+        try:
+            artifact = generate_call_plan_artifact(
+                provider_id=args.provider,
+                model_id=args.model,
+                purpose=args.purpose,
+                max_context_chars=args.max_context_chars,
+            )
+        except PreflightValidationError as exc:
+            if getattr(args, "json", False):
+                return emit_cli_error(
+                    "atlas providers preflight",
+                    code="preflight_validation_error",
+                    message=str(exc)
+                )
+            print(f"Validation error: {exc}", file=sys.stderr)
+            return 2
+
+        if args.output:
+            out_path = args.output
+        else:
+            now_for_path = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+            out_path = Path("artifacts/provider_preflight") / f"{now_for_path}-call-plan.json"
+
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+
+        if getattr(args, "json", False):
+            return emit_cli_success("atlas providers preflight", {"artifact_path": str(out_path)})
+
+        print(f"Generated dry-run call-plan artifact at {display_path(out_path)}")
         return 0
     if args.command == "broker" and args.brokers_command == "list":
         print("paper, alpaca, binance, ccxt, ibkr_stub")
