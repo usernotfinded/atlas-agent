@@ -51,59 +51,67 @@ echo "6. generated artifact hygiene check"
 "$PYTHON_BIN" scripts/check_generated_artifacts.py
 
 echo ""
-echo "7. feedback intake check"
+echo "7. GitHub Actions version check"
+"$PYTHON_BIN" scripts/check_github_actions_versions.py
+
+echo ""
+echo "8. feedback intake check"
 "$PYTHON_BIN" scripts/check_feedback_intake.py
 
 echo ""
-echo "8. feedback taxonomy check"
+echo "9. feedback taxonomy check"
 "$PYTHON_BIN" scripts/check_feedback_taxonomy.py
 
 echo ""
-echo "9. reviewer outreach check"
+echo "10. reviewer outreach check"
 "$PYTHON_BIN" scripts/check_reviewer_outreach.py
 
 echo ""
-echo "10. product capability inventory check"
+echo "11. product capability inventory check"
 "$PYTHON_BIN" scripts/check_product_capability_inventory.py
 
 echo ""
-echo "11. v0.5.8 gap prioritization check"
+echo "12. v0.5.8 gap prioritization check"
 "$PYTHON_BIN" scripts/check_v058_gap_prioritization.py
 
 echo ""
-echo "11a. v0.5.8 RC1 readiness dry run"
+echo "12a. v0.5.8 RC1 readiness dry run"
 "$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
 
 echo ""
-echo "11b. v0.5.8.1 hotfix cutover check"
+echo "12b. v0.5.8.1 hotfix cutover check"
 "$PYTHON_BIN" scripts/check_v0581_hotfix_cutover.py
 
 echo ""
-echo "12. generated artifact hygiene tests"
+echo "13. generated artifact hygiene tests"
 "$PYTHON_BIN" -m pytest tests/test_generated_artifacts.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "13. research sandbox CLI tests"
+echo "14. GitHub Actions version tests"
+"$PYTHON_BIN" -m pytest tests/test_github_actions_versions.py -q "${PYTEST_EXTRA_ARGS[@]}"
+
+echo ""
+echo "15. research sandbox CLI tests"
 "$PYTHON_BIN" -m pytest tests/research/test_research_sandbox_cli.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "14. reviewer golden-path smoke tests"
+echo "16. reviewer golden-path smoke tests"
 "$PYTHON_BIN" -m pytest tests/test_reviewer_golden_path_smoke.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "15. release check script tests"
+echo "17. release check script tests"
 "$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "16. git diff --check"
+echo "18. git diff --check"
 git diff --check
 
 echo ""
-echo "17. git diff --cached --check"
+echo "19. git diff --cached --check"
 git diff --cached --check
 
 echo ""
-echo "18. protected staged files"
+echo "20. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""

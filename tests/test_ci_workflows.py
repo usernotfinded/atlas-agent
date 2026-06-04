@@ -9,6 +9,41 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def _workflow_files() -> list[Path]:
+    workflow_dir = _repo_root() / ".github" / "workflows"
+    return sorted(
+        [
+            *workflow_dir.glob("*.yml"),
+            *workflow_dir.glob("*.yaml"),
+        ]
+    )
+
+
+class TestWorkflowActionVersions:
+    def test_all_workflows_use_checkout_v6(self) -> None:
+        for path in _workflow_files():
+            text = path.read_text(encoding="utf-8")
+            assert "actions/checkout@v4" not in text
+            assert "actions/checkout@v5" not in text
+            if "actions/checkout@" in text:
+                assert "actions/checkout@v6" in text
+
+    def test_all_workflows_use_setup_python_v6(self) -> None:
+        for path in _workflow_files():
+            text = path.read_text(encoding="utf-8")
+            assert "actions/setup-python@v5" not in text
+            if "actions/setup-python@" in text:
+                assert "actions/setup-python@v6" in text
+
+    def test_all_workflows_use_upload_artifact_v6(self) -> None:
+        for path in _workflow_files():
+            text = path.read_text(encoding="utf-8")
+            assert "actions/upload-artifact@v4" not in text
+            assert "actions/upload-artifact@v5" not in text
+            if "actions/upload-artifact@" in text:
+                assert "actions/upload-artifact@v6" in text
+
+
 class TestCiWorkflow:
     @pytest.fixture
     def ci_content(self) -> str:
@@ -49,8 +84,14 @@ class TestCiWorkflow:
     def test_includes_generated_artifact_check(self, ci_content: str) -> None:
         assert "check_generated_artifacts.py" in ci_content
 
+    def test_includes_github_actions_version_check(self, ci_content: str) -> None:
+        assert "check_github_actions_versions.py" in ci_content
+
     def test_includes_generated_artifact_tests(self, ci_content: str) -> None:
         assert "tests/test_generated_artifacts.py" in ci_content
+
+    def test_includes_github_actions_version_tests(self, ci_content: str) -> None:
+        assert "tests/test_github_actions_versions.py" in ci_content
 
     def test_includes_onboarding_docs_tests(self, ci_content: str) -> None:
         assert "tests/test_onboarding_docs.py" in ci_content
@@ -302,8 +343,14 @@ class TestCiCheckScript:
     def test_includes_generated_artifact_check(self, ci_check_content: str) -> None:
         assert "check_generated_artifacts.py" in ci_check_content
 
+    def test_includes_github_actions_version_check(self, ci_check_content: str) -> None:
+        assert "check_github_actions_versions.py" in ci_check_content
+
     def test_includes_generated_artifact_tests(self, ci_check_content: str) -> None:
         assert "tests/test_generated_artifacts.py" in ci_check_content
+
+    def test_includes_github_actions_version_tests(self, ci_check_content: str) -> None:
+        assert "tests/test_github_actions_versions.py" in ci_check_content
 
     def test_includes_trust_center_tests(self, ci_check_content: str) -> None:
         assert "tests/test_trust_center.py" in ci_check_content

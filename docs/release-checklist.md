@@ -233,7 +233,7 @@ Release checks inspect historical tags such as `v0.5.7` with `git show`.
 CI jobs that run release checks must use full-depth checkout and fetch tags:
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v6
   with:
     fetch-depth: 0
     fetch-tags: true

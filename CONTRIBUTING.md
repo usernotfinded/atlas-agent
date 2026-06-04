@@ -13,6 +13,8 @@ Safe local workflows and command classifications are documented in
 [docs/development/safe-local-workflows.md](docs/development/safe-local-workflows.md).
 Generated artifact hygiene is documented in
 [docs/development/generated-artifacts.md](docs/development/generated-artifacts.md).
+GitHub Actions maintenance is documented in
+[docs/development/github-actions.md](docs/development/github-actions.md).
 Post-push direct-main verification is documented in
 [docs/development/main-health.md](docs/development/main-health.md).
 
@@ -26,6 +28,7 @@ python3.11 scripts/check_forbidden_claims.py
 python3.11 scripts/check_trust_center.py
 python3.11 scripts/check_onboarding_docs.py
 python3.11 scripts/check_generated_artifacts.py
+python3.11 scripts/check_github_actions_versions.py
 python3.11 scripts/main_health.py
 python3.11 scripts/verify_readme_quickstart.py
 python3.11 scripts/check_public_docs_consistency.py

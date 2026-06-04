@@ -15,6 +15,8 @@ docs, safety messaging, release readiness, and local evidence generation.
   with safe local development rules.
 - `scripts/check_generated_artifacts.py` prevents accidental staging or tracking
   of local-only evidence outputs and secret-like filenames.
+- `scripts/check_github_actions_versions.py` prevents GitHub workflow action
+  version regressions to deprecated Node 20-era action majors.
 - `scripts/main_health.py` reports direct-main post-push health from local git
   metadata, with optional GitHub CLI visibility when requested.
 
@@ -137,6 +139,22 @@ identity, branch state, `HEAD` versus `origin/main`, generated artifact hygiene,
 protected runtime boundary status, and absence of an unrequested maintenance
 tag. GitHub CLI visibility is optional and should not be made mandatory in CI.
 See [Main Health Report](main-health.md).
+
+## GitHub Actions Version Checks
+
+`scripts/check_github_actions_versions.py` is a read-only workflow action
+version guard:
+
+```bash
+python scripts/check_github_actions_versions.py
+python scripts/check_github_actions_versions.py --json
+```
+
+It scans `.github/workflows/*.yml` and `.github/workflows/*.yaml` locally and
+requires `actions/checkout@v6`, `actions/setup-python@v6`, and
+`actions/upload-artifact@v6`. It does not call the network, install
+dependencies, modify files, or require GitHub credentials. See
+[GitHub Actions Maintenance](github-actions.md).
 
 ## Protected Boundary Checks
 

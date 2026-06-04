@@ -17,9 +17,9 @@ from types import ModuleType
 from typing import Callable, Iterable
 
 
-EXPECTED_SOURCE_VERSION = "0.5.9.3"
+EXPECTED_SOURCE_VERSION = "0.5.9.4"
 PUBLIC_RELEASE = "v0.5.9"
-MAINTENANCE_TAG = "v0.5.9.3"
+MAINTENANCE_TAG = "v0.5.9.4"
 
 PROTECTED_BOUNDARIES = (
     "src/atlas_agent/config",

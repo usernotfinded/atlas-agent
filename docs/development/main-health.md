@@ -85,10 +85,10 @@ with `git status --short`, then stage or remove only intentional files.
 ## Version and Release Identity
 
 The main source version can differ from public release during maintenance
-updates. For Batch 32, the source package version on `main` is `0.5.9.3`, while
+updates. For Batch 33, the source package version on `main` is `0.5.9.4`, while
 the public release remains `v0.5.9`.
 
-Do not create a `v0.5.9.3` tag, GitHub release, or PyPI publish unless the task
+Do not create a `v0.5.9.4` tag, GitHub release, or PyPI publish unless the task
 explicitly requests that release action. A maintenance source version is not a
 public release by itself.
 
@@ -108,6 +108,15 @@ python3.11 scripts/check_generated_artifacts.py
 ```
 
 See [Generated Artifacts](generated-artifacts.md) for the full policy.
+
+For workflow maintenance, also run:
+
+```bash
+python3.11 scripts/check_github_actions_versions.py
+```
+
+See [GitHub Actions Maintenance](github-actions.md) for the Node 24-compatible
+action version policy.
 
 ## Protected Runtime Boundaries
 
@@ -133,7 +142,7 @@ audit logs, or manifests as part of a health-report task.
 - A non-`main` branch is blocking for direct-main maintenance verification.
 - `HEAD` not matching `origin/main` means the latest local commit is not aligned
   with the tracked remote state.
-- An unrequested `v0.5.9.3` tag is blocking.
+- An unrequested `v0.5.9.4` tag is blocking.
 - Generated artifact hygiene findings are blocking.
 - Missing GitHub CLI in `--include-github` mode is a warning.
 - Untracked generated artifacts are warnings unless they become staged or

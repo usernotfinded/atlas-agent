@@ -22,6 +22,7 @@ SAFE_WORKFLOWS_DOC = Path("docs/development/safe-local-workflows.md")
 CHECKS_REFERENCE_DOC = Path("docs/development/checks-reference.md")
 GENERATED_ARTIFACTS_DOC = Path("docs/development/generated-artifacts.md")
 MAIN_HEALTH_DOC = Path("docs/development/main-health.md")
+GITHUB_ACTIONS_DOC = Path("docs/development/github-actions.md")
 
 REQUIRED_DOCS = [
     ONBOARDING_DOC,
@@ -29,6 +30,7 @@ REQUIRED_DOCS = [
     CHECKS_REFERENCE_DOC,
     GENERATED_ARTIFACTS_DOC,
     MAIN_HEALTH_DOC,
+    GITHUB_ACTIONS_DOC,
 ]
 
 REQUIRED_SECTIONS = {
@@ -91,6 +93,14 @@ REQUIRED_SECTIONS = {
         "Interpreting Findings",
         "Safe Follow-Up Actions",
     ],
+    GITHUB_ACTIONS_DOC: [
+        "Purpose",
+        "Current Action Version Policy",
+        "Node 24 Compatibility",
+        "Workflow Safety Rules",
+        "Manual Verification",
+        "What Not To Change",
+    ],
 }
 
 REQUIRED_FACTS = {
@@ -106,6 +116,12 @@ REQUIRED_FACTS = {
     "check_trust_center": (("check_trust_center.py",),),
     "check_generated_artifacts": (("check_generated_artifacts.py",),),
     "main health report": (("main_health.py",),),
+    "GitHub Actions version check": (("check_github_actions_versions.py",),),
+    "GitHub Actions checkout v6": (("actions/checkout@v6",),),
+    "GitHub Actions setup-python v6": (("actions/setup-python@v6",),),
+    "GitHub Actions upload-artifact v6": (("actions/upload-artifact@v6",),),
+    "GitHub Actions Node 24 compatibility": (("node 24", "ubuntu-latest"),),
+    "self-hosted runner requirement": (("self-hosted", "v2.327.1+"),),
     "dev_check.sh": (("dev_check.sh",),),
     "ci_check.sh": (("ci_check.sh",),),
     "release_check.sh --quick": (("release_check.sh --quick",),),
@@ -190,6 +206,8 @@ SAFE_COMMAND_SECTIONS = {
     "Version and Release Identity",
     "Interpreting Findings",
     "Safe Follow-Up Actions",
+    "Workflow Safety Rules",
+    "What Not To Change",
 }
 
 

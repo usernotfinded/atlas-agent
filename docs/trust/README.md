@@ -6,10 +6,10 @@ users, contributors, auditors, and potential adopters.
 ## Current Public Release
 
 - Current public release: `v0.5.9`
-- Source package version on `main`: `0.5.9.3`
+- Source package version on `main`: `0.5.9.4`
 - GitHub release: `v0.5.9`
 - PyPI publish: not performed
-- Maintenance label `v0.5.9.3`: not tagged or released
+- Maintenance label `v0.5.9.4`: not tagged or released
 - Release status detail: [v0.5.9 Trust and Release Status](v0.5.9-status.md)
 - Release notes: [docs/releases/v0.5.9.md](../releases/v0.5.9.md)
 
@@ -55,6 +55,7 @@ requires a versioned evidence pack.
 - [Release Readiness](../security/release-readiness.md)
 - [Release Assurance CI Workflow](../../.github/workflows/release-assurance.yml)
 - [Generated Artifacts](../development/generated-artifacts.md)
+- [GitHub Actions Maintenance](../development/github-actions.md)
 - [Main Health Report](../development/main-health.md)
 
 ## Auto-Updater Delivery
@@ -67,7 +68,7 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.5.9`
 - PyPI publish: not performed
-- Package version in source metadata: `0.5.9.3`
+- Package version in source metadata: `0.5.9.4`
 - Auto-updater delivery: verified
 
 ## What Is Ready
@@ -82,7 +83,7 @@ brokers, enable trading, or require credentials.
 ## What Is Not Ready
 
 - PyPI was not published for `v0.5.9`.
-- No `v0.5.9.3` tag or GitHub release has been created.
+- No `v0.5.9.4` tag or GitHub release has been created.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.

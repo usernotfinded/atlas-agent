@@ -54,6 +54,7 @@ python scripts/check_version_consistency.py
 python scripts/check_forbidden_claims.py
 python scripts/check_trust_center.py
 python scripts/check_generated_artifacts.py
+python scripts/check_github_actions_versions.py
 python scripts/main_health.py
 ./scripts/dev_check.sh
 ./scripts/ci_check.sh
@@ -73,6 +74,7 @@ Safe local commands include:
 - `python scripts/check_trust_center.py`
 - `python scripts/check_onboarding_docs.py`
 - `python scripts/check_generated_artifacts.py`
+- `python scripts/check_github_actions_versions.py`
 - `python scripts/main_health.py`
 - `python scripts/doctor.py`
 - `./scripts/dev_check.sh`
@@ -83,6 +85,11 @@ Safe local commands include:
 Paper-mode and dry-run commands are preferred during onboarding. Funded or live
 broker use requires explicit local operator configuration and is outside the
 normal contributor setup.
+
+GitHub Actions maintenance policy is documented in
+[GitHub Actions Maintenance](github-actions.md). Workflow action updates should
+preserve Python 3.11, read-only permissions, safety environment defaults, and
+non-publishing behavior.
 
 ## Evidence and Assurance Commands
 

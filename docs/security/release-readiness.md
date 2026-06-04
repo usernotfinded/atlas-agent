@@ -50,6 +50,13 @@ be uploaded as CI artifacts unless a task explicitly requires a versioned
 evidence pack. See [Generated Artifacts](../development/generated-artifacts.md)
 and run `python3.11 scripts/check_generated_artifacts.py` before staging.
 
+GitHub Actions workflow action versions are covered by
+[GitHub Actions Maintenance](../development/github-actions.md). Run
+`python3.11 scripts/check_github_actions_versions.py` after workflow edits to
+confirm `actions/checkout@v6`, `actions/setup-python@v6`, and
+`actions/upload-artifact@v6` are still in place without changing workflow
+permissions, secrets, or publishing behavior.
+
 After direct-main maintenance pushes, maintainers can run
 `python3.11 scripts/main_health.py` for local post-push verification of
 `main`, `origin/main`, source version identity, artifact hygiene,

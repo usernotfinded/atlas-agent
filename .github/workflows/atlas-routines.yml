@@ -31,8 +31,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 13 * * 1-5'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - run: python -m pip install -e . --no-build-isolation
@@ -45,8 +45,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '35 14 * * 1-5'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - run: python -m pip install -e . --no-build-isolation
@@ -59,8 +59,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 17 * * 1-5'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - run: python -m pip install -e . --no-build-isolation
@@ -73,8 +73,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 21 * * 1-5'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - run: python -m pip install -e . --no-build-isolation
@@ -87,8 +87,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 22 * * 5'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - run: python -m pip install -e . --no-build-isolation

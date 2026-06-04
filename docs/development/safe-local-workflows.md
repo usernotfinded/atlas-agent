@@ -13,6 +13,7 @@ These commands are safe by default for normal local development:
 - `python scripts/check_trust_center.py`
 - `python scripts/check_onboarding_docs.py`
 - `python scripts/check_generated_artifacts.py`
+- `python scripts/check_github_actions_versions.py`
 - `python scripts/main_health.py`
 - `./scripts/dev_check.sh`
 - `./scripts/ci_check.sh`
@@ -27,6 +28,11 @@ These commands are safe by default for normal local development:
 They are local or dry-run oriented. They do not require real credentials,
 provider calls, broker calls, live trading, live submit, provider execution, or
 broker execution.
+
+`python scripts/check_github_actions_versions.py` is also local-only. It checks
+workflow action majors such as `actions/checkout@v6`,
+`actions/setup-python@v6`, and `actions/upload-artifact@v6` without GitHub
+credentials or network access.
 
 ## Paper-Only / Dry-Run Commands
 

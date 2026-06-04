@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9.4] - 2026-06-04
+
+### Changed
+- Modernized GitHub Actions workflow dependencies to Node 24-compatible action majors.
+- Updated `actions/checkout` usage to `@v6`.
+- Updated `actions/setup-python` usage to `@v6`.
+- Updated `actions/upload-artifact` usage to `@v6` where artifact upload is used.
+- Updated source package metadata from `0.5.9.3` to `0.5.9.4`.
+- Runtime trading behavior did not change.
+
+### Added
+- Added workflow action version guard coverage to prevent regression to deprecated action majors.
+- Added GitHub Actions maintenance guidance covering Node 24 runner compatibility and workflow safety boundaries.
+
+### Safety
+- No live trading default changes.
+- No provider execution default changes.
+- No broker execution default changes.
+- No runtime trading behavior changes.
+- No tag, GitHub release, or PyPI publish was performed.
+
 ## [0.5.9.3] - 2026-06-04
 
 ### Added
