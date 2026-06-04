@@ -5,10 +5,18 @@ import sys
 from pathlib import Path
 from datetime import datetime, timezone
 import hashlib
+import tempfile
 
-def run_cmd(cmd, check=True):
+def run_cmd(cmd, check=True, cwd=None):
     try:
-        result = subprocess.run(cmd, shell=True, text=True, capture_output=True, check=check)
+        result = subprocess.run(
+            cmd,
+            shell=True,
+            text=True,
+            capture_output=True,
+            check=check,
+            cwd=cwd,
+        )
         return result.stdout.strip(), result.returncode, result.stderr.strip()
     except subprocess.CalledProcessError as e:
         if check:
@@ -84,7 +92,22 @@ def main():
     checks["github_release_present"] = (rc == 0)
 
     # 11. Updater dry-run
-    out, rc, err = run_cmd("PYTHONPATH=src python3.11 -m atlas_agent.cli update check --dry-run", check=False)
+    src_path = Path("src").resolve()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_workspace = Path(tmp_dir) / "workspace"
+        init_out, init_rc, init_err = run_cmd(
+            f"PYTHONPATH={src_path} python3.11 -m atlas_agent.cli init {tmp_workspace} --template routine-trader",
+            check=False,
+            cwd=tmp_dir,
+        )
+        if init_rc == 0:
+            out, rc, err = run_cmd(
+                f"PYTHONPATH={src_path} python3.11 -m atlas_agent.cli update check --dry-run",
+                check=False,
+                cwd=tmp_workspace,
+            )
+        else:
+            out, rc, err = init_out, init_rc, init_err
     checks["updater_dry_run_ok"] = "Current version: " in out and rc == 0
 
     # 12-13. Updater sources test
@@ -105,13 +128,31 @@ def main():
     # 16. Non-claims
     if checks["release_notes_present"]:
         notes = release_notes_path.read_text().lower()
-        checks["non_claims_preserved"] = all(x in notes for x in [
-            "does not enable live trading",
-            "does not enable provider execution",
-            "autonomous trading",
-            "not financial advice",
-            "pypi publish has been performed" # 'no pypi publish...' is in the doc
-        ])
+        checks["non_claims_preserved"] = all(
+            any(phrase in notes for phrase in variants)
+            for variants in [
+                (
+                    "does not enable live trading",
+                    "no live trading default changes",
+                    "live trading remains disabled by default",
+                ),
+                (
+                    "does not enable provider execution",
+                    "no provider execution default changes",
+                    "provider execution remains disabled by default",
+                ),
+                (
+                    "autonomous trading",
+                    "autonomous trading is not claimed",
+                ),
+                ("not financial advice",),
+                (
+                    "pypi publish has been performed",
+                    "pypi publish: not performed",
+                    "pypi was not published",
+                ),
+            ]
+        )
     else:
         checks["non_claims_preserved"] = False
 

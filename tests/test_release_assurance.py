@@ -43,7 +43,7 @@ def mock_env(monkeypatch):
             return True
         return original_exists(self, *args, **kwargs)
 
-    def mock_run_cmd(cmd, check=True):
+    def mock_run_cmd(cmd, check=True, cwd=None):
         if "git tag -l" in cmd:
             return "v0.5.9.4\n", 0, ""
         if "git ls-remote --tags" in cmd:
@@ -171,7 +171,7 @@ def test_release_assurance_stale_readme(mock_env, tmp_path, monkeypatch):
 
 def test_release_assurance_dev_stable_check(mock_env, tmp_path, monkeypatch):
     original_run_cmd = release_assurance.run_cmd
-    def bad_run_cmd(cmd, check=True):
+    def bad_run_cmd(cmd, check=True, cwd=None):
         if "from atlas_agent.update.sources" in cmd:
             return "True", 0, "" # Fails dev check
         if "git diff HEAD --name-only" in cmd:
