@@ -31,7 +31,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Expected package version (PEP 440).
-EXPECTED_PACKAGE_VERSION = "0.5.9.1"
+EXPECTED_PACKAGE_VERSION = "0.5.9.2"
 EXPECTED_PUBLIC_TAG = "v0.5.9"
 EXPECTED_NAME = "atlas-agent"
 EXPECTED_NORMALIZED_NAME = "atlas_agent"

@@ -46,6 +46,12 @@ class TestCiWorkflow:
     def test_includes_onboarding_docs_check(self, ci_content: str) -> None:
         assert "check_onboarding_docs.py" in ci_content
 
+    def test_includes_generated_artifact_check(self, ci_content: str) -> None:
+        assert "check_generated_artifacts.py" in ci_content
+
+    def test_includes_generated_artifact_tests(self, ci_content: str) -> None:
+        assert "tests/test_generated_artifacts.py" in ci_content
+
     def test_includes_onboarding_docs_tests(self, ci_content: str) -> None:
         assert "tests/test_onboarding_docs.py" in ci_content
 
@@ -292,6 +298,12 @@ class TestCiCheckScript:
 
     def test_includes_onboarding_docs_check(self, ci_check_content: str) -> None:
         assert "check_onboarding_docs.py" in ci_check_content
+
+    def test_includes_generated_artifact_check(self, ci_check_content: str) -> None:
+        assert "check_generated_artifacts.py" in ci_check_content
+
+    def test_includes_generated_artifact_tests(self, ci_check_content: str) -> None:
+        assert "tests/test_generated_artifacts.py" in ci_check_content
 
     def test_includes_trust_center_tests(self, ci_check_content: str) -> None:
         assert "tests/test_trust_center.py" in ci_check_content

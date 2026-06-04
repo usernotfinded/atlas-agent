@@ -13,6 +13,8 @@ docs, safety messaging, release readiness, and local evidence generation.
   security, provider evidence, updater, and non-claim messaging.
 - `scripts/check_onboarding_docs.py` keeps contributor onboarding docs aligned
   with safe local development rules.
+- `scripts/check_generated_artifacts.py` prevents accidental staging or tracking
+  of local-only evidence outputs and secret-like filenames.
 
 ## Development Checks
 
@@ -103,6 +105,20 @@ python scripts/release_assurance.py --version v0.5.9 --output artifacts/release_
 
 The release assurance pack includes identity, updater delivery, local evidence,
 checksum, and non-claim checks. It is not a publishing workflow.
+
+## Generated Artifact Hygiene Checks
+
+`scripts/check_generated_artifacts.py` inspects git path metadata only:
+
+```bash
+python scripts/check_generated_artifacts.py
+python scripts/check_generated_artifacts.py --json
+```
+
+It blocks tracked or staged local-only generated evidence, secret-like
+filenames, and dangerous generated file types staged from `artifacts/`. It does
+not remove files, stage files, unstage files, call the network, or read
+credential values.
 
 ## Protected Boundary Checks
 

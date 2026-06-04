@@ -8,6 +8,7 @@ Release was performed after:
 - all security hardening PRs were merged;
 - version consistency checks passed;
 - forbidden claims scan passed;
+- generated artifact hygiene checks passed;
 - dev/CI/research/release checks passed;
 - no live trading/provider execution defaults changed;
 - no secrets were present;
@@ -43,6 +44,11 @@ It does not create tags, publish packages, call providers, enable trading, or mo
 The workflow verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims, then uploads the generated assurance pack as an artifact.
 
 It is read-only and non-publishing. It does not create tags, create GitHub releases, publish to PyPI, use secrets, call providers, touch brokers, or enable trading.
+
+Generated release assurance and provider evidence outputs should stay local or
+be uploaded as CI artifacts unless a task explicitly requires a versioned
+evidence pack. See [Generated Artifacts](../development/generated-artifacts.md)
+and run `python3.11 scripts/check_generated_artifacts.py` before staging.
 
 The trust center is checked by `scripts/check_trust_center.py` to prevent stale public release/security messaging.
 

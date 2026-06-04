@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.9.1)** — `main` is 0.5.9.1 maintenance; latest stable public release is [v0.5.9](docs/releases/v0.5.9.md).
+> **Current Status (v0.5.9.2)** — `main` is 0.5.9.2 maintenance; latest stable public release is [v0.5.9](docs/releases/v0.5.9.md).
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -22,7 +22,7 @@ See the [Atlas Agent Trust Center](docs/trust/README.md) for the current public 
 
 ## Contributor Onboarding
 
-See [Contributor Onboarding](docs/development/onboarding.md) for Python 3.11 setup, dev extras, safe local checks, evidence commands, and commands that require explicit owner approval. The onboarding docs are checked by `scripts/check_onboarding_docs.py`.
+See [Contributor Onboarding](docs/development/onboarding.md) for Python 3.11 setup, dev extras, safe local checks, evidence commands, generated artifact hygiene, and commands that require explicit owner approval. The onboarding docs are checked by `scripts/check_onboarding_docs.py`. Generated local evidence outputs are covered by [Generated Artifacts](docs/development/generated-artifacts.md) and checked by `scripts/check_generated_artifacts.py`.
 
 Atlas is the broker-neutral control layer above user-selected models, broker/API providers, credentials, and risk limits. It treats the LLM as the reasoning engine and provides it with a toolset of **broker adapters** to perform web research, manage portfolios, and evaluate trade ideas through a rigorous deterministic **risk gates** layer.
 
@@ -143,7 +143,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`v0.5.9` is the latest stable public release, a packaging/install hotfix for `v0.5.8`. `main` is now `0.5.9.1` maintenance. No `v0.5.9.1` tag, GitHub release, or PyPI publish has been performed.
+`v0.5.9` is the latest stable public release, a packaging/install hotfix for `v0.5.8`. `main` is now `0.5.9.2` maintenance. No `v0.5.9.2` tag, GitHub release, or PyPI publish has been performed.
 
 - Live trading is disabled by default.
 - Provider execution remains locked.

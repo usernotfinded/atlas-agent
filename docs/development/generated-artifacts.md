@@ -1,0 +1,138 @@
+# Generated Artifacts
+
+## Purpose
+
+Artifact hygiene keeps local evidence outputs from becoming accidental source
+changes. `artifacts/` outputs are usually local evidence created by release,
+assurance, provider audit, or preflight checks. They should stay unstaged unless
+the task explicitly asks for a versioned evidence pack.
+In plain terms: artifacts/ outputs are usually local evidence.
+
+Use `git status --short` before staging and stage exact intended files only.
+Generated artifact hygiene does not change runtime trading behavior, safety
+defaults, provider execution defaults, broker execution defaults, or approval
+requirements.
+
+## Local-Only Evidence Outputs
+
+These paths are usually generated evidence outputs and should remain local:
+
+- `artifacts/release_evidence/`
+- `artifacts/release_assurance/`
+- `artifacts/provider_audit_pack/`
+- `artifacts/provider_preflight/`
+- `artifacts/provider_preflight_bundles/`
+- `artifacts/provider_preflight_smoke/`
+
+Do not commit local generated evidence unless explicitly requested. Prefer CI
+artifact upload for generated assurance, audit-pack, and preflight outputs.
+
+## Versioned Evidence Exceptions
+
+A versioned evidence pack may be committed only when the task explicitly asks
+for it. Examples include:
+
+- a release evidence bundle required for public review;
+- a frozen artifact fixture required by tests;
+- a documented versioned evidence pack.
+
+The repository already contains versioned `v0.5.9` release assurance evidence
+under `artifacts/release_assurance/`. Those tracked files are source evidence,
+not permission to stage newly generated local outputs.
+
+## What Not To Commit
+
+Never commit real credentials or credential files, including:
+
+- `.env`
+- `.env.*`
+- `.env.atlas`
+- `*.pem`
+- `*.key`
+- `*.p12`
+- `*.pfx`
+- `id_rsa`
+- `id_ed25519`
+- `*_TOKEN`
+- `*_PASSWORD`
+- `*_SECRET`
+- real credential files
+
+Do not read, print, or copy credential values while diagnosing artifact hygiene.
+Placeholder `.env.example` templates are allowed only when they contain no real
+credentials.
+
+## How To Check Artifact Hygiene
+
+Run the generated artifact hygiene checker:
+
+```bash
+python3.11 scripts/check_generated_artifacts.py
+```
+
+For machine-readable output:
+
+```bash
+python3.11 scripts/check_generated_artifacts.py --json
+```
+
+The checker inspects git path metadata only. It checks tracked paths, staged
+paths, and status output without modifying files, staging files, unstaging
+files, calling the network, or reading credential values.
+
+## How To Handle Untracked Local Artifacts
+
+Untracked local evidence artifacts may appear after release evidence,
+assurance, provider audit, or provider preflight commands. Inspect before
+staging:
+
+```bash
+git status --short
+```
+
+If these are local regenerated evidence outputs and not needed:
+
+```bash
+rm artifacts/release_evidence/evidence.json
+rm artifacts/release_evidence/evidence.md
+```
+
+Use exact file paths only. Do not use broad deletion commands as normal
+workflow.
+
+## Safe Cleanup Without Destructive Git Commands
+
+Safe cleanup means removing only exact files that are confirmed to be generated
+local artifacts.
+
+- Do not use git reset --hard.
+- Do not use git clean.
+- Do not use stash pop.
+- Do not use stash drop.
+- Do not use stash clear.
+
+Before cleanup:
+
+- inspect `git status --short`;
+- confirm the path is generated local evidence;
+- confirm the task does not require a versioned evidence pack;
+- remove only exact generated files;
+- run `git status --short` again before staging.
+
+If an artifact might be needed for review, move it outside the repository or use
+a CI artifact upload workflow instead of committing it.
+
+## CI and Local Gates
+
+The generated artifact checker is part of the local development and CI parity
+gates:
+
+- `python3.11 scripts/check_generated_artifacts.py`
+- `./scripts/dev_check.sh`
+- `./scripts/ci_check.sh`
+- `.github/workflows/ci.yml`
+
+Blocking findings include tracked or staged local-only evidence outputs,
+tracked or staged secret-like filenames, and dangerous generated file types
+staged from `artifacts/`. Untracked local evidence outputs are reported as
+warnings so contributors can clean exact files when they are no longer needed.

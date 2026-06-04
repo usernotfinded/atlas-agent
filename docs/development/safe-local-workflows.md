@@ -12,6 +12,7 @@ These commands are safe by default for normal local development:
 - `python scripts/check_forbidden_claims.py`
 - `python scripts/check_trust_center.py`
 - `python scripts/check_onboarding_docs.py`
+- `python scripts/check_generated_artifacts.py`
 - `./scripts/dev_check.sh`
 - `./scripts/ci_check.sh`
 - `./scripts/release_check.sh --quick`
@@ -119,13 +120,25 @@ Do not use destructive cleanup commands as a normal workflow.
 
 `artifacts/` outputs are usually local evidence, not source. Only commit
 artifacts when the task explicitly requires a versioned evidence pack. Prefer CI
-artifact upload for generated assurance/audit packs.
+artifact upload for generated assurance/audit packs. See
+[Generated Artifacts](generated-artifacts.md) for the full cleanup policy.
 
 Common local artifact paths include:
 
+- `artifacts/release_evidence/`
 - `artifacts/release_assurance/`
 - `artifacts/provider_audit_pack/`
 - `artifacts/provider_preflight_smoke/`
+
+Before staging, run:
+
+```bash
+python scripts/check_generated_artifacts.py
+git status --short
+```
+
+If generated evidence is untracked and no longer needed, remove exact confirmed
+files only. Do not use destructive cleanup commands as a normal workflow.
 
 ## Handling Secrets
 

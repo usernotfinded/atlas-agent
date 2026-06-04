@@ -20,8 +20,14 @@ from typing import Iterable
 ONBOARDING_DOC = Path("docs/development/onboarding.md")
 SAFE_WORKFLOWS_DOC = Path("docs/development/safe-local-workflows.md")
 CHECKS_REFERENCE_DOC = Path("docs/development/checks-reference.md")
+GENERATED_ARTIFACTS_DOC = Path("docs/development/generated-artifacts.md")
 
-REQUIRED_DOCS = [ONBOARDING_DOC, SAFE_WORKFLOWS_DOC, CHECKS_REFERENCE_DOC]
+REQUIRED_DOCS = [
+    ONBOARDING_DOC,
+    SAFE_WORKFLOWS_DOC,
+    CHECKS_REFERENCE_DOC,
+    GENERATED_ARTIFACTS_DOC,
+]
 
 REQUIRED_SECTIONS = {
     ONBOARDING_DOC: [
@@ -61,6 +67,16 @@ REQUIRED_SECTIONS = {
         "Dangerous Pattern Scans",
         "Interpreting Failures",
     ],
+    GENERATED_ARTIFACTS_DOC: [
+        "Purpose",
+        "Local-Only Evidence Outputs",
+        "Versioned Evidence Exceptions",
+        "What Not To Commit",
+        "How To Check Artifact Hygiene",
+        "How To Handle Untracked Local Artifacts",
+        "Safe Cleanup Without Destructive Git Commands",
+        "CI and Local Gates",
+    ],
 }
 
 REQUIRED_FACTS = {
@@ -74,6 +90,7 @@ REQUIRED_FACTS = {
     "check_version_consistency": (("check_version_consistency.py",),),
     "check_forbidden_claims": (("check_forbidden_claims.py",),),
     "check_trust_center": (("check_trust_center.py",),),
+    "check_generated_artifacts": (("check_generated_artifacts.py",),),
     "dev_check.sh": (("dev_check.sh",),),
     "ci_check.sh": (("ci_check.sh",),),
     "release_check.sh --quick": (("release_check.sh --quick",),),
@@ -142,6 +159,10 @@ SAFE_COMMAND_SECTIONS = {
     "Safety Rules",
     "Dangerous Pattern Scans",
     "Interpreting Failures",
+    "What Not To Commit",
+    "How To Handle Untracked Local Artifacts",
+    "Safe Cleanup Without Destructive Git Commands",
+    "CI and Local Gates",
 }
 
 

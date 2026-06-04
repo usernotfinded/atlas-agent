@@ -6,10 +6,10 @@ users, contributors, auditors, and potential adopters.
 ## Current Public Release
 
 - Current public release: `v0.5.9`
-- Source package version on `main`: `0.5.9.1`
+- Source package version on `main`: `0.5.9.2`
 - GitHub release: `v0.5.9`
 - PyPI publish: not performed
-- Maintenance label `v0.5.9.1`: not tagged or released
+- Maintenance label `v0.5.9.2`: not tagged or released
 - Release status detail: [v0.5.9 Trust and Release Status](v0.5.9-status.md)
 - Release notes: [docs/releases/v0.5.9.md](../releases/v0.5.9.md)
 
@@ -49,9 +49,12 @@ provider execution, broker execution, live trading, or order approval.
 Release assurance is available locally and through a manual CI workflow. It
 checks release identity, updater delivery, provider evidence, checksums, and
 safety non-claims without publishing packages or changing runtime behavior.
+Generated assurance and audit packs are local evidence unless a task explicitly
+requires a versioned evidence pack.
 
 - [Release Readiness](../security/release-readiness.md)
 - [Release Assurance CI Workflow](../../.github/workflows/release-assurance.yml)
+- [Generated Artifacts](../development/generated-artifacts.md)
 
 ## Auto-Updater Delivery
 
@@ -63,7 +66,7 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.5.9`
 - PyPI publish: not performed
-- Package version in source metadata: `0.5.9.1`
+- Package version in source metadata: `0.5.9.2`
 - Auto-updater delivery: verified
 
 ## What Is Ready
@@ -78,7 +81,7 @@ brokers, enable trading, or require credentials.
 ## What Is Not Ready
 
 - PyPI was not published for `v0.5.9`.
-- No `v0.5.9.1` tag or GitHub release has been created.
+- No `v0.5.9.2` tag or GitHub release has been created.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -91,6 +94,7 @@ brokers, enable trading, or require credentials.
 
 - [Contributor Onboarding](../development/onboarding.md)
 - [Safe Local Workflows](../development/safe-local-workflows.md)
+- [Generated Artifacts](../development/generated-artifacts.md)
 - [Checks Reference](../development/checks-reference.md)
 - [v0.5.9 Release Notes](../releases/v0.5.9.md)
 - [v0.5.9 Trust and Release Status](v0.5.9-status.md)

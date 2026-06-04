@@ -58,6 +58,8 @@ jobs:
         run: python3.11 scripts/check_trust_center.py
       - name: Onboarding docs check
         run: python3.11 scripts/check_onboarding_docs.py
+      - name: Generated artifact hygiene check
+        run: python3.11 scripts/check_generated_artifacts.py
       - name: README quickstart verification
         run: python3.11 scripts/verify_readme_quickstart.py
       - name: RC cutover check
@@ -87,6 +89,7 @@ jobs:
           python3.11 -m pytest tests/test_rc1_cutover_consistency.py -q
           python3.11 -m pytest tests/test_changelog_consistency.py -q
           python3.11 -m pytest tests/test_public_docs_consistency.py -q
+          python3.11 -m pytest tests/test_generated_artifacts.py -q
           python3.11 -m pytest tests/test_trust_center.py -q
           python3.11 -m pytest tests/test_onboarding_docs.py -q
           python3.11 -m pytest tests/test_readme_quickstart_verification.py -q

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9.2] - 2026-06-04
+
+### Added
+- Added generated artifact hygiene guidance and checking for local evidence outputs.
+
+### Changed
+- Updated source package metadata from `0.5.9.1` to `0.5.9.2`.
+- Clarified which generated artifact outputs are local-only and should not be staged unless explicitly requested.
+- Runtime trading behavior did not change.
+
+### Safety
+- No live trading default changes.
+- No provider execution default changes.
+- No broker execution default changes.
+- No runtime trading behavior changes.
+
 ## [0.5.9.1] - 2026-06-04
 
 ### Changed
