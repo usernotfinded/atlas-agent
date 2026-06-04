@@ -20,6 +20,10 @@
 
 See the [Atlas Agent Trust Center](docs/trust/README.md) for the current public release, security posture, release assurance, provider audit evidence, updater delivery status, and explicit non-claims. The trust center is checked by `scripts/check_trust_center.py` to prevent stale public release/security messaging.
 
+## Contributor Onboarding
+
+See [Contributor Onboarding](docs/development/onboarding.md) for Python 3.11 setup, dev extras, safe local checks, evidence commands, and commands that require explicit owner approval. The onboarding docs are checked by `scripts/check_onboarding_docs.py`.
+
 Atlas is the broker-neutral control layer above user-selected models, broker/API providers, credentials, and risk limits. It treats the LLM as the reasoning engine and provides it with a toolset of **broker adapters** to perform web research, manage portfolios, and evaluate trade ideas through a rigorous deterministic **risk gates** layer.
 
 ## Demo

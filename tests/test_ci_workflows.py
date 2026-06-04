@@ -43,6 +43,12 @@ class TestCiWorkflow:
     def test_includes_trust_center_check(self, ci_content: str) -> None:
         assert "check_trust_center.py" in ci_content
 
+    def test_includes_onboarding_docs_check(self, ci_content: str) -> None:
+        assert "check_onboarding_docs.py" in ci_content
+
+    def test_includes_onboarding_docs_tests(self, ci_content: str) -> None:
+        assert "tests/test_onboarding_docs.py" in ci_content
+
     def test_includes_readme_quickstart(self, ci_content: str) -> None:
         assert "verify_readme_quickstart.py" in ci_content
 
@@ -284,8 +290,14 @@ class TestCiCheckScript:
     def test_includes_trust_center_check(self, ci_check_content: str) -> None:
         assert "check_trust_center.py" in ci_check_content
 
+    def test_includes_onboarding_docs_check(self, ci_check_content: str) -> None:
+        assert "check_onboarding_docs.py" in ci_check_content
+
     def test_includes_trust_center_tests(self, ci_check_content: str) -> None:
         assert "tests/test_trust_center.py" in ci_check_content
+
+    def test_includes_onboarding_docs_tests(self, ci_check_content: str) -> None:
+        assert "tests/test_onboarding_docs.py" in ci_check_content
 
     def test_includes_readme_quickstart(self, ci_check_content: str) -> None:
         assert "verify_readme_quickstart.py" in ci_check_content
