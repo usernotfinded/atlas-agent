@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No provider execution default changes.
 - No broker execution default changes.
 - No runtime trading behavior changes.
-- No tag, GitHub release, or PyPI publish was performed.
+- Public GitHub release cutover is authorized for `v0.5.9.4`.
+- PyPI publish was not performed.
 
 ## [0.5.9.3] - 2026-06-04
 

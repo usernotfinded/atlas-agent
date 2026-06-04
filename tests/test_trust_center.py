@@ -19,7 +19,7 @@ from typing import Callable
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_trust_center.py"
 TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.5.9-status.md"
+TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.5.9.4-status.md"
 
 
 def _load_checker() -> ModuleType:
@@ -62,7 +62,7 @@ def _valid_fixture(tmp_path: Path) -> Path:
 
     _write(tmp_path / "docs" / "trust" / "README.md", TRUST_README.read_text(encoding="utf-8"))
     _write(
-        tmp_path / "docs" / "trust" / "v0.5.9-status.md",
+        tmp_path / "docs" / "trust" / "v0.5.9.4-status.md",
         TRUST_STATUS.read_text(encoding="utf-8"),
     )
     return tmp_path
@@ -164,13 +164,13 @@ class TestTrustCenterChecker:
         repo = _valid_fixture(tmp_path)
         readme = repo / CHECKER.TRUST_README
         readme.write_text(
-            readme.read_text(encoding="utf-8").replace("../releases/v0.5.9.md", "missing.md"),
+            readme.read_text(encoding="utf-8").replace("../releases/v0.5.9.4.md", "missing.md"),
             encoding="utf-8",
         )
 
         result = _run_checker(repo)
         assert result.returncode == 1
-        assert "docs/releases/v0.5.9.md" in result.stdout
+        assert "docs/releases/v0.5.9.4.md" in result.stdout
 
     def test_fails_if_security_link_is_missing(self, tmp_path: Path) -> None:
         repo = _valid_fixture(tmp_path)

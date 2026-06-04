@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 PACKAGE_VERSION = "0.5.9.4"
-PUBLIC_TAG = "v0.5.9"
+PUBLIC_TAG = "v0.5.9.4"
 
 
 def main() -> int:

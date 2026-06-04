@@ -18,8 +18,8 @@ from typing import Callable, Iterable
 
 
 EXPECTED_SOURCE_VERSION = "0.5.9.4"
-PUBLIC_RELEASE = "v0.5.9"
-MAINTENANCE_TAG = "v0.5.9.4"
+PUBLIC_RELEASE = "v0.5.9.4"
+NEXT_UNREQUESTED_RELEASE_TAG = "v0.5.9.5"
 
 PROTECTED_BOUNDARIES = (
     "src/atlas_agent/config",
@@ -42,11 +42,11 @@ RELEASE_PUBLISH_STAGED_PREFIXES = (
     "dist/",
     "build/",
     "artifacts/release_evidence/",
-    f"artifacts/release_assurance/{MAINTENANCE_TAG}/",
+    f"artifacts/release_assurance/{NEXT_UNREQUESTED_RELEASE_TAG}/",
 )
 
 RELEASE_PUBLISH_STAGED_EXACT = {
-    f"docs/releases/{MAINTENANCE_TAG}.md",
+    f"docs/releases/{NEXT_UNREQUESTED_RELEASE_TAG}.md",
 }
 
 RELEASE_PUBLISH_STAGED_SUFFIXES = (
@@ -366,7 +366,7 @@ def _new_checks() -> dict[str, bool]:
         "init_present": False,
         "version_consistent": False,
         "expected_source_version": False,
-        "public_release_expected": PUBLIC_RELEASE == "v0.5.9",
+        "public_release_expected": PUBLIC_RELEASE == "v0.5.9.4",
         "git_available": False,
         "on_main": False,
         "origin_main_resolved": False,
@@ -469,7 +469,7 @@ def collect_report(
         )
         status_result = git_runner(repo_root, ["status", "--porcelain=v1"])
         staged_result = git_runner(repo_root, ["diff", "--cached", "--name-only"])
-        tag_result = git_runner(repo_root, ["tag", "--list", MAINTENANCE_TAG])
+        tag_result = git_runner(repo_root, ["tag", "--list", NEXT_UNREQUESTED_RELEASE_TAG])
         protected_result = git_runner(
             repo_root,
             ["diff", "--name-status", "--", *PROTECTED_BOUNDARIES],
@@ -515,7 +515,7 @@ def collect_report(
         "git rev-parse HEAD": head_result,
         "git status --porcelain=v1": status_result,
         "git diff --cached --name-only": staged_result,
-        f"git tag --list {MAINTENANCE_TAG}": tag_result,
+        f"git tag --list {NEXT_UNREQUESTED_RELEASE_TAG}": tag_result,
         "git diff --name-status protected boundaries": protected_result,
     }
     failed = [
@@ -622,7 +622,7 @@ def collect_report(
             findings.append(
                 _finding(
                     "unrequested_maintenance_tag",
-                    f"local maintenance tag {MAINTENANCE_TAG} exists but was not requested",
+                    f"local future release tag {NEXT_UNREQUESTED_RELEASE_TAG} exists but was not requested",
                 )
             )
 

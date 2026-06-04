@@ -17,7 +17,7 @@ def run_cmd(cmd, check=True):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate a local release assurance pack.")
-    parser.add_argument("--version", required=True, help="Release version to assure (e.g., v0.5.9)")
+    parser.add_argument("--version", required=True, help="Release version to assure (e.g., v0.5.9.4)")
     parser.add_argument("--output", required=True, help="Output directory for the assurance pack")
     args = parser.parse_args()
 
@@ -90,7 +90,8 @@ def main():
     # 12-13. Updater sources test
     # This is tested implicitly by checking the sources.py directly or trusting the test suite. 
     # But we can also do a quick python check
-    out, rc, err = run_cmd("PYTHONPATH=src python3.11 -c 'from atlas_agent.update.sources import is_public_stable, is_version_newer; print(is_public_stable(\"v0.5.9.dev0\"))'", check=False)
+    dev_tag = f"{version}.dev0"
+    out, rc, err = run_cmd(f"PYTHONPATH=src python3.11 -c 'from atlas_agent.update.sources import is_public_stable, is_version_newer; print(is_public_stable(\"{dev_tag}\"))'", check=False)
     checks["dev_version_not_public_stable"] = (out == "False")
 
     # 14. Audit pack CLI
@@ -174,7 +175,7 @@ Generated at: {summary['generated_at']}
 
 ## Updater Delivery Verification
 - {version} stable detection
-- {version}.dev0 rejected as public stable
+- {dev_tag} rejected as public stable
 - v0.5.8.1 older than {version}
 - dry-run behavior
 

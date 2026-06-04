@@ -25,6 +25,8 @@ LOCAL_ONLY_ARTIFACT_PREFIXES = (
 TRACKED_VERSIONED_EVIDENCE_PREFIXES = (
     "artifacts/release_assurance/v0.5.9/",
     "artifacts/release_assurance/v0.5.9-local-check/",
+    "artifacts/release_assurance/v0.5.9.4/",
+    "artifacts/release_assurance/v0.5.9.4-local-check/",
 )
 
 SECRET_TEMPLATE_ALLOWLIST = {

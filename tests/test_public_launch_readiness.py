@@ -189,7 +189,7 @@ class TestScriptBehavior:
         data = json.loads(result.stdout)
         assert data["passed"] is True
         assert data["package_version"] == "0.5.9.4"
-        assert data["public_tag"] == "v0.5.9"
+        assert data["public_tag"] == "v0.5.9.4"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -232,16 +232,16 @@ class TestStaleRCReferencesBlocked:
             f"Expected pass for historical RC changelog entry:\n{result.stdout}"
         )
 
-    def test_current_stable_version_059_accepted(self) -> None:
+    def test_current_stable_version_0594_accepted(self) -> None:
         text = (
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.5.9)\n"
+            "Current Status (v0.5.9.4)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (
-            f"Expected pass for current dev version:\n{result.stdout}"
+            f"Expected pass for current public version:\n{result.stdout}"
         )
 
     @pytest.mark.parametrize("stale_version", [
