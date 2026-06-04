@@ -43,3 +43,5 @@ It does not create tags, publish packages, call providers, enable trading, or mo
 The workflow verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims, then uploads the generated assurance pack as an artifact.
 
 It is read-only and non-publishing. It does not create tags, create GitHub releases, publish to PyPI, use secrets, call providers, touch brokers, or enable trading.
+
+The trust center is checked by `scripts/check_trust_center.py` to prevent stale public release/security messaging.
