@@ -8,6 +8,10 @@ Atlas Agent is a broker-neutral supervised trading workspace with market researc
 
 ## Development Setup
 
+The contributor setup guide is [docs/development/onboarding.md](docs/development/onboarding.md).
+Safe local workflows and command classifications are documented in
+[docs/development/safe-local-workflows.md](docs/development/safe-local-workflows.md).
+
 ```bash
 # Install in editable mode with dev dependencies
 python3.11 -m pip install -e '.[dev]'
@@ -15,6 +19,8 @@ python3.11 -m pip install -e '.[dev]'
 # Run fast safety checks
 python3.11 scripts/check_version_consistency.py
 python3.11 scripts/check_forbidden_claims.py
+python3.11 scripts/check_trust_center.py
+python3.11 scripts/check_onboarding_docs.py
 python3.11 scripts/verify_readme_quickstart.py
 python3.11 scripts/check_public_docs_consistency.py
 

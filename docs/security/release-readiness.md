@@ -45,3 +45,6 @@ The workflow verifies release identity, public metadata, updater delivery, provi
 It is read-only and non-publishing. It does not create tags, create GitHub releases, publish to PyPI, use secrets, call providers, touch brokers, or enable trading.
 
 The trust center is checked by `scripts/check_trust_center.py` to prevent stale public release/security messaging.
+
+Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
+to keep local setup, safe-check, and release-sensitive command guidance current.

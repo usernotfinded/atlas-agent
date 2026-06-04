@@ -753,6 +753,7 @@ class TestDevCheckSh:
         assert "check_version_consistency.py" in content
         assert "check_forbidden_claims.py" in content
         assert "check_trust_center.py" in content
+        assert "check_onboarding_docs.py" in content
         assert "tests/research/test_research_sandbox_cli.py" in content
         assert "tests/test_release_check_scripts.py" in content
         assert "git diff --check" in content

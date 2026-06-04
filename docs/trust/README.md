@@ -87,6 +87,9 @@ brokers, enable trading, or require credentials.
 
 ## Reviewer Entry Points
 
+- [Contributor Onboarding](../development/onboarding.md)
+- [Safe Local Workflows](../development/safe-local-workflows.md)
+- [Checks Reference](../development/checks-reference.md)
 - [v0.5.9 Release Notes](../releases/v0.5.9.md)
 - [v0.5.9 Trust and Release Status](v0.5.9-status.md)
 - [SECURITY.md](../../SECURITY.md)
