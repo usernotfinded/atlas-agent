@@ -5,11 +5,11 @@
 ## Summary
 
 - **Overall status:** PASSED
-- **Generated at:** 2026-06-03T17:56:43.380150+00:00
+- **Generated at:** 2026-06-04T08:12:44.783354+00:00
 - **Package version:** 0.5.9
 - **Public stable tag:** v0.5.8.1
-- **Current branch:** main
-- **Current commit:** `5d3e6c805792637d3a44e8367e83fbb1a7c41c8e`
+- **Current branch:** docs/trust-center-v0.5.9
+- **Current commit:** `3bc4db491d7006a0874481c810970471e3221fed`
 - **Working tree clean:** False
 - **Diff check clean:** True
 - **Protected boundaries clean:** False
@@ -32,6 +32,7 @@ M	.env.example
 M	.github/workflows/ci.yml
 A	.github/workflows/full-test.yml
 A	.github/workflows/provider-audit-pack.yml
+A	.github/workflows/release-assurance.yml
 M	.github/workflows/release-gate.yml
 M	.github/workflows/research-ci.yml
 M	.gitignore
@@ -39,6 +40,13 @@ M	CHANGELOG.md
 M	CONTRIBUTING.md
 M	README.md
 M	SECURITY.md
+A	artifacts/release_assurance/v0.5.9/provider-audit-pack-checks.json
+A	artifacts/release_assurance/v0.5.9/public-metadata-checks.json
+A	artifacts/release_assurance/v0.5.9/release-assurance-report.md
+A	artifacts/release_assurance/v0.5.9/release-assurance-summary.json
+A	artifacts/release_assurance/v0.5.9/release-checks.json
+A	artifacts/release_assurance/v0.5.9/sha256sums.txt
+A	artifacts/release_assurance/v0.5.9/updater-delivery-checks.json
 M	artifacts/release_evidence/evidence.json
 M	artifacts/release_evidence/evidence.md
 A	docs/audits/batch-7-post-incident-audit.md
@@ -48,6 +56,8 @@ M	docs/kill-switch.md
 M	docs/live-submit-safety-contract.md
 M	docs/product-capability-inventory.md
 M	docs/public-launch-readiness.md
+M	docs/release-checklist.md
+A	docs/releases/v0.5.9.md
 M	docs/reviewer-outreach-checklist.md
 A	docs/security/approval-safety.md
 A	docs/security/broker-safety.md
@@ -65,6 +75,7 @@ M	scripts/build_release_evidence_bundle.py
 M	scripts/check_clean_install.py
 M	scripts/check_final_rc_audit.py
 M	scripts/check_package_distribution.py
+M	scripts/check_public_docs_consistency.py
 M	scripts/check_public_launch_messaging.py
 M	scripts/check_public_launch_readiness.py
 M	scripts/check_rc1_cutover.py
@@ -79,6 +90,7 @@ M	scripts/demo_paper_workflow.sh
 M	scripts/demo_research_workflow.sh
 M	scripts/dev_check.sh
 A	scripts/python_env.sh
+A	scripts/release_assurance.py
 M	scripts/release_check.sh
 M	scripts/research_check.sh
 M	src/atlas_agent/__init__.py
@@ -96,6 +108,7 @@ M	src/atlas_agent/research/release_candidate_cutover.py
 M	src/atlas_agent/research/release_candidate_readiness.py
 M	src/atlas_agent/risk/limits.py
 M	src/atlas_agent/templates/routine-trader/configs/risk.example.yaml
+M	src/atlas_agent/update/sources.py
 M	tests/brokers/test_alpaca_submit.py
 M	tests/brokers/test_alpaca_sync.py
 A	tests/config/test_config_store.py
@@ -132,6 +145,7 @@ M	tests/test_public_launch_messaging.py
 M	tests/test_public_launch_readiness.py
 M	tests/test_rc1_cutover_consistency.py
 A	tests/test_redaction.py
+A	tests/test_release_assurance.py
 M	tests/test_release_check_scripts.py
 M	tests/test_reviewer_onboarding.py
 M	tests/test_reviewer_outreach.py
@@ -143,6 +157,7 @@ M	tests/test_v0581_hotfix_cutover.py
 M	tests/test_v058_dev_version_regression.py
 M	tests/test_v058_rc1_readiness.py
 M	tests/test_v058_rc5_cutover.py
+A	tests/update/test_update_sources.py
 ```
 
 ## Protected Boundary Status
