@@ -136,3 +136,9 @@ Blocking findings include tracked or staged local-only evidence outputs,
 tracked or staged secret-like filenames, and dangerous generated file types
 staged from `artifacts/`. Untracked local evidence outputs are reported as
 warnings so contributors can clean exact files when they are no longer needed.
+
+After a direct-main maintenance push, run
+`python3.11 scripts/main_health.py` to confirm generated artifact hygiene is
+clean alongside local `main`, `origin/main`, release/tag safety, and protected
+runtime boundary status. Optional GitHub CLI visibility belongs in the main
+health report, not in mandatory artifact hygiene gates.

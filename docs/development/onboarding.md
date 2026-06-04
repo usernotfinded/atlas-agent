@@ -54,6 +54,7 @@ python scripts/check_version_consistency.py
 python scripts/check_forbidden_claims.py
 python scripts/check_trust_center.py
 python scripts/check_generated_artifacts.py
+python scripts/main_health.py
 ./scripts/dev_check.sh
 ./scripts/ci_check.sh
 ./scripts/release_check.sh --quick
@@ -72,6 +73,7 @@ Safe local commands include:
 - `python scripts/check_trust_center.py`
 - `python scripts/check_onboarding_docs.py`
 - `python scripts/check_generated_artifacts.py`
+- `python scripts/main_health.py`
 - `python scripts/doctor.py`
 - `./scripts/dev_check.sh`
 - `./scripts/ci_check.sh`
@@ -120,6 +122,9 @@ submit, or order approval.
 - Keep the diff focused on the task.
 - Check [Generated Artifacts](generated-artifacts.md) before staging local
   evidence outputs.
+- After direct-main maintenance pushes, check [Main Health Report](main-health.md)
+  to verify local `main`, `origin/main`, optional GitHub CI visibility, artifact
+  hygiene, and release/tag safety.
 - Stage only intended files.
 - Open a draft PR for review.
 - Do not merge until checks pass.

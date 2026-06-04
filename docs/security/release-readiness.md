@@ -50,6 +50,14 @@ be uploaded as CI artifacts unless a task explicitly requires a versioned
 evidence pack. See [Generated Artifacts](../development/generated-artifacts.md)
 and run `python3.11 scripts/check_generated_artifacts.py` before staging.
 
+After direct-main maintenance pushes, maintainers can run
+`python3.11 scripts/main_health.py` for local post-push verification of
+`main`, `origin/main`, source version identity, artifact hygiene,
+release/tag safety, and protected runtime boundaries. Optional GitHub CLI
+visibility is available with `python3.11 scripts/main_health.py --include-github`;
+missing GitHub CLI should be treated as a visibility limitation, not a local
+release-readiness failure.
+
 The trust center is checked by `scripts/check_trust_center.py` to prevent stale public release/security messaging.
 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`

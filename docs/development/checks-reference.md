@@ -15,6 +15,8 @@ docs, safety messaging, release readiness, and local evidence generation.
   with safe local development rules.
 - `scripts/check_generated_artifacts.py` prevents accidental staging or tracking
   of local-only evidence outputs and secret-like filenames.
+- `scripts/main_health.py` reports direct-main post-push health from local git
+  metadata, with optional GitHub CLI visibility when requested.
 
 ## Development Checks
 
@@ -119,6 +121,22 @@ It blocks tracked or staged local-only generated evidence, secret-like
 filenames, and dangerous generated file types staged from `artifacts/`. It does
 not remove files, stage files, unstage files, call the network, or read
 credential values.
+
+## Main Health Report
+
+`scripts/main_health.py` is a read-only direct-main maintenance report:
+
+```bash
+python scripts/main_health.py
+python scripts/main_health.py --json
+python scripts/main_health.py --include-github
+```
+
+Default mode is local-only. It checks source version identity, public release
+identity, branch state, `HEAD` versus `origin/main`, generated artifact hygiene,
+protected runtime boundary status, and absence of an unrequested maintenance
+tag. GitHub CLI visibility is optional and should not be made mandatory in CI.
+See [Main Health Report](main-health.md).
 
 ## Protected Boundary Checks
 

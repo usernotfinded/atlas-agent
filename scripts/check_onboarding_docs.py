@@ -21,12 +21,14 @@ ONBOARDING_DOC = Path("docs/development/onboarding.md")
 SAFE_WORKFLOWS_DOC = Path("docs/development/safe-local-workflows.md")
 CHECKS_REFERENCE_DOC = Path("docs/development/checks-reference.md")
 GENERATED_ARTIFACTS_DOC = Path("docs/development/generated-artifacts.md")
+MAIN_HEALTH_DOC = Path("docs/development/main-health.md")
 
 REQUIRED_DOCS = [
     ONBOARDING_DOC,
     SAFE_WORKFLOWS_DOC,
     CHECKS_REFERENCE_DOC,
     GENERATED_ARTIFACTS_DOC,
+    MAIN_HEALTH_DOC,
 ]
 
 REQUIRED_SECTIONS = {
@@ -77,6 +79,18 @@ REQUIRED_SECTIONS = {
         "Safe Cleanup Without Destructive Git Commands",
         "CI and Local Gates",
     ],
+    MAIN_HEALTH_DOC: [
+        "Purpose",
+        "When To Run",
+        "Local-Only Checks",
+        "Optional GitHub CI Visibility",
+        "Expected Direct-Main State",
+        "Version and Release Identity",
+        "Artifact Hygiene",
+        "Protected Runtime Boundaries",
+        "Interpreting Findings",
+        "Safe Follow-Up Actions",
+    ],
 }
 
 REQUIRED_FACTS = {
@@ -91,6 +105,7 @@ REQUIRED_FACTS = {
     "check_forbidden_claims": (("check_forbidden_claims.py",),),
     "check_trust_center": (("check_trust_center.py",),),
     "check_generated_artifacts": (("check_generated_artifacts.py",),),
+    "main health report": (("main_health.py",),),
     "dev_check.sh": (("dev_check.sh",),),
     "ci_check.sh": (("ci_check.sh",),),
     "release_check.sh --quick": (("release_check.sh --quick",),),
@@ -108,6 +123,13 @@ REQUIRED_FACTS = {
     "generated artifacts guidance": (
         ("artifacts/ outputs are usually local evidence",),
         ("only commit artifacts when the task explicitly requires",),
+    ),
+    "main health version identity": (
+        ("main source version can differ from public release",),
+        ("public release remains `v0.5.9`",),
+    ),
+    "main health protected boundary": (
+        ("protected runtime boundaries should be empty for docs/checker-only work",),
     ),
 }
 
@@ -163,6 +185,11 @@ SAFE_COMMAND_SECTIONS = {
     "How To Handle Untracked Local Artifacts",
     "Safe Cleanup Without Destructive Git Commands",
     "CI and Local Gates",
+    "Optional GitHub CI Visibility",
+    "Expected Direct-Main State",
+    "Version and Release Identity",
+    "Interpreting Findings",
+    "Safe Follow-Up Actions",
 }
 
 

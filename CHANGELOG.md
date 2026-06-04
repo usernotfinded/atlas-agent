@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9.3] - 2026-06-04
+
+### Added
+- Added a post-push main health reporting script and guide for verifying local `main`, pushed commits, CI visibility, artifact hygiene, protected-boundary status, and release/tag safety after direct-main maintenance updates.
+
+### Changed
+- Updated source package metadata from `0.5.9.2` to `0.5.9.3`.
+- Clarified post-push direct-main verification guidance for maintainers.
+- Runtime trading behavior did not change.
+
+### Safety
+- No live trading default changes.
+- No provider execution default changes.
+- No broker execution default changes.
+- No runtime trading behavior changes.
+- No tag, GitHub release, or PyPI publish was performed.
+
 ## [0.5.9.2] - 2026-06-04
 
 ### Added

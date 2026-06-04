@@ -13,6 +13,7 @@ These commands are safe by default for normal local development:
 - `python scripts/check_trust_center.py`
 - `python scripts/check_onboarding_docs.py`
 - `python scripts/check_generated_artifacts.py`
+- `python scripts/main_health.py`
 - `./scripts/dev_check.sh`
 - `./scripts/ci_check.sh`
 - `./scripts/release_check.sh --quick`
@@ -115,6 +116,12 @@ staging:
 - confirm protected runtime boundaries are unchanged for docs/checker work.
 
 Do not use destructive cleanup commands as a normal workflow.
+
+After direct-main maintenance pushes, run `python scripts/main_health.py` from a
+clean `main` checkout to verify local `HEAD`, `origin/main`, artifact hygiene,
+release/tag safety, and protected runtime boundary status. Use
+`python scripts/main_health.py --include-github` only when optional GitHub CLI
+visibility is available.
 
 ## Handling Generated Artifacts
 

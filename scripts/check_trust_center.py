@@ -19,7 +19,7 @@ from typing import Iterable
 
 
 CURRENT_RELEASE = "v0.5.9"
-PACKAGE_VERSION = "0.5.9.2"
+PACKAGE_VERSION = "0.5.9.3"
 TRUST_README = Path("docs/trust/README.md")
 TRUST_STATUS = Path("docs/trust/v0.5.9-status.md")
 
@@ -93,7 +93,7 @@ REQUIRED_LINKS = {
 
 REQUIRED_FACTS = {
     "current public release v0.5.9": (("current public release", CURRENT_RELEASE),),
-    "source package version 0.5.9.2": (
+    "source package version 0.5.9.3": (
         ("source package version", PACKAGE_VERSION),
         ("package version in source metadata", PACKAGE_VERSION),
     ),
