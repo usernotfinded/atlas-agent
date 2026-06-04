@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9.1] - 2026-06-04
+
+### Changed
+- Bumped package/source metadata from `0.5.9` to `0.5.9.1` for direct-main maintenance work.
+- Updated version-aware local checks and public current-status references to recognize `0.5.9.1` as the current source package version while keeping `v0.5.9` as the latest actual public release.
+- Runtime behavior did not change.
+
+### Safety
+- No live trading default changes.
+- No provider execution default changes.
+- No broker execution default changes.
+
 ## [0.5.9] - 2026-06-03
 
 ### Security

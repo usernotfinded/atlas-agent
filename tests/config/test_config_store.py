@@ -23,6 +23,7 @@ def test_config_store_rejects_secrets_without_exposure(monkeypatch, tmp_path):
 
 def test_config_store_atomic_write(monkeypatch, tmp_path):
     monkeypatch.setattr("atlas_agent.config.paths.get_workspace_root", lambda: tmp_path)
+    (tmp_path / ".atlas").mkdir()
     
     set_raw_value("market.symbol", "AAPL")
     val = get_raw_value("market.symbol")

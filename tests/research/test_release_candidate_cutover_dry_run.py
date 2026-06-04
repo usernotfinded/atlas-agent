@@ -590,7 +590,7 @@ class TestRealRepoIntegration:
         assert report["current_version_is_dev"] is current_is_dev
         assert report["dev_to_rc_transition_valid"] is _expected_dev_to_rc_transition("v0.5.7-rc1")
         assert report["release_note_present"] is _current_release_note_exists()
-        if current_is_dev:
+        if current_is_dev or not _current_release_note_exists():
             assert "missing_release_note" in report["blockers"]
         else:
             assert report["release_note_present"] is True
@@ -624,7 +624,7 @@ class TestRealRepoIntegration:
         report = build_release_candidate_cutover_dict(REPO_ROOT, "v0.5.7-rc1", "rcc-real-note")
         current_is_dev, _current_is_rc, _current_is_stable, _current_tuple = _current_version_state()
         assert report["release_note_present"] is _current_release_note_exists()
-        if current_is_dev:
+        if current_is_dev or not _current_release_note_exists():
             assert "missing_release_note" in report["blockers"]
         else:
             assert report["release_note_present"] is True

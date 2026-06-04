@@ -222,14 +222,17 @@ class TestVersionHygiene:
         from atlas_agent import __version__
 
         dev_match = re.match(r"^(\d+\.\d+\.\d+)\.dev\d+$", __version__)
-        if dev_match is not None:
-            # For dev versions, the smoke example should use the latest public stable tag,
-            # not a non-existent dev tag. Source of truth: scripts/check_version_consistency.py
+        package_tag = self._package_to_tag(__version__)
+        release_note_exists = Path(f"docs/releases/{package_tag}.md").exists()
+        if dev_match is not None or not release_note_exists:
+            # For dev or source-only maintenance versions, the smoke example should use
+            # the latest actual public stable tag, not a non-existent source label.
+            # Source of truth: scripts/check_version_consistency.py
             consistency_text = Path("scripts/check_version_consistency.py").read_text(encoding="utf-8")
             m = re.search(r'PUBLIC_TAG = "([^"]+)"', consistency_text)
-            expected_tag = m.group(1) if m else f"v{__version__}"
+            expected_tag = m.group(1) if m else package_tag
         else:
-            expected_tag = self._package_to_tag(__version__)
+            expected_tag = package_tag
 
         checklist = Path("docs/release-checklist.md").read_text(encoding="utf-8")
         found = False
