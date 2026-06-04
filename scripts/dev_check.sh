@@ -39,55 +39,59 @@ echo "3. forbidden claims scan"
 "$PYTHON_BIN" scripts/check_forbidden_claims.py
 
 echo ""
-echo "4. feedback intake check"
+echo "4. trust center check"
+"$PYTHON_BIN" scripts/check_trust_center.py
+
+echo ""
+echo "5. feedback intake check"
 "$PYTHON_BIN" scripts/check_feedback_intake.py
 
 echo ""
-echo "5. feedback taxonomy check"
+echo "6. feedback taxonomy check"
 "$PYTHON_BIN" scripts/check_feedback_taxonomy.py
 
 echo ""
-echo "6. reviewer outreach check"
+echo "7. reviewer outreach check"
 "$PYTHON_BIN" scripts/check_reviewer_outreach.py
 
 echo ""
-echo "7. product capability inventory check"
+echo "8. product capability inventory check"
 "$PYTHON_BIN" scripts/check_product_capability_inventory.py
 
 echo ""
-echo "8. v0.5.8 gap prioritization check"
+echo "9. v0.5.8 gap prioritization check"
 "$PYTHON_BIN" scripts/check_v058_gap_prioritization.py
 
 echo ""
-echo "8a. v0.5.8 RC1 readiness dry run"
+echo "9a. v0.5.8 RC1 readiness dry run"
 "$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
 
 echo ""
-echo "8b. v0.5.8.1 hotfix cutover check"
+echo "9b. v0.5.8.1 hotfix cutover check"
 "$PYTHON_BIN" scripts/check_v0581_hotfix_cutover.py
 
 echo ""
-echo "9. research sandbox CLI tests"
+echo "10. research sandbox CLI tests"
 "$PYTHON_BIN" -m pytest tests/research/test_research_sandbox_cli.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "10. reviewer golden-path smoke tests"
+echo "11. reviewer golden-path smoke tests"
 "$PYTHON_BIN" -m pytest tests/test_reviewer_golden_path_smoke.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "11. release check script tests"
+echo "12. release check script tests"
 "$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q "${PYTEST_EXTRA_ARGS[@]}"
 
 echo ""
-echo "12. git diff --check"
+echo "13. git diff --check"
 git diff --check
 
 echo ""
-echo "13. git diff --cached --check"
+echo "14. git diff --cached --check"
 git diff --cached --check
 
 echo ""
-echo "14. protected staged files"
+echo "15. protected staged files"
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
 
 echo ""

@@ -43,10 +43,6 @@ def mock_env(monkeypatch):
             return True
         return original_exists(self, *args, **kwargs)
 
-    monkeypatch.setattr(Path, "read_text", mock_read_text)
-    monkeypatch.setattr(Path, "exists", mock_exists)
-    return original_read_text
-
     def mock_run_cmd(cmd, check=True):
         if "git tag -l" in cmd:
             return "v0.5.9\n", 0, ""
@@ -66,7 +62,10 @@ def mock_env(monkeypatch):
             return "", 0, ""
         return "", 0, ""
 
+    monkeypatch.setattr(Path, "read_text", mock_read_text)
+    monkeypatch.setattr(Path, "exists", mock_exists)
     monkeypatch.setattr("release_assurance.run_cmd", mock_run_cmd)
+    return original_read_text
 
 def test_release_assurance_valid(mock_env, tmp_path, monkeypatch):
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.5.9", "--output", str(tmp_path)])
