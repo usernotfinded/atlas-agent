@@ -1,10 +1,18 @@
 strategy:
-  default: moving_average
-  moving_average:
+  default: buy_and_hold
+  buy_and_hold:
+    position_pct: 1.0
+  moving_average_cross:
     short_window: 3
     long_window: 5
-    threshold: 0.002
-  ai_assisted:
-    committee_enabled: true
-    minimum_votes: 1
-
+    position_pct: 1.0
+    exit_on_cross: true
+  rsi_mean_reversion:
+    period: 14
+    oversold: 30.0
+    overbought: 70.0
+    position_pct: 1.0
+  benchmark:
+    default: buy_and_hold
+    spy_symbol: SPY
+    spy_data_path: null

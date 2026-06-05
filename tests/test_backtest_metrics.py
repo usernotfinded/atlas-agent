@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 
-from atlas_agent.backtest.metrics import TradeRecord, calculate_metrics
+from atlas_agent.backtest.metrics import MetricsCalculator, MetricsInput, TradeRecord, calculate_metrics
 from atlas_agent.backtest.models import BacktestMetrics
 
 
@@ -30,3 +30,20 @@ def test_metrics_calculate_correctly() -> None:
     assert metrics.exposure_time_pct == 50.0
     assert metrics.buy_and_hold_return_pct == 20.0
 
+
+def test_metrics_calculator_accepts_benchmark_abstraction() -> None:
+    metrics = MetricsCalculator().calculate(
+        MetricsInput(
+            starting_cash=10_000,
+            ending_equity=10_250,
+            equity_curve=[10_000, 10_250],
+            trades=[],
+            exposure_points=[False, False],
+            start_price=100,
+            end_price=101,
+            benchmark_return_pct=1.0,
+        )
+    )
+
+    assert metrics.total_return_pct == 2.5
+    assert metrics.buy_and_hold_return_pct == 1.0

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import uuid4
 from typing import List, Dict, Any, Optional
 
+from atlas_agent.backtest.benchmarks import get_benchmark
 from atlas_agent.backtest.models import (
     BacktestConfig, 
     BacktestResult, 
@@ -15,7 +15,10 @@ from atlas_agent.backtest.models import (
 )
 from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.execution import ExecutionSimulator
-from atlas_agent.backtest.metrics import calculate_metrics, TradeRecord
+from atlas_agent.backtest.metrics import MetricsCalculator, MetricsInput, TradeRecord
+from atlas_agent.backtest.registry import get_strategy
+from atlas_agent.backtest.strategy import StrategyContext
+from atlas_agent.backtest.validation import validate_strategy_instance
 from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot, PendingOrder, RiskPosition
 from atlas_agent.risk.limits import RiskLimits
@@ -31,6 +34,12 @@ class BacktestEngine:
         self.config = config
         self.audit_writer = audit_writer
         self.executor = ExecutionSimulator(config)
+        self.strategy = get_strategy(
+            config.strategy_mode,
+            parameters=config.strategy_parameters,
+        )
+        self.metrics_calculator = MetricsCalculator()
+        self.benchmark = get_benchmark(config)
         
         # Internal state
         self.cash = config.initial_equity
@@ -39,6 +48,7 @@ class BacktestEngine:
         self.pending_orders: List[BacktestOrder] = []
         self.equity_curve: List[Dict[str, Any]] = []
         self.diagnostics: Dict[str, Any] = {"blocked_orders": []}
+        self._bars_seen: List[MarketBar] = []
 
         # Initialize Risk Manager if enabled
         self.risk_manager = None
@@ -68,19 +78,26 @@ class BacktestEngine:
             )
 
         bars = load_market_data(self.config.data_path, self.config.symbol)
+        validation = validate_strategy_instance(self.strategy, bars=bars, config=self.config)
+        self.diagnostics["strategy_validation"] = validation.model_dump(mode="json")
+        if validation.status != "valid":
+            raise ValueError(f"Invalid backtest strategy: {self.config.strategy_mode}")
         
         for bar in bars:
             self._step(bar)
 
         # Finalize
         final_equity = self._calculate_equity(bars[-1].close)
-        metrics = self._calculate_metrics(final_equity, bars)
+        benchmark_result = self.benchmark.calculate(bars)
+        metrics = self._calculate_metrics(final_equity, bars, benchmark_result.return_pct)
         
         result = BacktestResult(
             run_id=self.config.run_id,
             status="completed",
             config=self.config,
             metrics=metrics,
+            strategy_metadata=self.strategy.metadata.model_dump(mode="json"),
+            benchmark=benchmark_result.model_dump(mode="json"),
             fills=self.fills,
             equity_curve=self.equity_curve,
             diagnostics=self.diagnostics,
@@ -98,6 +115,9 @@ class BacktestEngine:
         return result
 
     def _step(self, bar: MarketBar):
+        if not self._bars_seen or self._bars_seen[-1].timestamp != bar.timestamp:
+            self._bars_seen.append(bar)
+
         # 1. Update equity curve at start of bar
         current_equity = self._calculate_equity(bar.open)
         self.equity_curve.append({
@@ -105,21 +125,19 @@ class BacktestEngine:
             "equity": current_equity
         })
 
-        # 2. Strategy logic (Buy and Hold MVP)
-        if self.config.strategy_mode == "buy_and_hold":
-            if not self.positions and not self.pending_orders:
-                # Propose buy order
-                qty = self.cash / bar.open
-                if qty > 0:
-                    order = BacktestOrder(
-                        order_id=str(uuid4()),
-                        timestamp=bar.timestamp,
-                        symbol=bar.symbol or self.config.symbol,
-                        side="buy",
-                        quantity=qty,
-                        price=bar.open
-                    )
-                    self.pending_orders.append(order)
+        # 2. Strategy logic
+        context = StrategyContext(
+            run_id=self.config.run_id,
+            symbol=self.config.symbol,
+            bar_index=len(self._bars_seen) - 1,
+            cash=self.cash,
+            positions=dict(self.positions),
+            pending_orders=list(self.pending_orders),
+            config=self.config,
+        )
+        self.pending_orders.extend(
+            self.strategy.generate_orders(bars=list(self._bars_seen), context=context)
+        )
 
         # 3. Process pending orders
         remaining_pending = []
@@ -242,7 +260,12 @@ class BacktestEngine:
             total_exposure=sum(p.notional for p in positions)
         )
 
-    def _calculate_metrics(self, final_equity: float, bars: List[MarketBar]) -> BacktestMetrics:
+    def _calculate_metrics(
+        self,
+        final_equity: float,
+        bars: List[MarketBar],
+        benchmark_return_pct: float,
+    ) -> BacktestMetrics:
         # Convert fills to TradeRecords for calculate_metrics
         trade_records = []
         for fill in self.fills:
@@ -267,12 +290,15 @@ class BacktestEngine:
         equity_curve_values = [entry["equity"] for entry in self.equity_curve]
         exposure_points = [entry["equity"] != self.cash for entry in self.equity_curve]
 
-        return calculate_metrics(
-            starting_cash=self.config.initial_equity,
-            ending_equity=final_equity,
-            equity_curve=equity_curve_values,
-            trades=trade_records,
-            exposure_points=exposure_points,
-            start_price=bars[0].close,
-            end_price=bars[-1].close
+        return self.metrics_calculator.calculate(
+            MetricsInput(
+                starting_cash=self.config.initial_equity,
+                ending_equity=final_equity,
+                equity_curve=equity_curve_values,
+                trades=trade_records,
+                exposure_points=exposure_points,
+                start_price=bars[0].close,
+                end_price=bars[-1].close,
+                benchmark_return_pct=benchmark_return_pct,
+            )
         )

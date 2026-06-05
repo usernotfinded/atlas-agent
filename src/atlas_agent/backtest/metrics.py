@@ -17,6 +17,34 @@ class TradeRecord:
 from atlas_agent.backtest.models import BacktestMetrics
 
 
+@dataclass(frozen=True)
+class MetricsInput:
+    starting_cash: float
+    ending_equity: float
+    equity_curve: list[float]
+    trades: list[TradeRecord]
+    exposure_points: list[bool]
+    start_price: float
+    end_price: float
+    benchmark_return_pct: float | None = None
+    periods_per_year: int = 252
+
+
+class MetricsCalculator:
+    def calculate(self, inputs: MetricsInput) -> BacktestMetrics:
+        return calculate_metrics(
+            starting_cash=inputs.starting_cash,
+            ending_equity=inputs.ending_equity,
+            equity_curve=inputs.equity_curve,
+            trades=inputs.trades,
+            exposure_points=inputs.exposure_points,
+            start_price=inputs.start_price,
+            end_price=inputs.end_price,
+            benchmark_return_pct=inputs.benchmark_return_pct,
+            periods_per_year=inputs.periods_per_year,
+        )
+
+
 def calculate_metrics(
     *,
     starting_cash: float,
@@ -26,6 +54,7 @@ def calculate_metrics(
     exposure_points: list[bool],
     start_price: float,
     end_price: float,
+    benchmark_return_pct: float | None = None,
     periods_per_year: int = 252,
 ) -> BacktestMetrics:
     if starting_cash <= 0:
@@ -37,7 +66,9 @@ def calculate_metrics(
     annualized = (1 + total_return) ** (periods_per_year / periods) - 1 if periods > 0 else 0.0
     
     closed_returns = _closed_trade_returns(trades)
-    benchmark = (end_price - start_price) / start_price if start_price > 0 else 0.0
+    if benchmark_return_pct is None:
+        benchmark = (end_price - start_price) / start_price if start_price > 0 else 0.0
+        benchmark_return_pct = benchmark * 100.0
     
     return BacktestMetrics(
         total_return_pct=total_return * 100.0,
@@ -54,7 +85,7 @@ def calculate_metrics(
             if exposure_points
             else 0.0
         ),
-        buy_and_hold_return_pct=benchmark * 100.0,
+        buy_and_hold_return_pct=benchmark_return_pct,
         final_equity=ending_equity,
         initial_equity=starting_cash
     )
@@ -101,4 +132,3 @@ def _sharpe(equity_curve: list[float], periods_per_year: int) -> float:
     if volatility == 0:
         return 0.0
     return fmean(returns) / volatility * sqrt(periods_per_year)
-

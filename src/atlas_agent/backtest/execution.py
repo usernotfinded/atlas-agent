@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import uuid4
-from typing import List, Optional
+from typing import Optional
 
 from atlas_agent.backtest.models import (
     BacktestOrder, 
@@ -63,7 +62,7 @@ class ExecutionSimulator:
                 commission_amt = notional * (self.config.commission_bps / 10000.0)
 
             return BacktestFill(
-                fill_id=str(uuid4()),
+                fill_id=f"fill-{order.order_id}",
                 order_id=order.order_id,
                 timestamp=bar.timestamp,
                 symbol=order.symbol,

@@ -27,6 +27,7 @@ def sample_csv(tmp_path):
 
 def test_engine_buy_and_hold(sample_csv):
     config = BacktestConfig(
+        run_id="test-buy-hold",
         symbol="AAPL",
         data_path=str(sample_csv),
         initial_equity=10000.0,
@@ -39,6 +40,10 @@ def test_engine_buy_and_hold(sample_csv):
     assert result.status == "completed"
     assert len(result.fills) == 1
     assert result.fills[0].side == "buy"
+    assert result.fills[0].order_id == "test-buy-hold-000000-buy-and-hold"
+    assert result.fills[0].fill_id == "fill-test-buy-hold-000000-buy-and-hold"
+    assert result.strategy_metadata["strategy_id"] == "buy_and_hold"
+    assert result.benchmark["benchmark_id"] == "buy_and_hold"
     assert result.metrics.final_equity > 10000.0
     assert len(result.equity_curve) == 10
 

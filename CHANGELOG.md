@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added the v0.6.1 backtesting strategy pack with `moving_average_cross`, `rsi_mean_reversion`, and registered `buy_and_hold`.
+- Added typed strategy parameter specs, parameter coercion, and fail-closed parameter validation.
+- Added CLI strategy parameter overrides for `atlas backtest run` and `atlas backtest validate`.
+- Added backtest run configuration fields for strategy parameters and benchmark selection.
+- Added a local-only SPY benchmark abstraction requiring explicit local benchmark CSV data.
+- Added full strategy-pack tests for registry, validation, signal generation, benchmarks, config defaults, and CLI behavior.
+
+### Changed
+- Updated strategy example configs to use the v0.6.1 strategy IDs and parameters.
+- Kept the existing deterministic buy-and-hold order ID format while adding strategy-pack order IDs for new strategies.
+
+### Safety
+- No live trading default changes.
+- No provider execution default changes.
+- No broker execution default changes.
+- No approval gate changes.
+- No kill-switch changes.
+- No audit hash-chain or manifest bypass.
+- No network benchmark data fetch was added.
+- No strategy performance claims added.
+
+## [0.6.0] - 2026-06-05
+
+### Added
+- Added the v0.6.x product roadmap with independently releasable subsystem batches.
+- Added a backtest strategy interface, metadata model, registry, local discovery path, benchmark abstraction, metrics calculator abstraction, and validation harness.
+- Added a built-in `buy_and_hold` strategy outside the core backtest engine branch.
+- Added `atlas backtest list-strategies`, `atlas backtest describe <strategy>`, and `atlas backtest validate <strategy>`.
+- Added strategy and benchmark metadata to backtest results.
+
+### Changed
+- Backtest execution now resolves the configured strategy through the strategy registry.
+- Built-in backtest strategy orders and fills now use deterministic identifiers.
+
+### Safety
+- No live trading default changes.
+- No provider execution default changes.
+- No broker execution default changes.
+- No approval gate changes.
+- No kill-switch changes.
+- No audit hash-chain or manifest bypass.
+- No strategy performance claims added.
+
 ## [0.5.9.5] - 2026-06-04
 
 ### Fixed

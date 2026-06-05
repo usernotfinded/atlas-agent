@@ -18,7 +18,14 @@ YELLOW = "\033[93m"
 RESET = "\033[0m"
 
 from atlas_agent import __version__
-from atlas_agent.backtest import BacktestConfig, BacktestEngine
+from atlas_agent.backtest import (
+    BacktestConfig,
+    BacktestEngine,
+    describe_strategy,
+    list_strategies,
+    load_market_data,
+    validate_strategy,
+)
 from atlas_agent.brokers.alpaca import AlpacaBroker
 from atlas_agent.brokers.base import BrokerConfigurationError
 from atlas_agent.brokers.binance import BinanceBroker
@@ -357,13 +364,39 @@ Safety First:
     backtest = subparsers.add_parser("backtest")
     backtest_sub = backtest.add_subparsers(dest="backtest_command")
     backtest_run = backtest_sub.add_parser("run")
-    backtest_run.add_argument("--strategy", default="buy_and_hold")
+    backtest_run.add_argument("--strategy", default=None)
+    backtest_run.add_argument(
+        "--strategy-param",
+        action="append",
+        default=[],
+        help="Strategy parameter override as key=value. Can be repeated.",
+    )
+    backtest_run.add_argument("--benchmark", choices=("buy_and_hold", "spy"), default=None)
+    backtest_run.add_argument("--benchmark-symbol", default=None)
+    backtest_run.add_argument("--benchmark-data", default=None)
     backtest_run.add_argument("--symbol", required=True)
     backtest_run.add_argument("--data", required=True)
     backtest_run.add_argument("--initial-equity", type=float, default=10000.0)
     backtest_run.add_argument("--slippage-bps", type=float, default=0.0)
     backtest_run.add_argument("--commission-bps", type=float, default=0.0)
     backtest_run.add_argument("--json", action="store_true")
+    backtest_list = backtest_sub.add_parser("list-strategies")
+    backtest_list.add_argument("--json", action="store_true")
+    backtest_describe = backtest_sub.add_parser("describe")
+    backtest_describe.add_argument("strategy")
+    backtest_describe.add_argument("--json", action="store_true")
+    backtest_validate = backtest_sub.add_parser("validate")
+    backtest_validate.add_argument("strategy")
+    backtest_validate.add_argument(
+        "--strategy-param",
+        action="append",
+        default=[],
+        help="Strategy parameter override as key=value. Can be repeated.",
+    )
+    backtest_validate.add_argument("--symbol")
+    backtest_validate.add_argument("--data")
+    backtest_validate.add_argument("--initial-equity", type=float, default=10000.0)
+    backtest_validate.add_argument("--json", action="store_true")
 
     run_once_parser = subparsers.add_parser("run-once")
     run_once_parser.add_argument("--mode", choices=("paper", "live"), default="paper")
@@ -2897,7 +2930,28 @@ def _cmd_broker_opt_out(args: argparse.Namespace, config: AtlasConfig) -> int:
     return 0
 
 
+def _parse_strategy_parameter_overrides(raw_items: list[str]) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    for item in raw_items:
+        if "=" not in item:
+            raise ValueError(f"Invalid strategy parameter override: {item!r}. Use key=value.")
+        key, value = item.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise ValueError(f"Invalid strategy parameter override: {item!r}. Key is required.")
+        parsed[key] = value.strip()
+    return parsed
+
+
+def _configured_strategy_parameters(config: AtlasConfig, raw_items: list[str]) -> dict[str, object]:
+    configured = dict(getattr(config.backtest, "strategy_parameters", {}) or {})
+    configured.update(_parse_strategy_parameter_overrides(raw_items))
+    return configured
+
+
 def main(argv: list[str] | None = None) -> int:
+    import json
+
     parser = build_parser()
     try:
         args = parser.parse_args(argv)
@@ -4045,21 +4099,110 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "broker" and args.brokers_command == "opt-out":
         return _cmd_broker_opt_out(args, config)
     if args.command == "backtest":
+        if args.backtest_command == "list-strategies":
+            strategies = list_strategies()
+            if getattr(args, "json", False):
+                print(json.dumps([item.model_dump(mode="json") for item in strategies], indent=2))
+                return 0
+            for item in strategies:
+                print(f"{item.strategy_id}\t{item.name}\t{item.version}")
+            return 0
+
+        if args.backtest_command == "describe":
+            try:
+                metadata = describe_strategy(args.strategy)
+            except KeyError as exc:
+                print(f"Error: {exc}")
+                return 1
+            if getattr(args, "json", False):
+                print(metadata.model_dump_json(indent=2))
+                return 0
+            print(f"Strategy: {metadata.strategy_id}")
+            print(f"Name:     {metadata.name}")
+            print(f"Version:  {metadata.version}")
+            print(f"Summary:  {metadata.description}")
+            if metadata.tags:
+                print(f"Tags:     {', '.join(metadata.tags)}")
+            if metadata.parameters:
+                print("Parameters:")
+                for name, spec in metadata.parameters.items():
+                    default = f" default={spec.default!r}" if spec.default is not None else ""
+                    print(f"  {name} ({spec.type}{default}): {spec.description}")
+            return 0
+
+        if args.backtest_command == "validate":
+            symbol = getattr(args, "symbol", None) or config.backtest.default_symbol
+            data_path = str(getattr(args, "data", None) or config.backtest.data_path)
+            initial_equity = getattr(args, "initial_equity", config.backtest.initial_cash)
+            try:
+                strategy_parameters = _configured_strategy_parameters(
+                    config,
+                    getattr(args, "strategy_param", []),
+                )
+            except ValueError as exc:
+                print(f"Error: {exc}")
+                return 1
+            bt_config = BacktestConfig(
+                symbol=symbol,
+                data_path=data_path,
+                initial_equity=initial_equity,
+                strategy_mode=args.strategy,
+                strategy_parameters=strategy_parameters,
+            )
+            ensure_sample_data(Path(data_path))
+            bars = load_market_data(data_path, symbol)
+            result = validate_strategy(args.strategy, bars=bars, config=bt_config)
+            if getattr(args, "json", False):
+                print(result.model_dump_json(indent=2))
+                return 0 if result.status == "valid" else 1
+            print(f"Strategy validation: {result.strategy_id} ({result.status})")
+            for issue in result.issues:
+                print(f"{issue.severity}: {issue.code}: {issue.message}")
+            return 0 if result.status == "valid" else 1
+
         if args.backtest_command == "run" or args.backtest_command is None:
             # If no sub-command, use defaults from config
             symbol = getattr(args, "symbol", config.backtest.default_symbol)
             data_path = str(getattr(args, "data", config.backtest.data_path))
             initial_equity = getattr(args, "initial_equity", config.backtest.initial_cash)
-            strategy_mode = getattr(args, "strategy", "buy_and_hold")
+            strategy_mode = (
+                getattr(args, "strategy", None)
+                or getattr(config.backtest, "default_strategy", "buy_and_hold")
+            )
+            benchmark_mode = (
+                getattr(args, "benchmark", None)
+                or getattr(config.backtest, "benchmark", "buy_and_hold")
+            )
+            benchmark_symbol = (
+                getattr(args, "benchmark_symbol", None)
+                or getattr(config.backtest, "benchmark_symbol", "SPY")
+            )
+            configured_benchmark_data_path = getattr(config.backtest, "benchmark_data_path", None)
+            benchmark_data_path = (
+                getattr(args, "benchmark_data", None)
+                or (str(configured_benchmark_data_path) if configured_benchmark_data_path else None)
+            )
             slippage_bps = getattr(args, "slippage_bps", 0.0)
             commission_bps = getattr(args, "commission_bps", 0.0)
             use_json = getattr(args, "json", False)
+            try:
+                strategy_parameters = _configured_strategy_parameters(
+                    config,
+                    getattr(args, "strategy_param", []),
+                )
+            except ValueError as exc:
+                print(f"Error: {exc}")
+                return 1
 
             bt_config = BacktestConfig(
                 symbol=symbol,
                 data_path=data_path,
                 initial_equity=initial_equity,
                 strategy_mode=strategy_mode,
+                strategy_parameters=strategy_parameters,
+                benchmark_mode=benchmark_mode,
+                benchmark_symbol=benchmark_symbol,
+                benchmark_data_path=benchmark_data_path,
                 slippage_bps=slippage_bps,
                 commission_bps=commission_bps
             )
@@ -4074,8 +4217,12 @@ def main(argv: list[str] | None = None) -> int:
             except (ImportError, AttributeError):
                 pass
 
-            engine = BacktestEngine(bt_config, audit_writer=audit_writer)
-            result = engine.run()
+            try:
+                engine = BacktestEngine(bt_config, audit_writer=audit_writer)
+                result = engine.run()
+            except (KeyError, ValueError) as exc:
+                print(f"Error: {exc}")
+                return 1
 
             if use_json:
                 print(result.model_dump_json(indent=2))

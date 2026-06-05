@@ -15,6 +15,10 @@ class BacktestConfig(BaseModel):
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     strategy_mode: str = "buy_and_hold"
+    strategy_parameters: Dict[str, Any] = Field(default_factory=dict)
+    benchmark_mode: str = "buy_and_hold"
+    benchmark_symbol: str = "SPY"
+    benchmark_data_path: Optional[str] = None
     risk_enabled: bool = True
     kill_switch_state: bool = False
 
@@ -81,6 +85,8 @@ class BacktestResult(BaseModel):
     status: Literal["completed", "failed", "blocked"]
     config: BacktestConfig
     metrics: BacktestMetrics
+    strategy_metadata: Dict[str, Any] = Field(default_factory=dict)
+    benchmark: Dict[str, Any] = Field(default_factory=dict)
     fills: List[BacktestFill] = Field(default_factory=list)
     equity_curve: List[Dict[str, Any]] = Field(default_factory=list)  # List of {timestamp, equity}
     diagnostics: Dict[str, Any] = Field(default_factory=dict)
