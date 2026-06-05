@@ -697,7 +697,7 @@
       "tests_or_checks": ["scripts/check_cli_command_compatibility.py", "tests/test_cli_command_compatibility.py"],
       "safety_notes": "Parser-only check. Does not call providers, brokers, load credentials, submit orders, or enable live trading.",
       "known_gaps": "",
-      "reviewer_notes": "Guards 174 research commands and 41 top-level commands."
+      "reviewer_notes": "Guards 174 research commands and 42 top-level commands."
     },
     {
       "id": "golden-path-smoke-test",

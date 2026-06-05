@@ -46,6 +46,7 @@ These command families are used in public docs, demos, and release checklists. T
 - `routine` (run, unlock, status)
 - `scheduler` (run)
 - `report` (daily)
+- `reflection` (create, list, show, submit, approve, reject, archive)
 - `portfolio` (show)
 - `risk` (check, status)
 - `kill` (status, soft-pause, cancel-all, flatten-all, lock, reset, heartbeat, plan, execute-plan)

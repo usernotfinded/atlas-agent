@@ -25,6 +25,7 @@
     "plan",
     "portfolio",
     "providers",
+    "reflection",
     "replay",
     "report",
     "research",
@@ -45,6 +46,15 @@
     "workspace"
   ],
   "subcommands": {
+    "reflection": [
+      "approve",
+      "archive",
+      "create",
+      "list",
+      "reject",
+      "show",
+      "submit"
+    ],
     "research": [
       "check-artifacts",
       "dossier",
