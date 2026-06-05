@@ -166,10 +166,23 @@ python3.11 scripts/check_v060_readiness.py
 python3.11 scripts/check_v060_readiness.py --json
 ```
 
-It verifies required docs, source modules, test files, CLI contract entries,
-CHANGELOG unreleased section, version identity, absence of a premature v0.6.0
-tag, forbidden claims, and generated artifact hygiene. It does not call the
-network, require credentials, or modify files.
+Default mode is **pre-release**: it verifies required docs, source modules,
+test files, CLI contract entries, CHANGELOG unreleased section, version
+identity, absence of a premature v0.6.0 tag, forbidden claims, and generated
+artifact hygiene.
+
+After `v0.6.0` is published, use **post-release** mode to validate the
+published state:
+
+```bash
+python3.11 scripts/check_v060_readiness.py --post-release
+python3.11 scripts/check_v060_readiness.py --post-release --json
+```
+
+Post-release mode expects the `v0.6.0` tag to exist and checks that the
+GitHub release is present (if GitHub CLI is available). It preserves all
+other readiness checks. It does not call the network, require credentials,
+create tags, create releases, or modify files.
 
 ## Protected Boundary Checks
 

@@ -5,6 +5,10 @@ Verifies that required docs, source modules, test files, CLI commands,
 CHANGELOG entries, version identity, and safety checks are present and
 consistent before any v0.6.0 version bump or release cutover.
 
+Default mode is pre-release: it blocks if the v0.6.0 tag already exists.
+Post-release mode (--post-release) expects the tag and GitHub release to
+exist and validates the published state.
+
 Exit codes:
   0 = valid
   1 = blocking findings
@@ -181,7 +185,7 @@ def _check_cli_contract() -> list[str]:
     return errors
 
 
-def _check_no_v060_tag() -> list[str]:
+def _check_v060_tag(post_release: bool = False) -> list[str]:
     errors = []
     try:
         result = subprocess.run(
@@ -190,11 +194,36 @@ def _check_no_v060_tag() -> list[str]:
             text=True,
             cwd=REPO_ROOT,
         )
-        if result.returncode == 0 and result.stdout.strip():
-            errors.append("v0.6.0 tag already exists")
+        tag_exists = result.returncode == 0 and result.stdout.strip()
+        if post_release:
+            if not tag_exists:
+                errors.append("v0.6.0 tag not found")
+        else:
+            if tag_exists:
+                errors.append("v0.6.0 tag already exists")
     except Exception as exc:
         errors.append(f"git tag check failed: {exc}")
     return errors
+
+
+def _check_github_release() -> tuple[list[str], list[str]]:
+    """Check GitHub release exists. Returns (errors, warnings)."""
+    errors = []
+    warnings = []
+    try:
+        result = subprocess.run(
+            ["gh", "release", "view", "v0.6.0", "--json", "url"],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        if result.returncode != 0:
+            errors.append("GitHub release v0.6.0 not found")
+    except FileNotFoundError:
+        warnings.append("GitHub CLI unavailable; cannot verify GitHub release")
+    except Exception as exc:
+        errors.append(f"GitHub release check failed: {exc}")
+    return errors, warnings
 
 
 def _check_forbidden_claims() -> list[str]:
@@ -237,21 +266,33 @@ def _check_generated_artifacts() -> list[str]:
     return errors
 
 
-def run_check(json_output: bool = False) -> tuple[int, dict]:
+def run_check(json_output: bool = False, post_release: bool = False) -> tuple[int, dict]:
     errors: list[str] = []
+    warnings: list[str] = []
+
     errors.extend(_check_required_files(REQUIRED_DOCS, "doc"))
     errors.extend(_check_required_files(REQUIRED_SOURCE_MODULES, "source module"))
     errors.extend(_check_required_files(REQUIRED_TEST_FILES, "test file"))
     errors.extend(_check_changelog_unreleased())
     errors.extend(_check_version_identity())
     errors.extend(_check_cli_contract())
-    errors.extend(_check_no_v060_tag())
+    errors.extend(_check_v060_tag(post_release=post_release))
+
+    if post_release:
+        gh_errors, gh_warnings = _check_github_release()
+        errors.extend(gh_errors)
+        warnings.extend(gh_warnings)
+
     errors.extend(_check_forbidden_claims())
     errors.extend(_check_generated_artifacts())
 
     result = {
+        "artifact_type": "v060_readiness_report",
+        "schema_version": 1,
+        "mode": "post_release" if post_release else "pre_release",
         "valid": len(errors) == 0,
         "errors": errors,
+        "warnings": warnings,
         "checks": {
             "docs": len(REQUIRED_DOCS),
             "source_modules": len(REQUIRED_SOURCE_MODULES),
@@ -263,16 +304,21 @@ def run_check(json_output: bool = False) -> tuple[int, dict]:
     if json_output:
         print(json.dumps(result, indent=2))
     else:
+        mode_label = "post-release" if post_release else "pre-release"
         if result["valid"]:
-            print("v0.6.0 readiness: PASS")
+            print(f"v0.6.0 readiness ({mode_label}): PASS")
             print(f"  docs={result['checks']['docs']} "
                   f"source_modules={result['checks']['source_modules']} "
                   f"test_files={result['checks']['test_files']} "
                   f"cli_subcommands={result['checks']['cli_subcommands']}")
+            for w in warnings:
+                print(f"  WARNING: {w}")
         else:
-            print("v0.6.0 readiness: FAIL")
+            print(f"v0.6.0 readiness ({mode_label}): FAIL")
             for e in errors:
                 print(f"  - {e}")
+            for w in warnings:
+                print(f"  WARNING: {w}")
 
     return 0 if result["valid"] else 1, result
 
@@ -280,8 +326,13 @@ def run_check(json_output: bool = False) -> tuple[int, dict]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="v0.6.0 readiness checker")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
+    parser.add_argument(
+        "--post-release",
+        action="store_true",
+        help="Validate published v0.6.0 state (expects tag and GitHub release to exist)",
+    )
     args = parser.parse_args()
-    code, _ = run_check(json_output=args.json)
+    code, _ = run_check(json_output=args.json, post_release=args.post_release)
     return code
 
 

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added a v0.6.1 maintenance planning document covering post-release verification, known follow-ups, and patch criteria.
 
+### Changed
+- Added post-release mode (`--post-release`) to the v0.6 readiness checker so `v0.6.0` can be validated after tag and GitHub release publication while preserving the default pre-release behavior.
+
 ### Fixed
 - Fixed `test_discipline_show_default` and `test_discipline_validate_no_file` to run in isolated temporary directories, preventing failures when a local `.atlas/discipline.md` exists.
 
