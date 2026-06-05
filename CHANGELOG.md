@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a real local report generator foundation for daily, weekly, and ad-hoc Markdown/JSON reports using available local data only.
+- Added `atlas report generate --type daily|weekly|ad-hoc --format markdown|json` with real portfolio, backtest, research, risk, audit, and system health sections.
+- Added `src/atlas_agent/reports/models.py`, `sources.py`, `generator.py`, `renderers.py`, and `adhoc.py` for local-data-only report generation.
+- Added `docs/reports.md` documenting report scope, safety, and CLI usage.
+- Added unit tests for report generator, renderers, and CLI (`tests/reports/test_report_generator.py`, `tests/reports/test_report_renderers.py`, `tests/cli/test_report_cli.py`).
 - Added the v0.6.1 backtesting strategy pack with `moving_average_cross`, `rsi_mean_reversion`, and registered `buy_and_hold`.
 - Added typed strategy parameter specs, parameter coercion, and fail-closed parameter validation.
 - Added CLI strategy parameter overrides for `atlas backtest run` and `atlas backtest validate`.
@@ -34,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added empty-data and missing-benchmark report fallback renderers.
 - Added e2e tier1 tests for backtest report and `atlas report generate` CLI flows.
 - Added unit tests for backtest report module (28 tests).
+- Reports remain local, offline, research-only, and do not call providers, brokers, or external services.
+- Missing data is shown explicitly; no fake content, no financial advice, no profit guarantees.
 
 ## [0.6.0-dev] — Unreleased
 

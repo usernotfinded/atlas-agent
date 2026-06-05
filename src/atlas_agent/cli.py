@@ -54,6 +54,9 @@ from atlas_agent.market_data.sample_data import ensure_sample_data
 from atlas_agent.portfolio.journal import TradeJournal
 from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.reports.daily import generate_daily_report
+from atlas_agent.reports.generator import generate_report
+from atlas_agent.reports.renderers import render_json_string, render_markdown
+from atlas_agent.reports.weekly import generate_weekly_report
 from atlas_agent.research import (
     get_research_provider,
     ResearchConfigurationError,
@@ -519,6 +522,12 @@ Safety First:
         help="Generate a research report. Outputs a backtest summary or placeholder.",
     )
     report_generate.add_argument(
+        "--type",
+        choices=("daily", "weekly", "ad-hoc"),
+        default="daily",
+        help="Report type. Default: daily.",
+    )
+    report_generate.add_argument(
         "--format",
         choices=("json", "markdown", "text"),
         default="text",
@@ -532,7 +541,7 @@ Safety First:
     report_generate.add_argument(
         "--run-id",
         default=None,
-        help="Backtest run ID to generate report for.",
+        help="Backtest run ID to generate a backtest summary for (legacy).",
     )
 
     portfolio = subparsers.add_parser("portfolio")
@@ -4811,11 +4820,11 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.report_command == "generate":
             run_id = getattr(args, "run_id", None)
+            report_type = getattr(args, "type", "daily")
             fmt = getattr(args, "format", "text")
             output = getattr(args, "output", "stdout")
 
-            # Try to load an existing backtest result
-            loaded_result = None
+            # Legacy backtest-specific report path
             if run_id:
                 result_path = Path(".atlas/backtests") / run_id / "result.json"
                 if not result_path.exists():
@@ -4826,21 +4835,32 @@ def main(argv: list[str] | None = None) -> int:
                 from atlas_agent.backtest.models import BacktestResult as _BR
                 loaded_result = _BR.model_validate(data)
 
-            if fmt == "json":
-                if loaded_result:
+                if fmt == "json":
                     content = json.dumps(render_json_report(loaded_result), indent=2, sort_keys=True, default=str)
-                else:
-                    content = json.dumps(render_empty_json_report(), indent=2, sort_keys=True)
-            elif fmt == "markdown":
-                if loaded_result:
+                elif fmt == "markdown":
                     content = render_markdown_report(loaded_result)
                 else:
-                    content = render_empty_markdown_report()
-            else:  # text
-                if loaded_result:
                     content = render_markdown_report(loaded_result)
+
+                if output == "stdout":
+                    print(content)
                 else:
-                    content = render_empty_markdown_report()
+                    out_path = Path(output)
+                    out_path.parent.mkdir(parents=True, exist_ok=True)
+                    out_path.write_text(content, encoding="utf-8")
+                    print(f"Report written to: {out_path}")
+                return 0
+
+            # New local report generator path
+            report_data = generate_report(
+                report_type,  # type: ignore[arg-type]
+                workspace=".",
+                output_format="json" if fmt == "json" else "markdown",
+            )
+            if fmt == "json":
+                content = render_json_string(report_data)
+            else:
+                content = render_markdown(report_data)
 
             if output == "stdout":
                 print(content)
