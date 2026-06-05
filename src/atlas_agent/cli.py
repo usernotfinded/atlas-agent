@@ -443,6 +443,49 @@ Safety First:
     skills_diff = skills_sub.add_parser("diff")
     skills_diff.add_argument("skill_name")
 
+    # Skill candidate subcommands
+    skills_create_candidate = skills_sub.add_parser(
+        "create-candidate",
+        help="Create a skill candidate from a local input file or reflection.",
+    )
+    skills_create_candidate.add_argument("--input", required=True, type=Path, help="Path to input artifact")
+    skills_create_candidate.add_argument("--kind", choices=("report", "backtest", "research", "audit", "note", "reflection"), default=None, help="Input kind")
+    skills_create_candidate.add_argument("--dry-run", action="store_true", default=True, help="Use static fallback (default)")
+    skills_create_candidate.add_argument("--json", action="store_true", help="Emit as JSON")
+
+    skills_list_candidates = skills_sub.add_parser("list-candidates", help="List skill candidates")
+    skills_list_candidates.add_argument("--status", choices=("draft", "pending_review", "approved", "rejected", "archived", "promoted"), default=None, help="Filter by status")
+    skills_list_candidates.add_argument("--json", action="store_true", help="Emit as JSON")
+
+    skills_show_candidate = skills_sub.add_parser("show-candidate", help="Show a skill candidate")
+    skills_show_candidate.add_argument("candidate_id", help="Candidate ID")
+    skills_show_candidate.add_argument("--json", action="store_true", help="Emit as JSON")
+
+    skills_submit_candidate = skills_sub.add_parser("submit-candidate", help="Submit a draft candidate for review")
+    skills_submit_candidate.add_argument("candidate_id", help="Candidate ID")
+
+    skills_approve_candidate = skills_sub.add_parser("approve-candidate", help="Approve a pending candidate")
+    skills_approve_candidate.add_argument("candidate_id", help="Candidate ID")
+    skills_approve_candidate.add_argument("--reason", default="", help="Approval reason")
+
+    skills_reject_candidate = skills_sub.add_parser("reject-candidate", help="Reject a pending candidate")
+    skills_reject_candidate.add_argument("candidate_id", help="Candidate ID")
+    skills_reject_candidate.add_argument("--reason", required=True, help="Rejection reason")
+
+    skills_archive_candidate = skills_sub.add_parser("archive-candidate", help="Archive an approved or rejected candidate")
+    skills_archive_candidate.add_argument("candidate_id", help="Candidate ID")
+    skills_archive_candidate.add_argument("--reason", default="", help="Archive reason")
+
+    skills_promote_candidate = skills_sub.add_parser("promote-candidate", help="Promote an approved candidate to the skill library")
+    skills_promote_candidate.add_argument("candidate_id", help="Candidate ID")
+
+    skills_list_library = skills_sub.add_parser("list-library", help="List promoted skills in the library")
+    skills_list_library.add_argument("--json", action="store_true", help="Emit as JSON")
+
+    skills_show_library = skills_sub.add_parser("show-library", help="Show a promoted skill")
+    skills_show_library.add_argument("skill_id", help="Skill ID")
+    skills_show_library.add_argument("--json", action="store_true", help="Emit as JSON")
+
     memory = subparsers.add_parser("memory")
     memory_sub = memory.add_subparsers(dest="memory_command")
     memory_ingest = memory_sub.add_parser("ingest")
@@ -4672,6 +4715,145 @@ def main(argv: list[str] | None = None) -> int:
                 print("No differences between active and proposed skill versions.")
                 return 0
             print("\n".join(lines))
+            return 0
+
+        # Skill candidate handlers
+        if args.skills_command == "create-candidate":
+            from atlas_agent.skills.generator import generate_candidate_from_input
+            from atlas_agent.skills.storage import save_candidate
+            from atlas_agent.skills.renderers import render_markdown as _render_skill_markdown
+
+            input_path = getattr(args, "input", None)
+            kind = getattr(args, "kind", None)
+            use_json = getattr(args, "json", False)
+            candidate = generate_candidate_from_input(
+                input_path,
+                kind=kind,
+                workspace=str(config.workspace_root),
+                dry_run=True,
+            )
+            save_candidate(candidate, workspace=str(config.workspace_root))
+            if use_json:
+                print(candidate.model_dump_json(indent=2))
+            else:
+                print(f"Skill candidate {candidate.candidate_id} created.")
+            return 0
+
+        if args.skills_command == "list-candidates":
+            from atlas_agent.skills.models import SkillCandidateStatus
+            from atlas_agent.skills.storage import list_candidates
+
+            status_filter = getattr(args, "status", None)
+            use_json = getattr(args, "json", False)
+            status = SkillCandidateStatus(status_filter) if status_filter else None
+            items = list_candidates(workspace=str(config.workspace_root), status=status)
+            if use_json:
+                print(json.dumps(items, indent=2, sort_keys=True, default=str))
+            else:
+                if not items:
+                    print("No skill candidates found.")
+                    return 0
+                print(f"{'ID':<36} {'Status':<16} {'Kind':<12} {'Title'}")
+                print("-" * 80)
+                for item in items:
+                    print(f"{item['candidate_id']:<36} {item['status']:<16} {item['kind']:<12} {item['title']}")
+            return 0
+
+        if args.skills_command == "show-candidate":
+            from atlas_agent.skills.storage import load_candidate
+            from atlas_agent.skills.renderers import render_markdown as _render_skill_markdown
+
+            candidate_id = getattr(args, "candidate_id", None)
+            use_json = getattr(args, "json", False)
+            candidate = load_candidate(candidate_id, workspace=str(config.workspace_root))
+            if use_json:
+                print(candidate.model_dump_json(indent=2))
+            else:
+                print(_render_skill_markdown(candidate))
+            return 0
+
+        if args.skills_command == "submit-candidate":
+            from atlas_agent.skills.storage import load_candidate
+            from atlas_agent.skills.approval import submit_for_review
+
+            candidate_id = getattr(args, "candidate_id", None)
+            candidate = load_candidate(candidate_id, workspace=str(config.workspace_root))
+            submit_for_review(candidate, workspace=str(config.workspace_root))
+            print(f"Skill candidate {candidate_id} submitted for review.")
+            return 0
+
+        if args.skills_command == "approve-candidate":
+            from atlas_agent.skills.storage import load_candidate
+            from atlas_agent.skills.approval import approve
+
+            candidate_id = getattr(args, "candidate_id", None)
+            candidate = load_candidate(candidate_id, workspace=str(config.workspace_root))
+            approve(candidate, reason=getattr(args, "reason", None), workspace=str(config.workspace_root))
+            print(f"Skill candidate {candidate_id} approved.")
+            return 0
+
+        if args.skills_command == "reject-candidate":
+            from atlas_agent.skills.storage import load_candidate
+            from atlas_agent.skills.approval import reject
+
+            candidate_id = getattr(args, "candidate_id", None)
+            candidate = load_candidate(candidate_id, workspace=str(config.workspace_root))
+            reject(candidate, reason=getattr(args, "reason", None), workspace=str(config.workspace_root))
+            print(f"Skill candidate {candidate_id} rejected.")
+            return 0
+
+        if args.skills_command == "archive-candidate":
+            from atlas_agent.skills.storage import load_candidate
+            from atlas_agent.skills.approval import archive
+
+            candidate_id = getattr(args, "candidate_id", None)
+            candidate = load_candidate(candidate_id, workspace=str(config.workspace_root))
+            archive(candidate, reason=getattr(args, "reason", None), workspace=str(config.workspace_root))
+            print(f"Skill candidate {candidate_id} archived.")
+            return 0
+
+        if args.skills_command == "promote-candidate":
+            from atlas_agent.skills.storage import load_candidate
+            from atlas_agent.skills.approval import promote_to_library
+
+            candidate_id = getattr(args, "candidate_id", None)
+            try:
+                candidate = load_candidate(candidate_id, workspace=str(config.workspace_root))
+                entry = promote_to_library(candidate, workspace=str(config.workspace_root))
+                print(f"Skill candidate {candidate_id} promoted to library as skill {entry.skill_id}.")
+            except (FileNotFoundError, ValueError) as exc:
+                print(f"Error: {exc}")
+                return 2
+            return 0
+
+        if args.skills_command == "list-library":
+            from atlas_agent.skills.library import list_skills as _list_library_skills
+
+            use_json = getattr(args, "json", False)
+            items = _list_library_skills(workspace=str(config.workspace_root))
+            if use_json:
+                print(json.dumps(items, indent=2, sort_keys=True, default=str))
+            else:
+                if not items:
+                    print("No skills in library.")
+                    return 0
+                print(f"{'ID':<36} {'Kind':<12} {'Title'}")
+                print("-" * 60)
+                for item in items:
+                    print(f"{item['skill_id']:<36} {item['kind']:<12} {item['title']}")
+            return 0
+
+        if args.skills_command == "show-library":
+            from atlas_agent.skills.library import load_skill
+            from atlas_agent.skills.renderers import render_skill_markdown
+
+            skill_id = getattr(args, "skill_id", None)
+            use_json = getattr(args, "json", False)
+            entry = load_skill(skill_id, workspace=str(config.workspace_root))
+            if use_json:
+                print(entry.model_dump_json(indent=2))
+            else:
+                print(render_skill_markdown(entry))
             return 0
 
     if args.command == "user":

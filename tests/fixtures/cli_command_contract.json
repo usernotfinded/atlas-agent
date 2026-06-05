@@ -295,6 +295,26 @@
     "risk": [
       "check",
       "status"
+    ],
+    "skills": [
+      "approve",
+      "approve-candidate",
+      "archive",
+      "archive-candidate",
+      "create-candidate",
+      "create-from-journal",
+      "diff",
+      "improve",
+      "list",
+      "list-candidates",
+      "list-library",
+      "propose",
+      "promote-candidate",
+      "reject-candidate",
+      "show",
+      "show-candidate",
+      "show-library",
+      "submit-candidate"
     ]
   },
   "configless_research_commands": [

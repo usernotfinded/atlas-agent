@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `src/atlas_agent/reflection/models.py`, `storage.py`, `generator.py`, `approval.py`, `renderers.py` for offline reflection generation.
 - Added `docs/reflection.md` documenting reflection scope, safety, status lifecycle, and CLI usage.
 - Added unit tests for reflection models, storage, generator, approval, and CLI (`tests/reflection/`, `tests/cli/test_reflection_cli.py`).
+- Added a local-first skill candidate foundation with structured candidate artifacts, provenance metadata, approval/rejection workflows, and manual-only promotion into a local skill library.
+- Added `atlas skills create-candidate/list-candidates/show-candidate/submit-candidate/approve-candidate/reject-candidate/archive-candidate/promote-candidate/list-library/show-library` CLI commands.
+- Added `src/atlas_agent/skills/models.py`, `storage.py`, `generator.py`, `approval.py`, `library.py`, `renderers.py` for offline skill candidate generation.
+- Added `docs/skills.md` documenting skill candidate scope, safety, status lifecycle, and CLI usage.
+- Added unit tests for skill candidate models, storage, generator, approval, library, and CLI (`tests/skills/`, `tests/cli/test_skills_cli.py`).
 - Added the v0.6.1 backtesting strategy pack with `moving_average_cross`, `rsi_mean_reversion`, and registered `buy_and_hold`.
 - Added typed strategy parameter specs, parameter coercion, and fail-closed parameter validation.
 - Added CLI strategy parameter overrides for `atlas backtest run` and `atlas backtest validate`.
@@ -48,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Missing data is shown explicitly; no fake content, no financial advice, no profit guarantees.
 - Reflection artifacts remain offline, research-only, provider-disabled by default, broker-disabled by default, and require operator review before downstream use.
 - Reflection static fallback clearly marks `provider_execution_disabled` and does not generate fake insights.
+- Skill candidates remain offline, research-only, manually reviewed, and never auto-activated. Provider execution, broker execution, and live trading remain disabled by default.
+- Skill candidate static fallback clearly marks `provider_execution_disabled` and preserves the marker from source reflection artifacts.
+- Skill library entries inherit `manual_only` activation policy and cannot be auto-activated.
 
 ## [0.6.0-dev] — Unreleased
 
