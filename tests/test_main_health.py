@@ -76,7 +76,7 @@ def _runner(
             return CHECKER.CommandResult(0, staged, "")
         if key == ("ls-files",):
             return CHECKER.CommandResult(0, tracked, "")
-        if key == ("tag", "--list", "v0.5.9.6"):
+        if key == ("tag", "--list", "v0.6.1"):
             return CHECKER.CommandResult(0, tag, "")
         if key == (
             "diff",
@@ -204,7 +204,7 @@ def test_warns_on_untracked_generated_artifacts_without_printing_secret_values(
 def test_flags_accidental_future_release_tag_using_mocked_git_tag(tmp_path: Path) -> None:
     report = CHECKER.collect_report(
         _fixture(tmp_path),
-        git_runner=_runner(tag="v0.5.9.6\n"),
+        git_runner=_runner(tag="v0.6.1\n"),
     )
 
     assert report.exit_code == 1
