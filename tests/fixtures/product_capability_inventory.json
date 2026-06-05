@@ -756,6 +756,36 @@
       "reviewer_notes": "Safe outreach process for 5–10 technical reviewers."
     },
     {
+      "id": "broker-roadmap",
+      "name": "Broker roadmap and guarded adapter status",
+      "group": "core-workspace",
+      "status": "implemented",
+      "public_claim_level": "safe_to_claim",
+      "cli_commands": ["atlas broker list", "atlas broker status", "atlas broker sync"],
+      "source_paths": [
+        "src/atlas_agent/brokers/status.py",
+        "src/atlas_agent/brokers/guards.py",
+        "src/atlas_agent/brokers/resolver.py",
+        "src/atlas_agent/brokers/paper.py",
+        "src/atlas_agent/brokers/alpaca.py",
+        "src/atlas_agent/brokers/binance.py",
+        "src/atlas_agent/brokers/ccxt_adapter.py",
+        "src/atlas_agent/brokers/ibkr_stub.py"
+      ],
+      "docs_paths": ["docs/broker-roadmap.md", "docs/brokers.md"],
+      "tests_or_checks": [
+        "tests/brokers/test_broker_status.py",
+        "tests/brokers/test_broker_guards.py",
+        "tests/brokers/test_unsupported_brokers_fail_closed.py",
+        "tests/cli/test_brokers_cli.py",
+        "tests/brokers/test_resolver.py",
+        "tests/test_live_broker_gates.py"
+      ],
+      "safety_notes": "Static support inventory with fail-closed guards. No broker API calls in status/list. Live submit requires explicit opt-in, credentials, kill-switch normal, and valid opt-in record. Unsupported/disabled/placeholder brokers are blocked.",
+      "known_gaps": "Binance live submit is partial/deferred. IBKR is placeholder only. CCXT generic adapter is disabled until explicitly configured.",
+      "reviewer_notes": "Read-only status command is safe. Guards raise BrokerConfigurationError for all unsupported paths."
+    },
+    {
       "id": "historical-release-record-check",
       "name": "Historical v0.5.7 release record check",
       "group": "public-review-release",

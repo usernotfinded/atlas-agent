@@ -241,6 +241,7 @@
       "list",
       "opt-in",
       "opt-out",
+      "status",
       "sync"
     ],
     "agent": [

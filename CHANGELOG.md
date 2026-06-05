@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a broker support inventory (`BrokerSupportEntry`) documenting status for PaperBroker, Alpaca, Binance, CCXT, and IBKR.
+- Added fail-closed broker guard helpers (`guard_submit`, `guard_sync`) in `src/atlas_agent/brokers/guards.py`.
+- Added `atlas broker status` CLI command for read-only broker support inventory and runtime status output.
+- Added `docs/broker-roadmap.md` with broker status table, fail-closed behavior, and CLI usage.
+- Added comprehensive broker status, guard, fail-closed, and CLI tests (`tests/brokers/test_broker_status.py`, `tests/brokers/test_broker_guards.py`, `tests/brokers/test_unsupported_brokers_fail_closed.py`, `tests/cli/test_brokers_cli.py`).
 - Added a safe notification foundation with disabled, dry-run, and Slack webhook transport modes, redaction, structured delivery results, and local audit storage.
 - Added `atlas notifications test/send` CLI commands with `--transport` and `--severity` flags, defaulting to dry-run mode.
 - Added `src/atlas_agent/notifications/models.py`, `redaction.py`, `transports.py`, `dispatcher.py`, `storage.py` for safe, testable notification delivery.
@@ -45,6 +50,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kept the existing deterministic buy-and-hold order ID format while adding strategy-pack order IDs for new strategies.
 
 ### Safety
+- Broker support inventory formalizes PaperBroker as `default_paper`, Alpaca as `supported_opt_in`, Binance as `partial`, CCXT as `disabled`, and IBKR as `placeholder`. No status enables live submit by default.
+- Fail-closed broker guards (`guard_submit`, `guard_sync`) block unsupported, disabled, and placeholder broker execution paths with clear `BrokerConfigurationError` messages.
+- `atlas broker status` is read-only and local; it does not call broker APIs, read credentials, or submit orders.
+- No live trading default changes. No live submit default changes. No broker execution default changes. No provider execution default changes. Risk gates, approval queue, and kill-switch remain unchanged.
+- No real broker API calls are made in broker status/guard tests. No real credentials are required.
 - Notifications remain disabled/dry-run by default, redact webhook secrets, avoid network calls in tests, and never alter trading, provider, broker, skill, or learning execution state.
 - Dashboard UI remains static, local, read-only, research-only, and does not expose trading, provider, broker, skill activation, or learning execution controls.
 - Dashboard rendering shows missing data and warnings explicitly without fake content, provider calls, broker calls, external scripts, or CDN dependencies.

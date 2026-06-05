@@ -362,6 +362,12 @@ Safety First:
     brokers = subparsers.add_parser("broker")
     brokers_sub = brokers.add_subparsers(dest="brokers_command")
     brokers_sub.add_parser("list")
+    brokers_status = brokers_sub.add_parser(
+        "status",
+        help="Show broker support inventory and runtime status",
+        description="Show broker support inventory and runtime status. Read-only. No broker API calls.",
+    )
+    brokers_status.add_argument("--json", action="store_true", help="Emit result as JSON envelope")
     brokers_sync = brokers_sub.add_parser("sync")
     brokers_sync.add_argument("--mode", choices=("paper", "live"), default="paper")
     brokers_sync.add_argument("--json", action="store_true")
@@ -4216,6 +4222,42 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "broker" and args.brokers_command == "list":
         print("paper, alpaca, binance, ccxt, ibkr_stub")
+        return 0
+    if args.command == "broker" and args.brokers_command == "status":
+        from atlas_agent.brokers.resolver import BrokerResolver
+        from atlas_agent.brokers.status import list_broker_support_inventory
+
+        resolver = BrokerResolver(config)
+        inventory = [
+            {
+                "support": entry.to_dict(),
+                "runtime": resolver.resolve_status(
+                    "paper" if entry.broker_id == "paper" else "live"
+                ).to_dict()
+                if entry.broker_id != "paper" or config is not None
+                else resolver.resolve_status("paper").to_dict(),
+            }
+            for entry in list_broker_support_inventory()
+        ]
+        if getattr(args, "json", False):
+            print(json.dumps({"inventory": inventory}, indent=2))
+            return 0
+
+        print("Broker Support Inventory")
+        print("-" * 60)
+        for item in inventory:
+            support = item["support"]
+            runtime = item["runtime"]
+            print(f"{support['display_name']} ({support['broker_id']})")
+            print(f"  Status             : {support['status']}")
+            print(f"  Paper supported    : {support['paper_supported']}")
+            print(f"  Read-only supported: {support['read_only_supported']}")
+            print(f"  Live submit support: {support['live_submit_supported']}")
+            print(f"  Requires opt-in    : {support['requires_explicit_opt_in']}")
+            print(f"  Default enabled    : {support['default_enabled']}")
+            print(f"  Runtime code       : {runtime['code']}")
+            print(f"  Notes              : {support['notes']}")
+            print()
         return 0
     if args.command == "broker" and args.brokers_command == "sync":
         from atlas_agent.brokers.resolver import BrokerResolver
