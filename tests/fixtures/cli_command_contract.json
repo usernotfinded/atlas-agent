@@ -23,6 +23,7 @@
     "memory",
     "model",
     "notify",
+    "notifications",
     "plan",
     "portfolio",
     "providers",
@@ -47,6 +48,10 @@
     "workspace"
   ],
   "subcommands": {
+    "notifications": [
+      "send",
+      "test"
+    ],
     "reflection": [
       "approve",
       "archive",

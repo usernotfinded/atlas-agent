@@ -165,6 +165,12 @@ class UpdateConfig(BaseModel):
     auto_apply: bool = False
 
 
+class NotificationConfig(BaseModel):
+    enabled: bool = False
+    transport: str = "disabled"  # disabled, dry_run, slack
+    slack_webhook_url_env: str = "SLACK_WEBHOOK_URL"
+
+
 class AtlasConfig(BaseModel):
     trading_mode: str = "paper" # backtest, paper, live
     workspace_root: Path = Path(".")
@@ -183,6 +189,7 @@ class AtlasConfig(BaseModel):
     market: MarketConfig = Field(default_factory=MarketConfig)
     backtest: BacktestConfig = Field(default_factory=BacktestConfig)
     update: UpdateConfig = Field(default_factory=UpdateConfig)
+    notifications: NotificationConfig = Field(default_factory=NotificationConfig)
 
     # Git settings
     allow_git_commit: bool = False

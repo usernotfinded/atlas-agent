@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a safe notification foundation with disabled, dry-run, and Slack webhook transport modes, redaction, structured delivery results, and local audit storage.
+- Added `atlas notifications test/send` CLI commands with `--transport` and `--severity` flags, defaulting to dry-run mode.
+- Added `src/atlas_agent/notifications/models.py`, `redaction.py`, `transports.py`, `dispatcher.py`, `storage.py` for safe, testable notification delivery.
 - Enhanced the read-only local dashboard UI with structured sections for system health, safety status, reports, backtests, reflections, skills, learning suggestions, audit events, warnings, and missing data.
 - Added `docs/dashboard.md` documenting dashboard scope, safety boundaries, CLI usage, missing-data behavior, and no-external-asset constraints.
 - Added a real local report generator foundation for daily, weekly, and ad-hoc Markdown/JSON reports using available local data only.
@@ -42,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kept the existing deterministic buy-and-hold order ID format while adding strategy-pack order IDs for new strategies.
 
 ### Safety
+- Notifications remain disabled/dry-run by default, redact webhook secrets, avoid network calls in tests, and never alter trading, provider, broker, skill, or learning execution state.
 - Dashboard UI remains static, local, read-only, research-only, and does not expose trading, provider, broker, skill activation, or learning execution controls.
 - Dashboard rendering shows missing data and warnings explicitly without fake content, provider calls, broker calls, external scripts, or CDN dependencies.
 - No live trading default changes.
