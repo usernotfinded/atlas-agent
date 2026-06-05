@@ -11,6 +11,13 @@ from atlas_agent.backtest.engine import BacktestEngine
 from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.benchmarks import BenchmarkResult, BuyAndHoldBenchmark, SPYBenchmark
 from atlas_agent.backtest.registry import describe_strategy, get_strategy, list_strategies
+from atlas_agent.backtest.report import (
+    render_json_report,
+    render_markdown_report,
+    render_empty_json_report,
+    render_empty_markdown_report,
+    write_report_from_result,
+)
 from atlas_agent.backtest.strategy import (
     BacktestStrategy,
     StrategyContext,
@@ -46,4 +53,9 @@ __all__ = [
     "get_strategy",
     "list_strategies",
     "validate_strategy",
+    "render_json_report",
+    "render_markdown_report",
+    "render_empty_json_report",
+    "render_empty_markdown_report",
+    "write_report_from_result",
 ]

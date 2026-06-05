@@ -28,8 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No audit hash-chain or manifest bypass.
 - No network benchmark data fetch was added.
 - No strategy performance claims added.
+- Added backtest report rendering (JSON and Markdown research summaries) with research-only disclaimer.
+- Added `atlas backtest run --report json|markdown` for direct report output.
+- Added `atlas report generate` subcommand with `--format json|markdown|text` and `--output` support.
+- Added empty-data and missing-benchmark report fallback renderers.
+- Added e2e tier1 tests for backtest report and `atlas report generate` CLI flows.
+- Added unit tests for backtest report module (28 tests).
 
-## [0.6.0] - 2026-06-05
+## [0.6.0-dev] — Unreleased
 
 ### Added
 - Added the v0.6.x product roadmap with independently releasable subsystem batches.

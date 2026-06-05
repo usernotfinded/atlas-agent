@@ -24,7 +24,12 @@ from atlas_agent.backtest import (
     describe_strategy,
     list_strategies,
     load_market_data,
+    render_empty_json_report,
+    render_empty_markdown_report,
+    render_json_report,
+    render_markdown_report,
     validate_strategy,
+    write_report_from_result,
 )
 from atlas_agent.brokers.alpaca import AlpacaBroker
 from atlas_agent.brokers.base import BrokerConfigurationError
@@ -379,6 +384,7 @@ Safety First:
     backtest_run.add_argument("--initial-equity", type=float, default=10000.0)
     backtest_run.add_argument("--slippage-bps", type=float, default=0.0)
     backtest_run.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_run.add_argument("--report", choices=("json", "markdown"), default=None, help="Generate a report summary in the specified format.")
     backtest_run.add_argument("--json", action="store_true")
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
@@ -508,6 +514,26 @@ Safety First:
     report = subparsers.add_parser("report")
     report_sub = report.add_subparsers(dest="report_command")
     report_sub.add_parser("daily")
+    report_generate = report_sub.add_parser(
+        "generate",
+        help="Generate a research report. Outputs a backtest summary or placeholder.",
+    )
+    report_generate.add_argument(
+        "--format",
+        choices=("json", "markdown", "text"),
+        default="text",
+        help="Output format. Default: text.",
+    )
+    report_generate.add_argument(
+        "--output",
+        default="stdout",
+        help="Output path or 'stdout'. Default: stdout.",
+    )
+    report_generate.add_argument(
+        "--run-id",
+        default=None,
+        help="Backtest run ID to generate report for.",
+    )
 
     portfolio = subparsers.add_parser("portfolio")
     portfolio_sub = portfolio.add_subparsers(dest="portfolio_command")
@@ -4228,6 +4254,14 @@ def main(argv: list[str] | None = None) -> int:
                 print(result.model_dump_json(indent=2))
                 return 0
 
+            report_format = getattr(args, "report", None)
+            if report_format == "json":
+                print(json.dumps(render_json_report(result), indent=2, sort_keys=True, default=str))
+                return 0
+            if report_format == "markdown":
+                print(render_markdown_report(result))
+                return 0
+
             print(f"Backtest complete: {symbol}")
             # Compatibility mapping for tests
             display_status = "filled" if result.status == "completed" else result.status
@@ -4238,11 +4272,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Max Drawdown:   {result.metrics.max_drawdown_pct:.2f}%")
             print(f"Trade Count:    {result.metrics.trade_count}")
 
-            # Write JSON report to disk
-            report_path = Path(".atlas/backtests") / result.run_id / "result.json"
-            report_path.parent.mkdir(parents=True, exist_ok=True)
-            report_path.write_text(result.model_dump_json(indent=2))
-            print(f"Report saved to: {report_path}")
+            # Write report files to disk
+            report_dir = Path(".atlas/backtests") / result.run_id
+            json_path, md_path = write_report_from_result(result, output_dir=report_dir)
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {md_path}")
 
             return 0
         else:
@@ -4771,9 +4805,53 @@ def main(argv: list[str] | None = None) -> int:
             f"{result.order_result.status}"
         )
         return 0 if result.order_result.status in {"filled", "held", "pending_approval"} else 2
-    if args.command == "report" and args.report_command == "daily":
-        print(generate_daily_report())
-        return 0
+    if args.command == "report":
+        if args.report_command == "daily":
+            print(generate_daily_report())
+            return 0
+        if args.report_command == "generate":
+            run_id = getattr(args, "run_id", None)
+            fmt = getattr(args, "format", "text")
+            output = getattr(args, "output", "stdout")
+
+            # Try to load an existing backtest result
+            loaded_result = None
+            if run_id:
+                result_path = Path(".atlas/backtests") / run_id / "result.json"
+                if not result_path.exists():
+                    print(f"Error: No backtest result found for run_id '{run_id}'", file=sys.stderr)
+                    return 1
+                import json as _json
+                data = _json.loads(result_path.read_text(encoding="utf-8"))
+                from atlas_agent.backtest.models import BacktestResult as _BR
+                loaded_result = _BR.model_validate(data)
+
+            if fmt == "json":
+                if loaded_result:
+                    content = json.dumps(render_json_report(loaded_result), indent=2, sort_keys=True, default=str)
+                else:
+                    content = json.dumps(render_empty_json_report(), indent=2, sort_keys=True)
+            elif fmt == "markdown":
+                if loaded_result:
+                    content = render_markdown_report(loaded_result)
+                else:
+                    content = render_empty_markdown_report()
+            else:  # text
+                if loaded_result:
+                    content = render_markdown_report(loaded_result)
+                else:
+                    content = render_empty_markdown_report()
+
+            if output == "stdout":
+                print(content)
+            else:
+                out_path = Path(output)
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out_path.write_text(content, encoding="utf-8")
+                print(f"Report written to: {out_path}")
+            return 0
+        print("Error: Use 'atlas report --help' for usage.")
+        return 1
     if args.command == "portfolio" and args.portfolio_command == "show":
         payload = _portfolio_payload(config)
         if getattr(args, "json", False):
