@@ -24,7 +24,7 @@ This inventory is organized by capability group (e.g., Core workspace, Paper tra
 - **Public claim** tells you whether it is safe to mention the capability in public docs and outreach. `safe_to_claim` means yes; `do_not_claim` means it exists but should not be highlighted.
 - **Notes** provide implementation details, safety boundaries, and caveats.
 
-For the roadmap that turns these capabilities into prioritized work items, see the [v0.5.8 Gap Prioritization Plan](v0.5.8-gap-prioritization.md).
+For the roadmap that turns these capabilities into prioritized work items, see the [v0.5.8 Gap Prioritization Plan](v0.5.8-gap-prioritization.md) and the [v0.6.x Roadmap](v0.6-roadmap.md).
 
 ## How to read capability statuses
 
@@ -168,12 +168,12 @@ The following are **not** capabilities of Atlas Agent and should not be requeste
 
 ## Mapping to v0.5.8 work
 
-Capabilities that are `partial` or `experimental` are candidates for v0.5.8 refinement:
+Capabilities that are `partial` or `experimental` are candidates for v0.6+ refinement:
 
-- Backtest strategy framework (currently hardcoded `buy_and_hold`)
-- Skills lifecycle (skill miner needs LLM integration)
-- Self-improvement loop (reflections and nudges need AI-driven extraction)
-- Report generators (daily/weekly stubs need real content)
-- Broker adapters (Binance completion, CCXT enablement, IBKR implementation)
+- Backtest strategy framework (strategy pack implemented with `buy_and_hold`, `moving_average_cross`, `rsi_mean_reversion`; more strategies can be added)
+- Skills lifecycle (skill miner is static placeholder; no LLM integration)
+- Self-improvement loop (reflections, nudges, and skill mining are static templates; no AI-driven extraction)
+- Report generators (`atlas report generate` is implemented; `report daily` from routine engine remains stub)
+- Broker adapters (Binance partial; CCXT disabled; IBKR placeholder)
 
 Capabilities that are `disabled_by_default` remain so unless explicit user opt-in passes all safety gates.

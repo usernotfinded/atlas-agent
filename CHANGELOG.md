@@ -80,28 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Skill candidate static fallback clearly marks `provider_execution_disabled` and preserves the marker from source reflection artifacts.
 - Skill library entries inherit `manual_only` activation policy and cannot be auto-activated.
 
-## [0.6.0-dev] — Unreleased
-
-### Added
-- Added the v0.6.x product roadmap with independently releasable subsystem batches.
-- Added a backtest strategy interface, metadata model, registry, local discovery path, benchmark abstraction, metrics calculator abstraction, and validation harness.
-- Added a built-in `buy_and_hold` strategy outside the core backtest engine branch.
-- Added `atlas backtest list-strategies`, `atlas backtest describe <strategy>`, and `atlas backtest validate <strategy>`.
-- Added strategy and benchmark metadata to backtest results.
-
-### Changed
-- Backtest execution now resolves the configured strategy through the strategy registry.
-- Built-in backtest strategy orders and fills now use deterministic identifiers.
-
-### Safety
-- No live trading default changes.
-- No provider execution default changes.
-- No broker execution default changes.
-- No approval gate changes.
-- No kill-switch changes.
-- No audit hash-chain or manifest bypass.
-- No strategy performance claims added.
-
 ## [0.5.9.5] - 2026-06-04
 
 ### Fixed

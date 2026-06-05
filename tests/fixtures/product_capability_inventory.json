@@ -122,7 +122,7 @@
       "docs_paths": ["README.md"],
       "tests_or_checks": ["scripts/smoke_reviewer_golden_path.py"],
       "safety_notes": "Local CSV-only; no network. Deterministic simulation.",
-      "known_gaps": "Only buy_and_hold strategy is implemented. Pluggable strategy framework exists but is not wired.",
+      "known_gaps": "Strategy pack implemented with buy_and_hold, moving_average_cross, rsi_mean_reversion. More strategies can be added via registry.",
       "reviewer_notes": "MVP backtest with slippage and commission."
     },
     {
@@ -542,7 +542,7 @@
       "docs_paths": ["README.md"],
       "tests_or_checks": [],
       "safety_notes": "Markdown report writing. No broker or provider calls in report generation itself.",
-      "known_gaps": "Daily/weekly report generators are stubs; real content comes from routine engine.",
+      "known_gaps": "atlas report generate is implemented. atlas report daily from routine engine remains stub-driven.",
       "reviewer_notes": "Generic timestamped Markdown writer exists. Report content is routine-driven."
     },
     {

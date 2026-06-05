@@ -156,6 +156,21 @@ requires `actions/checkout@v6`, `actions/setup-python@v6`, and
 dependencies, modify files, or require GitHub credentials. See
 [GitHub Actions Maintenance](github-actions.md).
 
+## v0.6.0 Readiness Checks
+
+`scripts/check_v060_readiness.py` is a read-only checker for the v0.6.0
+capability expansion audit:
+
+```bash
+python3.11 scripts/check_v060_readiness.py
+python3.11 scripts/check_v060_readiness.py --json
+```
+
+It verifies required docs, source modules, test files, CLI contract entries,
+CHANGELOG unreleased section, version identity, absence of a premature v0.6.0
+tag, forbidden claims, and generated artifact hygiene. It does not call the
+network, require credentials, or modify files.
+
 ## Protected Boundary Checks
 
 Docs/checker/onboarding work should not touch protected runtime boundaries. Use:

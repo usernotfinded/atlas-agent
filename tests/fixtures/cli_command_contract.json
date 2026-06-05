@@ -314,6 +314,10 @@
       "suggest-from-reflection",
       "suggest-from-skill"
     ],
+    "report": [
+      "daily",
+      "generate"
+    ],
     "skills": [
       "approve",
       "approve-candidate",

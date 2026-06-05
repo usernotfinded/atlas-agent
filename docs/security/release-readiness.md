@@ -69,3 +69,20 @@ The trust center is checked by `scripts/check_trust_center.py` to prevent stale 
 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
 to keep local setup, safe-check, and release-sensitive command guidance current.
+
+## v0.6.0 readiness
+
+Before any v0.6.0 version bump or release cutover, run the v0.6.0 readiness checker:
+
+```bash
+python3.11 scripts/check_v060_readiness.py
+python3.11 scripts/check_v060_readiness.py --json
+```
+
+The checker verifies required docs, source modules, test files, CLI contract
+entries, CHANGELOG unreleased section, version identity, absence of a premature
+v0.6.0 tag, forbidden claims, and generated artifact hygiene.
+
+See [v0.6.0 Readiness Audit](../releases/v0.6.0-readiness.md) for the full
+capability summary, safety boundaries, test coverage, docs coverage, deferred
+items, non-goals, release blockers, and release recommendation.
