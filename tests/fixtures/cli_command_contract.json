@@ -18,6 +18,7 @@
     "heartbeat",
     "init",
     "kill",
+    "learning",
     "kill-switch",
     "memory",
     "model",
@@ -295,6 +296,17 @@
     "risk": [
       "check",
       "status"
+    ],
+    "learning": [
+      "accept-suggestion",
+      "archive-suggestion",
+      "list-suggestions",
+      "reject-suggestion",
+      "show-suggestion",
+      "submit-suggestion",
+      "suggest",
+      "suggest-from-reflection",
+      "suggest-from-skill"
     ],
     "skills": [
       "approve",

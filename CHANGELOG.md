@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `src/atlas_agent/skills/models.py`, `storage.py`, `generator.py`, `approval.py`, `library.py`, `renderers.py` for offline skill candidate generation.
 - Added `docs/skills.md` documenting skill candidate scope, safety, status lifecycle, and CLI usage.
 - Added unit tests for skill candidate models, storage, generator, approval, library, and CLI (`tests/skills/`, `tests/cli/test_skills_cli.py`).
+- Added a local-first learning suggestion foundation with structured suggestion artifacts, reflection/skill/file provenance, review workflows, and advisory-only execution policy.
+- Added `atlas learning suggest/list-suggestions/show-suggestion/submit-suggestion/accept-suggestion/reject-suggestion/archive-suggestion` CLI commands.
+- Added `src/atlas_agent/learning/models.py`, `storage.py`, `generator.py`, `approval.py`, `renderers.py` for offline learning suggestion generation.
+- Added `docs/learning-loop.md` documenting learning suggestion scope, safety, status lifecycle, and CLI usage.
+- Added unit tests for learning suggestion models, storage, generator, approval, renderers, and CLI (`tests/learning/`, `tests/cli/test_learning_cli.py`).
 - Added the v0.6.1 backtesting strategy pack with `moving_average_cross`, `rsi_mean_reversion`, and registered `buy_and_hold`.
 - Added typed strategy parameter specs, parameter coercion, and fail-closed parameter validation.
 - Added CLI strategy parameter overrides for `atlas backtest run` and `atlas backtest validate`.

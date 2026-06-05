@@ -6,6 +6,33 @@ from atlas_agent.learning.conversation_memory import (
     rebuild_search_index,
     search_memory,
 )
+from atlas_agent.learning.models import (
+    LearningSuggestion,
+    SuggestionStatus,
+    SuggestionProvenance,
+    SuggestionAudit,
+)
+from atlas_agent.learning.storage import (
+    save_suggestion,
+    load_suggestion,
+    list_suggestions,
+    delete_suggestion,
+)
+from atlas_agent.learning.generator import (
+    generate_suggestion_from_reflection,
+    generate_suggestion_from_skill,
+    generate_suggestion_from_input,
+)
+from atlas_agent.learning.approval import (
+    submit_for_review,
+    accept,
+    reject,
+    archive,
+)
+from atlas_agent.learning.renderers import (
+    render_markdown,
+    render_json_string,
+)
 
 __all__ = [
     "run_learning_cycle",
@@ -15,4 +42,21 @@ __all__ = [
     "ingest_conversation",
     "rebuild_search_index",
     "search_memory",
+    "LearningSuggestion",
+    "SuggestionStatus",
+    "SuggestionProvenance",
+    "SuggestionAudit",
+    "save_suggestion",
+    "load_suggestion",
+    "list_suggestions",
+    "delete_suggestion",
+    "generate_suggestion_from_reflection",
+    "generate_suggestion_from_skill",
+    "generate_suggestion_from_input",
+    "submit_for_review",
+    "accept",
+    "reject",
+    "archive",
+    "render_markdown",
+    "render_json_string",
 ]
