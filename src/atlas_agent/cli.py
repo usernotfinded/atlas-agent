@@ -1656,6 +1656,44 @@ Safety First:
     dashboard.add_argument("--json", action="store_true", help="Emit dashboard snapshot as JSON")
     dashboard.add_argument("--open", action="store_true", help="Open dashboard in browser")
 
+    reflection = subparsers.add_parser(
+        "reflection",
+        help="Local reflection artifacts. Offline, provider-disabled by default.",
+    )
+    reflection_sub = reflection.add_subparsers(dest="reflection_command")
+    reflection_create = reflection_sub.add_parser(
+        "create",
+        help="Create a reflection artifact from a local input file.",
+    )
+    reflection_create.add_argument("--input", required=True, type=Path, help="Path to input artifact")
+    reflection_create.add_argument("--kind", choices=("report", "backtest", "research", "audit", "note"), default=None, help="Input kind")
+    reflection_create.add_argument("--dry-run", action="store_true", default=True, help="Use static fallback (default)")
+    reflection_create.add_argument("--output", default="stdout", help="Output path or 'stdout'")
+    reflection_create.add_argument("--json", action="store_true", help="Emit as JSON envelope")
+
+    reflection_list = reflection_sub.add_parser("list", help="List reflection artifacts")
+    reflection_list.add_argument("--status", choices=("draft", "pending_review", "approved", "rejected", "archived"), default=None, help="Filter by status")
+    reflection_list.add_argument("--json", action="store_true", help="Emit as JSON")
+
+    reflection_show = reflection_sub.add_parser("show", help="Show a reflection artifact")
+    reflection_show.add_argument("reflection_id", help="Reflection ID")
+    reflection_show.add_argument("--json", action="store_true", help="Emit as JSON")
+
+    reflection_submit = reflection_sub.add_parser("submit", help="Submit a draft reflection for review")
+    reflection_submit.add_argument("reflection_id", help="Reflection ID")
+
+    reflection_approve = reflection_sub.add_parser("approve", help="Approve a pending reflection")
+    reflection_approve.add_argument("reflection_id", help="Reflection ID")
+    reflection_approve.add_argument("--reason", default="", help="Approval reason")
+
+    reflection_reject = reflection_sub.add_parser("reject", help="Reject a pending reflection")
+    reflection_reject.add_argument("reflection_id", help="Reflection ID")
+    reflection_reject.add_argument("--reason", required=True, help="Rejection reason")
+
+    reflection_archive = reflection_sub.add_parser("archive", help="Archive an approved or rejected reflection")
+    reflection_archive.add_argument("reflection_id", help="Reflection ID")
+    reflection_archive.add_argument("--reason", default="", help="Archive reason")
+
     return parser
 
 
@@ -4340,6 +4378,102 @@ def main(argv: list[str] | None = None) -> int:
             import webbrowser
             webbrowser.open(f"file://{dashboard_path.resolve()}")
         return 0
+
+    if args.command == "reflection":
+        from atlas_agent.reflection.generator import generate_reflection
+        from atlas_agent.reflection.storage import save_artifact, load_artifact, list_artifacts
+        from atlas_agent.reflection.approval import approve, reject, archive, submit_for_review
+        from atlas_agent.reflection.renderers import render_markdown as _render_reflection_markdown
+
+        if args.reflection_command == "create":
+            input_path = getattr(args, "input", None)
+            kind = getattr(args, "kind", None)
+            output = getattr(args, "output", "stdout")
+            emit_json = getattr(args, "json", False)
+            artifact = generate_reflection(
+                input_path,
+                kind=kind,
+                workspace=".",
+                dry_run=True,
+            )
+            save_artifact(artifact, workspace=".")
+            if emit_json:
+                content = artifact.model_dump_json(indent=2)
+            else:
+                content = _render_reflection_markdown(artifact)
+            if output == "stdout":
+                print(content)
+            else:
+                out_path = Path(output)
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out_path.write_text(content, encoding="utf-8")
+                print(f"Reflection written to: {out_path}")
+            return 0
+
+        if args.reflection_command == "list":
+            status_filter = getattr(args, "status", None)
+            emit_json = getattr(args, "json", False)
+            from atlas_agent.reflection.models import ReflectionStatus
+            status = ReflectionStatus(status_filter) if status_filter else None
+            artifacts = list_artifacts(workspace=".", status=status)
+            if emit_json:
+                print(json.dumps(artifacts, indent=2, sort_keys=True, default=str))
+            else:
+                if not artifacts:
+                    print("No reflection artifacts found.")
+                    return 0
+                print(f"{'ID':<36} {'Status':<16} {'Kind':<12} {'Generated'}")
+                print("-" * 80)
+                for a in artifacts:
+                    print(f"{a['reflection_id']:<36} {a['status']:<16} {a['kind']:<12} {a['generated_at']}")
+            return 0
+
+        if args.reflection_command == "show":
+            reflection_id = getattr(args, "reflection_id", None)
+            emit_json = getattr(args, "json", False)
+            artifact = load_artifact(reflection_id, workspace=".")
+            if emit_json:
+                print(artifact.model_dump_json(indent=2))
+            else:
+                print(_render_reflection_markdown(artifact))
+            return 0
+
+        if args.reflection_command == "submit":
+            reflection_id = getattr(args, "reflection_id", None)
+            artifact = load_artifact(reflection_id, workspace=".")
+            submit_for_review(artifact, workspace=".")
+            print(f"Reflection {reflection_id} submitted for review.")
+            return 0
+
+        if args.reflection_command == "approve":
+            reflection_id = getattr(args, "reflection_id", None)
+            reason = getattr(args, "reason", "")
+            artifact = load_artifact(reflection_id, workspace=".")
+            approve(artifact, reason=reason or None, workspace=".")
+            print(f"Reflection {reflection_id} approved.")
+            return 0
+
+        if args.reflection_command == "reject":
+            reflection_id = getattr(args, "reflection_id", None)
+            reason = getattr(args, "reason", "")
+            if not reason:
+                print("Error: --reason is required for rejection.", file=sys.stderr)
+                return 1
+            artifact = load_artifact(reflection_id, workspace=".")
+            reject(artifact, reason=reason, workspace=".")
+            print(f"Reflection {reflection_id} rejected.")
+            return 0
+
+        if args.reflection_command == "archive":
+            reflection_id = getattr(args, "reflection_id", None)
+            reason = getattr(args, "reason", "")
+            artifact = load_artifact(reflection_id, workspace=".")
+            archive(artifact, reason=reason or None, workspace=".")
+            print(f"Reflection {reflection_id} archived.")
+            return 0
+
+        print("Error: Use 'atlas reflection --help' for usage.")
+        return 1
 
     if args.command == "agent":
         from atlas_agent.agent.planner import get_agent_plan, get_agent_plan_payload

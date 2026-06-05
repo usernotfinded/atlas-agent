@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `src/atlas_agent/reports/models.py`, `sources.py`, `generator.py`, `renderers.py`, and `adhoc.py` for local-data-only report generation.
 - Added `docs/reports.md` documenting report scope, safety, and CLI usage.
 - Added unit tests for report generator, renderers, and CLI (`tests/reports/test_report_generator.py`, `tests/reports/test_report_renderers.py`, `tests/cli/test_report_cli.py`).
+- Added a local-first reflection artifact foundation with structured artifacts, dry-run/static generation, provenance metadata, and approval/rejection state handling.
+- Added `atlas reflection create/list/show/submit/approve/reject/archive` CLI commands.
+- Added `src/atlas_agent/reflection/models.py`, `storage.py`, `generator.py`, `approval.py`, `renderers.py` for offline reflection generation.
+- Added `docs/reflection.md` documenting reflection scope, safety, status lifecycle, and CLI usage.
+- Added unit tests for reflection models, storage, generator, approval, and CLI (`tests/reflection/`, `tests/cli/test_reflection_cli.py`).
 - Added the v0.6.1 backtesting strategy pack with `moving_average_cross`, `rsi_mean_reversion`, and registered `buy_and_hold`.
 - Added typed strategy parameter specs, parameter coercion, and fail-closed parameter validation.
 - Added CLI strategy parameter overrides for `atlas backtest run` and `atlas backtest validate`.
@@ -41,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added unit tests for backtest report module (28 tests).
 - Reports remain local, offline, research-only, and do not call providers, brokers, or external services.
 - Missing data is shown explicitly; no fake content, no financial advice, no profit guarantees.
+- Reflection artifacts remain offline, research-only, provider-disabled by default, broker-disabled by default, and require operator review before downstream use.
+- Reflection static fallback clearly marks `provider_execution_disabled` and does not generate fake insights.
 
 ## [0.6.0-dev] — Unreleased
 
