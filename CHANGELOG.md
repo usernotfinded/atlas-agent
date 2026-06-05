@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Enhanced the read-only local dashboard UI with structured sections for system health, safety status, reports, backtests, reflections, skills, learning suggestions, audit events, warnings, and missing data.
+- Added `docs/dashboard.md` documenting dashboard scope, safety boundaries, CLI usage, missing-data behavior, and no-external-asset constraints.
 - Added a real local report generator foundation for daily, weekly, and ad-hoc Markdown/JSON reports using available local data only.
 - Added `atlas report generate --type daily|weekly|ad-hoc --format markdown|json` with real portfolio, backtest, research, risk, audit, and system health sections.
 - Added `src/atlas_agent/reports/models.py`, `sources.py`, `generator.py`, `renderers.py`, and `adhoc.py` for local-data-only report generation.
@@ -40,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kept the existing deterministic buy-and-hold order ID format while adding strategy-pack order IDs for new strategies.
 
 ### Safety
+- Dashboard UI remains static, local, read-only, research-only, and does not expose trading, provider, broker, skill activation, or learning execution controls.
+- Dashboard rendering shows missing data and warnings explicitly without fake content, provider calls, broker calls, external scripts, or CDN dependencies.
 - No live trading default changes.
 - No provider execution default changes.
 - No broker execution default changes.

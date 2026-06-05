@@ -16,3 +16,9 @@ The generated dashboard provides a purely read-only view of the agent's state, l
 
 ### 3. Secret Redaction
 The dashboard generator actively redacts sensitive environment variables, provider credentials, and broker API keys before rendering the HTML. Test coverage (`test_dashboard_security.py`) enforces that fake secrets and live API keys do not leak into the generated output.
+
+### 4. No Execution Controls
+The generated HTML does not include controls to trade, submit orders, enable live trading, enable provider execution, enable broker execution, activate skills, run learning suggestions, connect brokers, connect providers, publish releases, or mutate local configuration.
+
+### 5. Static Local Assets
+The dashboard uses inline local CSS and does not load external JavaScript, frameworks, CDN assets, provider APIs, broker APIs, or webhook services. Missing local data and warnings are displayed explicitly instead of being replaced with generated or fake content.

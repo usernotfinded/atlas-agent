@@ -1,8 +1,90 @@
 from __future__ import annotations
 
+from html import escape
 import json
 from pathlib import Path
+from typing import Any
+
 from atlas_agent.dashboard.models import DashboardSnapshot
+
+
+def _text(value: Any, default: str = "No data available") -> str:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    text = str(value)
+    return text if text else default
+
+
+def _html(value: Any, default: str = "No data available") -> str:
+    return escape(_text(value, default))
+
+
+def _status_class(status: Any) -> str:
+    text = str(status or "unknown").lower().replace("_", "-")
+    allowed = {
+        "active",
+        "compromised",
+        "enabled",
+        "expired",
+        "failed",
+        "healthy",
+        "locked-down",
+        "missing",
+        "normal",
+        "pass",
+        "partial",
+        "running",
+        "success",
+        "unknown",
+    }
+    return text if text in allowed else "unknown"
+
+
+def _badge(status: Any, label: Any | None = None) -> str:
+    visible = _html(label if label is not None else status, "unknown")
+    return f'<span class="status status-{_status_class(status)}">{visible}</span>'
+
+
+def _row(label: str, value: Any, *, status: Any | None = None, default: str = "No data available") -> str:
+    rendered = _badge(status, value) if status is not None else f'<span class="stat-value">{_html(value, default)}</span>'
+    return f"""
+                    <div class="stat-row">
+                        <span class="stat-label">{escape(label)}</span>
+                        {rendered}
+                    </div>"""
+
+
+def _empty_if_unavailable(available: bool) -> str:
+    if available:
+        return ""
+    return '<p class="empty-state">No data available</p>'
+
+
+def _status_breakdown(items: dict[str, int]) -> str:
+    if not items:
+        return '<p class="empty-state">No data available</p>'
+    rows = []
+    for status, count in sorted(items.items()):
+        rows.append(
+            f"""
+                    <div class="stat-row compact">
+                        <span class="stat-label">{_html(status)}</span>
+                        <span class="stat-value">{_html(count)}</span>
+                    </div>"""
+        )
+    return "\n".join(rows)
+
+
+def _list_section(items: list[str], empty: str = "No data available") -> str:
+    if not items:
+        return f'<p class="empty-state">{escape(empty)}</p>'
+    rendered = "\n".join(f"                    <li>{_html(item)}</li>" for item in items)
+    return f"""
+                <ul class="plain-list">
+{rendered}
+                </ul>"""
 
 
 def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Path:
@@ -17,6 +99,38 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
     orders = snapshot.open_orders_summary
     audit = snapshot.audit_summary
     
+    mode_label = snapshot.mode if snapshot.mode != "unknown" else "paper_or_sandbox"
+    safety_status = "locked_down" if snapshot.safety.kill_switch_active else "normal"
+    system_health = snapshot.system_health
+    portfolio = snapshot.portfolio
+    backtests = snapshot.backtests
+    reports = snapshot.reports
+    reflections = snapshot.reflections
+    skills = snapshot.skills
+    learning = snapshot.learning
+    audit_model = snapshot.audit
+    safety = snapshot.safety
+
+    system_checks = ""
+    if system_health.checks:
+        rendered_checks = []
+        for check in system_health.checks:
+            check_status = check.get("status", "unknown")
+            rendered_checks.append(
+                f"""
+                    <li>
+                        {_badge(check_status)}
+                        <span>{_html(check.get("id", "unknown"))}: {_html(check.get("message", ""))}</span>
+                    </li>"""
+            )
+        system_checks = f"""
+                <h3>Checks</h3>
+                <ul class="check-list">
+{''.join(rendered_checks)}
+                </ul>"""
+    else:
+        system_checks = '<p class="empty-state">No data available</p>'
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,131 +138,187 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlas Agent Dashboard</title>
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #0a0a0c; color: #e0e0e6; line-height: 1.5; padding: 2rem; margin: 0; }}
-        .container {{ max-width: 1200px; margin: 0 auto; }}
-        header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #303036; padding-bottom: 1rem; margin-bottom: 2rem; }}
-        h1 {{ margin: 0; font-size: 1.5rem; color: #ff4500; text-transform: uppercase; letter-spacing: 2px; }}
-        .timestamp {{ color: #80808a; font-size: 0.8rem; }}
-        .workspace {{ color: #a0a0ab; font-size: 0.8rem; margin-top: 0.2rem; }}
-        
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }}
-        .card {{ background: #16161a; border: 1px solid #303036; border-radius: 8px; padding: 1.5rem; transition: border-color 0.2s; }}
-        .card:hover {{ border-color: #40404a; }}
-        .card h2 {{ margin: 0 0 1rem 0; font-size: 1.1rem; color: #ff8c00; border-bottom: 1px solid #25252b; padding-bottom: 0.5rem; }}
-        
+        :root {{ color-scheme: light; --bg: #f7f7f4; --panel: #ffffff; --ink: #1d2525; --muted: #5d6866; --line: #d8ded9; --accent: #275c56; --warn: #7a4d00; --warn-bg: #fff7df; --danger: #8b1e24; --danger-bg: #fff0f0; --ok: #1f6b3a; --ok-bg: #ecf8ef; }}
+        * {{ box-sizing: border-box; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; margin: 0; }}
+        .container {{ max-width: 1240px; margin: 0 auto; padding: 2rem; }}
+        header {{ border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1.5rem; }}
+        .header-top {{ display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }}
+        h1 {{ margin: 0; font-size: 1.75rem; color: var(--accent); letter-spacing: 0; }}
+        h2 {{ margin: 0 0 1rem 0; font-size: 1.05rem; color: var(--ink); }}
+        h3 {{ margin: 1rem 0 0.5rem 0; font-size: 0.95rem; color: var(--muted); }}
+        .timestamp, .workspace, .meta {{ color: var(--muted); font-size: 0.86rem; }}
+        .workspace {{ overflow-wrap: anywhere; margin-top: 0.2rem; }}
+        .meta-bar {{ display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }}
+        .pill {{ display: inline-flex; align-items: center; min-height: 1.75rem; padding: 0.2rem 0.6rem; border: 1px solid var(--line); border-radius: 999px; background: #eef3ef; color: var(--ink); font-size: 0.82rem; font-weight: 650; }}
+        .banner {{ border: 1px solid var(--line); border-left: 5px solid var(--accent); background: var(--panel); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }}
+        .banner strong {{ display: block; margin-bottom: 0.4rem; }}
+        .banner p {{ margin: 0.25rem 0; color: var(--muted); }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; align-items: start; }}
+        .card {{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 1rem; min-width: 0; }}
+        .card.wide {{ grid-column: 1 / -1; }}
         .status {{ display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }}
-        .status-success, .status-active, .status-healthy {{ background: #1b3d20; color: #4caf50; }}
-        .status-failed, .status-missing, .status-expired, .status-compromised {{ background: #4a1c1c; color: #f44336; }}
-        .status-running, .status-partial {{ background: #3d3b1b; color: #ffeb3b; }}
-        .status-unknown {{ background: #303036; color: #80808a; }}
-        
+        .status-success, .status-active, .status-healthy, .status-pass, .status-normal, .status-enabled {{ background: var(--ok-bg); color: var(--ok); }}
+        .status-failed, .status-missing, .status-expired, .status-compromised, .status-locked-down {{ background: var(--danger-bg); color: var(--danger); }}
+        .status-running, .status-partial {{ background: var(--warn-bg); color: var(--warn); }}
+        .status-unknown {{ background: #eef0f0; color: var(--muted); }}
         .stat-row {{ display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }}
-        .stat-label {{ color: #a0a0ab; }}
+        .stat-row.compact {{ margin-bottom: 0.25rem; }}
+        .stat-label {{ color: var(--muted); padding-right: 1rem; }}
         .stat-value {{ font-weight: 500; }}
-        
-        pre {{ background: #000; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem; overflow-x: auto; color: #00ff00; }}
+        .empty-state {{ margin: 0.25rem 0 0; color: var(--muted); font-style: italic; }}
+        .plain-list, .check-list {{ margin: 0; padding-left: 1.1rem; }}
+        .plain-list li, .check-list li {{ margin: 0.35rem 0; }}
+        .check-list li {{ display: flex; gap: 0.5rem; align-items: baseline; }}
+        pre {{ background: #f1f3f1; border: 1px solid var(--line); padding: 0.75rem; border-radius: 6px; font-size: 0.78rem; overflow-x: auto; color: var(--ink); }}
+        footer {{ margin-top: 1.5rem; color: var(--muted); font-size: 0.9rem; }}
+        @media (max-width: 720px) {{ .container {{ padding: 1rem; }} .header-top {{ display: block; }} .timestamp {{ margin-top: 0.75rem; }} .stat-row {{ display: block; }} .stat-label {{ display: block; padding-right: 0; }} }}
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div>
-                <h1>Atlas Agent</h1>
-                <div class="workspace">{snapshot.workspace}</div>
+            <div class="header-top">
+                <div>
+                    <h1>Atlas Agent Dashboard</h1>
+                    <div class="workspace">Workspace: {_html(snapshot.workspace)}</div>
+                </div>
+                <div class="timestamp">Generated: {_html(snapshot.generated_at)}</div>
             </div>
-            <div class="timestamp">Generated: {snapshot.generated_at}</div>
+            <div class="meta-bar" aria-label="Dashboard mode indicators">
+                <span class="pill">dashboard: {_html(snapshot.dashboard_mode)}</span>
+                <span class="pill">local</span>
+                <span class="pill">mode: {_html(mode_label)}</span>
+                <span class="pill">execution surface: paper_or_sandbox</span>
+            </div>
         </header>
 
+        <section class="banner" aria-labelledby="safety-status">
+            <strong id="safety-status">Safety status: {_html(safety_status)}</strong>
+            <p>This dashboard is read-only.</p>
+            <p>This dashboard does not execute trades.</p>
+            <p>This dashboard does not call providers or brokers.</p>
+            <p>This dashboard is not financial advice.</p>
+        </section>
+
         <div class="grid">
-            <div class="card">
-                <h2>System Status</h2>
-                <div class="stat-row">
-                    <span class="stat-label">Mode</span>
-                    <span class="stat-value">{snapshot.mode.upper()}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">AI Provider</span>
-                    <span class="status status-{snapshot.provider_summary.status}">{snapshot.provider_summary.status}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Configured</span>
-                    <span class="stat-value">{snapshot.configured}</span>
-                </div>
-            </div>
+            <section class="card wide" aria-labelledby="system-health-heading">
+                <h2 id="system-health-heading">System Health</h2>
+                {_row("Available", system_health.available)}
+                {_row("Configured", snapshot.configured)}
+                {_row("Workspace initialized", system_health.workspace_initialized)}
+                {_row("Config readable", system_health.config_readable)}
+                {_row("Ready for backtesting", system_health.ready_for_backtesting)}
+                {_row("Ready for paper agentic review", system_health.ready_for_paper_agentic)}
+                {_row("Ready for live", system_health.ready_for_live)}
+{system_checks}
+            </section>
 
-            <div class="card">
-                <h2>Kill Switch</h2>
-                <div class="stat-row">
-                    <span class="stat-label">Mode</span>
-                    <span class="stat-value" style="color: {'#f44336' if ks_mode != 'NORMAL' else 'inherit'}">{ks_mode}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Status</span>
-                    <span class="stat-value">{ks_status}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Heartbeat</span>
-                    <span class="status status-{snapshot.heartbeat_summary.status}">{snapshot.heartbeat_summary.status}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Last Heartbeat</span>
-                    <span class="stat-value">{snapshot.heartbeat_summary.last_updated or 'None'}</span>
-                </div>
-            </div>
+            <section class="card" aria-labelledby="portfolio-heading">
+                <h2 id="portfolio-heading">Portfolio Summary</h2>
+                {_empty_if_unavailable(portfolio.available)}
+                {_row("Cash", portfolio.cash)}
+                {_row("Equity", portfolio.equity)}
+                {_row("Positions", portfolio.positions_count)}
+                {_row("Primary symbol", portfolio.symbol)}
+            </section>
 
-            <div class="card">
-                <h2>Broker Sync</h2>
-                <div class="stat-row">
-                    <span class="stat-label">Status</span>
-                    <span class="status status-{snapshot.broker_sync_summary.status}">{snapshot.broker_sync_summary.status}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Positions</span>
-                    <span class="stat-value">{port.get('position_count', 0)}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Open Orders</span>
-                    <span class="stat-value">{orders.get('order_count', 0)}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Last Sync</span>
-                    <span class="stat-value">{snapshot.broker_sync_summary.last_updated or 'None'}</span>
-                </div>
-            </div>
+            <section class="card" aria-labelledby="backtests-heading">
+                <h2 id="backtests-heading">Backtest Summary</h2>
+                {_empty_if_unavailable(backtests.available)}
+                {_row("Total runs", backtests.total_runs)}
+                {_row("Recent runs", backtests.recent_count)}
+                {_row("Latest run", backtests.latest_run_id)}
+                {_row("Latest symbol", backtests.latest_symbol)}
+                {_row("Latest return pct", backtests.latest_return_pct)}
+                {_row("Latest status", backtests.latest_status, status=backtests.latest_status)}
+            </section>
 
-            <div class="card">
-                <h2>Audit Health</h2>
-                <div class="stat-row">
-                    <span class="stat-label">Integrity</span>
-                    <span class="status status-{audit.get('integrity', 'unknown')}">{audit.get('integrity', 'unknown')}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Total Runs</span>
-                    <span class="stat-value">{audit.get('manifest_count', 0)}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Latest Status</span>
-                    <span class="stat-value">{audit.get('latest_status', 'unknown')}</span>
-                </div>
-            </div>
+            <section class="card" aria-labelledby="reports-heading">
+                <h2 id="reports-heading">Report Summary</h2>
+                {_empty_if_unavailable(reports.available)}
+                {_row("Report count", reports.report_count)}
+                {_row("Latest type", reports.latest_report_type)}
+                {_row("Latest generated", reports.latest_generated_at)}
+            </section>
 
-            <div class="card">
-                <h2>Risk Manager</h2>
-                <div class="stat-row">
-                    <span class="stat-label">Status</span>
-                    <span class="status status-{snapshot.risk_summary.status}">{snapshot.risk_summary.status}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Rules</span>
-                    <span class="stat-value">Position, Exposure, Symbol, Confidence</span>
-                </div>
-            </div>
+            <section class="card" aria-labelledby="reflections-heading">
+                <h2 id="reflections-heading">Reflection Summary</h2>
+                {_empty_if_unavailable(reflections.available)}
+                {_row("Total reflections", reflections.total_count)}
+                <h3>Status breakdown</h3>
+                {_status_breakdown(reflections.by_status)}
+            </section>
 
-            <div class="card">
-                <h2>Recent Diagnostics</h2>
-                <pre>{json.dumps(snapshot.diagnostics, indent=2)}</pre>
-            </div>
+            <section class="card" aria-labelledby="skills-heading">
+                <h2 id="skills-heading">Skills Summary</h2>
+                {_empty_if_unavailable(skills.available)}
+                {_row("Skill candidates", skills.candidate_count)}
+                {_row("Library entries", skills.library_count)}
+                <h3>Candidate status breakdown</h3>
+                {_status_breakdown(skills.by_status)}
+            </section>
+
+            <section class="card" aria-labelledby="learning-heading">
+                <h2 id="learning-heading">Learning Summary</h2>
+                {_empty_if_unavailable(learning.available)}
+                {_row("Suggestions", learning.suggestion_count)}
+                <h3>Suggestion status breakdown</h3>
+                {_status_breakdown(learning.by_status)}
+            </section>
+
+            <section class="card" aria-labelledby="audit-events-heading">
+                <h2 id="audit-events-heading">Audit / Event Summary</h2>
+                {_empty_if_unavailable(audit_model.available)}
+                {_row("Recent events", audit_model.recent_events)}
+                {_row("Risk approved", audit_model.recent_risk_approved)}
+                {_row("Risk rejected", audit_model.recent_risk_rejected)}
+                {_row("Backtests completed", audit_model.recent_backtest_completed)}
+                {_row("Backtests failed", audit_model.recent_backtest_failed)}
+                {_row("Manifest integrity", audit.get("integrity", "unknown"), status=audit.get("integrity", "unknown"))}
+            </section>
+
+            <section class="card" aria-labelledby="safety-heading">
+                <h2 id="safety-heading">Safety Status</h2>
+                {_row("Kill switch mode", safety.kill_switch_mode, status=safety.kill_switch_mode)}
+                {_row("Kill switch active", safety.kill_switch_active)}
+                {_row("Legacy kill switch mode", ks_mode)}
+                {_row("Legacy kill switch status", ks_status)}
+                {_row("Heartbeat", safety.heartbeat_status, status=safety.heartbeat_status)}
+                {_row("Last heartbeat", snapshot.heartbeat_summary.last_updated)}
+                {_row("Live trading enabled", safety.live_trading_enabled)}
+                {_row("Live submit enabled", safety.live_submit_enabled)}
+            </section>
+
+            <section class="card" aria-labelledby="provider-broker-heading">
+                <h2 id="provider-broker-heading">Provider / Broker Sync Status</h2>
+                {_row("Provider summary", snapshot.provider_summary.message)}
+                {_row("Provider status", snapshot.provider_summary.status, status=snapshot.provider_summary.status)}
+                {_row("Broker sync status", snapshot.broker_sync_summary.status, status=snapshot.broker_sync_summary.status)}
+                {_row("Broker sync positions", port.get("position_count", 0))}
+                {_row("Open orders", orders.get("order_count", 0))}
+                {_row("Last broker sync", snapshot.broker_sync_summary.last_updated)}
+            </section>
+
+            <section class="card" aria-labelledby="warnings-heading" role="status">
+                <h2 id="warnings-heading">Warnings</h2>
+                {_list_section(snapshot.warnings)}
+            </section>
+
+            <section class="card" aria-labelledby="missing-data-heading" role="status">
+                <h2 id="missing-data-heading">Missing Data</h2>
+                {_list_section(snapshot.missing_data)}
+            </section>
+
+            <section class="card wide" aria-labelledby="diagnostics-heading">
+                <h2 id="diagnostics-heading">Recent Diagnostics</h2>
+                <pre>{escape(json.dumps(snapshot.diagnostics, indent=2))}</pre>
+            </section>
         </div>
+
+        <footer>
+            Research-only local dashboard. It is not a trading interface, not financial advice, and contains no execution controls.
+        </footer>
     </div>
 </body>
 </html>
