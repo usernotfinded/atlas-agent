@@ -54,15 +54,15 @@ def _write(path: Path, text: str) -> None:
 
 
 def _valid_fixture(tmp_path: Path) -> Path:
-    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.0"\n')
-    _write(tmp_path / "src" / "atlas_agent" / "__init__.py", '__version__ = "0.6.0"\n')
+    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.1"\n')
+    _write(tmp_path / "src" / "atlas_agent" / "__init__.py", '__version__ = "0.6.1"\n')
 
     for rel_path in CHECKER.REQUIRED_LINKS:
         _write(tmp_path / rel_path, "# Fixture\n\nNot financial advice.\n")
 
     _write(tmp_path / "docs" / "trust" / "README.md", TRUST_README.read_text(encoding="utf-8"))
     _write(
-        tmp_path / "docs" / "trust" / "v0.6.0-status.md",
+        tmp_path / "docs" / "trust" / "v0.6.1-status.md",
         TRUST_STATUS.read_text(encoding="utf-8"),
     )
     return tmp_path

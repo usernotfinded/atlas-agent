@@ -12,8 +12,8 @@ import tomllib
 from pathlib import Path
 
 
-PACKAGE_VERSION = "0.6.0"
-PUBLIC_TAG = "v0.6.0"
+PACKAGE_VERSION = "0.6.1"
+PUBLIC_TAG = "v0.6.1"
 
 
 def main() -> int:
@@ -82,6 +82,7 @@ def main() -> int:
             r"Current Status \(0\.5\.7\.dev5[0-9]\)",
             r"Current Status \(v0\.5\.7-rc\d+\)",
             r"Current Status \(0\.5\.7rc\d+\)",
+            r"Current Status \(v0\.6\.0\)",
         ]
         for pattern in stale_patterns:
             if re.search(pattern, readme_text):

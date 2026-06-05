@@ -8,27 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Safety
+
+## [0.6.1] - 2026-06-06
+
+### Added
 - Added a v0.6.1 maintenance planning document covering post-release verification, known follow-ups, and patch criteria.
 - Added `scripts/check_runtime_diagnostics.py`, a read-only helper that documents expected check runtimes, focused subsets, and timeout triage guidance.
 - Added a v0.6.1 patch candidate selection document (`docs/releases/v0.6.1-candidates.md`) and machine-readable inventory (`docs/releases/v0.6.1-candidates.json`) to separate safe maintenance candidates from deferred or runtime-sensitive work.
 - Added `scripts/check_v061_candidates.py` and `tests/test_v061_candidates.py` to verify candidate selection structure, safety boundaries, and absence of premature version bumps or release claims.
+- Added `scripts/check_v061_release_prep.py` and `tests/test_v061_release_prep.py` to verify v0.6.1 release prep state.
+- Added `docs/releases/v0.6.1.md` release notes and `docs/trust/v0.6.1-status.md` trust status.
 
 ### Changed
+- Bumped package/source version from `0.6.0` to `0.6.1`.
 - Implemented selected v0.6.1 maintenance candidates for post-release status docs (CAND-001), capability inventory labeling (CAND-002), post-release readiness CI coverage (CAND-003), and checks-reference cross-links (CAND-005).
 - Updated `scripts/check_v060_readiness.py` to treat `gh` authentication failures as warnings instead of errors in post-release mode, preventing CI flakiness while preserving tag and docs checks.
 - Added v0.6 post-release readiness check to CI `quick-gate` and matching workflow tests.
-
-### Changed
 - Added post-release mode (`--post-release`) to the v0.6 readiness checker so `v0.6.0` can be validated after tag and GitHub release publication while preserving the default pre-release behavior.
 - Added per-step elapsed timing and total elapsed summary to all local gate scripts (`dev_check.sh`, `ci_check.sh`, `research_check.sh`, `release_check.sh`).
+- Updated public release identity docs (README, trust center, SECURITY, launch readiness) to reflect `0.6.1` source version while preserving `v0.6.0` as the latest tagged GitHub release.
 
 ### Fixed
 - Fixed `test_discipline_show_default` and `test_discipline_validate_no_file` to run in isolated temporary directories, preventing failures when a local `.atlas/discipline.md` exists.
 - Fixed `tests/test_v060_readiness.py` post-release tests to be deterministic and offline-safe by mocking `_check_v060_tag` and `_check_github_release` instead of relying on real local git tags or GitHub release visibility.
 
-### Changed
-
 ### Safety
+- No live trading, provider execution, broker execution, risk gate, approval queue, or kill switch changes.
+- No new runtime features, broker adapters, or provider integrations.
+- No PyPI publish, tag creation, or GitHub release creation performed in this prep batch.
 
 ## [0.6.0] - 2026-06-05
 

@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.0 capability expansion has been delivered through the `v0.6.0` versioned GitHub release so auto-updater users can receive the current public release identity.
+The v0.6.0 capability expansion has been delivered through the `v0.6.0` versioned GitHub release so auto-updater users can receive the current public release identity. v0.6.1 is version-prepared; tag and GitHub release not created yet.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.0, the expected public GitHub release is `v0.6.0`.
+For v0.6.0, the expected public GitHub release is `v0.6.0`. The next version-prepared release is `v0.6.1`.
 
 PyPI publishing was intentionally skipped unless explicitly approved separately.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.0 --output artifacts/release_assurance/v0.6.0-local-check
+python scripts/release_assurance.py --version v0.6.1 --output artifacts/release_assurance/v0.6.1-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
@@ -70,7 +70,7 @@ The trust center is checked by `scripts/check_trust_center.py` to prevent stale 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
 to keep local setup, safe-check, and release-sensitive command guidance current.
 
-## v0.6.0 readiness
+## v0.6.1 readiness
 
 Before any v0.6.0 version bump or release cutover, run the v0.6.0 readiness checker:
 

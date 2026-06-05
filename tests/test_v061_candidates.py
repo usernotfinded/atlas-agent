@@ -53,23 +53,35 @@ class TestScriptExists:
 
 
 class TestCheckerValid:
-    def test_valid_candidate_doc_passes(self) -> None:
-        result = _run_script()
+    def test_valid_candidate_doc_passes_release_prep(self) -> None:
+        result = _run_script("--release-prep")
         assert result.returncode == 0, result.stdout + result.stderr
         assert "PASS" in result.stdout
 
-    def test_valid_json_output(self) -> None:
-        result = _run_script("--json")
+    def test_valid_json_output_release_prep(self) -> None:
+        result = _run_script("--json", "--release-prep")
         assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
         assert data["valid"] is True
         assert data["errors"] == []
 
     def test_json_has_required_keys(self) -> None:
-        result = _run_script("--json")
+        result = _run_script("--json", "--release-prep")
         data = json.loads(result.stdout)
         assert data["artifact_type"] == "v061_candidate_check_report"
         assert data["schema_version"] == 1
+
+    def test_release_prep_mode_allows_version_bump(self) -> None:
+        mod = _load_script_module()
+        code, result = mod.run_check(release_prep=True)
+        assert code == 0
+        assert not any("Version bump" in e for e in result["errors"])
+
+    def test_release_prep_mode_allows_release_notes(self) -> None:
+        mod = _load_script_module()
+        code, result = mod.run_check(release_prep=True)
+        assert code == 0
+        assert not any("Release notes file must not exist" in e for e in result["errors"])
 
 
 class TestCheckerNegative:
@@ -135,6 +147,24 @@ class TestCheckerNegative:
             assert any("Version bump to 0.6.1" in e for e in result["errors"])
         finally:
             mod.PYPROJECT = original
+
+    def test_version_bump_allowed_in_release_prep(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_pyproject = tmp_path / "pyproject.toml"
+        fake_pyproject.write_text('version = "0.6.1"\n')
+        fake_init = tmp_path / "__init__.py"
+        fake_init.write_text('__version__ = "0.6.1"\n')
+        original_pyproject = mod.PYPROJECT
+        original_init = mod.INIT_PY
+        try:
+            mod.PYPROJECT = fake_pyproject
+            mod.INIT_PY = fake_init
+            code, result = mod.run_check(release_prep=True)
+            assert code == 0
+            assert not any("Version bump" in e for e in result["errors"])
+        finally:
+            mod.PYPROJECT = original_pyproject
+            mod.INIT_PY = original_init
 
     def test_release_notes_existing_rejected(self, tmp_path: Path) -> None:
         mod = _load_script_module()

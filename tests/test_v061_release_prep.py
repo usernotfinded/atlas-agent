@@ -1,0 +1,147 @@
+"""Tests for v0.6.1 release prep checker.
+
+Documentation/test-only. No execution code, no network calls,
+no credentials, no provider SDKs, no broker changes.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+from types import ModuleType
+
+import pytest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts" / "check_v061_release_prep.py"
+
+
+def _load_script_module() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("check_v061_release_prep", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["check_v061_release_prep"] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _run_script(*args: str) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), *args],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+    )
+    return result
+
+
+class TestScriptExists:
+    def test_script_exists(self) -> None:
+        assert SCRIPT.exists(), f"Script not found: {SCRIPT}"
+
+
+class TestCheckerValid:
+    def test_valid_release_prep_passes(self) -> None:
+        result = _run_script()
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "PASS" in result.stdout
+
+    def test_valid_json_output(self) -> None:
+        result = _run_script("--json")
+        assert result.returncode == 0, result.stderr
+        data = json.loads(result.stdout)
+        assert data["valid"] is True
+        assert data["errors"] == []
+
+    def test_json_has_required_keys(self) -> None:
+        result = _run_script("--json")
+        data = json.loads(result.stdout)
+        assert data["artifact_type"] == "v061_release_prep_report"
+        assert data["schema_version"] == 1
+
+
+class TestCheckerNegative:
+    def test_missing_version_bump_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_pyproject = tmp_path / "pyproject.toml"
+        fake_pyproject.write_text('version = "0.6.0"\n')
+        fake_init = tmp_path / "__init__.py"
+        fake_init.write_text('__version__ = "0.6.0"\n')
+        original_pyproject = mod.PYPROJECT
+        original_init = mod.INIT_PY
+        try:
+            mod.PYPROJECT = fake_pyproject
+            mod.INIT_PY = fake_init
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("0.6.1" in e for e in result["errors"])
+        finally:
+            mod.PYPROJECT = original_pyproject
+            mod.INIT_PY = original_init
+
+    def test_missing_release_notes_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original = mod.RELEASE_NOTES
+        try:
+            mod.RELEASE_NOTES = tmp_path / "nonexistent.md"
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("Release notes missing" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_NOTES = original
+
+    def test_missing_trust_status_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original = mod.TRUST_STATUS
+        try:
+            mod.TRUST_STATUS = tmp_path / "nonexistent.md"
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("Trust status missing" in e for e in result["errors"])
+        finally:
+            mod.TRUST_STATUS = original
+
+    def test_missing_changelog_entry_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_changelog = tmp_path / "CHANGELOG.md"
+        fake_changelog.write_text("# Changelog\n\n## [0.6.0] - 2026-06-05\n")
+        original = mod.CHANGELOG
+        try:
+            mod.CHANGELOG = fake_changelog
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("CHANGELOG missing entry" in e for e in result["errors"])
+        finally:
+            mod.CHANGELOG = original
+
+    def test_future_release_notes_rejected(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_future = tmp_path / "v0.6.2.md"
+        fake_future.write_text("# v0.6.2\n")
+        original = mod.FUTURE_RELEASE_NOTES
+        try:
+            mod.FUTURE_RELEASE_NOTES = fake_future
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("Future release notes must not exist" in e for e in result["errors"])
+        finally:
+            mod.FUTURE_RELEASE_NOTES = original
+
+    def test_unsafe_claim_in_release_notes_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_notes = tmp_path / "v0.6.1.md"
+        fake_notes.write_text(
+            "# v0.6.1\n\nThis release enables autonomous trading for everyone.\n"
+        )
+        original = mod.RELEASE_NOTES
+        try:
+            mod.RELEASE_NOTES = fake_notes
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("Unsafe claim" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_NOTES = original

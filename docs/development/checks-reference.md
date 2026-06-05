@@ -156,6 +156,20 @@ requires `actions/checkout@v6`, `actions/setup-python@v6`, and
 dependencies, modify files, or require GitHub credentials. See
 [GitHub Actions Maintenance](github-actions.md).
 
+## v0.6.1 Release Prep Checks
+
+`scripts/check_v061_release_prep.py` is a read-only checker for the v0.6.1 release
+prep state:
+
+```bash
+python3.11 scripts/check_v061_release_prep.py
+python3.11 scripts/check_v061_release_prep.py --json
+```
+
+It verifies that the package version is `0.6.1`, `docs/releases/v0.6.1.md` exists,
+`docs/trust/v0.6.1-status.md` exists, the CHANGELOG has a `[0.6.1]` entry, and
+no premature `v0.6.2` release notes exist.
+
 ## v0.6.1 Patch Candidate Checks
 
 `scripts/check_v061_candidates.py` is a read-only checker for the v0.6.1 patch
@@ -168,8 +182,7 @@ python3.11 scripts/check_v061_candidates.py --json
 
 It verifies that `docs/releases/v0.6.1-candidates.md` exists, contains required
 sections (selection criteria, candidate table, accepted candidates, rejected
-candidates, safety boundaries, non-goals), has no premature version bump to
-`0.6.1`, has no release notes file, and does not select unsafe runtime scope.
+candidates, safety boundaries, non-goals), and does not select unsafe runtime scope.
 
 See also [v0.6.0 Readiness Checks](#v060-readiness-checks) and
 [Long-Running Checks](#long-running-checks) for related release verification.

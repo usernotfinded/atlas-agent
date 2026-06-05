@@ -176,14 +176,22 @@ def _check_json_schema() -> list[str]:
     return errors
 
 
-def run_check(*, json_output: bool = False) -> tuple[int, dict]:
+def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple[int, dict]:
     errors: list[str] = []
     warnings: list[str] = []
 
     errors.extend(_check_candidates_md_exists())
     errors.extend(_check_candidates_md_sections())
-    errors.extend(_check_no_release_notes())
-    errors.extend(_check_no_version_bump())
+    if not release_prep:
+        errors.extend(_check_no_release_notes())
+        errors.extend(_check_no_version_bump())
+    else:
+        # In release-prep mode, verify the expected files exist
+        if not RELEASE_NOTES_MD.exists():
+            errors.append(f"Release notes file must exist in release-prep mode: {RELEASE_NOTES_MD}")
+        for path in (PYPROJECT, INIT_PY):
+            if path.exists() and "0.6.1" not in path.read_text(encoding="utf-8"):
+                errors.append(f"Version bump to 0.6.1 missing in {path}")
     errors.extend(_check_no_unsafe_selected())
     errors.extend(_check_no_publish_claim())
     errors.extend(_check_json_exists())
@@ -204,10 +212,11 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="v0.6.1 patch candidate selection checker")
     parser.add_argument("--json", action="store_true", help="Output JSON")
+    parser.add_argument("--release-prep", action="store_true", help="Allow version bump and release notes (release-prep mode)")
     args = parser.parse_args(argv)
 
     try:
-        code, result = run_check(json_output=args.json)
+        code, result = run_check(json_output=args.json, release_prep=args.release_prep)
     except Exception as exc:
         result = {
             "artifact_type": "v061_candidate_check_report",

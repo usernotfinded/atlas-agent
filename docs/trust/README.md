@@ -5,12 +5,14 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.0`
-- Source package version on `main`: `0.6.0`
+- Current public release: `v0.6.0` (tagged)
+- Next version-prepared release: `v0.6.1` (not tagged yet)
+- Source package version on `main`: `0.6.1`
 - GitHub release: `v0.6.0`
 - PyPI publish: not performed
-- Release status detail: [v0.6.0 Trust and Release Status](v0.6.0-status.md)
-- Release notes: [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
+- Release status detail: [v0.6.1 Trust and Release Status](v0.6.1-status.md)
+- Release notes: [docs/releases/v0.6.1.md](../releases/v0.6.1.md)
+- Historical release notes: [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
 ## Security Posture
 
@@ -60,6 +62,7 @@ requires a versioned evidence pack.
 ## Auto-Updater Delivery
 
 Auto-updater delivery for `v0.6.0` is verified against the GitHub release/tag.
+The next version-prepared release is `v0.6.1` (not tagged yet).
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
@@ -67,12 +70,13 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.6.0`
 - PyPI publish: not performed
-- Package version in source metadata: `0.6.0`
+- Package version in source metadata: `0.6.1`
+- Next version-prepared: `v0.6.1` (not tagged yet)
 - Auto-updater delivery: verified
 
 ## What Is Ready
 
-- Public v0.6.0 release notes and release status documentation.
+- Public v0.6.1 release notes and release status documentation.
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -81,7 +85,7 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.0`.
+- PyPI was not published for `v0.6.0` or `v0.6.1`.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -97,8 +101,9 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.0 Release Notes](../releases/v0.6.0.md)
-- [v0.6.0 Trust and Release Status](v0.6.0-status.md)
+- [v0.6.1 Release Notes](../releases/v0.6.1.md)
+- [v0.6.1 Trust and Release Status](v0.6.1-status.md)
+- [v0.6.0 Trust and Release Status (historical)](v0.6.0-status.md)
 - [SECURITY.md](../../SECURITY.md)
 - [Release Readiness](../security/release-readiness.md)
 - [Provider Audit Pack](../security/provider-audit-pack.md)

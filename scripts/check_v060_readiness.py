@@ -277,8 +277,11 @@ def run_check(json_output: bool = False, post_release: bool = False) -> tuple[in
     errors.extend(_check_required_files(REQUIRED_DOCS, "doc"))
     errors.extend(_check_required_files(REQUIRED_SOURCE_MODULES, "source module"))
     errors.extend(_check_required_files(REQUIRED_TEST_FILES, "test file"))
-    errors.extend(_check_changelog_unreleased())
-    errors.extend(_check_version_identity())
+    # Version identity and changelog checks are pre-release concerns.
+    # In post-release mode the source version may have already moved on.
+    if not post_release:
+        errors.extend(_check_changelog_unreleased())
+        errors.extend(_check_version_identity())
     errors.extend(_check_cli_contract())
     errors.extend(_check_v060_tag(post_release=post_release))
 
