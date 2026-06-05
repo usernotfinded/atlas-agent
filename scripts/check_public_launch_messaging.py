@@ -27,8 +27,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.9.5"
-PUBLIC_TAG = "v0.5.9.5"
+PACKAGE_VERSION = "0.6.0"
+PUBLIC_TAG = "v0.6.0"
 
 LAUNCH_DOC_PATHS = [
     REPO_ROOT / "docs" / "public-launch-messaging.md",

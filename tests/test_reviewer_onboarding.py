@@ -206,7 +206,7 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.9.5"
+        assert data["package_version"] == "0.6.0"
         assert data["public_tag"] == "v0.5.8.1"
         assert data["errors"] == []
 

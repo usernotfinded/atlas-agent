@@ -110,7 +110,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.5.9" in readme_text
+        assert "v0.6.0" in readme_text
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -188,8 +188,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.5.9.5"
-        assert data["public_tag"] == "v0.5.9.5"
+        assert data["package_version"] == "0.6.0"
+        assert data["public_tag"] == "v0.6.0"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -237,7 +237,7 @@ class TestStaleRCReferencesBlocked:
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.5.9.5)\n"
+            "Current Status (v0.6.0)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (

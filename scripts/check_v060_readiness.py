@@ -33,8 +33,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.5.9.5"
-PUBLIC_TAG = "v0.5.9.5"
+PACKAGE_VERSION = "0.6.0"
+PUBLIC_TAG = "v0.6.0"
 
 REQUIRED_DOCS = [
     REPO_ROOT / "docs" / "releases" / "v0.6.0-readiness.md",
@@ -138,8 +138,9 @@ def _check_changelog_unreleased() -> list[str]:
     text = CHANGELOG_PATH.read_text(encoding="utf-8")
     if "## [Unreleased]" not in text:
         errors.append("CHANGELOG.md missing [Unreleased] section")
-    # Ensure there is no premature v0.6.0 release section
-    if "## [0.6.0]" in text or "## [v0.6.0]" in text:
+    # When preparing the release, [0.6.0] section is expected; flag only if version mismatches
+    has_release_section = "## [0.6.0]" in text or "## [v0.6.0]" in text
+    if has_release_section and f'version = "{PACKAGE_VERSION}"' not in PYPROJECT_PATH.read_text(encoding="utf-8"):
         errors.append("CHANGELOG.md contains a premature v0.6.0 release section")
     return errors
 

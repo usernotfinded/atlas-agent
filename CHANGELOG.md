@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Safety
+
+## [0.6.0] - 2026-06-05
+
+### Added
+- Prepared v0.6.0 release identity and release notes.
 - Added a broker support inventory (`BrokerSupportEntry`) documenting status for PaperBroker, Alpaca, Binance, CCXT, and IBKR.
 - Added fail-closed broker guard helpers (`guard_submit`, `guard_sync`) in `src/atlas_agent/brokers/guards.py`.
 - Added `atlas broker status` CLI command for read-only broker support inventory and runtime status output.

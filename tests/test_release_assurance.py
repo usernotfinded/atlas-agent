@@ -22,17 +22,17 @@ def mock_env(monkeypatch):
         if "release-assurance" in name or "sha256sums" in name or name.endswith(".json") and "artifacts" not in name:
             return original_read_text(self, *args, **kwargs)
         if name == "pyproject.toml":
-            return 'version = "0.5.9.5"'
+            return 'version = "0.6.0"'
         if name == "src/atlas_agent/__init__.py":
-            return '__version__ = "0.5.9.5"'
+            return '__version__ = "0.6.0"'
         if "docs/releases/" in name:
             return "does not enable live trading\ndoes not enable provider execution\nno autonomous trading\nnot financial advice\nno pypi publish has been performed"
         if name == "CHANGELOG.md":
-            return "[0.5.9.5]"
+            return "[0.6.0]"
         if name == "README.md":
-            return "Current Status (v0.5.9.5)"
+            return "Current Status (v0.6.0)"
         if name == "SECURITY.md":
-            return "v0.5.9.5"
+            return "v0.6.0"
         return original_read_text(self, *args, **kwargs)
 
     def mock_exists(self, *args, **kwargs):
@@ -45,15 +45,15 @@ def mock_env(monkeypatch):
 
     def mock_run_cmd(cmd, check=True, cwd=None):
         if "git tag -l" in cmd:
-            return "v0.5.9.5\n", 0, ""
+            return "v0.6.0\n", 0, ""
         if "git ls-remote --tags" in cmd:
-            return "v0.5.9.5\n", 0, ""
+            return "v0.6.0\n", 0, ""
         if "gh release view" in cmd:
             return "", 0, ""
         if "update check --dry-run" in cmd:
-            return "Current version: 0.5.9.5", 0, ""
+            return "Current version: 0.6.0", 0, ""
         if "from atlas_agent.update.sources" in cmd:
-            if "v0.5.9.5.dev0" in cmd:
+            if "v0.6.0.dev0" in cmd:
                 return "False", 0, ""
             return "True", 0, ""
         if "audit-pack --help" in cmd or "verify-audit-pack --help" in cmd:
@@ -68,7 +68,7 @@ def mock_env(monkeypatch):
     return original_read_text
 
 def test_release_assurance_valid(mock_env, tmp_path, monkeypatch):
-    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.5.9.5", "--output", str(tmp_path)])
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
     
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
@@ -100,19 +100,19 @@ def test_release_assurance_invalid_version(mock_env, tmp_path, monkeypatch):
         if name == "pyproject.toml":
             return 'version = "0.5.8"'
         if name == "src/atlas_agent/__init__.py":
-            return '__version__ = "0.5.9.5"'
+            return '__version__ = "0.6.0"'
         if "docs/releases/" in name:
             return "does not enable live trading\ndoes not enable provider execution\nno autonomous trading\nnot financial advice\nno pypi publish has been performed"
         if name == "CHANGELOG.md":
-            return "[0.5.9.5]"
+            return "[0.6.0]"
         if name == "README.md":
-            return "Current Status (v0.5.9.5)"
+            return "Current Status (v0.6.0)"
         if name == "SECURITY.md":
-            return "v0.5.9.5"
+            return "v0.6.0"
         return mock_env(self, *args, **kwargs)
         
     monkeypatch.setattr(Path, "read_text", bad_read_text)
-    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.5.9.5", "--output", str(tmp_path)])
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
     
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
@@ -132,7 +132,7 @@ def test_release_assurance_missing_release_notes(mock_env, tmp_path, monkeypatch
         return original_exists(self, *args, **kwargs)
     
     monkeypatch.setattr(Path, "exists", bad_exists)
-    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.5.9.5", "--output", str(tmp_path)])
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
     
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
@@ -149,19 +149,19 @@ def test_release_assurance_stale_readme(mock_env, tmp_path, monkeypatch):
         if name == "README.md":
             return "Current Status (v0.5.8.1)"
         if name == "pyproject.toml":
-            return 'version = "0.5.9.5"'
+            return 'version = "0.6.0"'
         if name == "src/atlas_agent/__init__.py":
-            return '__version__ = "0.5.9.5"'
+            return '__version__ = "0.6.0"'
         if "docs/releases/" in name:
             return "does not enable live trading\ndoes not enable provider execution\nno autonomous trading\nnot financial advice\nno pypi publish has been performed"
         if name == "CHANGELOG.md":
-            return "[0.5.9.5]"
+            return "[0.6.0]"
         if name == "SECURITY.md":
-            return "v0.5.9.5"
+            return "v0.6.0"
         return mock_env(self, *args, **kwargs)
 
     monkeypatch.setattr(Path, "read_text", bad_read_text)
-    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.5.9.5", "--output", str(tmp_path)])
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
     
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
@@ -177,15 +177,15 @@ def test_release_assurance_dev_stable_check(mock_env, tmp_path, monkeypatch):
         if "git diff HEAD --name-only" in cmd:
             return "", 0, ""
         if "git tag -l" in cmd:
-            return "v0.5.9.5\n", 0, ""
+            return "v0.6.0\n", 0, ""
         if "git ls-remote" in cmd:
-            return "v0.5.9.5\n", 0, ""
+            return "v0.6.0\n", 0, ""
         if "update check" in cmd:
-            return "Current version: 0.5.9.5", 0, ""
+            return "Current version: 0.6.0", 0, ""
         return "", 0, ""
 
     monkeypatch.setattr("release_assurance.run_cmd", bad_run_cmd)
-    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.5.9.5", "--output", str(tmp_path)])
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
     
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
@@ -195,7 +195,7 @@ def test_release_assurance_dev_stable_check(mock_env, tmp_path, monkeypatch):
     assert summary["valid"] is False
 
 def test_release_assurance_secrets_omitted(mock_env, tmp_path, monkeypatch):
-    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.5.9.5", "--output", str(tmp_path)])
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
     with pytest.raises(SystemExit):
         release_assurance.main()
         

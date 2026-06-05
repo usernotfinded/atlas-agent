@@ -142,7 +142,7 @@ REQUIRED_FACTS = {
     ),
     "main health version identity": (
         ("main source version can differ from public release",),
-        ("public github release is `v0.5.9.5`",),
+        ("public github release is `v0.6.0`",),
     ),
     "main health protected boundary": (
         ("protected runtime boundaries should be empty for docs/checker-only work",),

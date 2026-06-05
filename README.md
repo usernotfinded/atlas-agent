@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.5.9.5)** — package/source version is `0.5.9.5`; latest stable public release is [v0.5.9.5](docs/releases/v0.5.9.5.md) on GitHub. PyPI publish was not performed.
+> **Current Status (v0.6.0)** — package/source version is `0.6.0`; latest stable public release is [v0.6.0](docs/releases/v0.6.0.md) on GitHub. PyPI publish was not performed.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -143,7 +143,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`v0.5.9.5` is the latest stable public release on GitHub for the `0.5.9.5` package/source version. This maintenance release makes the release-assurance local workspace fix visible to update detection. PyPI publish was not performed. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
+`v0.6.0` is the latest stable public release on GitHub for the `0.6.0` package/source version. This release adds the v0.6 capability expansion including backtesting foundation, strategy pack, local report generator, reflection artifacts, skill candidates, learning suggestions, dashboard data layer, safe notifications, and broker roadmap. PyPI publish was not performed. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
 
 - Live trading is disabled by default.
 - Provider execution remains locked.
@@ -440,7 +440,7 @@ Built by Natan Mucelli.
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.5.9.5 --output artifacts/release_assurance/v0.5.9.5-local-check
+python scripts/release_assurance.py --version v0.6.0 --output artifacts/release_assurance/v0.6.0-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.

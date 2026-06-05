@@ -304,7 +304,7 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.5.9.5
+./scripts/smoke_release_tag.sh v0.6.0
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):
