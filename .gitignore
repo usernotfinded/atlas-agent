@@ -70,3 +70,4 @@ BATCH2_PLAN.md
 # Local audit logs and manifests
 audit/*.log
 audit/manifests/
+artifacts/release_evidence/

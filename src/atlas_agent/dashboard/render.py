@@ -156,3 +156,123 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
     return output_path
+
+
+def render_dashboard_markdown(snapshot: DashboardSnapshot) -> str:
+    """Render DashboardSnapshot as a Markdown summary."""
+    lines: list[str] = []
+    lines.append("# Atlas Agent Dashboard")
+    lines.append("")
+    lines.append(f"**Workspace:** {snapshot.workspace}")
+    lines.append(f"**Generated:** {snapshot.generated_at}")
+    lines.append(f"**Mode:** {snapshot.mode}")
+    lines.append(f"**Dashboard Mode:** {snapshot.dashboard_mode}")
+    lines.append("")
+
+    if snapshot.warnings:
+        lines.append("## Warnings")
+        for warning in snapshot.warnings:
+            lines.append(f"- {warning}")
+        lines.append("")
+
+    lines.append("## System Health")
+    sh = snapshot.system_health
+    lines.append(f"- **Available:** {sh.available}")
+    lines.append(f"- **Workspace Initialized:** {sh.workspace_initialized}")
+    lines.append(f"- **Config Readable:** {sh.config_readable}")
+    lines.append(f"- **Ready for Backtesting:** {sh.ready_for_backtesting}")
+    lines.append(f"- **Ready for Paper Agentic:** {sh.ready_for_paper_agentic}")
+    lines.append(f"- **Ready for Live:** {sh.ready_for_live}")
+    if sh.checks:
+        lines.append("- **Checks:**")
+        for check in sh.checks:
+            lines.append(f"  - [{check.get('status', '?')}] {check.get('id', '?')}: {check.get('message', '')}")
+    lines.append("")
+
+    lines.append("## Portfolio")
+    pf = snapshot.portfolio
+    lines.append(f"- **Available:** {pf.available}")
+    lines.append(f"- **Cash:** {pf.cash if pf.cash is not None else 'N/A'}")
+    lines.append(f"- **Equity:** {pf.equity if pf.equity is not None else 'N/A'}")
+    lines.append(f"- **Positions:** {pf.positions_count}")
+    lines.append("")
+
+    lines.append("## Backtests")
+    bt = snapshot.backtests
+    lines.append(f"- **Available:** {bt.available}")
+    lines.append(f"- **Total Runs:** {bt.total_runs}")
+    lines.append(f"- **Latest Run:** {bt.latest_run_id or 'N/A'}")
+    lines.append(f"- **Latest Symbol:** {bt.latest_symbol or 'N/A'}")
+    lines.append(f"- **Latest Return:** {bt.latest_return_pct if bt.latest_return_pct is not None else 'N/A'}%")
+    lines.append("")
+
+    lines.append("## Reports")
+    rp = snapshot.reports
+    lines.append(f"- **Available:** {rp.available}")
+    lines.append(f"- **Report Count:** {rp.report_count}")
+    lines.append(f"- **Latest Type:** {rp.latest_report_type or 'N/A'}")
+    lines.append("")
+
+    lines.append("## Reflections")
+    rf = snapshot.reflections
+    lines.append(f"- **Available:** {rf.available}")
+    lines.append(f"- **Total Count:** {rf.total_count}")
+    if rf.by_status:
+        lines.append("- **By Status:**")
+        for status, count in rf.by_status.items():
+            lines.append(f"  - {status}: {count}")
+    lines.append("")
+
+    lines.append("## Skills")
+    sk = snapshot.skills
+    lines.append(f"- **Available:** {sk.available}")
+    lines.append(f"- **Candidates:** {sk.candidate_count}")
+    lines.append(f"- **Library:** {sk.library_count}")
+    if sk.by_status:
+        lines.append("- **By Status:**")
+        for status, count in sk.by_status.items():
+            lines.append(f"  - {status}: {count}")
+    lines.append("")
+
+    lines.append("## Learning Suggestions")
+    lr = snapshot.learning
+    lines.append(f"- **Available:** {lr.available}")
+    lines.append(f"- **Suggestion Count:** {lr.suggestion_count}")
+    if lr.by_status:
+        lines.append("- **By Status:**")
+        for status, count in lr.by_status.items():
+            lines.append(f"  - {status}: {count}")
+    lines.append("")
+
+    lines.append("## Audit")
+    au = snapshot.audit
+    lines.append(f"- **Available:** {au.available}")
+    lines.append(f"- **Recent Events:** {au.recent_events}")
+    lines.append(f"- **Risk Approved:** {au.recent_risk_approved}")
+    lines.append(f"- **Risk Rejected:** {au.recent_risk_rejected}")
+    lines.append(f"- **Backtest Completed:** {au.recent_backtest_completed}")
+    lines.append(f"- **Backtest Failed:** {au.recent_backtest_failed}")
+    lines.append("")
+
+    lines.append("## Safety")
+    sf = snapshot.safety
+    lines.append(f"- **Available:** {sf.available}")
+    lines.append(f"- **Kill Switch Mode:** {sf.kill_switch_mode}")
+    lines.append(f"- **Kill Switch Active:** {sf.kill_switch_active}")
+    lines.append(f"- **Heartbeat Status:** {sf.heartbeat_status}")
+    lines.append(f"- **Live Trading Enabled:** {sf.live_trading_enabled}")
+    lines.append(f"- **Live Submit Enabled:** {sf.live_submit_enabled}")
+    lines.append("")
+
+    if snapshot.missing_data:
+        lines.append("## Missing Data")
+        for item in snapshot.missing_data:
+            lines.append(f"- {item}")
+        lines.append("")
+
+    lines.append("---")
+    lines.append("")
+    lines.append("*This dashboard is read-only, local, and research-only. It is not a trading interface, not financial advice, and does not expose execution controls.*")
+    lines.append("")
+
+    return "\n".join(lines)

@@ -1724,6 +1724,7 @@ Safety First:
 
     dashboard = subparsers.add_parser("dashboard")
     dashboard.add_argument("--json", action="store_true", help="Emit dashboard snapshot as JSON")
+    dashboard.add_argument("--format", choices=("markdown", "html"), default="html", help="Output format (default: html)")
     dashboard.add_argument("--open", action="store_true", help="Open dashboard in browser")
 
     reflection = subparsers.add_parser(
@@ -4432,12 +4433,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "dashboard":
         from atlas_agent.dashboard.collectors import collect_dashboard_snapshot
-        from atlas_agent.dashboard.render import render_dashboard_html
+        from atlas_agent.dashboard.render import render_dashboard_html, render_dashboard_markdown
 
         snapshot = collect_dashboard_snapshot(config, Path.cwd())
 
         if args.json:
             print(snapshot.model_dump_json(indent=2))
+            return 0
+
+        fmt = getattr(args, "format", "html")
+        if fmt == "markdown":
+            md = render_dashboard_markdown(snapshot)
+            print(md)
             return 0
 
         dashboard_path = config.workspace_root / ".atlas" / "dashboard" / "index.html"
