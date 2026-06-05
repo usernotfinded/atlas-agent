@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a v0.6.1 maintenance planning document covering post-release verification, known follow-ups, and patch criteria.
+
+### Fixed
+- Fixed `test_discipline_show_default` and `test_discipline_validate_no_file` to run in isolated temporary directories, preventing failures when a local `.atlas/discipline.md` exists.
 
 ### Changed
 

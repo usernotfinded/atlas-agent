@@ -28,15 +28,15 @@ def _atlas(args: list[str], cwd: Path | None = None) -> tuple[int, str, str]:
     return result.returncode, result.stdout, result.stderr
 
 
-def test_discipline_show_default() -> None:
-    rc, out, _ = _atlas(["discipline", "show"])
+def test_discipline_show_default(tmp_path: Path) -> None:
+    rc, out, _ = _atlas(["discipline", "show"], cwd=tmp_path)
     assert rc == 0
     assert "Decision temperament" in out
     assert "not run agentic workflows" in out
 
 
-def test_discipline_validate_no_file() -> None:
-    rc, out, _ = _atlas(["discipline", "validate"])
+def test_discipline_validate_no_file(tmp_path: Path) -> None:
+    rc, out, _ = _atlas(["discipline", "validate"], cwd=tmp_path)
     assert rc == 0
     assert "No user discipline file found" in out
 
