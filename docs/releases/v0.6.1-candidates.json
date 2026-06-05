@@ -21,8 +21,9 @@
       "source": "docs/releases/v0.6.1-plan.md outdated post-release status; CI run 27038772473 green",
       "risk": "low",
       "expected_files": ["docs/releases/v0.6.1-plan.md"],
-      "acceptance_criteria": "Doc accurately reflects current post-release state; known issues section moved to resolved.",
+      "acceptance_criteria": "Doc accurately reflects current post-release state; known issues section moved to resolved. Implemented in Batch 52.",
       "selected": true,
+      "implemented": true,
       "reason": "Outdated planning doc is misleading to operators."
     },
     {
@@ -33,8 +34,9 @@
       "source": "docs/v0.6-capability-inventory.md labels strategy pack as v0.6.1 but it shipped in v0.6.0",
       "risk": "low",
       "expected_files": ["docs/v0.6-capability-inventory.md"],
-      "acceptance_criteria": "Section header corrected to reflect v0.6.0 release contents; no runtime changes.",
+      "acceptance_criteria": "Section header corrected to reflect v0.6.0 release contents; no runtime changes. Implemented in Batch 52.",
       "selected": true,
+      "implemented": true,
       "reason": "Misleading version labeling confuses patch scope."
     },
     {
@@ -44,9 +46,10 @@
       "priority": "P1",
       "source": "ci.yml does not exercise check_v060_readiness.py --post-release; checker passes locally",
       "risk": "low",
-      "expected_files": [".github/workflows/ci.yml", "tests/test_ci_workflows.py"],
-      "acceptance_criteria": "Post-release readiness step present in core-functional job; test asserts its presence.",
+      "expected_files": [".github/workflows/ci.yml", "tests/test_ci_workflows.py", "scripts/check_v060_readiness.py"],
+      "acceptance_criteria": "Post-release readiness step present in CI quick-gate job; test asserts its presence; auth-flaky gh failures warn instead of error. Implemented in Batch 52.",
       "selected": true,
+      "implemented": true,
       "reason": "Ensures post-release validation runs on every push, preventing regressions."
     },
     {
@@ -69,8 +72,9 @@
       "source": "checks-reference.md should reference new planning checkers",
       "risk": "none",
       "expected_files": ["docs/development/checks-reference.md"],
-      "acceptance_criteria": "New checker documented alongside other planning checkers.",
+      "acceptance_criteria": "Cross-links between planning checkers, readiness checks, and long-running check guidance. Implemented in Batch 52.",
       "selected": true,
+      "implemented": true,
       "reason": "Low-cost docs consistency."
     },
     {

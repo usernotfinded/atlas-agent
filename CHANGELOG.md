@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `scripts/check_v061_candidates.py` and `tests/test_v061_candidates.py` to verify candidate selection structure, safety boundaries, and absence of premature version bumps or release claims.
 
 ### Changed
+- Implemented selected v0.6.1 maintenance candidates for post-release status docs (CAND-001), capability inventory labeling (CAND-002), post-release readiness CI coverage (CAND-003), and checks-reference cross-links (CAND-005).
+- Updated `scripts/check_v060_readiness.py` to treat `gh` authentication failures as warnings instead of errors in post-release mode, preventing CI flakiness while preserving tag and docs checks.
+- Added v0.6 post-release readiness check to CI `quick-gate` and matching workflow tests.
+
+### Changed
 - Added post-release mode (`--post-release`) to the v0.6 readiness checker so `v0.6.0` can be validated after tag and GitHub release publication while preserving the default pre-release behavior.
 - Added per-step elapsed timing and total elapsed summary to all local gate scripts (`dev_check.sh`, `ci_check.sh`, `research_check.sh`, `release_check.sh`).
 

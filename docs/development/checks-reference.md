@@ -171,6 +171,9 @@ sections (selection criteria, candidate table, accepted candidates, rejected
 candidates, safety boundaries, non-goals), has no premature version bump to
 `0.6.1`, has no release notes file, and does not select unsafe runtime scope.
 
+See also [v0.6.0 Readiness Checks](#v060-readiness-checks) and
+[Long-Running Checks](#long-running-checks) for related release verification.
+
 ## v0.6.0 Readiness Checks
 
 `scripts/check_v060_readiness.py` is a read-only checker for the v0.6.0

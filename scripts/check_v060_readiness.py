@@ -218,7 +218,11 @@ def _check_github_release() -> tuple[list[str], list[str]]:
             cwd=REPO_ROOT,
         )
         if result.returncode != 0:
-            errors.append("GitHub release v0.6.0 not found")
+            stderr_lower = result.stderr.lower()
+            if any(k in stderr_lower for k in ("auth", "login", "credentials", "token", "401", "403", "not authenticated")):
+                warnings.append("GitHub CLI cannot verify release (auth unavailable)")
+            else:
+                errors.append("GitHub release v0.6.0 not found")
     except FileNotFoundError:
         warnings.append("GitHub CLI unavailable; cannot verify GitHub release")
     except Exception as exc:
