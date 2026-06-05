@@ -25,7 +25,7 @@ def run_cmd(cmd, check=True, cwd=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate a local release assurance pack.")
-    parser.add_argument("--version", required=True, help="Release version to assure (e.g., v0.5.9.4)")
+    parser.add_argument("--version", required=True, help="Release version to assure (e.g., v0.5.9.5)")
     parser.add_argument("--output", required=True, help="Output directory for the assurance pack")
     args = parser.parse_args()
 

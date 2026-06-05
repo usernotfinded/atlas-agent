@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9.5] - 2026-06-04
+
+### Fixed
+- Kept release assurance updater dry-run checks local by running them in an isolated temporary workspace.
+
+### Changed
+- Updated source package metadata from `0.5.9.4` to `0.5.9.5`.
+- Updated public release identity from `v0.5.9.4` to `v0.5.9.5`.
+
+### Safety
+- No live trading default changes.
+- No provider execution default changes.
+- No broker execution default changes.
+- No runtime trading behavior changes.
+- PyPI publish was not performed.
+
 ## [0.5.9.4] - 2026-06-04
 
 ### Changed

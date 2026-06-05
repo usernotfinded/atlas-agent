@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The security hardening and maintenance workflow changes have been delivered through the `v0.5.9.4` versioned GitHub release so auto-updater users can receive the current public release identity.
+The security hardening and maintenance workflow changes have been delivered through the `v0.5.9.5` versioned GitHub release so auto-updater users can receive the current public release identity.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.5.9.4, the expected public GitHub release is `v0.5.9.4`.
+For v0.5.9.5, the expected public GitHub release is `v0.5.9.5`.
 
 PyPI publishing was intentionally skipped unless explicitly approved separately.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.5.9.4 --output artifacts/release_assurance/v0.5.9.4-local-check
+python scripts/release_assurance.py --version v0.5.9.5 --output artifacts/release_assurance/v0.5.9.5-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.

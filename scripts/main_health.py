@@ -17,9 +17,9 @@ from types import ModuleType
 from typing import Callable, Iterable
 
 
-EXPECTED_SOURCE_VERSION = "0.5.9.4"
-PUBLIC_RELEASE = "v0.5.9.4"
-NEXT_UNREQUESTED_RELEASE_TAG = "v0.5.9.5"
+EXPECTED_SOURCE_VERSION = "0.5.9.5"
+PUBLIC_RELEASE = "v0.5.9.5"
+NEXT_UNREQUESTED_RELEASE_TAG = "v0.5.9.6"
 
 PROTECTED_BOUNDARIES = (
     "src/atlas_agent/config",
@@ -366,7 +366,7 @@ def _new_checks() -> dict[str, bool]:
         "init_present": False,
         "version_consistent": False,
         "expected_source_version": False,
-        "public_release_expected": PUBLIC_RELEASE == "v0.5.9.4",
+        "public_release_expected": PUBLIC_RELEASE == "v0.5.9.5",
         "git_available": False,
         "on_main": False,
         "origin_main_resolved": False,

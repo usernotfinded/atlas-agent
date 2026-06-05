@@ -36,8 +36,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-EXPECTED_VERSION = "0.5.9.4"
-POST_HOTFIX_DEV_VERSION = "0.5.9.4.dev0"
+EXPECTED_VERSION = "0.5.9.5"
+POST_HOTFIX_DEV_VERSION = "0.5.9.5.dev0"
 HISTORICAL_STABLE_VERSION = "0.5.8"
 HISTORICAL_STABLE_TAG = "v0.5.8"
 ACTIVE_RELEASE_TAG = "v0.5.8.1"
@@ -84,7 +84,7 @@ def _check_current_version() -> list[str]:
     if EXPECTED_VERSION == "0.5.8.1":
         allowed_versions.add(POST_HOTFIX_DEV_VERSION)
         allowed_versions.add("0.5.9")
-        allowed_versions.add("0.5.9.4")
+        allowed_versions.add("0.5.9.5")
 
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:

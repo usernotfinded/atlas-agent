@@ -5,12 +5,12 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.5.9.4`
-- Source package version on `main`: `0.5.9.4`
-- GitHub release: `v0.5.9.4`
+- Current public release: `v0.5.9.5`
+- Source package version on `main`: `0.5.9.5`
+- GitHub release: `v0.5.9.5`
 - PyPI publish: not performed
-- Release status detail: [v0.5.9.4 Trust and Release Status](v0.5.9.4-status.md)
-- Release notes: [docs/releases/v0.5.9.4.md](../releases/v0.5.9.4.md)
+- Release status detail: [v0.5.9.5 Trust and Release Status](v0.5.9.5-status.md)
+- Release notes: [docs/releases/v0.5.9.5.md](../releases/v0.5.9.5.md)
 
 ## Security Posture
 
@@ -59,20 +59,20 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.5.9.4` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.5.9.5` is verified against the GitHub release/tag.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.5.9.4`
+- GitHub release: `v0.5.9.5`
 - PyPI publish: not performed
-- Package version in source metadata: `0.5.9.4`
+- Package version in source metadata: `0.5.9.5`
 - Auto-updater delivery: verified
 
 ## What Is Ready
 
-- Public v0.5.9.4 release notes and release status documentation.
+- Public v0.5.9.5 release notes and release status documentation.
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -81,7 +81,7 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.5.9.4`.
+- PyPI was not published for `v0.5.9.5`.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -97,8 +97,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.5.9.4 Release Notes](../releases/v0.5.9.4.md)
-- [v0.5.9.4 Trust and Release Status](v0.5.9.4-status.md)
+- [v0.5.9.5 Release Notes](../releases/v0.5.9.5.md)
+- [v0.5.9.5 Trust and Release Status](v0.5.9.5-status.md)
 - [SECURITY.md](../../SECURITY.md)
 - [Release Readiness](../security/release-readiness.md)
 - [Provider Audit Pack](../security/provider-audit-pack.md)

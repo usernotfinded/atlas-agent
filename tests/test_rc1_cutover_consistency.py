@@ -21,7 +21,7 @@ VERSION_SCRIPT = REPO_ROOT / "scripts" / "check_version_consistency.py"
 
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.5.9.4"
+CURRENT_DEV_SERIES = "0.5.9.5"
 
 
 class TestScriptExists:

@@ -34,10 +34,10 @@ def _write(path: Path, text: str) -> None:
 
 
 def _fixture(tmp_path: Path) -> Path:
-    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.5.9.4"\n')
+    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.5.9.5"\n')
     _write(
         tmp_path / "src" / "atlas_agent" / "__init__.py",
-        '__version__ = "0.5.9.4"\n',
+        '__version__ = "0.5.9.5"\n',
     )
     _write(tmp_path / "scripts" / "check_trust_center.py", "# fixture\n")
     _write(tmp_path / "scripts" / "check_onboarding_docs.py", "# fixture\n")
@@ -76,7 +76,7 @@ def _runner(
             return CHECKER.CommandResult(0, staged, "")
         if key == ("ls-files",):
             return CHECKER.CommandResult(0, tracked, "")
-        if key == ("tag", "--list", "v0.5.9.5"):
+        if key == ("tag", "--list", "v0.5.9.6"):
             return CHECKER.CommandResult(0, tag, "")
         if key == (
             "diff",
@@ -102,7 +102,7 @@ def test_text_mode_runs_on_mocked_clean_main_state(tmp_path: Path, capsys) -> No
     captured = capsys.readouterr()
     assert exit_code == 0
     assert "Main health report PASSED" in captured.out
-    assert "Source version: 0.5.9.4" in captured.out
+    assert "Source version: 0.5.9.5" in captured.out
 
 
 def test_json_mode_returns_artifact_type(tmp_path: Path, capsys) -> None:
@@ -119,14 +119,14 @@ def test_json_mode_returns_artifact_type(tmp_path: Path, capsys) -> None:
 def test_reports_source_version_check(tmp_path: Path) -> None:
     report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
 
-    assert report.source_version == "0.5.9.4"
+    assert report.source_version == "0.5.9.5"
     assert report.checks["expected_source_version"] is True
 
 
 def test_reports_public_release_v0594(tmp_path: Path) -> None:
     report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
 
-    assert report.public_release == "v0.5.9.4"
+    assert report.public_release == "v0.5.9.5"
     assert report.checks["public_release_expected"] is True
 
 
@@ -204,7 +204,7 @@ def test_warns_on_untracked_generated_artifacts_without_printing_secret_values(
 def test_flags_accidental_future_release_tag_using_mocked_git_tag(tmp_path: Path) -> None:
     report = CHECKER.collect_report(
         _fixture(tmp_path),
-        git_runner=_runner(tag="v0.5.9.5\n"),
+        git_runner=_runner(tag="v0.5.9.6\n"),
     )
 
     assert report.exit_code == 1
@@ -280,7 +280,7 @@ def test_docs_mention_main_source_version_can_differ_from_public_release() -> No
     text = DOC.read_text(encoding="utf-8").lower()
 
     assert "main source version can differ from public release" in text
-    assert "public github release is `v0.5.9.4`" in text
+    assert "public github release is `v0.5.9.5`" in text
 
 
 def test_docs_discourage_destructive_git_cleanup() -> None:
