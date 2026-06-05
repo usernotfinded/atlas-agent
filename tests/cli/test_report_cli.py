@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 @pytest.fixture
 def atlas_cli():
@@ -21,13 +23,13 @@ class TestReportDaily:
             [*atlas_cli, "report", "daily"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         assert "daily-report" in result.stdout
         # Verify the written file contains real content
         path_line = result.stdout.strip()
-        written = Path(path_line)
+        written = REPO_ROOT / path_line
         if written.exists():
             content = written.read_text(encoding="utf-8")
             assert "Atlas Agent Report" in content
@@ -40,7 +42,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--type", "daily", "--format", "markdown"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         assert "Atlas Agent Report" in result.stdout
@@ -50,7 +52,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--type", "daily", "--format", "json"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         data = json.loads(result.stdout)
@@ -62,7 +64,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--type", "weekly", "--format", "markdown"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         assert "Atlas Agent Report: Weekly" in result.stdout
@@ -72,7 +74,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--type", "ad-hoc", "--format", "markdown"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         assert "Atlas Agent Report: Ad-Hoc" in result.stdout
@@ -82,7 +84,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--type", "ad-hoc", "--format", "json"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         data = json.loads(result.stdout)
@@ -95,7 +97,7 @@ class TestReportGenerate:
                 [*atlas_cli, "report", "generate", "--type", "daily", "--format", "markdown", "--output", str(out_path)],
                 capture_output=True,
                 text=True,
-                cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+                cwd=str(REPO_ROOT),
             )
             assert result.returncode == 0
             assert out_path.exists()
@@ -104,7 +106,7 @@ class TestReportGenerate:
 
     def test_generate_with_run_id_legacy(self, atlas_cli):
         # Find a real backtest run id
-        bt_dir = Path("/Users/natanmucelli/Desktop/prog/atlas-agent/.atlas/backtests")
+        bt_dir = REPO_ROOT / ".atlas" / "backtests"
         run_dirs = [d.name for d in bt_dir.iterdir() if d.is_dir()] if bt_dir.exists() else []
         if not run_dirs:
             pytest.skip("No backtest runs available for legacy test")
@@ -113,7 +115,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--run-id", run_id, "--format", "markdown"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         assert "Backtest Research Summary" in result.stdout
@@ -123,7 +125,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--run-id", "nonexistent-run", "--format", "markdown"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 1
         assert "No backtest result found" in result.stderr
@@ -133,7 +135,7 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--type", "daily", "--format", "json"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
         data = json.loads(result.stdout)
@@ -144,6 +146,6 @@ class TestReportGenerate:
             [*atlas_cli, "report", "generate", "--type", "daily", "--format", "json"],
             capture_output=True,
             text=True,
-            cwd="/Users/natanmucelli/Desktop/prog/atlas-agent",
+            cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0
