@@ -4389,7 +4389,7 @@ def main(argv: list[str] | None = None) -> int:
             input_path = getattr(args, "input", None)
             kind = getattr(args, "kind", None)
             output = getattr(args, "output", "stdout")
-            emit_json = getattr(args, "json", False)
+            use_json = getattr(args, "json", False)
             artifact = generate_reflection(
                 input_path,
                 kind=kind,
@@ -4397,7 +4397,7 @@ def main(argv: list[str] | None = None) -> int:
                 dry_run=True,
             )
             save_artifact(artifact, workspace=".")
-            if emit_json:
+            if use_json:
                 content = artifact.model_dump_json(indent=2)
             else:
                 content = _render_reflection_markdown(artifact)
@@ -4412,11 +4412,11 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.reflection_command == "list":
             status_filter = getattr(args, "status", None)
-            emit_json = getattr(args, "json", False)
+            use_json = getattr(args, "json", False)
             from atlas_agent.reflection.models import ReflectionStatus
             status = ReflectionStatus(status_filter) if status_filter else None
             artifacts = list_artifacts(workspace=".", status=status)
-            if emit_json:
+            if use_json:
                 print(json.dumps(artifacts, indent=2, sort_keys=True, default=str))
             else:
                 if not artifacts:
@@ -4430,9 +4430,9 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.reflection_command == "show":
             reflection_id = getattr(args, "reflection_id", None)
-            emit_json = getattr(args, "json", False)
+            use_json = getattr(args, "json", False)
             artifact = load_artifact(reflection_id, workspace=".")
-            if emit_json:
+            if use_json:
                 print(artifact.model_dump_json(indent=2))
             else:
                 print(_render_reflection_markdown(artifact))
