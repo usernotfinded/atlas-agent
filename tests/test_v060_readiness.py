@@ -82,24 +82,33 @@ class TestCheckerPreRelease:
 class TestCheckerPostRelease:
     """Post-release mode expects the v0.6.0 tag and GitHub release to exist."""
 
-    def test_post_release_mode_passes(self) -> None:
-        result = _run_script("--post-release")
-        assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
-        assert "PASS" in result.stdout
-        assert "post-release" in result.stdout.lower()
+    def test_post_release_mode_passes(self, monkeypatch) -> None:
+        mod = _load_script_module()
 
-    def test_post_release_json_valid(self) -> None:
-        result = _run_script("--post-release", "--json")
-        assert result.returncode == 0, f"stderr: {result.stderr}"
-        data = json.loads(result.stdout)
-        assert data["valid"] is True
-        assert data.get("mode") == "post_release"
-        assert data["errors"] == []
-        assert "checks" in data
-        assert data["checks"]["docs"] > 0
-        assert data["checks"]["source_modules"] > 0
-        assert data["checks"]["test_files"] > 0
-        assert data["checks"]["cli_subcommands"] > 0
+        monkeypatch.setattr(mod, "_check_v060_tag", lambda post_release=False: [])
+        monkeypatch.setattr(mod, "_check_github_release", lambda: ([], []))
+
+        code, result = mod.run_check(json_output=False, post_release=True)
+        assert code == 0
+        assert result["valid"] is True
+        assert result["mode"] == "post_release"
+
+    def test_post_release_json_valid(self, monkeypatch) -> None:
+        mod = _load_script_module()
+
+        monkeypatch.setattr(mod, "_check_v060_tag", lambda post_release=False: [])
+        monkeypatch.setattr(mod, "_check_github_release", lambda: ([], []))
+
+        code, result = mod.run_check(json_output=False, post_release=True)
+        assert code == 0
+        assert result["valid"] is True
+        assert result["mode"] == "post_release"
+        assert result["errors"] == []
+        assert "checks" in result
+        assert result["checks"]["docs"] > 0
+        assert result["checks"]["source_modules"] > 0
+        assert result["checks"]["test_files"] > 0
+        assert result["checks"]["cli_subcommands"] > 0
 
     def test_post_release_mode_fails_when_tag_missing(self, monkeypatch) -> None:
         mod = _load_script_module()
@@ -118,6 +127,9 @@ class TestCheckerPostRelease:
 
     def test_github_cli_unavailable_warns_not_errors(self, monkeypatch) -> None:
         mod = _load_script_module()
+
+        # Mock tag check so it does not interfere with the GH-unavailable test.
+        monkeypatch.setattr(mod, "_check_v060_tag", lambda post_release=False: [])
 
         def _fake_gh_check() -> tuple[list[str], list[str]]:
             return [], ["GitHub CLI unavailable; cannot verify GitHub release"]

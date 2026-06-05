@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed `test_discipline_show_default` and `test_discipline_validate_no_file` to run in isolated temporary directories, preventing failures when a local `.atlas/discipline.md` exists.
+- Fixed `tests/test_v060_readiness.py` post-release tests to be deterministic and offline-safe by mocking `_check_v060_tag` and `_check_github_release` instead of relying on real local git tags or GitHub release visibility.
 
 ### Changed
 
