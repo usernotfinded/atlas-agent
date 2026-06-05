@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added a v0.6.1 maintenance planning document covering post-release verification, known follow-ups, and patch criteria.
 - Added `scripts/check_runtime_diagnostics.py`, a read-only helper that documents expected check runtimes, focused subsets, and timeout triage guidance.
+- Added a v0.6.1 patch candidate selection document (`docs/releases/v0.6.1-candidates.md`) and machine-readable inventory (`docs/releases/v0.6.1-candidates.json`) to separate safe maintenance candidates from deferred or runtime-sensitive work.
+- Added `scripts/check_v061_candidates.py` and `tests/test_v061_candidates.py` to verify candidate selection structure, safety boundaries, and absence of premature version bumps or release claims.
 
 ### Changed
 - Added post-release mode (`--post-release`) to the v0.6 readiness checker so `v0.6.0` can be validated after tag and GitHub release publication while preserving the default pre-release behavior.

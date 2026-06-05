@@ -1,0 +1,141 @@
+{
+  "artifact_type": "v061_patch_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.1",
+  "generated_for": "planning",
+  "generated_at": "2026-06-05",
+  "selection_criteria": [
+    "small and safe — docs-only, checker-only, test-only, or CI-only",
+    "backward compatible — no API or CLI contract changes",
+    "no runtime trading impact — no broker, execution, safety, risk, or provider default changes",
+    "no new features — patch scope per Semantic Versioning 2.0.0",
+    "verified by evidence — reproducible from repo state, CI logs, or checker output",
+    "testable — no network or credentials required"
+  ],
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Update v0.6.1-plan.md post-release status and resolved issues",
+      "category": "docs",
+      "priority": "P1",
+      "source": "docs/releases/v0.6.1-plan.md outdated post-release status; CI run 27038772473 green",
+      "risk": "low",
+      "expected_files": ["docs/releases/v0.6.1-plan.md"],
+      "acceptance_criteria": "Doc accurately reflects current post-release state; known issues section moved to resolved.",
+      "selected": true,
+      "reason": "Outdated planning doc is misleading to operators."
+    },
+    {
+      "id": "CAND-002",
+      "title": "Fix capability inventory version section labeling",
+      "category": "docs",
+      "priority": "P1",
+      "source": "docs/v0.6-capability-inventory.md labels strategy pack as v0.6.1 but it shipped in v0.6.0",
+      "risk": "low",
+      "expected_files": ["docs/v0.6-capability-inventory.md"],
+      "acceptance_criteria": "Section header corrected to reflect v0.6.0 release contents; no runtime changes.",
+      "selected": true,
+      "reason": "Misleading version labeling confuses patch scope."
+    },
+    {
+      "id": "CAND-003",
+      "title": "Add post-release readiness check to CI quick-gate",
+      "category": "CI/test",
+      "priority": "P1",
+      "source": "ci.yml does not exercise check_v060_readiness.py --post-release; checker passes locally",
+      "risk": "low",
+      "expected_files": [".github/workflows/ci.yml", "tests/test_ci_workflows.py"],
+      "acceptance_criteria": "Post-release readiness step present in core-functional job; test asserts its presence.",
+      "selected": true,
+      "reason": "Ensures post-release validation runs on every push, preventing regressions."
+    },
+    {
+      "id": "CAND-004",
+      "title": "Align GitHub release body trailing newline",
+      "category": "docs",
+      "priority": "P2",
+      "source": "docs/releases/v0.6.0.md and GitHub release body differ by one trailing newline",
+      "risk": "none",
+      "expected_files": ["docs/releases/v0.6.0.md"],
+      "acceptance_criteria": "Content is byte-identical except benign trailing whitespace.",
+      "selected": false,
+      "reason": "Benign formatting; no user impact. Defer to next doc-edit batch."
+    },
+    {
+      "id": "CAND-005",
+      "title": "Checks-reference.md cross-link polish",
+      "category": "docs",
+      "priority": "P2",
+      "source": "checks-reference.md should reference new planning checkers",
+      "risk": "none",
+      "expected_files": ["docs/development/checks-reference.md"],
+      "acceptance_criteria": "New checker documented alongside other planning checkers.",
+      "selected": true,
+      "reason": "Low-cost docs consistency."
+    },
+    {
+      "id": "CAND-006",
+      "title": "Runtime diagnostics timeout guidance refinement",
+      "category": "docs/checker",
+      "priority": "P2",
+      "source": "scripts/check_runtime_diagnostics.py and checks-reference.md already document timeout triage",
+      "risk": "none",
+      "expected_files": ["scripts/check_runtime_diagnostics.py", "docs/development/checks-reference.md"],
+      "acceptance_criteria": "Guidance covers slow-machine estimates without weakening checks.",
+      "selected": false,
+      "reason": "Already sufficient; defer unless user reports confusion."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "New broker adapters (Binance completion, CCXT enablement, IBKR implementation)",
+      "reason": "New features, not bug fixes. Defer to v0.6.2 or later minor release."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Provider execution unlock or real LLM integration",
+      "reason": "Runtime-sensitive, safety-critical. Explicitly out of patch scope."
+    },
+    {
+      "id": "REJ-003",
+      "title": "PyPI publish",
+      "reason": "Not a bug fix. Requires separate approval and process."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Dashboard frontend rewrite",
+      "reason": "Large, new-feature work. Defer to minor release."
+    },
+    {
+      "id": "REJ-005",
+      "title": "New strategy packs",
+      "reason": "New features. Defer to minor release."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Autonomous trading or skill auto-activation",
+      "reason": "Violates safety boundaries. Never acceptable in a patch."
+    }
+  ],
+  "safety_boundaries": [
+    "src/atlas_agent/config/ — no new live defaults",
+    "src/atlas_agent/brokers/ — no new submit paths, no execution enabled by default",
+    "src/atlas_agent/execution/ — no direct AI-to-broker paths",
+    "src/atlas_agent/safety/ — no kill switch bypasses",
+    "src/atlas_agent/risk/ — risk limits must not be weakened",
+    "No version bump to 0.6.1 in this batch",
+    "No docs/releases/v0.6.1.md release notes file created yet",
+    "No tag, GitHub release, or PyPI publish"
+  ],
+  "non_goals": [
+    "No new runtime features for v0.6.1",
+    "No new broker adapters",
+    "No new provider integrations",
+    "No live trading default changes",
+    "Risk gates must remain unchanged",
+    "No approval queue or kill switch changes",
+    "No automatic skill activation or learning execution",
+    "No PyPI publish in this batch"
+  ]
+}

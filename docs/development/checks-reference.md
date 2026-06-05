@@ -156,6 +156,21 @@ requires `actions/checkout@v6`, `actions/setup-python@v6`, and
 dependencies, modify files, or require GitHub credentials. See
 [GitHub Actions Maintenance](github-actions.md).
 
+## v0.6.1 Patch Candidate Checks
+
+`scripts/check_v061_candidates.py` is a read-only checker for the v0.6.1 patch
+candidate selection document:
+
+```bash
+python3.11 scripts/check_v061_candidates.py
+python3.11 scripts/check_v061_candidates.py --json
+```
+
+It verifies that `docs/releases/v0.6.1-candidates.md` exists, contains required
+sections (selection criteria, candidate table, accepted candidates, rejected
+candidates, safety boundaries, non-goals), has no premature version bump to
+`0.6.1`, has no release notes file, and does not select unsafe runtime scope.
+
 ## v0.6.0 Readiness Checks
 
 `scripts/check_v060_readiness.py` is a read-only checker for the v0.6.0
