@@ -67,6 +67,8 @@ if [[ "$#" -gt 0 ]]; then
     exit 1
 fi
 
+TOTAL_ELAPSED=0
+
 echo "========================================"
 echo "release check — mode: $MODE"
 echo "========================================"
@@ -86,63 +88,94 @@ echo ""
 echo "========================================"
 echo "1. pytest"
 echo "========================================"
+SECONDS=0
 "$PYTHON_BIN" -m pytest -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "2. pip check"
 echo "========================================"
+SECONDS=0
 "$PYTHON_BIN" -m pip check
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "3. reviewer golden-path smoke"
 echo "========================================"
+SECONDS=0
 "$PYTHON_BIN" scripts/smoke_reviewer_golden_path.py --skip-release-check
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "4. demo paper workflow"
 echo "========================================"
+SECONDS=0
 ./scripts/demo_paper_workflow.sh
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "5. demo research workflow"
 echo "========================================"
+SECONDS=0
 ./scripts/demo_research_workflow.sh
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "6. git diff --check"
 echo "========================================"
+SECONDS=0
 git diff --check
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "7. git diff --cached --check"
 echo "========================================"
+SECONDS=0
 git diff --cached --check
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "8. protected staged files"
 echo "========================================"
+SECONDS=0
 "$PYTHON_BIN" scripts/check_no_protected_staged.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "9. version consistency"
 echo "========================================"
+SECONDS=0
 "$PYTHON_BIN" scripts/check_version_consistency.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "10. forbidden claims scan"
 echo "========================================"
+SECONDS=0
 "$PYTHON_BIN" scripts/check_forbidden_claims.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
 echo "All release checks passed."
+echo "Total elapsed: ${TOTAL_ELAPSED}s"
 echo "========================================"

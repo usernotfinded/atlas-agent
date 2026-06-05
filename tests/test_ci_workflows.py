@@ -178,6 +178,11 @@ class TestCiWorkflow:
     def test_has_explicit_tag_fetch_step(self, ci_content: str) -> None:
         assert "git fetch --force --tags origin" in ci_content
 
+    def test_core_functional_fetches_tags(self, ci_content: str) -> None:
+        # The core-functional job must also fetch tags so that tag-dependent
+        # tests (e.g. v0.6.0 post-release readiness) have the tag available.
+        assert ci_content.count("git fetch --force --tags origin") >= 2
+
     def test_clean_install_uses_allow_network(self, ci_content: str) -> None:
         assert "check_clean_install.py --allow-network" in ci_content
 

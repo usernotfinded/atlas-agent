@@ -221,6 +221,45 @@ Blocking matches include actual publishing commands, actual tag/release creation
 outside warning context, destructive git operations outside warning context,
 provider/broker execution, live trading enablement, and real secret values.
 
+## Long-Running Checks
+
+Some local checks can take several minutes, especially on slower machines or
+when the full test suite is large:
+
+| Check | Typical local runtime | Category |
+|---|---|---|
+| `scripts/dev_check.sh` | ~30–90s | core |
+| `scripts/ci_check.sh` | ~60–180s | core |
+| `scripts/release_check.sh --quick` | ~30–90s | core |
+| `scripts/research_check.sh` | ~60–300s | long |
+| `scripts/release_check.sh --full` | ~120–600s | long |
+
+**Timeout triage rules:**
+
+- If a long-running check times out but all core gates pass, report it as
+  **WARN / INCONCLUSIVE**, not PASS.
+- Core gates remain: `dev_check.sh`, `ci_check.sh`, `release_check.sh --quick`.
+- Do **not** weaken checks, add broad `|| true`, skip tests, or remove checks
+  to avoid timeout.
+- Use focused subsets for faster iteration (see `scripts/check_runtime_diagnostics.py`).
+- Capture full output to a log for post-hoc analysis:
+  ```bash
+  ./scripts/release_check.sh --full 2>&1 | tee /tmp/release.log
+  ```
+
+All gate scripts print per-step elapsed time and a total elapsed summary.
+
+## Runtime Diagnostics
+
+`scripts/check_runtime_diagnostics.py` is a read-only helper that documents
+expected commands, typical runtimes, focused subsets, and timeout triage
+guidance without running any checks:
+
+```bash
+python scripts/check_runtime_diagnostics.py
+python scripts/check_runtime_diagnostics.py --json
+```
+
 ## Interpreting Failures
 
 - Treat stale version, trust center, onboarding docs, and forbidden-claim

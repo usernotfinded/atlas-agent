@@ -900,3 +900,58 @@ class TestReleaseCheckTieredModes:
 
         assert "git add ." not in content
         assert "git add" not in content
+
+    def test_includes_per_step_timing(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "SECONDS=0" in content
+        assert "elapsed: ${SECONDS}s" in content
+
+    def test_includes_total_elapsed(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "Total elapsed: ${TOTAL_ELAPSED}s" in content
+
+    def test_no_broad_or_true(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "release_check.sh").read_text(encoding="utf-8")
+
+        assert "|| true" not in content
+
+
+# ---------------------------------------------------------------------------
+# Timing coverage across gate scripts
+# ---------------------------------------------------------------------------
+
+class TestGateScriptTiming:
+    def test_research_check_includes_timing(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "research_check.sh").read_text(encoding="utf-8")
+
+        assert "SECONDS=0" in content
+        assert "elapsed: ${SECONDS}s" in content
+        assert "Total elapsed: ${TOTAL_ELAPSED}s" in content
+
+    def test_research_check_no_broad_or_true(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "research_check.sh").read_text(encoding="utf-8")
+
+        assert "|| true" not in content
+
+    def test_dev_check_includes_timing(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "dev_check.sh").read_text(encoding="utf-8")
+
+        assert "SECONDS=0" in content
+        assert "elapsed: ${SECONDS}s" in content
+        assert "Total elapsed: ${TOTAL_ELAPSED}s" in content
+
+    def test_ci_check_includes_timing(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        content = (repo_root / "scripts" / "ci_check.sh").read_text(encoding="utf-8")
+
+        assert "SECONDS=0" in content
+        assert "elapsed: ${SECONDS}s" in content
+        assert "Total elapsed: ${TOTAL_ELAPSED}s" in content
