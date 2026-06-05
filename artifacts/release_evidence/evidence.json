@@ -22,6 +22,13 @@
     "A\tartifacts/release_assurance/v0.5.9-local-check/release-checks.json",
     "A\tartifacts/release_assurance/v0.5.9-local-check/sha256sums.txt",
     "A\tartifacts/release_assurance/v0.5.9-local-check/updater-delivery-checks.json",
+    "A\tartifacts/release_assurance/v0.5.9.5-local-check/provider-audit-pack-checks.json",
+    "A\tartifacts/release_assurance/v0.5.9.5-local-check/public-metadata-checks.json",
+    "A\tartifacts/release_assurance/v0.5.9.5-local-check/release-assurance-report.md",
+    "A\tartifacts/release_assurance/v0.5.9.5-local-check/release-assurance-summary.json",
+    "A\tartifacts/release_assurance/v0.5.9.5-local-check/release-checks.json",
+    "A\tartifacts/release_assurance/v0.5.9.5-local-check/sha256sums.txt",
+    "A\tartifacts/release_assurance/v0.5.9.5-local-check/updater-delivery-checks.json",
     "A\tartifacts/release_assurance/v0.5.9/provider-audit-pack-checks.json",
     "A\tartifacts/release_assurance/v0.5.9/public-metadata-checks.json",
     "A\tartifacts/release_assurance/v0.5.9/release-assurance-report.md",
@@ -29,8 +36,8 @@
     "A\tartifacts/release_assurance/v0.5.9/release-checks.json",
     "A\tartifacts/release_assurance/v0.5.9/sha256sums.txt",
     "A\tartifacts/release_assurance/v0.5.9/updater-delivery-checks.json",
-    "D\tartifacts/release_evidence/evidence.json",
-    "D\tartifacts/release_evidence/evidence.md",
+    "M\tartifacts/release_evidence/evidence.json",
+    "M\tartifacts/release_evidence/evidence.md",
     "A\tbump.py",
     "A\tdocs/audits/batch-7-post-incident-audit.md",
     "M\tdocs/cli-command-compatibility.md",
@@ -47,6 +54,7 @@
     "M\tdocs/public-launch-readiness.md",
     "M\tdocs/release-checklist.md",
     "A\tdocs/releases/v0.5.9.4.md",
+    "A\tdocs/releases/v0.5.9.5.md",
     "A\tdocs/releases/v0.5.9.md",
     "M\tdocs/reviewer-outreach-checklist.md",
     "A\tdocs/security/approval-safety.md",
@@ -63,6 +71,7 @@
     "A\tdocs/trust/README.md",
     "A\tdocs/trust/v0.5.9-status.md",
     "A\tdocs/trust/v0.5.9.4-status.md",
+    "A\tdocs/trust/v0.5.9.5-status.md",
     "A\tpatch_sources.py",
     "M\tpyproject.toml",
     "M\tscripts/build_release_evidence_bundle.py",
@@ -168,7 +177,7 @@
   "checks": [
     {
       "command": [
-        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "/Users/natanmucelli/.pyenv/versions/3.14.0/bin/python3",
         "scripts/check_version_consistency.py"
       ],
       "exit_code": 0,
@@ -179,7 +188,7 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "/Users/natanmucelli/.pyenv/versions/3.14.0/bin/python3",
         "scripts/check_forbidden_claims.py"
       ],
       "exit_code": 0,
@@ -190,7 +199,7 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "/Users/natanmucelli/.pyenv/versions/3.14.0/bin/python3",
         "scripts/check_public_docs_consistency.py"
       ],
       "exit_code": 0,
@@ -201,7 +210,7 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "/Users/natanmucelli/.pyenv/versions/3.14.0/bin/python3",
         "scripts/check_public_launch_readiness.py"
       ],
       "exit_code": 0,
@@ -212,7 +221,7 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "/Users/natanmucelli/.pyenv/versions/3.14.0/bin/python3",
         "scripts/check_stable_release_decision.py"
       ],
       "exit_code": 0,
@@ -223,7 +232,7 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.11/bin/python3.11",
+        "/Users/natanmucelli/.pyenv/versions/3.14.0/bin/python3",
         "scripts/check_cli_command_compatibility.py"
       ],
       "exit_code": 0,
@@ -234,9 +243,9 @@
     }
   ],
   "current_branch": "main",
-  "current_commit": "bb92d616a5274d9aa5a6152e32f4337e077dea00",
+  "current_commit": "25d3a127e7a17a60b45be1658ca0431d404dfa70",
   "diff_check_clean": true,
-  "generated_at": "2026-06-04T21:44:05.893032+00:00",
+  "generated_at": "2026-06-05T06:15:34.667858+00:00",
   "package_version": "0.5.9.5",
   "passed": true,
   "protected_boundaries": {

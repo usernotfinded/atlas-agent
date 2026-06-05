@@ -5,11 +5,11 @@
 ## Summary
 
 - **Overall status:** PASSED
-- **Generated at:** 2026-06-04T21:44:05.893032+00:00
+- **Generated at:** 2026-06-05T06:15:34.667858+00:00
 - **Package version:** 0.5.9.5
 - **Public stable tag:** v0.5.8.1
 - **Current branch:** main
-- **Current commit:** `bb92d616a5274d9aa5a6152e32f4337e077dea00`
+- **Current commit:** `25d3a127e7a17a60b45be1658ca0431d404dfa70`
 - **Working tree clean:** False
 - **Diff check clean:** True
 - **Protected boundaries clean:** False
@@ -50,6 +50,13 @@ A	artifacts/release_assurance/v0.5.9-local-check/release-assurance-summary.json
 A	artifacts/release_assurance/v0.5.9-local-check/release-checks.json
 A	artifacts/release_assurance/v0.5.9-local-check/sha256sums.txt
 A	artifacts/release_assurance/v0.5.9-local-check/updater-delivery-checks.json
+A	artifacts/release_assurance/v0.5.9.5-local-check/provider-audit-pack-checks.json
+A	artifacts/release_assurance/v0.5.9.5-local-check/public-metadata-checks.json
+A	artifacts/release_assurance/v0.5.9.5-local-check/release-assurance-report.md
+A	artifacts/release_assurance/v0.5.9.5-local-check/release-assurance-summary.json
+A	artifacts/release_assurance/v0.5.9.5-local-check/release-checks.json
+A	artifacts/release_assurance/v0.5.9.5-local-check/sha256sums.txt
+A	artifacts/release_assurance/v0.5.9.5-local-check/updater-delivery-checks.json
 A	artifacts/release_assurance/v0.5.9/provider-audit-pack-checks.json
 A	artifacts/release_assurance/v0.5.9/public-metadata-checks.json
 A	artifacts/release_assurance/v0.5.9/release-assurance-report.md
@@ -57,8 +64,8 @@ A	artifacts/release_assurance/v0.5.9/release-assurance-summary.json
 A	artifacts/release_assurance/v0.5.9/release-checks.json
 A	artifacts/release_assurance/v0.5.9/sha256sums.txt
 A	artifacts/release_assurance/v0.5.9/updater-delivery-checks.json
-D	artifacts/release_evidence/evidence.json
-D	artifacts/release_evidence/evidence.md
+M	artifacts/release_evidence/evidence.json
+M	artifacts/release_evidence/evidence.md
 A	bump.py
 A	docs/audits/batch-7-post-incident-audit.md
 M	docs/cli-command-compatibility.md
@@ -75,6 +82,7 @@ M	docs/product-capability-inventory.md
 M	docs/public-launch-readiness.md
 M	docs/release-checklist.md
 A	docs/releases/v0.5.9.4.md
+A	docs/releases/v0.5.9.5.md
 A	docs/releases/v0.5.9.md
 M	docs/reviewer-outreach-checklist.md
 A	docs/security/approval-safety.md
@@ -91,6 +99,7 @@ A	docs/security/release-readiness.md
 A	docs/trust/README.md
 A	docs/trust/v0.5.9-status.md
 A	docs/trust/v0.5.9.4-status.md
+A	docs/trust/v0.5.9.5-status.md
 A	patch_sources.py
 M	pyproject.toml
 M	scripts/build_release_evidence_bundle.py
