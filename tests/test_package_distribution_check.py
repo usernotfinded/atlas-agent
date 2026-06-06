@@ -22,9 +22,22 @@ PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.8-rc7"
 
 CURRENT_PACKAGE_VERSION = "0.6.2"
+RUNTIME_REQUIRES_DIST = (
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "jsonschema>=4.0",
+    "pydantic",
+    "prompt_toolkit>=3.0.30",
+    "tomlkit>=0.12",
+    "python-dotenv>=1.0",
+)
 
 
-def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
+def _run_script(
+    *args: str,
+    cwd: Path | None = None,
+    env: dict | None = None,
+) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
         capture_output=True,
@@ -34,7 +47,12 @@ def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) ->
     )
 
 
-def _make_fake_wheel(path: Path, name: str = "atlas_agent", version: str = PACKAGE_VERSION) -> None:
+def _make_fake_wheel(
+    path: Path,
+    name: str = "atlas_agent",
+    version: str = PACKAGE_VERSION,
+    requires_dist: tuple[str, ...] = RUNTIME_REQUIRES_DIST,
+) -> None:
     """Create a minimal fake wheel with METADATA and entry_points.txt."""
     with zipfile.ZipFile(path, "w") as zf:
         metadata = (
@@ -42,6 +60,7 @@ def _make_fake_wheel(path: Path, name: str = "atlas_agent", version: str = PACKA
             f"Name: {name}\n"
             f"Version: {version}\n"
             f"Summary: Atlas Agent test wheel\n"
+            + "".join(f"Requires-Dist: {dep}\n" for dep in requires_dist)
         )
         zf.writestr("atlas_agent-0.0.0.dist-info/METADATA", metadata)
         entry_points = "[console_scripts]\natlas = atlas_agent.cli:main\n"
@@ -66,6 +85,7 @@ def _make_fake_sdist(
     name: str = "atlas-agent",
     version: str = PACKAGE_VERSION,
     include_templates: bool = False,
+    requires_dist: tuple[str, ...] = RUNTIME_REQUIRES_DIST,
 ) -> None:
     """Create a minimal fake sdist with PKG-INFO."""
     pkg_info = (
@@ -73,6 +93,7 @@ def _make_fake_sdist(
         f"Name: {name}\n"
         f"Version: {version}\n"
         f"Summary: Atlas Agent test sdist\n"
+        + "".join(f"Requires-Dist: {dep}\n" for dep in requires_dist)
     )
     with tarfile.open(path, "w:gz") as tf:
         info = tarfile.TarInfo(name="PKG-INFO")
@@ -173,6 +194,27 @@ class TestSafeDefaults:
     def test_output_dir_flag_exists(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         assert "--output-dir" in text
+
+    def test_twine_dev_dependency_is_declared(self) -> None:
+        import tomllib
+
+        pyproject = REPO_ROOT / "pyproject.toml"
+        with open(pyproject, "rb") as f:
+            data = tomllib.load(f)
+
+        dev_deps = data.get("project", {}).get("optional-dependencies", {}).get("dev", [])
+        assert any(dep.startswith("twine>=4.0") for dep in dev_deps)
+
+    def test_ci_installs_dev_extra_for_package_distribution(self) -> None:
+        ci_text = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+        release_gate_text = (
+            REPO_ROOT / ".github" / "workflows" / "release-gate.yml"
+        ).read_text(encoding="utf-8")
+
+        assert "pip install -e '.[dev]'" in ci_text
+        assert "pip install -e '.[dev]'" in release_gate_text
 
 
 # ---------------------------------------------------------------------------
@@ -283,6 +325,32 @@ class TestWheelMetadataParser:
         assert ok, f"Unexpected errors: {errors}"
         assert errors == []
 
+    def test_requires_pydantic_in_wheel_metadata(self, tmp_path: Path) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_wheel_pydantic", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_wheel_pydantic"] = cpd
+        spec.loader.exec_module(cpd)
+
+        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        deps_without_pydantic = tuple(
+            dep for dep in RUNTIME_REQUIRES_DIST if not dep.startswith("pydantic")
+        )
+        _make_fake_wheel(
+            wheel_path,
+            name="atlas_agent",
+            version=CURRENT_PACKAGE_VERSION,
+            requires_dist=deps_without_pydantic,
+        )
+
+        ok, errors = cpd._check_wheel_metadata(wheel_path)
+
+        assert not ok
+        assert any("Requires-Dist: pydantic" in e for e in errors)
+
     def test_rejects_wrong_version(self, tmp_path: Path) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
@@ -378,6 +446,134 @@ class TestWheelTemplateParser:
         ok, errors = cpd._check_wheel_templates(wheel_path)
         assert not ok
         assert any("Template file missing from wheel" in e for e in errors)
+
+
+class TestWheelInstallPhases:
+    def test_no_deps_install_check_does_not_run_atlas_init(
+        self,
+        monkeypatch,
+        tmp_path: Path,
+    ) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_no_deps_install", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_no_deps_install"] = cpd
+        spec.loader.exec_module(cpd)
+
+        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        commands: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            commands.append([str(part) for part in cmd])
+            if cmd[:3] == [sys.executable, "-m", "venv"]:
+                venv_dir = Path(cmd[-1])
+                bin_dir = venv_dir / "bin"
+                bin_dir.mkdir(parents=True)
+                (bin_dir / "python").write_text("", encoding="utf-8")
+            return subprocess.CompletedProcess(cmd, returncode=0, stdout="", stderr="")
+
+        monkeypatch.setattr(cpd, "_run", fake_run)
+
+        ok, errors = cpd._check_wheel_no_deps_install(wheel_path)
+
+        assert ok, f"Unexpected errors: {errors}"
+        assert errors == []
+        assert not any("atlas" in command for command in commands)
+        assert any("--no-deps" in command for command in commands)
+        assert any("--no-index" in command for command in commands)
+
+    def test_template_init_does_not_fail_when_runtime_deps_are_declared(
+        self,
+        monkeypatch,
+        tmp_path: Path,
+    ) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_runtime_unavailable", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_runtime_unavailable"] = cpd
+        spec.loader.exec_module(cpd)
+
+        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        commands: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            commands.append([str(part) for part in cmd])
+            if cmd[:3] == [sys.executable, "-m", "venv"]:
+                venv_dir = Path(cmd[-1])
+                bin_dir = venv_dir / "bin"
+                bin_dir.mkdir(parents=True)
+                (bin_dir / "python").write_text("", encoding="utf-8")
+                (bin_dir / "atlas").write_text("", encoding="utf-8")
+            return subprocess.CompletedProcess(cmd, returncode=0, stdout="", stderr="")
+
+        monkeypatch.setattr(cpd, "_run", fake_run)
+        monkeypatch.setattr(
+            cpd,
+            "_find_missing_runtime_dependencies",
+            lambda python: ["pydantic"],
+        )
+
+        ok, errors, checked, reason = cpd._check_wheel_template_install(wheel_path)
+
+        assert ok, f"Unexpected errors: {errors}"
+        assert errors == []
+        assert not checked
+        assert "pydantic" in reason
+        assert "wheel METADATA declares them" in reason
+        assert not any("init" in command for command in commands)
+
+    def test_template_init_fails_when_runtime_metadata_is_missing(
+        self,
+        monkeypatch,
+        tmp_path: Path,
+    ) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_runtime_metadata_missing", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_runtime_metadata_missing"] = cpd
+        spec.loader.exec_module(cpd)
+
+        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        _make_fake_wheel(
+            wheel_path,
+            name="atlas_agent",
+            version=CURRENT_PACKAGE_VERSION,
+            requires_dist=(),
+        )
+
+        def fake_run(cmd, **kwargs):
+            if cmd[:3] == [sys.executable, "-m", "venv"]:
+                venv_dir = Path(cmd[-1])
+                bin_dir = venv_dir / "bin"
+                bin_dir.mkdir(parents=True)
+                (bin_dir / "python").write_text("", encoding="utf-8")
+                (bin_dir / "atlas").write_text("", encoding="utf-8")
+            return subprocess.CompletedProcess(cmd, returncode=0, stdout="", stderr="")
+
+        monkeypatch.setattr(cpd, "_run", fake_run)
+        monkeypatch.setattr(
+            cpd,
+            "_find_missing_runtime_dependencies",
+            lambda python: ["pydantic"],
+        )
+
+        ok, errors, checked, reason = cpd._check_wheel_template_install(wheel_path)
+
+        assert not ok
+        assert not checked
+        assert reason == ""
+        assert any("Requires-Dist: pydantic" in e for e in errors)
 
 
 # ---------------------------------------------------------------------------

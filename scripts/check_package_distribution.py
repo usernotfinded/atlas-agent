@@ -19,11 +19,14 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import email.parser
+import re
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 import zipfile
 from pathlib import Path
 
@@ -43,6 +46,15 @@ EXPECTED_TEMPLATE_FILES = (
     "templates/routine-trader/memory/portfolio.md",
     "templates/routine-trader/routines/prompts/pre_market.md",
     "templates/routine-trader/skills/risk_review.md",
+)
+RUNTIME_IMPORT_DISTRIBUTIONS = (
+    "fastapi",
+    "httpx",
+    "jsonschema",
+    "pydantic",
+    "prompt_toolkit",
+    "tomlkit",
+    "python-dotenv",
 )
 
 # Forbidden output fragments.
@@ -110,6 +122,46 @@ def _run(
     if env is not None:
         kwargs["env"] = env
     return subprocess.run(cmd, **kwargs)
+
+
+def _normalize_distribution_name(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def _requirement_distribution_name(requirement: str) -> str:
+    match = re.match(r"\s*([A-Za-z0-9_.-]+)", requirement)
+    if not match:
+        return ""
+    return _normalize_distribution_name(match.group(1))
+
+
+def _project_runtime_dependencies() -> tuple[str, ...]:
+    with open(REPO_ROOT / "pyproject.toml", "rb") as f:
+        pyproject = tomllib.load(f)
+    return tuple(pyproject.get("project", {}).get("dependencies", ()))
+
+
+def _metadata_requires_dist(metadata_text: str) -> tuple[str, ...]:
+    message = email.parser.Parser().parsestr(metadata_text)
+    return tuple(message.get_all("Requires-Dist") or ())
+
+
+def _check_runtime_dependency_metadata(
+    metadata_text: str,
+    source_name: str,
+) -> list[str]:
+    errors: list[str] = []
+    declared = {
+        _requirement_distribution_name(requirement)
+        for requirement in _metadata_requires_dist(metadata_text)
+    }
+    for dependency in _project_runtime_dependencies():
+        expected_name = _requirement_distribution_name(dependency)
+        if expected_name and expected_name not in declared:
+            errors.append(
+                f"{source_name} missing runtime dependency Requires-Dist: {dependency}"
+            )
+    return errors
 
 
 def _check_build_available() -> tuple[bool, str]:
@@ -205,6 +257,10 @@ def _check_wheel_metadata(wheel_path: Path) -> tuple[bool, list[str]]:
                 # atlas is expected so flag it.
                 errors.append("entry_points.txt not found in wheel")
 
+            errors.extend(
+                _check_runtime_dependency_metadata(metadata_text, "Wheel METADATA")
+            )
+
             # Check for forbidden claims in metadata
             lower_meta = metadata_text.lower()
             for claim in FORBIDDEN_METADATA_CLAIMS:
@@ -287,6 +343,10 @@ def _check_sdist_metadata(sdist_path: Path) -> tuple[bool, list[str]]:
                     f"Sdist version {version_match!r} != expected {EXPECTED_PACKAGE_VERSION!r}"
                 )
 
+            errors.extend(
+                _check_runtime_dependency_metadata(pkg_info_text, "Sdist PKG-INFO")
+            )
+
             # Check for forbidden claims in metadata (name, summary, description)
             lower_meta = pkg_info_text.lower()
             for claim in FORBIDDEN_METADATA_CLAIMS:
@@ -328,18 +388,15 @@ def _find_venv_bin(venv_dir: Path, name: str) -> Path:
     raise FileNotFoundError(f"Could not find {name} in venv: {venv_dir}")
 
 
-def _check_wheel_template_install(wheel_path: Path) -> tuple[bool, list[str]]:
+def _check_wheel_no_deps_install(wheel_path: Path) -> tuple[bool, list[str]]:
     errors: list[str] = []
-    temp_dir = Path(tempfile.mkdtemp(prefix="atlas-wheel-template-check-"))
+    temp_dir = Path(tempfile.mkdtemp(prefix="atlas-wheel-no-deps-check-"))
     global _CURRENT_TEMP_DIR
     previous_temp = _CURRENT_TEMP_DIR
     _CURRENT_TEMP_DIR = str(temp_dir)
     try:
         venv_dir = temp_dir / "venv"
-        workspace = temp_dir / "workspace"
-        venv_result = _run(
-            [sys.executable, "-m", "venv", "--system-site-packages", str(venv_dir)]
-        )
+        venv_result = _run([sys.executable, "-m", "venv", str(venv_dir)])
         if venv_result.returncode != 0:
             return False, [f"venv creation failed: {_redact(venv_result.stderr or '')}"]
 
@@ -359,6 +416,106 @@ def _check_wheel_template_install(wheel_path: Path) -> tuple[bool, list[str]]:
         )
         if install_result.returncode != 0:
             return False, [f"wheel install failed: {_redact(install_result.stderr or '')}"]
+
+        resource_script = (
+            "from importlib.resources import files\n"
+            f"expected = {EXPECTED_TEMPLATE_FILES!r}\n"
+            "root = files('atlas_agent')\n"
+            "missing = [rel for rel in expected if not root.joinpath(rel).is_file()]\n"
+            "if missing:\n"
+            "    raise SystemExit('missing template resources: ' + ', '.join(missing))\n"
+        )
+        resource_result = _run([str(python), "-c", resource_script])
+        if resource_result.returncode != 0:
+            errors.append(
+                "wheel no-deps template resource check failed: "
+                f"{_redact((resource_result.stdout or '') + (resource_result.stderr or ''))}"
+            )
+    except Exception as exc:
+        errors.append(f"wheel no-deps install check failed: {_redact(str(exc))}")
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        _CURRENT_TEMP_DIR = previous_temp
+    return len(errors) == 0, errors
+
+
+def _find_missing_runtime_dependencies(python: Path) -> list[str]:
+    check_script = (
+        "import importlib.metadata\n"
+        f"expected = {RUNTIME_IMPORT_DISTRIBUTIONS!r}\n"
+        "missing = []\n"
+        "for name in expected:\n"
+        "    try:\n"
+        "        importlib.metadata.version(name)\n"
+        "    except importlib.metadata.PackageNotFoundError:\n"
+        "        missing.append(name)\n"
+        "print('\\n'.join(missing))\n"
+        "raise SystemExit(1 if missing else 0)\n"
+    )
+    result = _run([str(python), "-c", check_script])
+    if result.returncode == 0:
+        return []
+    return [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
+
+
+def _wheel_runtime_dependency_errors(wheel_path: Path) -> list[str]:
+    try:
+        with zipfile.ZipFile(wheel_path, "r") as zf:
+            metadata_files = [n for n in zf.namelist() if n.endswith("/METADATA")]
+            if not metadata_files:
+                return ["No METADATA file found in wheel"]
+            metadata_text = zf.read(metadata_files[0]).decode("utf-8", errors="replace")
+            return _check_runtime_dependency_metadata(metadata_text, "Wheel METADATA")
+    except zipfile.BadZipFile as exc:
+        return [f"Bad wheel file: {exc}"]
+    except Exception as exc:
+        return [f"Error reading wheel dependency metadata: {exc}"]
+
+
+def _check_wheel_template_install(wheel_path: Path) -> tuple[bool, list[str], bool, str]:
+    errors: list[str] = []
+    temp_dir = Path(tempfile.mkdtemp(prefix="atlas-wheel-template-check-"))
+    global _CURRENT_TEMP_DIR
+    previous_temp = _CURRENT_TEMP_DIR
+    _CURRENT_TEMP_DIR = str(temp_dir)
+    try:
+        venv_dir = temp_dir / "venv"
+        workspace = temp_dir / "workspace"
+        venv_result = _run(
+            [sys.executable, "-m", "venv", "--system-site-packages", str(venv_dir)]
+        )
+        if venv_result.returncode != 0:
+            return False, [f"venv creation failed: {_redact(venv_result.stderr or '')}"], False, ""
+
+        python = _find_venv_bin(venv_dir, "python")
+        install_result = _run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--quiet",
+                "--no-index",
+                "--no-deps",
+                "--force-reinstall",
+                str(wheel_path),
+            ]
+        )
+        if install_result.returncode != 0:
+            return False, [f"wheel install failed: {_redact(install_result.stderr or '')}"], False, ""
+
+        missing_runtime = _find_missing_runtime_dependencies(python)
+        if missing_runtime:
+            metadata_errors = _wheel_runtime_dependency_errors(wheel_path)
+            if metadata_errors:
+                return False, metadata_errors, False, ""
+            missing = ", ".join(missing_runtime)
+            reason = (
+                "runtime dependencies are not installed in the checker environment "
+                f"({missing}); wheel METADATA declares them, so dependency resolution "
+                "is verified by metadata and atlas init was not run"
+            )
+            return True, [], False, reason
 
         atlas_bin = _find_venv_bin(venv_dir, "atlas")
         init_result = _run(
@@ -388,7 +545,7 @@ def _check_wheel_template_install(wheel_path: Path) -> tuple[bool, list[str]]:
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
         _CURRENT_TEMP_DIR = previous_temp
-    return len(errors) == 0, errors
+    return len(errors) == 0, errors, len(errors) == 0, ""
 
 
 def _check_artifact_filenames(wheel: Path | None, sdist: Path | None) -> list[str]:
@@ -437,11 +594,12 @@ def _build_plan(args: argparse.Namespace) -> dict:
             "verify wheel exists",
             "verify sdist exists",
             "verify artifact filenames contain expected version",
-            "verify wheel METADATA (name, version, entry points)",
+            "verify wheel METADATA (name, version, entry points, runtime dependencies)",
             "verify wheel contains packaged routine-trader templates",
-            "verify sdist PKG-INFO (name, version)",
+            "verify sdist PKG-INFO (name, version, runtime dependencies)",
             "verify sdist contains packaged routine-trader templates",
-            "install wheel into a temporary venv and run atlas init outside repo",
+            "install wheel into a dependency-free temporary venv and verify packaged templates",
+            "run atlas init outside repo when runtime dependencies are available",
             "verify no forbidden claims in metadata",
             "verify no package artifacts staged",
             *(["python -m twine check <dist>/*"] if not args.skip_twine else []),
@@ -500,6 +658,7 @@ def main(argv: list[str] | None = None) -> int:
     errors: list[str] = []
     wheel: Path | None = None
     sdist: Path | None = None
+    wheel_install_checked = False
 
     try:
         if args.output_dir is not None:
@@ -608,12 +767,28 @@ def main(argv: list[str] | None = None) -> int:
 
         # 7. Check wheel-installed template initialization
         if wheel is not None:
+            print("Checking dependency-free wheel install and template resources...")
+            no_deps_ok, no_deps_errors = _check_wheel_no_deps_install(wheel)
+            if not no_deps_ok:
+                errors.extend(no_deps_errors)
+                for e in no_deps_errors:
+                    print(f"  wheel no-deps install error: {e}")
+            else:
+                print("  wheel no-deps install: OK")
+
             print("Checking wheel-installed template initialization...")
-            wheel_install_ok, wheel_install_errors = _check_wheel_template_install(wheel)
+            (
+                wheel_install_ok,
+                wheel_install_errors,
+                wheel_install_checked,
+                wheel_install_reason,
+            ) = _check_wheel_template_install(wheel)
             if not wheel_install_ok:
                 errors.extend(wheel_install_errors)
                 for e in wheel_install_errors:
                     print(f"  wheel install template error: {e}")
+            elif not wheel_install_checked:
+                print(f"  wheel-installed template init not run: {wheel_install_reason}")
             else:
                 print("  wheel-installed template init: OK")
 
@@ -677,7 +852,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  Build isolation: {'enabled' if args.allow_network_build else 'disabled'}")
         print(f"  Network allowed: {args.allow_network_build}")
         print(f"  Template resources checked: yes")
-        print(f"  Wheel-installed template init checked: yes")
+        print(
+            "  Wheel-installed template init checked: "
+            f"{'yes' if wheel_install_checked else 'not run'}"
+        )
         print(f"  No forbidden claims in metadata")
         print(f"  No package artifacts staged")
         return 0
