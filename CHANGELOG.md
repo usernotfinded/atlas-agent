@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated public docs (README, SECURITY, trust center, release readiness, public launch readiness, capability inventory, checks reference, main health, release checklist) to reflect `v0.6.3` as the current public GitHub release and remove stale "version-prepared" wording.
+- Hardened `scripts/main_health.py` release metadata checks by centralizing constants into a `ReleaseMetadata` dataclass with a `validate()` method that detects drift against local git tags and source version. Tests now verify drift detection.
 
 ### Fixed
 
 ### Safety
 - The planning and docs updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- The main-health hardening does not change trading, broker, provider, risk, approval, or kill-switch behavior.
 
 ## [0.6.3] - 2026-06-06
 

@@ -78,6 +78,8 @@ def _runner(
             return CHECKER.CommandResult(0, tracked, "")
         if key == ("tag", "--list", "v0.6.1"):
             return CHECKER.CommandResult(0, tag, "")
+        if key == ("tag", "--list", "v0.6.3"):
+            return CHECKER.CommandResult(0, "v0.6.3\n", "")
         if key == ("tag", "--list", "v0.6.4"):
             return CHECKER.CommandResult(0, tag, "")
         if key == (
@@ -125,11 +127,55 @@ def test_reports_source_version_check(tmp_path: Path) -> None:
     assert report.checks["expected_source_version"] is True
 
 
-def test_reports_public_release_v0594(tmp_path: Path) -> None:
+def test_reports_public_release_v063(tmp_path: Path) -> None:
     report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
 
     assert report.public_release == "v0.6.3"
     assert report.checks["public_release_expected"] is True
+
+
+def test_release_metadata_validation_passes_when_consistent(tmp_path: Path) -> None:
+    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
+
+    assert not any(f.code.startswith("release_metadata") for f in report.findings)
+    assert not any(f.code == "public_release_tag_missing" for f in report.findings)
+    assert not any(f.code == "next_release_tag_exists" for f in report.findings)
+
+
+def test_release_metadata_drift_detected_when_source_version_mismatches(
+    tmp_path: Path,
+) -> None:
+    repo = _fixture(tmp_path)
+    (repo / "pyproject.toml").write_text('[project]\nversion = "0.6.99"\n')
+    (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.99"\n')
+
+    report = CHECKER.collect_report(repo, git_runner=_runner())
+
+    assert any(f.code == "release_metadata_drift" for f in report.findings)
+
+
+def test_public_release_tag_missing_detected(tmp_path: Path) -> None:
+    def no_v063_tag(repo_root: Path, args: list[str]):
+        key = tuple(args)
+        if key == ("tag", "--list", "v0.6.3"):
+            return CHECKER.CommandResult(0, "", "")
+        return _runner()(repo_root, args)
+
+    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=no_v063_tag)
+
+    assert any(f.code == "public_release_tag_missing" for f in report.findings)
+
+
+def test_next_release_tag_exists_detected(tmp_path: Path) -> None:
+    def v064_exists(repo_root: Path, args: list[str]):
+        key = tuple(args)
+        if key == ("tag", "--list", "v0.6.4"):
+            return CHECKER.CommandResult(0, "v0.6.4\n", "")
+        return _runner()(repo_root, args)
+
+    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=v064_exists)
+
+    assert any(f.code == "next_release_tag_exists" for f in report.findings)
 
 
 def test_reports_repo_root_check(tmp_path: Path) -> None:

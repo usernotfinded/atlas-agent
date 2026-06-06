@@ -22,9 +22,9 @@
       "source": "scripts/main_health.py hardcodes EXPECTED_SOURCE_VERSION, PUBLIC_RELEASE, and NEXT_UNREQUESTED_RELEASE_TAG; manual updates are recurring post-release friction",
       "risk": "low",
       "expected_files": ["scripts/main_health.py", "tests/test_main_health.py"],
-      "acceptance_criteria": "Constants clearly document release cutover update procedure; tests remain green after each release without ad-hoc fixes.",
+      "acceptance_criteria": "Constants centralized in ReleaseMetadata; validation detects drift against git tags and source version; tests verify detection. Implemented in Batch 60.",
       "selected": true,
-      "implemented": false,
+      "implemented": true,
       "reason": "Reduces recurring manual drift and post-release test breakage."
     },
     {

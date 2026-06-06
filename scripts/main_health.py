@@ -17,9 +17,68 @@ from types import ModuleType
 from typing import Callable, Iterable
 
 
-EXPECTED_SOURCE_VERSION = "0.6.3"
-PUBLIC_RELEASE = "v0.6.3"
-NEXT_UNREQUESTED_RELEASE_TAG = "v0.6.4"
+@dataclass(frozen=True)
+class ReleaseMetadata:
+    """Central release metadata for main_health.py.
+
+    Update these constants after each release cutover.
+    The validate() method detects drift against the actual repo state.
+    """
+
+    expected_source_version: str
+    public_release: str
+    next_unrequested_release_tag: str
+
+    def validate(
+        self,
+        source_version: str | None,
+        git_runner: GitRunner,
+        repo_root: Path,
+    ) -> list[Finding]:
+        """Return findings if release metadata appears stale."""
+        findings: list[Finding] = []
+        if source_version is not None and source_version != self.expected_source_version:
+            findings.append(
+                _finding(
+                    "release_metadata_drift",
+                    "EXPECTED_SOURCE_VERSION is "
+                    f"{self.expected_source_version} but source version is {source_version}; "
+                    "update ReleaseMetadata in main_health.py after release cutover",
+                )
+            )
+        try:
+            result = git_runner(repo_root, ["tag", "--list", self.public_release])
+        except (FileNotFoundError, OSError):
+            return findings
+        if result.returncode == 0 and not result.stdout.strip():
+            findings.append(
+                _finding(
+                    "public_release_tag_missing",
+                    f"PUBLIC_RELEASE {self.public_release} has no matching local git tag; "
+                    "update ReleaseMetadata in main_health.py after release cutover",
+                )
+            )
+        try:
+            result = git_runner(repo_root, ["tag", "--list", self.next_unrequested_release_tag])
+        except (FileNotFoundError, OSError):
+            return findings
+        if result.returncode == 0 and result.stdout.strip():
+            findings.append(
+                _finding(
+                    "next_release_tag_exists",
+                    "NEXT_UNREQUESTED_RELEASE_TAG "
+                    f"{self.next_unrequested_release_tag} already exists as a local tag; "
+                    "update ReleaseMetadata in main_health.py after release cutover",
+                )
+            )
+        return findings
+
+
+RELEASE_METADATA = ReleaseMetadata(
+    expected_source_version="0.6.3",
+    public_release="v0.6.3",
+    next_unrequested_release_tag="v0.6.4",
+)
 
 PROTECTED_BOUNDARIES = (
     "src/atlas_agent/config",
@@ -42,11 +101,11 @@ RELEASE_PUBLISH_STAGED_PREFIXES = (
     "dist/",
     "build/",
     "artifacts/release_evidence/",
-    f"artifacts/release_assurance/{NEXT_UNREQUESTED_RELEASE_TAG}/",
+    f"artifacts/release_assurance/{RELEASE_METADATA.next_unrequested_release_tag}/",
 )
 
 RELEASE_PUBLISH_STAGED_EXACT = {
-    f"docs/releases/{NEXT_UNREQUESTED_RELEASE_TAG}.md",
+    f"docs/releases/{RELEASE_METADATA.next_unrequested_release_tag}.md",
 }
 
 RELEASE_PUBLISH_STAGED_SUFFIXES = (
@@ -366,7 +425,7 @@ def _new_checks() -> dict[str, bool]:
         "init_present": False,
         "version_consistent": False,
         "expected_source_version": False,
-        "public_release_expected": PUBLIC_RELEASE == "v0.6.3",
+        "public_release_expected": True,
         "git_available": False,
         "on_main": False,
         "origin_main_resolved": False,
@@ -434,15 +493,18 @@ def collect_report(
                     "pyproject.toml and src/atlas_agent/__init__.py versions differ",
                 )
             )
-        checks["expected_source_version"] = source_version == EXPECTED_SOURCE_VERSION
+        checks["expected_source_version"] = source_version == RELEASE_METADATA.expected_source_version
         if not checks["expected_source_version"]:
             findings.append(
                 _finding(
                     "source_version_unexpected",
                     "source package version is "
-                    f"{source_version or 'unknown'}, expected {EXPECTED_SOURCE_VERSION}",
+                    f"{source_version or 'unknown'}, expected {RELEASE_METADATA.expected_source_version}",
                 )
             )
+
+    metadata_findings = RELEASE_METADATA.validate(source_version, git_runner, repo_root)
+    findings.extend(metadata_findings)
 
     if not (repo_root / "scripts" / "check_trust_center.py").exists():
         findings.append(
@@ -469,7 +531,7 @@ def collect_report(
         )
         status_result = git_runner(repo_root, ["status", "--porcelain=v1"])
         staged_result = git_runner(repo_root, ["diff", "--cached", "--name-only"])
-        tag_result = git_runner(repo_root, ["tag", "--list", NEXT_UNREQUESTED_RELEASE_TAG])
+        tag_result = git_runner(repo_root, ["tag", "--list", RELEASE_METADATA.next_unrequested_release_tag])
         protected_result = git_runner(
             repo_root,
             ["diff", "--name-status", "--", *PROTECTED_BOUNDARIES],
@@ -482,7 +544,7 @@ def collect_report(
         return MainHealthReport(
             str(repo_root),
             source_version,
-            PUBLIC_RELEASE,
+            RELEASE_METADATA.public_release,
             head_commit,
             origin_main_commit,
             checks,
@@ -499,7 +561,7 @@ def collect_report(
         return MainHealthReport(
             str(repo_root),
             source_version,
-            PUBLIC_RELEASE,
+            RELEASE_METADATA.public_release,
             head_commit,
             origin_main_commit,
             checks,
@@ -515,7 +577,7 @@ def collect_report(
         "git rev-parse HEAD": head_result,
         "git status --porcelain=v1": status_result,
         "git diff --cached --name-only": staged_result,
-        f"git tag --list {NEXT_UNREQUESTED_RELEASE_TAG}": tag_result,
+        f"git tag --list {RELEASE_METADATA.next_unrequested_release_tag}": tag_result,
         "git diff --name-status protected boundaries": protected_result,
     }
     failed = [
@@ -622,7 +684,7 @@ def collect_report(
             findings.append(
                 _finding(
                     "unrequested_maintenance_tag",
-                    f"local future release tag {NEXT_UNREQUESTED_RELEASE_TAG} exists but was not requested",
+                    f"local future release tag {RELEASE_METADATA.next_unrequested_release_tag} exists but was not requested",
                 )
             )
 
@@ -650,7 +712,7 @@ def collect_report(
     return MainHealthReport(
         str(repo_root),
         source_version,
-        PUBLIC_RELEASE,
+        RELEASE_METADATA.public_release,
         head_commit,
         origin_main_commit,
         checks,
