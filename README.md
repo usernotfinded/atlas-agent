@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.6.1)** — package/source version is `0.6.1`; latest stable public release is [v0.6.0](docs/releases/v0.6.0.md) on GitHub. v0.6.1 is version-prepared; tag and GitHub release not created yet. PyPI publish was not performed.
+> **Current Status (v0.6.1)** — package/source version is `0.6.1`; latest stable public release is [v0.6.1](docs/releases/v0.6.1.md) on GitHub. v0.6.0 is historical. PyPI publish was not performed.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 

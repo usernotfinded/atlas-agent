@@ -248,6 +248,12 @@ class TestBatch8NoProviderCode:
             "update/sources.py",
             "providers/openai_compatible.py",
             "notifications/clickup.py",
+            # notifications/transports.py contains a Slack webhook transport
+            # that uses urllib.request for POST calls. This is NOT provider
+            # execution; it is a notification transport. It is disabled/dry-run
+            # by default, requires explicit slack transport configuration, and
+            # tests use injected/mocked http_post with no real network.
+            "notifications/transports.py",
         }
         unexpected = [f for f in findings if f not in allowed]
         assert unexpected == [], f"Unexpected urllib network usage in: {unexpected}"

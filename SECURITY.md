@@ -11,7 +11,7 @@
 
 Live trading disabled by default in all versions.
 
-Atlas is in active development on the `main` branch. The v0.6.0 release is the current public GitHub release. v0.6.1 is version-prepared; tag not created yet. Security updates are applied to the latest development line.
+Atlas is in active development on the `main` branch. The v0.6.1 release is the current public GitHub release. v0.6.0 is historical. Security updates are applied to the latest development line.
 
 ## Scope
 

@@ -77,7 +77,7 @@ def test_validate_missing_safety_sentence() -> None:
     assert any("Missing required safety sentence" in e for e in errors)
 
 
-@pytest.mark.parametrize("phrase", list(_FORBIDDEN_PATTERNS))
+@pytest.mark.parametrize("phrase", sorted(_FORBIDDEN_PATTERNS))
 def test_validate_forbidden_phrases(phrase: str) -> None:
     text = GOOD_PROFILE + f"\n{phrase}\n"
     ok, errors = validate_discipline_text(text)

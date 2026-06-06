@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.0 capability expansion has been delivered through the `v0.6.0` versioned GitHub release so auto-updater users can receive the current public release identity. v0.6.1 is version-prepared; tag and GitHub release not created yet.
+The v0.6.1 maintenance patch has been delivered through the `v0.6.1` versioned GitHub release so auto-updater users can receive the current public release identity. v0.6.0 is historical.
 
 Release was performed after:
 - all security hardening PRs were merged;
