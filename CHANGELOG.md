@@ -23,9 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Bumped package/source version from `0.6.1` to `0.6.2`.
-- Updated public release identity docs (README, SECURITY, trust center, release readiness, public launch readiness) to reflect `0.6.2` source version while preserving `v0.6.1` as the latest tagged GitHub release.
+- Updated public release identity docs (README, SECURITY, trust center, release readiness, public launch readiness) to reflect `v0.6.2` as the current public GitHub release after cutover.
 - Updated version-aware local checks (`check_version_consistency.py`, `check_trust_center.py`, `check_public_docs_consistency.py`, `check_public_launch_readiness.py`, `check_stable_release_decision.py`) to recognize `0.6.2`.
 - Updated `scripts/check_v061_release_prep.py` to accept `0.6.2` as a valid post-bump state while still verifying v0.6.1 artifacts exist.
+- Hardened release assurance output ordering so JSON and checksum evidence remains deterministic across local and CI runs.
 
 ### Fixed
 - Fixed post-release CI failures discovered after v0.6.1 tag/release:
@@ -33,11 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `tests/test_provider_policy_docs.py` notification urllib allowlist for `notifications/transports.py`.
   - Stale v0.6.1 public docs corrected.
   - v0.6.1 release assurance wording aligned.
+  - Package distribution checker artifact discovery and staged `.egg-info` detection hardened.
+  - Release assurance updater dry-run no longer uses shell invocation.
 
 ### Safety
 - No live trading, provider execution, broker execution, risk gate, approval queue, or kill switch changes.
 - No new runtime features, broker adapters, or provider integrations.
-- No PyPI publish, tag creation, or GitHub release creation performed in this prep batch.
+- No PyPI publish performed.
 
 ## [0.6.1] - 2026-06-06
 

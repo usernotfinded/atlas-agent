@@ -5,10 +5,10 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.1` (tagged)
-- Next version-prepared release: `v0.6.2` (not tagged yet)
+- Current public release: `v0.6.2` (tagged)
+- Previous public release: `v0.6.1`
 - Source package version on `main`: `0.6.2`
-- GitHub release: `v0.6.1`
+- GitHub release: `v0.6.2`
 - PyPI publish: not performed
 - Release status detail: [v0.6.2 Trust and Release Status](v0.6.2-status.md)
 - Release notes: [docs/releases/v0.6.2.md](../releases/v0.6.2.md)
@@ -61,17 +61,15 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.1` is verified against the GitHub release/tag.
-The next version-prepared release is `v0.6.2` (not tagged yet).
+Auto-updater delivery for `v0.6.2` is verified against the GitHub release/tag.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.1`
+- GitHub release: `v0.6.2`
 - PyPI publish: not performed
 - Package version in source metadata: `0.6.2`
-- Next version-prepared: `v0.6.2` (not tagged yet)
 - Auto-updater delivery: verified
 
 ## What Is Ready
