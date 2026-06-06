@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.2 hotfix has been delivered through the `v0.6.2` versioned GitHub release. The v0.6.3 hotfix is version-prepared. The v0.6.1 and v0.6.0 releases are historical.
+The v0.6.3 hotfix has been delivered through the `v0.6.3` versioned GitHub release. The v0.6.2, v0.6.1, and v0.6.0 releases are historical. v0.6.4 planning is in progress and not yet prepared or tagged.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.2, the expected public GitHub release is `v0.6.2`. For v0.6.3, the prepared version is `0.6.3`.
+For v0.6.3, the public GitHub release is `v0.6.3`. For v0.6.4, planning is in progress and no tag or release has been created.
 
 PyPI publishing was intentionally skipped unless explicitly approved separately.
 

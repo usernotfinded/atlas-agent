@@ -78,7 +78,7 @@ def _runner(
             return CHECKER.CommandResult(0, tracked, "")
         if key == ("tag", "--list", "v0.6.1"):
             return CHECKER.CommandResult(0, tag, "")
-        if key == ("tag", "--list", "v0.6.3"):
+        if key == ("tag", "--list", "v0.6.4"):
             return CHECKER.CommandResult(0, tag, "")
         if key == (
             "diff",
@@ -128,7 +128,7 @@ def test_reports_source_version_check(tmp_path: Path) -> None:
 def test_reports_public_release_v0594(tmp_path: Path) -> None:
     report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
 
-    assert report.public_release == "v0.6.2"
+    assert report.public_release == "v0.6.3"
     assert report.checks["public_release_expected"] is True
 
 
@@ -206,7 +206,7 @@ def test_warns_on_untracked_generated_artifacts_without_printing_secret_values(
 def test_flags_accidental_future_release_tag_using_mocked_git_tag(tmp_path: Path) -> None:
     report = CHECKER.collect_report(
         _fixture(tmp_path),
-        git_runner=_runner(tag="v0.6.2\n"),
+        git_runner=_runner(tag="v0.6.4\n"),
     )
 
     assert report.exit_code == 1
@@ -282,7 +282,7 @@ def test_docs_mention_main_source_version_can_differ_from_public_release() -> No
     text = DOC.read_text(encoding="utf-8").lower()
 
     assert "main source version can differ from public release" in text
-    assert "public github release is `v0.6.2`" in text
+    assert "public github release is `v0.6.3`" in text
 
 
 def test_docs_discourage_destructive_git_cleanup() -> None:

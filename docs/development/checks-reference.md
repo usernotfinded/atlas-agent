@@ -156,9 +156,9 @@ requires `actions/checkout@v6`, `actions/setup-python@v6`, and
 dependencies, modify files, or require GitHub credentials. See
 [GitHub Actions Maintenance](github-actions.md).
 
-## v0.6.2 Release Prep Checks
+## v0.6.3 Release Prep Checks
 
-`scripts/check_v062_release_prep.py` is a read-only checker for the v0.6.2 release
+`scripts/check_v063_release_prep.py` is a read-only checker for the v0.6.3 release
 prep state:
 
 ```bash
@@ -166,9 +166,9 @@ python3.11 scripts/check_v063_release_prep.py
 python3.11 scripts/check_v063_release_prep.py --json
 ```
 
-It verifies that the package version is `0.6.2`, `docs/releases/v0.6.2.md` exists,
-`docs/trust/v0.6.2-status.md` exists, the CHANGELOG has a `[0.6.2]` entry, and
-no premature `v0.6.3` release notes exist.
+It verifies that the package version is `0.6.3`, `docs/releases/v0.6.3.md` exists,
+`docs/trust/v0.6.3-status.md` exists, the CHANGELOG has a `[0.6.3]` entry, and
+no premature `v0.6.4` release notes exist.
 
 ## v0.6.1 Patch Candidate Checks
 
@@ -200,8 +200,8 @@ python3.11 scripts/check_v061_release_prep.py --json
 
 It verifies that `docs/releases/v0.6.1.md` exists,
 `docs/trust/v0.6.1-status.md` exists, the CHANGELOG has a `[0.6.1]` entry, and
-no premature `v0.6.3` release notes exist. It accepts the current source version
-being `0.6.2` as a valid post-bump state.
+no premature `v0.6.4` release notes exist. It accepts the current source version
+being `0.6.2` or `0.6.3` as a valid post-bump state.
 
 ## v0.6.0 Readiness Checks
 

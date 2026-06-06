@@ -8,12 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added post-v0.6.3 planning notes for v0.6.4 maintenance candidate selection (`docs/releases/v0.6.4-plan.md`).
 
 ### Changed
+- Updated public docs (README, SECURITY, trust center, release readiness, public launch readiness, capability inventory, checks reference, main health, release checklist) to reflect `v0.6.3` as the current public GitHub release and remove stale "version-prepared" wording.
 
 ### Fixed
 
 ### Safety
+- The planning and docs updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
 
 ## [0.6.3] - 2026-06-06
 

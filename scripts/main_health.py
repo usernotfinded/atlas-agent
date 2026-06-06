@@ -18,8 +18,8 @@ from typing import Callable, Iterable
 
 
 EXPECTED_SOURCE_VERSION = "0.6.3"
-PUBLIC_RELEASE = "v0.6.2"
-NEXT_UNREQUESTED_RELEASE_TAG = "v0.6.3"
+PUBLIC_RELEASE = "v0.6.3"
+NEXT_UNREQUESTED_RELEASE_TAG = "v0.6.4"
 
 PROTECTED_BOUNDARIES = (
     "src/atlas_agent/config",
@@ -366,7 +366,7 @@ def _new_checks() -> dict[str, bool]:
         "init_present": False,
         "version_consistent": False,
         "expected_source_version": False,
-        "public_release_expected": PUBLIC_RELEASE == "v0.6.2",
+        "public_release_expected": PUBLIC_RELEASE == "v0.6.3",
         "git_available": False,
         "on_main": False,
         "origin_main_resolved": False,

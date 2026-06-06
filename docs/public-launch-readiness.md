@@ -4,7 +4,7 @@
 
 ## Public launch status
 
-Atlas Agent is a **v0.6.3 release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The latest tagged public GitHub release is `v0.6.2`; `v0.6.3` is version-prepared; `v0.6.1` and `v0.6.0` are historical.
+Atlas Agent is a **v0.6.3 release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The latest tagged public GitHub release is `v0.6.3`; `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
 
 This document explains what is verified, what remains disabled, and what reviewers should check.
 
