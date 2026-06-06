@@ -17,7 +17,7 @@ from types import ModuleType
 from typing import Callable, Iterable
 
 
-EXPECTED_SOURCE_VERSION = "0.6.1"
+EXPECTED_SOURCE_VERSION = "0.6.2"
 PUBLIC_RELEASE = "v0.6.1"
 NEXT_UNREQUESTED_RELEASE_TAG = "v0.6.2"
 

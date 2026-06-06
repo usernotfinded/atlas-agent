@@ -34,10 +34,10 @@ def _write(path: Path, text: str) -> None:
 
 
 def _fixture(tmp_path: Path) -> Path:
-    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.1"\n')
+    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.2"\n')
     _write(
         tmp_path / "src" / "atlas_agent" / "__init__.py",
-        '__version__ = "0.6.1"\n',
+        '__version__ = "0.6.2"\n',
     )
     _write(tmp_path / "scripts" / "check_trust_center.py", "# fixture\n")
     _write(tmp_path / "scripts" / "check_onboarding_docs.py", "# fixture\n")
@@ -104,7 +104,7 @@ def test_text_mode_runs_on_mocked_clean_main_state(tmp_path: Path, capsys) -> No
     captured = capsys.readouterr()
     assert exit_code == 0
     assert "Main health report PASSED" in captured.out
-    assert "Source version: 0.6.1" in captured.out
+    assert "Source version: 0.6.2" in captured.out
 
 
 def test_json_mode_returns_artifact_type(tmp_path: Path, capsys) -> None:
@@ -121,7 +121,7 @@ def test_json_mode_returns_artifact_type(tmp_path: Path, capsys) -> None:
 def test_reports_source_version_check(tmp_path: Path) -> None:
     report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
 
-    assert report.source_version == "0.6.1"
+    assert report.source_version == "0.6.2"
     assert report.checks["expected_source_version"] is True
 
 

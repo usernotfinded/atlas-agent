@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.1 maintenance patch has been delivered through the `v0.6.1` versioned GitHub release so auto-updater users can receive the current public release identity. v0.6.0 is historical.
+The v0.6.2 hotfix is version-prepared on `main`. The v0.6.1 maintenance patch has been delivered through the `v0.6.1` versioned GitHub release. v0.6.0 is historical.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.0, the expected public GitHub release is `v0.6.0`. The next version-prepared release is `v0.6.1`.
+For v0.6.1, the expected public GitHub release is `v0.6.1`. The next version-prepared release is `v0.6.2`.
 
 PyPI publishing was intentionally skipped unless explicitly approved separately.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.1 --output artifacts/release_assurance/v0.6.1-local-check
+python scripts/release_assurance.py --version v0.6.2 --output artifacts/release_assurance/v0.6.2-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
@@ -70,18 +70,18 @@ The trust center is checked by `scripts/check_trust_center.py` to prevent stale 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
 to keep local setup, safe-check, and release-sensitive command guidance current.
 
-## v0.6.1 readiness
+## v0.6.2 readiness
 
-Before any v0.6.0 version bump or release cutover, run the v0.6.0 readiness checker:
+Before any v0.6.2 tag or release cutover, run the v0.6.2 release prep checker:
 
 ```bash
-python3.11 scripts/check_v060_readiness.py
-python3.11 scripts/check_v060_readiness.py --json
+python3.11 scripts/check_v062_release_prep.py
+python3.11 scripts/check_v062_release_prep.py --json
 ```
 
 The checker verifies required docs, source modules, test files, CLI contract
 entries, CHANGELOG unreleased section, version identity, absence of a premature
-v0.6.0 tag, forbidden claims, and generated artifact hygiene.
+v0.6.3 tag, forbidden claims, and generated artifact hygiene.
 
 See [v0.6.0 Readiness Audit](../releases/v0.6.0-readiness.md) for the full
 capability summary, safety boundaries, test coverage, docs coverage, deferred

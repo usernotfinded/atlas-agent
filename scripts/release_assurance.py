@@ -68,7 +68,7 @@ def main():
     # 6. README
     try:
         readme = Path("README.md").read_text()
-        checks["readme_public_metadata_current"] = "Current Status (v0.5.7" not in readme and "Current Status (v0.5.8" not in readme
+        checks["readme_public_metadata_current"] = "Current Status (v0.5.7" not in readme and "Current Status (v0.5.8" not in readme and "Current Status (v0.6.1" not in readme
     except:
         checks["readme_public_metadata_current"] = False
 
@@ -114,6 +114,9 @@ def main():
     # This is tested implicitly by checking the sources.py directly or trusting the test suite. 
     # But we can also do a quick python check
     dev_tag = f"{version}.dev0"
+    # Handle v0.6.1 historical check
+    if version == "v0.6.1":
+        dev_tag = "v0.6.1.dev0"
     out, rc, err = run_cmd(f"PYTHONPATH=src python3.11 -c 'from atlas_agent.update.sources import is_public_stable, is_version_newer; print(is_public_stable(\"{dev_tag}\"))'", check=False)
     checks["dev_version_not_public_stable"] = (out == "False")
 

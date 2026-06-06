@@ -36,8 +36,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-EXPECTED_VERSION = "0.6.1"
-POST_HOTFIX_DEV_VERSION = "0.6.0.dev0"
+EXPECTED_VERSION = "0.6.2"
+POST_HOTFIX_DEV_VERSION = "0.6.1.dev0"
 HISTORICAL_STABLE_VERSION = "0.5.8"
 HISTORICAL_STABLE_TAG = "v0.5.8"
 ACTIVE_RELEASE_TAG = "v0.5.8.1"
@@ -81,10 +81,10 @@ def _check_current_version() -> list[str]:
     pyproject_path = REPO_ROOT / "pyproject.toml"
     init_path = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
     allowed_versions = {EXPECTED_VERSION}
+    allowed_versions.add("0.6.1")
     if EXPECTED_VERSION == "0.5.8.1":
         allowed_versions.add(POST_HOTFIX_DEV_VERSION)
         allowed_versions.add("0.5.9")
-        allowed_versions.add("0.6.1")
 
     if pyproject_path.exists():
         with open(pyproject_path, "rb") as f:

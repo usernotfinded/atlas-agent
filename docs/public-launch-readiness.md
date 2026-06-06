@@ -4,7 +4,7 @@
 
 ## Public launch status
 
-Atlas Agent is a **stable v0.6.1 release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The latest tagged public GitHub release is `v0.6.1`; `v0.6.0` is historical.
+Atlas Agent is a **version-prepared v0.6.2 release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The latest tagged public GitHub release is `v0.6.1`; `v0.6.0` is historical.
 
 This document explains what is verified, what remains disabled, and what reviewers should check.
 
@@ -87,7 +87,7 @@ No broker, no network, no credentials, no live trading.
 - Package distribution dry-run does not publish or upload.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
-- Version on `main` is `0.6.1`; latest stable public GitHub release is `v0.6.1`. v0.6.0 is historical.
+- Version on `main` is `0.6.2`; latest stable public GitHub release is `v0.6.1`. v0.6.0 is historical.
 
 ## Known limitations
 

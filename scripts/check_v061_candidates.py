@@ -190,8 +190,10 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         if not RELEASE_NOTES_MD.exists():
             errors.append(f"Release notes file must exist in release-prep mode: {RELEASE_NOTES_MD}")
         for path in (PYPROJECT, INIT_PY):
-            if path.exists() and "0.6.1" not in path.read_text(encoding="utf-8"):
-                errors.append(f"Version bump to 0.6.1 missing in {path}")
+            if path.exists():
+                text = path.read_text(encoding="utf-8")
+                if "0.6.1" not in text and "0.6.2" not in text:
+                    errors.append(f"Version bump to 0.6.1 or 0.6.2 missing in {path}")
     errors.extend(_check_no_unsafe_selected())
     errors.extend(_check_no_publish_claim())
     errors.extend(_check_json_exists())

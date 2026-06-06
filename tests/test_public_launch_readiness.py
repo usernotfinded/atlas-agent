@@ -188,8 +188,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.6.1"
-        assert data["public_tag"] == "v0.6.1"
+        assert data["package_version"] == "0.6.2"
+        assert data["public_tag"] == "v0.6.2"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -237,7 +237,7 @@ class TestStaleRCReferencesBlocked:
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.6.1)\n"
+            "Current Status (v0.6.2)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (

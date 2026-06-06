@@ -118,7 +118,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.6.1"
+CURRENT_VERSION = "v0.6.2"
 
 
 def _read(path: Path) -> str:

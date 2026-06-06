@@ -156,19 +156,19 @@ requires `actions/checkout@v6`, `actions/setup-python@v6`, and
 dependencies, modify files, or require GitHub credentials. See
 [GitHub Actions Maintenance](github-actions.md).
 
-## v0.6.1 Release Prep Checks
+## v0.6.2 Release Prep Checks
 
-`scripts/check_v061_release_prep.py` is a read-only checker for the v0.6.1 release
+`scripts/check_v062_release_prep.py` is a read-only checker for the v0.6.2 release
 prep state:
 
 ```bash
-python3.11 scripts/check_v061_release_prep.py
-python3.11 scripts/check_v061_release_prep.py --json
+python3.11 scripts/check_v062_release_prep.py
+python3.11 scripts/check_v062_release_prep.py --json
 ```
 
-It verifies that the package version is `0.6.1`, `docs/releases/v0.6.1.md` exists,
-`docs/trust/v0.6.1-status.md` exists, the CHANGELOG has a `[0.6.1]` entry, and
-no premature `v0.6.2` release notes exist.
+It verifies that the package version is `0.6.2`, `docs/releases/v0.6.2.md` exists,
+`docs/trust/v0.6.2-status.md` exists, the CHANGELOG has a `[0.6.2]` entry, and
+no premature `v0.6.3` release notes exist.
 
 ## v0.6.1 Patch Candidate Checks
 
@@ -184,8 +184,24 @@ It verifies that `docs/releases/v0.6.1-candidates.md` exists, contains required
 sections (selection criteria, candidate table, accepted candidates, rejected
 candidates, safety boundaries, non-goals), and does not select unsafe runtime scope.
 
-See also [v0.6.0 Readiness Checks](#v060-readiness-checks) and
+See also [v0.6.1 Release Prep Checks](#v061-release-prep-checks),
+[v0.6.0 Readiness Checks](#v060-readiness-checks), and
 [Long-Running Checks](#long-running-checks) for related release verification.
+
+## v0.6.1 Release Prep Checks
+
+`scripts/check_v061_release_prep.py` is a read-only checker for the v0.6.1 release
+prep state (historical or post-bump compatible):
+
+```bash
+python3.11 scripts/check_v061_release_prep.py
+python3.11 scripts/check_v061_release_prep.py --json
+```
+
+It verifies that `docs/releases/v0.6.1.md` exists,
+`docs/trust/v0.6.1-status.md` exists, the CHANGELOG has a `[0.6.1]` entry, and
+no premature `v0.6.3` release notes exist. It accepts the current source version
+being `0.6.2` as a valid post-bump state.
 
 ## v0.6.0 Readiness Checks
 
