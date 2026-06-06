@@ -484,6 +484,25 @@ class TestSdistTemplateParser:
 
 
 class TestArtifactFilenameChecks:
+    def test_find_artifacts_is_deterministic(self, tmp_path: Path) -> None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_find_artifacts", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_find_artifacts"] = cpd
+        spec.loader.exec_module(cpd)
+
+        (tmp_path / "z-last.whl").write_text("", encoding="utf-8")
+        (tmp_path / "a-first.whl").write_text("", encoding="utf-8")
+        (tmp_path / "z-last.tar.gz").write_text("", encoding="utf-8")
+        (tmp_path / "a-first.tar.gz").write_text("", encoding="utf-8")
+
+        wheel, sdist = cpd._find_artifacts(tmp_path)
+
+        assert wheel == tmp_path / "a-first.whl"
+        assert sdist == tmp_path / "a-first.tar.gz"
+
     def test_correct_filenames_pass(self) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
@@ -511,6 +530,21 @@ class TestArtifactFilenameChecks:
         sdist = Path("atlas-agent-0.5.6.tar.gz")
         errors = cpd._check_artifact_filenames(wheel, sdist)
         assert len(errors) == 2
+
+    def test_package_artifact_path_matches_egg_info_contents(self) -> None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "check_package_distribution_artifact_path", str(SCRIPT)
+        )
+        cpd = importlib.util.module_from_spec(spec)
+        sys.modules["check_package_distribution_artifact_path"] = cpd
+        spec.loader.exec_module(cpd)
+
+        assert cpd._is_package_artifact_path("dist/atlas_agent.whl")
+        assert cpd._is_package_artifact_path("build/lib/module.py")
+        assert cpd._is_package_artifact_path("src/atlas_agent.egg-info/PKG-INFO")
+        assert cpd._is_package_artifact_path("src/atlas_agent.egg-info")
+        assert not cpd._is_package_artifact_path("src/atlas_agent/__init__.py")
 
 
 # ---------------------------------------------------------------------------

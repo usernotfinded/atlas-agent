@@ -1,4 +1,5 @@
 import argparse
+import os
 import json
 import subprocess
 import sys
@@ -7,21 +8,25 @@ from datetime import datetime, timezone
 import hashlib
 import tempfile
 
-def run_cmd(cmd, check=True, cwd=None):
+
+def run_cmd(cmd: list[str], check: bool = True, cwd: str | Path | None = None, env: dict[str, str] | None = None):
+    run_env = os.environ.copy()
+    if env is not None:
+        run_env.update(env)
     try:
         result = subprocess.run(
             cmd,
-            shell=True,
             text=True,
             capture_output=True,
             check=check,
             cwd=cwd,
+            env=run_env,
         )
         return result.stdout.strip(), result.returncode, result.stderr.strip()
     except subprocess.CalledProcessError as e:
         if check:
             raise
-        return e.stdout.strip(), e.returncode, e.stderr.strip()
+        return (e.stdout or "").strip(), e.returncode, (e.stderr or "").strip()
 
 def main():
     parser = argparse.ArgumentParser(description="Generate a local release assurance pack.")
@@ -46,11 +51,11 @@ def main():
     
     # 1-3. Version checks
     try:
-        pyproject = Path("pyproject.toml").read_text()
+        pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
         checks["package_version_aligned"] = f'version = "{clean_version}"' in pyproject
-        init_py = Path("src/atlas_agent/__init__.py").read_text()
+        init_py = Path("src/atlas_agent/__init__.py").read_text(encoding="utf-8")
         checks["package_version_aligned"] = checks["package_version_aligned"] and f'__version__ = "{clean_version}"' in init_py
-    except Exception as e:
+    except OSError as e:
         checks["package_version_aligned"] = False
         findings.append(f"Failed to read version files: {e}")
 
@@ -60,51 +65,69 @@ def main():
     
     # 5. Changelog
     try:
-        changelog = Path("CHANGELOG.md").read_text()
+        changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
         checks["changelog_present"] = f"[{clean_version}]" in changelog
-    except:
+    except OSError:
         checks["changelog_present"] = False
 
     # 6. README
     try:
-        readme = Path("README.md").read_text()
+        readme = Path("README.md").read_text(encoding="utf-8")
         checks["readme_public_metadata_current"] = "Current Status (v0.5.7" not in readme and "Current Status (v0.5.8" not in readme and "Current Status (v0.6.1" not in readme
-    except:
+    except OSError:
         checks["readme_public_metadata_current"] = False
 
     # 7. SECURITY.md
     try:
-        security = Path("SECURITY.md").read_text()
+        security = Path("SECURITY.md").read_text(encoding="utf-8")
         checks["security_md_current"] = version in security
-    except:
+    except OSError:
         checks["security_md_current"] = False
 
     # 8. Local tag
-    out, rc, err = run_cmd(f"git tag -l {version}", check=False)
+    out, rc, err = run_cmd(["git", "tag", "-l", version], check=False)
     checks["local_tag_present"] = (version in out)
 
     # 9. Remote tag
-    out, rc, err = run_cmd(f"git ls-remote --tags origin {version}", check=False)
+    out, rc, err = run_cmd(["git", "ls-remote", "--tags", "origin", version], check=False)
     checks["remote_tag_present"] = (version in out)
 
     # 10. GitHub Release
-    out, rc, err = run_cmd(f"gh release view {version} --json url", check=False)
+    out, rc, err = run_cmd(["gh", "release", "view", version, "--json", "url"], check=False)
     checks["github_release_present"] = (rc == 0)
 
     # 11. Updater dry-run
     src_path = Path("src").resolve()
+    python_env = {"PYTHONPATH": str(src_path)}
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_workspace = Path(tmp_dir) / "workspace"
         init_out, init_rc, init_err = run_cmd(
-            f"PYTHONPATH={src_path} python3.11 -m atlas_agent.cli init {tmp_workspace} --template routine-trader",
+            [
+                sys.executable,
+                "-m",
+                "atlas_agent.cli",
+                "init",
+                str(tmp_workspace),
+                "--template",
+                "routine-trader",
+            ],
             check=False,
             cwd=tmp_dir,
+            env=python_env,
         )
         if init_rc == 0:
             out, rc, err = run_cmd(
-                f"PYTHONPATH={src_path} python3.11 -m atlas_agent.cli update check --dry-run",
+                [
+                    sys.executable,
+                    "-m",
+                    "atlas_agent.cli",
+                    "update",
+                    "check",
+                    "--dry-run",
+                ],
                 check=False,
                 cwd=tmp_workspace,
+                env=python_env,
             )
         else:
             out, rc, err = init_out, init_rc, init_err
@@ -117,12 +140,31 @@ def main():
     # Handle v0.6.1 historical check
     if version == "v0.6.1":
         dev_tag = "v0.6.1.dev0"
-    out, rc, err = run_cmd(f"PYTHONPATH=src python3.11 -c 'from atlas_agent.update.sources import is_public_stable, is_version_newer; print(is_public_stable(\"{dev_tag}\"))'", check=False)
+    out, rc, err = run_cmd(
+        [
+            sys.executable,
+            "-c",
+            (
+                "from atlas_agent.update.sources import is_public_stable; "
+                f"print(is_public_stable({dev_tag!r}))"
+            ),
+        ],
+        check=False,
+        env={"PYTHONPATH": "src"},
+    )
     checks["dev_version_not_public_stable"] = (out == "False")
 
     # 14. Audit pack CLI
-    out1, rc1, _ = run_cmd("PYTHONPATH=src python3.11 -m atlas_agent.cli providers audit-pack --help", check=False)
-    out2, rc2, _ = run_cmd("PYTHONPATH=src python3.11 -m atlas_agent.cli providers verify-audit-pack --help", check=False)
+    out1, rc1, _ = run_cmd(
+        [sys.executable, "-m", "atlas_agent.cli", "providers", "audit-pack", "--help"],
+        check=False,
+        env={"PYTHONPATH": "src"},
+    )
+    out2, rc2, _ = run_cmd(
+        [sys.executable, "-m", "atlas_agent.cli", "providers", "verify-audit-pack", "--help"],
+        check=False,
+        env={"PYTHONPATH": "src"},
+    )
     checks["provider_audit_pack_commands_present"] = (rc1 == 0 and rc2 == 0)
 
     # 15. Audit workflow
@@ -130,7 +172,7 @@ def main():
 
     # 16. Non-claims
     if checks["release_notes_present"]:
-        notes = release_notes_path.read_text().lower()
+        notes = release_notes_path.read_text(encoding="utf-8").lower()
         checks["non_claims_preserved"] = all(
             any(phrase in notes for phrase in variants)
             for variants in [
@@ -160,7 +202,21 @@ def main():
         checks["non_claims_preserved"] = False
 
     # 17. Protected boundaries
-    out, rc, err = run_cmd("git diff HEAD --name-only -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk", check=False)
+    out, rc, err = run_cmd(
+        [
+            "git",
+            "diff",
+            "HEAD",
+            "--name-only",
+            "--",
+            "src/atlas_agent/config",
+            "src/atlas_agent/brokers",
+            "src/atlas_agent/execution",
+            "src/atlas_agent/safety",
+            "src/atlas_agent/risk",
+        ],
+        check=False,
+    )
     checks["protected_boundaries_clean"] = (out == "")
 
     valid = all(checks.values()) and not any(safety.values())
@@ -178,8 +234,10 @@ def main():
         "findings": findings
     }
 
-    with open(out_dir / "release-assurance-summary.json", "w") as f:
-        json.dump(summary, f, indent=2)
+    (out_dir / "release-assurance-summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
     report_md = f"""# {version} Release Assurance Report
 
@@ -235,18 +293,39 @@ Generated at: {summary['generated_at']}
 
 ## Reviewer Notes
 """
-    with open(out_dir / "release-assurance-report.md", "w") as f:
-        f.write(report_md)
+    (out_dir / "release-assurance-report.md").write_text(report_md, encoding="utf-8")
 
     # Generate dummy json files to match directory structure request if they are supposed to be separate files
-    with open(out_dir / "release-checks.json", "w") as f:
-        json.dump({"package_version_aligned": checks["package_version_aligned"]}, f)
-    with open(out_dir / "public-metadata-checks.json", "w") as f:
-        json.dump({"readme_public_metadata_current": checks["readme_public_metadata_current"], "security_md_current": checks["security_md_current"]}, f)
-    with open(out_dir / "updater-delivery-checks.json", "w") as f:
-        json.dump({"updater_dry_run_ok": checks["updater_dry_run_ok"]}, f)
-    with open(out_dir / "provider-audit-pack-checks.json", "w") as f:
-        json.dump({"provider_audit_pack_commands_present": checks["provider_audit_pack_commands_present"], "provider_audit_pack_workflow_present": checks["provider_audit_pack_workflow_present"]}, f)
+    (out_dir / "release-checks.json").write_text(
+        json.dumps({"package_version_aligned": checks["package_version_aligned"]}, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "public-metadata-checks.json").write_text(
+        json.dumps(
+            {
+                "readme_public_metadata_current": checks["readme_public_metadata_current"],
+                "security_md_current": checks["security_md_current"],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "updater-delivery-checks.json").write_text(
+        json.dumps({"updater_dry_run_ok": checks["updater_dry_run_ok"]}, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "provider-audit-pack-checks.json").write_text(
+        json.dumps(
+            {
+                "provider_audit_pack_commands_present": checks["provider_audit_pack_commands_present"],
+                "provider_audit_pack_workflow_present": checks["provider_audit_pack_workflow_present"],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     # checksums
     def get_sha256(path):
@@ -255,12 +334,11 @@ Generated at: {summary['generated_at']}
         return h.hexdigest()
 
     checksums = []
-    for p in out_dir.iterdir():
+    for p in sorted(out_dir.iterdir()):
         if p.is_file() and p.name != "sha256sums.txt":
             checksums.append(f"{get_sha256(p)}  {p.name}")
     
-    with open(out_dir / "sha256sums.txt", "w") as f:
-        f.write("\n".join(checksums) + "\n")
+    (out_dir / "sha256sums.txt").write_text("\n".join(checksums) + "\n", encoding="utf-8")
 
     print(f"Release assurance pack written to {out_dir}")
     sys.exit(0 if valid else 1)

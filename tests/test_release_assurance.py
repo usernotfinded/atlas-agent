@@ -12,6 +12,11 @@ try:
 except ImportError:
     pass
 
+
+def _cmd_text(cmd):
+    return " ".join(str(part) for part in cmd)
+
+
 @pytest.fixture
 def mock_env(monkeypatch):
     original_read_text = Path.read_text
@@ -43,22 +48,23 @@ def mock_env(monkeypatch):
             return True
         return original_exists(self, *args, **kwargs)
 
-    def mock_run_cmd(cmd, check=True, cwd=None):
-        if "git tag -l" in cmd:
+    def mock_run_cmd(cmd, check=True, cwd=None, env=None):
+        text = _cmd_text(cmd)
+        if "git tag -l" in text:
             return "v0.6.0\n", 0, ""
-        if "git ls-remote --tags" in cmd:
+        if "git ls-remote --tags" in text:
             return "v0.6.0\n", 0, ""
-        if "gh release view" in cmd:
+        if "gh release view" in text:
             return "", 0, ""
-        if "update check --dry-run" in cmd:
+        if "update check --dry-run" in text:
             return "Current version: 0.6.0", 0, ""
-        if "from atlas_agent.update.sources" in cmd:
-            if "v0.6.0.dev0" in cmd:
+        if "from atlas_agent.update.sources" in text:
+            if "v0.6.0.dev0" in text:
                 return "False", 0, ""
             return "True", 0, ""
-        if "audit-pack --help" in cmd or "verify-audit-pack --help" in cmd:
+        if "audit-pack --help" in text or "verify-audit-pack --help" in text:
             return "", 0, ""
-        if "git diff HEAD --name-only" in cmd:
+        if "git diff HEAD --name-only" in text:
             return "", 0, ""
         return "", 0, ""
 
@@ -91,6 +97,10 @@ def test_release_assurance_valid(mock_env, tmp_path, monkeypatch):
     assert "no live trading enabled by default" in report
     
     assert (tmp_path / "sha256sums.txt").exists()
+
+def test_release_assurance_uses_argument_list_subprocess() -> None:
+    text = Path("scripts/release_assurance.py").read_text(encoding="utf-8")
+    assert "shell=True" not in text
 
 def test_release_assurance_invalid_version(mock_env, tmp_path, monkeypatch):
     def bad_read_text(self, *args, **kwargs):
@@ -170,17 +180,17 @@ def test_release_assurance_stale_readme(mock_env, tmp_path, monkeypatch):
     assert summary["checks"]["readme_public_metadata_current"] is False
 
 def test_release_assurance_dev_stable_check(mock_env, tmp_path, monkeypatch):
-    original_run_cmd = release_assurance.run_cmd
-    def bad_run_cmd(cmd, check=True, cwd=None):
-        if "from atlas_agent.update.sources" in cmd:
+    def bad_run_cmd(cmd, check=True, cwd=None, env=None):
+        text = _cmd_text(cmd)
+        if "from atlas_agent.update.sources" in text:
             return "True", 0, "" # Fails dev check
-        if "git diff HEAD --name-only" in cmd:
+        if "git diff HEAD --name-only" in text:
             return "", 0, ""
-        if "git tag -l" in cmd:
+        if "git tag -l" in text:
             return "v0.6.0\n", 0, ""
-        if "git ls-remote" in cmd:
+        if "git ls-remote" in text:
             return "v0.6.0\n", 0, ""
-        if "update check" in cmd:
+        if "update check" in text:
             return "Current version: 0.6.0", 0, ""
         return "", 0, ""
 

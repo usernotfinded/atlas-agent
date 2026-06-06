@@ -150,8 +150,8 @@ def _build_artifacts(output_dir: Path, no_isolation: bool = True) -> tuple[bool,
 
 
 def _find_artifacts(dist_dir: Path) -> tuple[Path | None, Path | None]:
-    wheels = list(dist_dir.glob("*.whl"))
-    sdists = list(dist_dir.glob("*.tar.gz"))
+    wheels = sorted(dist_dir.glob("*.whl"))
+    sdists = sorted(dist_dir.glob("*.tar.gz"))
     wheel = wheels[0] if wheels else None
     sdist = sdists[0] if sdists else None
     return wheel, sdist
@@ -410,11 +410,18 @@ def _check_no_staged_artifacts() -> list[str]:
     errors: list[str] = []
     result = _run(["git", "diff", "--cached", "--name-only"], cwd=REPO_ROOT)
     staged = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    forbidden_prefixes = ("dist/", "build/")
     for f in staged:
-        if f.startswith(forbidden_prefixes) or f.endswith(".egg-info/"):
+        if _is_package_artifact_path(f):
             errors.append(f"Package artifact staged: {f}")
     return errors
+
+
+def _is_package_artifact_path(path: str) -> bool:
+    return (
+        path.startswith(("dist/", "build/"))
+        or ".egg-info/" in path
+        or path.endswith(".egg-info")
+    )
 
 
 def _build_plan(args: argparse.Namespace) -> dict:
