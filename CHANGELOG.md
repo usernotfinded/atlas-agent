@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added post-v0.6.3 planning notes for v0.6.4 maintenance candidate selection (`docs/releases/v0.6.4-plan.md`).
+- Added v0.6.4 patch candidate selection documentation (`docs/releases/v0.6.4-candidates.md`) and machine-readable inventory (`docs/releases/v0.6.4-candidates.json`) to separate safe maintenance candidates from deferred or runtime-sensitive work.
+- Added `scripts/check_v064_candidates.py` and `tests/test_v064_candidates.py` to verify candidate selection structure, safety boundaries, and absence of premature version bumps or release claims.
 
 ### Changed
 - Updated public docs (README, SECURITY, trust center, release readiness, public launch readiness, capability inventory, checks reference, main health, release checklist) to reflect `v0.6.3` as the current public GitHub release and remove stale "version-prepared" wording.

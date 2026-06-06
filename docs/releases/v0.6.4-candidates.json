@@ -1,0 +1,280 @@
+{
+  "artifact_type": "v064_patch_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.4",
+  "generated_for": "planning",
+  "generated_at": "2026-06-06",
+  "status": "candidate_selection",
+  "selection_criteria": [
+    "small and safe — docs-only, checker-only, test-only, or CI-only",
+    "backward compatible — no API or CLI contract changes",
+    "no runtime trading impact — no broker, execution, safety, risk, or provider default changes",
+    "patch scope per Semantic Versioning 2.0.0 — backward-compatible bug fixes or small maintenance only",
+    "verified by evidence — reproducible from repo state, CI logs, or checker output",
+    "testable — no network or credentials required"
+  ],
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "main_health.py drift prevention after release cutovers",
+      "category": "checker",
+      "priority": "P1",
+      "source": "scripts/main_health.py hardcodes EXPECTED_SOURCE_VERSION, PUBLIC_RELEASE, and NEXT_UNREQUESTED_RELEASE_TAG; manual updates are recurring post-release friction",
+      "risk": "low",
+      "expected_files": ["scripts/main_health.py", "tests/test_main_health.py"],
+      "acceptance_criteria": "Constants clearly document release cutover update procedure; tests remain green after each release without ad-hoc fixes.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Reduces recurring manual drift and post-release test breakage."
+    },
+    {
+      "id": "CAND-002",
+      "title": "Release-assurance artifact hygiene follow-up",
+      "category": "checker/docs",
+      "priority": "P1",
+      "source": "scripts/release_assurance.py produces untracked local artifacts under artifacts/release_assurance/ that require manual backup before push",
+      "risk": "low",
+      "expected_files": ["scripts/check_generated_artifacts.py", "docs/development/checks-reference.md", "README.md"],
+      "acceptance_criteria": "Generated artifact checker provides clearer guidance on backing up vs. removing local release-assurance artifacts; docs reference the hygiene workflow consistently.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Keeps local worktree predictable and post-push checks clean."
+    },
+    {
+      "id": "CAND-003",
+      "title": "Package distribution checker follow-up after v0.6.3",
+      "category": "checker",
+      "priority": "P1",
+      "source": "scripts/check_package_distribution.py was hotfixed in v0.6.3; --dry-run and missing-tool paths can be further hardened",
+      "risk": "low",
+      "expected_files": ["scripts/check_package_distribution.py", "tests/test_package_distribution_check.py"],
+      "acceptance_criteria": "--dry-run produces a deterministic plan report; missing tooling yields actionable hints instead of tracebacks.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Hardens a checker that was part of the v0.6.3 release rationale."
+    },
+    {
+      "id": "CAND-004",
+      "title": "Release notes / trust center consistency after v0.6.3",
+      "category": "docs",
+      "priority": "P1",
+      "source": "Batch 58 updated most docs to v0.6.3; a final pass can align remaining examples, smoke commands, and cross-references",
+      "risk": "low",
+      "expected_files": ["docs/trust/v0.6.3-status.md", "docs/development/checks-reference.md", "docs/development/main-health.md", "docs/release-checklist.md"],
+      "acceptance_criteria": "All public-release references in docs and checkers resolve to v0.6.3; stale v0.6.2 examples are removed.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Closes the post-release docs polish loop."
+    },
+    {
+      "id": "CAND-005",
+      "title": "Long-running check timeout documentation refinement",
+      "category": "docs",
+      "priority": "P2",
+      "source": "scripts/check_runtime_diagnostics.py and checks-reference.md already document timeout triage sufficiently",
+      "risk": "none",
+      "expected_files": ["docs/development/checks-reference.md"],
+      "acceptance_criteria": "Add slow-machine estimates for research_check.sh and full_test gates without weakening timeouts.",
+      "selected": false,
+      "reason": "Already sufficient; defer unless operator feedback indicates confusion."
+    },
+    {
+      "id": "CAND-006",
+      "title": "CI deterministic test reliability follow-up",
+      "category": "test/CI",
+      "priority": "P1",
+      "source": "Historical scheduled Full Test failures and timing-sensitive tests benefit from better isolation and deterministic ordering",
+      "risk": "low",
+      "expected_files": ["tests/test_release_assurance.py", "tests/test_main_health.py"],
+      "acceptance_criteria": "Timing-sensitive tests mock time or filesystem ordering; JSON diff comparisons use sorted keys where appropriate.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Improves CI signal-to-noise without adding retries or skips."
+    },
+    {
+      "id": "CAND-007",
+      "title": "Generated artifact cleanup ergonomics",
+      "category": "checker",
+      "priority": "P1",
+      "source": "Operators manually back up generated artifacts; checker messages could be more actionable",
+      "risk": "low",
+      "expected_files": ["scripts/check_generated_artifacts.py"],
+      "acceptance_criteria": "Checker emits actionable backup commands; no destructive cleanup is performed automatically.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Reduces operator friction during post-push hygiene."
+    },
+    {
+      "id": "CAND-008",
+      "title": "Public docs consistency checker expansion",
+      "category": "checker",
+      "priority": "P2",
+      "source": "scripts/check_public_docs_consistency.py could validate README status line and orphaned release notes",
+      "risk": "low",
+      "expected_files": ["scripts/check_public_docs_consistency.py"],
+      "acceptance_criteria": "Checker validates README status line matches current public release; warns on orphaned release notes.",
+      "selected": false,
+      "reason": "Valuable but broader than a minimal patch; defer to a dedicated docs-checker batch."
+    },
+    {
+      "id": "CAND-009",
+      "title": "PyPI non-publish messaging consistency",
+      "category": "docs",
+      "priority": "P1",
+      "source": "Release notes use slightly different phrasing for PyPI not published",
+      "risk": "none",
+      "expected_files": ["docs/releases/*.md", "README.md", "SECURITY.md"],
+      "acceptance_criteria": "All PyPI references use consistent negated phrasing; no claim of publication exists.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Low-cost clarity improvement that reinforces the no-publish policy."
+    },
+    {
+      "id": "CAND-010",
+      "title": "v0.6.4 release prep checker planning",
+      "category": "checker",
+      "priority": "P1",
+      "source": "Pattern established by check_v061_release_prep.py, check_v062_release_prep.py, and check_v063_release_prep.py",
+      "risk": "low",
+      "expected_files": ["scripts/check_v064_release_prep.py", "tests/test_v064_release_prep.py"],
+      "acceptance_criteria": "Skeleton validates absence of docs/releases/v0.6.4.md and 0.6.4 version bump in planning mode; full release-prep mode activates after version bump.",
+      "selected": true,
+      "implemented": false,
+      "reason": "Prepares checker infrastructure without enabling it prematurely."
+    }
+  ],
+  "deferred": [
+    {
+      "id": "CAND-005",
+      "title": "Long-running check timeout documentation refinement",
+      "reason": "Already documented sufficiently. Defer until operator feedback indicates confusion."
+    },
+    {
+      "id": "CAND-008",
+      "title": "Public docs consistency checker expansion",
+      "reason": "Valuable but broader than a minimal patch. Defer to a dedicated docs-checker batch."
+    },
+    {
+      "id": "DEF-001",
+      "title": "New broker adapters (Binance completion, CCXT enablement, IBKR implementation)",
+      "reason": "New features, not bug fixes. Defer to v0.7.0 or later minor release."
+    },
+    {
+      "id": "DEF-002",
+      "title": "New strategy packs or backtest engine expansion",
+      "reason": "New features out of patch scope. Defer to v0.7.0 or later."
+    },
+    {
+      "id": "DEF-003",
+      "title": "Dashboard rewrite or new UI capabilities",
+      "reason": "Out of patch scope. Requires design review."
+    },
+    {
+      "id": "DEF-004",
+      "title": "Major architecture refactor",
+      "reason": "Out of patch scope. Too risky for a patch release."
+    },
+    {
+      "id": "DEF-005",
+      "title": "Research-to-live trading bridge",
+      "reason": "Safety-sensitive. Requires explicit gated design."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Atlas remains disabled-by-default for live trading."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Live submit enablement",
+      "reason": "Live submit remains disabled by default."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Broker execution enablement",
+      "reason": "No broker adapter may be promoted to default live-submit enabled."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Provider execution unlock",
+      "reason": "Provider adapters remain fail-closed and disabled by default."
+    },
+    {
+      "id": "REJ-005",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Automatic skill activation",
+      "reason": "Skill candidates remain manually reviewed and offline."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Automatic learning execution",
+      "reason": "Learning workflows remain offline and manually triggered."
+    },
+    {
+      "id": "REJ-008",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-009",
+      "title": "Major dashboard rewrite",
+      "reason": "Out of patch scope."
+    },
+    {
+      "id": "REJ-010",
+      "title": "Large architecture rewrite",
+      "reason": "Out of patch scope and too risky."
+    },
+    {
+      "id": "REJ-011",
+      "title": "New broker adapters",
+      "reason": "New features, not maintenance."
+    },
+    {
+      "id": "REJ-012",
+      "title": "New strategy packs",
+      "reason": "New features, not maintenance."
+    },
+    {
+      "id": "REJ-013",
+      "title": "Profitability or trading correctness claims",
+      "reason": "Forbidden."
+    },
+    {
+      "id": "REJ-014",
+      "title": "Financial advice wording",
+      "reason": "Forbidden."
+    }
+  ],
+  "safety_boundaries": [
+    "src/atlas_agent/config/ — no new live defaults",
+    "src/atlas_agent/brokers/ — no new submit paths, no execution enabled by default",
+    "src/atlas_agent/execution/ — no direct AI-to-broker paths",
+    "src/atlas_agent/safety/ — no kill switch bypasses",
+    "src/atlas_agent/risk/ — risk limits must not be weakened",
+    "Live trading remains disabled by default",
+    "Live submit remains disabled by default",
+    "Provider execution remains disabled by default",
+    "Broker execution remains disabled by default",
+    "Human approval remains required for live order flow",
+    "Credentials are not loaded unless explicitly configured",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks",
+    "Version is not bumped to 0.6.4 in this batch",
+    "docs/releases/v0.6.4.md does not exist yet",
+    "No tag, GitHub release, or PyPI publish yet"
+  ],
+  "non_goals": [
+    "No version bump to 0.6.4",
+    "No docs/releases/v0.6.4.md creation",
+    "No tag or GitHub release creation",
+    "No PyPI publishing",
+    "No runtime trading behavior changes",
+    "No broker, provider, risk, approval, or kill-switch behavior changes"
+  ]
+}
