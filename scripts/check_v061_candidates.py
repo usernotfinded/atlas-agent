@@ -192,7 +192,7 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         for path in (PYPROJECT, INIT_PY):
             if path.exists():
                 text = path.read_text(encoding="utf-8")
-                if "0.6.1" not in text and "0.6.2" not in text:
+                if "0.6.1" not in text and "0.6.2" not in text and "0.6.3" not in text:
                     errors.append(f"Version bump to 0.6.1 or 0.6.2 missing in {path}")
     errors.extend(_check_no_unsafe_selected())
     errors.extend(_check_no_publish_claim())

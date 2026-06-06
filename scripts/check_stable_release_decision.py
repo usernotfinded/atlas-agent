@@ -26,15 +26,15 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.6.2"
-PUBLIC_TAG = "v0.6.2"
+PACKAGE_VERSION = "0.6.3"
+PUBLIC_TAG = "v0.6.3"
 
 REQUIRED_FILES = [
     REPO_ROOT / "README.md",
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
     REPO_ROOT / "CHANGELOG.md",
-    REPO_ROOT / "docs" / "releases" / "v0.6.2.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.3.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.1.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.0.md",
     REPO_ROOT / "docs" / "stable-release-decision.md",

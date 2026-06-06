@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Read-only v0.6.2 release prep checker.
+"""Read-only v0.6.2 release prep checker (post-v0.6.2 state check).
 
-Verifies that the repository is correctly prepared for a v0.6.2 release:
-- version is 0.6.2
+Verifies that the repository remains correctly prepared after the v0.6.2 release:
+- version is 0.6.2 or 0.6.3 (post-bump allowed)
 - docs/releases/v0.6.2.md exists
 - docs/trust/v0.6.2-status.md exists
 - CHANGELOG has 0.6.2 entry
 - no unsafe claims
-- no docs/releases/v0.6.3.md
+- docs/releases/v0.6.3.md may exist (post-bump state)
+- no docs/releases/v0.6.4.md
 - v0.6.1 tag/release history remains intact
 
 Exit codes:
@@ -41,11 +42,12 @@ INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.2.md"
 TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.2-status.md"
-FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.3.md"
+FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.4.md"
 V061_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.1.md"
 V061_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.1-status.md"
 
 REQUIRED_VERSION = "0.6.2"
+POST_BUMP_VERSION = "0.6.3"
 PUBLIC_TAG = "v0.6.2"
 
 UNSAFE_CLAIMS = [
@@ -74,13 +76,19 @@ def _fail(message: str) -> tuple[int, dict]:
 
 def _check_version_bump() -> list[str]:
     errors: list[str] = []
+    found_required = False
+    found_post_bump = False
     for path in (PYPROJECT, INIT_PY):
         if not path.exists():
             errors.append(f"Missing file: {path}")
             continue
         text = path.read_text(encoding="utf-8")
-        if REQUIRED_VERSION not in text:
-            errors.append(f"Version {REQUIRED_VERSION} not found in {path}")
+        if REQUIRED_VERSION in text:
+            found_required = True
+        if POST_BUMP_VERSION in text:
+            found_post_bump = True
+    if not found_required and not found_post_bump:
+        errors.append(f"Version {REQUIRED_VERSION} or {POST_BUMP_VERSION} not found in pyproject.toml/__init__.py")
     return errors
 
 
@@ -183,7 +191,7 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="v0.6.2 release prep checker")
+    parser = argparse.ArgumentParser(description="v0.6.2 release prep checker (post-v0.6.2 state check)")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     args = parser.parse_args(argv)
 
@@ -207,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, indent=2))
     else:
         status = "PASS" if result["valid"] else "FAIL"
-        print(f"v0.6.2 release prep check {status}")
+        print(f"v0.6.2 release prep check (post-v0.6.2 state) {status}")
         if result["errors"]:
             for err in result["errors"]:
                 print(f"  ERROR: {err}")

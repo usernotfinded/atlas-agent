@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.2 hotfix has been delivered through the `v0.6.2` versioned GitHub release. The v0.6.1 and v0.6.0 releases are historical.
+The v0.6.2 hotfix has been delivered through the `v0.6.2` versioned GitHub release. The v0.6.3 hotfix is version-prepared. The v0.6.1 and v0.6.0 releases are historical.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.2, the expected public GitHub release is `v0.6.2`.
+For v0.6.2, the expected public GitHub release is `v0.6.2`. For v0.6.3, the prepared version is `0.6.3`.
 
 PyPI publishing was intentionally skipped unless explicitly approved separately.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.2 --output artifacts/release_assurance/v0.6.2-local-check
+python scripts/release_assurance.py --version v0.6.3 --output artifacts/release_assurance/v0.6.3-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
@@ -72,11 +72,11 @@ to keep local setup, safe-check, and release-sensitive command guidance current.
 
 ## v0.6.2 readiness
 
-For v0.6.2 release readiness and post-cutover verification, run the v0.6.2 release prep checker:
+For v0.6.3 release readiness and post-cutover verification, run the v0.6.3 release prep checker:
 
 ```bash
-python3.11 scripts/check_v062_release_prep.py
-python3.11 scripts/check_v062_release_prep.py --json
+python3.11 scripts/check_v063_release_prep.py
+python3.11 scripts/check_v063_release_prep.py --json
 ```
 
 The checker verifies required docs, source modules, test files, CLI contract

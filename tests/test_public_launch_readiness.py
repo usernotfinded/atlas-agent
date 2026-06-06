@@ -110,7 +110,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.6.1" in readme_text or "v0.6.0" in readme_text
+        assert "v0.6.2" in readme_text or "v0.6.1" in readme_text
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -188,8 +188,8 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.6.2"
-        assert data["public_tag"] == "v0.6.2"
+        assert data["package_version"] == "0.6.3"
+        assert data["public_tag"] == "v0.6.3"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:

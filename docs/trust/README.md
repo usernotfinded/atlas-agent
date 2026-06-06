@@ -7,12 +7,12 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.2` (tagged)
 - Previous public release: `v0.6.1`
-- Source package version on `main`: `0.6.2`
-- GitHub release: `v0.6.2`
+- Source package version on `main`: `0.6.3`
+- GitHub release: `v0.6.2` (current public); `v0.6.3` is version-prepared
 - PyPI publish: not performed
-- Release status detail: [v0.6.2 Trust and Release Status](v0.6.2-status.md)
-- Release notes: [docs/releases/v0.6.2.md](../releases/v0.6.2.md)
-- Historical release notes: [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
+- Release status detail: [v0.6.3 Trust and Release Status](v0.6.3-status.md) (prepared)
+- Release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md) (prepared)
+- Historical release notes: [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
 ## Security Posture
 
@@ -62,19 +62,20 @@ requires a versioned evidence pack.
 ## Auto-Updater Delivery
 
 Auto-updater delivery for `v0.6.2` is verified against the GitHub release/tag.
+`v0.6.3` will be verified after cutover.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.2`
+- GitHub release: `v0.6.2` (current public); `v0.6.3` is version-prepared
 - PyPI publish: not performed
-- Package version in source metadata: `0.6.2`
-- Auto-updater delivery: verified
+- Package version in source metadata: `0.6.3`
+- Auto-updater delivery: verified for `v0.6.2`
 
 ## What Is Ready
 
-- Public v0.6.2 release notes and release status documentation.
+- Public v0.6.3 release notes and release status documentation (prepared).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -83,7 +84,7 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1` or `v0.6.2`.
+- PyPI was not published for `v0.6.1`, `v0.6.2`, or `v0.6.3`.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -99,8 +100,9 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.2 Release Notes](../releases/v0.6.2.md)
-- [v0.6.2 Trust and Release Status](v0.6.2-status.md)
+- [v0.6.3 Release Notes](../releases/v0.6.3.md) (prepared)
+- [v0.6.3 Trust and Release Status](v0.6.3-status.md) (prepared)
+- [v0.6.2 Trust and Release Status](v0.6.2-status.md) (current public)
 - [v0.6.1 Trust and Release Status (historical)](v0.6.1-status.md)
 - [v0.6.0 Trust and Release Status (historical)](v0.6.0-status.md)
 - [SECURITY.md](../../SECURITY.md)

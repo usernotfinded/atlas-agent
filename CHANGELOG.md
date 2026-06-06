@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 
+## [0.6.3] - 2026-06-06
+
+### Added
+- Added `docs/releases/v0.6.3.md` release notes and `docs/trust/v0.6.3-status.md` trust status.
+- Added `scripts/check_v063_release_prep.py` and `tests/test_v063_release_prep.py` to verify v0.6.3 release prep state.
+
+### Changed
+- Bumped package/source version from `0.6.2` to `0.6.3`.
+- Updated version-aware local checks (`check_version_consistency.py`, `check_trust_center.py`, `check_public_docs_consistency.py`, `check_public_launch_readiness.py`, `check_stable_release_decision.py`, `check_reviewer_onboarding.py`, `check_package_distribution.py`, `check_clean_install.py`, `check_final_rc_audit.py`, `check_rc1_cutover.py`, `check_v058_rc1_readiness.py`, `check_v0581_hotfix_cutover.py`, `main_health.py`, `release_assurance.py`, `build_release_evidence_bundle.py`) to recognize `0.6.3`.
+- Updated `scripts/check_v061_release_prep.py` to also accept `0.6.3` as a valid post-bump state while still verifying v0.6.1 artifacts exist and rejecting v0.6.4.md.
+- Updated `scripts/check_v062_release_prep.py` to accept `0.6.3` as a valid post-bump state, accept `v0.6.3.md` existing, and reject v0.6.4.md while still verifying v0.6.2 artifacts exist.
+- Updated public docs (README, SECURITY, trust center, release readiness, public launch readiness, release checklist, checks reference, capability inventory) to reflect `v0.6.3` as the prepared source version and `v0.6.2` as the current public GitHub release.
+
+### Fixed
+- Hardened package distribution checker runtime dependency verification, including explicit `pydantic` metadata validation.
+- Separated `--no-deps` install checks from wheel-installed `atlas init` so dependency-free installs no longer fail when runtime dependencies are absent.
+- Guarded `atlas init` in package distribution checks so it only runs when runtime dependencies are confirmed present.
+- Confirmed `twine>=4.0` and `.[dev]` install paths in CI/release gates for package distribution tooling.
+
+### Safety
+- No live trading, provider execution, broker execution, risk gate, approval queue, or kill switch changes.
+- No new runtime features, broker adapters, or provider integrations.
+- No PyPI publish performed.
+
 ## [0.6.2] - 2026-06-06
 
 ### Added

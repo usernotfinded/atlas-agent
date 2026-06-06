@@ -162,8 +162,8 @@ dependencies, modify files, or require GitHub credentials. See
 prep state:
 
 ```bash
-python3.11 scripts/check_v062_release_prep.py
-python3.11 scripts/check_v062_release_prep.py --json
+python3.11 scripts/check_v063_release_prep.py
+python3.11 scripts/check_v063_release_prep.py --json
 ```
 
 It verifies that the package version is `0.6.2`, `docs/releases/v0.6.2.md` exists,

@@ -1,4 +1,4 @@
-"""Tests for v0.6.1 release prep checker.
+"""Tests for v0.6.3 release prep checker.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
@@ -17,14 +17,14 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "check_v061_release_prep.py"
+SCRIPT = ROOT / "scripts" / "check_v063_release_prep.py"
 
 
 def _load_script_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("check_v061_release_prep", SCRIPT)
+    spec = importlib.util.spec_from_file_location("check_v063_release_prep", SCRIPT)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["check_v061_release_prep"] = mod
+    sys.modules["check_v063_release_prep"] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -60,7 +60,7 @@ class TestCheckerValid:
     def test_json_has_required_keys(self) -> None:
         result = _run_script("--json")
         data = json.loads(result.stdout)
-        assert data["artifact_type"] == "v061_release_prep_report"
+        assert data["artifact_type"] == "v063_release_prep_report"
         assert data["schema_version"] == 1
 
 
@@ -68,9 +68,9 @@ class TestCheckerNegative:
     def test_missing_version_bump_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_pyproject = tmp_path / "pyproject.toml"
-        fake_pyproject.write_text('version = "0.6.0"\n')
+        fake_pyproject.write_text('version = "0.6.2"\n')
         fake_init = tmp_path / "__init__.py"
-        fake_init.write_text('__version__ = "0.6.0"\n')
+        fake_init.write_text('__version__ = "0.6.2"\n')
         original_pyproject = mod.PYPROJECT
         original_init = mod.INIT_PY
         try:
@@ -78,7 +78,7 @@ class TestCheckerNegative:
             mod.INIT_PY = fake_init
             code, result = mod.run_check()
             assert code == 1
-            assert any("0.6.1" in e for e in result["errors"])
+            assert any("0.6.3" in e for e in result["errors"])
         finally:
             mod.PYPROJECT = original_pyproject
             mod.INIT_PY = original_init
@@ -108,7 +108,7 @@ class TestCheckerNegative:
     def test_missing_changelog_entry_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_changelog = tmp_path / "CHANGELOG.md"
-        fake_changelog.write_text("# Changelog\n\n## [0.6.0] - 2026-06-05\n")
+        fake_changelog.write_text("# Changelog\n\n## [0.6.2] - 2026-06-06\n")
         original = mod.CHANGELOG
         try:
             mod.CHANGELOG = fake_changelog
@@ -133,9 +133,9 @@ class TestCheckerNegative:
 
     def test_unsafe_claim_in_release_notes_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
-        fake_notes = tmp_path / "v0.6.1.md"
+        fake_notes = tmp_path / "v0.6.3.md"
         fake_notes.write_text(
-            "# v0.6.1\n\nThis release enables autonomous trading for everyone.\n"
+            "# v0.6.3\n\nThis release enables autonomous trading for everyone.\n"
         )
         original = mod.RELEASE_NOTES
         try:
@@ -145,3 +145,17 @@ class TestCheckerNegative:
             assert any("Unsafe claim" in e for e in result["errors"])
         finally:
             mod.RELEASE_NOTES = original
+
+    def test_v062_history_missing_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original_v062_notes = mod.V062_RELEASE_NOTES
+        original_v062_status = mod.V062_TRUST_STATUS
+        try:
+            mod.V062_RELEASE_NOTES = tmp_path / "missing-v062.md"
+            mod.V062_TRUST_STATUS = tmp_path / "missing-v062-status.md"
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("v0.6.2 history missing" in e for e in result["errors"])
+        finally:
+            mod.V062_RELEASE_NOTES = original_v062_notes
+            mod.V062_TRUST_STATUS = original_v062_status

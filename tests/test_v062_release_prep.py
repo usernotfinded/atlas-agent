@@ -120,8 +120,8 @@ class TestCheckerNegative:
 
     def test_future_release_notes_rejected(self, tmp_path: Path) -> None:
         mod = _load_script_module()
-        fake_future = tmp_path / "v0.6.3.md"
-        fake_future.write_text("# v0.6.3\n")
+        fake_future = tmp_path / "v0.6.4.md"
+        fake_future.write_text("# v0.6.4\n")
         original = mod.FUTURE_RELEASE_NOTES
         try:
             mod.FUTURE_RELEASE_NOTES = fake_future

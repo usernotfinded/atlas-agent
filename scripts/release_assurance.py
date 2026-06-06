@@ -73,7 +73,7 @@ def main():
     # 6. README
     try:
         readme = Path("README.md").read_text(encoding="utf-8")
-        checks["readme_public_metadata_current"] = "Current Status (v0.5.7" not in readme and "Current Status (v0.5.8" not in readme and "Current Status (v0.6.1" not in readme
+        checks["readme_public_metadata_current"] = "Current Status (v0.5.7" not in readme and "Current Status (v0.5.8" not in readme and "Current Status (v0.6.1" not in readme and "Current Status (v0.6.2" not in readme
     except OSError:
         checks["readme_public_metadata_current"] = False
 
@@ -137,9 +137,9 @@ def main():
     # This is tested implicitly by checking the sources.py directly or trusting the test suite. 
     # But we can also do a quick python check
     dev_tag = f"{version}.dev0"
-    # Handle v0.6.1 historical check
-    if version == "v0.6.1":
-        dev_tag = "v0.6.1.dev0"
+    # Handle v0.6.1/v0.6.2 historical checks
+    if version in ("v0.6.1", "v0.6.2"):
+        dev_tag = f"{version}.dev0"
     out, rc, err = run_cmd(
         [
             sys.executable,
