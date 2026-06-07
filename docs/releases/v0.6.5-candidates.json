@@ -58,6 +58,7 @@
       ],
       "acceptance_criteria": "Test verifies that security_md_current passes when SECURITY.md contains the package version and fails when it contains only a mismatched tag version.",
       "selected_for_v065": true,
+      "implementation_status": "implemented in Batch 70",
       "decision": "accepted",
       "reason": "Protects the fix from regression."
     },
@@ -73,6 +74,7 @@
       ],
       "acceptance_criteria": "Examples reference the current source version and public tag without stale historical values.",
       "selected_for_v065": true,
+      "implementation_status": "implemented in Batch 70",
       "decision": "accepted",
       "reason": "Low-cost docs hygiene."
     },
@@ -88,9 +90,10 @@
         "tests/research/test_provider_execution_readiness_report.py"
       ],
       "acceptance_criteria": "All JSON-producing report modules use deterministic ordering (sort_keys=True or explicit sorting).",
-      "selected_for_v065": false,
-      "decision": "deferred",
-      "reason": "Most JSON outputs already use sort_keys=True; remaining cases are in complex research modules where a dedicated determinism pass is more appropriate than a patch-scope change."
+      "selected_for_v065": true,
+      "implementation_status": "implemented in Batch 70",
+      "decision": "accepted",
+      "reason": "Low-risk determinism hardening for scripts touched in this batch."
     },
     {
       "id": "CAND-006",
@@ -105,6 +108,7 @@
       ],
       "acceptance_criteria": "Planning mode rejects docs/releases/v0.6.5.md and 0.6.5 version bump; release-prep mode will accept them after bump.",
       "selected_for_v065": true,
+      "implementation_status": "implemented in Batch 70",
       "decision": "accepted",
       "reason": "Prepares the release-prep gate without enabling it prematurely."
     }

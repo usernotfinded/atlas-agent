@@ -189,6 +189,25 @@ def test_release_assurance_security_md_current_rejects_missing_package_version(t
     ]
 
 
+def test_release_assurance_security_md_current_rejects_tag_only_version(tmp_path, monkeypatch):
+    """CAND-003 regression: SECURITY.md must contain package version, not just tag version."""
+    _install_v064_mock_env(
+        monkeypatch,
+        security_text="| Version | Supported |\n|---|---|\n| v0.6.4 | Tag only |\n",
+    )
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.4", "--output", str(tmp_path)])
+
+    with pytest.raises(SystemExit) as e:
+        release_assurance.main()
+
+    assert e.value.code == 1
+    summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
+    assert summary["checks"]["security_md_current"] is False
+    assert summary["findings"] == [
+        "SECURITY.md supported versions do not include package version 0.6.4 for release tag v0.6.4."
+    ]
+
+
 def test_release_assurance_tag_checks_keep_tag_version(tmp_path, monkeypatch):
     commands = _install_v064_mock_env(monkeypatch)
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.4", "--output", str(tmp_path)])

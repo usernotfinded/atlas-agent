@@ -495,8 +495,8 @@ After all validations pass and the commit is ready:
 git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
 git commit -m "Batch 10.13 — Stable v0.5.7 release decision pack"
 git push origin main
-git tag -a v0.6.3 -m "Atlas Agent v0.6.3"
-git push origin v0.6.3
+git tag -a v0.6.4 -m "Atlas Agent v0.6.4"
+git push origin v0.6.4
 ```
 
 Only create the tag after:

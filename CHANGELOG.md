@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added v0.6.5 maintenance planning notes after the v0.6.4 release-assurance checker fix (`docs/releases/v0.6.5-plan.md`, `docs/releases/v0.6.5-candidates.md`, `docs/releases/v0.6.5-candidates.json`).
-- Finalized v0.6.5 candidate selection: CAND-003 (regression test for `security_md_current`), CAND-004 (release checklist version references), and CAND-006 (v0.6.5 release prep checker skeleton) accepted; CAND-005 (JSON determinism) deferred to a dedicated CI determinism batch.
+- Finalized v0.6.5 candidate selection: CAND-003 (regression test for `security_md_current`), CAND-004 (release checklist version references), CAND-005 (JSON determinism), and CAND-006 (v0.6.5 release prep checker skeleton) accepted.
+- Added `scripts/check_v065_release_prep.py` and `tests/test_v065_release_prep.py` for v0.6.5 release-prep state validation in planning and future release-prep modes.
+- Added CAND-003 regression test in `tests/test_release_assurance.py` proving `security_md_current` validates against package version (`0.6.4`), not tag string (`v0.6.4`).
 
 ### Changed
+- Updated `docs/release-checklist.md` tag example from stale `v0.6.3` to current `v0.6.4`.
+- Hardened deterministic JSON output in `scripts/check_v065_candidates.py` and `scripts/check_v065_release_prep.py` by adding `sort_keys=True` to all `json.dumps` calls.
 
 ### Fixed
 - Fixed release assurance `SECURITY.md` validation to compare supported versions against the package version without the leading `v` tag prefix.
@@ -22,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The release-assurance checker fix does not change trading, broker, provider, risk, approval, or kill-switch behavior.
 - The v0.6.5 planning update does not change trading, broker, provider, risk, approval, or kill-switch behavior.
 - The public-docs and checker metadata updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- The v0.6.5 checker/test/docs updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
 
 ## [0.6.4] - 2026-06-07
 

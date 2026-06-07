@@ -232,13 +232,13 @@ def main(argv: list[str] | None = None) -> int:
             "warnings": [],
         }
         if args.json:
-            print(json.dumps(result, indent=2))
+            print(json.dumps(result, indent=2, sort_keys=True))
         else:
             print(f"ERROR: {exc}")
         return 2
 
     if args.json:
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2, sort_keys=True))
     else:
         status = "PASS" if result["valid"] else "FAIL"
         print(f"v0.6.5 candidate check {status}")
