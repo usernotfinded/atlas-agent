@@ -355,6 +355,21 @@ def collect_report(repo_root: Path, git_runner: GitRunner = _run_git) -> Hygiene
     return HygieneReport(str(repo_root), checks, warnings, findings, errors)
 
 
+def _print_cleanup_guidance(warnings: list[Finding]) -> None:
+    untracked = [
+        w for w in warnings if w.code == "untracked_local_evidence_artifact"
+    ]
+    if not untracked:
+        return
+
+    print("  Safe cleanup guidance (review each path before running):")
+    print("    mkdir -p /tmp/atlas-agent-artifact-backup")
+    for warning in untracked:
+        if _is_local_only_artifact(warning.path):
+            print(f"    mv {warning.path} /tmp/atlas-agent-artifact-backup/")
+    print("    # Do not use git clean, git reset --hard, stash pop, or stash drop.")
+
+
 def _print_text(report: HygieneReport) -> None:
     if report.errors:
         print("Generated artifact hygiene check ERROR")
@@ -382,6 +397,7 @@ def _print_text(report: HygieneReport) -> None:
         print("  Warnings:")
         for warning in report.warnings:
             print(f"  - {warning.detail}")
+        _print_cleanup_guidance(report.warnings)
     else:
         print("  Warnings: 0")
 

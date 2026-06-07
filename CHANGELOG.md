@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated public docs (README, SECURITY, trust center, release readiness, public launch readiness, capability inventory, checks reference, main health, release checklist) to reflect `v0.6.3` as the current public GitHub release and remove stale "version-prepared" wording.
 - Hardened `scripts/main_health.py` release metadata checks by centralizing constants into a `ReleaseMetadata` dataclass with a `validate()` method that detects drift against local git tags and source version. Tests now verify drift detection.
+- Hardened package distribution checker diagnostics: `--dry-run` plan now explicitly documents `--no-deps` behavior; missing `build` and `twine` tooling yields actionable install hints instead of bare messages. Tests verify hints and plan clarity.
+- Improved generated-artifact hygiene guidance: `scripts/check_generated_artifacts.py` now emits copy-paste-ready `mv` backup commands for untracked local evidence artifacts, with explicit warnings against `git clean`, `git reset --hard`, and destructive stash operations. Tests verify exact-path guidance and disallowed-command warnings.
 
 ### Fixed
 

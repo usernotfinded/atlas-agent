@@ -48,9 +48,9 @@
       "source": "scripts/check_package_distribution.py was hotfixed in v0.6.3; --dry-run and missing-tool paths can be further hardened",
       "risk": "low",
       "expected_files": ["scripts/check_package_distribution.py", "tests/test_package_distribution_check.py"],
-      "acceptance_criteria": "--dry-run produces a deterministic plan report; missing tooling yields actionable hints instead of tracebacks.",
+      "acceptance_criteria": "--dry-run produces a deterministic plan report; missing tooling yields actionable hints instead of tracebacks. Implemented in Batch 61.",
       "selected": true,
-      "implemented": false,
+      "implemented": true,
       "reason": "Hardens a checker that was part of the v0.6.3 release rationale."
     },
     {
@@ -99,9 +99,9 @@
       "source": "Operators manually back up generated artifacts; checker messages could be more actionable",
       "risk": "low",
       "expected_files": ["scripts/check_generated_artifacts.py"],
-      "acceptance_criteria": "Checker emits actionable backup commands; no destructive cleanup is performed automatically.",
+      "acceptance_criteria": "Checker emits actionable backup commands; no destructive cleanup is performed automatically. Implemented in Batch 61.",
       "selected": true,
-      "implemented": false,
+      "implemented": true,
       "reason": "Reduces operator friction during post-push hygiene."
     },
     {

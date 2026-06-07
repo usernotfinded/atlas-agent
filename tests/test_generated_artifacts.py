@@ -194,3 +194,91 @@ def test_github_ci_includes_generated_artifact_checker() -> None:
     )
 
     assert "check_generated_artifacts.py" in text
+
+
+def test_cleanup_guidance_prints_exact_mv_commands(tmp_path: Path, capsys) -> None:
+    repo = tmp_path
+    (repo / "artifacts" / "release_evidence").mkdir(parents=True)
+    (repo / "artifacts" / "release_evidence" / "evidence.json").write_text(
+        '{"status": "local"}\n', encoding="utf-8"
+    )
+
+    exit_code = CHECKER.main(
+        [str(repo)],
+        git_runner=_runner(status="?? artifacts/release_evidence/evidence.json\n"),
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "Safe cleanup guidance" in captured.out
+    assert "mv artifacts/release_evidence/evidence.json" in captured.out
+    assert "mkdir -p /tmp/atlas-agent-artifact-backup" in captured.out
+    # The guidance explicitly warns against git clean / reset --hard, so those
+    # phrases appear in the output as disallowed commands, not as suggested ones.
+    assert "Do not use git clean" in captured.out
+    assert "git reset --hard" in captured.out
+
+
+def test_cleanup_guidance_does_not_suggest_git_clean(tmp_path: Path, capsys) -> None:
+    repo = tmp_path
+    (repo / "artifacts" / "release_assurance").mkdir(parents=True)
+    (repo / "artifacts" / "release_assurance" / "report.md").write_text(
+        "# report\n", encoding="utf-8"
+    )
+
+    exit_code = CHECKER.main(
+        [str(repo)],
+        git_runner=_runner(
+            status="?? artifacts/release_assurance/report.md\n"
+        ),
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "Do not use git clean" in captured.out
+    assert "git reset --hard" in captured.out
+    assert "stash pop" in captured.out
+    assert "stash drop" in captured.out
+
+
+def test_cleanup_guidance_does_not_touch_source_or_test_paths(
+    tmp_path: Path, capsys
+) -> None:
+    """Even if untracked source paths appear, cleanup guidance is not emitted for them."""
+    repo = tmp_path
+    (repo / "src").mkdir()
+    (repo / "src" / "new_file.py").write_text("pass\n", encoding="utf-8")
+
+    exit_code = CHECKER.main(
+        [str(repo)],
+        git_runner=_runner(status="?? src/new_file.py\n"),
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "Safe cleanup guidance" not in captured.out
+    assert "mv src/new_file.py" not in captured.out
+    assert "/tmp/atlas-agent-artifact-backup" not in captured.out
+
+
+def test_cleanup_guidance_only_for_local_artifact_prefixes(
+    tmp_path: Path, capsys
+) -> None:
+    repo = tmp_path
+    (repo / "artifacts" / "provider_preflight").mkdir(parents=True)
+    (repo / "artifacts" / "provider_preflight" / "result.json").write_text(
+        "{}\n", encoding="utf-8"
+    )
+
+    exit_code = CHECKER.main(
+        [str(repo)],
+        git_runner=_runner(
+            status="?? artifacts/provider_preflight/result.json\n"
+        ),
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "mv artifacts/provider_preflight/result.json" in captured.out
+    # The guidance explicitly warns against git clean as a disallowed command.
+    assert "Do not use git clean" in captured.out

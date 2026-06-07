@@ -167,14 +167,20 @@ def _check_runtime_dependency_metadata(
 def _check_build_available() -> tuple[bool, str]:
     result = _run([sys.executable, "-m", "build", "--help"])
     if result.returncode != 0:
-        return False, "python -m build is not available"
+        return False, (
+            "python -m build is not available; "
+            "install with: python -m pip install build"
+        )
     return True, ""
 
 
 def _check_twine_available() -> tuple[bool, str]:
     result = _run([sys.executable, "-m", "twine", "check", "--help"])
     if result.returncode != 0:
-        return False, "python -m twine is not available"
+        return False, (
+            "python -m twine is not available; "
+            "install dev extras with: python -m pip install -e '.[dev]'"
+        )
     return True, ""
 
 
@@ -512,8 +518,9 @@ def _check_wheel_template_install(wheel_path: Path) -> tuple[bool, list[str], bo
             missing = ", ".join(missing_runtime)
             reason = (
                 "runtime dependencies are not installed in the checker environment "
-                f"({missing}); wheel METADATA declares them, so dependency resolution "
-                "is verified by metadata and atlas init was not run"
+                f"({missing}); this is expected in --no-deps mode. "
+                "wheel METADATA declares them, so dependency resolution is verified by metadata. "
+                "atlas init was skipped because runtime deps are required for CLI execution."
             )
             return True, [], False, reason
 
@@ -598,8 +605,8 @@ def _build_plan(args: argparse.Namespace) -> dict:
             "verify wheel contains packaged routine-trader templates",
             "verify sdist PKG-INFO (name, version, runtime dependencies)",
             "verify sdist contains packaged routine-trader templates",
-            "install wheel into a dependency-free temporary venv and verify packaged templates",
-            "run atlas init outside repo when runtime dependencies are available",
+            "install wheel with --no-deps --no-index into a dependency-free temporary venv and verify packaged templates",
+            "run atlas init outside repo only when runtime deps are confirmed available in the venv",
             "verify no forbidden claims in metadata",
             "verify no package artifacts staged",
             *(["python -m twine check <dist>/*"] if not args.skip_twine else []),

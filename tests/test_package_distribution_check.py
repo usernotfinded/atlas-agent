@@ -172,6 +172,24 @@ class TestSafeDefaults:
         assert "retry" not in text or "with network" not in text
         assert "allow_network_build" in text or "no-isolation" in text
 
+    def test_missing_build_message_includes_install_hint(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        assert "python -m build is not available" in text
+        assert "install with: python -m pip install build" in text
+
+    def test_missing_twine_message_includes_install_hint(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        assert "python -m twine is not available" in text
+        assert "install dev extras with: python -m pip install -e '.[dev]'" in text
+
+    def test_dry_run_plan_documents_no_deps_behavior(self) -> None:
+        result = _run_script("--dry-run")
+        assert result.returncode == 0
+        assert "--no-deps" in result.stdout
+        assert "--no-index" in result.stdout
+        assert "runtime deps are confirmed available" in result.stdout
+        assert "atlas init was skipped" not in result.stdout  # only in runtime check, not plan
+
     def test_failure_output_is_redacted_before_print(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         # The _build_artifacts function must call _redact on stdout/stderr
