@@ -1,0 +1,173 @@
+{
+  "artifact_type": "v065_patch_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.5",
+  "generated_for": "planning",
+  "status": "candidate_selection",
+  "generated_at": "2026-06-07",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Update trust center and public docs to reflect v0.6.4 as current public release",
+      "category": "docs consistency",
+      "priority": "P1",
+      "source": "docs/trust/README.md, docs/security/release-readiness.md, docs/public-launch-readiness.md, and docs/trust/v0.6.4-status.md still describe v0.6.4 as not yet tagged or v0.6.3 as current public release",
+      "risk": "low",
+      "expected_files": [
+        "docs/trust/README.md",
+        "docs/security/release-readiness.md",
+        "docs/public-launch-readiness.md",
+        "docs/trust/v0.6.4-status.md"
+      ],
+      "acceptance_criteria": "All public-release references resolve to v0.6.4 as current; stale not-yet-tagged wording is removed.",
+      "selected_for_v065": true,
+      "reason": "Low-cost docs consistency that prevents reviewer confusion."
+    },
+    {
+      "id": "CAND-002",
+      "title": "Normalize package version vs tag version in historical checkers",
+      "category": "checker robustness",
+      "priority": "P1",
+      "source": "Historical checkers mix tag-formatted strings (v0.6.x) with package versions (0.6.x) in version assertions, causing future false negatives when the source version diverges from expected tag names.",
+      "risk": "low",
+      "expected_files": [
+        "scripts/check_v058_rc1_readiness.py",
+        "scripts/check_v061_release_prep.py",
+        "scripts/check_v062_release_prep.py",
+        "scripts/check_v063_release_prep.py",
+        "tests/test_v058_rc1_readiness.py",
+        "tests/test_v061_release_prep.py",
+        "tests/test_v062_release_prep.py",
+        "tests/test_v063_release_prep.py"
+      ],
+      "acceptance_criteria": "Version assertions consistently use package version for source-file checks and tag format only for tag/release checks.",
+      "selected_for_v065": true,
+      "reason": "Prevents recurring false negatives in release assurance."
+    },
+    {
+      "id": "CAND-003",
+      "title": "Regression test for security_md_current package-version validation",
+      "category": "test coverage",
+      "priority": "P1",
+      "source": "f3972ef fixed release_assurance.py but has no dedicated regression test for the package-version vs tag-version distinction.",
+      "risk": "none",
+      "expected_files": [
+        "tests/test_release_assurance.py"
+      ],
+      "acceptance_criteria": "Test verifies that security_md_current passes when SECURITY.md contains the package version and fails when it contains only a mismatched tag version.",
+      "selected_for_v065": true,
+      "reason": "Protects the fix from regression."
+    },
+    {
+      "id": "CAND-004",
+      "title": "Update release checklist version references",
+      "category": "docs consistency",
+      "priority": "P2",
+      "source": "docs/release-checklist.md contains example commands with hardcoded historical versions that drift after each release.",
+      "risk": "none",
+      "expected_files": [
+        "docs/release-checklist.md"
+      ],
+      "acceptance_criteria": "Examples reference the current source version and public tag without stale historical values.",
+      "selected_for_v065": true,
+      "reason": "Low-cost docs hygiene."
+    },
+    {
+      "id": "CAND-005",
+      "title": "Harden deterministic ordering in JSON outputs",
+      "category": "CI determinism",
+      "priority": "P2",
+      "source": "Some evidence or report generators may still use unsorted collections when producing JSON, causing flaky cross-platform diffs.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/research/provider_execution_readiness_report.py",
+        "tests/research/test_provider_execution_readiness_report.py"
+      ],
+      "acceptance_criteria": "All JSON-producing report modules use deterministic ordering (sort_keys=True or explicit sorting).",
+      "selected_for_v065": true,
+      "reason": "Reduces CI noise without adding skips."
+    },
+    {
+      "id": "CAND-006",
+      "title": "v0.6.5 release prep checker skeleton",
+      "category": "checker infrastructure",
+      "priority": "P1",
+      "source": "Following the pattern of check_v064_release_prep.py, prepare a skeleton that validates absence of v0.6.5 artifacts while source version remains 0.6.4.",
+      "risk": "none",
+      "expected_files": [
+        "scripts/check_v065_release_prep.py",
+        "tests/test_v065_release_prep.py"
+      ],
+      "acceptance_criteria": "Planning mode rejects docs/releases/v0.6.5.md and 0.6.5 version bump; release-prep mode will accept them after bump.",
+      "selected_for_v065": true,
+      "reason": "Prepares the release-prep gate without enabling it prematurely."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution unlock",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-005",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Automatic skill activation",
+      "reason": "Skill candidates remain manually reviewed and offline."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Automatic learning execution",
+      "reason": "Learning suggestions remain offline and manually reviewed."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading remains disabled by default.",
+    "Live submit remains disabled by default.",
+    "Provider execution remains disabled by default.",
+    "Broker execution remains disabled by default.",
+    "Risk gates remain deterministic and unchanged.",
+    "Approval queue behavior remains unchanged.",
+    "Kill-switch behavior remains unchanged.",
+    "Human approval remains required for live order flow.",
+    "Credentials are not loaded unless explicitly configured.",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
+  ],
+  "constraints": [
+    "Version is not bumped to 0.6.5 in this batch",
+    "docs/releases/v0.6.5.md does not exist yet",
+    "No tag, GitHub release, or PyPI publish yet",
+    "No runtime trading behavior changes"
+  ],
+  "release_criteria": [
+    "Accepted candidates are implemented",
+    "dev_check, ci_check, and release_check --quick pass locally",
+    "CI on main is green after the prep commit is pushed",
+    "Version is bumped to 0.6.5 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.5.md and docs/trust/v0.6.5-status.md are created",
+    "CHANGELOG.md has a [0.6.5] entry",
+    "scripts/check_v065_release_prep.py and matching tests are created",
+    "Protected boundary diff is empty",
+    "Forbidden claims scan is clean",
+    "Owner approval is obtained for tag cutover"
+  ]
+}

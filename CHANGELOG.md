@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added v0.6.5 maintenance planning notes after the v0.6.4 release-assurance checker fix (`docs/releases/v0.6.5-plan.md`, `docs/releases/v0.6.5-candidates.md`, `docs/releases/v0.6.5-candidates.json`).
 
 ### Changed
 
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 - The release-assurance checker fix does not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- The v0.6.5 planning update does not change trading, broker, provider, risk, approval, or kill-switch behavior.
 
 ## [0.6.4] - 2026-06-07
 
