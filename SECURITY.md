@@ -7,13 +7,14 @@
 | Version | Supported |
 |---|---|
 | 0.6.4 (main) | Yes — active development; current source version |
-| 0.6.3 | Historical — current public GitHub release |
+| 0.6.4 | Current public GitHub release |
+| 0.6.3 | Historical |
 | 0.6.2 | Historical |
 | 0.5.8.1 and earlier | Best-effort security guidance only |
 
 Live trading disabled by default in all versions.
 
-Atlas is in active development on the `main` branch. The v0.6.3 release is the current public GitHub release. v0.6.2, v0.6.1, and v0.6.0 are historical. Security updates are applied to the latest development line.
+Atlas is in active development on the `main` branch. The v0.6.4 release is the current public GitHub release. v0.6.3, v0.6.2, v0.6.1, and v0.6.0 are historical. Security updates are applied to the latest development line.
 
 ## Scope
 

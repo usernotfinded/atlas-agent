@@ -18,10 +18,10 @@ from pathlib import Path
 from typing import Iterable
 
 
-CURRENT_RELEASE = "v0.6.3"
+CURRENT_RELEASE = "v0.6.4"
 PACKAGE_VERSION = "0.6.4"
 TRUST_README = Path("docs/trust/README.md")
-TRUST_STATUS = Path("docs/trust/v0.6.3-status.md")
+TRUST_STATUS = Path("docs/trust/v0.6.4-status.md")
 
 REQUIRED_README_SECTIONS = [
     "Current Public Release",
@@ -51,7 +51,7 @@ REQUIRED_STATUS_SECTIONS = [
 ]
 
 REQUIRED_LINKS = {
-    "docs/releases/v0.6.3.md": ("docs/releases/v0.6.3.md", "../releases/v0.6.3.md"),
+    "docs/releases/v0.6.4.md": ("docs/releases/v0.6.4.md", "../releases/v0.6.4.md"),
     "docs/releases/v0.6.2.md": ("docs/releases/v0.6.2.md", "../releases/v0.6.2.md"),
     "docs/releases/v0.6.1.md": ("docs/releases/v0.6.1.md", "../releases/v0.6.1.md"),
     "docs/releases/v0.6.0.md": ("docs/releases/v0.6.0.md", "../releases/v0.6.0.md"),
@@ -95,7 +95,7 @@ REQUIRED_LINKS = {
 }
 
 REQUIRED_FACTS = {
-    "current public release v0.6.3": (("current public release", CURRENT_RELEASE),),
+    "current public release v0.6.4": (("current public release", CURRENT_RELEASE),),
     "source package version 0.6.3": (
         ("source package version", PACKAGE_VERSION),
         ("package version in source metadata", PACKAGE_VERSION),
@@ -471,6 +471,14 @@ def validate_trust_center(repo_root: Path) -> ValidationResult:
         "Current Status (v0.6.2)" not in combined_text,
         "trust docs do not claim v0.6.2 as the current prepared release",
         "trust docs still claim v0.6.2 as the current prepared release",
+    )
+    _add_check(
+        checks,
+        findings,
+        "no-v063-as-current-release",
+        "Current Status (v0.6.3)" not in combined_text,
+        "trust docs do not claim v0.6.3 as the current prepared release",
+        "trust docs still claim v0.6.3 as the current prepared release",
     )
 
     _validate_stale_versions(checks=checks, findings=findings, docs=docs)

@@ -14,10 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed release assurance `SECURITY.md` validation to compare supported versions against the package version without the leading `v` tag prefix.
+- Updated public release documentation to consistently describe `v0.6.4` as the current GitHub release (CAND-001: `README.md`, `SECURITY.md`, `docs/trust/README.md`, `docs/trust/v0.6.4-status.md`, `docs/security/release-readiness.md`, `docs/public-launch-readiness.md`, `docs/v0.6-capability-inventory.md`, `docs/development/main-health.md`, `docs/development/checks-reference.md`).
+- Updated version-consistency metadata to use the current public tag `v0.6.4` while preserving package-version checks for `0.6.4` (CAND-002: `scripts/check_version_consistency.py`, `scripts/check_trust_center.py`, `scripts/check_public_launch_readiness.py`, `scripts/check_public_docs_consistency.py`, `scripts/check_stable_release_decision.py`, `scripts/check_package_distribution.py`, `scripts/main_health.py`, and matching tests).
 
 ### Safety
 - The release-assurance checker fix does not change trading, broker, provider, risk, approval, or kill-switch behavior.
 - The v0.6.5 planning update does not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- The public-docs and checker metadata updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
 
 ## [0.6.4] - 2026-06-07
 

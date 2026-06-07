@@ -26,7 +26,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 PACKAGE_VERSION = "0.6.4"
-PUBLIC_TAG = "v0.6.3"
+PUBLIC_TAG = "v0.6.4"
 
 REQUIRED_FILES = [
     REPO_ROOT / "README.md",
@@ -38,7 +38,7 @@ REQUIRED_FILES = [
     REPO_ROOT / "docs" / "ci-release-gates.md",
     REPO_ROOT / "docs" / "package-distribution-verification.md",
     REPO_ROOT / "docs" / "clean-install-verification.md",
-    REPO_ROOT / "docs" / "releases" / "v0.6.3.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.4.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.1.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.0.md",
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",

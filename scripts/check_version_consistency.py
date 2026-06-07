@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 PACKAGE_VERSION = "0.6.4"
-PUBLIC_TAG = "v0.6.3"
+PUBLIC_TAG = "v0.6.4"
 
 
 def main() -> int:
@@ -83,6 +83,7 @@ def main() -> int:
             r"Current Status \(v0\.5\.7-rc\d+\)",
             r"Current Status \(0\.5\.7rc\d+\)",
             r"Current Status \(v0\.6\.2\)",
+            r"Current Status \(v0\.6\.3\)",
         ]
         for pattern in stale_patterns:
             if re.search(pattern, readme_text):

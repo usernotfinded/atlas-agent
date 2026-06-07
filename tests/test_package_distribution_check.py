@@ -277,7 +277,7 @@ class TestVersionReporting:
 
     def test_expected_tag_matches_version(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
-        assert 'EXPECTED_PUBLIC_TAG = "v0.6.3"' in text
+        assert 'EXPECTED_PUBLIC_TAG = "v0.6.4"' in text
 
 
 # ---------------------------------------------------------------------------

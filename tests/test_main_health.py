@@ -81,6 +81,8 @@ def _runner(
         if key == ("tag", "--list", "v0.6.3"):
             return CHECKER.CommandResult(0, "v0.6.3\n", "")
         if key == ("tag", "--list", "v0.6.4"):
+            return CHECKER.CommandResult(0, "v0.6.4\n", "")
+        if key == ("tag", "--list", "v0.6.5"):
             return CHECKER.CommandResult(0, tag, "")
         if key == (
             "diff",
@@ -130,7 +132,7 @@ def test_reports_source_version_check(tmp_path: Path) -> None:
 def test_reports_public_release_v063(tmp_path: Path) -> None:
     report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
 
-    assert report.public_release == "v0.6.3"
+    assert report.public_release == "v0.6.4"
     assert report.checks["public_release_expected"] is True
 
 
@@ -155,25 +157,25 @@ def test_release_metadata_drift_detected_when_source_version_mismatches(
 
 
 def test_public_release_tag_missing_detected(tmp_path: Path) -> None:
-    def no_v063_tag(repo_root: Path, args: list[str]):
+    def no_v064_tag(repo_root: Path, args: list[str]):
         key = tuple(args)
-        if key == ("tag", "--list", "v0.6.3"):
+        if key == ("tag", "--list", "v0.6.4"):
             return CHECKER.CommandResult(0, "", "")
         return _runner()(repo_root, args)
 
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=no_v063_tag)
+    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=no_v064_tag)
 
     assert any(f.code == "public_release_tag_missing" for f in report.findings)
 
 
 def test_next_release_tag_exists_detected(tmp_path: Path) -> None:
-    def v064_exists(repo_root: Path, args: list[str]):
+    def v065_exists(repo_root: Path, args: list[str]):
         key = tuple(args)
-        if key == ("tag", "--list", "v0.6.4"):
-            return CHECKER.CommandResult(0, "v0.6.4\n", "")
+        if key == ("tag", "--list", "v0.6.5"):
+            return CHECKER.CommandResult(0, "v0.6.5\n", "")
         return _runner()(repo_root, args)
 
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=v064_exists)
+    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=v065_exists)
 
     assert any(f.code == "next_release_tag_exists" for f in report.findings)
 
@@ -328,7 +330,7 @@ def test_docs_mention_main_source_version_can_differ_from_public_release() -> No
     text = DOC.read_text(encoding="utf-8").lower()
 
     assert "main source version can differ from public release" in text
-    assert "public github release is `v0.6.3`" in text
+    assert "public github release is `v0.6.4`" in text
 
 
 def test_docs_discourage_destructive_git_cleanup() -> None:

@@ -21,28 +21,30 @@
       ],
       "acceptance_criteria": "All public-release references resolve to v0.6.4 as current; stale not-yet-tagged wording is removed.",
       "selected_for_v065": true,
+      "implementation_status": "implemented in Batch 68",
       "reason": "Low-cost docs consistency that prevents reviewer confusion."
     },
     {
       "id": "CAND-002",
-      "title": "Normalize package version vs tag version in historical checkers",
-      "category": "checker robustness",
+      "title": "Normalize/fix stale PUBLIC_TAG and package/tag version references in checkers",
+      "category": "checker metadata",
       "priority": "P1",
-      "source": "Historical checkers mix tag-formatted strings (v0.6.x) with package versions (0.6.x) in version assertions, causing future false negatives when the source version diverges from expected tag names.",
+      "source": "scripts/check_version_consistency.py, scripts/check_trust_center.py, scripts/check_public_launch_readiness.py, and related tests still hardcode v0.6.3 as the current public tag even though v0.6.4 is released.",
       "risk": "low",
       "expected_files": [
-        "scripts/check_v058_rc1_readiness.py",
-        "scripts/check_v061_release_prep.py",
-        "scripts/check_v062_release_prep.py",
-        "scripts/check_v063_release_prep.py",
-        "tests/test_v058_rc1_readiness.py",
-        "tests/test_v061_release_prep.py",
-        "tests/test_v062_release_prep.py",
-        "tests/test_v063_release_prep.py"
+        "scripts/check_version_consistency.py",
+        "scripts/check_trust_center.py",
+        "scripts/check_public_launch_readiness.py",
+        "scripts/check_public_docs_consistency.py",
+        "scripts/check_stable_release_decision.py",
+        "scripts/check_package_distribution.py",
+        "scripts/main_health.py",
+        "tests/"
       ],
-      "acceptance_criteria": "Version assertions consistently use package version for source-file checks and tag format only for tag/release checks.",
+      "acceptance_criteria": "All checker constants reference v0.6.4 as current public tag and 0.6.4 as package version; stale v0.6.3 current-release claims are rejected by checkers.",
       "selected_for_v065": true,
-      "reason": "Prevents recurring false negatives in release assurance."
+      "implementation_status": "implemented in Batch 68",
+      "reason": "Prevents recurring post-release test failures and checker drift."
     },
     {
       "id": "CAND-003",
