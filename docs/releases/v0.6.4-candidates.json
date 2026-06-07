@@ -174,8 +174,9 @@
       ],
       "acceptance_criteria": "Skeleton validates absence of docs/releases/v0.6.4.md and 0.6.4 version bump in planning mode; full release-prep mode activates after version bump.",
       "selected": true,
-      "implemented": false,
-      "reason": "Prepares checker infrastructure without enabling it prematurely."
+      "implemented": true,
+      "reason": "Prepares checker infrastructure without enabling it prematurely.",
+      "implemented_in": "Batch 64"
     }
   ],
   "deferred": [
