@@ -45,19 +45,20 @@ class TestScriptExists:
 
 
 class TestPlanningModeValid:
-    def test_planning_mode_passes(self) -> None:
+    def test_planning_mode_fails_after_bump(self) -> None:
+        """Planning mode fails on real repo because source is now 0.6.5."""
         result = _run_script()
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "PASS" in result.stdout
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "FAIL" in result.stdout
         assert "planning" in result.stdout
 
-    def test_planning_json_output(self) -> None:
+    def test_planning_json_output_after_bump(self) -> None:
         result = _run_script("--json")
-        assert result.returncode == 0, result.stderr
+        assert result.returncode == 1, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is True
+        assert data["valid"] is False
         assert data["mode"] == "planning"
-        assert data["errors"] == []
+        assert any("0.6.4" in e for e in data["errors"])
         assert "checks" in data
 
     def test_json_has_required_keys(self) -> None:
@@ -157,18 +158,18 @@ class TestPlanningModeValid:
 
 
 class TestReleasePrepMode:
-    def test_release_prep_mode_fails_before_bump(self) -> None:
+    def test_release_prep_mode_passes_after_bump(self) -> None:
         result = _run_script("--release-prep")
-        assert result.returncode == 1, result.stdout + result.stderr
-        assert "FAIL" in result.stdout
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "PASS" in result.stdout
 
-    def test_release_prep_json_fails_before_bump(self) -> None:
+    def test_release_prep_json_passes_after_bump(self) -> None:
         result = _run_script("--release-prep", "--json")
-        assert result.returncode == 1, result.stderr
+        assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is False
+        assert data["valid"] is True
         assert data["mode"] == "release-prep"
-        assert any("0.6.5" in e for e in data["errors"])
+        assert data["errors"] == []
 
     def test_release_prep_version_missing_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()

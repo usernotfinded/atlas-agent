@@ -19,9 +19,9 @@ from typing import Iterable
 
 
 CURRENT_RELEASE = "v0.6.4"
-PACKAGE_VERSION = "0.6.4"
+PACKAGE_VERSION = "0.6.5"
 TRUST_README = Path("docs/trust/README.md")
-TRUST_STATUS = Path("docs/trust/v0.6.4-status.md")
+TRUST_STATUS = Path("docs/trust/v0.6.5-status.md")
 
 REQUIRED_README_SECTIONS = [
     "Current Public Release",
@@ -51,6 +51,7 @@ REQUIRED_STATUS_SECTIONS = [
 ]
 
 REQUIRED_LINKS = {
+    "docs/releases/v0.6.5.md": ("docs/releases/v0.6.5.md", "../releases/v0.6.5.md"),
     "docs/releases/v0.6.4.md": ("docs/releases/v0.6.4.md", "../releases/v0.6.4.md"),
     "docs/releases/v0.6.2.md": ("docs/releases/v0.6.2.md", "../releases/v0.6.2.md"),
     "docs/releases/v0.6.1.md": ("docs/releases/v0.6.1.md", "../releases/v0.6.1.md"),

@@ -104,7 +104,7 @@ approve orders.
 `scripts/release_assurance.py` generates a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.4 --output artifacts/release_assurance/v0.6.4-local-check
+python scripts/release_assurance.py --version v0.6.5 --output artifacts/release_assurance/v0.6.5-local-check
 ```
 
 The release assurance pack includes identity, updater delivery, local evidence,
@@ -176,6 +176,36 @@ It verifies that the package version is `0.6.3`, `docs/releases/v0.6.3.md` exist
 `docs/trust/v0.6.3-status.md` exists, the CHANGELOG has a `[0.6.3]` entry, and
 no premature `v0.6.4` release notes exist.
 
+## v0.6.5 Release Prep Checks
+
+`scripts/check_v065_release_prep.py` is a read-only checker for the v0.6.5 release
+prep state (current):
+
+```bash
+python3.11 scripts/check_v065_release_prep.py --release-prep
+python3.11 scripts/check_v065_release_prep.py --release-prep --json
+```
+
+It verifies that `docs/releases/v0.6.5.md` exists,
+`docs/trust/v0.6.5-status.md` exists, the CHANGELOG has a `[0.6.5]` entry,
+the package version is `0.6.5`, and no premature `v0.6.6` release notes exist.
+
+`scripts/check_v065_candidates.py` is the v0.6.5 candidate checker
+(used before the version bump; exits in planning mode after source version bump):
+
+```bash
+python3.11 scripts/check_v065_candidates.py
+```
+
+## v0.6.4 Release Prep Checks
+
+`scripts/check_v064_release_prep.py` is a read-only checker for the v0.6.4 release
+prep state (historical):
+
+```bash
+python3.11 scripts/check_v064_release_prep.py --release-prep
+```
+
 ## v0.6.1 Patch Candidate Checks
 
 `scripts/check_v061_candidates.py` is a read-only checker for the v0.6.1 patch
@@ -190,7 +220,9 @@ It verifies that `docs/releases/v0.6.1-candidates.md` exists, contains required
 sections (selection criteria, candidate table, accepted candidates, rejected
 candidates, safety boundaries, non-goals), and does not select unsafe runtime scope.
 
-See also [v0.6.1 Release Prep Checks](#v061-release-prep-checks),
+See also [v0.6.5 Release Prep Checks](#v065-release-prep-checks),
+[v0.6.4 Release Prep Checks](#v064-release-prep-checks),
+[v0.6.1 Release Prep Checks](#v061-release-prep-checks),
 [v0.6.0 Readiness Checks](#v060-readiness-checks), and
 [Long-Running Checks](#long-running-checks) for related release verification.
 

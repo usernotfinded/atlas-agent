@@ -31,7 +31,7 @@ def test_pyproject_version_is_current_dev() -> None:
     import tomllib
     with open(ROOT / "pyproject.toml", "rb") as f:
         data = tomllib.load(f)
-    assert data.get("project", {}).get("version") == "0.6.4"
+    assert data.get("project", {}).get("version") == "0.6.5"
 
 
 def test_init_version_is_current_dev() -> None:
@@ -39,7 +39,7 @@ def test_init_version_is_current_dev() -> None:
     text = init.read_text(encoding="utf-8")
     m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
     assert m is not None
-    assert m.group(1) == "0.6.4"
+    assert m.group(1) == "0.6.5"
 
 
 def test_public_stable_v058_tag_exists() -> None:
@@ -169,7 +169,7 @@ def test_version_consistency_script_accepts_dev() -> None:
     assert result.returncode == 0, (
         f"Version consistency check failed:\n{result.stdout}\n{result.stderr}"
     )
-    assert "0.6.4" in result.stdout
+    assert "0.6.5" in result.stdout
     assert "v0.6.4" in result.stdout
 
 

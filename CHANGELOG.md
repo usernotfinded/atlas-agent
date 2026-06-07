@@ -8,25 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Safety
+
+## [0.6.5] - 2026-06-07
+
+### Added
 - Added v0.6.5 maintenance planning notes after the v0.6.4 release-assurance checker fix (`docs/releases/v0.6.5-plan.md`, `docs/releases/v0.6.5-candidates.md`, `docs/releases/v0.6.5-candidates.json`).
 - Finalized v0.6.5 candidate selection: CAND-003 (regression test for `security_md_current`), CAND-004 (release checklist version references), CAND-005 (JSON determinism), and CAND-006 (v0.6.5 release prep checker skeleton) accepted.
 - Added `scripts/check_v065_release_prep.py` and `tests/test_v065_release_prep.py` for v0.6.5 release-prep state validation in planning and future release-prep modes.
-- Added CAND-003 regression test in `tests/test_release_assurance.py` proving `security_md_current` validates against package version (`0.6.4`), not tag string (`v0.6.4`).
+- Added CAND-003 regression test in `tests/test_release_assurance.py` proving `security_md_current` validates against package version, not tag string.
+- Created `docs/releases/v0.6.5.md` release notes and `docs/trust/v0.6.5-status.md` trust status.
 
 ### Changed
+- Bumped package/source version from `0.6.4` to `0.6.5`.
 - Updated `docs/release-checklist.md` tag example from stale `v0.6.3` to current `v0.6.4`.
 - Hardened deterministic JSON output in `scripts/check_v065_candidates.py` and `scripts/check_v065_release_prep.py` by adding `sort_keys=True` to all `json.dumps` calls.
+- Updated public docs and checker metadata to reflect `v0.6.4` as the current public GitHub release and `0.6.5` as the prepared source version.
 
 ### Fixed
 - Fixed release assurance `SECURITY.md` validation to compare supported versions against the package version without the leading `v` tag prefix.
-- Updated public release documentation to consistently describe `v0.6.4` as the current GitHub release (CAND-001: `README.md`, `SECURITY.md`, `docs/trust/README.md`, `docs/trust/v0.6.4-status.md`, `docs/security/release-readiness.md`, `docs/public-launch-readiness.md`, `docs/v0.6-capability-inventory.md`, `docs/development/main-health.md`, `docs/development/checks-reference.md`).
-- Updated version-consistency metadata to use the current public tag `v0.6.4` while preserving package-version checks for `0.6.4` (CAND-002: `scripts/check_version_consistency.py`, `scripts/check_trust_center.py`, `scripts/check_public_launch_readiness.py`, `scripts/check_public_docs_consistency.py`, `scripts/check_stable_release_decision.py`, `scripts/check_package_distribution.py`, `scripts/main_health.py`, and matching tests).
+- Updated public release documentation to consistently describe `v0.6.4` as the current GitHub release (CAND-001).
+- Updated version-consistency metadata to use the current public tag `v0.6.4` while preserving package-version checks for `0.6.4` (CAND-002).
 
 ### Safety
-- The release-assurance checker fix does not change trading, broker, provider, risk, approval, or kill-switch behavior.
-- The v0.6.5 planning update does not change trading, broker, provider, risk, approval, or kill-switch behavior.
-- The public-docs and checker metadata updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
-- The v0.6.5 checker/test/docs updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- The v0.6.5 release-prep updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- No tag, GitHub release, or PyPI publish was performed in this batch.
+- `v0.6.5` is version-prepared; tag and release cutover require separate owner approval.
 
 ## [0.6.4] - 2026-06-07
 

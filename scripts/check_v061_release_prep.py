@@ -40,7 +40,7 @@ INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.1.md"
 TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.1-status.md"
-FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.5.md"
+FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.6.md"
 
 REQUIRED_VERSION = "0.6.1"
 PUBLIC_TAG = "v0.6.1"
@@ -86,8 +86,10 @@ def _check_version_bump() -> list[str]:
             found_next = True
         if "0.6.4" in text:
             found_next = True
+        if "0.6.5" in text:
+            found_next = True
     if not found_required and not found_next:
-        errors.append(f"Version {REQUIRED_VERSION}, 0.6.2, 0.6.3, or 0.6.4 not found in pyproject.toml/__init__.py")
+        errors.append(f"Version {REQUIRED_VERSION}, 0.6.2, 0.6.3, 0.6.4, or 0.6.5 not found in pyproject.toml/__init__.py")
     elif not found_required and found_next:
         # Post-bump state: verify v0.6.1 artifacts remain
         if not RELEASE_NOTES.exists() or not TRUST_STATUS.exists():

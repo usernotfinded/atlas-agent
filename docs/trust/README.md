@@ -7,11 +7,13 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.4` (tagged)
 - Previous public release: `v0.6.3`
-- Source package version on `main`: `0.6.4`
+- Source package version on `main`: `0.6.5`
 - GitHub release: `v0.6.4` (current public)
 - PyPI was not published
-- Release status detail: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (current public)
-- Release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (current public)
+- Release status detail: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (version-prepared)
+- Previous release status: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (current public)
+- Release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (version-prepared)
+- Previous release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (current public)
 - Historical release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md), [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
 ## Security Posture
@@ -69,7 +71,7 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.6.4` (current public)
 - PyPI was not published
-- Package version in source metadata: `0.6.4`
+- Package version in source metadata: `0.6.5`
 - Auto-updater delivery: verified for `v0.6.4`
 
 ## What Is Ready
@@ -99,6 +101,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
+- [v0.6.5 Release Notes](../releases/v0.6.5.md) (version-prepared)
+- [v0.6.5 Trust and Release Status](v0.6.5-status.md) (version-prepared)
 - [v0.6.4 Release Notes](../releases/v0.6.4.md) (current public)
 - [v0.6.4 Trust and Release Status](v0.6.4-status.md) (current public)
 - [v0.6.3 Release Notes](../releases/v0.6.3.md) (historical)

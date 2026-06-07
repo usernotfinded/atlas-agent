@@ -54,15 +54,15 @@ def _write(path: Path, text: str) -> None:
 
 
 def _valid_fixture(tmp_path: Path) -> Path:
-    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.4"\n')
-    _write(tmp_path / "src" / "atlas_agent" / "__init__.py", '__version__ = "0.6.4"\n')
+    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.5"\n')
+    _write(tmp_path / "src" / "atlas_agent" / "__init__.py", '__version__ = "0.6.5"\n')
 
     for rel_path in CHECKER.REQUIRED_LINKS:
         _write(tmp_path / rel_path, "# Fixture\n\nNot financial advice.\n")
 
     _write(tmp_path / "docs" / "trust" / "README.md", TRUST_README.read_text(encoding="utf-8"))
     _write(
-        tmp_path / "docs" / "trust" / "v0.6.4-status.md",
+        tmp_path / "docs" / "trust" / "v0.6.5-status.md",
         TRUST_STATUS.read_text(encoding="utf-8"),
     )
     return tmp_path
@@ -259,13 +259,14 @@ class TestPypiNonPublishConsistency:
         )
 
     def test_release_notes_use_consistent_pypi_not_published_phrasing(self) -> None:
-        release_notes = (REPO_ROOT / "docs" / "releases" / "v0.6.4.md").read_text(encoding="utf-8").lower()
-        assert "pypi was not published" in release_notes, (
-            "v0.6.4 release notes should use consistent 'PyPI was not published' phrasing"
-        )
-        assert "pypi publish has been performed" not in release_notes, (
-            "Release notes must not claim PyPI publish was performed"
-        )
+        for version in ("v0.6.5", "v0.6.4"):
+            release_notes = (REPO_ROOT / "docs" / "releases" / f"{version}.md").read_text(encoding="utf-8").lower()
+            assert "pypi was not published" in release_notes, (
+                f"{version} release notes should use consistent 'PyPI was not published' phrasing"
+            )
+            assert "pypi publish has been performed" not in release_notes, (
+                f"{version} release notes must not claim PyPI publish was performed"
+            )
 
     def test_no_twine_upload_in_scripts(self) -> None:
         scripts_dir = REPO_ROOT / "scripts"

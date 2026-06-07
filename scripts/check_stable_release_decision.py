@@ -26,7 +26,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.6.4"
+PACKAGE_VERSION = "0.6.5"
 PUBLIC_TAG = "v0.6.4"
 
 REQUIRED_FILES = [
@@ -34,6 +34,7 @@ REQUIRED_FILES = [
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
     REPO_ROOT / "CHANGELOG.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.5.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.4.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.1.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.0.md",

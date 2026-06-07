@@ -29,22 +29,23 @@ class TestScriptExists:
 
 
 class TestPlanningMode:
-    def test_passes_in_planning_mode(self) -> None:
+    def test_planning_mode_fails_after_bump(self) -> None:
+        """Planning mode fails on real repo because source is now 0.6.5."""
         result = _run_script()
-        assert result.returncode == 0, (
+        assert result.returncode == 1, (
             f"v0.6.5 candidate check failed:\n{result.stdout}\n{result.stderr}"
         )
-        assert "PASS" in result.stdout
+        assert "FAIL" in result.stdout
 
-    def test_json_mode_passes(self) -> None:
+    def test_json_mode_fails_after_bump(self) -> None:
         result = _run_script("--json")
-        assert result.returncode == 0, (
+        assert result.returncode == 1, (
             f"v0.6.5 candidate check --json failed:\n{result.stdout}\n{result.stderr}"
         )
         data = json.loads(result.stdout)
-        assert data["valid"] is True
+        assert data["valid"] is False
         assert data["artifact_type"] == "v065_candidate_check_report"
-        assert data.get("errors", []) == []
+        assert any("0.6.5" in e for e in data.get("errors", []))
 
     def test_fails_if_release_notes_exist(self, tmp_path: Path) -> None:
         # This test verifies the checker logic by creating a temp repo

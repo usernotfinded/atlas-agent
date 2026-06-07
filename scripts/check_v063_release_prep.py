@@ -41,7 +41,7 @@ INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.3.md"
 TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.3-status.md"
-FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.5.md"
+FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.6.md"
 V062_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.2.md"
 V062_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.2-status.md"
 
@@ -79,7 +79,7 @@ def _check_version_bump() -> list[str]:
             errors.append(f"Missing file: {path}")
             continue
         text = path.read_text(encoding="utf-8")
-        if REQUIRED_VERSION not in text and "0.6.4" not in text:
+        if REQUIRED_VERSION not in text and "0.6.4" not in text and "0.6.5" not in text:
             errors.append(f"Version {REQUIRED_VERSION} or 0.6.4 not found in {path}")
     return errors
 

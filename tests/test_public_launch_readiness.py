@@ -188,7 +188,7 @@ class TestScriptBehavior:
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.6.4"
+        assert data["package_version"] == "0.6.5"
         assert data["public_tag"] == "v0.6.4"
         assert data["errors"] == []
 
@@ -295,10 +295,10 @@ class TestReleaseDocConsistency:
             "README must not use stale v0.6.1 release assurance example"
         )
 
-    def test_checks_reference_release_assurance_uses_v064(self) -> None:
+    def test_checks_reference_release_assurance_uses_v065(self) -> None:
         text = (ROOT / "docs" / "development" / "checks-reference.md").read_text(encoding="utf-8")
-        assert "--version v0.6.4" in text, (
-            "checks-reference.md release assurance example must use v0.6.4"
+        assert "--version v0.6.5" in text, (
+            "checks-reference.md release assurance example must use v0.6.5"
         )
         assert "v0.6.0-local-check" not in text, (
             "checks-reference.md must not use stale v0.6.0 release assurance example"
