@@ -12,8 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- Fixed release assurance `SECURITY.md` validation to compare supported versions against the package version without the leading `v` tag prefix.
 
 ### Safety
+- The release-assurance checker fix does not change trading, broker, provider, risk, approval, or kill-switch behavior.
 
 ## [0.6.4] - 2026-06-07
 

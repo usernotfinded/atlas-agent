@@ -1,12 +1,33 @@
 import argparse
 import os
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 from datetime import datetime, timezone
 import hashlib
 import tempfile
+
+
+def normalize_release_version(version: str) -> str:
+    """Return the package version for a release/tag version."""
+    return version[1:] if version.startswith("v") else version
+
+
+def security_md_supports_package_version(security_md: str, package_version: str) -> bool:
+    version_pattern = re.compile(
+        rf"(?<![0-9A-Za-z.]){re.escape(package_version)}(?![0-9A-Za-z.])"
+    )
+    for line in security_md.splitlines():
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if not cells or cells[0].lower() in {"version", "---"}:
+            continue
+        if version_pattern.search(cells[0]):
+            return True
+    return False
 
 
 def run_cmd(cmd: list[str], check: bool = True, cwd: str | Path | None = None, env: dict[str, str] | None = None):
@@ -35,7 +56,8 @@ def main():
     args = parser.parse_args()
 
     version = args.version
-    clean_version = version.lstrip('v')
+    tag_version = version
+    clean_version = normalize_release_version(version)
     out_dir = Path(args.output)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -80,9 +102,14 @@ def main():
     # 7. SECURITY.md
     try:
         security = Path("SECURITY.md").read_text(encoding="utf-8")
-        checks["security_md_current"] = version in security
+        checks["security_md_current"] = security_md_supports_package_version(security, clean_version)
     except OSError:
         checks["security_md_current"] = False
+    if not checks["security_md_current"]:
+        findings.append(
+            "SECURITY.md supported versions do not include "
+            f"package version {clean_version} for release tag {tag_version}."
+        )
 
     # 8. Local tag
     out, rc, err = run_cmd(["git", "tag", "-l", version], check=False)
