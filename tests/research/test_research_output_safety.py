@@ -219,14 +219,22 @@ class TestVersionHygiene:
 
     def test_release_checklist_smoke_example_matches_package_version(self) -> None:
         import re
+        import subprocess
         from atlas_agent import __version__
 
         dev_match = re.match(r"^(\d+\.\d+\.\d+)\.dev\d+$", __version__)
         package_tag = self._package_to_tag(__version__)
         release_note_exists = Path(f"docs/releases/{package_tag}.md").exists()
-        if dev_match is not None or not release_note_exists:
-            # For dev or source-only maintenance versions, the smoke example should use
-            # the latest actual public stable tag, not a non-existent source label.
+        tag_exists = subprocess.run(
+            ["git", "tag", "-l", package_tag],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).resolve().parents[2],
+        ).stdout.strip() != ""
+        if dev_match is not None or not release_note_exists or not tag_exists:
+            # For dev, source-only maintenance, or release-prep versions (where release
+            # notes exist but the tag has not been created yet), the smoke example
+            # should use the latest actual public stable tag.
             # Source of truth: scripts/check_version_consistency.py
             consistency_text = Path("scripts/check_version_consistency.py").read_text(encoding="utf-8")
             m = re.search(r'PUBLIC_TAG = "([^"]+)"', consistency_text)

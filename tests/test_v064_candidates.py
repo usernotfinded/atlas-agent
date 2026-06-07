@@ -54,32 +54,32 @@ class TestScriptExists:
 
 class TestCheckerValid:
     def test_valid_candidate_doc_passes(self) -> None:
-        result = _run_script()
+        result = _run_script("--release-prep")
         assert result.returncode == 0, result.stdout + result.stderr
         assert "PASS" in result.stdout
 
     def test_valid_json_output(self) -> None:
-        result = _run_script("--json")
+        result = _run_script("--json", "--release-prep")
         assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
         assert data["valid"] is True
         assert data["errors"] == []
 
     def test_json_has_required_keys(self) -> None:
-        result = _run_script("--json")
+        result = _run_script("--json", "--release-prep")
         data = json.loads(result.stdout)
         assert data["artifact_type"] == "v064_candidate_check_report"
         assert data["schema_version"] == 1
 
-    def test_no_version_bump_detected_in_planning_mode(self) -> None:
+    def test_release_prep_mode_allows_version_bump(self) -> None:
         mod = _load_script_module()
-        code, result = mod.run_check()
+        code, result = mod.run_check(release_prep=True)
         assert code == 0
         assert not any("Version bump" in e for e in result["errors"])
 
-    def test_release_notes_not_existing_in_planning_mode(self) -> None:
+    def test_release_prep_mode_allows_release_notes(self) -> None:
         mod = _load_script_module()
-        code, result = mod.run_check()
+        code, result = mod.run_check(release_prep=True)
         assert code == 0
         assert not any("Release notes file must not exist" in e for e in result["errors"])
 

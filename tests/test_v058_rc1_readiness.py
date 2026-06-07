@@ -70,7 +70,7 @@ def test_readiness_script_json_output() -> None:
     data = json.loads(result.stdout)
     assert data["passed"] is True
     assert data["errors"] == []
-    assert data["current_dev_version"] == "0.6.3"
+    assert data["current_dev_version"] == "0.6.4"
     assert data["stable_tag"] == "v0.5.7"
 
 

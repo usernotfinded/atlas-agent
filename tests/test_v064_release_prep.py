@@ -44,24 +44,24 @@ class TestScriptExists:
         assert SCRIPT.exists(), f"Script not found: {SCRIPT}"
 
 
-class TestPlanningMode:
-    def test_planning_mode_passes(self) -> None:
-        result = _run_script()
+class TestReleasePrepModeValid:
+    def test_release_prep_mode_passes(self) -> None:
+        result = _run_script("--release-prep")
         assert result.returncode == 0, result.stdout + result.stderr
         assert "PASS" in result.stdout
-        assert "planning" in result.stdout
+        assert "release-prep" in result.stdout
 
-    def test_planning_json_output(self) -> None:
-        result = _run_script("--json")
+    def test_release_prep_json_output(self) -> None:
+        result = _run_script("--json", "--release-prep")
         assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
         assert data["valid"] is True
-        assert data["mode"] == "planning"
+        assert data["mode"] == "release-prep"
         assert data["errors"] == []
         assert "checks" in data
 
     def test_json_has_required_keys(self) -> None:
-        result = _run_script("--json")
+        result = _run_script("--json", "--release-prep")
         data = json.loads(result.stdout)
         assert data["artifact_type"] == "v064_release_prep_report"
         assert data["schema_version"] == 1
@@ -157,18 +157,18 @@ class TestPlanningMode:
 
 
 class TestReleasePrepMode:
-    def test_release_prep_mode_fails_before_bump(self) -> None:
+    def test_release_prep_mode_passes_after_bump(self) -> None:
         result = _run_script("--release-prep")
-        assert result.returncode == 1, result.stdout + result.stderr
-        assert "FAIL" in result.stdout
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "PASS" in result.stdout
 
-    def test_release_prep_json_fails_before_bump(self) -> None:
+    def test_release_prep_json_passes_after_bump(self) -> None:
         result = _run_script("--release-prep", "--json")
-        assert result.returncode == 1, result.stderr
+        assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is False
+        assert data["valid"] is True
         assert data["mode"] == "release-prep"
-        assert any("0.6.4" in e for e in data["errors"])
+        assert data["errors"] == []
 
     def test_release_prep_version_missing_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
@@ -240,8 +240,8 @@ class TestReleasePrepMode:
 
 
 class TestDeterminism:
-    def test_planning_output_is_deterministic(self) -> None:
-        result1 = _run_script("--json")
-        result2 = _run_script("--json")
+    def test_release_prep_output_is_deterministic(self) -> None:
+        result1 = _run_script("--json", "--release-prep")
+        result2 = _run_script("--json", "--release-prep")
         assert result1.returncode == result2.returncode
         assert result1.stdout == result2.stdout
