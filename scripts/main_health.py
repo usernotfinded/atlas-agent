@@ -75,7 +75,7 @@ class ReleaseMetadata:
 
 
 RELEASE_METADATA = ReleaseMetadata(
-    expected_source_version="0.6.3",
+    expected_source_version="0.6.4",
     public_release="v0.6.3",
     next_unrequested_release_tag="v0.6.4",
 )

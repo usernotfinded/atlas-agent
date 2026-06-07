@@ -6,7 +6,8 @@
 
 | Version | Supported |
 |---|---|
-| 0.6.3 (main) | Yes — active development; current public GitHub release |
+| 0.6.4 (main) | Yes — active development; current source version |
+| 0.6.3 | Historical — current public GitHub release |
 | 0.6.2 | Historical |
 | 0.5.8.1 and earlier | Best-effort security guidance only |
 

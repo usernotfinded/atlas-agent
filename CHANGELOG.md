@@ -8,12 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Safety
+
+## [0.6.4] - 2026-06-07
+
+### Added
 - Added post-v0.6.3 planning notes for v0.6.4 maintenance candidate selection (`docs/releases/v0.6.4-plan.md`).
 - Added v0.6.4 patch candidate selection documentation (`docs/releases/v0.6.4-candidates.md`) and machine-readable inventory (`docs/releases/v0.6.4-candidates.json`) to separate safe maintenance candidates from deferred or runtime-sensitive work.
 - Added `scripts/check_v064_candidates.py` and `tests/test_v064_candidates.py` to verify candidate selection structure, safety boundaries, and absence of premature version bumps or release claims.
 - Added `scripts/check_v064_release_prep.py` and `tests/test_v064_release_prep.py` to validate v0.6.4 release prep state in both planning mode (before version bump) and release-prep mode (after version bump).
+- Added `docs/releases/v0.6.4.md` release notes and `docs/trust/v0.6.4-status.md` trust status.
 
 ### Changed
+- Bumped package/source version from `0.6.3` to `0.6.4`.
 - Updated public docs (README, SECURITY, trust center, release readiness, public launch readiness, capability inventory, checks reference, main health, release checklist) to reflect `v0.6.3` as the current public GitHub release and remove stale "version-prepared" wording.
 - Hardened `scripts/main_health.py` release metadata checks by centralizing constants into a `ReleaseMetadata` dataclass with a `validate()` method that detects drift against local git tags and source version. Tests now verify drift detection.
 - Hardened package distribution checker diagnostics: `--dry-run` plan now explicitly documents `--no-deps` behavior; missing `build` and `twine` tooling yields actionable install hints instead of bare messages. Tests verify hints and plan clarity.

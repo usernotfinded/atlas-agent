@@ -7,7 +7,7 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.3` (tagged)
 - Previous public release: `v0.6.2`
-- Source package version on `main`: `0.6.3`
+- Source package version on `main`: `0.6.4`
 - GitHub release: `v0.6.3` (current public)
 - PyPI was not published
 - Release status detail: [v0.6.3 Trust and Release Status](v0.6.3-status.md) (current public)
@@ -69,7 +69,7 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.6.3` (current public)
 - PyPI was not published
-- Package version in source metadata: `0.6.3`
+- Package version in source metadata: `0.6.4`
 - Auto-updater delivery: verified for `v0.6.3`
 
 ## What Is Ready
@@ -99,6 +99,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
+- [v0.6.4 Release Notes](../releases/v0.6.4.md) (prepared, not yet public)
+- [v0.6.4 Trust and Release Status](v0.6.4-status.md) (prepared, not yet public)
 - [v0.6.3 Release Notes](../releases/v0.6.3.md) (current public)
 - [v0.6.3 Trust and Release Status](v0.6.3-status.md) (current public)
 - [v0.6.2 Trust and Release Status](v0.6.2-status.md) (historical)
