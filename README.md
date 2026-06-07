@@ -440,7 +440,7 @@ Built by Natan Mucelli.
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.1 --output artifacts/release_assurance/v0.6.1-local-check
+python scripts/release_assurance.py --version v0.6.3 --output artifacts/release_assurance/v0.6.3-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.

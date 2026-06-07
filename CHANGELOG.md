@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved generated-artifact hygiene guidance: `scripts/check_generated_artifacts.py` now emits copy-paste-ready `mv` backup commands for untracked local evidence artifacts, with explicit warnings against `git clean`, `git reset --hard`, and destructive stash operations. Tests verify exact-path guidance and disallowed-command warnings.
 - Improved release-assurance artifact hygiene: `scripts/release_assurance.py` now marks outputs as `local_only_evidence` in the summary JSON and includes a "Local Evidence" section in the report with deterministic cleanup instructions. Tests verify local-only metadata and cleanup guidance.
 - Standardized PyPI non-publish messaging across README, release notes, trust center, and release readiness docs to consistently use "PyPI was not published". Tests verify consistent negated phrasing and absence of positive publish claims.
+- Fixed stale `v0.6.2` current-release references in `docs/public-launch-readiness.md`, `docs/release-checklist.md`, `README.md`, and `docs/development/checks-reference.md` to correctly describe `v0.6.3` as the current stable public GitHub release. Tests verify no stale v0.6.2 claims remain.
+- Hardened deterministic ordering in `src/atlas_agent/research/provider_execution_readiness_report.py` by replacing `list(set(...))` with `sorted(set(...))` for artifact lists, preventing nondeterministic JSON output. Added regression tests to enforce no `list(set(...))` patterns in source code and to verify the existing `sorted(_FORBIDDEN_PATTERNS)` fix for pytest-xdist collection stability.
 
 ### Fixed
 
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The planning and docs updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
 - The main-health hardening does not change trading, broker, provider, risk, approval, or kill-switch behavior.
 - The release-assurance and PyPI messaging updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- The release-doc consistency and CI-determinism updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
 
 ## [0.6.3] - 2026-06-06
 

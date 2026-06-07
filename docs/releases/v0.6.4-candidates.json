@@ -6,12 +6,12 @@
   "generated_at": "2026-06-06",
   "status": "candidate_selection",
   "selection_criteria": [
-    "small and safe — docs-only, checker-only, test-only, or CI-only",
-    "backward compatible — no API or CLI contract changes",
-    "no runtime trading impact — no broker, execution, safety, risk, or provider default changes",
-    "patch scope per Semantic Versioning 2.0.0 — backward-compatible bug fixes or small maintenance only",
-    "verified by evidence — reproducible from repo state, CI logs, or checker output",
-    "testable — no network or credentials required"
+    "small and safe \u2014 docs-only, checker-only, test-only, or CI-only",
+    "backward compatible \u2014 no API or CLI contract changes",
+    "no runtime trading impact \u2014 no broker, execution, safety, risk, or provider default changes",
+    "patch scope per Semantic Versioning 2.0.0 \u2014 backward-compatible bug fixes or small maintenance only",
+    "verified by evidence \u2014 reproducible from repo state, CI logs, or checker output",
+    "testable \u2014 no network or credentials required"
   ],
   "candidates": [
     {
@@ -21,7 +21,10 @@
       "priority": "P1",
       "source": "scripts/main_health.py hardcodes EXPECTED_SOURCE_VERSION, PUBLIC_RELEASE, and NEXT_UNREQUESTED_RELEASE_TAG; manual updates are recurring post-release friction",
       "risk": "low",
-      "expected_files": ["scripts/main_health.py", "tests/test_main_health.py"],
+      "expected_files": [
+        "scripts/main_health.py",
+        "tests/test_main_health.py"
+      ],
       "acceptance_criteria": "Constants centralized in ReleaseMetadata; validation detects drift against git tags and source version; tests verify detection. Implemented in Batch 60.",
       "selected": true,
       "implemented": true,
@@ -34,7 +37,11 @@
       "priority": "P1",
       "source": "scripts/release_assurance.py produces untracked local artifacts under artifacts/release_assurance/ that require manual backup before push",
       "risk": "low",
-      "expected_files": ["scripts/check_generated_artifacts.py", "docs/development/checks-reference.md", "README.md"],
+      "expected_files": [
+        "scripts/check_generated_artifacts.py",
+        "docs/development/checks-reference.md",
+        "README.md"
+      ],
       "acceptance_criteria": "Generated artifact checker provides clearer guidance on backing up vs. removing local release-assurance artifacts; docs reference the hygiene workflow consistently. Implemented in Batch 62.",
       "selected": true,
       "implemented": true,
@@ -48,7 +55,10 @@
       "priority": "P1",
       "source": "scripts/check_package_distribution.py was hotfixed in v0.6.3; --dry-run and missing-tool paths can be further hardened",
       "risk": "low",
-      "expected_files": ["scripts/check_package_distribution.py", "tests/test_package_distribution_check.py"],
+      "expected_files": [
+        "scripts/check_package_distribution.py",
+        "tests/test_package_distribution_check.py"
+      ],
       "acceptance_criteria": "--dry-run produces a deterministic plan report; missing tooling yields actionable hints instead of tracebacks. Implemented in Batch 61.",
       "selected": true,
       "implemented": true,
@@ -61,11 +71,17 @@
       "priority": "P1",
       "source": "Batch 58 updated most docs to v0.6.3; a final pass can align remaining examples, smoke commands, and cross-references",
       "risk": "low",
-      "expected_files": ["docs/trust/v0.6.3-status.md", "docs/development/checks-reference.md", "docs/development/main-health.md", "docs/release-checklist.md"],
+      "expected_files": [
+        "docs/trust/v0.6.3-status.md",
+        "docs/development/checks-reference.md",
+        "docs/development/main-health.md",
+        "docs/release-checklist.md"
+      ],
       "acceptance_criteria": "All public-release references in docs and checkers resolve to v0.6.3; stale v0.6.2 examples are removed.",
       "selected": true,
-      "implemented": false,
-      "reason": "Closes the post-release docs polish loop."
+      "implemented": true,
+      "reason": "Closes the post-release docs polish loop.",
+      "implemented_in": "Batch 63"
     },
     {
       "id": "CAND-005",
@@ -74,7 +90,9 @@
       "priority": "P2",
       "source": "scripts/check_runtime_diagnostics.py and checks-reference.md already document timeout triage sufficiently",
       "risk": "none",
-      "expected_files": ["docs/development/checks-reference.md"],
+      "expected_files": [
+        "docs/development/checks-reference.md"
+      ],
       "acceptance_criteria": "Add slow-machine estimates for research_check.sh and full_test gates without weakening timeouts.",
       "selected": false,
       "reason": "Already sufficient; defer unless operator feedback indicates confusion."
@@ -86,11 +104,15 @@
       "priority": "P1",
       "source": "Historical scheduled Full Test failures and timing-sensitive tests benefit from better isolation and deterministic ordering",
       "risk": "low",
-      "expected_files": ["tests/test_release_assurance.py", "tests/test_main_health.py"],
+      "expected_files": [
+        "tests/test_release_assurance.py",
+        "tests/test_main_health.py"
+      ],
       "acceptance_criteria": "Timing-sensitive tests mock time or filesystem ordering; JSON diff comparisons use sorted keys where appropriate.",
       "selected": true,
-      "implemented": false,
-      "reason": "Improves CI signal-to-noise without adding retries or skips."
+      "implemented": true,
+      "reason": "Improves CI signal-to-noise without adding retries or skips.",
+      "implemented_in": "Batch 63"
     },
     {
       "id": "CAND-007",
@@ -99,7 +121,9 @@
       "priority": "P1",
       "source": "Operators manually back up generated artifacts; checker messages could be more actionable",
       "risk": "low",
-      "expected_files": ["scripts/check_generated_artifacts.py"],
+      "expected_files": [
+        "scripts/check_generated_artifacts.py"
+      ],
       "acceptance_criteria": "Checker emits actionable backup commands; no destructive cleanup is performed automatically. Implemented in Batch 61.",
       "selected": true,
       "implemented": true,
@@ -112,7 +136,9 @@
       "priority": "P2",
       "source": "scripts/check_public_docs_consistency.py could validate README status line and orphaned release notes",
       "risk": "low",
-      "expected_files": ["scripts/check_public_docs_consistency.py"],
+      "expected_files": [
+        "scripts/check_public_docs_consistency.py"
+      ],
       "acceptance_criteria": "Checker validates README status line matches current public release; warns on orphaned release notes.",
       "selected": false,
       "reason": "Valuable but broader than a minimal patch; defer to a dedicated docs-checker batch."
@@ -124,7 +150,11 @@
       "priority": "P1",
       "source": "Release notes use slightly different phrasing for PyPI not published",
       "risk": "none",
-      "expected_files": ["docs/releases/*.md", "README.md", "SECURITY.md"],
+      "expected_files": [
+        "docs/releases/*.md",
+        "README.md",
+        "SECURITY.md"
+      ],
       "acceptance_criteria": "All PyPI references use consistent negated phrasing; no claim of publication exists. Implemented in Batch 62.",
       "selected": true,
       "implemented": true,
@@ -138,7 +168,10 @@
       "priority": "P1",
       "source": "Pattern established by check_v061_release_prep.py, check_v062_release_prep.py, and check_v063_release_prep.py",
       "risk": "low",
-      "expected_files": ["scripts/check_v064_release_prep.py", "tests/test_v064_release_prep.py"],
+      "expected_files": [
+        "scripts/check_v064_release_prep.py",
+        "tests/test_v064_release_prep.py"
+      ],
       "acceptance_criteria": "Skeleton validates absence of docs/releases/v0.6.4.md and 0.6.4 version bump in planning mode; full release-prep mode activates after version bump.",
       "selected": true,
       "implemented": false,
@@ -255,11 +288,11 @@
     }
   ],
   "safety_boundaries": [
-    "src/atlas_agent/config/ — no new live defaults",
-    "src/atlas_agent/brokers/ — no new submit paths, no execution enabled by default",
-    "src/atlas_agent/execution/ — no direct AI-to-broker paths",
-    "src/atlas_agent/safety/ — no kill switch bypasses",
-    "src/atlas_agent/risk/ — risk limits must not be weakened",
+    "src/atlas_agent/config/ \u2014 no new live defaults",
+    "src/atlas_agent/brokers/ \u2014 no new submit paths, no execution enabled by default",
+    "src/atlas_agent/execution/ \u2014 no direct AI-to-broker paths",
+    "src/atlas_agent/safety/ \u2014 no kill switch bypasses",
+    "src/atlas_agent/risk/ \u2014 risk limits must not be weakened",
     "Live trading remains disabled by default",
     "Live submit remains disabled by default",
     "Provider execution remains disabled by default",

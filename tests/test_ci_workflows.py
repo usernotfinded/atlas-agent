@@ -537,3 +537,45 @@ class TestReleaseAssuranceWorkflow:
         assert "ENABLE_LIVE_TRADING: \"false\"" in release_assurance_content
         assert "PROVIDER_EXECUTION_ENABLED: \"false\"" in release_assurance_content
         assert "BROKER_EXECUTION_ENABLED: \"false\"" in release_assurance_content
+
+
+class TestDeterministicOrdering:
+    """Regression tests for CI nondeterminism fixes (CAND-006)."""
+
+    def test_provider_execution_readiness_report_uses_sorted_set(self) -> None:
+        """The doctor function must use sorted(set(...)) not list(set(...))
+        so JSON output is deterministic across runs."""
+        path = _repo_root() / "src" / "atlas_agent" / "research" / "provider_execution_readiness_report.py"
+        text = path.read_text(encoding="utf-8")
+        assert "sorted(set(invalid_artifacts))" in text, (
+            "provider_execution_readiness_report.py must use sorted(set(...)) for deterministic output"
+        )
+        assert "sorted(set(orphan_artifacts))" in text, (
+            "provider_execution_readiness_report.py must use sorted(set(...)) for deterministic output"
+        )
+        assert "list(set(invalid_artifacts))" not in text, (
+            "provider_execution_readiness_report.py must not use list(set(...)) which is nondeterministic"
+        )
+        assert "list(set(orphan_artifacts))" not in text, (
+            "provider_execution_readiness_report.py must not use list(set(...)) which is nondeterministic"
+        )
+
+    def test_discipline_profile_uses_sorted_parametrize(self) -> None:
+        """pytest-xdist collection mismatch is avoided by sorting parametrized values."""
+        path = _repo_root() / "tests" / "test_discipline_profile.py"
+        text = path.read_text(encoding="utf-8")
+        assert "sorted(_FORBIDDEN_PATTERNS)" in text, (
+            "test_discipline_profile.py must use sorted(_FORBIDDEN_PATTERNS) for deterministic collection"
+        )
+
+    def test_no_list_set_in_source(self) -> None:
+        """list(set(...)) is a known nondeterministic pattern in Python; prefer sorted(set(...))."""
+        src_dir = _repo_root() / "src" / "atlas_agent"
+        violations: list[str] = []
+        for path in src_dir.rglob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            if "list(set(" in text:
+                violations.append(str(path.relative_to(_repo_root())))
+        assert not violations, (
+            f"Found list(set(...)) in source files (nondeterministic): {violations}"
+        )
