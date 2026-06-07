@@ -110,6 +110,12 @@ python scripts/release_assurance.py --version v0.6.0 --output artifacts/release_
 The release assurance pack includes identity, updater delivery, local evidence,
 checksum, and non-claim checks. It is not a publishing workflow.
 
+Generated release assurance packs are local-only evidence. The report includes a
+"Local Evidence" section with deterministic cleanup instructions. Do not commit
+release assurance outputs unless a task explicitly requests a versioned evidence
+pack. Run `python3.11 scripts/check_generated_artifacts.py` before staging to
+confirm no generated artifacts are accidentally committed.
+
 ## Generated Artifact Hygiene Checks
 
 `scripts/check_generated_artifacts.py` inspects git path metadata only:

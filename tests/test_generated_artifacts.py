@@ -282,3 +282,43 @@ def test_cleanup_guidance_only_for_local_artifact_prefixes(
     assert "mv artifacts/provider_preflight/result.json" in captured.out
     # The guidance explicitly warns against git clean as a disallowed command.
     assert "Do not use git clean" in captured.out
+
+
+def test_release_assurance_artifacts_recognized_as_local_evidence(
+    tmp_path: Path, capsys
+) -> None:
+    repo = tmp_path
+    (repo / "artifacts" / "release_assurance" / "v0.6.3-local-check").mkdir(parents=True)
+    (repo / "artifacts" / "release_assurance" / "v0.6.3-local-check" / "release-assurance-summary.json").write_text(
+        "{}\n", encoding="utf-8"
+    )
+    exit_code = CHECKER.main(
+        [str(repo)],
+        git_runner=_runner(
+            status="?? artifacts/release_assurance/v0.6.3-local-check/release-assurance-summary.json\n"
+        ),
+    )
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "untracked local-only generated evidence artifact" in captured.out
+    assert "artifacts/release_assurance/" in captured.out
+
+
+def test_release_assurance_tracked_versioned_evidence_allowed(
+    tmp_path: Path, capsys
+) -> None:
+    repo = tmp_path
+    (repo / "artifacts" / "release_assurance" / "v0.5.9-local-check").mkdir(parents=True)
+    (repo / "artifacts" / "release_assurance" / "v0.5.9-local-check" / "release-assurance-summary.json").write_text(
+        "{}\n", encoding="utf-8"
+    )
+    exit_code = CHECKER.main(
+        [str(repo)],
+        git_runner=_runner(
+            tracked="artifacts/release_assurance/v0.5.9-local-check/release-assurance-summary.json\n",
+            status="",
+        ),
+    )
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "tracked local-only generated evidence artifact" not in captured.out

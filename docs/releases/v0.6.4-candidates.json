@@ -35,9 +35,10 @@
       "source": "scripts/release_assurance.py produces untracked local artifacts under artifacts/release_assurance/ that require manual backup before push",
       "risk": "low",
       "expected_files": ["scripts/check_generated_artifacts.py", "docs/development/checks-reference.md", "README.md"],
-      "acceptance_criteria": "Generated artifact checker provides clearer guidance on backing up vs. removing local release-assurance artifacts; docs reference the hygiene workflow consistently.",
+      "acceptance_criteria": "Generated artifact checker provides clearer guidance on backing up vs. removing local release-assurance artifacts; docs reference the hygiene workflow consistently. Implemented in Batch 62.",
       "selected": true,
-      "implemented": false,
+      "implemented": true,
+      "implemented_in": "Batch 62",
       "reason": "Keeps local worktree predictable and post-push checks clean."
     },
     {
@@ -124,9 +125,10 @@
       "source": "Release notes use slightly different phrasing for PyPI not published",
       "risk": "none",
       "expected_files": ["docs/releases/*.md", "README.md", "SECURITY.md"],
-      "acceptance_criteria": "All PyPI references use consistent negated phrasing; no claim of publication exists.",
+      "acceptance_criteria": "All PyPI references use consistent negated phrasing; no claim of publication exists. Implemented in Batch 62.",
       "selected": true,
-      "implemented": false,
+      "implemented": true,
+      "implemented_in": "Batch 62",
       "reason": "Low-cost clarity improvement that reinforces the no-publish policy."
     },
     {

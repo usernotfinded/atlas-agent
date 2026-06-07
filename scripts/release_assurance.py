@@ -229,6 +229,7 @@ def main():
         "valid": valid,
         "public_release_detected": checks["local_tag_present"],
         "pypi_published": safety["pypi_publish_performed"],
+        "local_only_evidence": True,
         "checks": checks,
         "safety_summary": safety,
         "findings": findings
@@ -249,7 +250,7 @@ Generated at: {summary['generated_at']}
 - package version: {clean_version}
 - tag: {version}
 - GitHub release URL if available: {"Present" if checks["github_release_present"] else "N/A"}
-- PyPI status: Not published
+- PyPI status: not published
 
 ## Security Hardening Included
 - redaction refresh after secret load/set
@@ -286,10 +287,29 @@ Generated at: {summary['generated_at']}
 - no provider execution enabled by default
 - no autonomous trading claim
 - not financial advice
-- PyPI not published
+- PyPI was not published
 
 ## Findings
 {"No findings." if not findings else chr(10).join(f"- {x}" for x in findings)}
+
+## Local Evidence
+
+This assurance pack is **local-only generated evidence**. It is produced by
+`scripts/release_assurance.py` and is not a published artifact. The files in this
+pack should not be committed to the repository unless a task explicitly requests
+a versioned evidence pack.
+
+### Cleanup Guidance
+
+If this pack is no longer needed, back it up before removal:
+
+```bash
+mkdir -p /tmp/atlas-agent-artifact-backup
+mv {out_dir} /tmp/atlas-agent-artifact-backup/
+```
+
+Use exact paths only. Do not use `git clean`, `git reset --hard`, `stash pop`,
+or `stash drop` to remove generated artifacts.
 
 ## Reviewer Notes
 """

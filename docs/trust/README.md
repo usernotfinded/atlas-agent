@@ -9,7 +9,7 @@ users, contributors, auditors, and potential adopters.
 - Previous public release: `v0.6.2`
 - Source package version on `main`: `0.6.3`
 - GitHub release: `v0.6.3` (current public)
-- PyPI publish: not performed
+- PyPI was not published
 - Release status detail: [v0.6.3 Trust and Release Status](v0.6.3-status.md) (current public)
 - Release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md) (current public)
 - Historical release notes: [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
@@ -68,7 +68,7 @@ brokers, enable trading, or require credentials.
 ## Distribution Status
 
 - GitHub release: `v0.6.3` (current public)
-- PyPI publish: not performed
+- PyPI was not published
 - Package version in source metadata: `0.6.3`
 - Auto-updater delivery: verified for `v0.6.3`
 

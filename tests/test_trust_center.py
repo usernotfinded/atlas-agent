@@ -228,3 +228,57 @@ class TestTrustCenterChecker:
         )
         assert result.returncode == 0, result.stderr
         assert result.stdout.strip() == ""
+
+
+class TestPypiNonPublishConsistency:
+    def test_trust_docs_use_consistent_pypi_not_published_phrasing(self) -> None:
+        readme_text = TRUST_README.read_text(encoding="utf-8").lower()
+        status_text = TRUST_STATUS.read_text(encoding="utf-8").lower()
+        combined = readme_text + "\n" + status_text
+
+        # Docs must state PyPI was not published
+        assert "pypi was not published" in combined, (
+            "Trust docs should use consistent 'PyPI was not published' phrasing"
+        )
+
+        # Docs must not claim PyPI publishing occurred
+        assert "pypi publish has been performed" not in combined, (
+            "Trust docs must not claim PyPI publish was performed"
+        )
+        assert "pypi published" not in combined.replace("pypi was not published", ""), (
+            "Trust docs must not contain positive PyPI published claims"
+        )
+
+    def test_readme_uses_consistent_pypi_not_published_phrasing(self) -> None:
+        readme_text = (REPO_ROOT / "README.md").read_text(encoding="utf-8").lower()
+        assert "pypi was not published" in readme_text, (
+            "README should use consistent 'PyPI was not published' phrasing"
+        )
+        assert "pypi publish has been performed" not in readme_text, (
+            "README must not claim PyPI publish was performed"
+        )
+
+    def test_release_notes_use_consistent_pypi_not_published_phrasing(self) -> None:
+        release_notes = (REPO_ROOT / "docs" / "releases" / "v0.6.3.md").read_text(encoding="utf-8").lower()
+        assert "pypi was not published" in release_notes, (
+            "v0.6.3 release notes should use consistent 'PyPI was not published' phrasing"
+        )
+        assert "pypi publish has been performed" not in release_notes, (
+            "Release notes must not claim PyPI publish was performed"
+        )
+
+    def test_no_twine_upload_in_scripts(self) -> None:
+        scripts_dir = REPO_ROOT / "scripts"
+        for path in scripts_dir.glob("*.py"):
+            text = path.read_text(encoding="utf-8").lower()
+            assert "twine upload" not in text, (
+                f"{path.name} must not contain twine upload command"
+            )
+
+    def test_no_twine_upload_in_workflows(self) -> None:
+        workflows_dir = REPO_ROOT / ".github" / "workflows"
+        for path in workflows_dir.glob("*.yml"):
+            text = path.read_text(encoding="utf-8").lower()
+            assert "twine upload" not in text, (
+                f"{path.name} must not contain twine upload command"
+            )

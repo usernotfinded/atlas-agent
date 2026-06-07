@@ -75,12 +75,12 @@ def mock_env(monkeypatch):
 
 def test_release_assurance_valid(mock_env, tmp_path, monkeypatch):
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
-    
+
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
-    
+
     assert e.value.code == 0
-    
+
     summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
     assert summary["valid"] is True
     assert summary["public_release_detected"] is True
@@ -95,7 +95,7 @@ def test_release_assurance_valid(mock_env, tmp_path, monkeypatch):
     assert "Updater Delivery Verification" in report
     assert "Safety Non-Claims" in report
     assert "no live trading enabled by default" in report
-    
+
     assert (tmp_path / "sha256sums.txt").exists()
 
 def test_release_assurance_uses_argument_list_subprocess() -> None:
@@ -120,13 +120,13 @@ def test_release_assurance_invalid_version(mock_env, tmp_path, monkeypatch):
         if name == "SECURITY.md":
             return "v0.6.0"
         return mock_env(self, *args, **kwargs)
-        
+
     monkeypatch.setattr(Path, "read_text", bad_read_text)
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
-    
+
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
-    
+
     assert e.value.code == 1
     summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
     assert summary["checks"]["package_version_aligned"] is False
@@ -140,13 +140,13 @@ def test_release_assurance_missing_release_notes(mock_env, tmp_path, monkeypatch
         if str(self) == ".github/workflows/provider-audit-pack.yml":
             return True
         return original_exists(self, *args, **kwargs)
-    
+
     monkeypatch.setattr(Path, "exists", bad_exists)
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
-    
+
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
-        
+
     summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
     assert summary["checks"]["release_notes_present"] is False
     assert summary["valid"] is False
@@ -172,10 +172,10 @@ def test_release_assurance_stale_readme(mock_env, tmp_path, monkeypatch):
 
     monkeypatch.setattr(Path, "read_text", bad_read_text)
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
-    
+
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
-        
+
     summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
     assert summary["checks"]["readme_public_metadata_current"] is False
 
@@ -196,10 +196,10 @@ def test_release_assurance_dev_stable_check(mock_env, tmp_path, monkeypatch):
 
     monkeypatch.setattr("release_assurance.run_cmd", bad_run_cmd)
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
-    
+
     with pytest.raises(SystemExit) as e:
         release_assurance.main()
-        
+
     summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
     assert summary["checks"]["dev_version_not_public_stable"] is False
     assert summary["valid"] is False
@@ -208,8 +208,59 @@ def test_release_assurance_secrets_omitted(mock_env, tmp_path, monkeypatch):
     monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
     with pytest.raises(SystemExit):
         release_assurance.main()
-        
+
     report = (tmp_path / "release-assurance-report.md").read_text()
     assert "token" not in report.lower()
     assert "secret" not in report.lower() or "secret regression coverage" in report.lower() # allowed in heading
     assert "password" not in report.lower()
+
+
+def test_release_assurance_local_evidence_marked(mock_env, tmp_path, monkeypatch):
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
+    with pytest.raises(SystemExit):
+        release_assurance.main()
+
+    summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
+    assert summary.get("local_only_evidence") is True
+    assert summary.get("artifact_type") == "release_assurance_summary"
+
+
+def test_release_assurance_report_has_local_evidence_section(mock_env, tmp_path, monkeypatch):
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
+    with pytest.raises(SystemExit):
+        release_assurance.main()
+
+    report = (tmp_path / "release-assurance-report.md").read_text()
+    assert "## Local Evidence" in report
+    assert "local-only generated evidence" in report.lower()
+    assert "should not be committed" in report.lower()
+    assert "Cleanup Guidance" in report
+    assert "mkdir -p /tmp/atlas-agent-artifact-backup" in report
+    assert "Do not use `git clean`" in report
+
+
+def test_release_assurance_pypi_not_published_lowercase(mock_env, tmp_path, monkeypatch):
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
+    with pytest.raises(SystemExit):
+        release_assurance.main()
+
+    report = (tmp_path / "release-assurance-report.md").read_text()
+    assert "PyPI status: not published" in report
+    assert "PyPI status: Not published" not in report
+
+    summary = json.loads((tmp_path / "release-assurance-summary.json").read_text())
+    assert summary["pypi_published"] is False
+
+
+def test_release_assurance_outputs_all_expected_files(mock_env, tmp_path, monkeypatch):
+    monkeypatch.setattr("sys.argv", ["release_assurance.py", "--version", "v0.6.0", "--output", str(tmp_path)])
+    with pytest.raises(SystemExit):
+        release_assurance.main()
+
+    assert (tmp_path / "release-assurance-summary.json").exists()
+    assert (tmp_path / "release-assurance-report.md").exists()
+    assert (tmp_path / "sha256sums.txt").exists()
+    assert (tmp_path / "release-checks.json").exists()
+    assert (tmp_path / "public-metadata-checks.json").exists()
+    assert (tmp_path / "updater-delivery-checks.json").exists()
+    assert (tmp_path / "provider-audit-pack-checks.json").exists()

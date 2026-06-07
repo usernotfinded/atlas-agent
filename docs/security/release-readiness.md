@@ -21,7 +21,7 @@ After a security release, maintainers must verify that the auto-updater can dete
 
 For v0.6.3, the public GitHub release is `v0.6.3`. For v0.6.4, planning is in progress and no tag or release has been created.
 
-PyPI publishing was intentionally skipped unless explicitly approved separately.
+PyPI was not published. A separate approval process is required for any future PyPI publish.
 
 The updater verification must not install packages, modify files, enable live trading, call providers, or require credentials.
 
