@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added v0.6.5 maintenance planning notes after the v0.6.4 release-assurance checker fix (`docs/releases/v0.6.5-plan.md`, `docs/releases/v0.6.5-candidates.md`, `docs/releases/v0.6.5-candidates.json`).
+- Finalized v0.6.5 candidate selection: CAND-003 (regression test for `security_md_current`), CAND-004 (release checklist version references), and CAND-006 (v0.6.5 release prep checker skeleton) accepted; CAND-005 (JSON determinism) deferred to a dedicated CI determinism batch.
 
 ### Changed
 
