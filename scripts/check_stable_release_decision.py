@@ -27,7 +27,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 PACKAGE_VERSION = "0.6.5"
-PUBLIC_TAG = "v0.6.4"
+PUBLIC_TAG = "v0.6.5"
 
 REQUIRED_FILES = [
     REPO_ROOT / "README.md",

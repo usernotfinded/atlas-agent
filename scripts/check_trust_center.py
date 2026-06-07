@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Iterable
 
 
-CURRENT_RELEASE = "v0.6.4"
+CURRENT_RELEASE = "v0.6.5"
 PACKAGE_VERSION = "0.6.5"
 TRUST_README = Path("docs/trust/README.md")
 TRUST_STATUS = Path("docs/trust/v0.6.5-status.md")

@@ -5,15 +5,15 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.4` (tagged)
-- Previous public release: `v0.6.3`
+- Current public release: `v0.6.5` (tagged)
+- Previous public release: `v0.6.4`
 - Source package version on `main`: `0.6.5`
-- GitHub release: `v0.6.4` (current public)
+- GitHub release: `v0.6.5` (current public)
 - PyPI was not published
-- Release status detail: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (version-prepared)
-- Previous release status: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (current public)
-- Release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (version-prepared)
-- Previous release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (current public)
+- Release status detail: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (current public)
+- Previous release status: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (historical)
+- Release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (current public)
+- Previous release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (historical)
 - Historical release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md), [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
 ## Security Posture
@@ -63,20 +63,20 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.4` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.5` is verified against the GitHub release/tag.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.4` (current public)
+- GitHub release: `v0.6.5` (current public)
 - PyPI was not published
 - Package version in source metadata: `0.6.5`
-- Auto-updater delivery: verified for `v0.6.4`
+- Auto-updater delivery: verified for `v0.6.5`
 
 ## What Is Ready
 
-- Public v0.6.4 release notes and release status documentation (current public).
+- Public v0.6.5 release notes and release status documentation (current public).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -85,7 +85,7 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, or `v0.6.4`.
+- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, or `v0.6.5`.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -101,8 +101,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.5 Release Notes](../releases/v0.6.5.md) (version-prepared)
-- [v0.6.5 Trust and Release Status](v0.6.5-status.md) (version-prepared)
+- [v0.6.5 Release Notes](../releases/v0.6.5.md) (current public)
+- [v0.6.5 Trust and Release Status](v0.6.5-status.md) (current public)
 - [v0.6.4 Release Notes](../releases/v0.6.4.md) (current public)
 - [v0.6.4 Trust and Release Status](v0.6.4-status.md) (current public)
 - [v0.6.3 Release Notes](../releases/v0.6.3.md) (historical)

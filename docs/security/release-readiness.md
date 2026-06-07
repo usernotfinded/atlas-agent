@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.4, the public GitHub release is `v0.6.4`. v0.6.5 is version-prepared but not yet tagged or released.
+For v0.6.5, the public GitHub release is `v0.6.5`. v0.6.4 is historical.
 
 PyPI was not published. A separate approval process is required for any future PyPI publish.
 

@@ -8,8 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added v0.6.6 maintenance planning notes after the v0.6.5 release (`docs/releases/v0.6.6-plan.md`).
 
 ### Changed
+- Updated public docs and checker metadata to reflect `v0.6.5` as the current public GitHub release (was previously described as version-prepared).
+- Updated `SECURITY.md` supported versions table to list `0.6.5` as the current public GitHub release.
+- Updated `docs/trust/v0.6.5-status.md` from version-prepared wording to tagged-and-published wording.
+- Updated `scripts/main_health.py` and `tests/test_main_health.py` public release metadata from `v0.6.4` to `v0.6.5`.
 
 ### Fixed
 
