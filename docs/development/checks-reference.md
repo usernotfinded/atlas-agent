@@ -191,6 +191,22 @@ It verifies that `docs/releases/v0.6.5.md` exists,
 the package version is `0.6.5`, and no premature `v0.6.6` release notes exist.
 `v0.6.5` is tagged and released; `v0.6.6` is the next planning line.
 
+## v0.6.6 Release Prep Checks
+
+`scripts/check_v066_release_prep.py` is a read-only checker for the v0.6.6 release
+prep state (next planning line):
+
+```bash
+python3.11 scripts/check_v066_release_prep.py
+python3.11 scripts/check_v066_release_prep.py --json
+```
+
+Default planning mode verifies that the package version is `0.6.5`,
+`docs/releases/v0.6.6.md` does not exist, the CHANGELOG has no `[0.6.6]` entry,
+and `v0.6.6` planning docs exist. After the version bump, use `--release-prep` to
+validate that `docs/releases/v0.6.6.md` and `docs/trust/v0.6.6-status.md` exist,
+the CHANGELOG has a `[0.6.6]` entry, and the package version is `0.6.6`.
+
 `scripts/check_v065_candidates.py` is the v0.6.5 candidate checker
 (used before the version bump; exits in planning mode after source version bump):
 
