@@ -6,14 +6,25 @@ no credentials, no provider SDKs, no broker changes.
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from types import ModuleType
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_public_docs_consistency.py"
+
+
+def _load_script_module() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("check_public_docs_consistency", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["check_public_docs_consistency"] = mod
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def _run_script_on_text(text: str) -> subprocess.CompletedProcess[str]:
@@ -182,3 +193,106 @@ class TestScriptRequiresNotFinancialAdvice:
         result = _run_script_on_text(text)
         assert result.returncode != 0
         assert "not financial advice" in result.stdout.lower()
+
+
+class TestReadmeCurrentVersion:
+    def test_readme_missing_current_status_fails(self) -> None:
+        mod = _load_script_module()
+        text = "# README\n\nSome text.\nNot financial advice.\n"
+        violations = mod._check_readme_current_version(text, "README.md")
+        assert len(violations) == 1
+        assert "v0.6.5" in violations[0]
+
+    def test_readme_has_current_status_passes(self) -> None:
+        mod = _load_script_module()
+        text = "# README\n\n> **Current Status (v0.6.5)**\n\nNot financial advice.\n"
+        violations = mod._check_readme_current_version(text, "README.md")
+        assert violations == []
+
+    def test_skipped_for_non_readme(self) -> None:
+        mod = _load_script_module()
+        text = "# Doc\n\nNo status here.\nNot financial advice.\n"
+        violations = mod._check_readme_current_version(text, "OTHER.md")
+        assert violations == []
+
+
+class TestStaleCurrentStatusInReadme:
+    def test_stale_current_status_fails(self) -> None:
+        mod = _load_script_module()
+        text = "# README\n\n> **Current Status (v0.6.4)**\n\nNot financial advice.\n"
+        violations = mod._check_stale_current_status_in_readme(text, "README.md")
+        assert len(violations) == 1
+        assert "v0.6.4" in violations[0]
+        assert "v0.6.5" in violations[0]
+
+    def test_current_status_passes(self) -> None:
+        mod = _load_script_module()
+        text = "# README\n\n> **Current Status (v0.6.5)**\n\nNot financial advice.\n"
+        violations = mod._check_stale_current_status_in_readme(text, "README.md")
+        assert violations == []
+
+    def test_skipped_for_non_readme(self) -> None:
+        mod = _load_script_module()
+        text = "# Doc\n\n> **Current Status (v0.6.4)**\n\nNot financial advice.\n"
+        violations = mod._check_stale_current_status_in_readme(text, "OTHER.md")
+        assert violations == []
+
+
+class TestChangelogReferencesReleaseNotes:
+    def test_orphaned_release_note_warns(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_releases = tmp_path / "releases"
+        fake_releases.mkdir()
+        (fake_releases / "v0.5.8.1.md").write_text("# v0.5.8.1\n")
+        (fake_releases / "v0.6.5.md").write_text("# v0.6.5\n")
+        fake_changelog = tmp_path / "CHANGELOG.md"
+        fake_changelog.write_text("# Changelog\n\n## [0.6.5]\n\nSee v0.6.5.md\n")
+
+        original_releases_dir = mod.RELEASES_DIR
+        original_changelog = mod.CHANGELOG_PATH
+        try:
+            mod.RELEASES_DIR = fake_releases
+            mod.CHANGELOG_PATH = fake_changelog
+            warnings = mod._check_changelog_references_release_notes()
+            assert any("v0.5.8.1.md" in w for w in warnings)
+            assert not any("v0.6.5.md" in w for w in warnings)
+        finally:
+            mod.RELEASES_DIR = original_releases_dir
+            mod.CHANGELOG_PATH = original_changelog
+
+    def test_all_referenced_no_warnings(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_releases = tmp_path / "releases"
+        fake_releases.mkdir()
+        (fake_releases / "v0.6.5.md").write_text("# v0.6.5\n")
+        fake_changelog = tmp_path / "CHANGELOG.md"
+        fake_changelog.write_text("# Changelog\n\nSee v0.6.5.md\n")
+
+        original_releases_dir = mod.RELEASES_DIR
+        original_changelog = mod.CHANGELOG_PATH
+        try:
+            mod.RELEASES_DIR = fake_releases
+            mod.CHANGELOG_PATH = fake_changelog
+            warnings = mod._check_changelog_references_release_notes()
+            assert warnings == []
+        finally:
+            mod.RELEASES_DIR = original_releases_dir
+            mod.CHANGELOG_PATH = original_changelog
+
+    def test_missing_changelog_warns(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_releases = tmp_path / "releases"
+        fake_releases.mkdir()
+        (fake_releases / "v0.6.5.md").write_text("# v0.6.5\n")
+        fake_changelog = tmp_path / "CHANGELOG.md"
+
+        original_releases_dir = mod.RELEASES_DIR
+        original_changelog = mod.CHANGELOG_PATH
+        try:
+            mod.RELEASES_DIR = fake_releases
+            mod.CHANGELOG_PATH = fake_changelog
+            warnings = mod._check_changelog_references_release_notes()
+            assert any("not found" in w for w in warnings)
+        finally:
+            mod.RELEASES_DIR = original_releases_dir
+            mod.CHANGELOG_PATH = original_changelog

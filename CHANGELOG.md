@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added v0.6.6 maintenance planning notes after the v0.6.5 release (`docs/releases/v0.6.6-plan.md`).
 - Documented v0.6.6 patch candidate selection (`docs/releases/v0.6.6-candidates.md`): CAND-001 (v0.6.6 release prep checker skeleton), CAND-002 (checks-reference.md stale wording), and CAND-003 (public docs consistency checker expansion) accepted.
 - Added `scripts/check_v066_release_prep.py` and `tests/test_check_v066_release_prep.py` for v0.6.6 release-prep state validation in planning and future release-prep modes (CAND-001).
+- Expanded `scripts/check_public_docs_consistency.py` and `tests/test_public_docs_consistency.py` to validate that the README status line matches the current public release and warn on orphaned release notes not referenced in CHANGELOG (CAND-003).
 
 ### Changed
 - Updated public docs and checker metadata to reflect `v0.6.5` as the current public GitHub release (was previously described as version-prepared).

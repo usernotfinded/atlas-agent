@@ -121,6 +121,13 @@ STALE_VERSION_PATTERNS = [
 # Current version string that public docs should reference as current.
 CURRENT_VERSION = "v0.6.5"
 
+# Release notes directory.
+RELEASES_DIR = REPO_ROOT / "docs" / "releases"
+CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
+
+# Semantic-version release note pattern: vX.Y.Z.md (and vX.Y.Z.W.md).
+_RELEASE_NOTE_PATTERN = re.compile(r"^v\d+\.\d+\.\d+([.-]\d+)?\.md$")
+
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:
@@ -297,12 +304,59 @@ def _check_stale_rc_status_claims(text: str, rel_path: str) -> list[str]:
     return violations
 
 
+def _check_readme_current_version(text: str, rel_path: str) -> list[str]:
+    """Verify README references CURRENT_VERSION in a status line."""
+    violations: list[str] = []
+    if rel_path != "README.md":
+        return violations
+    if f"Current Status ({CURRENT_VERSION})" not in text:
+        violations.append(
+            f"[{rel_path}] README missing 'Current Status ({CURRENT_VERSION})' status line"
+        )
+    return violations
+
+
+def _check_stale_current_status_in_readme(text: str, rel_path: str) -> list[str]:
+    """Flag stale Current Status (vX.Y.Z) claims in README that don't match CURRENT_VERSION."""
+    violations: list[str] = []
+    if rel_path != "README.md":
+        return violations
+    for m in re.finditer(r"Current Status \(v(\d+\.\d+\.\d+(?:[.-]\d+)?)\)", text):
+        found_version = m.group(1)
+        if f"v{found_version}" != CURRENT_VERSION:
+            violations.append(
+                f"[{rel_path}] Stale current-status claim: {m.group(0)} (expected {CURRENT_VERSION})"
+            )
+    return violations
+
+
+def _check_changelog_references_release_notes() -> list[str]:
+    """Warn on orphaned release notes (vX.Y.Z.md) not referenced in CHANGELOG."""
+    warnings: list[str] = []
+    if not CHANGELOG_PATH.exists():
+        warnings.append("CHANGELOG.md not found; cannot check release-note references")
+        return warnings
+    if not RELEASES_DIR.exists():
+        return warnings
+    changelog_text = CHANGELOG_PATH.read_text(encoding="utf-8")
+    for path in sorted(RELEASES_DIR.glob("v*.md")):
+        if not _RELEASE_NOTE_PATTERN.match(path.name):
+            continue
+        name = path.name.replace(".md", "")
+        if name not in changelog_text:
+            warnings.append(
+                f"Release note {path.name} not referenced in CHANGELOG.md"
+            )
+    return warnings
+
+
 def main() -> int:
     all_violations: list[str] = []
+    all_warnings: list[str] = []
 
     for path in PUBLIC_DOC_PATHS:
         if not path.exists():
-            print(f"WARNING: Public doc not found: {path}")
+            all_warnings.append(f"Public doc not found: {path}")
             continue
         rel = path.relative_to(REPO_ROOT)
         text = _read(path)
@@ -314,15 +368,25 @@ def main() -> int:
         all_violations.extend(_check_readme_required_safe(text, str(rel)))
         all_violations.extend(_check_stale_version_refs(text, str(rel)))
         all_violations.extend(_check_stale_rc_status_claims(text, str(rel)))
+        all_violations.extend(_check_readme_current_version(text, str(rel)))
+        all_violations.extend(_check_stale_current_status_in_readme(text, str(rel)))
+
+    all_warnings.extend(_check_changelog_references_release_notes())
 
     if all_violations:
         print("Public docs consistency check FAILED")
         for v in all_violations:
             print(f"  - {v}")
+        if all_warnings:
+            for w in all_warnings:
+                print(f"  WARN: {w}")
         return 1
 
     print("Public docs consistency check PASSED")
     print(f"  Scanned {len(PUBLIC_DOC_PATHS)} public doc file(s)")
+    if all_warnings:
+        for w in all_warnings:
+            print(f"  WARN: {w}")
     return 0
 
 

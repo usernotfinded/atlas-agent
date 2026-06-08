@@ -9,6 +9,11 @@ docs, safety messaging, release readiness, and local evidence generation.
   `pyproject.toml` and `src/atlas_agent/__init__.py`.
 - `scripts/check_forbidden_claims.py` scans public docs for prohibited safety or
   profit wording.
+- `scripts/check_public_docs_consistency.py` scans public docs for unsafe claims,
+  stale version references, stale RC status claims, missing safety wording,
+  forbidden commands in bash blocks, secret-like patterns, and release-note
+  reference consistency (README status line matches current public release;
+  warns on orphaned release notes not referenced in CHANGELOG).
 - `scripts/check_trust_center.py` keeps the trust center aligned with release,
   security, provider evidence, updater, and non-claim messaging.
 - `scripts/check_onboarding_docs.py` keeps contributor onboarding docs aligned
