@@ -179,7 +179,7 @@ no premature `v0.6.4` release notes exist.
 ## v0.6.5 Release Prep Checks
 
 `scripts/check_v065_release_prep.py` is a read-only checker for the v0.6.5 release
-prep state (current):
+prep state (historical):
 
 ```bash
 python3.11 scripts/check_v065_release_prep.py --release-prep
@@ -189,6 +189,7 @@ python3.11 scripts/check_v065_release_prep.py --release-prep --json
 It verifies that `docs/releases/v0.6.5.md` exists,
 `docs/trust/v0.6.5-status.md` exists, the CHANGELOG has a `[0.6.5]` entry,
 the package version is `0.6.5`, and no premature `v0.6.6` release notes exist.
+`v0.6.5` is tagged and released; `v0.6.6` is the next planning line.
 
 `scripts/check_v065_candidates.py` is the v0.6.5 candidate checker
 (used before the version bump; exits in planning mode after source version bump):
