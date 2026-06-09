@@ -74,6 +74,29 @@ python3.11 scripts/check_package_distribution.py
 ./scripts/release_check.sh --full
 ```
 
+### Paper workflow demo
+
+Run the reproducible demo script to see a full paper-mode workflow:
+
+```bash
+./scripts/demo_paper_workflow.sh
+```
+
+**What to expect:**
+- A temporary workspace is created.
+- A safe discipline profile and demo symbol are configured.
+- `atlas validate` confirms the workspace is paper-only.
+- A paper dry-run prints the planned workflow without sending orders.
+- A deterministic sample-data backtest runs and writes a local report.
+- The script exits `0` with no credentials required.
+
+**How to know it worked:**
+- The final line reads `Demo complete. Review the temporary workspace at: ...`
+- No provider API keys or broker credentials were requested.
+- `atlas validate` reports `Live trading: Disabled by default`.
+
+For full expected output, success criteria, and artifact locations, see [Demo: Paper Workflow](demo-paper-workflow.md).
+
 ### Expected safe failures
 
 - `atlas validate` may report missing provider API keys. This is expected and safe — Atlas does not require real credentials for paper and backtest workflows.

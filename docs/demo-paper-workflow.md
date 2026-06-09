@@ -91,6 +91,89 @@ No live orders are sent.
 3. No pending orders were created in `pending_orders/`.
 4. The demo does not require live broker credentials.
 
+## Expected output
+
+When the script succeeds, you will see output similar to:
+
+```text
+Atlas Agent paper workflow demo
+Workspace: /tmp/atlas-agent-demo.XXXXXX
+Symbol: ATLAS-DEMO
+Sample-data backtest symbol: DEMO-SYMBOL
+This demo is paper-only and does not require broker credentials.
+
+$ atlas init ... --template routine-trader
+Atlas Agent workspace created: ... (template: routine-trader)
+
+$ atlas discipline setup --manual --yes
+Discipline profile created at .atlas/discipline.md
+
+$ atlas config set market.symbol ATLAS-DEMO
+Updated market.symbol in config.toml
+
+$ atlas validate
+...
+[✓] Live trading
+    Disabled by default.
+...
+Status: not ready for agentic paper workflows
+...
+
+$ atlas run --mode paper --dry-run --symbol ATLAS-DEMO
+Atlas Agent Plan
+...
+Plan: Market open. Paper trade cycle.
+
+$ atlas backtest run --symbol DEMO-SYMBOL --data ...
+Backtest complete: DEMO-SYMBOL
+...
+Report saved to: .atlas/backtests/.../result.json
+
+$ atlas audit verify --all
+No manifests found.
+
+Demo complete. Review the temporary workspace at: ...
+```
+
+Notes:
+- `atlas validate` may report `Status: not ready for agentic paper workflows` because no AI provider API key is configured. This is expected and safe; the backtest and dry-run steps still complete.
+- `atlas audit verify --all` may report `No manifests found` because the dry-run does not create run manifests. This is expected.
+- The backtest report path includes a timestamp; the exact path will vary.
+
+## Expected artifacts
+
+- A temporary workspace directory (printed at the start and end of the demo).
+- `.atlas/config.toml` with `market.symbol = "ATLAS-DEMO"`.
+- `.atlas/discipline.md` with the default safe discipline profile.
+- `.atlas/backtests/bt-<timestamp>/result.json` and `report.md` from the deterministic sample-data backtest.
+
+## Success criteria
+
+- The script exits with code `0`.
+- No broker credentials or provider API keys are required.
+- No live orders are submitted.
+- The backtest runs and produces a local report.
+- The workspace is created in a temporary directory and is safe to delete after review.
+
+## Common failures
+
+| Symptom | Likely cause | Resolution |
+|---|---|---|
+| `Missing prerequisite: sample data not found` | The repository was not cloned or `data/sample/ohlcv.csv` is missing. | Clone the repo and ensure sample data is present. |
+| `atlas: command not found` or Python import error | Atlas is not installed in editable mode. | Run `python3.11 -m pip install -e .` from the repository root. |
+| `Status: not ready for agentic paper workflows` | No AI provider API key is configured. | This is expected and safe for the demo. The backtest and dry-run still complete. |
+
+## Safety note
+
+This demo is **paper-only and local-only**. It does not:
+- submit live orders,
+- call provider APIs,
+- use the network,
+- load credentials,
+- or enable live trading.
+
+It is a proof of workflow mechanics, not a live-trading setup or performance claim.
+
 ## Paper/sandbox support note
 
 Paper and sandbox support depends on the selected broker/API provider and asset class. Some providers offer crypto simulation or testnet environments; others may not. Atlas does not assume crypto support.

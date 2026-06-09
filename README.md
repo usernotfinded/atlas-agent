@@ -37,6 +37,8 @@ atlas validate
 ./scripts/demo_paper_workflow.sh
 ```
 
+See [docs/demo-paper-workflow.md](docs/demo-paper-workflow.md) for expected output, success criteria, and artifact locations.
+
 This path installs Atlas locally, creates a safe paper workspace, validates the configuration, and runs the reproducible paper-mode demo. It produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
 
 ### What this quick path shows
@@ -67,7 +69,7 @@ Run the reproducible paper-mode workflow:
 
 The demo creates a temporary Atlas workspace, installs a safe discipline profile, sets the explicit `ATLAS-DEMO` paper symbol, runs `atlas validate`, shows a paper-mode dry run, runs a deterministic sample-data backtest with the `DEMO-SYMBOL` fixture, and verifies audit manifests when present.
 
-It does not require live trading, real broker credentials, or private values. It is a paper-mode proof of workflow mechanics, not a live-trading setup or performance claim. No `assets/atlas-demo.gif` recording is checked in yet; the script is the reproducible demo artifact.
+It does not require live trading, real broker credentials, or private values. It is a paper-mode proof of workflow mechanics, not a live-trading setup or performance claim. No `assets/atlas-demo.gif` recording is checked in yet; the reproducible demo script and the documented expected-output guide are the canonical demo artifacts.
 
 ## Provider preflight dry-run demo
 

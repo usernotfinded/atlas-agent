@@ -35,7 +35,7 @@
       ],
       "acceptance_criteria": "Expected output snippets are added to demo docs and reviewer walkthrough; the README demo note is reframed as a constructive pointer to documented demos.",
       "selected_for_v067": true,
-      "implementation_status": "not yet implemented",
+      "implementation_status": "implemented in Batch 81",
       "reason": "Reduces reviewer uncertainty and support requests. Docs-only; no runtime changes."
     },
     {
