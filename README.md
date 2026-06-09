@@ -174,7 +174,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`v0.6.6` is the latest stable public release on GitHub. The `0.6.6` source version is tagged and released. The v0.6.6 patch release contains docs consistency, checker metadata, test coverage, and public release reference alignment improvements. No new runtime features, broker adapters, or provider integrations. PyPI was not published. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
+`v0.6.6` is the latest stable public release on GitHub. `v0.5.8` is a historical stable release. The `0.6.6` source version is tagged and released. The v0.6.6 patch release contains docs consistency, checker metadata, test coverage, and public release reference alignment improvements. No new runtime features, broker adapters, or provider integrations. PyPI was not published. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
 
 - Live trading is disabled by default.
 - Provider execution remains locked.
