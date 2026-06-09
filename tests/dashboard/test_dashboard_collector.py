@@ -8,7 +8,8 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.dashboard.collectors import collect_dashboard_snapshot
 
 
-def test_collect_dashboard_snapshot_handles_empty_workspace(tmp_path: Path):
+def test_collect_dashboard_snapshot_handles_empty_workspace(tmp_path: Path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     config = AtlasConfig(audit_dir=tmp_path / "audit")
     snapshot = collect_dashboard_snapshot(config, tmp_path)
 
