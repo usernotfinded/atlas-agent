@@ -1,0 +1,171 @@
+{
+  "artifact_type": "v067_patch_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.7",
+  "generated_for": "planning",
+  "status": "candidate_selection",
+  "generated_at": "2026-06-09",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "README quickstart front-loading",
+      "category": "docs clarity",
+      "priority": "P1",
+      "source": "The README quickstart currently starts at line ~197, below trust status, contributor onboarding, demo, provider preflight, provider capability, Why Atlas?, Broker-Neutral Model, System Status, What this is, What this is not, Current Development Status, Review and Feedback, and External Review sections. A new visitor must scroll through ~200 lines before seeing install/try instructions.",
+      "risk": "low",
+      "expected_files": [
+        "README.md"
+      ],
+      "acceptance_criteria": "Quickstart appears immediately after the top status banner; a concise Try Atlas in 5 minutes subsection is present; the Review and Feedback link list is compressed to a curated set.",
+      "selected_for_v067": true,
+      "implementation_status": "not yet implemented",
+      "reason": "Highest-impact onboarding improvement. Docs-only; no runtime changes."
+    },
+    {
+      "id": "CAND-002",
+      "title": "Demo output expectations and discoverability",
+      "category": "docs clarity",
+      "priority": "P1",
+      "source": "docs/demo-paper-workflow.md and docs/external-reviewer-walkthrough.md describe commands but do not show expected success output. The README notes No assets/atlas-demo.gif recording is checked in yet, which is honest but not constructive. Reviewers do not know what successful execution looks like.",
+      "risk": "low",
+      "expected_files": [
+        "docs/demo-paper-workflow.md",
+        "docs/external-reviewer-walkthrough.md",
+        "README.md"
+      ],
+      "acceptance_criteria": "Expected output snippets are added to demo docs and reviewer walkthrough; the README demo note is reframed as a constructive pointer to documented demos.",
+      "selected_for_v067": true,
+      "implementation_status": "not yet implemented",
+      "reason": "Reduces reviewer uncertainty and support requests. Docs-only; no runtime changes."
+    },
+    {
+      "id": "CAND-003",
+      "title": "Onboarding docs and checker stale version references",
+      "category": "docs/checker consistency",
+      "priority": "P2",
+      "source": "docs/development/onboarding.md contains a release_assurance.py example using v0.6.0 (line 99). scripts/check_onboarding_docs.py hardcodes public github release is 'v0.6.0' in REQUIRED_FACTS (line 145), which has been stale for multiple releases.",
+      "risk": "low",
+      "expected_files": [
+        "docs/development/onboarding.md",
+        "scripts/check_onboarding_docs.py",
+        "tests/test_onboarding_docs.py"
+      ],
+      "acceptance_criteria": "Onboarding doc release_assurance example references the current public release; checker REQUIRED_FACTS uses the current public release dynamically or is updated to match; tests pass.",
+      "selected_for_v067": true,
+      "implementation_status": "not yet implemented",
+      "reason": "Prevents recurring contributor confusion from stale version references. No runtime changes."
+    },
+    {
+      "id": "CAND-004",
+      "title": "Harden release-checklist automated version reference validation",
+      "category": "checker infrastructure",
+      "priority": "P2",
+      "source": "docs/release-checklist.md contains version-specific examples (smoke tag scripts, version references) that drift after each release. A lightweight validation could catch stale examples earlier.",
+      "risk": "low",
+      "expected_files": [
+        "scripts/check_release_checklist_consistency.py",
+        "tests/test_release_checklist_consistency.py"
+      ],
+      "acceptance_criteria": "Checker validates that release-checklist examples reference the current public tag and source version without stale historical values.",
+      "selected_for_v067": false,
+      "reason": "Valuable but broader than a minimal onboarding patch; defer to a dedicated docs-checker batch."
+    },
+    {
+      "id": "CAND-005",
+      "title": "Demo GIF or screen recording asset",
+      "category": "media asset",
+      "priority": "P3",
+      "source": "The README explicitly states No assets/atlas-demo.gif recording is checked in yet. A short ASCII or text-based demo recording could improve first impression.",
+      "risk": "none",
+      "expected_files": [
+        "assets/ (potential new file)"
+      ],
+      "acceptance_criteria": "A safe, non-interactive demo recording is created and referenced from README.",
+      "selected_for_v067": false,
+      "reason": "Media asset creation is out of patch scope and requires separate review for redaction/safety."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution unlock",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-005",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Automatic skill activation",
+      "reason": "Skill candidates remain manually reviewed and offline."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Automatic learning execution",
+      "reason": "Learning suggestions remain offline and manually reviewed."
+    },
+    {
+      "id": "REJ-008",
+      "title": "Version bump to 0.6.7",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-009",
+      "title": "Creation of docs/releases/v0.6.7.md",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-010",
+      "title": "Creation of docs/trust/v0.6.7-status.md",
+      "reason": "Not authorized in selection-only batch."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading remains disabled by default.",
+    "Live submit remains disabled by default.",
+    "Provider execution remains disabled by default.",
+    "Broker execution remains disabled by default.",
+    "Risk gates remain deterministic and unchanged.",
+    "Approval queue behavior remains unchanged.",
+    "Kill-switch behavior remains unchanged.",
+    "Human approval remains required for live order flow.",
+    "Credentials are not loaded unless explicitly configured.",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
+  ],
+  "constraints": [
+    "Version is not bumped to 0.6.7 in this batch",
+    "docs/releases/v0.6.7.md does not exist yet",
+    "docs/trust/v0.6.7-status.md does not exist yet",
+    "No tag, GitHub release, or PyPI publish yet",
+    "No runtime trading behavior changes"
+  ],
+  "release_criteria": [
+    "Accepted candidates are implemented",
+    "dev_check, ci_check, and release_check --quick pass locally",
+    "CI on main is green after the prep commit is pushed",
+    "Version is bumped to 0.6.7 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.7.md and docs/trust/v0.6.7-status.md are created",
+    "CHANGELOG.md has a [0.6.7] entry",
+    "scripts/check_v067_release_prep.py and matching tests are created",
+    "Protected boundary diff is empty",
+    "Forbidden claims scan is clean",
+    "Owner approval is obtained for tag cutover"
+  ]
+}

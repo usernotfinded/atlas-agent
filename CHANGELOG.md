@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Documented v0.6.7 public-onboarding candidate selection (`docs/releases/v0.6.7-candidates.md`, `docs/releases/v0.6.7-candidates.json`): CAND-001 (README quickstart front-loading), CAND-002 (demo output expectations and discoverability), and CAND-003 (onboarding docs and checker stale version references) accepted.
 
 ### Changed
 - Updated public docs and checker metadata to reflect `v0.6.6` as the current public GitHub release (was previously described as prepared/not yet tagged).
