@@ -281,7 +281,7 @@ class TestScriptBehavior:
         data = json.loads(result.stdout)
         assert data["passed"] is True
         assert data["package_version"] == "0.6.6"
-        assert data["public_tag"] == "v0.6.1"
+        assert data["public_tag"] == "v0.6.6"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:

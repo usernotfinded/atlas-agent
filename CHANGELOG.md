@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Documented v0.6.7 public-onboarding candidate selection (`docs/releases/v0.6.7-candidates.md`, `docs/releases/v0.6.7-candidates.json`): CAND-001 (README quickstart front-loading), CAND-002 (demo output expectations and discoverability), and CAND-003 (onboarding docs and checker stale version references) accepted.
 - Documented expected output, success criteria, artifact expectations, and common failures for the paper demo (`docs/demo-paper-workflow.md`, `docs/external-reviewer-walkthrough.md`) and reframed the README demo note as a constructive pointer to documented demos (CAND-002).
+- Fixed stale onboarding, reviewer, release-readiness, and checker version references across the repository: updated docs to reference the current `v0.6.6` public release, converted `check_onboarding_docs.py` `REQUIRED_FACTS` to use module-level current-release constants, aligned `check_public_launch_messaging.py`, `check_reviewer_outreach.py`, `doctor.py`, and `check_generated_artifacts.py` to current release, and updated corresponding tests (CAND-003).
 
 ### Changed
 - Front-loaded the README quickstart path for v0.6.7 public onboarding candidate CAND-001: added "Try Atlas in 5 minutes" section immediately after the status banner and compressed the "Review and Feedback" link list.

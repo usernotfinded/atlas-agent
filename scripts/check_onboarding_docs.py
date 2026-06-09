@@ -24,6 +24,10 @@ GENERATED_ARTIFACTS_DOC = Path("docs/development/generated-artifacts.md")
 MAIN_HEALTH_DOC = Path("docs/development/main-health.md")
 GITHUB_ACTIONS_DOC = Path("docs/development/github-actions.md")
 
+CURRENT_PACKAGE_VERSION = "0.6.6"
+CURRENT_PUBLIC_RELEASE = "v0.6.6"
+NEXT_PLANNED_RELEASE = "v0.6.7"
+
 REQUIRED_DOCS = [
     ONBOARDING_DOC,
     SAFE_WORKFLOWS_DOC,
@@ -142,7 +146,7 @@ REQUIRED_FACTS = {
     ),
     "main health version identity": (
         ("main source version can differ from public release",),
-        ("public github release is `v0.6.0`",),
+        (f"public github release is `{CURRENT_PUBLIC_RELEASE}`",),
     ),
     "main health protected boundary": (
         ("protected runtime boundaries should be empty for docs/checker-only work",),

@@ -52,7 +52,7 @@
       ],
       "acceptance_criteria": "Onboarding doc release_assurance example references the current public release; checker REQUIRED_FACTS uses the current public release dynamically or is updated to match; tests pass.",
       "selected_for_v067": true,
-      "implementation_status": "not yet implemented",
+      "implementation_status": "implemented in Batch 82",
       "reason": "Prevents recurring contributor confusion from stale version references. No runtime changes."
     },
     {
