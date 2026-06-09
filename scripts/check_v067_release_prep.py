@@ -256,6 +256,9 @@ def _check_no_tag_claim() -> list[str]:
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8").lower()
+        # Allow claims for the current released version
+        if PUBLIC_TAG.lower() in text:
+            continue
         if "tag created" in text and "not created" not in text:
             errors.append(f"{path.name} may claim tag was already created")
         if "github release created" in text and "not created" not in text:
@@ -306,8 +309,8 @@ def _check_trust_readme_version() -> list[str]:
     text = TRUST_README.read_text(encoding="utf-8")
     if "Source package version on `main`: `0.6.7`" not in text:
         errors.append("Trust README does not state source package version on main is 0.6.7")
-    if "Prepared v0.6.7" not in text:
-        errors.append("Trust README does not mention prepared v0.6.7")
+    if "Public v0.6.7" not in text:
+        errors.append("Trust README does not mention public v0.6.7")
     return errors
 
 

@@ -110,7 +110,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.6.6" in readme_text, "README must reference v0.6.6 as current status"
+        assert "v0.6.7" in readme_text, "README must reference v0.6.7 as current status"
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -189,7 +189,7 @@ class TestScriptBehavior:
         data = json.loads(result.stdout)
         assert data["passed"] is True
         assert data["package_version"] == "0.6.7"
-        assert data["public_tag"] == "v0.6.6"
+        assert data["public_tag"] == "v0.6.7"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -262,10 +262,10 @@ class TestStaleRCReferencesBlocked:
 
 
 class TestReleaseDocConsistency:
-    def test_public_launch_readiness_doc_has_v063_as_current_release(self) -> None:
+    def test_public_launch_readiness_doc_has_v067_as_current_release(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
-        assert "latest stable public GitHub release is `v0.6.6`" in text, (
-            "public-launch-readiness.md must describe v0.6.6 as the current stable release"
+        assert "latest stable public GitHub release is `v0.6.7`" in text, (
+            "public-launch-readiness.md must describe v0.6.7 as the current stable release"
         )
 
     def test_public_launch_readiness_doc_does_not_claim_v062_as_latest(self) -> None:
@@ -286,19 +286,19 @@ class TestReleaseDocConsistency:
             "release-checklist.md must not reference v0.6.2 as the current public tag"
         )
 
-    def test_readme_release_assurance_example_uses_v064(self) -> None:
+    def test_readme_release_assurance_example_uses_v067(self) -> None:
         text = (ROOT / "README.md").read_text(encoding="utf-8")
-        assert "--version v0.6.6" in text, (
-            "README release assurance example must use v0.6.6"
+        assert "--version v0.6.7" in text, (
+            "README release assurance example must use v0.6.7"
         )
         assert "v0.6.1-local-check" not in text, (
             "README must not use stale v0.6.1 release assurance example"
         )
 
-    def test_checks_reference_release_assurance_uses_v065(self) -> None:
+    def test_checks_reference_release_assurance_uses_v067(self) -> None:
         text = (ROOT / "docs" / "development" / "checks-reference.md").read_text(encoding="utf-8")
-        assert "--version v0.6.6" in text, (
-            "checks-reference.md release assurance example must use v0.6.6"
+        assert "--version v0.6.7" in text, (
+            "checks-reference.md release assurance example must use v0.6.7"
         )
         assert "v0.6.0-local-check" not in text, (
             "checks-reference.md must not use stale v0.6.0 release assurance example"

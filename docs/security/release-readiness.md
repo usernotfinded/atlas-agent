@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.6 public release is the current stable version. The v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
+The v0.6.7 public release is the current stable version. The v0.6.6, v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.6, the public GitHub release is `v0.6.6`. v0.6.5 is historical.
+For v0.6.7, the public GitHub release is `v0.6.7`. v0.6.6 is historical.
 
 PyPI was not published. A separate approval process is required for any future PyPI publish.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.6 --output artifacts/release_assurance/v0.6.6-local-check
+python scripts/release_assurance.py --version v0.6.7 --output artifacts/release_assurance/v0.6.7-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
@@ -69,15 +69,6 @@ The trust center is checked by `scripts/check_trust_center.py` to prevent stale 
 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
 to keep local setup, safe-check, and release-sensitive command guidance current.
-
-## v0.6.7 readiness
-
-For v0.6.7 release readiness and post-cutover verification, run the v0.6.7 release prep checker:
-
-```bash
-python3.11 scripts/check_v067_release_prep.py --release-prep
-python3.11 scripts/check_v067_release_prep.py --release-prep --json
-```
 
 ## v0.6.6 readiness
 

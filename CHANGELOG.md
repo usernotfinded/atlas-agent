@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Corrected v0.6.7 release-prep public documentation status drift before tag cutover.
+- Completed v0.6.7 post-release hygiene after GitHub release cutover.
 
 ### Safety
 
@@ -27,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Front-loaded the README quickstart path for v0.6.7 public onboarding candidate CAND-001: added "Try Atlas in 5 minutes" section immediately after the status banner and compressed the "Review and Feedback" link list.
-- Updated public docs and checker metadata to reflect `v0.6.6` as the current public GitHub release and `0.6.7` as the prepared source version.
+- Updated public docs and checker metadata to reflect `v0.6.6` as the then-current public GitHub release and `0.6.7` as the source version being prepared.
 - Updated `scripts/check_version_consistency.py`, `scripts/check_trust_center.py`, `scripts/check_public_launch_readiness.py`, `scripts/check_stable_release_decision.py`, `scripts/check_final_rc_audit.py`, `scripts/check_reviewer_onboarding.py`, `scripts/build_release_evidence_bundle.py`, and `scripts/doctor.py` package version metadata from `0.6.6` to `0.6.7`.
 - Updated `scripts/check_onboarding_docs.py` current package version from `0.6.6` to `0.6.7` and next planned release from `v0.6.7` to `v0.6.8`.
 - Updated `scripts/main_health.py` expected source version from `0.6.6` to `0.6.7` and next unrequested release tag from `v0.6.7` to `v0.6.8`.
@@ -38,8 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 - The v0.6.7 release-prep updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
-- No tag, GitHub release, or PyPI publish was performed in this batch.
-- `v0.6.7` is version-prepared; tag and release cutover require separate owner approval.
+- `v0.6.7` was tagged and released on 2026-06-09.
+- `v0.6.7` release cutover was approved and completed.
 
 ## [0.6.6] - 2026-06-09
 

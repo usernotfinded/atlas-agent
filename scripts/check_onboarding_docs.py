@@ -25,7 +25,7 @@ MAIN_HEALTH_DOC = Path("docs/development/main-health.md")
 GITHUB_ACTIONS_DOC = Path("docs/development/github-actions.md")
 
 CURRENT_PACKAGE_VERSION = "0.6.7"
-CURRENT_PUBLIC_RELEASE = "v0.6.6"
+CURRENT_PUBLIC_RELEASE = "v0.6.7"
 NEXT_PLANNED_RELEASE = "v0.6.8"
 
 REQUIRED_DOCS = [

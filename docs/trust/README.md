@@ -5,18 +5,18 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.6` (tagged)
-- Previous public release: `v0.6.5`
+- Current public release: `v0.6.7` (tagged)
+- Previous public release: `v0.6.6`
 - Source package version on `main`: `0.6.7`
-- GitHub release: `v0.6.6` (current public)
+- GitHub release: `v0.6.7` (current public)
 - Next planning line: `v0.6.8`
 - PyPI was not published
-- Release status detail: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (current public)
-- Previous release status: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
-- Previous previous release status: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (historical)
-- Release notes: [docs/releases/v0.6.6.md](../releases/v0.6.6.md) (current public)
-- Previous release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (historical)
-- Previous previous release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (historical)
+- Release status detail: [v0.6.7 Trust and Release Status](v0.6.7-status.md) (current public)
+- Previous release status: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (historical)
+- Previous previous release status: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
+- Release notes: [docs/releases/v0.6.7.md](../releases/v0.6.7.md) (current public)
+- Previous release notes: [docs/releases/v0.6.6.md](../releases/v0.6.6.md) (historical)
+- Previous previous release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (historical)
 - Historical release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md), [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
 ## Security Posture
@@ -66,22 +66,22 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.6` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.7` is verified against the GitHub release/tag.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.6` (current public)
+- GitHub release: `v0.6.7` (current public)
 - PyPI was not published
 - Package version in source metadata: `0.6.7`
-- Auto-updater delivery: verified for `v0.6.6`; not yet verified for `v0.6.7`
+- Auto-updater delivery: verified for `v0.6.7`; not yet verified for `v0.6.8`
 
 ## What Is Ready
 
-- Public v0.6.6 release notes and release status documentation (current public).
-- Prepared v0.6.7 release notes and release status documentation (prepared, not yet tagged or released).
-- Next planning line v0.6.8 release notes and release status documentation (not yet prepared).
+- Public v0.6.7 release notes and release status documentation (current public).
+- Prepared v0.6.8 release notes and release status documentation (prepared, not yet tagged or released).
+- Next planning line v0.6.9 release notes and release status documentation (not yet prepared).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -106,10 +106,10 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.7 Release Notes](../releases/v0.6.7.md) (prepared, not yet released)
-- [v0.6.7 Trust and Release Status](v0.6.7-status.md) (prepared, not yet released)
-- [v0.6.6 Release Notes](../releases/v0.6.6.md) (current public)
-- [v0.6.6 Trust and Release Status](v0.6.6-status.md) (current public)
+- [v0.6.7 Release Notes](../releases/v0.6.7.md) (current public)
+- [v0.6.7 Trust and Release Status](v0.6.7-status.md) (current public)
+- [v0.6.6 Release Notes](../releases/v0.6.6.md) (historical)
+- [v0.6.6 Trust and Release Status](v0.6.6-status.md) (historical)
 - [v0.6.5 Release Notes](../releases/v0.6.5.md) (historical)
 - [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
 - [v0.6.4 Release Notes](../releases/v0.6.4.md) (historical)

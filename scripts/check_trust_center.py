@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Iterable
 
 
-CURRENT_RELEASE = "v0.6.6"
+CURRENT_RELEASE = "v0.6.7"
 PACKAGE_VERSION = "0.6.7"
 TRUST_README = Path("docs/trust/README.md")
 TRUST_STATUS = Path("docs/trust/v0.6.7-status.md")
@@ -96,8 +96,8 @@ REQUIRED_LINKS = {
 }
 
 REQUIRED_FACTS = {
-    "current public release v0.6.4": (("current public release", CURRENT_RELEASE),),
-    "source package version 0.6.3": (
+    "current public release v0.6.7": (("current public release", CURRENT_RELEASE),),
+    "source package version 0.6.7": (
         ("source package version", PACKAGE_VERSION),
         ("package version in source metadata", PACKAGE_VERSION),
     ),

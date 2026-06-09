@@ -85,8 +85,8 @@ class TestReadmeLinks:
             or "stable release checklist" in lower
         )
 
-    def test_readme_current_status_is_v0507(self, readme_text: str) -> None:
-        assert "v0.5.8" in readme_text
+    def test_readme_current_status_is_v067(self, readme_text: str) -> None:
+        assert "v0.6.7" in readme_text
 
 
 class TestDecisionDocSafety:
@@ -146,9 +146,9 @@ class TestDecisionDocSafety:
         text = DECISION_DOC.read_text(encoding="utf-8").lower()
         # Allow negative contexts like "does not claim that v0.5.8 has already been published"
         positive_claims = [
-            "v0.5.8 has been released externally",
-            "v0.5.8 is now live",
-            "v0.5.8 is already published",
+            "v0.6.7 has been released externally",
+            "v0.6.7 is now live",
+            "v0.6.7 is already published",
         ]
         for claim in positive_claims:
             assert claim not in text, f"Doc contains positive publication claim: {claim}"
@@ -215,7 +215,7 @@ class TestScriptBehavior:
         data = json.loads(result.stdout)
         assert data["passed"] is True
         assert data["package_version"] == "0.6.7"
-        assert data["public_tag"] == "v0.6.6"
+        assert data["public_tag"] == "v0.6.7"
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:
@@ -267,9 +267,9 @@ class TestVersionConsistency:
         assert m.group(1) == "0.6.7"
 
     def test_release_note_exists(self) -> None:
-        assert (ROOT / "docs" / "releases" / "v0.5.8.1.md").exists()
+        assert (ROOT / "docs" / "releases" / "v0.6.7.md").exists()
 
     def test_changelog_has_stable_entry(self) -> None:
         changelog = ROOT / "CHANGELOG.md"
         text = changelog.read_text(encoding="utf-8")
-        assert "[0.5.7]" in text
+        assert "[0.6.7]" in text

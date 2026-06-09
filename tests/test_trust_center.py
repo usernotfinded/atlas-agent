@@ -62,7 +62,7 @@ def _valid_fixture(tmp_path: Path) -> Path:
 
     _write(tmp_path / "docs" / "trust" / "README.md", TRUST_README.read_text(encoding="utf-8"))
     _write(
-        tmp_path / "docs" / "trust" / "v0.6.7-status.md",
+        tmp_path / "docs" / "trust" / CHECKER.TRUST_STATUS.name,
         TRUST_STATUS.read_text(encoding="utf-8"),
     )
     return tmp_path
