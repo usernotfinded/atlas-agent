@@ -18,7 +18,7 @@
       ],
       "acceptance_criteria": "Quickstart appears immediately after the top status banner; a concise Try Atlas in 5 minutes subsection is present; the Review and Feedback link list is compressed to a curated set.",
       "selected_for_v067": true,
-      "implementation_status": "not yet implemented",
+      "implementation_status": "implemented in Batch 80",
       "reason": "Highest-impact onboarding improvement. Docs-only; no runtime changes."
     },
     {

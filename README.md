@@ -16,6 +16,37 @@
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
+## Try Atlas in 5 minutes
+
+Atlas Agent is **paper-first** and **safe by default**. No live trading, no broker credentials, and no provider API keys are required for this path.
+
+```bash
+# 1. Install
+python3.11 -m pip install -e .
+
+# 2. Create a workspace
+atlas init my-workspace --template routine-trader
+cd my-workspace
+atlas discipline setup --manual --yes
+atlas config set market.symbol DEMO-SYMBOL
+
+# 3. Validate
+atlas validate
+
+# 4. Run the reproducible paper demo
+./scripts/demo_paper_workflow.sh
+```
+
+This path installs Atlas locally, creates a safe paper workspace, validates the configuration, and runs the reproducible paper-mode demo. It produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
+
+### What this quick path shows
+
+- Local install validation
+- Paper-mode workspace setup
+- Deterministic backtest on sample data
+- Tamper-evident audit trail generation
+- No live trading, no broker credentials, no provider calls
+
 ## Trust and Release Status
 
 See the [Atlas Agent Trust Center](docs/trust/README.md) for the current public release, security posture, release assurance, provider audit evidence, updater delivery status, and explicit non-claims. The trust center is checked by `scripts/check_trust_center.py` to prevent stale public release/security messaging.
@@ -153,41 +184,17 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Review and Feedback
 
-- **[v0.5.8 RC1 Readiness](docs/v0.5.8-rc1-readiness.md)** — dry-run readiness gate before any RC tag is created
-- **[External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md)** — 10–15 minute safe review path
+New to the repo? Start with the [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md) for a 10–15 minute safe review path.
+
+Key reviewer docs:
 - **[Reviewer Checklist](docs/reviewer-checklist.md)** — checklist before trusting or recommending
 - **[Public Launch Readiness](docs/public-launch-readiness.md)** — verified checks and disabled features
-- **[Public Launch Messaging](docs/public-launch-messaging.md)** — safe draft messaging for feedback requests
-- **[Feedback Request Guide](docs/feedback-request-guide.md)** — how to ask for feedback safely
 - **[Public FAQ](docs/public-faq.md)** — answers to common questions
-- **[Final RC Audit](docs/final-rc-audit.md)** — release-manager audit of the RC series
-- **[Final Release Candidate Checklist](docs/final-release-candidate-checklist.md)** — go/no-go checklist for v0.5.8 final
-- **[Stable Release Decision](docs/stable-release-decision.md)** — decision record for stable v0.5.8
-- **[Stable Release Checklist](docs/stable-release-checklist.md)** — pre-tag checklist for stable v0.5.8
-- **[CLI Command Compatibility](docs/cli-command-compatibility.md)** — parser contract and regression guard for public CLI commands
-- **[Reviewer Golden Path](docs/reviewer-golden-path.md)** — safe local onboarding smoke test
-- **[Release Evidence Bundle](docs/release-evidence-bundle.md)** — local JSON/Markdown release snapshot
-- **[Feedback Intake Process](docs/feedback-intake-process.md)** — how to submit structured reviewer feedback
-- **[Public Feedback Checklist](docs/public-feedback-checklist.md)** — pre-outreach safety checklist
-- **[Feedback Triage Taxonomy](docs/feedback-triage-taxonomy.md)** — label taxonomy and triage rules for incoming reviewer feedback
-- **[Controlled Reviewer Outreach](docs/controlled-reviewer-outreach.md)** — safe copy-paste review requests and outreach process for 5–10 technical reviewers
-- **[Reviewer Outreach Checklist](docs/reviewer-outreach-checklist.md)** — pre-outreach safety and readiness checklist
-- **[Product Capability Inventory](docs/product-capability-inventory.md)** — capability matrix, implementation status, and public-claim boundaries
-- **[v0.5.8 Gap Prioritization](docs/v0.5.8-gap-prioritization.md)** — planned release scope, non-goals, and gap priorities
-
-For full release history, see [CHANGELOG.md](CHANGELOG.md).
-
-Release engineering preflight for a future sandbox/paper RC tag is documented in [Release Candidate Cutover Dry Run](docs/release-candidate-cutover.md).
-
-## External Review
-
-New to the repo? Start here:
-- **[External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md)** — a 10–15 minute safe review path
-- **[Reviewer Checklist](docs/reviewer-checklist.md)** — checklist before trusting or recommending
-- **[Public Launch Readiness](docs/public-launch-readiness.md)** — what is verified and what remains disabled
-- **[Public Launch Messaging](docs/public-launch-messaging.md)** — safe draft messaging for feedback requests
 - **[Feedback Request Guide](docs/feedback-request-guide.md)** — how to ask for feedback safely
-- **[Public FAQ](docs/public-faq.md)** — answers to common questions
+- **[Product Capability Inventory](docs/product-capability-inventory.md)** — capability matrix and public-claim boundaries
+- **[Controlled Reviewer Outreach](docs/controlled-reviewer-outreach.md)** — safe copy-paste review requests
+
+For full release history, see [CHANGELOG.md](CHANGELOG.md). Release engineering preflight is documented in [Release Candidate Cutover Dry Run](docs/release-candidate-cutover.md).
 
 ## Contributing and Security
 

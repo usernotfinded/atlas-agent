@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documented v0.6.7 public-onboarding candidate selection (`docs/releases/v0.6.7-candidates.md`, `docs/releases/v0.6.7-candidates.json`): CAND-001 (README quickstart front-loading), CAND-002 (demo output expectations and discoverability), and CAND-003 (onboarding docs and checker stale version references) accepted.
 
 ### Changed
+- Front-loaded the README quickstart path for v0.6.7 public onboarding candidate CAND-001: added "Try Atlas in 5 minutes" section immediately after the status banner and compressed the "Review and Feedback" link list.
 - Updated public docs and checker metadata to reflect `v0.6.6` as the current public GitHub release (was previously described as prepared/not yet tagged).
 - Updated `SECURITY.md` supported versions table to list `0.6.6` as the current public GitHub release.
 - Updated `docs/trust/v0.6.6-status.md` from prepared-but-not-yet-tagged wording to tagged-and-published wording.
