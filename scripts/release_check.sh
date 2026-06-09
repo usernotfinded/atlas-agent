@@ -32,9 +32,11 @@ Usage: release_check.sh [OPTION]
 Run release checks with tiered modes for local developer convenience.
 
 Options:
-  --quick     Fast dev check (cheap loop for active development).
-              Runs: version, claims, sandbox CLI tests, release script tests,
-                    git diff checks, protected-staged check.
+  --quick     Delegates to ./scripts/dev_check.sh (full local development gate).
+              Historically described as a minimal subset; in practice it runs
+              all dev checks for safety. For a faster smoke loop, use
+              ./scripts/smoke_check.sh. For a balanced pre-commit gate, use
+              ./scripts/local_quick_check.sh.
   --research  Research/sandbox gate (medium cost).
               Runs: version, claims, full research tests, research demo,
                     git diff checks, protected-staged check.

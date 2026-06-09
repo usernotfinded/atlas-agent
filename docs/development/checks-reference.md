@@ -60,6 +60,24 @@ is the release-adjacent quick safety check for ordinary PRs:
 
 This command does not create tags, create GitHub releases, or publish packages.
 
+## Check Tiers
+
+For faster local iteration, use the tiered check scripts:
+
+- **`scripts/smoke_check.sh`** — fastest gate (< 10 s) for edit-loop feedback
+  after small docs/checker changes. Runs safety-critical checks and a tiny
+  pytest subset.
+- **`scripts/local_quick_check.sh`** — balanced pre-commit gate (~30–45 s).
+  Runs all safety checks plus core unit tests and fast script tests. Skips
+  historical release checker tests and slow subprocess-heavy integration tests.
+- **`scripts/dev_check.sh`** — full local development gate (~55–90 s).
+- **`scripts/ci_check.sh`** — local CI parity gate (~60–180 s).
+- **`scripts/release_check.sh --full`** — strict release gate required before
+  push/tag (~120–600 s).
+
+See [Check Tiers](check-tiers.md) for the full tier model, what each tier
+includes and skips, and concurrency/heat guidance.
+
 ## Research Checks
 
 `scripts/research_check.sh` runs the research-focused local gate:
