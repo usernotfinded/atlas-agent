@@ -31,7 +31,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_BIN = os.environ.get("PYTHON_BIN", sys.executable)
 PUBLIC_STABLE_TAG = "v0.5.8.1"
-PACKAGE_VERSION = "0.6.5"
+PACKAGE_VERSION = "0.6.6"
 
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "artifacts" / "release_evidence"
 

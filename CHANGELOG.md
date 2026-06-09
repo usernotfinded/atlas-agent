@@ -8,23 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Safety
+
+## [0.6.6] - 2026-06-09
+
+### Added
 - Added v0.6.6 maintenance planning notes after the v0.6.5 release (`docs/releases/v0.6.6-plan.md`).
 - Documented v0.6.6 patch candidate selection (`docs/releases/v0.6.6-candidates.md`): CAND-001 (v0.6.6 release prep checker skeleton), CAND-002 (checks-reference.md stale wording), and CAND-003 (public docs consistency checker expansion) accepted.
 - Added `scripts/check_v066_release_prep.py` and `tests/test_check_v066_release_prep.py` for v0.6.6 release-prep state validation in planning and future release-prep modes (CAND-001).
 - Expanded `scripts/check_public_docs_consistency.py` and `tests/test_public_docs_consistency.py` to validate that the README status line matches the current public release and warn on orphaned release notes not referenced in CHANGELOG (CAND-003).
 - Aligned `docs/releases/v0.6.6-candidates.md` section headings with the v0.6.6 release-prep checker so the unsafe-candidates scan is genuinely active (`## Accepted Candidates` added, `## Rejected items` renamed to `## Rejected / Out-of-Scope Candidates`).
 - Added missing CHANGELOG reference to `docs/releases/v0.5.8.1.md` so the orphan release-note warning clears.
+- Created `docs/releases/v0.6.6.md` release notes and `docs/trust/v0.6.6-status.md` trust status.
 
 ### Changed
-- Updated public docs and checker metadata to reflect `v0.6.5` as the current public GitHub release (was previously described as version-prepared).
-- Updated `SECURITY.md` supported versions table to list `0.6.5` as the current public GitHub release.
-- Updated `docs/trust/v0.6.5-status.md` from version-prepared wording to tagged-and-published wording.
-- Updated `scripts/main_health.py` and `tests/test_main_health.py` public release metadata from `v0.6.4` to `v0.6.5`.
+- Bumped package/source version from `0.6.5` to `0.6.6`.
+- Updated public docs and checker metadata to reflect `v0.6.5` as the current public GitHub release and `0.6.6` as the prepared source version.
+- Updated `SECURITY.md` supported versions table to list `0.6.6` as the current source version on `main` and `0.6.5` as the current public GitHub release.
+- Updated `docs/trust/v0.6.6-status.md` from version-prepared wording to prepared-but-not-yet-tagged wording.
 - Updated `docs/development/checks-reference.md` to describe v0.6.5 release prep checks as historical and note v0.6.6 as the next planning line (CAND-002).
 
 ### Fixed
 
 ### Safety
+- The v0.6.6 release-prep updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- No tag, GitHub release, or PyPI publish was performed in this batch.
+- `v0.6.6` is version-prepared; tag and release cutover require separate owner approval.
 
 ## [0.6.5] - 2026-06-07
 

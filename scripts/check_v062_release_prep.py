@@ -42,7 +42,7 @@ INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.2.md"
 TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.2-status.md"
-FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.6.md"
+FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.7.md"
 V061_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.1.md"
 V061_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.1-status.md"
 
@@ -50,6 +50,7 @@ REQUIRED_VERSION = "0.6.2"
 POST_BUMP_VERSION = "0.6.3"
 POST_BUMP_VERSION_2 = "0.6.4"
 POST_BUMP_VERSION_3 = "0.6.5"
+POST_BUMP_VERSION_4 = "0.6.6"
 PUBLIC_TAG = "v0.6.2"
 
 UNSAFE_CLAIMS = [
@@ -93,8 +94,10 @@ def _check_version_bump() -> list[str]:
             found_post_bump = True
         if POST_BUMP_VERSION_3 in text:
             found_post_bump = True
+        if POST_BUMP_VERSION_4 in text:
+            found_post_bump = True
     if not found_required and not found_post_bump:
-        errors.append(f"Version {REQUIRED_VERSION}, {POST_BUMP_VERSION}, {POST_BUMP_VERSION_2}, or {POST_BUMP_VERSION_3} not found in pyproject.toml/__init__.py")
+        errors.append(f"Version {REQUIRED_VERSION}, {POST_BUMP_VERSION}, {POST_BUMP_VERSION_2}, {POST_BUMP_VERSION_3}, or {POST_BUMP_VERSION_4} not found in pyproject.toml/__init__.py")
     return errors
 
 

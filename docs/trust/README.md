@@ -7,12 +7,15 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.5` (tagged)
 - Previous public release: `v0.6.4`
-- Source package version on `main`: `0.6.5`
+- Source package version on `main`: `0.6.6`
 - GitHub release: `v0.6.5` (current public)
+- Prepared release: `v0.6.6` (not yet tagged or released)
 - PyPI was not published
 - Release status detail: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (current public)
+- Prepared release status: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (prepared)
 - Previous release status: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (historical)
 - Release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (current public)
+- Prepared release notes: [docs/releases/v0.6.6.md](../releases/v0.6.6.md) (prepared)
 - Previous release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (historical)
 - Historical release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md), [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
@@ -71,12 +74,13 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.6.5` (current public)
 - PyPI was not published
-- Package version in source metadata: `0.6.5`
-- Auto-updater delivery: verified for `v0.6.5`
+- Package version in source metadata: `0.6.6`
+- Auto-updater delivery: verified for `v0.6.5`; not yet verified for `v0.6.6`
 
 ## What Is Ready
 
 - Public v0.6.5 release notes and release status documentation (current public).
+- Prepared v0.6.6 release notes and release status documentation (prepared, not yet released).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -85,7 +89,7 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, or `v0.6.5`.
+- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, or `v0.6.6`.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -103,8 +107,10 @@ brokers, enable trading, or require credentials.
 - [Checks Reference](../development/checks-reference.md)
 - [v0.6.5 Release Notes](../releases/v0.6.5.md) (current public)
 - [v0.6.5 Trust and Release Status](v0.6.5-status.md) (current public)
-- [v0.6.4 Release Notes](../releases/v0.6.4.md) (current public)
-- [v0.6.4 Trust and Release Status](v0.6.4-status.md) (current public)
+- [v0.6.6 Release Notes](../releases/v0.6.6.md) (prepared)
+- [v0.6.6 Trust and Release Status](v0.6.6-status.md) (prepared)
+- [v0.6.4 Release Notes](../releases/v0.6.4.md) (historical)
+- [v0.6.4 Trust and Release Status](v0.6.4-status.md) (historical)
 - [v0.6.3 Release Notes](../releases/v0.6.3.md) (historical)
 - [v0.6.3 Trust and Release Status](v0.6.3-status.md) (historical)
 - [v0.6.2 Trust and Release Status](v0.6.2-status.md) (historical)

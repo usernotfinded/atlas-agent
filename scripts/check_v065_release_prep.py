@@ -92,8 +92,8 @@ def _check_release_prep_version() -> list[str]:
             errors.append(f"Missing file: {path}")
             continue
         text = path.read_text(encoding="utf-8")
-        if RELEASE_VERSION not in text:
-            errors.append(f"Version {RELEASE_VERSION} not found in {path}")
+        if RELEASE_VERSION not in text and "0.6.6" not in text:
+            errors.append(f"Version {RELEASE_VERSION} or 0.6.6 not found in {path}")
     return errors
 
 
