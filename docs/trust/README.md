@@ -5,18 +5,18 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.5` (tagged)
-- Previous public release: `v0.6.4`
+- Current public release: `v0.6.6` (tagged)
+- Previous public release: `v0.6.5`
 - Source package version on `main`: `0.6.6`
-- GitHub release: `v0.6.5` (current public)
-- Prepared release: `v0.6.6` (not yet tagged or released)
+- GitHub release: `v0.6.6` (current public)
+- Next planning line: `v0.6.7`
 - PyPI was not published
-- Release status detail: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (current public)
-- Prepared release status: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (prepared)
-- Previous release status: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (historical)
-- Release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (current public)
-- Prepared release notes: [docs/releases/v0.6.6.md](../releases/v0.6.6.md) (prepared)
-- Previous release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (historical)
+- Release status detail: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (current public)
+- Previous release status: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
+- Previous previous release status: [v0.6.4 Trust and Release Status](v0.6.4-status.md) (historical)
+- Release notes: [docs/releases/v0.6.6.md](../releases/v0.6.6.md) (current public)
+- Previous release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (historical)
+- Previous previous release notes: [docs/releases/v0.6.4.md](../releases/v0.6.4.md) (historical)
 - Historical release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md), [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
 ## Security Posture
@@ -66,21 +66,21 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.5` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.6` is verified against the GitHub release/tag.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.5` (current public)
+- GitHub release: `v0.6.6` (current public)
 - PyPI was not published
 - Package version in source metadata: `0.6.6`
-- Auto-updater delivery: verified for `v0.6.5`; not yet verified for `v0.6.6`
+- Auto-updater delivery: verified for `v0.6.6`; not yet verified for `v0.6.7`
 
 ## What Is Ready
 
-- Public v0.6.5 release notes and release status documentation (current public).
-- Prepared v0.6.6 release notes and release status documentation (prepared, not yet released).
+- Public v0.6.6 release notes and release status documentation (current public).
+- Next planning line v0.6.7 release notes and release status documentation (not yet prepared).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -105,10 +105,10 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.5 Release Notes](../releases/v0.6.5.md) (current public)
-- [v0.6.5 Trust and Release Status](v0.6.5-status.md) (current public)
-- [v0.6.6 Release Notes](../releases/v0.6.6.md) (prepared)
-- [v0.6.6 Trust and Release Status](v0.6.6-status.md) (prepared)
+- [v0.6.6 Release Notes](../releases/v0.6.6.md) (current public)
+- [v0.6.6 Trust and Release Status](v0.6.6-status.md) (current public)
+- [v0.6.5 Release Notes](../releases/v0.6.5.md) (historical)
+- [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
 - [v0.6.4 Release Notes](../releases/v0.6.4.md) (historical)
 - [v0.6.4 Trust and Release Status](v0.6.4-status.md) (historical)
 - [v0.6.3 Release Notes](../releases/v0.6.3.md) (historical)

@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.5, the public GitHub release is `v0.6.5`. v0.6.4 is historical.
+For v0.6.6, the public GitHub release is `v0.6.6`. v0.6.5 is historical.
 
 PyPI was not published. A separate approval process is required for any future PyPI publish.
 
@@ -31,7 +31,7 @@ After publishing a security release, maintainers can generate a local release as
 
 ```bash
 python scripts/release_assurance.py --version v0.6.4 --output artifacts/release_assurance/v0.6.4-local-check
-python scripts/release_assurance.py --version v0.6.5 --output artifacts/release_assurance/v0.6.5-local-check
+python scripts/release_assurance.py --version v0.6.6 --output artifacts/release_assurance/v0.6.6-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
@@ -71,9 +71,9 @@ The trust center is checked by `scripts/check_trust_center.py` to prevent stale 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
 to keep local setup, safe-check, and release-sensitive command guidance current.
 
-## v0.6.5 readiness
+## v0.6.6 readiness
 
-For v0.6.5 release readiness and post-cutover verification, run the v0.6.5 release prep checker:
+For v0.6.6 release readiness and post-cutover verification, run the v0.6.6 release prep checker:
 
 ```bash
 python3.11 scripts/check_v065_release_prep.py --release-prep

@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Updated public docs and checker metadata to reflect `v0.6.6` as the current public GitHub release (was previously described as prepared/not yet tagged).
+- Updated `SECURITY.md` supported versions table to list `0.6.6` as the current public GitHub release.
+- Updated `docs/trust/v0.6.6-status.md` from prepared-but-not-yet-tagged wording to tagged-and-published wording.
+- Updated `docs/releases/v0.6.6.md` to reflect tag and GitHub release created.
+- Updated `scripts/check_version_consistency.py`, `scripts/check_trust_center.py`, `scripts/check_public_launch_readiness.py`, `scripts/check_stable_release_decision.py`, `scripts/check_package_distribution.py`, `scripts/check_public_docs_consistency.py`, and `scripts/main_health.py` public release metadata from `v0.6.5` to `v0.6.6`.
+- Updated `scripts/main_health.py` next unrequested release tag from `v0.6.6` to `v0.6.7`.
 
 ### Fixed
 

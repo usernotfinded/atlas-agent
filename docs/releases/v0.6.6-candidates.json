@@ -1,0 +1,168 @@
+{
+  "artifact_type": "v066_patch_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.6",
+  "generated_for": "planning",
+  "status": "candidate_selection",
+  "generated_at": "2026-06-09",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "v0.6.6 release prep checker skeleton",
+      "category": "checker infrastructure",
+      "priority": "P1",
+      "source": "Following the pattern of check_v065_release_prep.py, prepare a skeleton that validates absence of v0.6.6 artifacts while source version remains 0.6.5.",
+      "risk": "none",
+      "expected_files": [
+        "scripts/check_v066_release_prep.py",
+        "tests/test_v066_release_prep.py"
+      ],
+      "acceptance_criteria": "Planning mode rejects docs/releases/v0.6.6.md and 0.6.6 version bump; release-prep mode will accept them after bump.",
+      "selected_for_v066": true,
+      "implementation_status": "implemented in Batch 73",
+      "reason": "Standard pattern; prepares the release-prep gate without enabling it prematurely. No runtime changes."
+    },
+    {
+      "id": "CAND-002",
+      "title": "Update checks-reference.md to reflect v0.6.5 released state",
+      "category": "docs consistency",
+      "priority": "P1",
+      "source": "docs/development/checks-reference.md still frames v0.6.5 release prep checks as the current prep state.",
+      "risk": "low",
+      "expected_files": [
+        "docs/development/checks-reference.md"
+      ],
+      "acceptance_criteria": "v0.6.5 release prep checks are described as historical/verified; the doc accurately reflects that v0.6.5 is released and the next planning line is v0.6.6.",
+      "selected_for_v066": true,
+      "implementation_status": "implemented in Batch 73",
+      "reason": "Low-cost docs hygiene that prevents maintainer confusion. No runtime changes."
+    },
+    {
+      "id": "CAND-003",
+      "title": "Expand public docs consistency checker to validate release note references",
+      "category": "checker expansion",
+      "priority": "P2",
+      "source": "scripts/check_public_docs_consistency.py could be expanded to validate that all docs/releases/v*.md files are referenced from CHANGELOG.md and that no stale Current Status (vX.Y.Z) strings remain in README.md.",
+      "risk": "low",
+      "expected_files": [
+        "scripts/check_public_docs_consistency.py",
+        "tests/test_public_docs_consistency.py"
+      ],
+      "acceptance_criteria": "Checker validates README status line matches current public release; warns on orphaned release notes not referenced in CHANGELOG.",
+      "selected_for_v066": true,
+      "implementation_status": "implemented in Batch 73",
+      "reason": "Low-cost automation that prevents recurring post-release docs drift. No runtime changes."
+    },
+    {
+      "id": "CAND-004",
+      "title": "Harden release-checklist automated version reference validation",
+      "category": "checker infrastructure",
+      "priority": "P2",
+      "source": "docs/release-checklist.md contains version-specific examples that drift after each release.",
+      "risk": "low",
+      "expected_files": [
+        "scripts/check_release_checklist_consistency.py",
+        "tests/test_release_checklist_consistency.py"
+      ],
+      "acceptance_criteria": "Checker validates that release-checklist examples reference the current public tag and source version without stale historical values.",
+      "selected_for_v066": false,
+      "reason": "Valuable but broader than a minimal patch; defer to a dedicated docs-checker batch."
+    },
+    {
+      "id": "CAND-005",
+      "title": "Normalize docs/trust/v0.6.5-status.md historical wording",
+      "category": "docs consistency",
+      "priority": "P2",
+      "source": "The v0.6.5 trust status still contains some imperative checklist items that could be rephrased as historical statements.",
+      "risk": "none",
+      "expected_files": [
+        "docs/trust/v0.6.5-status.md"
+      ],
+      "acceptance_criteria": "Trust status uses past-tense/historical wording consistently; no imperative items directed at a future reviewer.",
+      "selected_for_v066": false,
+      "reason": "Cosmetic; does not affect correctness or checker behavior. Low priority."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution unlock",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-005",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Automatic skill activation",
+      "reason": "Skill candidates remain manually reviewed and offline."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Automatic learning execution",
+      "reason": "Learning suggestions remain offline and manually reviewed."
+    },
+    {
+      "id": "REJ-008",
+      "title": "Version bump to 0.6.6",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-009",
+      "title": "Creation of docs/releases/v0.6.6.md",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-010",
+      "title": "Creation of docs/trust/v0.6.6-status.md",
+      "reason": "Not authorized in selection-only batch."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading remains disabled by default.",
+    "Live submit remains disabled by default.",
+    "Provider execution remains disabled by default.",
+    "Broker execution remains disabled by default.",
+    "Risk gates remain deterministic and unchanged.",
+    "Approval queue behavior remains unchanged.",
+    "Kill-switch behavior remains unchanged.",
+    "Human approval remains required for live order flow.",
+    "Credentials are not loaded unless explicitly configured.",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
+  ],
+  "constraints": [
+    "Version is not bumped to 0.6.6 in this batch",
+    "docs/releases/v0.6.6.md does not exist yet",
+    "No tag, GitHub release, or PyPI publish yet",
+    "No runtime trading behavior changes"
+  ],
+  "release_criteria": [
+    "Accepted candidates are implemented",
+    "dev_check, ci_check, and release_check --quick pass locally",
+    "CI on main is green after the prep commit is pushed",
+    "Version is bumped to 0.6.6 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.6.md and docs/trust/v0.6.6-status.md are created",
+    "CHANGELOG.md has a [0.6.6] entry",
+    "scripts/check_v066_release_prep.py and matching tests are created",
+    "Protected boundary diff is empty",
+    "Forbidden claims scan is clean",
+    "Owner approval is obtained for tag cutover"
+  ]
+}

@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.6.5)** — package/source version is `0.6.6`; latest stable public release is [v0.6.5](docs/releases/v0.6.5.md) on GitHub. v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 are historical. PyPI was not published.
+> **Current Status (v0.6.6)** — package/source version is `0.6.6`; latest stable public release is [v0.6.6](docs/releases/v0.6.6.md) on GitHub. v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 are historical. PyPI was not published.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Live submit remains disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -143,7 +143,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`v0.6.5` is the latest stable public release on GitHub. The `0.6.5` source version is tagged and released. The v0.6.5 patch release contains docs consistency, checker metadata, test coverage, and public release reference alignment improvements. No new runtime features, broker adapters, or provider integrations. PyPI was not published. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
+`v0.6.6` is the latest stable public release on GitHub. The `0.6.6` source version is tagged and released. The v0.6.6 patch release contains docs consistency, checker metadata, test coverage, and public release reference alignment improvements. No new runtime features, broker adapters, or provider integrations. PyPI was not published. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
 
 - Live trading is disabled by default.
 - Provider execution remains locked.
@@ -440,7 +440,7 @@ Built by Natan Mucelli.
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.5 --output artifacts/release_assurance/v0.6.5-local-check
+python scripts/release_assurance.py --version v0.6.6 --output artifacts/release_assurance/v0.6.6-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
