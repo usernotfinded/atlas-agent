@@ -237,7 +237,7 @@ class TestStaleRCReferencesBlocked:
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.6.6)\n"
+            "Current Status (v0.6.7)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (
