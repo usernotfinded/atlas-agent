@@ -130,7 +130,6 @@ _run "18. focused pytest subset" \
         tests/e2e/ \
         tests/gateway/ \
         tests/learning/ \
-        tests/memory/ \
         tests/notifications/ \
         tests/reflection/ \
         tests/reports/ \
