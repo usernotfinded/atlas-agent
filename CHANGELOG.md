@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documented v0.6.6 patch candidate selection (`docs/releases/v0.6.6-candidates.md`): CAND-001 (v0.6.6 release prep checker skeleton), CAND-002 (checks-reference.md stale wording), and CAND-003 (public docs consistency checker expansion) accepted.
 - Added `scripts/check_v066_release_prep.py` and `tests/test_check_v066_release_prep.py` for v0.6.6 release-prep state validation in planning and future release-prep modes (CAND-001).
 - Expanded `scripts/check_public_docs_consistency.py` and `tests/test_public_docs_consistency.py` to validate that the README status line matches the current public release and warn on orphaned release notes not referenced in CHANGELOG (CAND-003).
+- Aligned `docs/releases/v0.6.6-candidates.md` section headings with the v0.6.6 release-prep checker so the unsafe-candidates scan is genuinely active (`## Accepted Candidates` added, `## Rejected items` renamed to `## Rejected / Out-of-Scope Candidates`).
+- Added missing CHANGELOG reference to `docs/releases/v0.5.8.1.md` so the orphan release-note warning clears.
 
 ### Changed
 - Updated public docs and checker metadata to reflect `v0.6.5` as the current public GitHub release (was previously described as version-prepared).
@@ -350,6 +352,8 @@ Provider audit evidence:
 - This release is not financial advice.
 
 ## [0.5.8.1] - 2026-06-01
+
+> See [release notes](docs/releases/v0.5.8.1.md) for full details.
 
 ### Fixed
 - Fixed runtime template packaging so `atlas init --template routine-trader` works from clean wheel/sdist installs outside the source checkout.
