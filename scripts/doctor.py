@@ -31,6 +31,7 @@ REQUIRED_DEV_SCRIPTS = [
 REQUIRED_TRUST_DOCS = [
     "docs/trust/README.md",
     "docs/trust/v0.6.6-status.md",
+    "docs/trust/v0.6.7-status.md",
 ]
 TRACKED_SECRET_FILENAMES = {
     ".env",

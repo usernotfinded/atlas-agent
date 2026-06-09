@@ -2,8 +2,8 @@
   "artifact_type": "v067_patch_candidate_inventory",
   "schema_version": 1,
   "release": "v0.6.7",
-  "generated_for": "planning",
-  "status": "candidate_selection",
+  "generated_for": "release-prep",
+  "status": "release_prep",
   "generated_at": "2026-06-09",
   "candidates": [
     {

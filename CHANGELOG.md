@@ -8,22 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Documented v0.6.7 public-onboarding candidate selection (`docs/releases/v0.6.7-candidates.md`, `docs/releases/v0.6.7-candidates.json`): CAND-001 (README quickstart front-loading), CAND-002 (demo output expectations and discoverability), and CAND-003 (onboarding docs and checker stale version references) accepted.
-- Documented expected output, success criteria, artifact expectations, and common failures for the paper demo (`docs/demo-paper-workflow.md`, `docs/external-reviewer-walkthrough.md`) and reframed the README demo note as a constructive pointer to documented demos (CAND-002).
-- Fixed stale onboarding, reviewer, release-readiness, and checker version references across the repository: updated docs to reference the current `v0.6.6` public release, converted `check_onboarding_docs.py` `REQUIRED_FACTS` to use module-level current-release constants, aligned `check_public_launch_messaging.py`, `check_reviewer_outreach.py`, `doctor.py`, and `check_generated_artifacts.py` to current release, and updated corresponding tests (CAND-003).
 
 ### Changed
-- Front-loaded the README quickstart path for v0.6.7 public onboarding candidate CAND-001: added "Try Atlas in 5 minutes" section immediately after the status banner and compressed the "Review and Feedback" link list.
-- Updated public docs and checker metadata to reflect `v0.6.6` as the current public GitHub release (was previously described as prepared/not yet tagged).
-- Updated `SECURITY.md` supported versions table to list `0.6.6` as the current public GitHub release.
-- Updated `docs/trust/v0.6.6-status.md` from prepared-but-not-yet-tagged wording to tagged-and-published wording.
-- Updated `docs/releases/v0.6.6.md` to reflect tag and GitHub release created.
-- Updated `scripts/check_version_consistency.py`, `scripts/check_trust_center.py`, `scripts/check_public_launch_readiness.py`, `scripts/check_stable_release_decision.py`, `scripts/check_package_distribution.py`, `scripts/check_public_docs_consistency.py`, and `scripts/main_health.py` public release metadata from `v0.6.5` to `v0.6.6`.
-- Updated `scripts/main_health.py` next unrequested release tag from `v0.6.6` to `v0.6.7`.
 
 ### Fixed
 
 ### Safety
+
+## [0.6.7] - 2026-06-09
+
+### Added
+- Documented v0.6.7 public-onboarding candidate selection (`docs/releases/v0.6.7-candidates.md`, `docs/releases/v0.6.7-candidates.json`): CAND-001 (README quickstart front-loading), CAND-002 (demo output expectations and discoverability), and CAND-003 (onboarding docs and checker stale version references) accepted.
+- Documented expected output, success criteria, artifact expectations, and common failures for the paper demo (`docs/demo-paper-workflow.md`, `docs/external-reviewer-walkthrough.md`) and reframed the README demo note as a constructive pointer to documented demos (CAND-002).
+- Fixed stale onboarding, reviewer, release-readiness, and checker version references across the repository: updated docs to reference the current `v0.6.6` public release, converted `check_onboarding_docs.py` `REQUIRED_FACTS` to use module-level current-release constants, aligned `check_public_launch_messaging.py`, `check_reviewer_outreach.py`, `doctor.py`, and `check_generated_artifacts.py` to current release, and updated corresponding tests (CAND-003).
+- Created `docs/releases/v0.6.7.md` release notes and `docs/trust/v0.6.7-status.md` trust status.
+- Added `scripts/check_v067_release_prep.py` and `tests/test_check_v067_release_prep.py` for v0.6.7 release-prep state validation.
+
+### Changed
+- Front-loaded the README quickstart path for v0.6.7 public onboarding candidate CAND-001: added "Try Atlas in 5 minutes" section immediately after the status banner and compressed the "Review and Feedback" link list.
+- Updated public docs and checker metadata to reflect `v0.6.6` as the current public GitHub release and `0.6.7` as the prepared source version.
+- Updated `scripts/check_version_consistency.py`, `scripts/check_trust_center.py`, `scripts/check_public_launch_readiness.py`, `scripts/check_stable_release_decision.py`, `scripts/check_final_rc_audit.py`, `scripts/check_reviewer_onboarding.py`, `scripts/build_release_evidence_bundle.py`, and `scripts/doctor.py` package version metadata from `0.6.6` to `0.6.7`.
+- Updated `scripts/check_onboarding_docs.py` current package version from `0.6.6` to `0.6.7` and next planned release from `v0.6.7` to `v0.6.8`.
+- Updated `scripts/main_health.py` expected source version from `0.6.6` to `0.6.7` and next unrequested release tag from `v0.6.7` to `v0.6.8`.
+- Updated `scripts/check_generated_artifacts.py` tracked versioned evidence prefixes to include `v0.6.7`.
+- Bumped package/source version from `0.6.6` to `0.6.7`.
+
+### Fixed
+
+### Safety
+- The v0.6.7 release-prep updates do not change trading, broker, provider, risk, approval, or kill-switch behavior.
+- No tag, GitHub release, or PyPI publish was performed in this batch.
+- `v0.6.7` is version-prepared; tag and release cutover require separate owner approval.
 
 ## [0.6.6] - 2026-06-09
 

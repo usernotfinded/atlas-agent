@@ -19,7 +19,7 @@ from typing import Callable
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_trust_center.py"
 TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.4-status.md"
+TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.7-status.md"
 
 
 def _load_checker() -> ModuleType:
@@ -62,7 +62,7 @@ def _valid_fixture(tmp_path: Path) -> Path:
 
     _write(tmp_path / "docs" / "trust" / "README.md", TRUST_README.read_text(encoding="utf-8"))
     _write(
-        tmp_path / "docs" / "trust" / "v0.6.6-status.md",
+        tmp_path / "docs" / "trust" / "v0.6.7-status.md",
         TRUST_STATUS.read_text(encoding="utf-8"),
     )
     return tmp_path
@@ -259,7 +259,7 @@ class TestPypiNonPublishConsistency:
         )
 
     def test_release_notes_use_consistent_pypi_not_published_phrasing(self) -> None:
-        for version in ("v0.6.6", "v0.6.5"):
+        for version in ("v0.6.7", "v0.6.6", "v0.6.5"):
             release_notes = (REPO_ROOT / "docs" / "releases" / f"{version}.md").read_text(encoding="utf-8").lower()
             assert "pypi was not published" in release_notes, (
                 f"{version} release notes should use consistent 'PyPI was not published' phrasing"

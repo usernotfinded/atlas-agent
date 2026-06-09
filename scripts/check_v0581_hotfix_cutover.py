@@ -36,7 +36,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-EXPECTED_VERSION = "0.6.6"
+EXPECTED_VERSION = "0.6.7"
 POST_HOTFIX_DEV_VERSION = "0.6.1.dev0"
 HISTORICAL_STABLE_VERSION = "0.5.8"
 HISTORICAL_STABLE_TAG = "v0.5.8"
@@ -189,7 +189,14 @@ def _check_readme_current_status() -> list[str]:
         return errors
     text = path.read_text(encoding="utf-8")
     public_label = "v" + EXPECTED_VERSION
-    if EXPECTED_VERSION not in text and public_label not in text:
+    # Accept either current package version or current public release tag
+    # since README may reference the public release rather than source version.
+    current_public_release = "v0.6.6"
+    if (
+        EXPECTED_VERSION not in text
+        and public_label not in text
+        and current_public_release not in text
+    ):
         errors.append("README.md missing current version reference")
     if "latest stable public release" not in text.lower():
         errors.append("README.md should indicate this is the latest stable public release")

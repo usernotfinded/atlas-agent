@@ -70,6 +70,15 @@ The trust center is checked by `scripts/check_trust_center.py` to prevent stale 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
 to keep local setup, safe-check, and release-sensitive command guidance current.
 
+## v0.6.7 readiness
+
+For v0.6.7 release readiness and post-cutover verification, run the v0.6.7 release prep checker:
+
+```bash
+python3.11 scripts/check_v067_release_prep.py --release-prep
+python3.11 scripts/check_v067_release_prep.py --release-prep --json
+```
+
 ## v0.6.6 readiness
 
 For v0.6.6 release readiness and post-cutover verification, run the v0.6.6 release prep checker:
