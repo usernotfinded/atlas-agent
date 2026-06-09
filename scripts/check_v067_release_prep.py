@@ -42,6 +42,9 @@ CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.7-candidates.json"
 PLAN_MD = REPO_ROOT / "docs" / "releases" / "v0.6.7-plan.md"
 V066_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.6.md"
 V066_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.6-status.md"
+README = REPO_ROOT / "README.md"
+SECURITY = REPO_ROOT / "SECURITY.md"
+TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
 
 PLANNING_VERSION = "0.6.6"
 RELEASE_VERSION = "0.6.7"
@@ -269,6 +272,45 @@ def _check_v066_history_intact() -> list[str]:
     return errors
 
 
+def _check_readme_version() -> list[str]:
+    errors: list[str] = []
+    if not README.exists():
+        errors.append(f"README missing: {README}")
+        return errors
+    text = README.read_text(encoding="utf-8")
+    if "package/source version is `0.6.7`" not in text:
+        errors.append("README does not state package/source version is 0.6.7")
+    if "Current Status (v0.6.7)" not in text:
+        errors.append("README does not contain Current Status (v0.6.7)")
+    return errors
+
+
+def _check_security_version() -> list[str]:
+    errors: list[str] = []
+    if not SECURITY.exists():
+        errors.append(f"SECURITY.md missing: {SECURITY}")
+        return errors
+    text = SECURITY.read_text(encoding="utf-8")
+    if "0.6.7 (main)" not in text:
+        errors.append("SECURITY.md does not list 0.6.7 (main) as current source version")
+    if "0.6.6" not in text:
+        errors.append("SECURITY.md does not mention 0.6.6")
+    return errors
+
+
+def _check_trust_readme_version() -> list[str]:
+    errors: list[str] = []
+    if not TRUST_README.exists():
+        errors.append(f"Trust README missing: {TRUST_README}")
+        return errors
+    text = TRUST_README.read_text(encoding="utf-8")
+    if "Source package version on `main`: `0.6.7`" not in text:
+        errors.append("Trust README does not state source package version on main is 0.6.7")
+    if "Prepared v0.6.7" not in text:
+        errors.append("Trust README does not mention prepared v0.6.7")
+    return errors
+
+
 def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple[int, dict]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -285,6 +327,12 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         errors.extend(_check_trust_status_exists())
         checks.append("changelog_entry")
         errors.extend(_check_changelog_entry_release_prep())
+        checks.append("readme_version")
+        errors.extend(_check_readme_version())
+        checks.append("security_version")
+        errors.extend(_check_security_version())
+        checks.append("trust_readme_version")
+        errors.extend(_check_trust_readme_version())
     else:
         checks.append("planning_version")
         errors.extend(_check_planning_version())

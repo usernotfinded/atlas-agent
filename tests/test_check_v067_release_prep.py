@@ -239,6 +239,52 @@ class TestReleasePrepMode:
             mod.RELEASE_NOTES = original
 
 
+    def test_release_prep_readme_stale_version_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original_readme = mod.README
+        try:
+            fake_readme = tmp_path / "README.md"
+            fake_readme.write_text(
+                "# README\n\n> **Current Status (v0.6.6)** — package/source version is `0.6.6`;\n"
+            )
+            mod.README = fake_readme
+            code, result = mod.run_check(release_prep=True)
+            assert code == 1
+            assert any("package/source version is 0.6.7" in e for e in result["errors"])
+        finally:
+            mod.README = original_readme
+
+    def test_release_prep_security_stale_version_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original_security = mod.SECURITY
+        try:
+            fake_security = tmp_path / "SECURITY.md"
+            fake_security.write_text(
+                "# Security\n\n| 0.6.6 (main) | Yes — active development |\n"
+            )
+            mod.SECURITY = fake_security
+            code, result = mod.run_check(release_prep=True)
+            assert code == 1
+            assert any("0.6.7 (main)" in e for e in result["errors"])
+        finally:
+            mod.SECURITY = original_security
+
+    def test_release_prep_trust_readme_stale_version_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original_trust_readme = mod.TRUST_README
+        try:
+            fake_trust = tmp_path / "README.md"
+            fake_trust.write_text(
+                "# Trust\n\n- Source package version on `main`: `0.6.6`\n"
+            )
+            mod.TRUST_README = fake_trust
+            code, result = mod.run_check(release_prep=True)
+            assert code == 1
+            assert any("source package version on main is 0.6.7" in e for e in result["errors"])
+        finally:
+            mod.TRUST_README = original_trust_readme
+
+
 class TestDeterminism:
     def test_planning_output_is_deterministic(self) -> None:
         result1 = _run_script("--json")

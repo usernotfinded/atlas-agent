@@ -40,6 +40,7 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "final-release-candidate-checklist.md",
     REPO_ROOT / "docs" / "stable-release-decision.md",
     REPO_ROOT / "docs" / "stable-release-checklist.md",
+    REPO_ROOT / "docs" / "trust" / "README.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
@@ -119,7 +120,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.6.6"
+CURRENT_VERSION = "v0.6.7"
 
 # Release notes directory.
 RELEASES_DIR = REPO_ROOT / "docs" / "releases"

@@ -7,9 +7,9 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.6` (tagged)
 - Previous public release: `v0.6.5`
-- Source package version on `main`: `0.6.6`
+- Source package version on `main`: `0.6.7`
 - GitHub release: `v0.6.6` (current public)
-- Next planning line: `v0.6.7`
+- Next planning line: `v0.6.8`
 - PyPI was not published
 - Release status detail: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (current public)
 - Previous release status: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
@@ -74,13 +74,14 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.6.6` (current public)
 - PyPI was not published
-- Package version in source metadata: `0.6.6`
+- Package version in source metadata: `0.6.7`
 - Auto-updater delivery: verified for `v0.6.6`; not yet verified for `v0.6.7`
 
 ## What Is Ready
 
 - Public v0.6.6 release notes and release status documentation (current public).
-- Next planning line v0.6.7 release notes and release status documentation (not yet prepared).
+- Prepared v0.6.7 release notes and release status documentation (prepared, not yet tagged or released).
+- Next planning line v0.6.8 release notes and release status documentation (not yet prepared).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -105,6 +106,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
+- [v0.6.7 Release Notes](../releases/v0.6.7.md) (prepared, not yet released)
+- [v0.6.7 Trust and Release Status](v0.6.7-status.md) (prepared, not yet released)
 - [v0.6.6 Release Notes](../releases/v0.6.6.md) (current public)
 - [v0.6.6 Trust and Release Status](v0.6.6-status.md) (current public)
 - [v0.6.5 Release Notes](../releases/v0.6.5.md) (historical)

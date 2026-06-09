@@ -62,6 +62,7 @@ def _run_script_on_text(text: str) -> subprocess.CompletedProcess[str]:
         '    REPO_ROOT / "docs" / "final-release-candidate-checklist.md",\n'
         '    REPO_ROOT / "docs" / "stable-release-decision.md",\n'
         '    REPO_ROOT / "docs" / "stable-release-checklist.md",\n'
+        '    REPO_ROOT / "docs" / "trust" / "README.md",\n'
         ']'
     )
     new_paths_block = f'PUBLIC_DOC_PATHS = [Path("{tmp_path}")]'
@@ -201,11 +202,11 @@ class TestReadmeCurrentVersion:
         text = "# README\n\nSome text.\nNot financial advice.\n"
         violations = mod._check_readme_current_version(text, "README.md")
         assert len(violations) == 1
-        assert "v0.6.6" in violations[0]
+        assert "v0.6.7" in violations[0]
 
     def test_readme_has_current_status_passes(self) -> None:
         mod = _load_script_module()
-        text = "# README\n\n> **Current Status (v0.6.6)**\n\nNot financial advice.\n"
+        text = "# README\n\n> **Current Status (v0.6.7)**\n\nNot financial advice.\n"
         violations = mod._check_readme_current_version(text, "README.md")
         assert violations == []
 
@@ -223,11 +224,11 @@ class TestStaleCurrentStatusInReadme:
         violations = mod._check_stale_current_status_in_readme(text, "README.md")
         assert len(violations) == 1
         assert "v0.6.4" in violations[0]
-        assert "v0.6.6" in violations[0]
+        assert "v0.6.7" in violations[0]
 
     def test_current_status_passes(self) -> None:
         mod = _load_script_module()
-        text = "# README\n\n> **Current Status (v0.6.6)**\n\nNot financial advice.\n"
+        text = "# README\n\n> **Current Status (v0.6.7)**\n\nNot financial advice.\n"
         violations = mod._check_stale_current_status_in_readme(text, "README.md")
         assert violations == []
 

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- Corrected v0.6.7 release-prep public documentation status drift before tag cutover.
 
 ### Safety
 
