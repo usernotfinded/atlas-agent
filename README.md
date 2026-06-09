@@ -189,9 +189,14 @@ New to the repo? Start with the [External Reviewer Walkthrough](docs/external-re
 Key reviewer docs:
 - **[Reviewer Checklist](docs/reviewer-checklist.md)** — checklist before trusting or recommending
 - **[Public Launch Readiness](docs/public-launch-readiness.md)** — verified checks and disabled features
+- **[Public Launch Messaging](docs/public-launch-messaging.md)** — safe draft messaging for feedback requests
 - **[Public FAQ](docs/public-faq.md)** — answers to common questions
 - **[Feedback Request Guide](docs/feedback-request-guide.md)** — how to ask for feedback safely
 - **[Product Capability Inventory](docs/product-capability-inventory.md)** — capability matrix and public-claim boundaries
+- **[Final RC Audit](docs/final-rc-audit.md)** — release-manager audit of the RC series
+- **[Final Release Candidate Checklist](docs/final-release-candidate-checklist.md)** — go/no-go checklist
+- **[Stable Release Decision](docs/stable-release-decision.md)** — decision record for stable v0.5.8
+- **[Stable Release Checklist](docs/stable-release-checklist.md)** — pre-tag checklist
 - **[Controlled Reviewer Outreach](docs/controlled-reviewer-outreach.md)** — safe copy-paste review requests
 
 For full release history, see [CHANGELOG.md](CHANGELOG.md). Release engineering preflight is documented in [Release Candidate Cutover Dry Run](docs/release-candidate-cutover.md).
