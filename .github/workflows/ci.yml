@@ -33,10 +33,9 @@ jobs:
           python3.11 -m pip install --upgrade pip
           python3.11 -m pip install -e '.[dev]'
       - name: Version consistency
+        run: python3.11 scripts/check_version_consistency.py
       - name: Release metadata
         run: python3.11 scripts/check_release_metadata.py
-
-        run: python3.11 scripts/check_version_consistency.py
       - name: CLI command compatibility
         run: python3.11 scripts/check_cli_command_compatibility.py
       - name: Forbidden claims scan
