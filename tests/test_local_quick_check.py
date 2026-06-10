@@ -65,6 +65,10 @@ class TestSmokeCheckSh:
         assert "check_no_protected_staged.py" in text
         assert "git diff --check" in text
 
+    def test_contains_demo_command_smoke_check(self) -> None:
+        text = _script_path("smoke_check.sh").read_text(encoding="utf-8")
+        assert "check_demo_command_smoke.py" in text
+
     def test_contains_no_provider_or_broker_calls(self) -> None:
         text = _script_path("smoke_check.sh").read_text(encoding="utf-8")
         assert "alpaca" not in text.lower()
@@ -126,6 +130,10 @@ class TestLocalQuickCheckSh:
         assert "check_submit_execution_safety.py" in text
         assert "check_no_protected_staged.py" in text
         assert "git diff --check" in text
+
+    def test_contains_demo_command_smoke_check(self) -> None:
+        text = _script_path("local_quick_check.sh").read_text(encoding="utf-8")
+        assert "check_demo_command_smoke.py" in text
 
     def test_contains_no_provider_or_broker_calls(self) -> None:
         text = _script_path("local_quick_check.sh").read_text(encoding="utf-8")

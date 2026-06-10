@@ -71,7 +71,7 @@
       ],
       "acceptance_criteria": "Smoke and local quick tiers include a fast demo-script existence and structure check (reusing logic from test_demo_proof_layer.py or check_demo_proof.py if implemented).",
       "selected_for_v068": true,
-      "implemented": false,
+      "implemented": true,
       "reason": "Small, coherent extension of CAND-002 into the tier system. Keeps demo integrity in the fastest gates."
     },
     {

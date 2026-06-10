@@ -412,9 +412,13 @@ def _check_candidates_md_state(text: str) -> list[str]:
                 elif "implemented" not in line.lower():
                     violations.append(f"{line.strip()} not marked implemented in candidates markdown")
             if "CAND-004" in line:
-                if "not yet implemented" not in line.lower():
+                if "not yet implemented" in line.lower():
                     violations.append(
-                        f"{line.strip()} should be marked not yet implemented in candidates markdown"
+                        f"{line.strip()} should be marked implemented in candidates markdown"
+                    )
+                elif "implemented" not in line.lower():
+                    violations.append(
+                        f"{line.strip()} not marked implemented in candidates markdown"
                     )
     return violations
 
@@ -429,8 +433,8 @@ def _check_candidates_json_state(data: dict) -> list[str]:
         if cand_id in candidates and candidates[cand_id].get("implemented") is not True:
             violations.append(f"{cand_id} not marked implemented=true in candidates JSON")
     for cand_id in ("CAND-004",):
-        if cand_id in candidates and candidates[cand_id].get("implemented") is not False:
-            violations.append(f"{cand_id} not marked implemented=false in candidates JSON")
+        if cand_id in candidates and candidates[cand_id].get("implemented") is not True:
+            violations.append(f"{cand_id} not marked implemented=true in candidates JSON")
     return violations
 
 

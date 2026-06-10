@@ -27,6 +27,7 @@ The recommended path to review the paper demo is:
 3. Read expected output in [Demo: Paper Workflow](demo-paper-workflow.md).
 4. Inspect the [Demo Artifact Index](demo-artifact-index.md) for artifact details.
 5. Run the deterministic [Demo Proof Checker](../scripts/check_demo_proof.py) to validate docs and safety invariants without executing the demo.
+6. Run the lightweight [Demo Command Smoke Checker](../scripts/check_demo_command_smoke.py) to validate that the demo script surface remains intact in the fastest local gates.
 
 These commands run locally without credentials, network calls, or live trading.
 

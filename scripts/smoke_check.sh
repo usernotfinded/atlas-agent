@@ -66,7 +66,10 @@ _run "6. protected staged files" \
 _run "7. pip check" \
     "$PYTHON_BIN" -m pip check
 
-_run "8. focused pytest smoke" \
+_run "8. demo command smoke validation" \
+    "$PYTHON_BIN" scripts/check_demo_command_smoke.py
+
+_run "9. focused pytest smoke" \
     "$PYTHON_BIN" -m pytest tests/test_cli_smoke.py tests/test_submit_execution_safety_check.py -q "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 
 echo ""

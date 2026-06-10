@@ -98,7 +98,8 @@ def test_candidates_md_marks_cand_001_to_003_implemented() -> None:
             if "CAND-001" in line or "CAND-002" in line or "CAND-003" in line:
                 assert "implemented" in line.lower()
             if "CAND-004" in line:
-                assert "not yet implemented" in line.lower()
+                assert "implemented" in line.lower()
+                assert "not yet implemented" not in line.lower()
 
 
 def test_candidates_json_marks_cand_001_to_003_implemented() -> None:
@@ -107,7 +108,7 @@ def test_candidates_json_marks_cand_001_to_003_implemented() -> None:
     assert candidates["CAND-001"].get("implemented") is True
     assert candidates["CAND-002"].get("implemented") is True
     assert candidates["CAND-003"].get("implemented") is True
-    assert candidates["CAND-004"].get("implemented") is False
+    assert candidates["CAND-004"].get("implemented") is True
 
 
 def test_artifact_index_describes_expected_artifacts() -> None:

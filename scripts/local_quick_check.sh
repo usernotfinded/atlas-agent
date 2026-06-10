@@ -107,7 +107,10 @@ _run "15. reviewer outreach check" \
 _run "16. product capability inventory check" \
     "$PYTHON_BIN" scripts/check_product_capability_inventory.py
 
-_run "17. git diff --cached --check" \
+_run "17. demo command smoke validation" \
+    "$PYTHON_BIN" scripts/check_demo_command_smoke.py
+
+_run "18. git diff --cached --check" \
     git diff --cached --check
 
 # --- Tier 3: focused pytest subset ---
@@ -164,6 +167,7 @@ _run "18. focused pytest subset" \
         tests/test_feedback_taxonomy.py \
         tests/test_reviewer_outreach.py \
         tests/test_product_capability_inventory.py \
+        tests/test_demo_command_smoke.py \
         -q \
         "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 

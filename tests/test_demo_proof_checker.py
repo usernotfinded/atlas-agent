@@ -270,10 +270,10 @@ class TestCheckerValidatesCandidateTracking:
         candidates = {c["id"]: c for c in data.get("candidates", [])}
         assert candidates["CAND-003"].get("implemented") is True
 
-    def test_cand_004_not_implemented_in_json(self) -> None:
+    def test_cand_004_implemented_in_json(self) -> None:
         data = json.loads(CANDIDATES_JSON.read_text(encoding="utf-8"))
         candidates = {c["id"]: c for c in data.get("candidates", [])}
-        assert candidates["CAND-004"].get("implemented") is False
+        assert candidates["CAND-004"].get("implemented") is True
 
     def test_checker_function_detects_bad_json_state(self) -> None:
         mod = _load_checker_module()

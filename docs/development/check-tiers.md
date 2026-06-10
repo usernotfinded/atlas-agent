@@ -30,6 +30,7 @@ balance of speed and coverage for each situation.
 - `git diff --check`
 - `check_no_protected_staged.py`
 - `pip check`
+- `check_demo_command_smoke.py` (CAND-004)
 - Focused pytest: `test_cli_smoke.py` + `test_submit_execution_safety_check.py`
 
 **Skips:** trust center, onboarding, generated artifacts, GitHub Actions versions,
@@ -47,6 +48,7 @@ while skipping low-value or subprocess-heavy work.
 
 **Includes:**
 - Everything in Smoke Check
+- `check_demo_command_smoke.py` (CAND-004)
 - `check_trust_center.py`
 - `check_onboarding_docs.py`
 - `check_generated_artifacts.py`
