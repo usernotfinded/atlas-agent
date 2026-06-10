@@ -18,8 +18,10 @@ from typing import Callable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_trust_center.py"
-TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.7-status.md"
+TRUST_README_REL = Path("docs/trust/README.md")
+TRUST_STATUS_REL = Path("docs/trust/v0.6.7-status.md")
+TRUST_README = REPO_ROOT / TRUST_README_REL
+TRUST_STATUS = REPO_ROOT / TRUST_STATUS_REL
 
 
 def _load_checker() -> ModuleType:
@@ -57,19 +59,22 @@ def _valid_fixture(tmp_path: Path) -> Path:
     _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.8"\n')
     _write(tmp_path / "src" / "atlas_agent" / "__init__.py", '__version__ = "0.6.8"\n')
 
+    meta_path = "docs/releases/release-metadata.json"
+    _write(tmp_path / meta_path, (REPO_ROOT / meta_path).read_text(encoding="utf-8"))
+
     for rel_path in CHECKER.REQUIRED_LINKS:
         _write(tmp_path / rel_path, "# Fixture\n\nNot financial advice.\n")
 
-    _write(tmp_path / "docs" / "trust" / "README.md", TRUST_README.read_text(encoding="utf-8"))
+    _write(tmp_path / TRUST_README_REL, TRUST_README.read_text(encoding="utf-8"))
     _write(
-        tmp_path / "docs" / "trust" / CHECKER.TRUST_STATUS.name,
+        tmp_path / TRUST_STATUS_REL,
         TRUST_STATUS.read_text(encoding="utf-8"),
     )
     return tmp_path
 
 
 def _rewrite_trust_docs(repo_root: Path, transform: Callable[[str], str]) -> None:
-    for rel_path in (CHECKER.TRUST_README, CHECKER.TRUST_STATUS):
+    for rel_path in (TRUST_README_REL, TRUST_STATUS_REL):
         path = repo_root / rel_path
         path.write_text(transform(path.read_text(encoding="utf-8")), encoding="utf-8")
 
@@ -96,7 +101,7 @@ class TestTrustCenterChecker:
 
     def test_fails_on_stale_current_status_versions(self, tmp_path: Path) -> None:
         repo = _valid_fixture(tmp_path)
-        readme = repo / CHECKER.TRUST_README
+        readme = repo / TRUST_README_REL
         readme.write_text(
             readme.read_text(encoding="utf-8")
             + "\n\nCurrent public release: v0.5.9.dev0\n",
@@ -162,7 +167,7 @@ class TestTrustCenterChecker:
 
     def test_fails_if_release_notes_link_is_missing(self, tmp_path: Path) -> None:
         repo = _valid_fixture(tmp_path)
-        readme = repo / CHECKER.TRUST_README
+        readme = repo / TRUST_README_REL
         readme.write_text(
             readme.read_text(encoding="utf-8").replace("../releases/v0.6.4.md", "missing.md"),
             encoding="utf-8",
@@ -174,7 +179,7 @@ class TestTrustCenterChecker:
 
     def test_fails_if_security_link_is_missing(self, tmp_path: Path) -> None:
         repo = _valid_fixture(tmp_path)
-        readme = repo / CHECKER.TRUST_README
+        readme = repo / TRUST_README_REL
         readme.write_text(
             readme.read_text(encoding="utf-8").replace("../../SECURITY.md", "missing.md"),
             encoding="utf-8",
@@ -186,7 +191,7 @@ class TestTrustCenterChecker:
 
     def test_fails_if_provider_audit_pack_link_is_missing(self, tmp_path: Path) -> None:
         repo = _valid_fixture(tmp_path)
-        readme = repo / CHECKER.TRUST_README
+        readme = repo / TRUST_README_REL
         readme.write_text(
             readme.read_text(encoding="utf-8").replace(
                 "../security/provider-audit-pack.md",
@@ -202,7 +207,7 @@ class TestTrustCenterChecker:
     def test_fails_on_secret_like_values(self, tmp_path: Path) -> None:
         repo = _valid_fixture(tmp_path)
         fake_value = "sk-" + ("x" * 24)
-        readme = repo / CHECKER.TRUST_README
+        readme = repo / TRUST_README_REL
         readme.write_text(
             readme.read_text(encoding="utf-8") + f"\n\n{fake_value}\n",
             encoding="utf-8",

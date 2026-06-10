@@ -18,10 +18,11 @@ from pathlib import Path
 from typing import Iterable
 
 
-CURRENT_RELEASE = "v0.6.7"
-PACKAGE_VERSION = "0.6.8"
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_metadata import load_metadata
+
 TRUST_README = Path("docs/trust/README.md")
-TRUST_STATUS = Path("docs/trust/v0.6.7-status.md")
 
 REQUIRED_README_SECTIONS = [
     "Current Public Release",
@@ -95,27 +96,28 @@ REQUIRED_LINKS = {
     ),
 }
 
-REQUIRED_FACTS = {
-    "current public release v0.6.7": (("current public release", CURRENT_RELEASE),),
-    "source package version 0.6.7": (
-        ("source package version", PACKAGE_VERSION),
-        ("package version in source metadata", PACKAGE_VERSION),
-    ),
-    "PyPI not published": (
-        ("pypi publish: not performed",),
-        ("pypi: not published",),
-        ("pypi was not published",),
-        ("no pypi publish has been performed",),
-    ),
-    "live trading disabled by default": (("live trading is disabled by default",),),
-    "live submit disabled by default": (("live submit is disabled by default",),),
-    "provider execution disabled by default": (
-        ("provider execution is disabled by default",),
-    ),
-    "broker execution disabled by default": (
-        ("broker execution is disabled by default",),
-    ),
-    "human approval required": (
+def _build_required_facts(CURRENT_RELEASE: str, PACKAGE_VERSION: str) -> dict[str, tuple[tuple[str, ...], ...]]:
+    return {
+        f"current public release {CURRENT_RELEASE}": (("current public release", CURRENT_RELEASE),),
+        f"source package version {PACKAGE_VERSION}": (
+            ("source package version", PACKAGE_VERSION),
+            ("package version in source metadata", PACKAGE_VERSION),
+        ),
+        "PyPI not published": (
+            ("pypi publish: not performed",),
+            ("pypi: not published",),
+            ("pypi was not published",),
+            ("no pypi publish has been performed",),
+        ),
+        "live trading disabled by default": (("live trading is disabled by default",),),
+        "live submit disabled by default": (("live submit is disabled by default",),),
+        "provider execution disabled by default": (
+            ("provider execution is disabled by default",),
+        ),
+        "broker execution disabled by default": (
+            ("broker execution is disabled by default",),
+        ),
+        "human approval required": (
         ("human approval is required",),
         ("human approval remains required",),
     ),
@@ -351,18 +353,40 @@ def _validate_secret_patterns(
 
 
 def validate_trust_center(repo_root: Path) -> ValidationResult:
-    repo_root = repo_root.resolve()
     checks: list[Check] = []
     findings: list[str] = []
     errors: list[str] = []
 
-    if not repo_root.exists():
+    if not repo_root.is_dir():
         return ValidationResult(
             repo_root=str(repo_root),
-            checks=[],
-            findings=[],
+            checks=checks,
+            findings=findings,
             errors=[f"repo root does not exist: {repo_root}"],
         )
+
+    metadata_path = repo_root / "docs" / "releases" / "release-metadata.json"
+    try:
+        metadata = load_metadata(metadata_path)
+        CURRENT_RELEASE = metadata["current_public_release"]
+        PACKAGE_VERSION = metadata["source_version"]
+        trust_status_rel = None
+        for r in metadata.get("releases", []):
+            if r.get("tag") == CURRENT_RELEASE:
+                trust_status_rel = r.get("trust_status")
+                break
+        if not trust_status_rel:
+            raise ValueError(f"No trust_status found for release {CURRENT_RELEASE}")
+        TRUST_STATUS = Path(trust_status_rel)
+    except Exception as e:
+        return ValidationResult(
+            repo_root=str(repo_root),
+            checks=checks,
+            findings=findings,
+            errors=[f"could not load release metadata: {e}"],
+        )
+
+    required_facts = _build_required_facts(CURRENT_RELEASE, PACKAGE_VERSION)
 
     docs: dict[Path, str] = {}
     for rel_path in (TRUST_README, TRUST_STATUS):
@@ -439,7 +463,7 @@ def validate_trust_center(repo_root: Path) -> ValidationResult:
             sections=REQUIRED_STATUS_SECTIONS,
         )
 
-    for fact, variants in REQUIRED_FACTS.items():
+    for fact, variants in required_facts.items():
         _add_check(
             checks,
             findings,
