@@ -80,7 +80,7 @@ brokers, enable trading, or require credentials.
 ## What Is Ready
 
 - Public v0.6.7 release notes and release status documentation (current public).
-- Prepared v0.6.8 release notes and release status documentation (prepared, not yet tagged or released).
+- v0.6.8 release notes and release status documentation (not yet prepared; will be created as part of the v0.6.8 release-prep batch).
 - Next planning line v0.6.9 release notes and release status documentation (not yet prepared).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.

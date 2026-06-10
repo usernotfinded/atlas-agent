@@ -18,7 +18,15 @@ Atlas Agent is a **local-first sandbox/paper trading research workbench** with d
 - **Not a licensed financial advisor.** This is software, not financial advice.
 - **Not autonomous.** All live actions require explicit human confirmation when enabled.
 
-## 10–15 minute review path
+## Canonical reviewer demo path
+
+The recommended path to review the paper demo is:
+
+1. Install Atlas (this page).
+2. Run the paper demo or inspect the safe command list.
+3. Read expected output in [Demo: Paper Workflow](demo-paper-workflow.md).
+4. Inspect the [Demo Artifact Index](demo-artifact-index.md) for artifact details.
+5. Run the deterministic [Demo Proof Checker](../scripts/check_demo_proof.py) to validate docs and safety invariants without executing the demo.
 
 These commands run locally without credentials, network calls, or live trading.
 

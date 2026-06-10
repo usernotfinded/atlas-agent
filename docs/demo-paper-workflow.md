@@ -2,6 +2,9 @@
 
 This demo shows Atlas Agent running in **paper mode**, the default and safest way to explore the system. No live broker orders are sent.
 
+For the canonical reviewer path, see [External Reviewer Walkthrough](external-reviewer-walkthrough.md).
+For an indexed view of every artifact, see [Demo Artifact Index](demo-artifact-index.md).
+
 For a reproducible terminal run, use:
 
 ```bash

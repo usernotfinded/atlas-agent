@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Deterministic demo proof checker for CAND-002.
+"""Deterministic demo proof checker for CAND-002 and CAND-003.
 
 Validates demo documentation, artifact index consistency, safety invariants,
-and script/doc alignment. Local-only; no credentials, network, or execution.
+script/doc alignment, canonical reviewer path, symbol consistency, and
+over-promise claims. Local-only; no credentials, network, or execution.
 """
 
 from __future__ import annotations
@@ -25,6 +26,8 @@ ARTIFACT_INDEX = REPO_ROOT / "docs" / "demo-artifact-index.md"
 PAPER_WORKFLOW_DOC = REPO_ROOT / "docs" / "demo-paper-workflow.md"
 EXTERNAL_REVIEWER_DOC = REPO_ROOT / "docs" / "external-reviewer-walkthrough.md"
 README = REPO_ROOT / "README.md"
+TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
+BROKERS_DOC = REPO_ROOT / "docs" / "brokers.md"
 CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.md"
 CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.json"
 
@@ -138,6 +141,13 @@ EXPECTED_ARTIFACT_PATHS = [
     "report.md",
     "audit/",
     "pending_orders/",
+]
+
+STALE_OVER_PROMISE_PATTERNS = [
+    # (pattern, description)
+    (r"source version on main is prepared", "stale source-version-prepared claim"),
+    (r"prepared v0\.6\.8 release notes", "stale v0.6.8 release-notes-prepared claim"),
+    (r"prepared v0\.6\.8.*status documentation", "stale v0.6.8 status-docs-prepared claim"),
 ]
 
 
@@ -258,6 +268,34 @@ def _check_docs_mention_script() -> list[str]:
     return violations
 
 
+def _check_canonical_reviewer_path() -> list[str]:
+    """Validate that the canonical reviewer path is linked across docs."""
+    violations: list[str] = []
+
+    # README must link to external reviewer walkthrough
+    readme_text = _read(README) if README.exists() else ""
+    if "external-reviewer-walkthrough.md" not in readme_text:
+        violations.append("README missing link to external-reviewer-walkthrough.md")
+
+    # External reviewer walkthrough must link to paper workflow and artifact index
+    reviewer_text = _read(EXTERNAL_REVIEWER_DOC) if EXTERNAL_REVIEWER_DOC.exists() else ""
+    if "demo-paper-workflow.md" not in reviewer_text:
+        violations.append("External reviewer walkthrough missing link to demo-paper-workflow.md")
+    if "demo-artifact-index.md" not in reviewer_text:
+        violations.append("External reviewer walkthrough missing link to demo-artifact-index.md")
+    if "check_demo_proof.py" not in reviewer_text:
+        violations.append("External reviewer walkthrough missing link to check_demo_proof.py")
+
+    # Paper workflow doc must link to external reviewer walkthrough and artifact index
+    paper_text = _read(PAPER_WORKFLOW_DOC) if PAPER_WORKFLOW_DOC.exists() else ""
+    if "external-reviewer-walkthrough.md" not in paper_text:
+        violations.append("Demo paper workflow doc missing link to external-reviewer-walkthrough.md")
+    if "demo-artifact-index.md" not in paper_text:
+        violations.append("Demo paper workflow doc missing link to demo-artifact-index.md")
+
+    return violations
+
+
 def _check_demo_surfaces_forbidden_claims() -> list[str]:
     violations: list[str] = []
     for path in DEMO_SURFACES:
@@ -289,16 +327,12 @@ def _check_demo_surfaces_secrets() -> list[str]:
 
 
 def _check_symbol_consistency() -> list[str]:
-    """Verify core demo symbols appear where expected.
-
-    Note: README quickstart symbol usage (DEMO-SYMBOL vs ATLAS-DEMO)
-    is a known CAND-003 inconsistency and is intentionally not validated
-    as a hard failure here.
-    """
+    """Verify core demo symbols appear where expected and README is consistent."""
     violations: list[str] = []
     script_text = _read(DEMO_SCRIPT) if DEMO_SCRIPT.exists() else ""
     index_text = _read(ARTIFACT_INDEX) if ARTIFACT_INDEX.exists() else ""
     paper_text = _read(PAPER_WORKFLOW_DOC) if PAPER_WORKFLOW_DOC.exists() else ""
+    readme_text = _read(README) if README.exists() else ""
 
     if "ATLAS-DEMO" not in script_text:
         violations.append("Demo script missing ATLAS-DEMO symbol")
@@ -310,6 +344,56 @@ def _check_symbol_consistency() -> list[str]:
         violations.append("Demo paper workflow doc missing DEMO-SYMBOL symbol")
     if "ATLAS-DEMO" not in paper_text:
         violations.append("Demo paper workflow doc missing ATLAS-DEMO symbol")
+
+    # CAND-003: README must use ATLAS-DEMO for the config symbol, not DEMO-SYMBOL
+    # We look for the config set line and ensure it uses ATLAS-DEMO
+    readme_lines = readme_text.splitlines()
+    for line in readme_lines:
+        if "config set market.symbol" in line:
+            if "ATLAS-DEMO" not in line:
+                violations.append(
+                    "README config set market.symbol does not use ATLAS-DEMO"
+                )
+            break
+    else:
+        violations.append("README missing config set market.symbol line")
+
+    return violations
+
+
+def _check_stale_over_promise_claims() -> list[str]:
+    """Detect stale or over-promise claims in public-facing docs.
+
+    CAND-003 specifically fixed:
+    - README claiming 0.6.8 source is prepared
+    - trust/README claiming v0.6.8 release notes are prepared
+    - brokers.md calling PaperBroker production-ready
+    """
+    violations: list[str] = []
+
+    # Check README for stale source-version claims
+    readme_text = _read(README) if README.exists() else ""
+    for pattern, desc in STALE_OVER_PROMISE_PATTERNS:
+        if re.search(pattern, readme_text, re.IGNORECASE):
+            violations.append(f"README contains stale/over-promise claim: {desc}")
+
+    # Check trust/README for stale v0.6.8 claims
+    trust_text = _read(TRUST_README) if TRUST_README.exists() else ""
+    for pattern, desc in STALE_OVER_PROMISE_PATTERNS:
+        if re.search(pattern, trust_text, re.IGNORECASE):
+            violations.append(f"docs/trust/README.md contains stale/over-promise claim: {desc}")
+
+    # Check brokers.md for "production-ready" in positive context
+    brokers_text = _read(BROKERS_DOC) if BROKERS_DOC.exists() else ""
+    if "production-ready" in brokers_text.lower():
+        # Verify it's in a negative/safe context
+        for m in re.finditer(r"production-ready", brokers_text, re.IGNORECASE):
+            sentence = _sentence_around(brokers_text, m.start(), m.end()).lower()
+            if not any(ind in sentence for ind in NEGATIVE_CONTEXT_INDICATORS):
+                violations.append(
+                    "docs/brokers.md contains 'production-ready' outside negative context"
+                )
+
     return violations
 
 
@@ -322,12 +406,12 @@ def _check_candidates_md_state(text: str) -> list[str]:
         elif line.startswith("## "):
             in_accepted = False
         if in_accepted:
-            if "CAND-001" in line or "CAND-002" in line:
+            if "CAND-001" in line or "CAND-002" in line or "CAND-003" in line:
                 if "not yet implemented" in line.lower():
                     violations.append(f"{line.strip()} should be marked implemented in candidates markdown")
                 elif "implemented" not in line.lower():
                     violations.append(f"{line.strip()} not marked implemented in candidates markdown")
-            if "CAND-003" in line or "CAND-004" in line:
+            if "CAND-004" in line:
                 if "not yet implemented" not in line.lower():
                     violations.append(
                         f"{line.strip()} should be marked not yet implemented in candidates markdown"
@@ -341,10 +425,10 @@ def _check_candidates_json_state(data: dict) -> list[str]:
     for cand_id in ("CAND-001", "CAND-002", "CAND-003", "CAND-004"):
         if cand_id not in candidates:
             violations.append(f"{cand_id} missing from candidates JSON")
-    for cand_id in ("CAND-001", "CAND-002"):
+    for cand_id in ("CAND-001", "CAND-002", "CAND-003"):
         if cand_id in candidates and candidates[cand_id].get("implemented") is not True:
             violations.append(f"{cand_id} not marked implemented=true in candidates JSON")
-    for cand_id in ("CAND-003", "CAND-004"):
+    for cand_id in ("CAND-004",):
         if cand_id in candidates and candidates[cand_id].get("implemented") is not False:
             violations.append(f"{cand_id} not marked implemented=false in candidates JSON")
     return violations
@@ -377,6 +461,7 @@ def main() -> int:
     # Cross-link checks
     all_violations.extend(_check_linking_docs_reference_index())
     all_violations.extend(_check_docs_mention_script())
+    all_violations.extend(_check_canonical_reviewer_path())
 
     # Demo surface checks
     all_violations.extend(_check_demo_surfaces_forbidden_claims())
@@ -384,6 +469,9 @@ def main() -> int:
 
     # Symbol consistency
     all_violations.extend(_check_symbol_consistency())
+
+    # Stale/over-promise claims (CAND-003)
+    all_violations.extend(_check_stale_over_promise_claims())
 
     # Candidate tracking
     candidates_md_text = _read(CANDIDATES_MD) if CANDIDATES_MD.exists() else ""

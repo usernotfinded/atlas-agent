@@ -54,7 +54,7 @@
       ],
       "acceptance_criteria": "Over-promise claims are corrected; symbol usage is unified or explicitly explained; duplicate demo instructions across README/walkthrough/demo-doc are consolidated or cross-referenced with canonical pointers; reviewer path is one clean narrative.",
       "selected_for_v068": true,
-      "implemented": false,
+      "implemented": true,
       "reason": "Directly fixes reviewer trust issues discovered by swarm. Docs-only; no runtime changes."
     },
     {

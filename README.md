@@ -28,7 +28,7 @@ python3.11 -m pip install -e .
 atlas init my-workspace --template routine-trader
 cd my-workspace
 atlas discipline setup --manual --yes
-atlas config set market.symbol DEMO-SYMBOL
+atlas config set market.symbol ATLAS-DEMO
 
 # 3. Validate
 atlas validate
@@ -37,7 +37,8 @@ atlas validate
 ./scripts/demo_paper_workflow.sh
 ```
 
-See [docs/demo-paper-workflow.md](docs/demo-paper-workflow.md) for expected output, success criteria, and artifact locations.
+For the canonical reviewer path, see [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md).
+For expected demo output, success criteria, and artifact locations, see [Demo: Paper Workflow](docs/demo-paper-workflow.md).
 For an indexed view of every demo artifact, its path, and the safety invariant it demonstrates, see [Demo Artifact Index](docs/demo-artifact-index.md).
 
 This path installs Atlas locally, creates a safe paper workspace, validates the configuration, and runs the reproducible paper-mode demo. It produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
@@ -177,7 +178,7 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 
 ## Current Development Status
 
-`v0.6.7` is the latest stable public release on GitHub. `v0.6.6` and `v0.5.8` are historical stable releases. The `0.6.8` source version on main is prepared but not yet tagged or released. The v0.6.7 patch release contains docs consistency, checker metadata, test coverage, and public release reference alignment improvements. No new runtime features, broker adapters, or provider integrations. PyPI was not published. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
+`v0.6.7` is the latest stable public release on GitHub. `v0.6.6` and `v0.5.8` are historical stable releases. The source package version on `main` is `0.6.7`; `0.6.8` is the next planning line and is not yet tagged or released. The v0.6.7 patch release contains docs consistency, checker metadata, test coverage, and public release reference alignment improvements. No new runtime features, broker adapters, or provider integrations. PyPI was not published. After direct-main maintenance pushes, run `python3.11 scripts/main_health.py` for local post-push verification.
 
 - Live trading is disabled by default.
 - Provider execution remains locked.
@@ -230,7 +231,7 @@ Most commands require an Atlas workspace.
 atlas init my-workspace --template routine-trader
 cd my-workspace
 atlas discipline setup --manual --yes
-atlas config set market.symbol DEMO-SYMBOL
+atlas config set market.symbol ATLAS-DEMO
 ```
 
 ### 3. Validate configuration

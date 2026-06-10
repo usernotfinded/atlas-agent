@@ -1,4 +1,4 @@
-"""Tests for demo proof checker — CAND-002.
+"""Tests for demo proof checker — CAND-002 and CAND-003.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
@@ -48,6 +48,8 @@ def _run_checker_with_patched_doc(original_text: str, patched_text: str, doc_nam
         "docs/demo-paper-workflow.md": REPO_ROOT / "docs" / "demo-paper-workflow.md",
         "docs/external-reviewer-walkthrough.md": REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
         "README.md": REPO_ROOT / "README.md",
+        "docs/trust/README.md": REPO_ROOT / "docs" / "trust" / "README.md",
+        "docs/brokers.md": REPO_ROOT / "docs" / "brokers.md",
         "docs/releases/v0.6.8-candidates.md": REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.md",
         "docs/releases/v0.6.8-candidates.json": CANDIDATES_JSON,
     }
@@ -180,6 +182,47 @@ class TestCheckerDetectsMissingCrossLinks:
         assert "artifact index" in result.stdout.lower()
 
 
+class TestCheckerDetectsCanonicalReviewerPathIssues:
+    def test_rejects_missing_walkthrough_link_in_readme(self) -> None:
+        original = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        injected = original.replace("external-reviewer-walkthrough.md", "reviewer-guide.md")
+        result = _run_checker_with_patched_doc(original, injected, "README.md")
+        assert result.returncode != 0
+        assert "external-reviewer-walkthrough" in result.stdout.lower()
+
+    def test_rejects_missing_proof_checker_link_in_walkthrough(self) -> None:
+        original = (REPO_ROOT / "docs/external-reviewer-walkthrough.md").read_text(encoding="utf-8")
+        injected = original.replace("check_demo_proof.py", "verify_demo.py")
+        result = _run_checker_with_patched_doc(original, injected, "docs/external-reviewer-walkthrough.md")
+        assert result.returncode != 0
+        assert "check_demo_proof" in result.stdout.lower()
+
+
+class TestCheckerDetectsSymbolInconsistency:
+    def test_rejects_readme_using_demo_symbol_for_config(self) -> None:
+        original = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        injected = original.replace("atlas config set market.symbol ATLAS-DEMO", "atlas config set market.symbol DEMO-SYMBOL")
+        result = _run_checker_with_patched_doc(original, injected, "README.md")
+        assert result.returncode != 0
+        assert "atlas-demo" in result.stdout.lower()
+
+
+class TestCheckerDetectsStaleOverPromiseClaims:
+    def test_rejects_stale_source_version_prepared_claim(self) -> None:
+        original = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        injected = original + "\nThe 0.6.8 source version on main is prepared.\n"
+        result = _run_checker_with_patched_doc(original, injected, "README.md")
+        assert result.returncode != 0
+        assert "stale" in result.stdout.lower()
+
+    def test_rejects_production_ready_in_brokers_doc(self) -> None:
+        original = (REPO_ROOT / "docs/brokers.md").read_text(encoding="utf-8")
+        injected = original.replace("fully implemented", "production-ready")
+        result = _run_checker_with_patched_doc(original, injected, "docs/brokers.md")
+        assert result.returncode != 0
+        assert "production-ready" in result.stdout.lower()
+
+
 class TestCheckerDoesNotExecuteDemo:
     def test_no_subprocess_call_to_demo_script(self) -> None:
         text = CHECKER_SCRIPT.read_text(encoding="utf-8")
@@ -222,10 +265,10 @@ class TestCheckerValidatesCandidateTracking:
         candidates = {c["id"]: c for c in data.get("candidates", [])}
         assert candidates["CAND-002"].get("implemented") is True
 
-    def test_cand_003_not_implemented_in_json(self) -> None:
+    def test_cand_003_implemented_in_json(self) -> None:
         data = json.loads(CANDIDATES_JSON.read_text(encoding="utf-8"))
         candidates = {c["id"]: c for c in data.get("candidates", [])}
-        assert candidates["CAND-003"].get("implemented") is False
+        assert candidates["CAND-003"].get("implemented") is True
 
     def test_cand_004_not_implemented_in_json(self) -> None:
         data = json.loads(CANDIDATES_JSON.read_text(encoding="utf-8"))
@@ -238,18 +281,21 @@ class TestCheckerValidatesCandidateTracking:
             "candidates": [
                 {"id": "CAND-001", "implemented": False},
                 {"id": "CAND-002", "implemented": False},
+                {"id": "CAND-003", "implemented": False},
             ]
         }
         violations = mod._check_candidates_json_state(bad_data)
         assert any("CAND-001" in v for v in violations)
         assert any("CAND-002" in v for v in violations)
+        assert any("CAND-003" in v for v in violations)
 
     def test_checker_function_detects_bad_md_state(self) -> None:
         mod = _load_checker_module()
-        bad_md = "## Accepted Candidates\n- CAND-001 — not yet implemented\n- CAND-002 — not yet implemented\n"
+        bad_md = "## Accepted Candidates\n- CAND-001 — not yet implemented\n- CAND-002 — not yet implemented\n- CAND-003 — not yet implemented\n"
         violations = mod._check_candidates_md_state(bad_md)
         assert any("CAND-001" in v and "should be marked implemented" in v for v in violations)
         assert any("CAND-002" in v and "should be marked implemented" in v for v in violations)
+        assert any("CAND-003" in v and "should be marked implemented" in v for v in violations)
 
 
 class TestCheckerUnitFunctions:
@@ -282,4 +328,14 @@ class TestCheckerUnitFunctions:
         mod = _load_checker_module()
         # With the real repo files, this should pass
         violations = mod._check_symbol_consistency()
+        assert violations == []
+
+    def test_canonical_reviewer_path_passes(self) -> None:
+        mod = _load_checker_module()
+        violations = mod._check_canonical_reviewer_path()
+        assert violations == []
+
+    def test_stale_over_promise_passes(self) -> None:
+        mod = _load_checker_module()
+        violations = mod._check_stale_over_promise_claims()
         assert violations == []

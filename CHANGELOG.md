@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `scripts/check_demo_proof.py` and `tests/test_demo_proof_checker.py` (CAND-002), a deterministic demo proof checker that validates demo documentation, artifact index consistency, safety invariants, and script/doc alignment without running provider, broker, or trading paths.
 
 ### Changed
+- Consolidated the reviewer demo path for v0.6.8 CAND-003, aligning README, reviewer walkthrough, demo workflow, artifact index, and demo proof checker references. Fixed README quickstart to use `ATLAS-DEMO` consistently with the demo script, corrected stale `0.6.8` source-version-prepared wording in README, removed over-promise v0.6.8 release-notes-prepared claim from trust center, and replaced ambiguous `production-ready` wording in brokers doc with safer phrasing.
 
 ### Fixed
 - Corrected v0.6.7 release-prep public documentation status drift before tag cutover.

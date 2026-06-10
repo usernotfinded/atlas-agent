@@ -9,7 +9,7 @@ authoritative support inventory, fail-closed behavior, and CLI usage.
 ## Broker Adapters
 All adapters must implement the `Broker` interface (`src/atlas_agent/brokers/base.py`).
 
-- **PaperBrokerAdapter**: A deterministic local simulator. It is the default for all runs and does not require credentials. It is the only complete, production-ready adapter.
+- **PaperBrokerAdapter**: A deterministic local simulator. It is the default for all runs and does not require credentials. It is the only fully implemented adapter; all other adapters are partial, deferred, or placeholder.
 - **AlpacaBrokerAdapter**: Read-only live sync adapter for Alpaca Markets. Supports account state, positions, open orders, and balances via HTTP GET. Live order submission remains disabled (`can_submit=false`). Not production-grade for execution.
 - **AlpacaBroker**: Legacy live adapter scaffold for Alpaca order placement. Configuration validation is wired, but execution is gated by `BrokerResolver`.
 - **BinanceBroker**: Partial live adapter for Binance (Spot) via CCXT. Configuration validation and order placement are wired; account and position sync are deferred. Not production-grade.
