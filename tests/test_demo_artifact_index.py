@@ -83,7 +83,7 @@ def test_linking_docs_reference_artifact_index() -> None:
         assert "demo-artifact-index.md" in text
 
 
-def test_candidates_md_marks_cand_001_implemented() -> None:
+def test_candidates_md_marks_cand_001_and_002_implemented() -> None:
     text = CANDIDATES_MD.read_text(encoding="utf-8")
     assert "CAND-001" in text
     assert "implemented" in text.lower()
@@ -95,17 +95,17 @@ def test_candidates_md_marks_cand_001_implemented() -> None:
         elif line.startswith("## "):
             in_accepted = False
         if in_accepted:
-            if "CAND-001" in line:
+            if "CAND-001" in line or "CAND-002" in line:
                 assert "implemented" in line.lower()
-            if "CAND-002" in line or "CAND-003" in line or "CAND-004" in line:
+            if "CAND-003" in line or "CAND-004" in line:
                 assert "not yet implemented" in line.lower()
 
 
-def test_candidates_json_marks_cand_001_implemented() -> None:
+def test_candidates_json_marks_cand_001_and_002_implemented() -> None:
     data = json.loads(CANDIDATES_JSON.read_text(encoding="utf-8"))
     candidates = {c["id"]: c for c in data.get("candidates", [])}
     assert candidates["CAND-001"].get("implemented") is True
-    assert candidates["CAND-002"].get("implemented") is False
+    assert candidates["CAND-002"].get("implemented") is True
     assert candidates["CAND-003"].get("implemented") is False
     assert candidates["CAND-004"].get("implemented") is False
 

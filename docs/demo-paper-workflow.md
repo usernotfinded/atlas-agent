@@ -180,6 +180,14 @@ It is a proof of workflow mechanics, not a live-trading setup or performance cla
 
 Paper and sandbox support depends on the selected broker/API provider and asset class. Some providers offer crypto simulation or testnet environments; others may not. Atlas does not assume crypto support.
 
+## Validation
+
+Run the deterministic demo proof checker to verify documentation consistency and safety invariants without executing the demo:
+
+```bash
+python3.11 scripts/check_demo_proof.py
+```
+
 ## Next steps
 
 - Configure a provider with `atlas configure` or edit `.atlas/config.toml`.

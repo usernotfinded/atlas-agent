@@ -213,6 +213,16 @@ The following demos exist in the repository but are **not** executed by `scripts
 | `No manifests found` during audit verify | Dry-run does not create run manifests | Expected and safe |
 | Generated workspace path not printed | `DEMO_WORKSPACE` was set and reused | Check the environment variable or run without it |
 
+## Validation
+
+You can verify this index and the surrounding demo documentation with the deterministic demo proof checker:
+
+```bash
+python3.11 scripts/check_demo_proof.py
+```
+
+The checker is local-only, read-only, and does not execute the demo or call any provider, broker, or trading path.
+
 ## Related Docs
 
 - [Demo: Paper Workflow](demo-paper-workflow.md) — step-by-step expected output and common failures

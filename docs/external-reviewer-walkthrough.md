@@ -137,6 +137,14 @@ Expected: no output.
 - **Credentials** are not loaded unless explicitly configured. No credentials required for default verification.
 - **Trust remains blocked** — mock responses in safety workflows are explicitly not trusted.
 
+## Validation
+
+Run the deterministic demo proof checker to verify documentation and safety invariants without executing the demo:
+
+```bash
+python3.11 scripts/check_demo_proof.py
+```
+
 ## How to report findings
 
 - Security or safety issues: [GitHub Security Advisories](https://github.com/usernotfinded/atlas-agent/security/advisories)

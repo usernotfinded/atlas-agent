@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Documented v0.6.8 public-demo-proof candidate selection (`docs/releases/v0.6.8-candidates.md`, `docs/releases/v0.6.8-candidates.json`): CAND-001 (Demo Artifact Index), CAND-002 (Demo Proof Checker), CAND-003 (Reviewer Demo Path Consolidation), and CAND-004 (Demo command smoke validation under smoke/local quick tier) accepted.
 - Added `docs/demo-artifact-index.md` (CAND-001), a complete indexed view of every paper-demo artifact, its path, content summary, and safety invariant. Cross-referenced from `README.md`, `docs/demo-paper-workflow.md`, and `docs/external-reviewer-walkthrough.md`.
+- Added `scripts/check_demo_proof.py` and `tests/test_demo_proof_checker.py` (CAND-002), a deterministic demo proof checker that validates demo documentation, artifact index consistency, safety invariants, and script/doc alignment without running provider, broker, or trading paths.
 
 ### Changed
 

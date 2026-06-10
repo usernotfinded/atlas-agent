@@ -35,7 +35,7 @@
       ],
       "acceptance_criteria": "Checker validates that demo docs list all script commands, that expected artifacts match script outputs, that symbols are consistent across docs, and that no over-promise claims exist in demo surfaces. Runs locally without credentials or network.",
       "selected_for_v068": true,
-      "implemented": false,
+      "implemented": true,
       "reason": "Prevents doc-script drift and gives reviewers a one-command verification path. No runtime changes."
     },
     {
