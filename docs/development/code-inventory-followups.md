@@ -8,42 +8,40 @@ A codebase hygiene audit was performed to identify and safely remove local, gene
 * Removed local runtime and IDE state files: `.atlas_update_state.json`, `.antigravitycli/e5a2f704-d460-434f-829e-9bd713ffb828.json`
 * Added strict ignore rules to `.gitignore` to prevent these from being tracked again.
 
-# Deferred candidates
+# Safe module cleanup completed in the second batch
 
-The following modules were flagged as unused or containing duplicate functionality, but were deferred from removal in this batch:
+All deferred code inventory modules were systematically analyzed using static grep references, dynamic import verification, and test coverage checks. To guarantee public API stability, all uncertain modules were intentionally kept and added to `tests/test_code_inventory_imports.py` to lock down compatibility.
 
-* `ai/analyst.py` (candidate)
-* `execution/trade_executor.py` (candidate)
-* `market_data/yfinance_provider.py` (candidate)
-* `notifications/slack_stub.py` (candidate)
-* `notifications/telegram_stub.py` (candidate)
-* `reports/adhoc.py` (candidate)
-* `risk/position_sizing.py` (candidate)
-* `safety/policy.py` (candidate)
-* `scheduler/cron.py` (candidate)
-* `strategies/base.py` (candidate)
-* `strategies/breakout.py` (candidate)
-* `strategies/rsi.py` (candidate)
-* `tools/contracts.py` (candidate)
-* `tools/runtime.py` (candidate)
-* `setup/inline_select.py` (candidate)
+| Module | Classification | Evidence | Action |
+| ------ | -------------- | -------- | ------ |
+| `ai/analyst.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. Dynamic import OK. | Kept and added to test suite. |
+| `execution/trade_executor.py` | KEEP_COMPAT_SHIM | No internal references, but may act as a compatibility shim. | Kept and added to test suite. |
+| `market_data/yfinance_provider.py` | KEEP_PUBLIC_API | No internal references, but may be used as a public API or dynamic provider. | Kept and added to test suite. |
+| `notifications/slack_stub.py` | KEEP_FAIL_CLOSED_STUB | Explicitly listed in `product_capability_inventory.json`. | Kept and added to test suite. |
+| `notifications/telegram_stub.py` | KEEP_FAIL_CLOSED_STUB | No direct references, but logically grouped with slack_stub as fail-closed API stub. | Kept and added to test suite. |
+| `reports/adhoc.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. | Kept and added to test suite. |
+| `risk/position_sizing.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. | Kept and added to test suite. |
+| `safety/policy.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. | Kept and added to test suite. |
+| `scheduler/cron.py` | KEEP_PUBLIC_API | Explicitly listed in `product_capability_inventory.json`. | Kept and added to test suite. |
+| `strategies/base.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. | Kept and added to test suite. |
+| `strategies/breakout.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. | Kept and added to test suite. |
+| `strategies/rsi.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. | Kept and added to test suite. |
+| `tools/contracts.py` | KEEP_COMPAT_SHIM | No internal references, but may act as a compatibility shim. | Kept and added to test suite. |
+| `tools/runtime.py` | KEEP_PUBLIC_API | No direct internal references found, but kept as possible public API. | Kept and added to test suite. |
+| `setup/inline_select.py` | KEEP_PUBLIC_API | Safe to import (`theme` is imported inside functions dynamically). | Kept and added to test suite. |
+| `risk/validation.py` | KEEP_USED_DYNAMICALLY | Actively imported by `tests/test_safety_atlas_blockers.py`. | Kept and added to test suite. |
+| `ai/signal_parser.py` | KEEP_USED_DYNAMICALLY | Actively imported by `tests/test_ai_decision_schema.py`. | Kept and added to test suite. |
+| `providers/openrouter.py` | KEEP_PUBLIC_API | Actively imported by `tests/test_provider_adapters.py`. | Kept and added to test suite. |
+| `brokers/ibkr_stub.py` | KEEP_FAIL_CLOSED_STUB | Referenced in tests, docs, and capability inventory. | Kept and added to test suite. |
 
-Duplicate/merge candidates:
-* `risk/validation.py`
-* `ai/signal_parser.py`
-* `providers/openrouter.py`
-* `ibkr_stub.py`
+# Remaining risk
 
-# Why source modules were not removed now
-
-These files were not removed in this batch because they require API compatibility verification. While static grep searches indicate they may be dead code, there is not yet strong proof they are not used as a public API or loaded dynamically (e.g., via `importlib`). Any removal needs to be provably safe and properly tested.
+All modules have been proven safe to import, preventing `ModuleNotFoundError` crashes. However, because they are kept in place, the repository still retains these files.
 
 # Recommended next batch
 
-1. Verify if the above modules are part of the public API or dynamically loaded by user configurations.
-2. If safe, remove the dead code and run full integration suites to guarantee no runtime behavior changes.
-3. Consolidate the duplicate/merge candidates.
-4. Refactor `tests/test_demo_research_workflow_script.py` by abstracting the mock script generation.
+1. Deep architectural review of whether the `strategies` and `ai` modules can be deprecated via semantic versioning.
+2. Template source-of-truth simplification.
 
 # Commands used for import/reference search
 
