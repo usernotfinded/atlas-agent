@@ -1,0 +1,204 @@
+{
+  "artifact_type": "v068_patch_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.8",
+  "generated_for": "planning",
+  "status": "candidate_selection",
+  "generated_at": "2026-06-09",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Demo Artifact Index",
+      "category": "docs clarity",
+      "priority": "P1",
+      "source": "The paper demo (scripts/demo_paper_workflow.sh) produces a temporary workspace, config, discipline profile, backtest report, and audit directory — but there is no single indexed view of what each artifact proves or where it lives. Reviewers must read the script and multiple docs to reconstruct the artifact map.",
+      "risk": "low",
+      "expected_files": [
+        "docs/demo-artifact-index.md",
+        "docs/demo-paper-workflow.md"
+      ],
+      "acceptance_criteria": "A docs page lists every artifact the demo produces, its path, its content summary, and the safety invariant it demonstrates. Cross-referenced from README and external-reviewer-walkthrough.",
+      "selected_for_v068": true,
+      "reason": "Highest-impact demo auditability improvement. Docs-only; no runtime changes."
+    },
+    {
+      "id": "CAND-002",
+      "title": "Demo Proof Checker",
+      "category": "checker infrastructure",
+      "priority": "P1",
+      "source": "tests/test_demo_proof_layer.py validates static script safety (forbidden phrases, secrets, shebang) but does not verify that demo docs and script remain consistent, or that expected artifacts are documented. A deterministic checker would close this gap without executing the demo.",
+      "risk": "low",
+      "expected_files": [
+        "scripts/check_demo_proof.py",
+        "tests/test_check_demo_proof.py"
+      ],
+      "acceptance_criteria": "Checker validates that demo docs list all script commands, that expected artifacts match script outputs, that symbols are consistent across docs, and that no over-promise claims exist in demo surfaces. Runs locally without credentials or network.",
+      "selected_for_v068": true,
+      "reason": "Prevents doc-script drift and gives reviewers a one-command verification path. No runtime changes."
+    },
+    {
+      "id": "CAND-003",
+      "title": "Reviewer Demo Path Consolidation",
+      "category": "docs clarity",
+      "priority": "P1",
+      "source": "Swarm safety audit found three over-promise issues in public-facing docs: (1) docs/trust/README.md line 83 claims Prepared v0.6.8 release notes and release status documentation — no such docs exist; (2) README.md line 179 claims The 0.6.8 source version on main is prepared — source is 0.6.7; (3) docs/brokers.md line 12 calls PaperBroker production-ready — ambiguous wording for a safety-first framework. Additionally, the README quickstart uses DEMO-SYMBOL while the demo script uses ATLAS-DEMO, causing confusion.",
+      "risk": "low",
+      "expected_files": [
+        "README.md",
+        "docs/trust/README.md",
+        "docs/brokers.md",
+        "docs/external-reviewer-walkthrough.md",
+        "docs/demo-paper-workflow.md"
+      ],
+      "acceptance_criteria": "Over-promise claims are corrected; symbol usage is unified or explicitly explained; duplicate demo instructions across README/walkthrough/demo-doc are consolidated or cross-referenced with canonical pointers; reviewer path is one clean narrative.",
+      "selected_for_v068": true,
+      "reason": "Directly fixes reviewer trust issues discovered by swarm. Docs-only; no runtime changes."
+    },
+    {
+      "id": "CAND-004",
+      "title": "Demo command smoke validation under smoke/local quick tier",
+      "category": "checker infrastructure",
+      "priority": "P2",
+      "source": "The smoke and local quick check tiers validate core safety but do not assert that the demo script exists, is executable, and contains expected commands. Adding a lightweight validation would catch accidental demo script breakage early.",
+      "risk": "low",
+      "expected_files": [
+        "scripts/smoke_check.sh",
+        "scripts/local_quick_check.sh",
+        "tests/test_local_quick_check.py"
+      ],
+      "acceptance_criteria": "Smoke and local quick tiers include a fast demo-script existence and structure check (reusing logic from test_demo_proof_layer.py or check_demo_proof.py if implemented).",
+      "selected_for_v068": true,
+      "reason": "Small, coherent extension of CAND-002 into the tier system. Keeps demo integrity in the fastest gates."
+    },
+    {
+      "id": "CAND-005",
+      "title": "Backtest report schema contract",
+      "category": "docs/checker",
+      "priority": "P2",
+      "source": "tests/backtest/test_backtest_reports.py tests rendering but no JSON schema documents the result.json structure. The render_json_report function injects extra keys (generated_at, disclaimer, report_type) not on BacktestResult, creating a latent Pydantic round-trip mismatch. A schema contract would close the v0.6.3 roadmap gap for JSON schema tests.",
+      "risk": "low",
+      "expected_files": [
+        "docs/backtest-report-schema.md",
+        "src/atlas_agent/backtest/report_schema.py",
+        "tests/backtest/test_backtest_report_schema.py"
+      ],
+      "acceptance_criteria": "Documented schema for result.json; deterministic validation test that engine run → report → schema validation passes; no runtime execution changes.",
+      "selected_for_v068": false,
+      "reason": "Good candidate but extends beyond the public-demo-proof theme. Defer to v0.7.x backtest batch."
+    },
+    {
+      "id": "CAND-006",
+      "title": "Provider preflight deterministic checker",
+      "category": "checker infrastructure",
+      "priority": "P2",
+      "source": "Provider preflight is mature (1026 lines of tests, CI-backed) but there is no single scripts/check_provider_preflight.py for reviewers to verify docs, artifact schemas, and import safety without reading all code.",
+      "risk": "low",
+      "expected_files": [
+        "scripts/check_provider_preflight.py",
+        "docs/security/provider-preflight.md",
+        "tests/test_check_provider_preflight.py"
+      ],
+      "acceptance_criteria": "Checker validates preflight docs exist, AST-scans for forbidden imports, and optionally runs smoke chain into temp dir to validate expected artifacts.",
+      "selected_for_v068": false,
+      "reason": "Good candidate but extends beyond the public-demo-proof theme. Defer to v0.6.9 or v0.7.x provider batch."
+    },
+    {
+      "id": "CAND-007",
+      "title": "Dashboard validation docs polish",
+      "category": "docs clarity",
+      "priority": "P3",
+      "source": "The dashboard is fully implemented (runtime HTML generation, tested, ~1000 lines). docs/dashboard.md is only 43 lines and lacks usage examples. No code changes are needed.",
+      "risk": "none",
+      "expected_files": [
+        "docs/dashboard.md"
+      ],
+      "acceptance_criteria": "Expanded usage examples and What you'll see section.",
+      "selected_for_v068": false,
+      "reason": "Docs-only but out of demo-proof theme. Defer to v0.7.x dashboard batch."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution unlock",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-005",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Automatic skill activation",
+      "reason": "Skill candidates remain manually reviewed and offline."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Automatic learning execution",
+      "reason": "Learning suggestions remain offline and manually reviewed."
+    },
+    {
+      "id": "REJ-008",
+      "title": "Version bump to 0.6.8",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-009",
+      "title": "Creation of docs/releases/v0.6.8.md",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-010",
+      "title": "Creation of docs/trust/v0.6.8-status.md",
+      "reason": "Not authorized in selection-only batch."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading remains disabled by default.",
+    "Live submit remains disabled by default.",
+    "Provider execution remains disabled by default.",
+    "Broker execution remains disabled by default.",
+    "Risk gates remain deterministic and unchanged.",
+    "Approval queue behavior remains unchanged.",
+    "Kill-switch behavior remains unchanged.",
+    "Human approval remains required for live order flow.",
+    "Credentials are not loaded unless explicitly configured.",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
+  ],
+  "constraints": [
+    "Version is not bumped to 0.6.8 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.8.md does not exist yet",
+    "docs/trust/v0.6.8-status.md does not exist yet",
+    "scripts/check_v068_release_prep.py and matching tests do not exist yet",
+    "No tag, GitHub release, or PyPI publish yet",
+    "No runtime trading behavior changes"
+  ],
+  "release_criteria": [
+    "Accepted candidates are implemented",
+    "dev_check, ci_check, and release_check --quick pass locally",
+    "CI on main is green after the prep commit is pushed",
+    "Version is bumped to 0.6.8 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.8.md and docs/trust/v0.6.8-status.md are created",
+    "CHANGELOG.md has a [0.6.8] entry",
+    "scripts/check_v068_release_prep.py and matching tests are created",
+    "Protected boundary diff is empty",
+    "Forbidden claims scan is clean",
+    "Owner approval is obtained for tag cutover"
+  ]
+}
