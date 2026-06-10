@@ -75,9 +75,9 @@ class ReleaseMetadata:
 
 
 RELEASE_METADATA = ReleaseMetadata(
-    expected_source_version="0.6.7",
+    expected_source_version="0.6.8",
     public_release="v0.6.7",
-    next_unrequested_release_tag="v0.6.8",
+    next_unrequested_release_tag="v0.6.9",
 )
 
 PROTECTED_BOUNDARIES = (

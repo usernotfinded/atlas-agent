@@ -36,7 +36,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-EXPECTED_VERSION = "0.6.7"
+EXPECTED_VERSION = "0.6.8"
 POST_HOTFIX_DEV_VERSION = "0.6.1.dev0"
 HISTORICAL_STABLE_VERSION = "0.5.8"
 HISTORICAL_STABLE_TAG = "v0.5.8"

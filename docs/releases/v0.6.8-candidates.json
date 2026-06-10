@@ -11,7 +11,7 @@
       "title": "Demo Artifact Index",
       "category": "docs clarity",
       "priority": "P1",
-      "source": "The paper demo (scripts/demo_paper_workflow.sh) produces a temporary workspace, config, discipline profile, backtest report, and audit directory — but there is no single indexed view of what each artifact proves or where it lives. Reviewers must read the script and multiple docs to reconstruct the artifact map.",
+      "source": "The paper demo (scripts/demo_paper_workflow.sh) produces a temporary workspace, config, discipline profile, backtest report, and audit directory \u2014 but there is no single indexed view of what each artifact proves or where it lives. Reviewers must read the script and multiple docs to reconstruct the artifact map.",
       "risk": "low",
       "expected_files": [
         "docs/demo-artifact-index.md",
@@ -43,7 +43,7 @@
       "title": "Reviewer Demo Path Consolidation",
       "category": "docs clarity",
       "priority": "P1",
-      "source": "Swarm safety audit found three over-promise issues in public-facing docs: (1) docs/trust/README.md line 83 claims Prepared v0.6.8 release notes and release status documentation — no such docs exist; (2) README.md line 179 claims The 0.6.8 source version on main is prepared — source is 0.6.7; (3) docs/brokers.md line 12 calls PaperBroker production-ready — ambiguous wording for a safety-first framework. Additionally, the README quickstart uses DEMO-SYMBOL while the demo script uses ATLAS-DEMO, causing confusion.",
+      "source": "Swarm safety audit found three over-promise issues in public-facing docs: (1) docs/trust/README.md line 83 claims Prepared v0.6.8 release notes and release status documentation \u2014 no such docs exist; (2) README.md line 179 claims The 0.6.8 source version on main is prepared \u2014 source is 0.6.7; (3) docs/brokers.md line 12 calls PaperBroker production-ready \u2014 ambiguous wording for a safety-first framework. Additionally, the README quickstart uses DEMO-SYMBOL while the demo script uses ATLAS-DEMO, causing confusion.",
       "risk": "low",
       "expected_files": [
         "README.md",
@@ -86,7 +86,7 @@
         "src/atlas_agent/backtest/report_schema.py",
         "tests/backtest/test_backtest_report_schema.py"
       ],
-      "acceptance_criteria": "Documented schema for result.json; deterministic validation test that engine run → report → schema validation passes; no runtime execution changes.",
+      "acceptance_criteria": "Documented schema for result.json; deterministic validation test that engine run \u2192 report \u2192 schema validation passes; no runtime execution changes.",
       "selected_for_v068": false,
       "reason": "Good candidate but extends beyond the public-demo-proof theme. Defer to v0.7.x backtest batch."
     },
@@ -186,10 +186,10 @@
     "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
   ],
   "constraints": [
-    "Version is not bumped to 0.6.8 in pyproject.toml and src/atlas_agent/__init__.py",
-    "docs/releases/v0.6.8.md does not exist yet",
-    "docs/trust/v0.6.8-status.md does not exist yet",
-    "scripts/check_v068_release_prep.py and matching tests do not exist yet",
+    "Version is bumped to 0.6.8 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.8.md created",
+    "docs/trust/v0.6.8-status.md created",
+    "scripts/check_v068_release_prep.py and matching tests created",
     "No tag, GitHub release, or PyPI publish yet",
     "No runtime trading behavior changes"
   ],

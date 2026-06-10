@@ -8,17 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Safety
+
+## [0.6.8] - 2026-06-10
+
+### Added
 - Documented v0.6.8 public-demo-proof candidate selection (`docs/releases/v0.6.8-candidates.md`, `docs/releases/v0.6.8-candidates.json`): CAND-001 (Demo Artifact Index), CAND-002 (Demo Proof Checker), CAND-003 (Reviewer Demo Path Consolidation), and CAND-004 (Demo command smoke validation under smoke/local quick tier) accepted.
 - Added `docs/demo-artifact-index.md` (CAND-001), a complete indexed view of every paper-demo artifact, its path, content summary, and safety invariant. Cross-referenced from `README.md`, `docs/demo-paper-workflow.md`, and `docs/external-reviewer-walkthrough.md`.
 - Added `scripts/check_demo_proof.py` and `tests/test_demo_proof_checker.py` (CAND-002), a deterministic demo proof checker that validates demo documentation, artifact index consistency, safety invariants, and script/doc alignment without running provider, broker, or trading paths.
 - Added `scripts/check_demo_command_smoke.py` and `tests/test_demo_command_smoke.py` (CAND-004), a lightweight static smoke checker that validates the demo script exists, is executable, is referenced in docs, contains paper-only wording, and excludes forbidden high-risk patterns. Integrated into `scripts/smoke_check.sh` and `scripts/local_quick_check.sh`.
+- Created `docs/releases/v0.6.8.md` release notes and `docs/trust/v0.6.8-status.md` trust status.
+- Added `scripts/check_v068_release_prep.py` and `tests/test_check_v068_release_prep.py` for v0.6.8 release-prep state validation.
 
 ### Changed
 - Consolidated the reviewer demo path for v0.6.8 CAND-003, aligning README, reviewer walkthrough, demo workflow, artifact index, and demo proof checker references. Fixed README quickstart to use `ATLAS-DEMO` consistently with the demo script, corrected stale `0.6.8` source-version-prepared wording in README, removed over-promise v0.6.8 release-notes-prepared claim from trust center, and replaced ambiguous `production-ready` wording in brokers doc with safer phrasing.
+- Bumped package/source version from `0.6.7` to `0.6.8`.
+- Updated public docs and checker metadata to reflect `v0.6.7` as the current public GitHub release and `0.6.8` as the source version being prepared.
+- Updated `scripts/check_version_consistency.py`, `scripts/check_trust_center.py`, `scripts/check_public_launch_readiness.py`, `scripts/check_stable_release_decision.py`, `scripts/check_final_rc_audit.py`, `scripts/check_reviewer_onboarding.py`, `scripts/build_release_evidence_bundle.py`, and `scripts/doctor.py` package version metadata from `0.6.7` to `0.6.8`.
+- Updated `scripts/check_onboarding_docs.py` current package version from `0.6.7` to `0.6.8` and next planned release from `v0.6.8` to `v0.6.9`.
+- Updated `scripts/main_health.py` expected source version from `0.6.7` to `0.6.8` and next unrequested release tag from `v0.6.8` to `v0.6.9`.
+- Updated `scripts/check_generated_artifacts.py` tracked versioned evidence prefixes to include `v0.6.8`.
 
 ### Fixed
-- Corrected v0.6.7 release-prep public documentation status drift before tag cutover.
-- Completed v0.6.7 post-release hygiene after GitHub release cutover.
 
 ### Safety
 

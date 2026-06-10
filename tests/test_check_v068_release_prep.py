@@ -1,4 +1,4 @@
-"""Tests for v0.6.7 release prep checker.
+"""Tests for v0.6.8 release prep checker.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
@@ -17,14 +17,14 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "check_v067_release_prep.py"
+SCRIPT = ROOT / "scripts" / "check_v068_release_prep.py"
 
 
 def _load_script_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("check_v067_release_prep", SCRIPT)
+    spec = importlib.util.spec_from_file_location("check_v068_release_prep", SCRIPT)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["check_v067_release_prep"] = mod
+    sys.modules["check_v068_release_prep"] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -63,7 +63,7 @@ class TestPlanningModeValid:
     def test_json_has_required_keys(self) -> None:
         result = _run_script("--json")
         data = json.loads(result.stdout)
-        assert data["artifact_type"] == "v067_release_prep_report"
+        assert data["artifact_type"] == "v068_release_prep_report"
         assert data["schema_version"] == 1
         assert "mode" in data
         assert "checks" in data
@@ -73,9 +73,9 @@ class TestPlanningModeValid:
     def test_missing_planning_version_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_pyproject = tmp_path / "pyproject.toml"
-        fake_pyproject.write_text('version = "0.6.7"\n')
+        fake_pyproject.write_text('version = "0.6.8"\n')
         fake_init = tmp_path / "__init__.py"
-        fake_init.write_text('__version__ = "0.6.7"\n')
+        fake_init.write_text('__version__ = "0.6.8"\n')
         original_pyproject = mod.PYPROJECT
         original_init = mod.INIT_PY
         try:
@@ -83,15 +83,15 @@ class TestPlanningModeValid:
             mod.INIT_PY = fake_init
             code, result = mod.run_check()
             assert code == 1
-            assert any("0.6.6" in e for e in result["errors"])
+            assert any("0.6.7" in e for e in result["errors"])
         finally:
             mod.PYPROJECT = original_pyproject
             mod.INIT_PY = original_init
 
     def test_release_notes_exist_in_planning_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
-        fake_notes = tmp_path / "v0.6.7.md"
-        fake_notes.write_text("# v0.6.7\n")
+        fake_notes = tmp_path / "v0.6.8.md"
+        fake_notes.write_text("# v0.6.8\n")
         original = mod.RELEASE_NOTES
         try:
             mod.RELEASE_NOTES = fake_notes
@@ -104,29 +104,29 @@ class TestPlanningModeValid:
     def test_changelog_has_release_entry_in_planning_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_changelog = tmp_path / "CHANGELOG.md"
-        fake_changelog.write_text("# Changelog\n\n## [0.6.7] - 2026-06-08\n")
+        fake_changelog.write_text("# Changelog\n\n## [0.6.8] - 2026-06-10\n")
         original = mod.CHANGELOG
         try:
             mod.CHANGELOG = fake_changelog
             code, result = mod.run_check()
             assert code == 1
-            assert any("must not contain [0.6.7]" in e for e in result["errors"])
+            assert any("must not contain [0.6.8]" in e for e in result["errors"])
         finally:
             mod.CHANGELOG = original
 
     def test_unselected_candidate_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
-        fake_json = tmp_path / "v0.6.7-candidates.json"
+        fake_json = tmp_path / "v0.6.8-candidates.json"
         fake_json.write_text(
             json.dumps({
-                "artifact_type": "v067_patch_candidate_inventory",
+                "artifact_type": "v068_patch_candidate_inventory",
                 "schema_version": 1,
-                "release": "v0.6.7",
+                "release": "v0.6.8",
                 "candidates": [
                     {
                         "id": "CAND-010",
-                        "selected_for_v067": True,
-                        "implementation_status": "not implemented",
+                        "selected_for_v068": True,
+                        "implemented": False,
                     }
                 ],
                 "rejected": [],
@@ -141,41 +141,41 @@ class TestPlanningModeValid:
         finally:
             mod.CANDIDATES_JSON = original
 
-    def test_v066_history_missing_fails(self, tmp_path: Path) -> None:
+    def test_v067_history_missing_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
-        original_notes = mod.V066_RELEASE_NOTES
-        original_status = mod.V066_TRUST_STATUS
+        original_notes = mod.V067_RELEASE_NOTES
+        original_status = mod.V067_TRUST_STATUS
         try:
-            mod.V066_RELEASE_NOTES = tmp_path / "missing-v066.md"
-            mod.V066_TRUST_STATUS = tmp_path / "missing-v066-status.md"
+            mod.V067_RELEASE_NOTES = tmp_path / "missing-v067.md"
+            mod.V067_TRUST_STATUS = tmp_path / "missing-v067-status.md"
             code, result = mod.run_check()
             assert code == 1
-            assert any("v0.6.6" in e for e in result["errors"])
+            assert any("v0.6.7" in e for e in result["errors"])
         finally:
-            mod.V066_RELEASE_NOTES = original_notes
-            mod.V066_TRUST_STATUS = original_status
+            mod.V067_RELEASE_NOTES = original_notes
+            mod.V067_TRUST_STATUS = original_status
 
 
 class TestReleasePrepMode:
-    def test_release_prep_mode_fails_on_real_repo_after_bump(self) -> None:
-        """Release-prep mode fails on real repo because source is now 0.6.8."""
+    def test_release_prep_mode_passes_on_real_repo(self) -> None:
+        """Release-prep mode passes on real repo because v0.6.8 artifacts are present."""
         result = _run_script("--release-prep")
-        assert result.returncode == 1, result.stdout + result.stderr
-        assert "FAIL" in result.stdout
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "PASS" in result.stdout
 
-    def test_release_prep_json_fails_on_real_repo_after_bump(self) -> None:
+    def test_release_prep_json_passes_on_real_repo(self) -> None:
         result = _run_script("--release-prep", "--json")
-        assert result.returncode == 1, result.stderr
+        assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is False
+        assert data["valid"] is True
         assert data["mode"] == "release-prep"
 
     def test_release_prep_version_missing_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_pyproject = tmp_path / "pyproject.toml"
-        fake_pyproject.write_text('version = "0.6.6"\n')
+        fake_pyproject.write_text('version = "0.6.7"\n')
         fake_init = tmp_path / "__init__.py"
-        fake_init.write_text('__version__ = "0.6.6"\n')
+        fake_init.write_text('__version__ = "0.6.7"\n')
         original_pyproject = mod.PYPROJECT
         original_init = mod.INIT_PY
         try:
@@ -183,7 +183,7 @@ class TestReleasePrepMode:
             mod.INIT_PY = fake_init
             code, result = mod.run_check(release_prep=True)
             assert code == 1
-            assert any("0.6.7" in e for e in result["errors"])
+            assert any("0.6.8" in e for e in result["errors"])
         finally:
             mod.PYPROJECT = original_pyproject
             mod.INIT_PY = original_init
@@ -213,7 +213,7 @@ class TestReleasePrepMode:
     def test_release_prep_missing_changelog_entry_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_changelog = tmp_path / "CHANGELOG.md"
-        fake_changelog.write_text("# Changelog\n\n## [0.6.6] - 2026-06-07\n")
+        fake_changelog.write_text("# Changelog\n\n## [0.6.7] - 2026-06-09\n")
         original = mod.CHANGELOG
         try:
             mod.CHANGELOG = fake_changelog
@@ -225,9 +225,9 @@ class TestReleasePrepMode:
 
     def test_release_prep_unsafe_claim_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
-        fake_notes = tmp_path / "v0.6.7.md"
+        fake_notes = tmp_path / "v0.6.8.md"
         fake_notes.write_text(
-            "# v0.6.7\n\nThis release enables autonomous trading for everyone.\n"
+            "# v0.6.8\n\nThis release enables autonomous trading for everyone.\n"
         )
         original = mod.RELEASE_NOTES
         try:
@@ -238,19 +238,18 @@ class TestReleasePrepMode:
         finally:
             mod.RELEASE_NOTES = original
 
-
     def test_release_prep_readme_stale_version_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         original_readme = mod.README
         try:
             fake_readme = tmp_path / "README.md"
             fake_readme.write_text(
-                "# README\n\n> **Current Status (v0.6.6)** — package/source version is `0.6.6`;\n"
+                "# README\n\n> **Current Status (v0.6.7)** — package/source version is `0.6.7`;\n"
             )
             mod.README = fake_readme
             code, result = mod.run_check(release_prep=True)
             assert code == 1
-            assert any("package/source version is 0.6.7" in e for e in result["errors"])
+            assert any("package/source version is 0.6.8" in e for e in result["errors"])
         finally:
             mod.README = original_readme
 
@@ -260,12 +259,12 @@ class TestReleasePrepMode:
         try:
             fake_security = tmp_path / "SECURITY.md"
             fake_security.write_text(
-                "# Security\n\n| 0.6.6 (main) | Yes — active development |\n"
+                "# Security\n\n| 0.6.7 (main) | Yes — active development |\n"
             )
             mod.SECURITY = fake_security
             code, result = mod.run_check(release_prep=True)
             assert code == 1
-            assert any("0.6.7 (main)" in e for e in result["errors"])
+            assert any("0.6.8 (main)" in e for e in result["errors"])
         finally:
             mod.SECURITY = original_security
 
@@ -275,14 +274,50 @@ class TestReleasePrepMode:
         try:
             fake_trust = tmp_path / "README.md"
             fake_trust.write_text(
-                "# Trust\n\n- Source package version on `main`: `0.6.6`\n"
+                "# Trust\n\n- Source package version on `main`: `0.6.7`\n"
             )
             mod.TRUST_README = fake_trust
             code, result = mod.run_check(release_prep=True)
             assert code == 1
-            assert any("source package version on main is 0.6.7" in e for e in result["errors"])
+            assert any("source package version on main is 0.6.8" in e for e in result["errors"])
         finally:
             mod.TRUST_README = original_trust_readme
+
+    def test_release_prep_missing_demo_proof_checker_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original = mod.DEMO_PROOF_CHECKER
+        try:
+            mod.DEMO_PROOF_CHECKER = tmp_path / "nonexistent.py"
+            code, result = mod.run_check(release_prep=True)
+            assert code == 1
+            assert any("Demo proof checker missing" in e for e in result["errors"])
+        finally:
+            mod.DEMO_PROOF_CHECKER = original
+
+    def test_release_prep_missing_demo_command_smoke_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original = mod.DEMO_COMMAND_SMOKE
+        try:
+            mod.DEMO_COMMAND_SMOKE = tmp_path / "nonexistent.py"
+            code, result = mod.run_check(release_prep=True)
+            assert code == 1
+            assert any("Demo command smoke checker missing" in e for e in result["errors"])
+        finally:
+            mod.DEMO_COMMAND_SMOKE = original
+
+    def test_release_prep_demo_not_referenced_in_notes_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        original = mod.RELEASE_NOTES
+        try:
+            fake_notes = tmp_path / "v0.6.8.md"
+            fake_notes.write_text("# v0.6.8\n\nSome release notes without demo references.\n")
+            mod.RELEASE_NOTES = fake_notes
+            code, result = mod.run_check(release_prep=True)
+            assert code == 1
+            assert any("Release notes do not reference check_demo_proof" in e for e in result["errors"])
+            assert any("Release notes do not reference check_demo_command_smoke" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_NOTES = original
 
 
 class TestDeterminism:

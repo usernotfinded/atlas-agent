@@ -206,7 +206,7 @@ class TestReadmeCurrentVersion:
 
     def test_readme_has_current_status_passes(self) -> None:
         mod = _load_script_module()
-        text = "# README\n\n> **Current Status (v0.6.7)**\n\nNot financial advice.\n"
+        text = "# README\n\n> **Current Status (v0.6.8)**\n\nNot financial advice.\n"
         violations = mod._check_readme_current_version(text, "README.md")
         assert violations == []
 
@@ -228,7 +228,7 @@ class TestStaleCurrentStatusInReadme:
 
     def test_current_status_passes(self) -> None:
         mod = _load_script_module()
-        text = "# README\n\n> **Current Status (v0.6.7)**\n\nNot financial advice.\n"
+        text = "# README\n\n> **Current Status (v0.6.8)**\n\nNot financial advice.\n"
         violations = mod._check_stale_current_status_in_readme(text, "README.md")
         assert violations == []
 

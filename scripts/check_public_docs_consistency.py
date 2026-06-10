@@ -120,7 +120,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.6.7"
+CURRENT_VERSION = "v0.6.8"
 
 # Release notes directory.
 RELEASES_DIR = REPO_ROOT / "docs" / "releases"

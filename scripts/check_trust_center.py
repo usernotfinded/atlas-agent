@@ -19,7 +19,7 @@ from typing import Iterable
 
 
 CURRENT_RELEASE = "v0.6.7"
-PACKAGE_VERSION = "0.6.7"
+PACKAGE_VERSION = "0.6.8"
 TRUST_README = Path("docs/trust/README.md")
 TRUST_STATUS = Path("docs/trust/v0.6.7-status.md")
 
