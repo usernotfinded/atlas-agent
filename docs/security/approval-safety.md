@@ -11,10 +11,17 @@ Atlas does **not** auto-submit live orders by default. Any trading signals gener
 A human operator must explicitly review and approve a pending order before it can be submitted to a live broker. Approvals require an active command invocation (e.g., `atlas approve-order`), preventing accidental or passive read-based approvals.
 
 ### 3. Cryptographic Tamper Detection
-Pending orders use strong SHA-256 hashes to bind the original order payload to the approval decision. 
+Pending orders use strong SHA-256 hashes to bind the original order payload to the approval decision.
 - The `order_hash` ensures the core payload (symbol, side, quantity, etc.) is immutable.
 - The `approval_hash` binds the `order_hash` with the approval status, timestamp, actor, and expiration.
 Any accidental or naive tampering with the pending JSON file will immediately invalidate the order.
+
+### 3a. Optional HMAC Hardening (Live Submit)
+For environments that require stronger integrity guarantees, Atlas supports optional HMAC-SHA256 approval hashes via the `ATLAS_APPROVAL_SECRET_KEY` environment variable.
+- When the secret is configured, new pending orders use `approval_hash_alg: hmac-sha256`.
+- Live submit enforces HMAC-backed approvals and fails closed if the secret is configured but the order was approved without HMAC.
+- Paper, demo, and reviewer workflows continue to work without the secret; legacy SHA-256 approvals remain valid when HMAC is not configured.
+- The secret is never logged, printed, or committed.
 
 ### 4. Deterministic Risk Gates
 Passing the initial risk gates during order generation does not guarantee execution. During final submission (`atlas submit-approved-order`), Atlas re-evaluates the order against the `RiskManager` to ensure market prices and portfolio exposure still comply with strict safety limits.

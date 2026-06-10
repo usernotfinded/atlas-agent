@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional, Literal
 
 from atlas_agent.audit.chain import compute_event_hash
-from atlas_agent.audit.manifest import compute_root_hash, create_initial_manifest
+from atlas_agent.audit.manifest import (
+    compute_root_hash,
+    create_initial_manifest,
+    _rolling_hash_step,
+)
 from atlas_agent.audit.models import AuditEvent, AuditEventType, AuditManifest
 from atlas_agent.audit.redaction import redact_payload
+
+logger = logging.getLogger(__name__)
 
 
 class AuditWriter:
@@ -32,6 +39,7 @@ class AuditWriter:
         
         if self.audit_path.exists():
             # Try to recover last hash from the last line
+            recovery_error: Exception | None = None
             try:
                 with open(self.audit_path, "rb") as f:
                     try:
@@ -40,14 +48,22 @@ class AuditWriter:
                             f.seek(-2, os.SEEK_CUR)
                     except OSError:
                         f.seek(0)
-                        
+
                     last_line = f.readline().decode("utf-8")
                     if last_line:
                         last_event = AuditEvent.model_validate_json(last_line)
                         self.last_hash = last_event.event_hash
-            except Exception:
-                # If recovery fails, we start fresh or with None last_hash
-                pass
+            except (OSError, json.JSONDecodeError, ValueError) as exc:
+                recovery_error = exc
+
+            if recovery_error is not None:
+                logger.warning(
+                    "Audit log recovery failed for %s (%s: %s). "
+                    "Starting fresh chain; previous hash will be None.",
+                    self.audit_path.name,
+                    type(recovery_error).__name__,
+                    recovery_error,
+                )
                 
         self._initialized = True
 
@@ -114,6 +130,11 @@ class AuditWriter:
                 self.current_manifest.first_event_hash = event.event_hash
             self.current_manifest.event_count += 1
             self.current_manifest.final_event_hash = event.event_hash
+            # Rolling root binds every intermediate event hash into the manifest
+            prev = self.current_manifest.event_hash_rolling_root
+            self.current_manifest.event_hash_rolling_root = _rolling_hash_step(
+                prev, event.event_hash
+            )
         
         with open(self.audit_path, "a", encoding="utf-8") as f:
             f.write(event.model_dump_json() + "\n")

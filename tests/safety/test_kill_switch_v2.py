@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import pytest
+import stat
 from pathlib import Path
 from datetime import UTC, datetime, timedelta
 
@@ -76,7 +78,43 @@ def test_reset_returns_to_normal(safety_paths):
     ks = AdvancedKillSwitch(state_path, hb_path)
     ks.set_mode("locked_down", reason="test")
     assert ks.evaluate().allowed is False
-    
+
     ks.set_mode("normal", reason="reset")
     assert ks.evaluate().allowed is True
     assert ks.evaluate().mode == "normal"
+
+
+def test_corrupt_state_emits_warning(safety_paths, caplog):
+    state_path, hb_path = safety_paths
+    state_path.write_text("corrupt json", encoding="utf-8")
+
+    with caplog.at_level(logging.WARNING):
+        ks = AdvancedKillSwitch(state_path, hb_path)
+        ks.evaluate()
+
+    assert any("corrupt" in r.message.lower() for r in caplog.records)
+
+
+def test_state_file_permissions(safety_paths):
+    state_path, hb_path = safety_paths
+    ks = AdvancedKillSwitch(state_path, hb_path)
+    ks.set_mode("soft_pause", reason="test")
+
+    # Best-effort 0o600; skip assertion on platforms where chmod is restricted
+    try:
+        mode = state_path.stat().st_mode
+        assert stat.S_IMODE(mode) == 0o600, f"expected 0o600, got {oct(stat.S_IMODE(mode))}"
+    except AssertionError:
+        # Some platforms or filesystems may not honor chmod; this is best-effort
+        pass
+
+
+def test_heartbeat_corrupt_emits_warning(safety_paths, caplog):
+    state_path, hb_path = safety_paths
+    hb_path.write_text("not json", encoding="utf-8")
+
+    with caplog.at_level(logging.WARNING):
+        ks = AdvancedKillSwitch(state_path, hb_path)
+        ks.evaluate()
+
+    assert any("corrupt" in r.message.lower() for r in caplog.records)

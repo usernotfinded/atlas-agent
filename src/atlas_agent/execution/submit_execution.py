@@ -14,6 +14,7 @@ from atlas_agent.execution.approval import (
     ApprovalManager,
     InvalidApprovalIdError,
     InvalidPendingOrderError,
+    assert_live_hmac_approval,
 )
 from atlas_agent.execution.order import Order
 from atlas_agent.execution.quotes import (
@@ -491,6 +492,25 @@ def run_submit_execution(
             message=f"Approval {expiry_reason}.",
         )
     gates["not_expired"] = "pass"
+
+    # 6a. Require HMAC-backed approval for live submit
+    try:
+        assert_live_hmac_approval(payload)
+    except InvalidPendingOrderError as exc:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "hmac_approval_missing", "hmac_approval",
+        )
+        return SubmitExecutionReport(
+            ok=False,
+            status="blocked",
+            order_id=order_id,
+            gates={**gates, "hmac_approval": "fail"},
+            blocked_reason="hmac_approval_missing",
+            message=str(exc),
+        )
+    gates["hmac_approval"] = "pass"
 
     # 7. Require live trading enabled
     if not getattr(config, "enable_live_trading", False):

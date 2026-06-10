@@ -122,6 +122,15 @@ Run this on paper mode before any live rollout:
 4. Disable kill switch only after explicit operator review (and TOTP when required).
 5. Resume with paper mode first, then re-enable live mode only after safety checks.
 
+## State File Hardening
+
+The Advanced Kill Switch (v2) and heartbeat manager write state atomically and set restrictive file permissions where supported:
+
+- **Atomic writes**: state is written to a temporary file and then renamed into place, preventing partially-written files on crash.
+- **File permissions**: best-effort `0o600` (owner read/write only) is applied after writing.
+- **Corrupt state handling**: if a state file is unreadable or malformed, the system logs a visible warning and fails closed to `locked_down`.
+- **No encryption by default**: state files do not use application-level encryption. For additional protection, use OS-level full-disk encryption and restrict access to the runtime user.
+
 ## Notes
 
 - Kill-switch transitions are idempotent.

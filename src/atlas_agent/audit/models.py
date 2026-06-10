@@ -78,6 +78,7 @@ class VerificationResult(BaseModel):
     events_checked: int
     first_error_index: Optional[int] = None
     errors: List[str] = Field(default_factory=list)
+    rolling_root: Optional[str] = None
 
 
 class AuditManifest(BaseModel):
@@ -92,6 +93,7 @@ class AuditManifest(BaseModel):
     root_hash: Optional[str] = None
     final_status: Optional[str] = None
     schema_version: int = 2
+    event_hash_rolling_root: Optional[str] = None
     diagnostics: dict[str, Any] = Field(default_factory=dict)
 
 

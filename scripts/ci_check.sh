@@ -37,7 +37,14 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "4. feedback intake check"
+echo "4. env template checks"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_env_templates.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "5. feedback intake check"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_feedback_intake.py
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
@@ -219,6 +226,7 @@ SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_final_rc_audit.py -q
 "$PYTHON_BIN" -m pytest tests/test_stable_release_decision.py -q
 "$PYTHON_BIN" -m pytest tests/test_v0581_hotfix_cutover.py -q
+"$PYTHON_BIN" -m pytest tests/test_env_templates.py -q
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

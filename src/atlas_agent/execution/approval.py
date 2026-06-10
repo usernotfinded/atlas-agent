@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import math
+import os
 import re
 from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
@@ -10,6 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from atlas_agent.execution.order import Order
+
+
+def _get_approval_secret() -> str | None:
+    """Read optional ATLAS_APPROVAL_SECRET_KEY from environment."""
+    return os.environ.get("ATLAS_APPROVAL_SECRET_KEY") or None
 
 
 class InvalidApprovalIdError(ValueError):
@@ -24,9 +31,15 @@ _SAFE_APPROVAL_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
 class ApprovalManager:
-    def __init__(self, pending_dir: str | Path = "pending_orders") -> None:
+    def __init__(
+        self,
+        pending_dir: str | Path = "pending_orders",
+        *,
+        secret_key: str | None = None,
+    ) -> None:
         self.pending_dir = Path(pending_dir)
         self.pending_dir.mkdir(parents=True, exist_ok=True)
+        self._secret_key = secret_key if secret_key is not None else _get_approval_secret()
 
     def create_pending_order(self, order: Order, *, ttl_minutes: int = 30) -> Path:
         now = datetime.now(UTC)
@@ -54,6 +67,7 @@ class ApprovalManager:
             "fill_price": None,
             "submitted_at": None,
         }
+        payload["approval_hash_alg"] = "hmac-sha256" if self._secret_key else "sha256"
         payload["approval_hash"] = _compute_approval_hash(
             order_hash=order_hash,
             approved=False,
@@ -62,6 +76,7 @@ class ApprovalManager:
             status="pending_approval",
             status_transitions=transitions,
             expires_at=expires_at.isoformat(),
+            secret_key=self._secret_key,
         )
         path = self.path_for(order.id)
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
@@ -93,6 +108,7 @@ class ApprovalManager:
         payload["status_transitions"].append(
             {"status": "approved", "at": now.isoformat(), "actor": actor}
         )
+        payload["approval_hash_alg"] = "hmac-sha256" if self._secret_key else "sha256"
         payload["approval_hash"] = _compute_approval_hash(
             order_hash=payload["order_hash"],
             approved=True,
@@ -101,6 +117,7 @@ class ApprovalManager:
             status="approved",
             status_transitions=payload["status_transitions"],
             expires_at=payload["expires_at"],
+            secret_key=self._secret_key,
         )
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return path
@@ -127,6 +144,10 @@ class ApprovalManager:
             approval_hash = payload.get("approval_hash")
             if not approval_hash or not isinstance(approval_hash, str):
                 return False
+            # Verify using the algorithm recorded in the payload so legacy orders
+            # without approval_hash_alg still verify under plain SHA-256.
+            alg = payload.get("approval_hash_alg", "sha256")
+            secret_key = self._secret_key if alg == "hmac-sha256" else None
             recomputed = _compute_approval_hash(
                 order_hash=payload.get("order_hash", ""),
                 approved=payload.get("approved"),
@@ -135,6 +156,7 @@ class ApprovalManager:
                 status=payload.get("status", ""),
                 status_transitions=payload.get("status_transitions", []),
                 expires_at=payload.get("expires_at", ""),
+                secret_key=secret_key,
             )
             if approval_hash != recomputed:
                 return False
@@ -168,7 +190,7 @@ class ApprovalManager:
             raise InvalidPendingOrderError(
                 "unsupported pending order schema version"
             )
-        _validate_v2_payload_integrity(payload)
+        _validate_v2_payload_integrity(payload, secret_key=self._secret_key)
         return payload
 
     def path_for(self, order_id: str) -> Path:
@@ -201,13 +223,12 @@ def _compute_approval_hash(
     status: str,
     status_transitions: list[dict[str, Any]],
     expires_at: str,
+    secret_key: str | None = None,
 ) -> str:
-    """Compute sha256 of canonical JSON of approval decision fields.
+    """Compute tamper-evident hash of approval decision fields.
 
-    This binds order_hash, approved, approved_at, approval_actor, status,
-    status_transitions, and expires_at into a single tamper-evident value.
-    It is NOT cryptographic authentication against a local write-capable
-    attacker; it only detects accidental or naive tampering.
+    When secret_key is provided, uses HMAC-SHA256 for authentication.
+    When absent, falls back to plain SHA256 for paper/demo compatibility.
     """
     canonical = json.dumps(
         {
@@ -222,7 +243,10 @@ def _compute_approval_hash(
         sort_keys=True,
         separators=(",", ":"),
     )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    payload = canonical.encode("utf-8")
+    if secret_key:
+        return hmac.new(secret_key.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _is_number(value: Any) -> bool:
@@ -397,12 +421,19 @@ def _validate_v2_top_level_schema(payload: dict[str, Any]) -> None:
     _require_optional_iso_datetime(payload.get("submitted_at"), "pending order schema invalid")
 
 
-def _validate_v2_payload_integrity(payload: dict[str, Any]) -> None:
+def _validate_v2_payload_integrity(
+    payload: dict[str, Any],
+    secret_key: str | None = None,
+) -> None:
     """Validate that a v2 pending order's order_hash matches its order payload
     and that the order payload is structurally valid.
 
     For approved orders, also validates the approval_hash to detect tampering
-    with approval decision fields.
+    with approval decision fields. When secret_key is provided, HMAC-SHA256
+    hashes are verified; when absent, plain SHA256 hashes are verified.
+    If the payload uses HMAC but no secret_key is given, the approval hash
+    presence is checked but the cryptographic verification is deferred to
+    the caller that holds the secret.
 
     Raises InvalidPendingOrderError on any mismatch or missing required field.
     """
@@ -428,17 +459,24 @@ def _validate_v2_payload_integrity(payload: dict[str, Any]) -> None:
         actor = payload.get("approval_actor")
         if not actor or actor == "unknown":
             raise InvalidPendingOrderError("invalid approval_actor for approved order")
-        recomputed_approval = _compute_approval_hash(
-            order_hash=stored_hash,
-            approved=approved,
-            approved_at=payload.get("approved_at"),
-            approval_actor=actor,
-            status=status,
-            status_transitions=payload.get("status_transitions", []),
-            expires_at=payload.get("expires_at", ""),
-        )
-        if approval_hash != recomputed_approval:
-            raise InvalidPendingOrderError("approval hash mismatch")
+        alg = payload.get("approval_hash_alg", "sha256")
+        # If HMAC is used and no secret is provided, skip cryptographic verification
+        # but still validate schema and actor presence above.
+        if alg == "hmac-sha256" and secret_key is None:
+            pass
+        else:
+            recomputed_approval = _compute_approval_hash(
+                order_hash=stored_hash,
+                approved=approved,
+                approved_at=payload.get("approved_at"),
+                approval_actor=actor,
+                status=status,
+                status_transitions=payload.get("status_transitions", []),
+                expires_at=payload.get("expires_at", ""),
+                secret_key=secret_key if alg == "hmac-sha256" else None,
+            )
+            if approval_hash != recomputed_approval:
+                raise InvalidPendingOrderError("approval hash mismatch")
 
 
 def _upgrade_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
@@ -503,6 +541,24 @@ def _upgrade_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
     )
 
     return result
+
+
+def assert_live_hmac_approval(payload: dict[str, Any]) -> None:
+    """Fail closed if a live submit lacks HMAC-backed approval.
+
+    When ATLAS_APPROVAL_SECRET_KEY is configured, live submit requires
+    approval_hash_alg == 'hmac-sha256'. When the secret is not configured,
+    legacy SHA-256 approvals are still accepted to preserve backward
+    compatibility for existing deployments and reviewer/demo workflows.
+    """
+    if _get_approval_secret() is None:
+        return
+    alg = payload.get("approval_hash_alg")
+    if alg != "hmac-sha256":
+        raise InvalidPendingOrderError(
+            "Live submit requires HMAC-backed approval. "
+            "Set ATLAS_APPROVAL_SECRET_KEY and re-approve the order."
+        )
 
 
 def _validate_approval_id(order_id: str) -> str:

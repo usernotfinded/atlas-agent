@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Optional
 
 from atlas_agent.audit.chain import verify_event_integrity
-from atlas_agent.audit.manifest import compute_root_hash
+from atlas_agent.audit.manifest import compute_root_hash, compute_event_hash_rolling_root
 from atlas_agent.audit.models import (
-    AuditEvent, 
-    VerificationResult, 
-    AuditManifest, 
+    AuditEvent,
+    VerificationResult,
+    AuditManifest,
     ManifestVerificationResult
 )
 
@@ -36,13 +36,14 @@ def verify_audit_log(
     last_event_hash: Optional[str] = None
     errors: list[str] = []
     first_error_index: Optional[int] = None
-    
+    event_hashes: list[str] = []
+
     try:
         with open(path, "r", encoding="utf-8") as f:
             for i, line in enumerate(f):
                 if not line.strip():
                     continue
-                    
+
                 try:
                     event = AuditEvent.model_validate_json(line)
                 except Exception as e:
@@ -50,7 +51,7 @@ def verify_audit_log(
                         first_error_index = i
                     errors.append(f"Line {i}: Invalid JSON or event model: {e}")
                     continue
-                
+
                 # If we are filtering by run_id (manifest verification), ignore other runs
                 if filter_run_id and event.run_id != filter_run_id:
                     continue
@@ -59,26 +60,29 @@ def verify_audit_log(
                     if first_error_index is None:
                         first_error_index = i
                     errors.append(f"Line {i}: Hash chain broken (event_id={event.event_id})")
-                
+
                 previous_hash = event.event_hash
                 last_event_hash = event.event_hash
                 events_checked += 1
-                
+                event_hashes.append(event.event_hash)
+
         # Check tail deletion if expected values are provided
         if expected_event_count is not None and events_checked != expected_event_count:
             errors.append(f"Event count mismatch: expected {expected_event_count}, found {events_checked} (Tail deletion detected)")
-            
+
         if expected_final_hash is not None and last_event_hash != expected_final_hash:
             errors.append(f"Final event hash mismatch: expected {expected_final_hash}, found {last_event_hash}")
 
     except Exception as e:
         errors.append(f"Failed to read audit log: {e}")
-        
+
+    rolling_root = compute_event_hash_rolling_root(event_hashes) if event_hashes else None
     return VerificationResult(
         valid=len(errors) == 0,
         events_checked=events_checked,
         first_error_index=first_error_index,
-        errors=errors
+        errors=errors,
+        rolling_root=rolling_root,
     )
 
 
@@ -112,8 +116,8 @@ def verify_run_manifest(manifest_path: str | Path) -> ManifestVerificationResult
     # 1. Verify root hash
     actual_root_hash = compute_root_hash(manifest)
     if manifest.root_hash != actual_root_hash:
-        errors.append(f"Manifest root hash mismatch: manifest was likely modified after sealing.")
-        
+        errors.append("Manifest root hash mismatch: manifest was likely modified after sealing.")
+
     # 2. Verify log integrity
     log_result = verify_audit_log(
         manifest.audit_log_path,
@@ -121,10 +125,17 @@ def verify_run_manifest(manifest_path: str | Path) -> ManifestVerificationResult
         expected_final_hash=manifest.final_event_hash,
         filter_run_id=manifest.run_id
     )
-    
+
     if not log_result.valid:
         errors.extend(log_result.errors)
-        
+
+    # 3. Verify rolling root binds intermediate events (if present; absent means legacy manifest)
+    if manifest.event_hash_rolling_root is not None:
+        if log_result.rolling_root != manifest.event_hash_rolling_root:
+            errors.append(
+                "Manifest rolling root mismatch: intermediate events may have been tampered with."
+            )
+
     return ManifestVerificationResult(
         valid=len(errors) == 0,
         manifest_status=manifest.status,
