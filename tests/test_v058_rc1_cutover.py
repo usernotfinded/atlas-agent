@@ -179,7 +179,8 @@ def test_pre_tag_absent_state_passes() -> None:
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
             with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-                result = CUTOVER_MOD._gather()
+                with patch.object(CUTOVER_MOD, "_check_readme_current_status", lambda: []):
+                    result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "absent_pre_tag"
     assert result["tag_commit"] is None
@@ -193,7 +194,8 @@ def test_post_tag_matches_head_passes() -> None:
     with patch.object(CUTOVER_MOD, "_check_tag_state", _patched_tag_state):
         with patch.object(CUTOVER_MOD, "_check_current_version", lambda: []):
             with patch.object(CUTOVER_MOD, "_check_historical_tag", lambda: []):
-                result = CUTOVER_MOD._gather()
+                with patch.object(CUTOVER_MOD, "_check_readme_current_status", lambda: []):
+                    result = CUTOVER_MOD._gather()
     assert result["passed"] is True
     assert result["tag_state"] == "present_matches_head"
     assert result["tag_commit"] == "abc123"
