@@ -147,6 +147,8 @@ Notes:
 - `.atlas/discipline.md` with the default safe discipline profile.
 - `.atlas/backtests/bt-<timestamp>/result.json` and `report.md` from the deterministic sample-data backtest.
 
+For a complete indexed view of each artifact, its content summary, and the safety invariant it demonstrates, see [Demo Artifact Index](demo-artifact-index.md).
+
 ## Success criteria
 
 - The script exits with code `0`.

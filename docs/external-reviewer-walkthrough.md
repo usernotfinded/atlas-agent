@@ -96,6 +96,7 @@ Run the reproducible demo script to see a full paper-mode workflow:
 - `atlas validate` reports `Live trading: Disabled by default`.
 
 For full expected output, success criteria, and artifact locations, see [Demo: Paper Workflow](demo-paper-workflow.md).
+For an indexed view of every demo artifact and the safety invariant it demonstrates, see [Demo Artifact Index](demo-artifact-index.md).
 
 ### Expected safe failures
 

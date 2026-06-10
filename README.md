@@ -38,6 +38,7 @@ atlas validate
 ```
 
 See [docs/demo-paper-workflow.md](docs/demo-paper-workflow.md) for expected output, success criteria, and artifact locations.
+For an indexed view of every demo artifact, its path, and the safety invariant it demonstrates, see [Demo Artifact Index](docs/demo-artifact-index.md).
 
 This path installs Atlas locally, creates a safe paper workspace, validates the configuration, and runs the reproducible paper-mode demo. It produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
 

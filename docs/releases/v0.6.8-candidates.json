@@ -19,6 +19,7 @@
       ],
       "acceptance_criteria": "A docs page lists every artifact the demo produces, its path, its content summary, and the safety invariant it demonstrates. Cross-referenced from README and external-reviewer-walkthrough.",
       "selected_for_v068": true,
+      "implemented": true,
       "reason": "Highest-impact demo auditability improvement. Docs-only; no runtime changes."
     },
     {
@@ -34,6 +35,7 @@
       ],
       "acceptance_criteria": "Checker validates that demo docs list all script commands, that expected artifacts match script outputs, that symbols are consistent across docs, and that no over-promise claims exist in demo surfaces. Runs locally without credentials or network.",
       "selected_for_v068": true,
+      "implemented": false,
       "reason": "Prevents doc-script drift and gives reviewers a one-command verification path. No runtime changes."
     },
     {
@@ -52,6 +54,7 @@
       ],
       "acceptance_criteria": "Over-promise claims are corrected; symbol usage is unified or explicitly explained; duplicate demo instructions across README/walkthrough/demo-doc are consolidated or cross-referenced with canonical pointers; reviewer path is one clean narrative.",
       "selected_for_v068": true,
+      "implemented": false,
       "reason": "Directly fixes reviewer trust issues discovered by swarm. Docs-only; no runtime changes."
     },
     {
@@ -68,6 +71,7 @@
       ],
       "acceptance_criteria": "Smoke and local quick tiers include a fast demo-script existence and structure check (reusing logic from test_demo_proof_layer.py or check_demo_proof.py if implemented).",
       "selected_for_v068": true,
+      "implemented": false,
       "reason": "Small, coherent extension of CAND-002 into the tier system. Keeps demo integrity in the fastest gates."
     },
     {
