@@ -61,4 +61,3 @@ Send ClickUp notification if configured, especially for risk changes or pending 
 ## Final Output Format
 
 Return: files read, position review, research summary, decision JSON, risk result, files updated, notification status, git status.
-

@@ -11,4 +11,3 @@ Safety rules: use `ClickUpNotifier`; never print `CLICKUP_API_TOKEN`; do not inc
 Failure modes: missing token, missing task/list ID, network error, ClickUp API failure.
 
 Example: send a market-close recap with report path and pending order count.
-

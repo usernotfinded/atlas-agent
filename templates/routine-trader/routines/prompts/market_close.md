@@ -62,4 +62,3 @@ Send ClickUp recap if `CLICKUP_API_TOKEN` and `CLICKUP_TASK_ID` or `CLICKUP_LIST
 ## Final Output Format
 
 Return: files read, daily recap, benchmark comparison, memory updates, report path, notification status, git status, safety status.
-

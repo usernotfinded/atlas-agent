@@ -11,4 +11,3 @@ Safety rules: defer to deterministic `RiskManager`; do not override rejection; k
 Failure modes: missing price, blocked symbol, max loss exceeded, max position size exceeded, duplicate order.
 
 Example: reject a buy when projected notional exceeds `MAX_POSITION_SIZE`.
-

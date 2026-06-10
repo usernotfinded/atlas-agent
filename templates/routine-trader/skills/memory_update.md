@@ -11,4 +11,3 @@ Safety rules: append history instead of erasing; do not write secrets; preserve 
 Failure modes: missing memory directory, malformed existing notes, accidental secret insertion.
 
 Example: append market-open order result to `memory/trade_journal.md`.
-

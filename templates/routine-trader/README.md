@@ -20,4 +20,3 @@ Copy `.env.example` to `.env` only for local development. Do not commit `.env`, 
 - `pending_orders/`: live approval files; live mode remains gated.
 - `audit/`: JSONL audit logs.
 - `.atlas/locks/`: local routine lock files.
-

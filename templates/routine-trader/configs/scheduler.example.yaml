@@ -6,4 +6,3 @@ scheduler:
     midday_scan: "12:00"
     end_of_day: "16:00"
     weekly_review: "Friday 17:00"
-

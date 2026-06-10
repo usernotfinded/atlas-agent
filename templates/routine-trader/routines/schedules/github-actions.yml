@@ -96,4 +96,3 @@ jobs:
       - run: atlas discipline setup --manual --yes
       - run: atlas config set market.symbol DEMO-SYMBOL
       - run: atlas routine run weekly_review --mode paper
-

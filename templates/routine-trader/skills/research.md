@@ -10,4 +10,3 @@ Safety rules: use the configured web research provider; avoid unsupported market
 Failure modes: missing research API key, stale data, no citations, provider timeout. If research fails, continue with local data and state the limitation.
 
 Example: summarize SPY market regime, <SYMBOL> catalysts, and risk events relevant to current watchlist.
-

@@ -62,4 +62,3 @@ Send ClickUp weekly summary if configured. Never print the token.
 ## Final Output Format
 
 Return: files read, weekly summary, benchmark comparison, repeated mistakes, proposed improvements, files updated, notification status, git status.
-

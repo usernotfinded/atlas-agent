@@ -63,4 +63,3 @@ Send a short ClickUp notification if configured. Include order status and pendin
 ## Final Output Format
 
 Return: files read, decision JSON, risk result, order result, files updated, notification status, git status, safety status.
-

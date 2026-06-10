@@ -11,4 +11,3 @@ Safety rules: paper orders can execute automatically; live orders become pending
 Failure modes: missing approval, stale approval, risk rejection, kill switch, broker credentials missing.
 
 Example: in live mode create `pending_orders/<order_id>.json` and wait for `atlas approve-order <order_id>`.
-

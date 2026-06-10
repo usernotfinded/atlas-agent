@@ -11,4 +11,3 @@ Safety rules: low confidence must hold; AI output is advisory; never call broker
 Failure modes: missing data, invalid decision schema, low confidence, conflicting signals.
 
 Example: produce a hold decision when research is uncertain and confidence is below threshold.
-

@@ -11,4 +11,3 @@ atlas routine run market_open --mode paper
 ```
 
 Live mode is disabled by default and requires explicit configuration, broker credentials, risk checks, and approval gates.
-

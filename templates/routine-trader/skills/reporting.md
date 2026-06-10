@@ -11,4 +11,3 @@ Safety rules: no profit claims; include limitations; include rejected orders; in
 Failure modes: missing market data, missing broker state, research unavailable.
 
 Example: write `reports/daily/YYYY-MM-DD-close.md` with trades, risk events, PnL notes, and next actions.
-

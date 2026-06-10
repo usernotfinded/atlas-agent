@@ -59,4 +59,3 @@ Send a short ClickUp notification if `CLICKUP_API_TOKEN` and `CLICKUP_TASK_ID` o
 ## Final Output Format
 
 Return: files read, research summary, candidate plan, files updated, notification status, git status, safety status.
-

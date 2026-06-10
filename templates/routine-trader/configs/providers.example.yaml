@@ -9,4 +9,3 @@ providers:
     api_key_env: OPENROUTER_API_KEY
   local_command:
     command_env: LOCAL_COMMAND
-

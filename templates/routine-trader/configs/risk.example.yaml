@@ -11,4 +11,3 @@ risk:
   enforce_market_hours: false
   symbol_allowlist: []
   symbol_blocklist: []
-
