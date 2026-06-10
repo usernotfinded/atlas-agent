@@ -175,6 +175,13 @@ class TestCheckVersionConsistency:
         init_dir.mkdir(parents=True)
         init_file = init_dir / "__init__.py"
         init_file.write_text('__version__ = "1.2.3"\n', encoding="utf-8")
+        meta_dir = tmp_path / "docs" / "releases"
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        meta_file = meta_dir / "release-metadata.json"
+        meta_file.write_text("""{"source_version": "1.2.3", "current_public_release": "v1.2.2"}""", encoding="utf-8")
+        (meta_dir / "v1.2.2.md").touch()
+
+
 
         result = _run_script("check_version_consistency.py", str(tmp_path))
         assert result.returncode == 0
@@ -187,6 +194,13 @@ class TestCheckVersionConsistency:
         init_dir.mkdir(parents=True)
         init_file = init_dir / "__init__.py"
         init_file.write_text('__version__ = "1.2.4"\n', encoding="utf-8")
+        meta_dir = tmp_path / "docs" / "releases"
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        meta_file = meta_dir / "release-metadata.json"
+        meta_file.write_text("""{"source_version": "1.2.3", "current_public_release": "v1.2.2"}""", encoding="utf-8")
+        (meta_dir / "v1.2.2.md").touch()
+
+
 
         result = _run_script("check_version_consistency.py", str(tmp_path))
         assert result.returncode == 2
@@ -197,6 +211,13 @@ class TestCheckVersionConsistency:
         init_dir.mkdir(parents=True)
         init_file = init_dir / "__init__.py"
         init_file.write_text('__version__ = "1.0.0"\n', encoding="utf-8")
+        meta_dir = tmp_path / "docs" / "releases"
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        meta_file = meta_dir / "release-metadata.json"
+        meta_file.write_text("""{"source_version": "1.2.3", "current_public_release": "v1.2.2"}""", encoding="utf-8")
+        (meta_dir / "v1.2.2.md").touch()
+
+
 
         result = _run_script("check_version_consistency.py", str(tmp_path))
         assert result.returncode == 2
@@ -456,6 +477,13 @@ class TestReleaseCheckSh:
         init_dir.mkdir(parents=True)
         init_file = init_dir / "__init__.py"
         init_file.write_text('__version__ = "0.0.0"\n', encoding="utf-8")
+        meta_dir = tmp_path / "docs" / "releases"
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        meta_file = meta_dir / "release-metadata.json"
+        meta_file.write_text("""{"source_version": "1.2.3", "current_public_release": "v1.2.2"}""", encoding="utf-8")
+        (meta_dir / "v1.2.2.md").touch()
+
+
 
         return marker_dir
 
@@ -750,6 +778,7 @@ class TestDevCheckSh:
         repo_root = Path(__file__).resolve().parent.parent
         content = (repo_root / "scripts" / "dev_check.sh").read_text(encoding="utf-8")
 
+        assert "check_release_metadata.py" in content
         assert "check_version_consistency.py" in content
         assert "check_forbidden_claims.py" in content
         assert "check_trust_center.py" in content
@@ -814,6 +843,7 @@ class TestResearchCheckSh:
     def test_contains_expected_checks(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
         content = (repo_root / "scripts" / "research_check.sh").read_text(encoding="utf-8")
+
 
         assert "check_version_consistency.py" in content
         assert "check_forbidden_claims.py" in content
@@ -892,6 +922,7 @@ class TestReleaseCheckTieredModes:
         assert "demo_research_workflow.sh" in content
         assert "git diff --check" in content
         assert "git diff --cached --check" in content
+
         assert "check_version_consistency.py" in content
         assert "check_forbidden_claims.py" in content
         assert "check_no_protected_staged.py" in content

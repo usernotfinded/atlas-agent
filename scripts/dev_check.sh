@@ -29,6 +29,13 @@ echo "dev check — fast local development gate"
 echo "========================================"
 
 echo ""
+echo "0. release metadata"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_release_metadata.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+
 echo "1. version consistency"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_version_consistency.py

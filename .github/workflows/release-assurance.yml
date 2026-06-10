@@ -41,6 +41,8 @@ jobs:
 
       - name: Run static release checks
         run: |
+          python scripts/check_release_metadata.py
+
           python scripts/check_version_consistency.py
           python scripts/check_forbidden_claims.py
           ./scripts/release_check.sh --quick

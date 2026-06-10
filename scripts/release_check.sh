@@ -160,6 +160,13 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "8a. release metadata"
+SECONDS=0
+python scripts/check_release_metadata.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+
 echo "9. version consistency"
 echo "========================================"
 SECONDS=0

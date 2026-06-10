@@ -11,9 +11,19 @@ import sys
 import tomllib
 from pathlib import Path
 
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_metadata import load_metadata
 
-PACKAGE_VERSION = "0.6.8"
-PUBLIC_TAG = "v0.6.7"
+
+def load_version_constants(repo_root: Path) -> tuple[str, str]:
+    try:
+        metadata_path = repo_root / "docs" / "releases" / "release-metadata.json"
+        metadata = load_metadata(metadata_path)
+        return metadata["source_version"], metadata["current_public_release"]
+    except Exception as e:
+        print(f"Error loading release metadata: {e}")
+        sys.exit(2)
 
 
 def main() -> int:
@@ -21,6 +31,8 @@ def main() -> int:
         repo_root = Path(sys.argv[1])
     else:
         repo_root = Path(__file__).resolve().parent.parent
+
+    PACKAGE_VERSION, PUBLIC_TAG = load_version_constants(repo_root)
 
     pyproject_path = repo_root / "pyproject.toml"
     init_path = repo_root / "src" / "atlas_agent" / "__init__.py"

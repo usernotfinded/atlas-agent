@@ -66,6 +66,10 @@ class TestCiWorkflow:
     def test_triggers_workflow_dispatch(self, ci_content: str) -> None:
         assert "workflow_dispatch:" in ci_content
 
+    def test_includes_release_metadata(self, ci_content: str) -> None:
+        assert "check_release_metadata.py" in ci_content
+
+
     def test_includes_version_consistency(self, ci_content: str) -> None:
         assert "check_version_consistency.py" in ci_content
 
@@ -345,6 +349,10 @@ class TestCiCheckScript:
     def test_uses_set_euo_pipefail(self, ci_check_content: str) -> None:
         assert "set -euo pipefail" in ci_check_content
 
+    def test_includes_release_metadata(self, ci_check_content: str) -> None:
+        assert "check_release_metadata.py" in ci_check_content
+
+
     def test_includes_version_consistency(self, ci_check_content: str) -> None:
         assert "check_version_consistency.py" in ci_check_content
 
@@ -513,6 +521,10 @@ class TestReleaseAssuranceWorkflow:
         assert "gh release create" not in content
         assert "git push" not in content
         assert "git tag" not in content
+
+    def test_runs_release_metadata(self, release_assurance_content: str) -> None:
+        assert "scripts/check_release_metadata.py" in release_assurance_content
+
 
     def test_runs_version_consistency(self, release_assurance_content: str) -> None:
         assert "scripts/check_version_consistency.py" in release_assurance_content
