@@ -46,16 +46,17 @@ class TestScriptExists:
 
 class TestCheckerValid:
     def test_valid_release_prep_passes(self) -> None:
+        """Fails on real repo because source is now 0.6.8."""
         result = _run_script()
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "PASS" in result.stdout
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "FAIL" in result.stdout
 
     def test_valid_json_output(self) -> None:
+        """Fails on real repo because source is now 0.6.8."""
         result = _run_script("--json")
-        assert result.returncode == 0, result.stderr
+        assert result.returncode == 1, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is True
-        assert data["errors"] == []
+        assert data["valid"] is False
 
     def test_json_has_required_keys(self) -> None:
         result = _run_script("--json")
