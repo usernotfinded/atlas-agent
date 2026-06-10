@@ -71,3 +71,13 @@ BATCH2_PLAN.md
 audit/*.log
 audit/manifests/
 artifacts/release_evidence/
+
+# Local Atlas runtime/update state
+/.atlas_update_state.json
+
+# Local IDE/agent metadata
+/.antigravitycli/
+
+# One-off local maintenance scripts
+/bump.py
+/patch_sources.py

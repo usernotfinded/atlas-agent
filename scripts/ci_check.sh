@@ -44,6 +44,13 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "4a. template parity checks"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_template_parity.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "5. feedback intake check"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_feedback_intake.py
@@ -227,6 +234,7 @@ SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_stable_release_decision.py -q
 "$PYTHON_BIN" -m pytest tests/test_v0581_hotfix_cutover.py -q
 "$PYTHON_BIN" -m pytest tests/test_env_templates.py -q
+"$PYTHON_BIN" -m pytest tests/test_template_parity.py -q
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
