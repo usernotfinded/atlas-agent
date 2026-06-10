@@ -16,6 +16,10 @@ from pathlib import Path
 from types import ModuleType
 from typing import Callable, Iterable
 
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_metadata import load_metadata
+
 
 @dataclass(frozen=True)
 class ReleaseMetadata:
@@ -43,7 +47,7 @@ class ReleaseMetadata:
                     "release_metadata_drift",
                     "EXPECTED_SOURCE_VERSION is "
                     f"{self.expected_source_version} but source version is {source_version}; "
-                    "update ReleaseMetadata in main_health.py after release cutover",
+                    "update release-metadata.json",
                 )
             )
         try:
@@ -54,8 +58,7 @@ class ReleaseMetadata:
             findings.append(
                 _finding(
                     "public_release_tag_missing",
-                    f"PUBLIC_RELEASE {self.public_release} has no matching local git tag; "
-                    "update ReleaseMetadata in main_health.py after release cutover",
+                    f"PUBLIC_RELEASE {self.public_release} has no matching local git tag",
                 )
             )
         try:
@@ -67,18 +70,10 @@ class ReleaseMetadata:
                 _finding(
                     "next_release_tag_exists",
                     "NEXT_UNREQUESTED_RELEASE_TAG "
-                    f"{self.next_unrequested_release_tag} already exists as a local tag; "
-                    "update ReleaseMetadata in main_health.py after release cutover",
+                    f"{self.next_unrequested_release_tag} already exists as a local tag",
                 )
             )
         return findings
-
-
-RELEASE_METADATA = ReleaseMetadata(
-    expected_source_version="0.6.8",
-    public_release="v0.6.7",
-    next_unrequested_release_tag="v0.6.9",
-)
 
 PROTECTED_BOUNDARIES = (
     "src/atlas_agent/config",
@@ -96,17 +91,6 @@ LOCAL_ONLY_ARTIFACT_PREFIXES = (
     "artifacts/provider_preflight_bundles/",
     "artifacts/provider_preflight_smoke/",
 )
-
-RELEASE_PUBLISH_STAGED_PREFIXES = (
-    "dist/",
-    "build/",
-    "artifacts/release_evidence/",
-    f"artifacts/release_assurance/{RELEASE_METADATA.next_unrequested_release_tag}/",
-)
-
-RELEASE_PUBLISH_STAGED_EXACT = {
-    f"docs/releases/{RELEASE_METADATA.next_unrequested_release_tag}.md",
-}
 
 RELEASE_PUBLISH_STAGED_SUFFIXES = (
     ".whl",
@@ -258,10 +242,17 @@ def _is_local_only_artifact(path: str) -> bool:
     return _is_under(path, LOCAL_ONLY_ARTIFACT_PREFIXES)
 
 
-def _is_release_publish_staged_artifact(path: str) -> bool:
-    if path in RELEASE_PUBLISH_STAGED_EXACT:
+def _is_release_publish_staged_artifact(path: str, next_tag: str) -> bool:
+    exact = { f"docs/releases/{next_tag}.md" }
+    prefixes = (
+        "dist/",
+        "build/",
+        "artifacts/release_evidence/",
+        f"artifacts/release_assurance/{next_tag}/",
+    )
+    if path in exact:
         return True
-    if _is_under(path, RELEASE_PUBLISH_STAGED_PREFIXES):
+    if _is_under(path, prefixes):
         return True
     return path.endswith(RELEASE_PUBLISH_STAGED_SUFFIXES)
 
@@ -458,6 +449,31 @@ def collect_report(
     head_commit: str | None = None
     origin_main_commit: str | None = None
 
+    try:
+        metadata_path = repo_root / "docs" / "releases" / "release-metadata.json"
+        data = load_metadata(metadata_path)
+        next_tag = data.get("next_planned_release", "UNKNOWN_NEXT_TAG")
+
+        release_metadata = ReleaseMetadata(
+            expected_source_version=data["source_version"],
+            public_release=data["current_public_release"],
+            next_unrequested_release_tag=next_tag,
+        )
+    except Exception as exc:
+        errors.append(f"could not load release metadata: {_sanitize(str(exc))}")
+        return MainHealthReport(
+            str(repo_root),
+            None,
+            "UNKNOWN",
+            None,
+            None,
+            checks,
+            {"requested": include_github, "gh_available": None, "runs": []},
+            warnings,
+            findings,
+            errors,
+        )
+
     pyproject_path = repo_root / "pyproject.toml"
     init_path = repo_root / "src" / "atlas_agent" / "__init__.py"
     checks["pyproject_present"] = pyproject_path.exists()
@@ -493,17 +509,17 @@ def collect_report(
                     "pyproject.toml and src/atlas_agent/__init__.py versions differ",
                 )
             )
-        checks["expected_source_version"] = source_version == RELEASE_METADATA.expected_source_version
+        checks["expected_source_version"] = source_version == release_metadata.expected_source_version
         if not checks["expected_source_version"]:
             findings.append(
                 _finding(
                     "source_version_unexpected",
                     "source package version is "
-                    f"{source_version or 'unknown'}, expected {RELEASE_METADATA.expected_source_version}",
+                    f"{source_version or 'unknown'}, expected {release_metadata.expected_source_version}",
                 )
             )
 
-    metadata_findings = RELEASE_METADATA.validate(source_version, git_runner, repo_root)
+    metadata_findings = release_metadata.validate(source_version, git_runner, repo_root)
     findings.extend(metadata_findings)
 
     if not (repo_root / "scripts" / "check_trust_center.py").exists():
@@ -531,7 +547,7 @@ def collect_report(
         )
         status_result = git_runner(repo_root, ["status", "--porcelain=v1"])
         staged_result = git_runner(repo_root, ["diff", "--cached", "--name-only"])
-        tag_result = git_runner(repo_root, ["tag", "--list", RELEASE_METADATA.next_unrequested_release_tag])
+        tag_result = git_runner(repo_root, ["tag", "--list", release_metadata.next_unrequested_release_tag])
         protected_result = git_runner(
             repo_root,
             ["diff", "--name-status", "--", *PROTECTED_BOUNDARIES],
@@ -544,7 +560,7 @@ def collect_report(
         return MainHealthReport(
             str(repo_root),
             source_version,
-            RELEASE_METADATA.public_release,
+            release_metadata.public_release,
             head_commit,
             origin_main_commit,
             checks,
@@ -561,7 +577,7 @@ def collect_report(
         return MainHealthReport(
             str(repo_root),
             source_version,
-            RELEASE_METADATA.public_release,
+            release_metadata.public_release,
             head_commit,
             origin_main_commit,
             checks,
@@ -577,7 +593,7 @@ def collect_report(
         "git rev-parse HEAD": head_result,
         "git status --porcelain=v1": status_result,
         "git diff --cached --name-only": staged_result,
-        f"git tag --list {RELEASE_METADATA.next_unrequested_release_tag}": tag_result,
+        f"git tag --list {release_metadata.next_unrequested_release_tag}": tag_result,
         "git diff --name-status protected boundaries": protected_result,
     }
     failed = [
@@ -665,7 +681,7 @@ def collect_report(
             )
 
     staged_release_artifacts = [
-        path for path in staged_paths if _is_release_publish_staged_artifact(path)
+        path for path in staged_paths if _is_release_publish_staged_artifact(path, release_metadata.next_unrequested_release_tag)
     ]
     checks["no_known_release_publish_artifacts_staged"] = not staged_release_artifacts
     for path in staged_release_artifacts:
@@ -684,7 +700,7 @@ def collect_report(
             findings.append(
                 _finding(
                     "unrequested_maintenance_tag",
-                    f"local future release tag {RELEASE_METADATA.next_unrequested_release_tag} exists but was not requested",
+                    f"local future release tag {release_metadata.next_unrequested_release_tag} exists but was not requested",
                 )
             )
 
@@ -712,7 +728,7 @@ def collect_report(
     return MainHealthReport(
         str(repo_root),
         source_version,
-        RELEASE_METADATA.public_release,
+        release_metadata.public_release,
         head_commit,
         origin_main_commit,
         checks,

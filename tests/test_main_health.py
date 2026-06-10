@@ -45,6 +45,10 @@ def _fixture(tmp_path: Path) -> Path:
         tmp_path / "scripts" / "check_generated_artifacts.py",
         GENERATED_ARTIFACT_CHECKER.read_text(encoding="utf-8"),
     )
+    _write(
+        tmp_path / "docs" / "releases" / "release-metadata.json",
+        (REPO_ROOT / "docs" / "releases" / "release-metadata.json").read_text(encoding="utf-8"),
+    )
     return tmp_path
 
 
