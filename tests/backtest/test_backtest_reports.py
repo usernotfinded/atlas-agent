@@ -276,11 +276,29 @@ class TestRenderMarkdownReport:
         assert "| Best Realized PnL | $100.00 |" in md
         assert "| Worst Realized PnL | $100.00 |" in md
         assert "| Average Realized PnL | $100.00 |" in md
+        assert "| Best Trade % | 3.00% |" in md
+        assert "| Worst Trade % | -0.50% |" in md
+        assert "| Average Trade % | 1.25% |" in md
 
     def test_includes_trade_metrics_when_no_fills(self):
         md = render_markdown_report(_sample_result())
         assert "## Trade Metrics" in md
         assert "No realized trades recorded." in md
+        assert "Best Trade %" not in md
+        assert "Worst Trade %" not in md
+        assert "Average Trade %" not in md
+
+    def test_trade_metrics_omits_percentage_rows_when_none(self):
+        result = _sample_result_with_fills_and_diagnostics()
+        result.metrics.best_trade_pct = None
+        result.metrics.worst_trade_pct = None
+        result.metrics.average_trade_pct = None
+        md = render_markdown_report(result)
+        assert "## Trade Metrics" in md
+        assert "| Realized Fill Count | 1 |" in md
+        assert "Best Trade %" not in md
+        assert "Worst Trade %" not in md
+        assert "Average Trade %" not in md
 
     def test_trade_metrics_values_with_multiple_sell_fills(self):
         result = _sample_result()
@@ -332,6 +350,9 @@ class TestRenderMarkdownReport:
         assert "| Best Realized PnL | $50.00 |" in md
         assert "| Worst Realized PnL | $-20.00 |" in md
         assert "| Average Realized PnL | $20.00 |" in md
+        assert "| Best Trade % | 3.00% |" in md
+        assert "| Worst Trade % | -0.50% |" in md
+        assert "| Average Trade % | 1.25% |" in md
 
     def test_trade_metrics_no_realized_with_only_buy_fills(self):
         result = _sample_result()
@@ -353,6 +374,9 @@ class TestRenderMarkdownReport:
         md = render_markdown_report(result)
         assert "## Trade Metrics" in md
         assert "No realized trades recorded." in md
+        assert "Best Trade %" not in md
+        assert "Worst Trade %" not in md
+        assert "Average Trade %" not in md
 
 
 class TestRenderEmptyMarkdownReport:

@@ -27,6 +27,7 @@ def test_metrics_calculate_correctly() -> None:
     assert metrics.trade_count == 2
     assert metrics.best_trade_pct == 10.0
     assert metrics.worst_trade_pct == 10.0
+    assert metrics.average_trade_pct == 10.0
     assert metrics.exposure_time_pct == 50.0
     assert metrics.buy_and_hold_return_pct == 20.0
 

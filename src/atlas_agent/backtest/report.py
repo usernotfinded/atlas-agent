@@ -117,6 +117,12 @@ def render_markdown_report(result: BacktestResult) -> str:
         lines.append(f"| Best Realized PnL | ${best_pnl:,.2f} |")
         lines.append(f"| Worst Realized PnL | ${worst_pnl:,.2f} |")
         lines.append(f"| Average Realized PnL | ${avg_pnl:,.2f} |")
+        if m.best_trade_pct is not None:
+            lines.append(f"| Best Trade % | {m.best_trade_pct:.2f}% |")
+        if m.worst_trade_pct is not None:
+            lines.append(f"| Worst Trade % | {m.worst_trade_pct:.2f}% |")
+        if m.average_trade_pct is not None:
+            lines.append(f"| Average Trade % | {m.average_trade_pct:.2f}% |")
     else:
         lines.append("No realized trades recorded.")
     lines.append("")
