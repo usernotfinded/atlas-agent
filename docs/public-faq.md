@@ -84,4 +84,4 @@ No. Atlas Agent is software, not a financial advisor. Not financial advice. Trad
 
 ## Is this production ready?
 
-No. This is stable v0.5.7. It is ready for public review and technical feedback, but it is not a live-trading-ready or production-ready product. Live trading disabled by default. Provider execution remains locked. Trust remains blocked.
+No. The v0.6.9 source is prepared and v0.6.8 is the latest stable public release. It is ready for public review and technical feedback, but it is not a live-trading-ready or production-ready product. Live trading disabled by default. Provider execution remains locked. Trust remains blocked.

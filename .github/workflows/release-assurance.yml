@@ -6,7 +6,7 @@ on:
       release:
         description: "Release tag to verify"
         required: true
-        default: "v0.5.9"
+        default: "v0.6.9"
 
 permissions:
   contents: read

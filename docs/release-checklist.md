@@ -492,11 +492,12 @@ python3.11 -m pytest tests/test_stable_release_decision.py -q
 After all validations pass and the commit is ready:
 
 ```bash
-git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
-git commit -m "Batch 10.13 — Stable v0.5.7 release decision pack"
-git push origin main
-git tag -a v0.6.4 -m "Atlas Agent v0.6.4"
-git push origin v0.6.4
+# Replace VERSION with the actual release tag (e.g., v0.6.9):
+# git add pyproject.toml src/atlas_agent/__init__.py CHANGELOG.md README.md docs/
+# git commit -m "release: Atlas Agent VERSION"
+# git push origin main
+# git tag -a VERSION -m "Atlas Agent VERSION"
+# git push origin VERSION
 ```
 
 Only create the tag after:

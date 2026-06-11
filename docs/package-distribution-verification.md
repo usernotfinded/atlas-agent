@@ -56,8 +56,8 @@ Default behavior:
 2. Runs `python -m build --sdist --wheel --outdir <temp>` if the `build` module is available.
 3. Verifies one wheel and one sdist exist.
 4. Verifies package name is `atlas-agent` (or normalized equivalent).
-5. Verifies package version metadata matches `0.5.7rc4`.
-6. Verifies artifact filenames correspond to `0.5.7rc4` or normalized equivalent.
+5. Verifies package version metadata matches the expected version (currently `0.6.9`).
+6. Verifies artifact filenames correspond to the expected version or normalized equivalent.
 7. Verifies the `atlas` console entry point is declared.
 8. Optionally runs `twine check` if `twine` is available.
 9. Removes generated artifacts when done.
