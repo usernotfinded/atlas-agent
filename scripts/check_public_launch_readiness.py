@@ -25,8 +25,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-PACKAGE_VERSION = "0.6.8"
-PUBLIC_TAG = "v0.6.7"
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    from scripts.release_metadata import load_metadata, ReleaseMetadata
+
+_metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+_meta = ReleaseMetadata(load_metadata(_metadata_path))
+
+PACKAGE_VERSION = _meta.source_version
+PUBLIC_TAG = _meta.current_public_release
 
 REQUIRED_FILES = [
     REPO_ROOT / "README.md",

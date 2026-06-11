@@ -26,7 +26,17 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-CURRENT_PACKAGE_VERSION = "0.6.8"
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    from scripts.release_metadata import load_metadata, ReleaseMetadata
+
+_metadata_path = Path(__file__).resolve().parent.parent / "docs" / "releases" / "release-metadata.json"
+_meta = ReleaseMetadata(load_metadata(_metadata_path))
+
+CURRENT_PACKAGE_VERSION = _meta.source_version
 HISTORICAL_STABLE_TAG = "v0.5.8.1"
 
 ONBOARDING_DOC_PATHS = [

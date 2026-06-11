@@ -24,9 +24,19 @@ GENERATED_ARTIFACTS_DOC = Path("docs/development/generated-artifacts.md")
 MAIN_HEALTH_DOC = Path("docs/development/main-health.md")
 GITHUB_ACTIONS_DOC = Path("docs/development/github-actions.md")
 
-CURRENT_PACKAGE_VERSION = "0.6.8"
-CURRENT_PUBLIC_RELEASE = "v0.6.7"
-NEXT_PLANNED_RELEASE = "v0.6.9"
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    from scripts.release_metadata import load_metadata, ReleaseMetadata
+
+_metadata_path = Path(__file__).resolve().parent.parent / "docs" / "releases" / "release-metadata.json"
+_meta = ReleaseMetadata(load_metadata(_metadata_path))
+
+CURRENT_PACKAGE_VERSION = _meta.source_version
+CURRENT_PUBLIC_RELEASE = _meta.current_public_release
+NEXT_PLANNED_RELEASE = _meta.next_planned_release
 
 REQUIRED_DOCS = [
     ONBOARDING_DOC,

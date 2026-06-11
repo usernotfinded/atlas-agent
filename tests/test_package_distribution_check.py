@@ -267,17 +267,13 @@ class TestDryRun:
 
 class TestVersionReporting:
     def test_expected_version_matches_pyproject(self) -> None:
-        import tomllib
-        pyproject = REPO_ROOT / "pyproject.toml"
-        with open(pyproject, "rb") as f:
-            data = tomllib.load(f)
-        pkg_version = data.get("project", {}).get("version")
         text = SCRIPT.read_text(encoding="utf-8")
-        assert f'EXPECTED_PACKAGE_VERSION = "{pkg_version}"' in text
+        assert "from release_metadata import load_metadata" in text or "from scripts.release_metadata import load_metadata" in text
+        assert "EXPECTED_PACKAGE_VERSION = _meta.source_version" in text
 
     def test_expected_tag_matches_version(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
-        assert 'EXPECTED_PUBLIC_TAG = "v0.6.7"' in text
+        assert "EXPECTED_PUBLIC_TAG = _meta.current_public_release" in text
 
 
 # ---------------------------------------------------------------------------

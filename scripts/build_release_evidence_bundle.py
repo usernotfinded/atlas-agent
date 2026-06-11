@@ -31,7 +31,18 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_BIN = os.environ.get("PYTHON_BIN", sys.executable)
 PUBLIC_STABLE_TAG = "v0.5.8.1"
-PACKAGE_VERSION = "0.6.8"
+# Provide a fallback module path injection for scripts directory imports
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    from scripts.release_metadata import load_metadata, ReleaseMetadata
+
+_metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+_meta = ReleaseMetadata(load_metadata(_metadata_path))
+
+PACKAGE_VERSION = _meta.source_version
 
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "artifacts" / "release_evidence"
 

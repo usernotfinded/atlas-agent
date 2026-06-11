@@ -274,14 +274,20 @@ class TestScriptBehavior:
         )
 
     def test_script_json_output(self) -> None:
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from release_metadata import load_metadata, ReleaseMetadata
+        _meta = ReleaseMetadata(load_metadata(ROOT / "docs" / "releases" / "release-metadata.json"))
+        sys.path.pop(0)
+
         result = _run_script("--json")
         assert result.returncode == 0, (
             f"Public launch messaging script --json failed:\n{result.stdout}\n{result.stderr}"
         )
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.6.8"
-        assert data["public_tag"] == "v0.6.6"
+        assert data["package_version"] == _meta.source_version
+        assert data["public_tag"] == _meta.current_public_release
         assert data["errors"] == []
 
     def test_json_output_has_no_absolute_paths(self) -> None:

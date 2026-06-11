@@ -34,8 +34,18 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Expected package version (PEP 440).
-EXPECTED_PACKAGE_VERSION = "0.6.8"
-EXPECTED_PUBLIC_TAG = "v0.6.7"
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    from scripts.release_metadata import load_metadata, ReleaseMetadata
+
+_metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+_meta = ReleaseMetadata(load_metadata(_metadata_path))
+
+EXPECTED_PACKAGE_VERSION = _meta.source_version
+EXPECTED_PUBLIC_TAG = _meta.current_public_release
 EXPECTED_NAME = "atlas-agent"
 EXPECTED_NORMALIZED_NAME = "atlas_agent"
 EXPECTED_TEMPLATE_FILES = (
