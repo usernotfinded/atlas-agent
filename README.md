@@ -50,13 +50,13 @@ atlas --help
 ./scripts/demo_paper_workflow.sh
 ```
 
-This path installs Atlas locally, creates a safe paper workspace, validates the configuration, explores the CLI, and runs the reproducible paper-mode demo. It produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
+This path installs Atlas locally, creates a safe paper workspace, validates the configuration, explores the CLI, and runs the reproducible paper-mode demo. It produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading. No `assets/atlas-demo.gif` recording is checked in yet; the reproducible demo script and the documented expected-output guide are the canonical demo artifacts.
 
 For the canonical reviewer path, see [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md). For expected demo output, see [Demo: Paper Workflow](docs/demo-paper-workflow.md). For an indexed view of every demo artifact, its path, and the safety invariant it demonstrates, see [Demo Artifact Index](docs/demo-artifact-index.md).
 
 ## Quickstart
 
-Atlas Agent is **sandbox-only**, **paper-first**, and **offline-safe** by default. Live trading is disabled by default. No broker orders or credential loading happen in the quickstart flow. Provider execution in the research workflow is governed by artifact-based safety policy and the risk manager — resulting orders are prevented by deterministic risk gates.
+Atlas Agent is **sandbox-only**, **paper-first**, and **offline-safe** by default. Live trading is disabled by default. No broker orders or credential loading happen in the quickstart flow. Provider execution in the research workflow is governed by artifact-based safety policy and the risk manager — there is no runtime network block, and resulting orders are prevented by deterministic risk gates.
 
 **Not financial advice.** Trading involves significant risk of loss.
 
