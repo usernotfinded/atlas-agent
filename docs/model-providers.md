@@ -26,6 +26,7 @@ Atlas enforces strict separation between application state and credentials. `con
 | `google` | `GOOGLE_API_KEY` | Mode-dependent | Mode-dependent | Yes (for `api_key` auth) | Unified Google Gemini provider; supports native + OpenAI-compatible modes |
 | `huggingface` | `HF_TOKEN` | Bearer | `https://api-inference.huggingface.co/v1` | Yes | `HUGGINGFACEHUB_API_TOKEN` legacy alias |
 | `lmstudio` | *(None)* | None | `http://localhost:1234/v1` | No | Zero-auth local AI endpoint |
+| `local` | *(None)* | None | `http://localhost:11434/v1` | No | Local / self-hosted endpoint; aliases `ollama`, `llamacpp` |
 | `openai-compatible` | `ATLAS_OPENAI_COMPATIBLE_API_KEY` | Bearer (if key present) | *(user-provided)* | No | Strict isolation; never falls back to OpenAI |
 | `custom` | `ATLAS_CUSTOM_API_KEY` | Bearer (if key present) | *(user-provided)* | No | Strict isolation |
 
@@ -101,6 +102,17 @@ To set up LM Studio:
 3. Set `base_url` (default is `http://localhost:1234/v1`).
 4. Set the model ID matching the loaded LM Studio model.
 5. No API key is required by default, and Atlas will not emit an Authorization header.
+
+### Local / Ollama / llama.cpp setup
+The `local` provider is a first-class user-facing provider for self-hosted endpoints such as Ollama, llama.cpp, or any other OpenAI-compatible local server.
+
+1. Start your local server (for example `ollama serve` or a llama.cpp server).
+2. Set provider to `local` (or alias `ollama` / `llamacpp`).
+3. Set `base_url` (default is `http://localhost:11434/v1`).
+4. Set the model ID matching your local backend.
+5. No API key is required by default, and Atlas will not emit an Authorization header.
+
+Use exact model IDs configured in your local backend. The curated model list in the catalog is a set of examples, not a guarantee of availability.
 
 ### OpenAI-compatible/custom endpoint isolation
 Use the `openai-compatible` or `custom` providers for self-hosted, enterprise proxies, LiteLLM, or third-party OpenAI-compatible endpoints:
