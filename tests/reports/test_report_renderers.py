@@ -45,6 +45,8 @@ def _sample_report() -> ReportData:
             latest_return_pct=5.0,
             latest_status="completed",
             total_runs=10,
+            latest_schema_version="backtest.report.v1",
+            latest_validation_status="valid",
         ),
         research=ResearchSummary(
             available=True,
@@ -101,6 +103,8 @@ class TestRenderMarkdown:
         md = render_markdown(_sample_report())
         assert "Backtest Summary" in md
         assert "bt-001" in md
+        assert "backtest.report.v1" in md
+        assert "valid" in md
 
     def test_includes_research(self):
         md = render_markdown(_sample_report())
@@ -160,6 +164,8 @@ class TestRenderJson:
         payload = render_json(_sample_report())
         assert payload["portfolio"]["available"] is True
         assert payload["backtest"]["latest_run_id"] == "bt-001"
+        assert payload["backtest"]["latest_schema_version"] == "backtest.report.v1"
+        assert payload["backtest"]["latest_validation_status"] == "valid"
         assert payload["research"]["artifact_count"] == 5
         assert payload["risk"]["live_trading_enabled"] is False
         assert payload["audit_decisions"]["recent_events"] == 20

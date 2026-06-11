@@ -58,6 +58,8 @@ def render_markdown(data: ReportData) -> str:
         lines.append(f"- **Latest Symbol:** {_fmt(b.latest_symbol)}")
         lines.append(f"- **Latest Return:** {_fmt(b.latest_return_pct)}%")
         lines.append(f"- **Latest Status:** {_fmt(b.latest_status)}")
+        lines.append(f"- **Latest Schema Version:** {_fmt(b.latest_schema_version)}")
+        lines.append(f"- **Latest Validation Status:** {_fmt(b.latest_validation_status)}")
     else:
         lines.append("No backtest data available.")
     lines.append("")
@@ -174,6 +176,8 @@ def render_json(data: ReportData) -> dict[str, Any]:
             "latest_return_pct": data.backtest.latest_return_pct,
             "latest_status": data.backtest.latest_status,
             "total_runs": data.backtest.total_runs,
+            "latest_schema_version": data.backtest.latest_schema_version,
+            "latest_validation_status": data.backtest.latest_validation_status,
         },
         "research": {
             "available": data.research.available,

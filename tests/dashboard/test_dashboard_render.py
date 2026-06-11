@@ -46,6 +46,8 @@ def _full_snapshot() -> DashboardSnapshot:
             latest_symbol="AAPL",
             latest_return_pct=1.5,
             latest_status="completed",
+            latest_schema_version="backtest.report.v1",
+            latest_validation_status="valid",
         ),
         reports=DashboardReports(available=True, report_count=2, latest_report_type="markdown", latest_generated_at="2026-01-01T00:00:00Z"),
         reflections=DashboardReflections(available=True, total_count=2, by_status={"draft": 1, "approved": 1}),
@@ -74,6 +76,8 @@ def test_render_dashboard_html_includes_required_dashboard_sections(tmp_path: Pa
     assert "System Health" in content
     assert "Portfolio Summary" in content
     assert "Backtest Summary" in content
+    assert "Latest schema version" in content
+    assert "Latest validation status" in content
     assert "Report Summary" in content
     assert "Reflection Summary" in content
     assert "Skills Summary" in content
@@ -210,6 +214,8 @@ def test_render_dashboard_markdown_contains_sections():
     assert "## System Health" in md
     assert "## Portfolio" in md
     assert "## Backtests" in md
+    assert "Latest Schema Version" in md
+    assert "Latest Validation Status" in md
     assert "## Reports" in md
     assert "## Reflections" in md
     assert "## Skills" in md

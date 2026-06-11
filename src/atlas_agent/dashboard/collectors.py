@@ -155,6 +155,7 @@ def _collect_backtests(workspace_root: Path) -> DashboardBacktests:
     # Sort by some heuristic; try to use run_id or just keep order
     latest = runs[-1]
     metrics = latest.get("metrics", {})
+    from atlas_agent.backtest.report_schema import get_schema_status
     return DashboardBacktests(
         available=True,
         total_runs=len(runs),
@@ -163,6 +164,8 @@ def _collect_backtests(workspace_root: Path) -> DashboardBacktests:
         latest_symbol=latest.get("config", {}).get("symbol"),
         latest_return_pct=metrics.get("total_return_pct"),
         latest_status=latest.get("status"),
+        latest_schema_version=latest.get("schema_version"),
+        latest_validation_status=get_schema_status(latest),
     )
 
 

@@ -140,6 +140,28 @@ def validate_backtest_report(data: dict[str, Any]) -> None:
         raise ReportSchemaError("diagnostics must be an object")
 
 
+def get_schema_status(data: Any) -> str:
+    """Return the schema validation status for a raw report dict.
+
+    Returns one of:
+      - "valid"                – passes validate_backtest_report
+      - "legacy"               – missing schema_version key
+      - "unreadable"           – not a dict / not JSON-parseable
+      - "invalid: <reason>"    – has schema_version but fails validation
+    """
+    if not isinstance(data, dict):
+        return "unreadable"
+    if "schema_version" not in data:
+        return "legacy"
+    try:
+        validate_backtest_report(data)
+        return "valid"
+    except ReportSchemaError as exc:
+        return f"invalid: {exc}"
+    except Exception as exc:
+        return f"invalid: {exc}"
+
+
 def validate_backtest_result(result: "BacktestResult") -> dict[str, Any]:
     """Validate a BacktestResult and return the report dict with schema_version.
 

@@ -37,6 +37,8 @@ class DashboardBacktests(BaseModel):
     latest_symbol: str | None = None
     latest_return_pct: float | None = None
     latest_status: str | None = None
+    latest_schema_version: str | None = None
+    latest_validation_status: str | None = None
 
 
 class DashboardReports(BaseModel):

@@ -232,6 +232,8 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
                 {_row("Latest symbol", backtests.latest_symbol)}
                 {_row("Latest return pct", backtests.latest_return_pct)}
                 {_row("Latest status", backtests.latest_status, status=backtests.latest_status)}
+                {_row("Latest schema version", backtests.latest_schema_version)}
+                {_row("Latest validation status", backtests.latest_validation_status, status=backtests.latest_validation_status)}
             </section>
 
             <section class="card" aria-labelledby="reports-heading">
@@ -374,6 +376,8 @@ def render_dashboard_markdown(snapshot: DashboardSnapshot) -> str:
     lines.append(f"- **Latest Run:** {bt.latest_run_id or 'N/A'}")
     lines.append(f"- **Latest Symbol:** {bt.latest_symbol or 'N/A'}")
     lines.append(f"- **Latest Return:** {bt.latest_return_pct if bt.latest_return_pct is not None else 'N/A'}%")
+    lines.append(f"- **Latest Schema Version:** {bt.latest_schema_version or 'N/A'}")
+    lines.append(f"- **Latest Validation Status:** {bt.latest_validation_status or 'N/A'}")
     lines.append("")
 
     lines.append("## Reports")

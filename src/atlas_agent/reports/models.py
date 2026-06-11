@@ -37,6 +37,8 @@ class BacktestSummary:
     latest_return_pct: float | None = None
     latest_status: str | None = None
     total_runs: int = 0
+    latest_schema_version: str | None = None
+    latest_validation_status: str | None = None
 
 
 @dataclass

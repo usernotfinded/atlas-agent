@@ -78,6 +78,7 @@ def load_backtest_summary(workspace: str | Path = ".") -> BacktestSummary:
     latest = result_files[0]
     try:
         data = json.loads(latest.read_text(encoding="utf-8"))
+        from atlas_agent.backtest.report_schema import get_schema_status
         return BacktestSummary(
             available=True,
             recent_count=min(total_runs, 7),
@@ -86,6 +87,8 @@ def load_backtest_summary(workspace: str | Path = ".") -> BacktestSummary:
             latest_return_pct=data.get("metrics", {}).get("total_return_pct"),
             latest_status=data.get("status"),
             total_runs=total_runs,
+            latest_schema_version=data.get("schema_version"),
+            latest_validation_status=get_schema_status(data),
         )
     except (json.JSONDecodeError, OSError):
         return BacktestSummary(available=False, total_runs=total_runs)

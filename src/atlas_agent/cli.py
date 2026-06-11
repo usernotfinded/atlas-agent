@@ -3155,16 +3155,8 @@ def _list_backtest_runs(*, validate: bool = False) -> list[dict]:
 
 
 def _validate_report_file(data: dict) -> str:
-    from atlas_agent.backtest.report_schema import validate_backtest_report
-    if not isinstance(data, dict):
-        return "unreadable"
-    if "schema_version" not in data:
-        return "legacy"
-    try:
-        validate_backtest_report(data)
-        return "valid"
-    except Exception:
-        return "invalid"
+    from atlas_agent.backtest.report_schema import get_schema_status
+    return get_schema_status(data)
 
 
 def main(argv: list[str] | None = None) -> int:

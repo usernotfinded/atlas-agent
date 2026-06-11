@@ -109,6 +109,7 @@ class TestLoadBacktestSummary:
             assert summary.latest_run_id == "bt-test-001"
             assert summary.latest_return_pct == 5.0
             assert summary.total_runs == 1
+            assert summary.latest_validation_status == "legacy"
 
 
 class TestLoadResearchSummary:
