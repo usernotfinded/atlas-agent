@@ -284,3 +284,79 @@ def test_cli_backtest_report_json_validates_schema(tmp_path):
     assert output["schema_version"] == REPORT_SCHEMA_VERSION
     assert output["report_type"] == "backtest_research_summary"
     validate_backtest_report(output)
+
+
+def test_cli_backtest_runs_validate_json(tmp_path):
+    import json
+    import os
+    # Init workspace in tmp_path
+    init_cmd = ["python3.11", "-m", "atlas_agent.cli", "init", "--template", "routine-trader", str(tmp_path)]
+    init_proc = subprocess.run(init_cmd, capture_output=True, text=True)
+    assert init_proc.returncode == 0, f"init failed: {init_proc.stdout} {init_proc.stderr}"
+
+    runs_dir = tmp_path / ".atlas" / "backtests" / "bt-20260101-120000"
+    runs_dir.mkdir(parents=True)
+    result = {
+        "schema_version": "backtest.report.v1",
+        "run_id": "bt-20260101-120000",
+        "status": "completed",
+        "config": {"run_id": "bt-20260101-120000", "symbol": "AAPL", "data_path": "d.csv", "initial_equity": 10000.0, "strategy_mode": "buy_and_hold"},
+        "metrics": {"total_return_pct": 5.0, "max_drawdown_pct": 1.0, "trade_count": 1, "final_equity": 10500.0, "initial_equity": 10000.0},
+        "strategy_metadata": {"strategy_id": "buy_and_hold"},
+        "fills": [],
+        "equity_curve": [],
+        "diagnostics": {},
+        "generated_at": "2026-01-01T12:00:00",
+        "disclaimer": "test",
+        "report_type": "backtest_research_summary",
+    }
+    (runs_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
+
+    cmd = [
+        "python3.11", "-m", "atlas_agent.cli",
+        "--workspace", str(tmp_path),
+        "backtest", "runs",
+        "--validate",
+        "--json",
+    ]
+    result_proc = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result_proc.returncode == 0, f"runs failed: {result_proc.stdout} {result_proc.stderr}"
+    output = json.loads(result_proc.stdout)
+    assert len(output) == 1
+    assert output[0]["schema_status"] == "valid"
+
+
+def test_cli_backtest_runs_validate_legacy_report(tmp_path):
+    import json
+    init_cmd = ["python3.11", "-m", "atlas_agent.cli", "init", "--template", "routine-trader", str(tmp_path)]
+    init_proc = subprocess.run(init_cmd, capture_output=True, text=True)
+    assert init_proc.returncode == 0, f"init failed: {init_proc.stdout} {init_proc.stderr}"
+
+    runs_dir = tmp_path / ".atlas" / "backtests" / "bt-20260101-120001"
+    runs_dir.mkdir(parents=True)
+    result = {
+        "run_id": "bt-20260101-120001",
+        "status": "completed",
+        "config": {"run_id": "bt-20260101-120001", "symbol": "AAPL", "data_path": "d.csv", "initial_equity": 10000.0, "strategy_mode": "buy_and_hold"},
+        "metrics": {"total_return_pct": 5.0, "max_drawdown_pct": 1.0, "trade_count": 1, "final_equity": 10500.0, "initial_equity": 10000.0},
+        "strategy_metadata": {"strategy_id": "buy_and_hold"},
+        "fills": [],
+        "equity_curve": [],
+        "diagnostics": {},
+    }
+    (runs_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
+
+    cmd = [
+        "python3.11", "-m", "atlas_agent.cli",
+        "--workspace", str(tmp_path),
+        "backtest", "runs",
+        "--validate",
+        "--json",
+    ]
+    result_proc = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result_proc.returncode == 0, f"runs failed: {result_proc.stdout} {result_proc.stderr}"
+    output = json.loads(result_proc.stdout)
+    assert len(output) == 1
+    assert output[0]["schema_status"] == "legacy"

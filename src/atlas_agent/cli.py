@@ -401,6 +401,7 @@ Safety First:
     backtest_list.add_argument("--json", action="store_true")
     backtest_runs = backtest_sub.add_parser("runs")
     backtest_runs.add_argument("--json", action="store_true")
+    backtest_runs.add_argument("--validate", action="store_true", help="Validate each report against the schema contract and show status.")
     backtest_describe = backtest_sub.add_parser("describe")
     backtest_describe.add_argument("strategy")
     backtest_describe.add_argument("--json", action="store_true")
@@ -3119,7 +3120,7 @@ def _configured_strategy_parameters(config: AtlasConfig, raw_items: list[str]) -
     return configured
 
 
-def _list_backtest_runs() -> list[dict]:
+def _list_backtest_runs(*, validate: bool = False) -> list[dict]:
     from pathlib import Path
     import json
     runs_dir = Path(".atlas/backtests")
@@ -3139,15 +3140,31 @@ def _list_backtest_runs() -> list[dict]:
             continue
         config = data.get("config", {})
         metrics = data.get("metrics", {})
-        runs.append({
+        run = {
             "run_id": data.get("run_id", run_dir.name),
             "symbol": config.get("symbol", "?"),
             "strategy": config.get("strategy_mode", "?"),
             "status": data.get("status", "?"),
             "return_pct": metrics.get("total_return_pct", 0.0),
             "date": config.get("run_id", "").replace("bt-", ""),
-        })
+        }
+        if validate:
+            run["schema_status"] = _validate_report_file(data)
+        runs.append(run)
     return runs
+
+
+def _validate_report_file(data: dict) -> str:
+    from atlas_agent.backtest.report_schema import validate_backtest_report
+    if not isinstance(data, dict):
+        return "unreadable"
+    if "schema_version" not in data:
+        return "legacy"
+    try:
+        validate_backtest_report(data)
+        return "valid"
+    except Exception:
+        return "invalid"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -4493,16 +4510,22 @@ def main(argv: list[str] | None = None) -> int:
 
             return 0
         if args.backtest_command == "runs":
-            runs = _list_backtest_runs()
+            do_validate = getattr(args, "validate", False)
+            runs = _list_backtest_runs(validate=do_validate)
             if getattr(args, "json", False):
                 print(json.dumps(runs, indent=2, default=str))
                 return 0
             if not runs:
                 print("No backtest runs found.")
                 return 0
-            print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Date':<20}")
-            for run in runs:
-                print(f"{run['run_id']:<30} {run['symbol']:<10} {run['strategy']:<20} {run['status']:<12} {run['return_pct']:<10.2f} {run['date']:<20}")
+            if do_validate:
+                print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Schema':<10} {'Date':<20}")
+                for run in runs:
+                    print(f"{run['run_id']:<30} {run['symbol']:<10} {run['strategy']:<20} {run['status']:<12} {run['return_pct']:<10.2f} {run['schema_status']:<10} {run['date']:<20}")
+            else:
+                print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Date':<20}")
+                for run in runs:
+                    print(f"{run['run_id']:<30} {run['symbol']:<10} {run['strategy']:<20} {run['status']:<12} {run['return_pct']:<10.2f} {run['date']:<20}")
             return 0
 
         else:
