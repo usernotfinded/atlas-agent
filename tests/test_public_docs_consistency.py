@@ -200,20 +200,20 @@ class TestReadmeCurrentVersion:
     def test_readme_missing_current_status_fails(self) -> None:
         mod = _load_script_module()
         text = "# README\n\nSome text.\nNot financial advice.\n"
-        violations = mod._check_readme_current_version(text, "README.md")
+        violations = mod._check_readme_current_version(text, "README.md", "v1.2.3")
         assert len(violations) == 1
-        assert mod.CURRENT_VERSION in violations[0]
+        assert "v1.2.3" in violations[0]
 
     def test_readme_has_current_status_passes(self) -> None:
         mod = _load_script_module()
         text = "# README\n\n> **Current Status (v0.6.8)**\n\nNot financial advice.\n"
-        violations = mod._check_readme_current_version(text, "README.md")
+        violations = mod._check_readme_current_version(text, "README.md", "v0.6.8")
         assert violations == []
 
     def test_skipped_for_non_readme(self) -> None:
         mod = _load_script_module()
         text = "# Doc\n\nNo status here.\nNot financial advice.\n"
-        violations = mod._check_readme_current_version(text, "OTHER.md")
+        violations = mod._check_readme_current_version(text, "OTHER.md", "v0.6.8")
         assert violations == []
 
 
@@ -221,21 +221,21 @@ class TestStaleCurrentStatusInReadme:
     def test_stale_current_status_fails(self) -> None:
         mod = _load_script_module()
         text = "# README\n\n> **Current Status (v0.6.4)**\n\nNot financial advice.\n"
-        violations = mod._check_stale_current_status_in_readme(text, "README.md")
+        violations = mod._check_stale_current_status_in_readme(text, "README.md", "v1.2.3")
         assert len(violations) == 1
         assert "v0.6.4" in violations[0]
-        assert mod.CURRENT_VERSION in violations[0]
+        assert "v1.2.3" in violations[0]
 
     def test_current_status_passes(self) -> None:
         mod = _load_script_module()
         text = "# README\n\n> **Current Status (v0.6.8)**\n\nNot financial advice.\n"
-        violations = mod._check_stale_current_status_in_readme(text, "README.md")
+        violations = mod._check_stale_current_status_in_readme(text, "README.md", "v0.6.8")
         assert violations == []
 
     def test_skipped_for_non_readme(self) -> None:
         mod = _load_script_module()
         text = "# Doc\n\n> **Current Status (v0.6.4)**\n\nNot financial advice.\n"
-        violations = mod._check_stale_current_status_in_readme(text, "OTHER.md")
+        violations = mod._check_stale_current_status_in_readme(text, "OTHER.md", "v1.2.3")
         assert violations == []
 
 
@@ -306,52 +306,40 @@ class TestDynamicMetadata:
         fake_repo.mkdir()
         meta_dir = fake_repo / "docs" / "releases"
         meta_dir.mkdir(parents=True)
-        
+
         meta_path = meta_dir / "release-metadata.json"
         meta_path.write_text('{"source_version": "0.9.9", "current_public_release": "v0.9.8"}', encoding="utf-8")
-        
-        original_repo = mod.REPO_ROOT
-        try:
-            mod.REPO_ROOT = fake_repo
-            # Force reload of CURRENT_VERSION logic
-            _meta = mod.load_metadata(meta_path)
-            mod.CURRENT_VERSION = "v" + _meta["source_version"]
-            
-            assert mod.CURRENT_VERSION == "v0.9.9"
-            
-            # The checker uses CURRENT_VERSION
-            text = "# README\n\n> **Current Status (v0.9.9)**\n\nNot financial advice.\n"
-            violations = mod._check_readme_current_version(text, "README.md")
-            assert violations == []
-            
-            text_bad = "# README\n\n> **Current Status (v0.6.8)**\n\nNot financial advice.\n"
-            violations_bad = mod._check_readme_current_version(text_bad, "README.md")
-            assert len(violations_bad) == 1
-            assert "v0.9.9" in violations_bad[0]
-            
-            violations_stale = mod._check_stale_current_status_in_readme(text_bad, "README.md")
-            assert len(violations_stale) == 1
-            assert "expected v0.9.9" in violations_stale[0]
-        finally:
-            mod.REPO_ROOT = original_repo
+
+        current_version = mod._get_current_version(fake_repo)
+        assert current_version == "v0.9.9"
+
+        text = "# README\n\n> **Current Status (v0.9.9)**\n\nNot financial advice.\n"
+        violations = mod._check_readme_current_version(text, "README.md", current_version)
+        assert violations == []
+
+        text_bad = "# README\n\n> **Current Status (v0.6.8)**\n\nNot financial advice.\n"
+        violations_bad = mod._check_readme_current_version(text_bad, "README.md", current_version)
+        assert len(violations_bad) == 1
+        assert "v0.9.9" in violations_bad[0]
+
+        violations_stale = mod._check_stale_current_status_in_readme(text_bad, "README.md", current_version)
+        assert len(violations_stale) == 1
+        assert "expected v0.9.9" in violations_stale[0]
 
     def test_missing_metadata_fallback(self, tmp_path: Path) -> None:
         """invalid/missing metadata fails clearly."""
         mod = _load_script_module()
         fake_repo = tmp_path / "repo"
         fake_repo.mkdir()
-        
-        original_repo = mod.REPO_ROOT
-        try:
-            mod.REPO_ROOT = fake_repo
-            meta_path = fake_repo / "docs" / "releases" / "release-metadata.json"
-            
-            try:
-                _meta = mod.load_metadata(meta_path)
-                mod.CURRENT_VERSION = "v" + _meta["source_version"]
-            except Exception:
-                mod.CURRENT_VERSION = "v0.0.0-unknown"
-                
-            assert mod.CURRENT_VERSION == "v0.0.0-unknown"
-        finally:
-            mod.REPO_ROOT = original_repo
+
+        import pytest
+        with pytest.raises(FileNotFoundError, match="Release metadata not found"):
+            mod._get_current_version(fake_repo)
+
+        meta_dir = fake_repo / "docs" / "releases"
+        meta_dir.mkdir(parents=True)
+        meta_path = meta_dir / "release-metadata.json"
+        meta_path.write_text('{"bad_schema": "0.9.9"}', encoding="utf-8")
+
+        with pytest.raises(Exception, match="source_version is empty in metadata"):
+            mod._get_current_version(fake_repo)

@@ -120,7 +120,7 @@ STALE_VERSION_PATTERNS = [
 ]
 
 # Provide a fallback module path injection for scripts directory imports
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
 try:
     from release_metadata import load_metadata, ReleaseMetadata
 except ImportError:
@@ -128,16 +128,22 @@ except ImportError:
     load_metadata = None
     ReleaseMetadata = None
 
-# Current version string that public docs should reference as current.
-try:
-    if load_metadata and ReleaseMetadata:
-        _metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
-        _meta = ReleaseMetadata(load_metadata(_metadata_path))
-        CURRENT_VERSION = "v" + _meta.source_version
-    else:
-        CURRENT_VERSION = "v0.0.0-unknown"
-except Exception:
-    CURRENT_VERSION = "v0.0.0-unknown"
+def _get_current_version(repo_root: Path) -> str:
+    """Read the current version from release-metadata.json dynamically."""
+    if load_metadata is None or ReleaseMetadata is None:
+        raise RuntimeError("Failed to import release_metadata module")
+
+    metadata_path = repo_root / "docs" / "releases" / "release-metadata.json"
+    if not metadata_path.exists():
+        raise FileNotFoundError(f"Release metadata not found at {metadata_path}")
+
+    try:
+        meta = ReleaseMetadata(load_metadata(metadata_path))
+        if not meta.source_version:
+            raise ValueError("source_version is empty in metadata")
+        return "v" + meta.source_version
+    except Exception as e:
+        raise RuntimeError(f"Invalid release metadata: {e}")
 
 # Release notes directory.
 RELEASES_DIR = REPO_ROOT / "docs" / "releases"
@@ -322,28 +328,28 @@ def _check_stale_rc_status_claims(text: str, rel_path: str) -> list[str]:
     return violations
 
 
-def _check_readme_current_version(text: str, rel_path: str) -> list[str]:
+def _check_readme_current_version(text: str, rel_path: str, current_version: str) -> list[str]:
     """Verify README references CURRENT_VERSION in a status line."""
     violations: list[str] = []
     if rel_path != "README.md":
         return violations
-    if f"Current Status ({CURRENT_VERSION})" not in text:
+    if f"Current Status ({current_version})" not in text:
         violations.append(
-            f"[{rel_path}] README missing 'Current Status ({CURRENT_VERSION})' status line"
+            f"[{rel_path}] README missing 'Current Status ({current_version})' status line"
         )
     return violations
 
 
-def _check_stale_current_status_in_readme(text: str, rel_path: str) -> list[str]:
+def _check_stale_current_status_in_readme(text: str, rel_path: str, current_version: str) -> list[str]:
     """Flag stale Current Status (vX.Y.Z) claims in README that don't match CURRENT_VERSION."""
     violations: list[str] = []
     if rel_path != "README.md":
         return violations
     for m in re.finditer(r"Current Status \(v(\d+\.\d+\.\d+(?:[.-]\d+)?)\)", text):
         found_version = m.group(1)
-        if f"v{found_version}" != CURRENT_VERSION:
+        if f"v{found_version}" != current_version:
             violations.append(
-                f"[{rel_path}] Stale current-status claim: {m.group(0)} (expected {CURRENT_VERSION})"
+                f"[{rel_path}] Stale current-status claim: {m.group(0)} (expected {current_version})"
             )
     return violations
 
@@ -369,6 +375,13 @@ def _check_changelog_references_release_notes() -> list[str]:
 
 
 def main() -> int:
+    try:
+        current_version = _get_current_version(REPO_ROOT)
+    except Exception as e:
+        print("Public docs consistency check FAILED")
+        print(f"  - Metadata Error: {e}")
+        return 1
+
     all_violations: list[str] = []
     all_warnings: list[str] = []
 
@@ -386,8 +399,8 @@ def main() -> int:
         all_violations.extend(_check_readme_required_safe(text, str(rel)))
         all_violations.extend(_check_stale_version_refs(text, str(rel)))
         all_violations.extend(_check_stale_rc_status_claims(text, str(rel)))
-        all_violations.extend(_check_readme_current_version(text, str(rel)))
-        all_violations.extend(_check_stale_current_status_in_readme(text, str(rel)))
+        all_violations.extend(_check_readme_current_version(text, str(rel), current_version))
+        all_violations.extend(_check_stale_current_status_in_readme(text, str(rel), current_version))
 
     all_warnings.extend(_check_changelog_references_release_notes())
 
