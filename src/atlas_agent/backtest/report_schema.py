@@ -6,6 +6,7 @@ silent structural drift.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 REPORT_SCHEMA_VERSION = "backtest.report.v1"
@@ -46,6 +47,33 @@ ALLOWED_STATUSES = {"completed", "failed", "blocked"}
 
 class ReportSchemaError(ValueError):
     """Raised when a backtest report violates the schema contract."""
+
+
+@dataclass(frozen=True)
+class SchemaValidationResult:
+    """Structured result from schema validation."""
+
+    status: str
+    valid: bool
+    error: str | None = None
+    schema_version: str | None = None
+
+
+def get_schema_validation_result(data: Any) -> SchemaValidationResult:
+    """Return a structured schema validation result for a raw report dict.
+
+    This is backward-compatible with ``get_schema_status()`` but provides
+    machine-readable fields (``valid``, ``error``, ``schema_version``)
+    for downstream consumers.
+    """
+    status = get_schema_status(data)
+    version = data.get("schema_version") if isinstance(data, dict) else None
+    if status == "valid":
+        return SchemaValidationResult(status=status, valid=True, schema_version=version)
+    if status == "legacy":
+        return SchemaValidationResult(status=status, valid=False, schema_version=version)
+    # unreadable or invalid: <reason>
+    return SchemaValidationResult(status=status, valid=False, error=status, schema_version=version)
 
 
 def validate_backtest_report(data: dict[str, Any]) -> None:

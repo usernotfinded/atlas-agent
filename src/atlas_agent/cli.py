@@ -3149,14 +3149,18 @@ def _list_backtest_runs(*, validate: bool = False) -> list[dict]:
             "date": config.get("run_id", "").replace("bt-", ""),
         }
         if validate:
-            run["schema_status"] = _validate_report_file(data)
+            validation = _validate_report_file(data)
+            run["schema_status"] = validation.status
+            run["schema_valid"] = validation.valid
+            run["schema_error"] = validation.error
+            run["schema_version"] = validation.schema_version
         runs.append(run)
     return runs
 
 
-def _validate_report_file(data: dict) -> str:
-    from atlas_agent.backtest.report_schema import get_schema_status
-    return get_schema_status(data)
+def _validate_report_file(data: dict):
+    from atlas_agent.backtest.report_schema import get_schema_validation_result
+    return get_schema_validation_result(data)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -4511,9 +4515,12 @@ def main(argv: list[str] | None = None) -> int:
                 print("No backtest runs found.")
                 return 0
             if do_validate:
-                print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Schema':<10} {'Date':<20}")
+                print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Schema':<15} {'Date':<20}")
                 for run in runs:
-                    print(f"{run['run_id']:<30} {run['symbol']:<10} {run['strategy']:<20} {run['status']:<12} {run['return_pct']:<10.2f} {run['schema_status']:<10} {run['date']:<20}")
+                    schema_display = str(run.get('schema_status', ''))[:15]
+                    print(f"{run['run_id']:<30} {run['symbol']:<10} {run['strategy']:<20} {run['status']:<12} {run['return_pct']:<10.2f} {schema_display:<15} {run['date']:<20}")
+                    if run.get('schema_error'):
+                        print(f"  → {run['schema_error']}")
             else:
                 print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Date':<20}")
                 for run in runs:

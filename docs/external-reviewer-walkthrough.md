@@ -63,6 +63,12 @@ python3.11 scripts/check_package_distribution.py --dry-run
 
 # Quick release gate
 ./scripts/release_check.sh --quick
+
+# Backtest report schema validation
+python3.11 scripts/check_backtest_report_schema.py
+
+# List backtest runs with schema validation
+atlas backtest runs --validate --json
 ```
 
 ### Optional longer commands

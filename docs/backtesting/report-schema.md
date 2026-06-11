@@ -110,6 +110,12 @@ python scripts/check_backtest_report_schema.py
 
 to validate all existing `.atlas/backtests/*/result.json` files.
 
+You can also validate existing runs via the CLI:
+
+```bash
+atlas backtest runs --validate --json
+```
+
 ## Backward Compatibility
 
 - New optional fields may be added without bumping the schema version.

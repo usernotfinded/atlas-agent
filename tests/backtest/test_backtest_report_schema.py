@@ -16,6 +16,7 @@ from atlas_agent.backtest.report import render_json_report
 from atlas_agent.backtest.report_schema import (
     REPORT_SCHEMA_VERSION,
     ReportSchemaError,
+    get_schema_validation_result,
     validate_backtest_report,
     validate_backtest_result,
 )
@@ -139,3 +140,49 @@ def test_date_filtering_metadata_present():
     validate_backtest_report(report)
     assert report["config"]["start_date"] == "2026-04-01"
     assert report["config"]["end_date"] == "2026-04-30"
+
+
+# --- get_schema_validation_result tests ---
+
+
+class TestGetSchemaValidationResult:
+    def test_valid_report(self):
+        report = render_json_report(_sample_result())
+        result = get_schema_validation_result(report)
+        assert result.status == "valid"
+        assert result.valid is True
+        assert result.error is None
+        assert result.schema_version == REPORT_SCHEMA_VERSION
+
+    def test_legacy_report(self):
+        report = render_json_report(_sample_result())
+        del report["schema_version"]
+        result = get_schema_validation_result(report)
+        assert result.status == "legacy"
+        assert result.valid is False
+        assert result.error is None
+        assert result.schema_version is None
+
+    def test_invalid_report(self):
+        report = render_json_report(_sample_result())
+        del report["metrics"]["total_return_pct"]
+        result = get_schema_validation_result(report)
+        assert result.status.startswith("invalid:")
+        assert result.valid is False
+        assert result.error is not None
+        assert "Missing metric keys" in result.error
+        assert result.schema_version == REPORT_SCHEMA_VERSION
+
+    def test_unreadable_report(self):
+        result = get_schema_validation_result("not a dict")
+        assert result.status == "unreadable"
+        assert result.valid is False
+        assert result.error == "unreadable"
+        assert result.schema_version is None
+
+    def test_invalid_status(self):
+        report = render_json_report(_sample_result())
+        report["status"] = "unknown"
+        result = get_schema_validation_result(report)
+        assert result.valid is False
+        assert "Unexpected status" in result.error
