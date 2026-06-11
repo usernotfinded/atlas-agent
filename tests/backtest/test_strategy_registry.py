@@ -39,3 +39,44 @@ def test_registry_applies_strategy_parameters() -> None:
     assert strategy.short_window == 2
     assert strategy.long_window == 4
     assert strategy.exit_on_cross is False
+
+
+def test_entry_points_are_declared_in_pyproject_toml():
+    import tomllib
+    from pathlib import Path
+
+    pyproject = Path("pyproject.toml")
+    assert pyproject.exists()
+    with open(pyproject, "rb") as f:
+        data = tomllib.load(f)
+
+    eps = data.get("project", {}).get("entry-points", {}).get("atlas_agent.backtest_strategies", {})
+    assert "buy_and_hold" in eps
+    assert "moving_average_cross" in eps
+    assert "rsi_mean_reversion" in eps
+
+
+def test_entry_points_load_correctly():
+    from importlib import metadata as importlib_metadata
+
+    entry_points = importlib_metadata.entry_points()
+    if hasattr(entry_points, "select"):
+        candidates = list(entry_points.select(group="atlas_agent.backtest_strategies"))
+    else:
+        candidates = list(entry_points.get("atlas_agent.backtest_strategies", ()))
+
+    for ep in candidates:
+        loaded = ep.load()
+        assert hasattr(loaded, "metadata")
+        assert hasattr(loaded, "generate_orders")
+
+
+def test_registry_with_entry_points_discovers_builtins():
+    registry = default_strategy_registry(include_entry_points=True)
+
+    strategies = registry.list_metadata()
+    strategy_ids = [item.strategy_id for item in strategies]
+
+    assert "buy_and_hold" in strategy_ids
+    assert "moving_average_cross" in strategy_ids
+    assert "rsi_mean_reversion" in strategy_ids
