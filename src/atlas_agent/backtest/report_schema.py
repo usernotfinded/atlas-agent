@@ -56,6 +56,7 @@ class SchemaValidationResult:
     status: str
     valid: bool
     error: str | None = None
+    errors: list[str] | None = None
     schema_version: str | None = None
 
 
@@ -72,8 +73,124 @@ def get_schema_validation_result(data: Any) -> SchemaValidationResult:
         return SchemaValidationResult(status=status, valid=True, schema_version=version)
     if status == "legacy":
         return SchemaValidationResult(status=status, valid=False, schema_version=version)
-    # unreadable or invalid: <reason>
-    return SchemaValidationResult(status=status, valid=False, error=status, schema_version=version)
+    if status == "unreadable":
+        return SchemaValidationResult(status=status, valid=False, error=status, schema_version=version)
+    # invalid: collect all errors
+    errors = collect_backtest_report_schema_errors(data) if isinstance(data, dict) else []
+    first_error = errors[0] if errors else status
+    return SchemaValidationResult(
+        status=status,
+        valid=False,
+        error=first_error,
+        errors=errors,
+        schema_version=version,
+    )
+
+
+def collect_backtest_report_schema_errors(data: dict[str, Any]) -> list[str]:
+    """Collect all schema validation errors from a report dict.
+
+    Returns an empty list if the report is valid.
+    """
+    errors: list[str] = []
+
+    if not isinstance(data, dict):
+        errors.append("Report must be a JSON object (dict)")
+        return errors
+
+    missing_top = REQUIRED_TOP_LEVEL_KEYS - set(data.keys())
+    if missing_top:
+        errors.append(f"Missing top-level keys: {sorted(missing_top)}")
+
+    if "schema_version" in data and data["schema_version"] != REPORT_SCHEMA_VERSION:
+        errors.append(
+            f"Unexpected schema_version: {data['schema_version']!r} "
+            f"(expected {REPORT_SCHEMA_VERSION!r})"
+        )
+
+    if "report_type" in data and data["report_type"] != "backtest_research_summary":
+        errors.append(f"Unexpected report_type: {data['report_type']!r}")
+
+    if "status" in data and data["status"] not in ALLOWED_STATUSES:
+        errors.append(
+            f"Unexpected status: {data['status']!r} (expected one of {ALLOWED_STATUSES})"
+        )
+
+    if "run_id" in data:
+        if not isinstance(data["run_id"], str) or not data["run_id"]:
+            errors.append("run_id must be a non-empty string")
+
+    # Metrics
+    if "metrics" in data:
+        metrics = data["metrics"]
+        if not isinstance(metrics, dict):
+            errors.append("metrics must be an object")
+        else:
+            missing_metrics = REQUIRED_METRIC_KEYS - set(metrics.keys())
+            if missing_metrics:
+                errors.append(f"Missing metric keys: {sorted(missing_metrics)}")
+            for key in REQUIRED_METRIC_KEYS:
+                if key in metrics and not isinstance(metrics[key], (int, float)):
+                    errors.append(f"metrics.{key} must be numeric")
+
+    # Config
+    if "config" in data:
+        config = data["config"]
+        if not isinstance(config, dict):
+            errors.append("config must be an object")
+        else:
+            missing_config = REQUIRED_CONFIG_KEYS - set(config.keys())
+            if missing_config:
+                errors.append(f"Missing config keys: {sorted(missing_config)}")
+
+    # Fills
+    if "fills" in data:
+        fills = data["fills"]
+        if not isinstance(fills, list):
+            errors.append("fills must be an array")
+        else:
+            for i, fill in enumerate(fills):
+                if not isinstance(fill, dict):
+                    errors.append(f"fills[{i}] must be an object")
+                    continue
+                for key in ("side", "symbol", "quantity", "price", "notional"):
+                    if key not in fill:
+                        errors.append(f"fills[{i}] missing key: {key}")
+                if fill.get("side") not in {"buy", "sell"}:
+                    errors.append(
+                        f"fills[{i}].side must be 'buy' or 'sell', got {fill.get('side')!r}"
+                    )
+
+    # Equity curve
+    if "equity_curve" in data:
+        equity_curve = data["equity_curve"]
+        if not isinstance(equity_curve, list):
+            errors.append("equity_curve must be an array")
+        else:
+            for i, point in enumerate(equity_curve):
+                if not isinstance(point, dict):
+                    errors.append(f"equity_curve[{i}] must be an object")
+                    continue
+                if "timestamp" not in point or "equity" not in point:
+                    errors.append(
+                        f"equity_curve[{i}] missing 'timestamp' or 'equity'"
+                    )
+
+    # Strategy metadata
+    if "strategy_metadata" in data:
+        strategy_metadata = data["strategy_metadata"]
+        if not isinstance(strategy_metadata, dict):
+            errors.append("strategy_metadata must be an object")
+        elif "strategy_id" not in strategy_metadata:
+            errors.append("strategy_metadata missing 'strategy_id'")
+
+    # Diagnostics
+    if "diagnostics" in data:
+        diagnostics = data["diagnostics"]
+        if not isinstance(diagnostics, dict):
+            errors.append("diagnostics must be an object")
+
+    return errors
 
 
 def validate_backtest_report(data: dict[str, Any]) -> None:
@@ -181,13 +298,10 @@ def get_schema_status(data: Any) -> str:
         return "unreadable"
     if "schema_version" not in data:
         return "legacy"
-    try:
-        validate_backtest_report(data)
+    errors = collect_backtest_report_schema_errors(data)
+    if not errors:
         return "valid"
-    except ReportSchemaError as exc:
-        return f"invalid: {exc}"
-    except Exception as exc:
-        return f"invalid: {exc}"
+    return f"invalid: {errors[0]}"
 
 
 def validate_backtest_result(result: "BacktestResult") -> dict[str, Any]:

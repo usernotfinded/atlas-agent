@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-from atlas_agent.backtest.report_schema import ReportSchemaError, validate_backtest_report
+from atlas_agent.backtest.report_schema import collect_backtest_report_schema_errors
 
 
 def main() -> int:
@@ -41,12 +41,15 @@ def main() -> int:
             skipped += 1
             continue
 
-        try:
-            validate_backtest_report(data)
+        report_errors = collect_backtest_report_schema_errors(data)
+        if not report_errors:
             print(f"OK   {path}")
-        except ReportSchemaError as exc:
-            print(f"FAIL {path}: {exc}")
-            errors.append((path, exc))
+        else:
+            print(f"FAIL {path}: {report_errors[0]}")
+            if len(report_errors) > 1:
+                for err in report_errors[1:]:
+                    print(f"      {err}")
+            errors.append((path, report_errors))
 
     if errors:
         print(f"\n{len(errors)} report(s) failed schema validation.")

@@ -3153,6 +3153,7 @@ def _list_backtest_runs(*, validate: bool = False) -> list[dict]:
             run["schema_status"] = validation.status
             run["schema_valid"] = validation.valid
             run["schema_error"] = validation.error
+            run["schema_errors"] = validation.errors
             run["schema_version"] = validation.schema_version
         runs.append(run)
     return runs
@@ -4521,6 +4522,9 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"{run['run_id']:<30} {run['symbol']:<10} {run['strategy']:<20} {run['status']:<12} {run['return_pct']:<10.2f} {schema_display:<15} {run['date']:<20}")
                     if run.get('schema_error'):
                         print(f"  → {run['schema_error']}")
+                        errors = run.get('schema_errors')
+                        if errors and len(errors) > 1:
+                            print(f"  → ({len(errors)} total errors)")
             else:
                 print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Date':<20}")
                 for run in runs:

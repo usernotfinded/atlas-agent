@@ -102,7 +102,9 @@ Each item in `equity_curve` is an object with:
 ## Validation
 
 Use `atlas_agent.backtest.report_schema.validate_backtest_report(data)` to
-validate a report dict programmatically, or run:
+validate a report dict programmatically (raises on first error), or use
+`collect_backtest_report_schema_errors(data)` to collect all schema violations
+in one pass. You can also run:
 
 ```bash
 python scripts/check_backtest_report_schema.py

@@ -411,6 +411,52 @@ def test_cli_backtest_runs_validate_invalid_report(tmp_path):
     assert output[0]["schema_version"] == "backtest.report.v1"
 
 
+def test_cli_backtest_runs_validate_invalid_report_multiple_errors(tmp_path):
+    import json
+    init_cmd = ["python3.11", "-m", "atlas_agent.cli", "init", "--template", "routine-trader", str(tmp_path)]
+    init_proc = subprocess.run(init_cmd, capture_output=True, text=True)
+    assert init_proc.returncode == 0, f"init failed: {init_proc.stdout} {init_proc.stderr}"
+
+    runs_dir = tmp_path / ".atlas" / "backtests" / "bt-20260101-120005"
+    runs_dir.mkdir(parents=True)
+    result = {
+        "schema_version": "backtest.report.v1",
+        "run_id": "bt-20260101-120005",
+        "status": "completed",
+        "config": {"run_id": "bt-20260101-120005", "symbol": "AAPL", "data_path": "d.csv", "initial_equity": 10000.0, "strategy_mode": "buy_and_hold"},
+        "metrics": {"max_drawdown_pct": 1.0, "trade_count": 1, "final_equity": 10500.0, "initial_equity": 10000.0},
+        "strategy_metadata": {"strategy_id": "buy_and_hold"},
+        "fills": [],
+        "equity_curve": [],
+        "diagnostics": {},
+        "generated_at": "2026-01-01T12:00:00",
+        "disclaimer": "test",
+        "report_type": "backtest_research_summary",
+    }
+    (runs_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
+
+    cmd = [
+        "python3.11", "-m", "atlas_agent.cli",
+        "--workspace", str(tmp_path),
+        "backtest", "runs",
+        "--validate",
+        "--json",
+    ]
+    result_proc = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result_proc.returncode == 0, f"runs failed: {result_proc.stdout} {result_proc.stderr}"
+    output = json.loads(result_proc.stdout)
+    assert len(output) == 1
+    assert output[0]["schema_status"].startswith("invalid:")
+    assert output[0]["schema_valid"] is False
+    assert output[0]["schema_error"] is not None
+    assert "Missing metric keys" in output[0]["schema_error"]
+    assert output[0]["schema_errors"] is not None
+    assert len(output[0]["schema_errors"]) >= 1
+    assert any("Missing metric keys" in e for e in output[0]["schema_errors"])
+    assert output[0]["schema_version"] == "backtest.report.v1"
+
+
 def test_cli_backtest_runs_validate_unreadable_report(tmp_path):
     import json
     init_cmd = ["python3.11", "-m", "atlas_agent.cli", "init", "--template", "routine-trader", str(tmp_path)]

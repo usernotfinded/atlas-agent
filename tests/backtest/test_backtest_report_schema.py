@@ -16,6 +16,7 @@ from atlas_agent.backtest.report import render_json_report
 from atlas_agent.backtest.report_schema import (
     REPORT_SCHEMA_VERSION,
     ReportSchemaError,
+    collect_backtest_report_schema_errors,
     get_schema_validation_result,
     validate_backtest_report,
     validate_backtest_result,
@@ -130,6 +131,75 @@ def test_fill_with_realized_pnl_passes():
         }
     ]
     validate_backtest_report(report)
+
+
+# --- collect_backtest_report_schema_errors tests ---
+
+
+def test_collect_errors_empty_for_valid_report():
+    report = render_json_report(_sample_result())
+    errs = collect_backtest_report_schema_errors(report)
+    assert errs == []
+
+
+def test_collect_errors_multiple_missing_top_level_keys():
+    report = render_json_report(_sample_result())
+    del report["schema_version"]
+    del report["run_id"]
+    del report["metrics"]
+    errs = collect_backtest_report_schema_errors(report)
+    assert len(errs) >= 1
+    assert any("Missing top-level keys" in e for e in errs)
+    # Should list all three missing keys in a single error
+    top_err = [e for e in errs if "Missing top-level keys" in e][0]
+    assert "metrics" in top_err
+    assert "run_id" in top_err
+    assert "schema_version" in top_err
+
+
+def test_collect_errors_multiple_missing_metric_keys():
+    report = render_json_report(_sample_result())
+    del report["metrics"]["total_return_pct"]
+    del report["metrics"]["trade_count"]
+    errs = collect_backtest_report_schema_errors(report)
+    assert any("Missing metric keys" in e for e in errs)
+    metric_err = [e for e in errs if "Missing metric keys" in e][0]
+    assert "total_return_pct" in metric_err
+    assert "trade_count" in metric_err
+
+
+def test_collect_errors_cross_category():
+    report = render_json_report(_sample_result())
+    del report["schema_version"]
+    del report["metrics"]["total_return_pct"]
+    del report["config"]["symbol"]
+    errs = collect_backtest_report_schema_errors(report)
+    assert any("Missing top-level keys" in e for e in errs)
+    assert any("Missing metric keys" in e for e in errs)
+    assert any("Missing config keys" in e for e in errs)
+
+
+def test_collect_errors_multiple_fill_problems():
+    report = render_json_report(_sample_result())
+    report["fills"] = [
+        {"side": "invalid", "symbol": "A", "quantity": 1.0, "price": 1.0, "notional": 1.0},
+        {"side": "buy", "symbol": "B", "quantity": 1.0},
+    ]
+    errs = collect_backtest_report_schema_errors(report)
+    assert any("fills[0].side must be" in e for e in errs)
+    assert any("fills[1] missing key: price" in e for e in errs)
+    assert any("fills[1] missing key: notional" in e for e in errs)
+
+
+def test_invalid_report_has_errors_list():
+    report = render_json_report(_sample_result())
+    del report["metrics"]["total_return_pct"]
+    del report["config"]["symbol"]
+    result = get_schema_validation_result(report)
+    assert result.errors is not None
+    assert len(result.errors) >= 2
+    assert any("Missing metric keys" in e for e in result.errors)
+    assert any("Missing config keys" in e for e in result.errors)
 
 
 def test_date_filtering_metadata_present():
