@@ -211,3 +211,49 @@ def test_cli_backtest_spy_benchmark_json(tmp_path):
     output = json.loads(result.stdout)
     assert output["benchmark"]["benchmark_id"] == "spy"
     assert output["benchmark"]["return_pct"] == 10.0
+
+
+def test_cli_backtest_run_with_date_filtering(tmp_path):
+    data_path = tmp_path / "data.csv"
+    data_path.write_text(
+        "date,symbol,open,high,low,close,volume\n"
+        "2026-01-01,AAPL,100,105,95,101,1000\n"
+        "2026-01-02,AAPL,101,106,96,102,1000\n"
+        "2026-01-03,AAPL,102,107,97,103,1000\n"
+        "2026-01-04,AAPL,103,108,98,104,1000\n"
+        "2026-01-05,AAPL,104,109,99,105,1000\n",
+        encoding="utf-8",
+    )
+
+    cmd = [
+        "python3.11", "-m", "atlas_agent.cli",
+        "backtest", "run",
+        "--symbol", "AAPL",
+        "--data", str(data_path),
+        "--start-date", "2026-01-02",
+        "--end-date", "2026-01-04",
+        "--json",
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result.returncode == 0
+    output = json.loads(result.stdout)
+    assert output["status"] == "completed"
+    assert len(output["equity_curve"]) == 3
+    assert output["equity_curve"][0]["timestamp"].startswith("2026-01-02")
+    assert output["equity_curve"][-1]["timestamp"].startswith("2026-01-04")
+
+
+def test_cli_backtest_runs_json():
+    cmd = [
+        "python3.11", "-m", "atlas_agent.cli",
+        "backtest", "runs",
+        "--json",
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result.returncode == 0
+    output = json.loads(result.stdout)
+    assert isinstance(output, list)

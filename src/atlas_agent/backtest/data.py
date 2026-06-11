@@ -3,20 +3,38 @@ from __future__ import annotations
 import csv
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from atlas_agent.backtest.models import MarketBar
 
 
-def load_market_data(file_path: str, symbol: str) -> List[MarketBar]:
+def _parse_date_boundary(value: Optional[str]) -> Optional[datetime]:
+    if value is None:
+        return None
+    value = value.strip()
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return datetime.strptime(value, "%Y-%m-%d")
+
+
+def load_market_data(
+    file_path: str,
+    symbol: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> List[MarketBar]:
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"Market data file not found: {file_path}")
 
+    start_dt = _parse_date_boundary(start_date)
+    end_dt = _parse_date_boundary(end_date)
+
     bars = []
     with open(path, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        
+
         # Validate headers
         fieldnames = set(reader.fieldnames or [])
         time_col = "timestamp" if "timestamp" in fieldnames else "date"
@@ -29,7 +47,7 @@ def load_market_data(file_path: str, symbol: str) -> List[MarketBar]:
             # Skip rows for different symbols if symbol column exists
             if "symbol" in row and row["symbol"] and row["symbol"] != symbol:
                 continue
-                
+
             try:
                 # Support common ISO formats or basic YYYY-MM-DD
                 ts_str = row[time_col]
@@ -38,6 +56,11 @@ def load_market_data(file_path: str, symbol: str) -> List[MarketBar]:
                 except ValueError:
                     # Fallback for simple date
                     ts = datetime.strptime(ts_str, "%Y-%m-%d")
+
+                if start_dt is not None and ts < start_dt:
+                    continue
+                if end_dt is not None and ts > end_dt:
+                    continue
 
                 bars.append(MarketBar(
                     timestamp=ts,
@@ -55,7 +78,7 @@ def load_market_data(file_path: str, symbol: str) -> List[MarketBar]:
 
     if not bars:
         raise ValueError(f"No data found for symbol {symbol} in {file_path}")
-        
+
     # Ensure bars are sorted by timestamp
     bars.sort(key=lambda x: x.timestamp)
     return bars

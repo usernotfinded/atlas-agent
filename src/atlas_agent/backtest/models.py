@@ -55,6 +55,7 @@ class BacktestFill(BaseModel):
     notional: float
     commission: float = 0.0
     slippage: float = 0.0
+    realized_pnl: float = 0.0
 
 
 class BacktestPosition(BaseModel):

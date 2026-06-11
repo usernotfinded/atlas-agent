@@ -179,3 +179,67 @@ def test_buy_and_hold_sample_data_is_deterministic(sample_csv):
 
     assert result.status == "completed"
     assert result.metrics.final_equity == pytest.approx(10900.0)
+
+
+def test_engine_date_filtering(sample_csv):
+    config = BacktestConfig(
+        run_id="test-date-filter",
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        risk_enabled=False,
+        start_date="2026-01-03",
+        end_date="2026-01-05",
+    )
+    engine = BacktestEngine(config)
+    result = engine.run()
+
+    assert result.status == "completed"
+    assert len(result.equity_curve) == 3
+    assert result.equity_curve[0]["timestamp"].startswith("2026-01-03")
+    assert result.equity_curve[-1]["timestamp"].startswith("2026-01-05")
+
+
+def test_engine_realized_pnl_tracking(sample_csv):
+    config = BacktestConfig(
+        run_id="test-pnl",
+        symbol="AAPL",
+        data_path=str(sample_csv),
+        initial_equity=10000.0,
+        strategy_mode="buy_and_hold",
+        risk_enabled=False,
+    )
+    engine = BacktestEngine(config)
+    result = engine.run()
+
+    assert result.status == "completed"
+    assert len(result.fills) == 1
+    assert result.fills[0].side == "buy"
+    # buy-and-hold has no sell fills, so win_rate is 0
+    assert result.metrics.win_rate == 0.0
+
+    # Manually add a sell fill to verify realized PnL tracking
+    from atlas_agent.backtest.models import BacktestFill
+    sell_fill = BacktestFill(
+        fill_id="fill-sell",
+        order_id="order-sell",
+        timestamp=result.fills[0].timestamp,
+        symbol="AAPL",
+        side="sell",
+        quantity=result.fills[0].quantity,
+        price=110.0,
+        notional=result.fills[0].quantity * 110.0,
+    )
+    engine._apply_fill(sell_fill)
+
+    # Recompute metrics with the sell fill
+    final_equity = engine._calculate_equity(110.0)
+    bars = load_market_data(str(sample_csv), "AAPL")
+    metrics = engine._calculate_metrics(final_equity, bars, 0.0)
+
+    # We now have a sell fill with realized PnL
+    sell_fills = [f for f in engine.fills if f.side == "sell"]
+    assert len(sell_fills) == 1
+    assert sell_fills[0].realized_pnl > 0
+    assert metrics.win_rate == 1.0

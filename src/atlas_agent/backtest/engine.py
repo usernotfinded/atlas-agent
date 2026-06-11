@@ -77,7 +77,12 @@ class BacktestEngine:
                 payload=self.config.model_dump(mode='json')
             )
 
-        bars = load_market_data(self.config.data_path, self.config.symbol)
+        bars = load_market_data(
+            self.config.data_path,
+            self.config.symbol,
+            start_date=self.config.start_date,
+            end_date=self.config.end_date,
+        )
         validation = validate_strategy_instance(self.strategy, bars=bars, config=self.config)
         self.diagnostics["strategy_validation"] = validation.model_dump(mode="json")
         if validation.status != "valid":
@@ -191,14 +196,13 @@ class BacktestEngine:
         self.pending_orders = remaining_pending
 
     def _apply_fill(self, fill: BacktestFill):
-        self.fills.append(fill)
         if fill.side == "buy":
             self.cash -= (fill.notional + fill.commission)
             pos = self.positions.get(fill.symbol, BacktestPosition(symbol=fill.symbol))
-            
+
             new_qty = pos.quantity + fill.quantity
             new_avg_price = ((pos.quantity * pos.average_entry_price) + (fill.quantity * fill.price)) / new_qty
-            
+
             self.positions[fill.symbol] = BacktestPosition(
                 symbol=fill.symbol,
                 quantity=new_qty,
@@ -208,7 +212,9 @@ class BacktestEngine:
         else:
             self.cash += (fill.notional - fill.commission)
             pos = self.positions.get(fill.symbol)
+            realized_pnl = 0.0
             if pos:
+                realized_pnl = (fill.price - pos.average_entry_price) * fill.quantity
                 new_qty = pos.quantity - fill.quantity
                 if new_qty <= 0:
                     del self.positions[fill.symbol]
@@ -219,6 +225,14 @@ class BacktestEngine:
                         average_entry_price=pos.average_entry_price,
                         notional=new_qty * fill.price
                     )
+            fill_with_pnl = BacktestFill(
+                **fill.model_dump(exclude={"realized_pnl"}),
+                realized_pnl=realized_pnl,
+            )
+            self.fills.append(fill_with_pnl)
+            return
+
+        self.fills.append(fill)
 
     def _calculate_equity(self, current_price: float) -> float:
         position_value = sum(pos.quantity * current_price for pos in self.positions.values())
@@ -269,22 +283,12 @@ class BacktestEngine:
         # Convert fills to TradeRecords for calculate_metrics
         trade_records = []
         for fill in self.fills:
-            # We don't track realized PnL perfectly here for each trade record, 
-            # but calculate_metrics handles it for closed returns if side is 'sell'.
-            # For MVP, we pass realized_pnl=0 and it might miss some win_rate info if not perfectly tracked,
-            # but let's try to pass what we can.
-            realized_pnl = 0.0
-            if fill.side == "sell":
-                # Find corresponding buy
-                # (Simple FIFO or Average would work, but metrics.py expects it per trade)
-                pass
-
             trade_records.append(TradeRecord(
                 side=fill.side,
                 quantity=fill.quantity,
                 price=fill.price,
                 notional=fill.notional,
-                realized_pnl=realized_pnl
+                realized_pnl=fill.realized_pnl,
             ))
 
         equity_curve_values = [entry["equity"] for entry in self.equity_curve]

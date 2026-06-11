@@ -393,10 +393,14 @@ Safety First:
     backtest_run.add_argument("--initial-equity", type=float, default=10000.0)
     backtest_run.add_argument("--slippage-bps", type=float, default=0.0)
     backtest_run.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_run.add_argument("--start-date", default=None, help="ISO or YYYY-MM-DD date to begin the backtest (inclusive).")
+    backtest_run.add_argument("--end-date", default=None, help="ISO or YYYY-MM-DD date to end the backtest (inclusive).")
     backtest_run.add_argument("--report", choices=("json", "markdown"), default=None, help="Generate a report summary in the specified format.")
     backtest_run.add_argument("--json", action="store_true")
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
+    backtest_runs = backtest_sub.add_parser("runs")
+    backtest_runs.add_argument("--json", action="store_true")
     backtest_describe = backtest_sub.add_parser("describe")
     backtest_describe.add_argument("strategy")
     backtest_describe.add_argument("--json", action="store_true")
@@ -3115,6 +3119,37 @@ def _configured_strategy_parameters(config: AtlasConfig, raw_items: list[str]) -
     return configured
 
 
+def _list_backtest_runs() -> list[dict]:
+    from pathlib import Path
+    import json
+    runs_dir = Path(".atlas/backtests")
+    if not runs_dir.exists():
+        return []
+    runs = []
+    for run_dir in sorted(runs_dir.iterdir()):
+        if not run_dir.is_dir():
+            continue
+        result_path = run_dir / "result.json"
+        if not result_path.exists():
+            continue
+        try:
+            with open(result_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            continue
+        config = data.get("config", {})
+        metrics = data.get("metrics", {})
+        runs.append({
+            "run_id": data.get("run_id", run_dir.name),
+            "symbol": config.get("symbol", "?"),
+            "strategy": config.get("strategy_mode", "?"),
+            "status": data.get("status", "?"),
+            "return_pct": metrics.get("total_return_pct", 0.0),
+            "date": config.get("run_id", "").replace("bt-", ""),
+        })
+    return runs
+
+
 def main(argv: list[str] | None = None) -> int:
     import json
 
@@ -4406,7 +4441,9 @@ def main(argv: list[str] | None = None) -> int:
                 benchmark_symbol=benchmark_symbol,
                 benchmark_data_path=benchmark_data_path,
                 slippage_bps=slippage_bps,
-                commission_bps=commission_bps
+                commission_bps=commission_bps,
+                start_date=getattr(args, "start_date", None),
+                end_date=getattr(args, "end_date", None),
             )
 
             ensure_sample_data(Path(data_path))
@@ -4455,6 +4492,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Markdown saved to: {md_path}")
 
             return 0
+        if args.backtest_command == "runs":
+            runs = _list_backtest_runs()
+            if getattr(args, "json", False):
+                print(json.dumps(runs, indent=2, default=str))
+                return 0
+            if not runs:
+                print("No backtest runs found.")
+                return 0
+            print(f"{'Run ID':<30} {'Symbol':<10} {'Strategy':<20} {'Status':<12} {'Return %':<10} {'Date':<20}")
+            for run in runs:
+                print(f"{run['run_id']:<30} {run['symbol']:<10} {run['strategy']:<20} {run['status']:<12} {run['return_pct']:<10.2f} {run['date']:<20}")
+            return 0
+
         else:
             print("Error: Use 'atlas backtest run --help' for usage.")
             return 1
