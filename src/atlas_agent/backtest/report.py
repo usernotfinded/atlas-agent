@@ -98,6 +98,29 @@ def render_markdown_report(result: BacktestResult) -> str:
         lines.append(f"| Buy & Hold Return | {m.buy_and_hold_return_pct:.2f}% |")
     lines.append("")
 
+    # Trade Metrics
+    sell_fills = [f for f in result.fills if f.side == "sell"]
+    lines.append("## Trade Metrics")
+    lines.append("")
+    if sell_fills:
+        realized_pnls = [f.realized_pnl for f in sell_fills]
+        winning = sum(1 for p in realized_pnls if p > 0)
+        losing = sum(1 for p in realized_pnls if p < 0)
+        best_pnl = max(realized_pnls)
+        worst_pnl = min(realized_pnls)
+        avg_pnl = sum(realized_pnls) / len(realized_pnls)
+        lines.append("| Metric | Value |")
+        lines.append("| --- | ---: |")
+        lines.append(f"| Realized Fill Count | {len(sell_fills)} |")
+        lines.append(f"| Winning Realized Fills | {winning} |")
+        lines.append(f"| Losing Realized Fills | {losing} |")
+        lines.append(f"| Best Realized PnL | ${best_pnl:,.2f} |")
+        lines.append(f"| Worst Realized PnL | ${worst_pnl:,.2f} |")
+        lines.append(f"| Average Realized PnL | ${avg_pnl:,.2f} |")
+    else:
+        lines.append("No realized trades recorded.")
+    lines.append("")
+
     # Benchmark
     if result.benchmark:
         bm_name = result.benchmark.get("benchmark_id", "n/a")

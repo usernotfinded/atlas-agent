@@ -267,6 +267,93 @@ class TestRenderMarkdownReport:
         assert "todo" not in md
         assert "lorem ipsum" not in md
 
+    def test_includes_trade_metrics_with_fills(self):
+        md = render_markdown_report(_sample_result_with_fills_and_diagnostics())
+        assert "## Trade Metrics" in md
+        assert "| Realized Fill Count | 1 |" in md
+        assert "| Winning Realized Fills | 1 |" in md
+        assert "| Losing Realized Fills | 0 |" in md
+        assert "| Best Realized PnL | $100.00 |" in md
+        assert "| Worst Realized PnL | $100.00 |" in md
+        assert "| Average Realized PnL | $100.00 |" in md
+
+    def test_includes_trade_metrics_when_no_fills(self):
+        md = render_markdown_report(_sample_result())
+        assert "## Trade Metrics" in md
+        assert "No realized trades recorded." in md
+
+    def test_trade_metrics_values_with_multiple_sell_fills(self):
+        result = _sample_result()
+        result.fills = [
+            BacktestFill(
+                fill_id="f1",
+                order_id="o1",
+                timestamp=datetime(2026, 4, 20),
+                symbol="DEMO-SYMBOL",
+                side="sell",
+                quantity=10.0,
+                price=100.0,
+                notional=1000.0,
+                commission=1.0,
+                slippage=0.0,
+                realized_pnl=50.0,
+            ),
+            BacktestFill(
+                fill_id="f2",
+                order_id="o2",
+                timestamp=datetime(2026, 4, 21),
+                symbol="DEMO-SYMBOL",
+                side="sell",
+                quantity=10.0,
+                price=110.0,
+                notional=1100.0,
+                commission=1.1,
+                slippage=0.0,
+                realized_pnl=-20.0,
+            ),
+            BacktestFill(
+                fill_id="f3",
+                order_id="o3",
+                timestamp=datetime(2026, 4, 22),
+                symbol="DEMO-SYMBOL",
+                side="sell",
+                quantity=10.0,
+                price=105.0,
+                notional=1050.0,
+                commission=1.05,
+                slippage=0.0,
+                realized_pnl=30.0,
+            ),
+        ]
+        md = render_markdown_report(result)
+        assert "| Realized Fill Count | 3 |" in md
+        assert "| Winning Realized Fills | 2 |" in md
+        assert "| Losing Realized Fills | 1 |" in md
+        assert "| Best Realized PnL | $50.00 |" in md
+        assert "| Worst Realized PnL | $-20.00 |" in md
+        assert "| Average Realized PnL | $20.00 |" in md
+
+    def test_trade_metrics_no_realized_with_only_buy_fills(self):
+        result = _sample_result()
+        result.fills = [
+            BacktestFill(
+                fill_id="f1",
+                order_id="o1",
+                timestamp=datetime(2026, 4, 20),
+                symbol="DEMO-SYMBOL",
+                side="buy",
+                quantity=10.0,
+                price=100.0,
+                notional=1000.0,
+                commission=1.0,
+                slippage=0.0,
+                realized_pnl=0.0,
+            ),
+        ]
+        md = render_markdown_report(result)
+        assert "## Trade Metrics" in md
+        assert "No realized trades recorded." in md
+
 
 class TestRenderEmptyMarkdownReport:
     def test_contains_no_data_message(self):

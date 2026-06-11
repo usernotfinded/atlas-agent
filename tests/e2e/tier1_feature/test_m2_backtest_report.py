@@ -115,6 +115,7 @@ def test_f2_backtest_report_markdown():
     assert "DEMO-SYMBOL" in result.stdout
     assert "## Diagnostics" in result.stdout
     assert "## Fills Summary" in result.stdout
+    assert "## Trade Metrics" in result.stdout
     assert "not investment advice" in result.stdout.lower()
 
 
