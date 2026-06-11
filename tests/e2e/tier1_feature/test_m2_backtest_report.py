@@ -113,6 +113,8 @@ def test_f2_backtest_report_markdown():
     assert result.returncode == 0, f"stderr={result.stderr}"
     assert "# Backtest Research Summary" in result.stdout
     assert "DEMO-SYMBOL" in result.stdout
+    assert "## Diagnostics" in result.stdout
+    assert "## Fills Summary" in result.stdout
     assert "not investment advice" in result.stdout.lower()
 
 

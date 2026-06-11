@@ -72,6 +72,49 @@ def _sample_result() -> BacktestResult:
     )
 
 
+def _sample_result_with_fills_and_diagnostics() -> BacktestResult:
+    """Create a BacktestResult with fills and diagnostics for testing."""
+    result = _sample_result()
+    result.fills = [
+        BacktestFill(
+            fill_id="f1",
+            order_id="o1",
+            timestamp=datetime(2026, 4, 20),
+            symbol="DEMO-SYMBOL",
+            side="buy",
+            quantity=10.0,
+            price=100.0,
+            notional=1000.0,
+            commission=1.0,
+            slippage=0.0,
+            realized_pnl=0.0,
+        ),
+        BacktestFill(
+            fill_id="f2",
+            order_id="o2",
+            timestamp=datetime(2026, 4, 21),
+            symbol="DEMO-SYMBOL",
+            side="sell",
+            quantity=10.0,
+            price=110.0,
+            notional=1100.0,
+            commission=1.1,
+            slippage=0.0,
+            realized_pnl=100.0,
+        ),
+    ]
+    result.diagnostics = {
+        "blocked_orders": [
+            {"order_id": "o3", "reason": "risk_limit", "violations": []},
+        ],
+        "strategy_validation": {
+            "status": "valid",
+            "issues": [],
+        },
+    }
+    return result
+
+
 # --- JSON report tests ---
 
 
@@ -191,6 +234,38 @@ class TestRenderMarkdownReport:
         md = render_markdown_report(_sample_result()).lower()
         assert "guaranteed profit" not in md
         assert "predicts profit" not in md
+
+    def test_includes_diagnostics_section(self):
+        md = render_markdown_report(_sample_result())
+        assert "## Diagnostics" in md
+        assert "**Blocked Orders:** 0" in md
+
+    def test_includes_fills_summary_when_no_fills(self):
+        md = render_markdown_report(_sample_result())
+        assert "## Fills Summary" in md
+        assert "No fills recorded." in md
+
+    def test_includes_diagnostics_with_blocked_orders(self):
+        md = render_markdown_report(_sample_result_with_fills_and_diagnostics())
+        assert "**Blocked Orders:** 1" in md
+        assert "**Strategy Validation:** valid" in md
+
+    def test_includes_fills_summary_with_fills(self):
+        md = render_markdown_report(_sample_result_with_fills_and_diagnostics())
+        assert "**Total Fills:** 2" in md
+        assert "**Buy Fills:** 1" in md
+        assert "**Sell Fills:** 1" in md
+        assert "**Total Notional:** $2,100.00" in md
+        assert "**Total Realized PnL:** $100.00" in md
+        assert "**Total Commission:** $2.10" in md
+        assert "| buy | DEMO-SYMBOL | 10.0000 | $100.00 | $1,000.00 | $0.00 | $1.00 |" in md
+        assert "| sell | DEMO-SYMBOL | 10.0000 | $110.00 | $1,100.00 | $100.00 | $1.10 |" in md
+
+    def test_no_fake_content_with_fills(self):
+        md = render_markdown_report(_sample_result_with_fills_and_diagnostics()).lower()
+        assert "placeholder" not in md
+        assert "todo" not in md
+        assert "lorem ipsum" not in md
 
 
 class TestRenderEmptyMarkdownReport:

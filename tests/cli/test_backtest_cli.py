@@ -360,3 +360,28 @@ def test_cli_backtest_runs_validate_legacy_report(tmp_path):
     output = json.loads(result_proc.stdout)
     assert len(output) == 1
     assert output[0]["schema_status"] == "legacy"
+
+
+def test_cli_backtest_run_report_markdown(tmp_path):
+    data_path = tmp_path / "data.csv"
+    data_path.write_text(
+        "date,symbol,open,high,low,close,volume\n"
+        "2026-01-01,AAPL,100,105,95,101,1000\n"
+        "2026-01-02,AAPL,101,106,96,102,1000\n"
+    )
+
+    cmd = [
+        "python3.11", "-m", "atlas_agent.cli",
+        "backtest", "run",
+        "--symbol", "AAPL",
+        "--data", str(data_path),
+        "--report", "markdown",
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result.returncode == 0, f"markdown report failed: {result.stdout} {result.stderr}"
+    assert "# Backtest Research Summary" in result.stdout
+    assert "## Diagnostics" in result.stdout
+    assert "## Fills Summary" in result.stdout
+    assert "not investment advice" in result.stdout.lower()

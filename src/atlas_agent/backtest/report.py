@@ -111,6 +111,53 @@ def render_markdown_report(result: BacktestResult) -> str:
             lines.append("**Benchmark Return:** n/a")
         lines.append("")
 
+    # Diagnostics
+    diagnostics = result.diagnostics or {}
+    blocked_orders = diagnostics.get("blocked_orders", [])
+    strategy_validation = diagnostics.get("strategy_validation", {})
+    lines.append("## Diagnostics")
+    lines.append("")
+    lines.append(f"**Blocked Orders:** {len(blocked_orders)}")
+    if strategy_validation:
+        lines.append(f"**Strategy Validation:** {strategy_validation.get('status', 'n/a')}")
+        issues = strategy_validation.get("issues", [])
+        if issues:
+            lines.append("")
+            lines.append("### Validation Issues")
+            lines.append("")
+            for issue in issues:
+                severity = issue.get("severity", "unknown")
+                message = issue.get("message", "")
+                lines.append(f"- [{severity}] {message}")
+    lines.append("")
+
+    # Fills Summary
+    lines.append("## Fills Summary")
+    lines.append("")
+    if result.fills:
+        buy_fills = [f for f in result.fills if f.side == "buy"]
+        sell_fills = [f for f in result.fills if f.side == "sell"]
+        total_notional = sum(f.notional for f in result.fills)
+        total_realized_pnl = sum(f.realized_pnl for f in result.fills)
+        total_commission = sum(f.commission for f in result.fills)
+        lines.append(f"**Total Fills:** {len(result.fills)}")
+        lines.append(f"**Buy Fills:** {len(buy_fills)}")
+        lines.append(f"**Sell Fills:** {len(sell_fills)}")
+        lines.append(f"**Total Notional:** ${total_notional:,.2f}")
+        lines.append(f"**Total Realized PnL:** ${total_realized_pnl:,.2f}")
+        lines.append(f"**Total Commission:** ${total_commission:,.2f}")
+        lines.append("")
+        lines.append("| Side | Symbol | Quantity | Price | Notional | Realized PnL | Commission |")
+        lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: |")
+        for f in result.fills:
+            lines.append(
+                f"| {f.side} | {f.symbol} | {f.quantity:,.4f} | ${f.price:,.2f} | "
+                f"${f.notional:,.2f} | ${f.realized_pnl:,.2f} | ${f.commission:,.2f} |"
+            )
+    else:
+        lines.append("No fills recorded.")
+    lines.append("")
+
     # Disclaimer
     lines.append("---")
     lines.append("")
