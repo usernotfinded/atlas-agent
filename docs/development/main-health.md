@@ -86,7 +86,7 @@ with `git status --short`, then stage or remove only intentional files.
 
 The main source version can differ from public release during maintenance
 updates. After the v0.6.8 release, the source package version on `main` is `0.6.9`, and
-the public GitHub release is `v0.6.8`.
+the public GitHub release is `v0.6.9`.
 
 Do not create future tags, GitHub releases, or PyPI publishes unless the task
 explicitly requests that release action. A maintenance source version is not a
