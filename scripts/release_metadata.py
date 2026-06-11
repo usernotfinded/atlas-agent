@@ -1,10 +1,53 @@
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
+
+class ReleaseMetadata:
+    def __init__(self, data: Dict[str, Any]):
+        self.data = data
+
+    @property
+    def source_version(self) -> str:
+        return self.data.get("source_version", "")
+
+    @property
+    def current_public_release(self) -> str:
+        return self.data.get("current_public_release", "")
+
+    @property
+    def next_planned_release(self) -> str:
+        return self.data.get("next_planned_release", "")
+
+    @property
+    def pypi_published(self) -> bool:
+        return self.data.get("pypi_published", False)
+
+    @property
+    def releases(self) -> List[Dict[str, Any]]:
+        return self.data.get("releases", [])
+
+    @property
+    def current_public_release_record(self) -> Optional[Dict[str, Any]]:
+        for r in self.releases:
+            if r.get("status") == "current_public":
+                return r
+        return None
+
+    @property
+    def prepared_releases(self) -> List[Dict[str, Any]]:
+        return [r for r in self.releases if r.get("status") == "prepared"]
+
+    def release_by_tag(self, tag: str) -> Optional[Dict[str, Any]]:
+        for r in self.releases:
+            if r.get("tag") == tag:
+                return r
+        return None
+
 
 def load_metadata(path: Path) -> Dict[str, Any]:
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
+
 
 def validate_metadata(metadata: Dict[str, Any], project_root: Path) -> list[str]:
     errors = []

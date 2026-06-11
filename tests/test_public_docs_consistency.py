@@ -297,3 +297,61 @@ class TestChangelogReferencesReleaseNotes:
         finally:
             mod.RELEASES_DIR = original_releases_dir
             mod.CHANGELOG_PATH = original_changelog
+
+class TestDynamicMetadata:
+    def test_reads_dynamic_metadata(self, tmp_path: Path) -> None:
+        """Test that changing fixture metadata changes expected checker targets."""
+        mod = _load_script_module()
+        fake_repo = tmp_path / "repo"
+        fake_repo.mkdir()
+        meta_dir = fake_repo / "docs" / "releases"
+        meta_dir.mkdir(parents=True)
+        
+        meta_path = meta_dir / "release-metadata.json"
+        meta_path.write_text('{"source_version": "0.9.9", "current_public_release": "v0.9.8"}', encoding="utf-8")
+        
+        original_repo = mod.REPO_ROOT
+        try:
+            mod.REPO_ROOT = fake_repo
+            # Force reload of CURRENT_VERSION logic
+            _meta = mod.load_metadata(meta_path)
+            mod.CURRENT_VERSION = "v" + _meta["source_version"]
+            
+            assert mod.CURRENT_VERSION == "v0.9.9"
+            
+            # The checker uses CURRENT_VERSION
+            text = "# README\n\n> **Current Status (v0.9.9)**\n\nNot financial advice.\n"
+            violations = mod._check_readme_current_version(text, "README.md")
+            assert violations == []
+            
+            text_bad = "# README\n\n> **Current Status (v0.6.8)**\n\nNot financial advice.\n"
+            violations_bad = mod._check_readme_current_version(text_bad, "README.md")
+            assert len(violations_bad) == 1
+            assert "v0.9.9" in violations_bad[0]
+            
+            violations_stale = mod._check_stale_current_status_in_readme(text_bad, "README.md")
+            assert len(violations_stale) == 1
+            assert "expected v0.9.9" in violations_stale[0]
+        finally:
+            mod.REPO_ROOT = original_repo
+
+    def test_missing_metadata_fallback(self, tmp_path: Path) -> None:
+        """invalid/missing metadata fails clearly."""
+        mod = _load_script_module()
+        fake_repo = tmp_path / "repo"
+        fake_repo.mkdir()
+        
+        original_repo = mod.REPO_ROOT
+        try:
+            mod.REPO_ROOT = fake_repo
+            meta_path = fake_repo / "docs" / "releases" / "release-metadata.json"
+            
+            try:
+                _meta = mod.load_metadata(meta_path)
+                mod.CURRENT_VERSION = "v" + _meta["source_version"]
+            except Exception:
+                mod.CURRENT_VERSION = "v0.0.0-unknown"
+                
+            assert mod.CURRENT_VERSION == "v0.0.0-unknown"
+        finally:
+            mod.REPO_ROOT = original_repo

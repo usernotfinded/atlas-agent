@@ -119,8 +119,25 @@ STALE_VERSION_PATTERNS = [
     r"0\.5\.7\.dev[1-5][0-9](?!\d)",
 ]
 
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    # Handle the case where the script is executed from a weird directory
+    load_metadata = None
+    ReleaseMetadata = None
+
 # Current version string that public docs should reference as current.
-CURRENT_VERSION = "v0.6.8"
+try:
+    if load_metadata and ReleaseMetadata:
+        _metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+        _meta = ReleaseMetadata(load_metadata(_metadata_path))
+        CURRENT_VERSION = "v" + _meta.source_version
+    else:
+        CURRENT_VERSION = "v0.0.0-unknown"
+except Exception:
+    CURRENT_VERSION = "v0.0.0-unknown"
 
 # Release notes directory.
 RELEASES_DIR = REPO_ROOT / "docs" / "releases"

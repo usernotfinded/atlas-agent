@@ -95,3 +95,45 @@ def test_validate_metadata_multiple_current_public(tmp_path):
     }
     errors = validate_metadata(metadata, tmp_path)
     assert any("Expected exactly 1 current_public release" in err for err in errors)
+
+from scripts.release_metadata import ReleaseMetadata
+
+def test_release_metadata_helpers():
+    data = {
+        "schema_version": 1,
+        "source_version": "0.6.8",
+        "current_public_release": "v0.6.7",
+        "next_planned_release": "v0.6.9",
+        "pypi_published": False,
+        "releases": [
+            {
+                "tag": "v0.6.8",
+                "status": "prepared",
+            },
+            {
+                "tag": "v0.6.7",
+                "status": "current_public",
+            }
+        ]
+    }
+    meta = ReleaseMetadata(data)
+    
+    assert meta.source_version == "0.6.8"
+    assert meta.current_public_release == "v0.6.7"
+    assert meta.next_planned_release == "v0.6.9"
+    assert meta.pypi_published is False
+    assert len(meta.releases) == 2
+    
+    assert meta.current_public_release_record is not None
+    assert meta.current_public_release_record["tag"] == "v0.6.7"
+    
+    prepared = meta.prepared_releases
+    assert len(prepared) == 1
+    assert prepared[0]["tag"] == "v0.6.8"
+    
+    r_067 = meta.release_by_tag("v0.6.7")
+    assert r_067 is not None
+    assert r_067["status"] == "current_public"
+    
+    r_unknown = meta.release_by_tag("v0.9.9")
+    assert r_unknown is None
