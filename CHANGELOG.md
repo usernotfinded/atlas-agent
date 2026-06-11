@@ -32,15 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Bumped package/source version from `0.6.8` to `0.6.9`.
-- Updated release metadata to reflect `v0.6.8` as the current public GitHub release (already tagged and released) and `v0.6.9` as prepared.
-- Updated `docs/releases/v0.6.8.md` and `docs/trust/v0.6.8-status.md` to tagged/released state.
-- Updated README, SECURITY.md, and `docs/trust/README.md` current status lines to `v0.6.9` source / `v0.6.8` public / `v0.6.10` next planning line.
+- Updated release metadata to reflect `v0.6.9` as the current public GitHub release and `v0.6.8` as historical.
+- Updated `docs/releases/v0.6.9.md`, `docs/trust/v0.6.9-status.md`, README, SECURITY.md, and `docs/trust/README.md` current status lines to `v0.6.9` public / `v0.6.8` historical / `v0.6.10` next planning line.
+- Updated `docs/releases/v0.6.8.md` and `docs/trust/v0.6.8-status.md` to historical state.
 
 ### Fixed
 
 ### Safety
 - No live trading, broker execution, provider execution, risk gate, approval gate, kill switch, or audit behavior changes.
-- No tag, GitHub release, or PyPI publish performed for v0.6.9.
+- Tag `v0.6.9` created and GitHub release `v0.6.9` published; PyPI was not published.
 
 ## [0.6.8] - 2026-06-10
 
