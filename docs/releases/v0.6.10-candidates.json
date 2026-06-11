@@ -1,0 +1,298 @@
+{
+  "artifact_type": "v0610_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.10",
+  "generated_for": "planning",
+  "status": "planning",
+  "generated_at": "2026-06-11",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Reviewer validation command guide refresh",
+      "summary": "Refresh reviewer walkthroughs, fix stale safety-doc version references, repair broken internal links, and link the reviewer golden path from the README and external walkthrough.",
+      "user_value": "Reviewers can navigate from README to deterministic validation commands without hitting stale or broken references.",
+      "safety_boundary": "No runtime code; only docs and link/reference hardening.",
+      "risk": "low",
+      "likely_files": [
+        "README.md",
+        "docs/external-reviewer-walkthrough.md",
+        "docs/reviewer-golden-path.md",
+        "docs/reviewer-checklist.md",
+        "docs/public-faq.md",
+        "CHANGELOG.md",
+        "docs/safety.md",
+        "docs/kill-switch.md",
+        "docs/live-trading.md"
+      ],
+      "tests_checks": [
+        "scripts/check_public_docs_consistency.py",
+        "scripts/check_reviewer_onboarding.py",
+        "scripts/check_demo_proof.py",
+        "tests/test_public_docs_consistency.py",
+        "tests/test_reviewer_onboarding.py"
+      ],
+      "recommendation": "now",
+      "ranking_reason": "Closes visible reviewer-journey gaps surfaced by the README cleanup; low risk.",
+      "selected_for_v0610": true,
+      "implemented": false
+    },
+    {
+      "id": "CAND-002",
+      "title": "Dashboard/report UX polish after v0.6.9",
+      "summary": "Fix dashboard status-badge mapping for schema statuses, add the HTML safety banner to Markdown dashboard output, improve empty/redacted diagnostics rendering, and sort backtest runs deterministically by timestamp.",
+      "user_value": "Report-quality output and static dashboard exports are more useful and less misleading for reviewers.",
+      "safety_boundary": "Dashboard remains read-only, local, and has no execution controls or external assets.",
+      "risk": "low",
+      "likely_files": [
+        "src/atlas_agent/dashboard/render.py",
+        "src/atlas_agent/dashboard/collectors.py",
+        "tests/dashboard/test_dashboard_render.py",
+        "tests/dashboard/test_dashboard_collectors.py"
+      ],
+      "tests_checks": [
+        "pytest tests/dashboard",
+        "python scripts/check_backtest_report_schema.py",
+        "manual HTML/Markdown export inspection"
+      ],
+      "recommendation": "now",
+      "ranking_reason": "Small, high-visibility render-only polish that extends v0.6.9 report-quality work.",
+      "selected_for_v0610": true,
+      "implemented": false
+    },
+    {
+      "id": "CAND-003",
+      "title": "Backtest report schema checker ergonomics",
+      "summary": "Improve scripts/check_backtest_report_schema.py with --json, per-status counts (valid/invalid/legacy/unreadable), --fail-on-legacy, a final summary, and direct unit tests.",
+      "user_value": "Reviewers and CI get machine-readable, deterministic schema validation diagnostics.",
+      "safety_boundary": "Still local-only read-only validation; no execution or broker/provider calls.",
+      "risk": "low",
+      "likely_files": [
+        "scripts/check_backtest_report_schema.py",
+        "tests/scripts/test_check_backtest_report_schema.py",
+        "docs/backtesting/report-schema.md"
+      ],
+      "tests_checks": [
+        "New unit tests for JSON output, exit codes, legacy handling",
+        "Run against .atlas/backtests"
+      ],
+      "recommendation": "now",
+      "ranking_reason": "Purely additive checker UX; aligns with the v0.6.9 validation theme.",
+      "selected_for_v0610": true,
+      "implemented": false
+    },
+    {
+      "id": "CAND-004",
+      "title": "Template source-of-truth simplification",
+      "summary": "Resolve the duplicated templates/routine-trader/ and src/atlas_agent/templates/routine-trader/ trees by making the packaged copy the canonical source and removing or symlinking the root tree.",
+      "user_value": "Removes a long-standing drift hazard and simplifies template parity checks.",
+      "safety_boundary": "Must preserve fail-closed defaults in .env.example, risk.example.yaml, and brokers.example.yaml; no execution changes.",
+      "risk": "medium",
+      "likely_files": [
+        "pyproject.toml",
+        "src/atlas_agent/cli.py",
+        "scripts/check_template_parity.py",
+        "scripts/check_env_templates.py",
+        "tests/test_template_parity.py",
+        "tests/test_template_packaging.py"
+      ],
+      "tests_checks": [
+        "check_template_parity",
+        "check_env_templates",
+        "wheel/sdist packaging tests",
+        "atlas init smoke from clean checkout"
+      ],
+      "recommendation": "later",
+      "ranking_reason": "Packaging/init path change; safer to isolate in its own batch with clean-install verification.",
+      "selected_for_v0610": false,
+      "implemented": false
+    },
+    {
+      "id": "CAND-005",
+      "title": "Code inventory follow-up import/API classification",
+      "summary": "Refresh docs/development/code-inventory-followups.md and tests/test_code_inventory_imports.py to remove integrated modules, re-verify deferred imports, and improve API-classification clarity.",
+      "user_value": "Keeps the code inventory accurate and useful for reviewers.",
+      "safety_boundary": "Docs/test only; no runtime behavior changes.",
+      "risk": "low",
+      "likely_files": [
+        "docs/development/code-inventory-followups.md",
+        "tests/test_code_inventory_imports.py"
+      ],
+      "tests_checks": [
+        "pytest tests/test_code_inventory_imports.py",
+        "scripts/check_product_capability_inventory.py"
+      ],
+      "recommendation": "now",
+      "ranking_reason": "Low-risk documentation/test accuracy improvement.",
+      "selected_for_v0610": true,
+      "implemented": false
+    },
+    {
+      "id": "CAND-006",
+      "title": "Release-assurance metadata cleanup",
+      "summary": "Remove stale hardcoded v0.5.x-era copy-paste from scripts/release_assurance.py, archive old tracked artifacts/release_assurance/v0.5.9* packs, and tighten .gitignore for generated local evidence.",
+      "user_value": "Generated local evidence and release-assurance output stay accurate and free of stale version claims.",
+      "safety_boundary": "Only affects generated local evidence; no runtime trading behavior changes.",
+      "risk": "medium",
+      "likely_files": [
+        "scripts/release_assurance.py",
+        "artifacts/release_assurance/",
+        ".gitignore",
+        "docs/development/generated-artifacts.md"
+      ],
+      "tests_checks": [
+        "scripts/release_assurance.py --version v0.6.9 --output /tmp/...",
+        "git status",
+        "scripts/check_generated_artifacts.py"
+      ],
+      "recommendation": "later",
+      "ranking_reason": "Touches tracked historical evidence and generated artifact hygiene; isolate to avoid accidental data loss.",
+      "selected_for_v0610": false,
+      "implemented": false
+    },
+    {
+      "id": "CAND-007",
+      "title": "Public docs link/reference hardening after README cleanup",
+      "summary": "Fix broken CHANGELOG links to v0.5.8 rc notes, refresh stale capability-inventory headers, convert backticked doc paths to markdown links, and extend the public-docs consistency scan list to cover reviewer-facing docs added since v0.6.8.",
+      "user_value": "Public docs stay internally consistent and trustworthy after the README streamlining.",
+      "safety_boundary": "Docs/checker only; no runtime or safety-boundary changes.",
+      "risk": "low",
+      "likely_files": [
+        "CHANGELOG.md",
+        "docs/product-capability-inventory.md",
+        "docs/v0.6-capability-inventory.md",
+        "docs/public-repo-hygiene.md",
+        "docs/research-workflow.md",
+        "docs/provider-safety-dossier.md",
+        "scripts/check_public_docs_consistency.py",
+        "tests/test_public_docs_consistency.py"
+      ],
+      "tests_checks": [
+        "scripts/check_public_docs_consistency.py",
+        "tests/test_public_docs_consistency.py",
+        "manual link scan"
+      ],
+      "recommendation": "now",
+      "ranking_reason": "Direct follow-up to the README cleanup; low risk and reviewer-facing.",
+      "selected_for_v0610": true,
+      "implemented": false
+    }
+  ],
+  "deferred": [
+    {
+      "id": "CAND-004",
+      "title": "Template source-of-truth simplification",
+      "reason": "Medium packaging/init risk; isolate in a dedicated batch with clean-install and wheel verification."
+    },
+    {
+      "id": "CAND-006",
+      "title": "Release-assurance metadata cleanup",
+      "reason": "Touches tracked historical evidence; defer to a focused generated-artifact hygiene batch."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution unlock",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-005",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Automatic skill activation",
+      "reason": "Skill candidates remain manually reviewed and offline."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Automatic learning execution",
+      "reason": "Learning suggestions remain offline and manually reviewed."
+    },
+    {
+      "id": "REJ-008",
+      "title": "New broker adapters (Binance completion, CCXT enablement, IBKR implementation)",
+      "reason": "New features, not maintenance. Defer to v0.7.0 or later minor release."
+    },
+    {
+      "id": "REJ-009",
+      "title": "Dashboard rewrite or new UI capabilities",
+      "reason": "Out of patch scope. Requires design review. Defer to v0.7.x."
+    },
+    {
+      "id": "REJ-010",
+      "title": "Version bump to 0.6.10",
+      "reason": "Not authorized in planning-only batch."
+    },
+    {
+      "id": "REJ-011",
+      "title": "Creation of docs/releases/v0.6.10.md",
+      "reason": "Not authorized in planning-only batch."
+    },
+    {
+      "id": "REJ-012",
+      "title": "Creation of docs/trust/v0.6.10-status.md",
+      "reason": "Not authorized in planning-only batch."
+    },
+    {
+      "id": "REJ-013",
+      "title": "Creation of tag v0.6.10 or GitHub Release v0.6.10",
+      "reason": "Not authorized in planning-only batch."
+    },
+    {
+      "id": "REJ-014",
+      "title": "Any runtime trading or execution feature work",
+      "reason": "Out of scope for this conservative hygiene batch."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading remains disabled by default.",
+    "Live submit remains disabled by default.",
+    "Provider execution remains disabled by default.",
+    "Broker execution remains disabled by default.",
+    "Risk gates remain deterministic and unchanged.",
+    "Approval queue behavior remains unchanged.",
+    "Kill-switch behavior remains unchanged.",
+    "Human approval remains required for live order flow.",
+    "Credentials are not loaded unless explicitly configured.",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
+  ],
+  "constraints": [
+    "docs/releases/v0.6.10-candidates.md created",
+    "docs/releases/v0.6.10-candidates.json created",
+    "scripts/check_v0610_planning.py and matching tests created",
+    "Source/package version remains 0.6.9",
+    "No docs/releases/v0.6.10.md created",
+    "No docs/trust/v0.6.10-status.md created",
+    "No tag, GitHub release, or PyPI publish yet",
+    "No runtime trading behavior changes"
+  ],
+  "release_criteria": [
+    "Accepted candidates are implemented",
+    "dev_check, ci_check, and release_check --quick pass locally",
+    "CI on main is green after each batch is pushed",
+    "Version is bumped to 0.6.10 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.10.md and docs/trust/v0.6.10-status.md are created",
+    "CHANGELOG.md has a [0.6.10] entry",
+    "scripts/check_v0610_release_prep.py and matching tests are created (release-prep mode)",
+    "Protected boundary diff is empty",
+    "Forbidden claims scan is clean",
+    "Owner approval is obtained for tag cutover"
+  ]
+}
