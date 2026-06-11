@@ -87,6 +87,17 @@ def get_schema_validation_result(data: Any) -> SchemaValidationResult:
     )
 
 
+def unreadable_schema_result(error_message: str) -> SchemaValidationResult:
+    """Return an unreadable schema validation result with an actionable message."""
+    return SchemaValidationResult(
+        status="unreadable",
+        valid=False,
+        error=error_message,
+        errors=[error_message],
+        schema_version=None,
+    )
+
+
 def collect_backtest_report_schema_errors(data: dict[str, Any]) -> list[str]:
     """Collect all schema validation errors from a report dict.
 

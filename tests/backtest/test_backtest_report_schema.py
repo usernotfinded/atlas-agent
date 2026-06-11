@@ -18,6 +18,7 @@ from atlas_agent.backtest.report_schema import (
     ReportSchemaError,
     collect_backtest_report_schema_errors,
     get_schema_validation_result,
+    unreadable_schema_result,
     validate_backtest_report,
     validate_backtest_result,
 )
@@ -256,3 +257,11 @@ class TestGetSchemaValidationResult:
         result = get_schema_validation_result(report)
         assert result.valid is False
         assert "Unexpected status" in result.error
+
+    def test_unreadable_schema_result_helper(self):
+        result = unreadable_schema_result("unreadable: bad json")
+        assert result.status == "unreadable"
+        assert result.valid is False
+        assert result.error == "unreadable: bad json"
+        assert result.errors == ["unreadable: bad json"]
+        assert result.schema_version is None

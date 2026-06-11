@@ -3136,7 +3136,27 @@ def _list_backtest_runs(*, validate: bool = False) -> list[dict]:
         try:
             with open(result_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-        except Exception:
+        except Exception as exc:
+            if not validate:
+                continue
+            from atlas_agent.backtest.report_schema import unreadable_schema_result
+
+            validation = unreadable_schema_result(f"unreadable: {exc}")
+            runs.append(
+                {
+                    "run_id": run_dir.name,
+                    "symbol": "?",
+                    "strategy": "?",
+                    "status": "?",
+                    "return_pct": 0.0,
+                    "date": run_dir.name.replace("bt-", ""),
+                    "schema_status": validation.status,
+                    "schema_valid": validation.valid,
+                    "schema_error": validation.error,
+                    "schema_errors": validation.errors,
+                    "schema_version": validation.schema_version,
+                }
+            )
             continue
         config = data.get("config", {})
         metrics = data.get("metrics", {})

@@ -118,6 +118,9 @@ You can also validate existing runs via the CLI:
 atlas backtest runs --validate --json
 ```
 
+Reports that cannot be parsed as JSON are surfaced with `schema_status: unreadable`
+instead of being silently skipped, so corrupted run directories remain visible.
+
 ## Backward Compatibility
 
 - New optional fields may be added without bumping the schema version.
