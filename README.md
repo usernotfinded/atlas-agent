@@ -52,7 +52,7 @@ atlas --help
 
 This path installs Atlas locally, creates a safe paper workspace, validates the configuration, explores the CLI, and runs the reproducible paper-mode demo. It produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
 
-For the canonical reviewer path, see [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md). For expected demo output, see [Demo: Paper Workflow](docs/demo-paper-workflow.md).
+For the canonical reviewer path, see [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md). For expected demo output, see [Demo: Paper Workflow](docs/demo-paper-workflow.md). For an indexed view of every demo artifact, its path, and the safety invariant it demonstrates, see [Demo Artifact Index](docs/demo-artifact-index.md).
 
 ## Quickstart
 
