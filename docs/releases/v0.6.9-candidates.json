@@ -1,0 +1,300 @@
+{
+  "artifact_type": "v069_patch_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.9",
+  "generated_for": "planning",
+  "status": "candidate_selection",
+  "generated_at": "2026-06-11",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Backtest Date Filtering",
+      "category": "engine",
+      "priority": "P1",
+      "source": "Backtests ran over the full CSV even when reviewers wanted a restricted date range.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/engine.py"
+      ],
+      "acceptance_criteria": "--start-date and --end-date accepted and honored.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves reproducibility; no runtime changes."
+    },
+    {
+      "id": "CAND-002",
+      "title": "Historical Backtest Runs CLI",
+      "category": "CLI",
+      "priority": "P1",
+      "source": "No way to list prior local backtest runs from .atlas/backtests/.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/cli.py"
+      ],
+      "acceptance_criteria": "atlas backtest runs lists runs; --json and --validate modes work.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves reviewer visibility; offline only."
+    },
+    {
+      "id": "CAND-003",
+      "title": "Realized PnL Tracking",
+      "category": "engine",
+      "priority": "P1",
+      "source": "Sell fills did not carry realized PnL, making trade metrics impossible.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/models.py",
+        "src/atlas_agent/backtest/engine.py",
+        "src/atlas_agent/backtest/metrics.py"
+      ],
+      "acceptance_criteria": "Sell fills populate realized_pnl; metrics use it.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Enables trade metrics; deterministic local."
+    },
+    {
+      "id": "CAND-004",
+      "title": "Backtest Report Schema Contract",
+      "category": "checker",
+      "priority": "P1",
+      "source": "result.json structure was implicit; no schema contract existed.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/report_schema.py",
+        "docs/backtesting/report-schema.md",
+        "tests/backtest/test_backtest_report_schema.py"
+      ],
+      "acceptance_criteria": "Schema backtest.report.v1 defined; validator raises on violations.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Formalizes report contract; no execution changes."
+    },
+    {
+      "id": "CAND-005",
+      "title": "Strategy Entry-Point Dogfooding",
+      "category": "test",
+      "priority": "P2",
+      "source": "Built-in strategies were not verified via entry-point discovery.",
+      "risk": "low",
+      "expected_files": [
+        "pyproject.toml",
+        "tests/backtest/test_backtest_strategies.py"
+      ],
+      "acceptance_criteria": "Entry points declared; tests verify discovery.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves test coverage; no runtime changes."
+    },
+    {
+      "id": "CAND-006",
+      "title": "Backtest Report Validation UX",
+      "category": "CLI",
+      "priority": "P2",
+      "source": "atlas backtest runs did not surface schema validation status.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/cli.py",
+        "src/atlas_agent/backtest/report_schema.py",
+        "tests/cli/test_backtest_cli.py"
+      ],
+      "acceptance_criteria": "--validate emits schema_status, schema_valid, schema_error, schema_errors, schema_version.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves diagnostics; offline only."
+    },
+    {
+      "id": "CAND-007",
+      "title": "Dashboard / Report Schema Status",
+      "category": "report",
+      "priority": "P2",
+      "source": "Dashboard/report quality output did not expose latest schema state.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/report.py",
+        "src/atlas_agent/dashboard",
+        "tests/backtest/test_backtest_reports.py"
+      ],
+      "acceptance_criteria": "latest_schema_version and latest_validation_status surfaced.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves observability; read-only."
+    },
+    {
+      "id": "CAND-008",
+      "title": "Markdown Diagnostics & Fills Summary",
+      "category": "report",
+      "priority": "P2",
+      "source": "Markdown reports lacked diagnostics and fills summary.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/report.py",
+        "tests/backtest/test_backtest_reports.py"
+      ],
+      "acceptance_criteria": "Diagnostics and Fills Summary sections render.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves readability; render-only."
+    },
+    {
+      "id": "CAND-009",
+      "title": "Structured Validation Details",
+      "category": "report",
+      "priority": "P3",
+      "source": "Validation errors were not surfaced in Markdown.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/report.py",
+        "src/atlas_agent/backtest/report_schema.py",
+        "tests/backtest/test_backtest_reports.py"
+      ],
+      "acceptance_criteria": "SchemaValidationResult carries schema_valid/schema_error/schema_version.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves clarity; render-only."
+    },
+    {
+      "id": "CAND-010",
+      "title": "Accumulated Schema Errors",
+      "category": "checker",
+      "priority": "P3",
+      "source": "validate_backtest_report raised on first error only.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/report_schema.py",
+        "tests/backtest/test_backtest_report_schema.py"
+      ],
+      "acceptance_criteria": "collect_backtest_report_schema_errors returns all errors.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves debugging; offline only."
+    },
+    {
+      "id": "CAND-011",
+      "title": "Unreadable Report Surfacing",
+      "category": "CLI",
+      "priority": "P3",
+      "source": "Unreadable result.json files were silently skipped by --validate.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/cli.py",
+        "src/atlas_agent/backtest/report_schema.py",
+        "tests/cli/test_backtest_cli.py"
+      ],
+      "acceptance_criteria": "Unreadable files appear with schema_status=unreadable.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves reliability; offline only."
+    },
+    {
+      "id": "CAND-012",
+      "title": "Markdown Trade Percentage Metrics",
+      "category": "report",
+      "priority": "P3",
+      "source": "BacktestMetrics had percentage fields but Markdown omitted them.",
+      "risk": "low",
+      "expected_files": [
+        "src/atlas_agent/backtest/report.py",
+        "tests/backtest/test_backtest_reports.py"
+      ],
+      "acceptance_criteria": "Best/Worst/Average Trade % render when present.",
+      "selected_for_v069": true,
+      "implemented": true,
+      "reason": "Improves readability; render-only."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution unlock",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-005",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Automatic skill activation",
+      "reason": "Skill candidates remain manually reviewed and offline."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Automatic learning execution",
+      "reason": "Learning suggestions remain offline and manually reviewed."
+    },
+    {
+      "id": "REJ-008",
+      "title": "New broker adapters (Binance completion, CCXT enablement, IBKR implementation)",
+      "reason": "New features, not maintenance. Defer to v0.7.0 or later minor release."
+    },
+    {
+      "id": "REJ-009",
+      "title": "Dashboard rewrite or new UI capabilities",
+      "reason": "Out of patch scope. Requires design review. Defer to v0.7.x."
+    },
+    {
+      "id": "REJ-010",
+      "title": "Version bump to 0.6.9",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-011",
+      "title": "Creation of docs/releases/v0.6.9.md",
+      "reason": "Not authorized in selection-only batch."
+    },
+    {
+      "id": "REJ-012",
+      "title": "Creation of docs/trust/v0.6.9-status.md",
+      "reason": "Not authorized in selection-only batch."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading remains disabled by default.",
+    "Live submit remains disabled by default.",
+    "Provider execution remains disabled by default.",
+    "Broker execution remains disabled by default.",
+    "Risk gates remain deterministic and unchanged.",
+    "Approval queue behavior remains unchanged.",
+    "Kill-switch behavior remains unchanged.",
+    "Human approval remains required for live order flow.",
+    "Credentials are not loaded unless explicitly configured.",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
+  ],
+  "constraints": [
+    "Version is bumped to 0.6.9 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.9.md created",
+    "docs/trust/v0.6.9-status.md created",
+    "scripts/check_v069_release_prep.py and matching tests created",
+    "No tag, GitHub release, or PyPI publish yet",
+    "No runtime trading behavior changes"
+  ],
+  "release_criteria": [
+    "Accepted candidates are implemented",
+    "dev_check, ci_check, and release_check --quick pass locally",
+    "CI on main is green after the prep commit is pushed",
+    "Version is bumped to 0.6.9 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.9.md and docs/trust/v0.6.9-status.md are created",
+    "CHANGELOG.md has a [0.6.9] entry",
+    "scripts/check_v069_release_prep.py and matching tests are created",
+    "Protected boundary diff is empty",
+    "Forbidden claims scan is clean",
+    "Owner approval is obtained for tag cutover"
+  ]
+}

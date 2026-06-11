@@ -48,6 +48,7 @@ REQUIRED_FILES = [
     REPO_ROOT / "docs" / "ci-release-gates.md",
     REPO_ROOT / "docs" / "package-distribution-verification.md",
     REPO_ROOT / "docs" / "clean-install-verification.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.9.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.8.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.7.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.6.md",

@@ -15,6 +15,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 
+## [0.6.9] - 2026-06-11
+
+### Added
+- Backtest report schema contract (`src/atlas_agent/backtest/report_schema.py`, `docs/backtesting/report-schema.md`, `tests/backtest/test_backtest_report_schema.py`) with `backtest.report.v1`, deterministic validation, and accumulated schema error collection.
+- Backtest validation UX: `atlas backtest runs --validate` emits `schema_status`, `schema_valid`, `schema_error`, `schema_errors`, and `schema_version`; unreadable `result.json` files are surfaced instead of silently skipped.
+- Dashboard/report schema status surfacing (`latest_schema_version`, `latest_validation_status`).
+- Markdown Diagnostics and Fills Summary sections in backtest reports.
+- Markdown trade metrics: realized-PnL best/worst/average and percentage best/worst/average (`Best Trade %`, `Worst Trade %`, `Average Trade %`).
+- Historical backtest runs CLI (`atlas backtest runs`) with JSON and validate modes.
+- Backtest date filtering (`--start-date`, `--end-date`).
+- Realized-PnL tracking per sell fill.
+- Strategy entry-point dogfooding: built-in backtest strategies declared in `pyproject.toml` with discovery tests.
+- `scripts/check_v069_release_prep.py` and `tests/test_check_v069_release_prep.py` for v0.6.9 release-prep state validation.
+- `docs/releases/v0.6.9.md`, `docs/trust/v0.6.9-status.md`, `docs/releases/v0.6.9-candidates.md`, and `docs/releases/v0.6.9-candidates.json`.
+
+### Changed
+- Bumped package/source version from `0.6.8` to `0.6.9`.
+- Updated release metadata to reflect `v0.6.8` as the current public GitHub release (already tagged and released) and `v0.6.9` as prepared.
+- Updated `docs/releases/v0.6.8.md` and `docs/trust/v0.6.8-status.md` to tagged/released state.
+- Updated README, SECURITY.md, and `docs/trust/README.md` current status lines to `v0.6.9` source / `v0.6.8` public / `v0.6.10` next planning line.
+
+### Fixed
+
+### Safety
+- No live trading, broker execution, provider execution, risk gate, approval gate, kill switch, or audit behavior changes.
+- No tag, GitHub release, or PyPI publish performed for v0.6.9.
+
 ## [0.6.8] - 2026-06-10
 
 ### Added

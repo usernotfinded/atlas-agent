@@ -9,7 +9,7 @@ The metadata file establishes a single source of truth for release scripts, test
 ## Schema
 
 - `schema_version`: Data structure version integer.
-- `source_version`: The package version that the `main` branch currently represents (e.g. "0.6.8"). Must match `pyproject.toml`.
+- `source_version`: The package version that the `main` branch currently represents (e.g. "0.6.9"). Must match `pyproject.toml`.
 - `current_public_release`: The exact Git tag for the latest stable, officially published release.
 - `next_planned_release`: Advisory target for the next release line.
 - `pypi_published`: Repository-level toggle indicating if PyPI publication is globally enabled and executed.

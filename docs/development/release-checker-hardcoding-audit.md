@@ -31,10 +31,11 @@ The following scripts perform checks against specific historical contexts, versi
 * `scripts/check_v062_release_prep.py` (Checks v0.6.2 prep)
 * `scripts/check_v063_release_prep.py` (Checks v0.6.3 prep)
 * `scripts/check_v068_release_prep.py` (Checks v0.6.8 prep)
+* `scripts/check_v069_release_prep.py` (Checks v0.6.9 prep)
 * `scripts/check_rc1_cutover.py` (Verifies historical RC cutover patterns)
 * `scripts/check_demo_command_smoke.py` (References specific v0.6.8 candidate files)
 * `scripts/check_demo_proof.py` (Validates explicit string references to "v0.6.8 release notes" in documentation)
-* `scripts/check_generated_artifacts.py` (Contains a static allowlist of historical `TRACKED_VERSIONED_EVIDENCE_PREFIXES` up to `v0.6.8`)
+* `scripts/check_generated_artifacts.py` (Contains a static allowlist of historical `TRACKED_VERSIONED_EVIDENCE_PREFIXES` up to `v0.6.9`)
 
 ## Conclusion
 Active continuous integration checkers now successfully reference `docs/releases/release-metadata.json` dynamically. Tests have been updated to assert proper metadata loads instead of searching for hardcoded strings. All tests and CI checks are green.

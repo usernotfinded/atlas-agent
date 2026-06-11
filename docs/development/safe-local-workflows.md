@@ -70,7 +70,7 @@ enablement workflow.
 Generate local release assurance evidence:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.7 --output artifacts/release_assurance/v0.6.7-local-check
+python scripts/release_assurance.py --version v0.6.9 --output artifacts/release_assurance/v0.6.9-local-check
 ```
 
 Release assurance checks identity, updater delivery, local safety checks,

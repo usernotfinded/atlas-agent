@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-CURRENT_RELEASE_TAG = "v0.6.6"
+CURRENT_RELEASE_TAG = "v0.6.8"
 REQUIRED_DEV_SCRIPTS = [
     "scripts/check_version_consistency.py",
     "scripts/check_forbidden_claims.py",
@@ -30,8 +30,8 @@ REQUIRED_DEV_SCRIPTS = [
 ]
 REQUIRED_TRUST_DOCS = [
     "docs/trust/README.md",
-    "docs/trust/v0.6.6-status.md",
-    "docs/trust/v0.6.7-status.md",
+    "docs/trust/v0.6.8-status.md",
+    "docs/trust/v0.6.9-status.md",
 ]
 TRACKED_SECRET_FILENAMES = {
     ".env",

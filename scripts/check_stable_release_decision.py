@@ -44,6 +44,8 @@ REQUIRED_FILES = [
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
     REPO_ROOT / "CHANGELOG.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.9.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.8.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.7.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.6.md",
     REPO_ROOT / "docs" / "releases" / "v0.6.5.md",

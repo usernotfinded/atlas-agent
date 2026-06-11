@@ -21,7 +21,7 @@ SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.8-rc7"
 
-CURRENT_PACKAGE_VERSION = "0.6.8"
+CURRENT_PACKAGE_VERSION = "0.6.9"
 RUNTIME_REQUIRES_DIST = (
     "fastapi>=0.115",
     "httpx>=0.27",

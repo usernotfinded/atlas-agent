@@ -5,21 +5,21 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.7` (tagged)
-- Previous public release: `v0.6.6`
-- Source package version on `main`: `0.6.8`
-- GitHub release: `v0.6.7` (current public)
-- Next planning line: `v0.6.9`
+- Current public release: `v0.6.8` (tagged)
+- Previous public release: `v0.6.7`
+- Source package version on `main`: `0.6.9`
+- GitHub release: `v0.6.8` (current public)
+- Next planning line: `v0.6.10`
 - PyPI was not published
-- Prepared release status: [v0.6.8 Trust and Release Status](v0.6.8-status.md) (prepared, not yet tagged)
-- Release status detail: [v0.6.7 Trust and Release Status](v0.6.7-status.md) (current public)
-- Previous release status: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (historical)
-- Previous previous release status: [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
-- Release notes: [docs/releases/v0.6.8.md](../releases/v0.6.8.md) (prepared, not yet tagged)
-- Current public release notes: [docs/releases/v0.6.7.md](../releases/v0.6.7.md) (current public)
-- Previous release notes: [docs/releases/v0.6.6.md](../releases/v0.6.6.md) (historical)
-- Previous previous release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md) (historical)
-- Historical release notes: [docs/releases/v0.6.3.md](../releases/v0.6.3.md), [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
+- Prepared release status: [v0.6.9 Trust and Release Status](v0.6.9-status.md) (prepared, not yet tagged)
+- Release status detail: [v0.6.8 Trust and Release Status](v0.6.8-status.md) (current public)
+- Previous release status: [v0.6.7 Trust and Release Status](v0.6.7-status.md) (historical)
+- Previous previous release status: [v0.6.6 Trust and Release Status](v0.6.6-status.md) (historical)
+- Release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (prepared, not yet tagged)
+- Current public release notes: [docs/releases/v0.6.8.md](../releases/v0.6.8.md) (current public)
+- Previous release notes: [docs/releases/v0.6.7.md](../releases/v0.6.7.md) (historical)
+- Previous previous release notes: [docs/releases/v0.6.6.md](../releases/v0.6.6.md) (historical)
+- Historical release notes: [docs/releases/v0.6.5.md](../releases/v0.6.5.md), [docs/releases/v0.6.3.md](../releases/v0.6.3.md), [docs/releases/v0.6.2.md](../releases/v0.6.2.md), [docs/releases/v0.6.1.md](../releases/v0.6.1.md), [docs/releases/v0.6.0.md](../releases/v0.6.0.md)
 
 ## Security Posture
 
@@ -68,23 +68,23 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.7` is verified against the GitHub release/tag.
-Auto-updater delivery for `v0.6.8` is not yet verified because the tag does not exist.
+Auto-updater delivery for `v0.6.8` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.9` is not yet verified because the tag does not exist.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.7` (current public)
+- GitHub release: `v0.6.8` (current public)
 - PyPI was not published
-- Package version in source metadata: `0.6.8`
-- Auto-updater delivery: verified for `v0.6.7`; not yet verified for `v0.6.8`
+- Package version in source metadata: `0.6.9`
+- Auto-updater delivery: verified for `v0.6.8`; not yet verified for `v0.6.9`
 
 ## What Is Ready
 
-- Public v0.6.7 release notes and release status documentation (current public).
-- Public v0.6.8 release notes and release status documentation (prepared; not yet tagged or released).
-- Next planning line v0.6.9 release notes and release status documentation (not yet prepared).
+- Public v0.6.8 release notes and release status documentation (current public).
+- Public v0.6.9 release notes and release status documentation (prepared; not yet tagged or released).
+- Next planning line v0.6.10 release notes and release status documentation (not yet prepared).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -109,12 +109,12 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.8 Release Notes](../releases/v0.6.8.md) (prepared, not yet tagged)
-- [v0.6.8 Trust and Release Status](v0.6.8-status.md) (prepared, not yet tagged)
-- [v0.6.7 Release Notes](../releases/v0.6.7.md) (current public)
-- [v0.6.7 Trust and Release Status](v0.6.7-status.md) (current public)
-- [v0.6.6 Release Notes](../releases/v0.6.6.md) (historical)
-- [v0.6.6 Trust and Release Status](v0.6.6-status.md) (historical)
+- [v0.6.9 Release Notes](../releases/v0.6.9.md) (prepared, not yet tagged)
+- [v0.6.9 Trust and Release Status](v0.6.9-status.md) (prepared, not yet tagged)
+- [v0.6.8 Release Notes](../releases/v0.6.8.md) (current public)
+- [v0.6.8 Trust and Release Status](v0.6.8-status.md) (current public)
+- [v0.6.7 Release Notes](../releases/v0.6.7.md) (historical)
+- [v0.6.7 Trust and Release Status](v0.6.7-status.md) (historical)
 - [v0.6.5 Release Notes](../releases/v0.6.5.md) (historical)
 - [v0.6.5 Trust and Release Status](v0.6.5-status.md) (historical)
 - [v0.6.4 Release Notes](../releases/v0.6.4.md) (historical)

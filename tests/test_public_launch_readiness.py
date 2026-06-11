@@ -110,7 +110,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.6.7" in readme_text, "README must reference v0.6.7 as current status"
+        assert "v0.6.9" in readme_text, "README must reference v0.6.9 as current status"
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -238,16 +238,16 @@ class TestStaleRCReferencesBlocked:
             f"Expected pass for historical RC changelog entry:\n{result.stdout}"
         )
 
-    def test_current_stable_version_0594_accepted(self) -> None:
+    def test_current_stable_version_068_accepted(self) -> None:
         text = (
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.6.7)\n"
+            "Current Status (v0.6.9)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (
-            f"Expected pass for current public version:\n{result.stdout}"
+            f"Expected pass for current source version:\n{result.stdout}"
         )
 
     @pytest.mark.parametrize("stale_version", [
@@ -268,10 +268,10 @@ class TestStaleRCReferencesBlocked:
 
 
 class TestReleaseDocConsistency:
-    def test_public_launch_readiness_doc_has_v067_as_current_release(self) -> None:
+    def test_public_launch_readiness_doc_has_v068_as_current_release(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
-        assert "latest stable public GitHub release is `v0.6.7`" in text, (
-            "public-launch-readiness.md must describe v0.6.7 as the current stable release"
+        assert "latest stable public GitHub release is `v0.6.8`" in text, (
+            "public-launch-readiness.md must describe v0.6.8 as the current stable release"
         )
 
     def test_public_launch_readiness_doc_does_not_claim_v062_as_latest(self) -> None:
@@ -292,19 +292,19 @@ class TestReleaseDocConsistency:
             "release-checklist.md must not reference v0.6.2 as the current public tag"
         )
 
-    def test_readme_release_assurance_example_uses_v067(self) -> None:
+    def test_readme_release_assurance_example_uses_v069(self) -> None:
         text = (ROOT / "README.md").read_text(encoding="utf-8")
-        assert "--version v0.6.7" in text, (
-            "README release assurance example must use v0.6.7"
+        assert "--version v0.6.9" in text, (
+            "README release assurance example must use v0.6.9"
         )
         assert "v0.6.1-local-check" not in text, (
             "README must not use stale v0.6.1 release assurance example"
         )
 
-    def test_checks_reference_release_assurance_uses_v067(self) -> None:
+    def test_checks_reference_release_assurance_uses_v069(self) -> None:
         text = (ROOT / "docs" / "development" / "checks-reference.md").read_text(encoding="utf-8")
-        assert "--version v0.6.7" in text, (
-            "checks-reference.md release assurance example must use v0.6.7"
+        assert "--version v0.6.9" in text, (
+            "checks-reference.md release assurance example must use v0.6.9"
         )
         assert "v0.6.0-local-check" not in text, (
             "checks-reference.md must not use stale v0.6.0 release assurance example"
