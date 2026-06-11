@@ -15,6 +15,7 @@ from typing import Any
 
 from atlas_agent.backtest.metrics import TradeRecord
 from atlas_agent.backtest.models import BacktestResult
+from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION
 
 
 _DISCLAIMER = (
@@ -28,6 +29,7 @@ _DISCLAIMER = (
 def render_json_report(result: BacktestResult) -> dict[str, Any]:
     """Render a BacktestResult as a JSON-serializable dict."""
     payload = result.model_dump(mode="json")
+    payload["schema_version"] = REPORT_SCHEMA_VERSION
     payload["generated_at"] = datetime.now(UTC).isoformat()
     payload["disclaimer"] = _DISCLAIMER
     payload["report_type"] = "backtest_research_summary"

@@ -22,6 +22,7 @@ from atlas_agent.backtest.report import (
     render_markdown_report,
     write_report_from_result,
 )
+from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION
 
 
 def _sample_result() -> BacktestResult:
@@ -75,6 +76,10 @@ def _sample_result() -> BacktestResult:
 
 
 class TestRenderJsonReport:
+    def test_includes_schema_version(self):
+        report = render_json_report(_sample_result())
+        assert report["schema_version"] == REPORT_SCHEMA_VERSION
+
     def test_includes_disclaimer(self):
         report = render_json_report(_sample_result())
         assert report["disclaimer"] == _DISCLAIMER

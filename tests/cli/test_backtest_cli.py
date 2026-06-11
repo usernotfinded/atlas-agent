@@ -3,6 +3,8 @@ import json
 import pytest
 from pathlib import Path
 
+from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION, validate_backtest_report
+
 def test_cli_backtest_run_json(tmp_path):
     # Create sample data
     data_path = tmp_path / "data.csv"
@@ -257,3 +259,28 @@ def test_cli_backtest_runs_json():
     assert result.returncode == 0
     output = json.loads(result.stdout)
     assert isinstance(output, list)
+
+
+def test_cli_backtest_report_json_validates_schema(tmp_path):
+    data_path = tmp_path / "data.csv"
+    data_path.write_text(
+        "date,symbol,open,high,low,close,volume\n"
+        "2026-01-01,AAPL,100,105,95,101,1000\n"
+        "2026-01-02,AAPL,101,106,96,102,1000\n"
+    )
+
+    cmd = [
+        "python3.11", "-m", "atlas_agent.cli",
+        "backtest", "run",
+        "--symbol", "AAPL",
+        "--data", str(data_path),
+        "--report", "json",
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result.returncode == 0
+    output = json.loads(result.stdout)
+    assert output["schema_version"] == REPORT_SCHEMA_VERSION
+    assert output["report_type"] == "backtest_research_summary"
+    validate_backtest_report(output)

@@ -13,6 +13,8 @@ import tempfile
 
 import pytest
 
+from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION, validate_backtest_report
+
 
 def _run(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
@@ -84,7 +86,7 @@ def test_f2_backtest_invalid_csv_format():
 
 
 def test_f2_backtest_report_json():
-    """Backtest with --report json emits valid JSON with disclaimer."""
+    """Backtest with --report json emits valid JSON with disclaimer and schema."""
     result = _run(
         "backtest", "run",
         "--data", "data/sample/ohlcv.csv",
@@ -94,8 +96,10 @@ def test_f2_backtest_report_json():
     assert result.returncode == 0, f"stderr={result.stderr}"
     data = json.loads(result.stdout)
     assert data["report_type"] == "backtest_research_summary"
+    assert data["schema_version"] == REPORT_SCHEMA_VERSION
     assert "disclaimer" in data
     assert "not investment advice" in data["disclaimer"].lower()
+    validate_backtest_report(data)
 
 
 def test_f2_backtest_report_markdown():

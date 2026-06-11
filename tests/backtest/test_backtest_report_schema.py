@@ -1,0 +1,141 @@
+"""Tests for backtest report schema contract (CAND-005)."""
+from __future__ import annotations
+
+import json
+from datetime import datetime
+
+import pytest
+
+from atlas_agent.backtest.models import (
+    BacktestConfig,
+    BacktestFill,
+    BacktestMetrics,
+    BacktestResult,
+)
+from atlas_agent.backtest.report import render_json_report
+from atlas_agent.backtest.report_schema import (
+    REPORT_SCHEMA_VERSION,
+    ReportSchemaError,
+    validate_backtest_report,
+    validate_backtest_result,
+)
+
+
+def _sample_result() -> BacktestResult:
+    return BacktestResult(
+        run_id="bt-schema-001",
+        status="completed",
+        config=BacktestConfig(
+            run_id="bt-schema-001",
+            symbol="DEMO-SYMBOL",
+            data_path="data/sample/ohlcv.csv",
+            initial_equity=10000.0,
+            strategy_mode="buy_and_hold",
+        ),
+        metrics=BacktestMetrics(
+            total_return_pct=3.0,
+            max_drawdown_pct=1.5,
+            trade_count=2,
+            final_equity=10300.0,
+            initial_equity=10000.0,
+        ),
+        strategy_metadata={"strategy_id": "buy_and_hold", "name": "Buy and Hold"},
+        benchmark={},
+        fills=[],
+        equity_curve=[
+            {"timestamp": "2026-04-20T00:00:00", "equity": 10000.0},
+        ],
+        diagnostics={"blocked_orders": []},
+        started_at=datetime(2026, 4, 20),
+        completed_at=datetime(2026, 4, 25),
+    )
+
+
+def test_valid_report_passes():
+    report = render_json_report(_sample_result())
+    validate_backtest_report(report)
+
+
+def test_validate_backtest_result_wrapper():
+    report = validate_backtest_result(_sample_result())
+    assert report["schema_version"] == REPORT_SCHEMA_VERSION
+
+
+def test_missing_schema_version_fails():
+    report = render_json_report(_sample_result())
+    del report["schema_version"]
+    with pytest.raises(ReportSchemaError, match="Missing top-level keys"):
+        validate_backtest_report(report)
+
+
+def test_wrong_schema_version_fails():
+    report = render_json_report(_sample_result())
+    report["schema_version"] = "backtest.report.v0"
+    with pytest.raises(ReportSchemaError, match="Unexpected schema_version"):
+        validate_backtest_report(report)
+
+
+def test_missing_required_metric_fails():
+    report = render_json_report(_sample_result())
+    del report["metrics"]["total_return_pct"]
+    with pytest.raises(ReportSchemaError, match="Missing metric keys"):
+        validate_backtest_report(report)
+
+
+def test_missing_config_key_fails():
+    report = render_json_report(_sample_result())
+    del report["config"]["symbol"]
+    with pytest.raises(ReportSchemaError, match="Missing config keys"):
+        validate_backtest_report(report)
+
+
+def test_invalid_fill_side_fails():
+    report = render_json_report(_sample_result())
+    report["fills"] = [
+        {
+            "side": "invalid",
+            "symbol": "AAPL",
+            "quantity": 1.0,
+            "price": 100.0,
+            "notional": 100.0,
+        }
+    ]
+    with pytest.raises(ReportSchemaError, match=r"fills\[0\]\.side must be"):
+        validate_backtest_report(report)
+
+
+def test_missing_equity_curve_key_fails():
+    report = render_json_report(_sample_result())
+    report["equity_curve"] = [{"timestamp": "2026-01-01T00:00:00"}]
+    with pytest.raises(ReportSchemaError, match=r"equity_curve\[0\] missing"):
+        validate_backtest_report(report)
+
+
+def test_non_dict_report_fails():
+    with pytest.raises(ReportSchemaError, match="must be a JSON object"):
+        validate_backtest_report("not a dict")
+
+
+def test_fill_with_realized_pnl_passes():
+    report = render_json_report(_sample_result())
+    report["fills"] = [
+        {
+            "side": "sell",
+            "symbol": "AAPL",
+            "quantity": 10.0,
+            "price": 110.0,
+            "notional": 1100.0,
+            "realized_pnl": 100.0,
+        }
+    ]
+    validate_backtest_report(report)
+
+
+def test_date_filtering_metadata_present():
+    result = _sample_result()
+    result.config.start_date = "2026-04-01"
+    result.config.end_date = "2026-04-30"
+    report = render_json_report(result)
+    validate_backtest_report(report)
+    assert report["config"]["start_date"] == "2026-04-01"
+    assert report["config"]["end_date"] == "2026-04-30"
