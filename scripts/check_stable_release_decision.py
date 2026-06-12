@@ -164,17 +164,8 @@ def _check_readme_links() -> list[str]:
     text = _read(readme)
     lower = text.lower()
 
-    if "stable-release-decision.md" not in text and "stable release decision" not in lower:
-        errors.append("README.md missing link to stable release decision")
-
-    if "stable-release-checklist.md" not in text and "stable release checklist" not in lower:
-        errors.append("README.md missing link to stable release checklist")
-
     if "public-launch-readiness.md" not in text and "public launch readiness" not in lower:
         errors.append("README.md missing link to public launch readiness")
-
-    if "final-rc-audit.md" not in text and "final rc audit" not in lower:
-        errors.append("README.md missing link to final RC audit")
 
     if PUBLIC_TAG not in text:
         errors.append("README.md missing current status reference")

@@ -165,11 +165,8 @@ def _check_readme_safety() -> list[str]:
         if re.search(pattern, text):
             errors.append(f"README.md contains stale RC current-status reference matching {pattern}")
 
-    if "what this is" not in lower:
-        errors.append("README.md missing 'What this is' section")
-
-    if "what this is not" not in lower:
-        errors.append("README.md missing 'What this is not' section")
+    if "why atlas?" not in lower and "why atlas" not in lower:
+        errors.append("README.md missing 'Why Atlas?' section")
 
     if "security.md" not in lower:
         errors.append("README.md missing link to SECURITY.md")

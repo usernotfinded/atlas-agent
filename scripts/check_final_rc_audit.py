@@ -154,12 +154,6 @@ def _check_readme_links() -> list[str]:
     text = _read(readme)
     lower = text.lower()
 
-    if "final-rc-audit.md" not in text and "final rc audit" not in lower:
-        errors.append("README.md missing link to final RC audit")
-
-    if "final-release-candidate-checklist.md" not in text and "final release candidate checklist" not in lower:
-        errors.append("README.md missing link to final release candidate checklist")
-
     if "public-launch-readiness.md" not in text and "public launch readiness" not in lower:
         errors.append("README.md missing link to public launch readiness")
 

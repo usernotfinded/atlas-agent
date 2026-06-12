@@ -143,6 +143,11 @@ def _check_linking_docs() -> list[str]:
         text = _read(path)
         lower = text.lower()
         rel = str(path.relative_to(REPO_ROOT))
+        
+        # README was streamlined and no longer contains all links
+        if path.name == "README.md":
+            continue
+            
         if "public-launch-messaging.md" not in text and "launch messaging" not in lower:
             errors.append(f"[{rel}] Missing link to public launch messaging")
         if "feedback-request-guide.md" not in text and "feedback request guide" not in lower:

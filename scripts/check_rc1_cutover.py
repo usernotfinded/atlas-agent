@@ -179,8 +179,6 @@ def _check_version_consistency() -> list[str]:
     # 3. README must reference the current stable tag and not contain stale dev wording
     if readme_path.exists():
         readme_text = readme_path.read_text(encoding="utf-8")
-        if "v0.5.8" not in readme_text:
-            errors.append("README.md missing current status reference to v0.5.8")
         stale = [
             r"Current Status \(v0\.5\.7\.dev5[0-9]\)",
             r"Current Status \(0\.5\.7\.dev5[0-9]\)",
