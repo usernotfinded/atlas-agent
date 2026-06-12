@@ -147,3 +147,30 @@ def test_collect_dashboard_snapshot_warnings_in_live_mode(tmp_path: Path):
     config.trading_mode = "live"
     snapshot = collect_dashboard_snapshot(config, tmp_path)
     assert any("Live trading" in w for w in snapshot.warnings)
+
+
+def test_collect_dashboard_snapshot_orders_backtests_by_timestamp(tmp_path: Path):
+    config = AtlasConfig(audit_dir=tmp_path / "audit")
+    backtests_dir = tmp_path / ".atlas" / "backtests"
+    runs = [
+        ("bt-20260103-120000", "DEMO-SYMBOL", 3.0),
+        ("bt-20260101-120000", "AAPL", 1.0),
+        ("bt-20260102-120000", "TSLA", 2.0),
+    ]
+    for run_id, symbol, return_pct in runs:
+        run_dir = backtests_dir / run_id
+        run_dir.mkdir(parents=True)
+        result = {
+            "run_id": run_id,
+            "status": "completed",
+            "config": {"symbol": symbol},
+            "metrics": {"total_return_pct": return_pct},
+        }
+        (run_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
+
+    snapshot = collect_dashboard_snapshot(config, tmp_path)
+    assert snapshot.backtests.available is True
+    assert snapshot.backtests.total_runs == 3
+    assert snapshot.backtests.latest_run_id == "bt-20260103-120000"
+    assert snapshot.backtests.latest_symbol == "DEMO-SYMBOL"
+    assert snapshot.backtests.latest_return_pct == 3.0

@@ -46,18 +46,21 @@
       "likely_files": [
         "src/atlas_agent/dashboard/render.py",
         "src/atlas_agent/dashboard/collectors.py",
+        "src/atlas_agent/backtest/report.py",
         "tests/dashboard/test_dashboard_render.py",
-        "tests/dashboard/test_dashboard_collectors.py"
+        "tests/dashboard/test_dashboard_collectors.py",
+        "tests/backtest/test_backtest_reports.py"
       ],
       "tests_checks": [
         "pytest tests/dashboard",
+        "pytest tests/backtest/test_backtest_reports.py",
         "python scripts/check_backtest_report_schema.py",
         "manual HTML/Markdown export inspection"
       ],
       "recommendation": "now",
       "ranking_reason": "Small, high-visibility render-only polish that extends v0.6.9 report-quality work.",
       "selected_for_v0610": true,
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "CAND-003",

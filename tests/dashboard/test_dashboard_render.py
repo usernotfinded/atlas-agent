@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
+import pytest
 from atlas_agent.dashboard.models import (
     DashboardAudit,
     DashboardBacktests,
@@ -252,3 +254,117 @@ def test_render_dashboard_markdown_with_missing_data():
     assert "## Missing Data" in md
     assert "portfolio" in md
     assert "backtest" in md
+
+
+@pytest.mark.parametrize(
+    "status,expected_class",
+    [
+        ("completed", "status-success"),
+        ("valid", "status-success"),
+        ("invalid: missing run_id", "status-failed"),
+        ("legacy", "status-partial"),
+        ("unreadable", "status-failed"),
+    ],
+)
+def test_render_dashboard_html_status_badge_mapping(tmp_path: Path, status: str, expected_class: str):
+    snapshot = _full_snapshot()
+    snapshot.backtests.latest_validation_status = status
+    output_path = tmp_path / "dashboard.html"
+    render_dashboard_html(snapshot, output_path)
+    content = output_path.read_text(encoding="utf-8")
+    assert expected_class in content
+
+
+def test_render_dashboard_markdown_includes_safety_banner():
+    snapshot = _full_snapshot()
+    md = render_dashboard_markdown(snapshot)
+    assert "## Safety Notice" in md
+    assert "This dashboard is read-only." in md
+    assert "This dashboard does not execute trades." in md
+    assert "This dashboard does not call providers or brokers." in md
+    assert "This dashboard is not financial advice." in md
+
+
+def test_render_dashboard_html_empty_diagnostics(tmp_path: Path):
+    snapshot = DashboardSnapshot(
+        workspace="/test",
+        provider_summary=DashboardStatusSummary(status="active"),
+        broker_sync_summary=DashboardStatusSummary(status="success"),
+        risk_summary=DashboardStatusSummary(status="enabled"),
+        heartbeat_summary=DashboardStatusSummary(status="healthy"),
+        diagnostics={},
+    )
+    output_path = tmp_path / "dashboard.html"
+    render_dashboard_html(snapshot, output_path)
+    content = output_path.read_text(encoding="utf-8")
+    assert "No diagnostics available." in content
+
+
+def test_render_dashboard_html_redacted_diagnostics(tmp_path: Path):
+    snapshot = DashboardSnapshot(
+        workspace="/test",
+        provider_summary=DashboardStatusSummary(status="active"),
+        broker_sync_summary=DashboardStatusSummary(status="success"),
+        risk_summary=DashboardStatusSummary(status="enabled"),
+        heartbeat_summary=DashboardStatusSummary(status="healthy"),
+        diagnostics={"redacted": True},
+    )
+    output_path = tmp_path / "dashboard.html"
+    render_dashboard_html(snapshot, output_path)
+    content = output_path.read_text(encoding="utf-8")
+    assert "Diagnostics redacted." in content
+
+
+def test_render_dashboard_markdown_empty_diagnostics():
+    snapshot = DashboardSnapshot(
+        workspace="/test",
+        provider_summary=DashboardStatusSummary(status="active"),
+        broker_sync_summary=DashboardStatusSummary(status="success"),
+        risk_summary=DashboardStatusSummary(status="enabled"),
+        heartbeat_summary=DashboardStatusSummary(status="healthy"),
+        diagnostics={},
+    )
+    md = render_dashboard_markdown(snapshot)
+    assert "## Diagnostics" in md
+    assert "No diagnostics available." in md
+
+
+def test_render_dashboard_markdown_redacted_diagnostics():
+    snapshot = DashboardSnapshot(
+        workspace="/test",
+        provider_summary=DashboardStatusSummary(status="active"),
+        broker_sync_summary=DashboardStatusSummary(status="success"),
+        risk_summary=DashboardStatusSummary(status="enabled"),
+        heartbeat_summary=DashboardStatusSummary(status="healthy"),
+        diagnostics={"redacted": True},
+    )
+    md = render_dashboard_markdown(snapshot)
+    assert "## Diagnostics" in md
+    assert "Diagnostics redacted." in md
+
+
+def test_render_dashboard_markdown_provided_diagnostics():
+    snapshot = DashboardSnapshot(
+        workspace="/test",
+        provider_summary=DashboardStatusSummary(status="active"),
+        broker_sync_summary=DashboardStatusSummary(status="success"),
+        risk_summary=DashboardStatusSummary(status="enabled"),
+        heartbeat_summary=DashboardStatusSummary(status="healthy"),
+        diagnostics={"safe_key": "safe-value"},
+    )
+    md = render_dashboard_markdown(snapshot)
+    assert "## Diagnostics" in md
+    assert "safe-value" in md
+
+
+def test_render_dashboard_markdown_mode_fallback():
+    snapshot = DashboardSnapshot(
+        workspace="/test",
+        mode="unknown",
+        provider_summary=DashboardStatusSummary(status="active"),
+        broker_sync_summary=DashboardStatusSummary(status="success"),
+        risk_summary=DashboardStatusSummary(status="enabled"),
+        heartbeat_summary=DashboardStatusSummary(status="healthy"),
+    )
+    md = render_dashboard_markdown(snapshot)
+    assert "**Mode:** paper_or_sandbox" in md

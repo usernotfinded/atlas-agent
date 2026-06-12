@@ -23,6 +23,15 @@ def _html(value: Any, default: str = "No data available") -> str:
 
 def _status_class(status: Any) -> str:
     text = str(status or "unknown").lower().replace("_", "-")
+    # Normalize dashboard/report-specific statuses to consistent badge classes.
+    if text.startswith("invalid:"):
+        return "failed"
+    text = {
+        "completed": "success",
+        "valid": "success",
+        "unreadable": "failed",
+        "legacy": "partial",
+    }.get(text, text)
     allowed = {
         "active",
         "compromised",
@@ -85,6 +94,22 @@ def _list_section(items: list[str], empty: str = "No data available") -> str:
                 <ul class="plain-list">
 {rendered}
                 </ul>"""
+
+
+def _diagnostics_html(diagnostics: dict[str, Any]) -> str:
+    if not diagnostics:
+        return '<p class="empty-state">No diagnostics available.</p>'
+    if diagnostics.get("redacted"):
+        return '<p class="empty-state">Diagnostics redacted.</p>'
+    return f'<pre>{escape(json.dumps(diagnostics, indent=2))}</pre>'
+
+
+def _diagnostics_markdown(diagnostics: dict[str, Any]) -> str:
+    if not diagnostics:
+        return "No diagnostics available."
+    if diagnostics.get("redacted"):
+        return "Diagnostics redacted."
+    return f"```json\n{json.dumps(diagnostics, indent=2)}\n```"
 
 
 def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Path:
@@ -314,7 +339,7 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card wide" aria-labelledby="diagnostics-heading">
                 <h2 id="diagnostics-heading">Recent Diagnostics</h2>
-                <pre>{escape(json.dumps(snapshot.diagnostics, indent=2))}</pre>
+                {_diagnostics_html(snapshot.diagnostics)}
             </section>
         </div>
 
@@ -337,8 +362,17 @@ def render_dashboard_markdown(snapshot: DashboardSnapshot) -> str:
     lines.append("")
     lines.append(f"**Workspace:** {snapshot.workspace}")
     lines.append(f"**Generated:** {snapshot.generated_at}")
-    lines.append(f"**Mode:** {snapshot.mode}")
+    mode_label = snapshot.mode if snapshot.mode != "unknown" else "paper_or_sandbox"
+    lines.append(f"**Mode:** {mode_label}")
     lines.append(f"**Dashboard Mode:** {snapshot.dashboard_mode}")
+    lines.append("")
+
+    lines.append("## Safety Notice")
+    lines.append("")
+    lines.append("- This dashboard is read-only.")
+    lines.append("- This dashboard does not execute trades.")
+    lines.append("- This dashboard does not call providers or brokers.")
+    lines.append("- This dashboard is not financial advice.")
     lines.append("")
 
     if snapshot.warnings:
@@ -436,6 +470,11 @@ def render_dashboard_markdown(snapshot: DashboardSnapshot) -> str:
     lines.append(f"- **Heartbeat Status:** {sf.heartbeat_status}")
     lines.append(f"- **Live Trading Enabled:** {sf.live_trading_enabled}")
     lines.append(f"- **Live Submit Enabled:** {sf.live_submit_enabled}")
+    lines.append("")
+
+    lines.append("## Diagnostics")
+    lines.append("")
+    lines.append(_diagnostics_markdown(snapshot.diagnostics))
     lines.append("")
 
     if snapshot.missing_data:

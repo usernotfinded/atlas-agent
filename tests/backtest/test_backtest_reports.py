@@ -238,7 +238,7 @@ class TestRenderMarkdownReport:
     def test_includes_diagnostics_section(self):
         md = render_markdown_report(_sample_result())
         assert "## Diagnostics" in md
-        assert "**Blocked Orders:** 0" in md
+        assert "No diagnostics recorded." in md
 
     def test_includes_fills_summary_when_no_fills(self):
         md = render_markdown_report(_sample_result())
@@ -377,6 +377,42 @@ class TestRenderMarkdownReport:
         assert "Best Trade %" not in md
         assert "Worst Trade %" not in md
         assert "Average Trade %" not in md
+
+
+class TestRenderMarkdownReportDiagnostics:
+    def test_empty_diagnostics_renders_clear_fallback(self):
+        result = _sample_result()
+        result.diagnostics = {}
+        md = render_markdown_report(result)
+        assert "## Diagnostics" in md
+        assert "No diagnostics recorded." in md
+
+    def test_redacted_diagnostics_renders_explicit_text(self):
+        result = _sample_result()
+        result.diagnostics = {"redacted": True}
+        md = render_markdown_report(result)
+        assert "## Diagnostics" in md
+        assert "Diagnostics redacted." in md
+        assert "Blocked Orders" not in md
+
+    def test_sensitive_diagnostics_are_scrubbed_in_markdown(self):
+        result = _sample_result_with_fills_and_diagnostics()
+        result.diagnostics["api_key"] = "super-secret-key"
+        result.diagnostics["nested"] = {"password": "hunter2"}
+        md = render_markdown_report(result)
+        assert "super-secret-key" not in md
+        assert "hunter2" not in md
+        assert "[redacted]" in md
+        assert "**Blocked Orders:** 1" in md
+
+    def test_sensitive_diagnostics_are_scrubbed_in_json(self):
+        result = _sample_result_with_fills_and_diagnostics()
+        result.diagnostics["api_key"] = "super-secret-key"
+        result.diagnostics["tokens"] = ["abc", "def"]
+        report = render_json_report(result)
+        assert report["diagnostics"]["api_key"] == "[redacted]"
+        assert report["diagnostics"]["tokens"] == "[redacted]"
+        assert "super-secret-key" not in json.dumps(report)
 
 
 class TestRenderEmptyMarkdownReport:

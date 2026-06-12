@@ -26,9 +26,38 @@ _DISCLAIMER = (
 )
 
 
+_SENSITIVE_DIAGNOSTIC_KEYS = (
+    "api_key",
+    "apikey",
+    "token",
+    "password",
+    "secret",
+    "credential",
+    "credentials",
+    "private_key",
+    "privatekey",
+    "auth_header",
+)
+
+
+def _is_sensitive_key(key: str) -> bool:
+    lowered = key.lower()
+    return any(sensitive in lowered for sensitive in _SENSITIVE_DIAGNOSTIC_KEYS)
+
+
+def _scrub_diagnostics(value: Any) -> Any:
+    """Redact likely secrets from diagnostics while preserving structure."""
+    if isinstance(value, dict):
+        return {k: "[redacted]" if _is_sensitive_key(k) else _scrub_diagnostics(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_scrub_diagnostics(item) for item in value]
+    return value
+
+
 def render_json_report(result: BacktestResult) -> dict[str, Any]:
     """Render a BacktestResult as a JSON-serializable dict."""
     payload = result.model_dump(mode="json")
+    payload["diagnostics"] = _scrub_diagnostics(payload.get("diagnostics", {}))
     payload["schema_version"] = REPORT_SCHEMA_VERSION
     payload["generated_at"] = datetime.now(UTC).isoformat()
     payload["disclaimer"] = _DISCLAIMER
@@ -141,23 +170,34 @@ def render_markdown_report(result: BacktestResult) -> str:
         lines.append("")
 
     # Diagnostics
-    diagnostics = result.diagnostics or {}
-    blocked_orders = diagnostics.get("blocked_orders", [])
-    strategy_validation = diagnostics.get("strategy_validation", {})
+    diagnostics = _scrub_diagnostics(result.diagnostics or {})
     lines.append("## Diagnostics")
     lines.append("")
-    lines.append(f"**Blocked Orders:** {len(blocked_orders)}")
-    if strategy_validation:
-        lines.append(f"**Strategy Validation:** {strategy_validation.get('status', 'n/a')}")
-        issues = strategy_validation.get("issues", [])
-        if issues:
+    if diagnostics.get("redacted"):
+        lines.append("Diagnostics redacted.")
+    elif not diagnostics:
+        lines.append("No diagnostics recorded.")
+    else:
+        blocked_orders = diagnostics.get("blocked_orders", [])
+        strategy_validation = diagnostics.get("strategy_validation", {})
+        lines.append(f"**Blocked Orders:** {len(blocked_orders)}")
+        if strategy_validation:
+            lines.append(f"**Strategy Validation:** {strategy_validation.get('status', 'n/a')}")
+            issues = strategy_validation.get("issues", [])
+            if issues:
+                lines.append("")
+                lines.append("### Validation Issues")
+                lines.append("")
+                for issue in issues:
+                    severity = issue.get("severity", "unknown")
+                    message = issue.get("message", "")
+                    lines.append(f"- [{severity}] {message}")
+        other = {k: v for k, v in diagnostics.items() if k not in ("blocked_orders", "strategy_validation")}
+        if other:
             lines.append("")
-            lines.append("### Validation Issues")
-            lines.append("")
-            for issue in issues:
-                severity = issue.get("severity", "unknown")
-                message = issue.get("message", "")
-                lines.append(f"- [{severity}] {message}")
+            lines.append("```json")
+            lines.append(json.dumps(other, indent=2))
+            lines.append("```")
     lines.append("")
 
     # Fills Summary

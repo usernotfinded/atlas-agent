@@ -136,7 +136,7 @@ def _collect_backtests(workspace_root: Path) -> DashboardBacktests:
     if not backtests_dir.exists():
         return DashboardBacktests(available=False)
 
-    runs: list[dict[str, Any]] = []
+    runs: list[tuple[Path, dict[str, Any]]] = []
     for run_dir in backtests_dir.iterdir():
         if not run_dir.is_dir():
             continue
@@ -145,15 +145,17 @@ def _collect_backtests(workspace_root: Path) -> DashboardBacktests:
             continue
         try:
             data = json.loads(result_path.read_text(encoding="utf-8"))
-            runs.append(data)
+            runs.append((run_dir, data))
         except (json.JSONDecodeError, Exception):
             continue
 
     if not runs:
         return DashboardBacktests(available=False)
 
-    # Sort by some heuristic; try to use run_id or just keep order
-    latest = runs[-1]
+    # Sort deterministically by run_id (newest first), falling back to directory name.
+    runs.sort(key=lambda item: item[0].name, reverse=True)
+    runs.sort(key=lambda item: item[1].get("run_id") or item[0].name, reverse=True)
+    latest = runs[0][1]
     metrics = latest.get("metrics", {})
     from atlas_agent.backtest.report_schema import get_schema_status
     return DashboardBacktests(
