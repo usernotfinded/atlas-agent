@@ -271,9 +271,10 @@ We welcome contributions that respect the safe-by-default design. See [CONTRIBUT
 
 ## Review and Feedback
 
-New to the repo? Start with the [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md) for a 10–15 minute safe review path.
+New to the repo? Start with the [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md) for a 10–15 minute safe review path, then run the compact [Reviewer Golden-Path Validation Guide](docs/reviewer-golden-path.md).
 
 Key reviewer docs:
+- **[Reviewer Golden-Path Validation Guide](docs/reviewer-golden-path.md)**
 - **[Reviewer Checklist](docs/reviewer-checklist.md)**
 - **[Public Launch Readiness](docs/public-launch-readiness.md)**
 - **[Public Launch Messaging](docs/public-launch-messaging.md)**

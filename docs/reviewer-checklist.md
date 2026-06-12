@@ -65,9 +65,9 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 
 ## Known limitations
 
-- [ ] Release candidate, not final release
+- [ ] Final public release, not a release candidate
 - [ ] Live trading explicitly disabled by default
-- [ ] Provider execution not implemented for real providers
+- [ ] Provider execution remains locked for real providers
 - [ ] Broker adapters in beta (Alpaca read-only sync available; others deferred)
 - [ ] Dashboard is basic and read-only
 - [ ] Backtesting is a research tool; historical results do not guarantee future performance

@@ -34,7 +34,7 @@
       "recommendation": "now",
       "ranking_reason": "Closes visible reviewer-journey gaps surfaced by the README cleanup; low risk.",
       "selected_for_v0610": true,
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "CAND-002",

@@ -125,16 +125,16 @@ submit, or order approval.
 
 ## Git Workflow
 
-- Use a feature branch for contributor work.
-- Keep the diff focused on the task.
+Atlas Agent maintenance work follows `AGENTS.md`: **work directly on `main`**.
+Keep the diff focused on the task, stage only intended files, and do not merge
+until checks pass. For contributor work that is not direct-main maintenance,
+use a feature branch and open a draft PR for review.
+
 - Check [Generated Artifacts](generated-artifacts.md) before staging local
   evidence outputs.
 - After direct-main maintenance pushes, check [Main Health Report](main-health.md)
   to verify local `main`, `origin/main`, optional GitHub CI visibility, artifact
   hygiene, and release/tag safety.
-- Stage only intended files.
-- Open a draft PR for review.
-- Do not merge until checks pass.
 - Do not commit generated local artifacts unless the task explicitly requires a
   versioned evidence pack.
 

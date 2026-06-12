@@ -1,6 +1,42 @@
-# Reviewer Golden-Path Smoke Test
+# Reviewer Golden-Path Validation Guide
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
+This guide is the fastest safe path for an external reviewer to verify the current Atlas Agent state.
+
+## Quick validation path
+
+After cloning and installing (`python3.11 -m pip install -e .`), run these commands in order to verify the current `v0.6.9` public release / `v0.6.10` planning state:
+
+```bash
+# Release metadata and version consistency
+python3.11 scripts/check_release_metadata.py
+python3.11 scripts/check_version_consistency.py
+
+# Trust center and public docs consistency
+python3.11 scripts/check_trust_center.py
+python3.11 scripts/check_public_docs_consistency.py
+
+# Backtest report schema and v0.6.10 planning baseline
+python3.11 scripts/check_backtest_report_schema.py
+python3.11 scripts/check_v0610_planning.py
+
+# Local gates
+./scripts/dev_check.sh
+./scripts/ci_check.sh
+./scripts/release_check.sh --quick
+```
+
+Optional reviewer CLI checks:
+
+```bash
+atlas validate
+atlas backtest runs --validate --json
+```
+
+For a safe paper demo, see the [Paper Workflow Demo](demo-paper-workflow.md) or run `./scripts/demo_paper_workflow.sh`.
+
+All commands above are local, deterministic, and require no credentials, providers, brokers, or network access.
 
 ## What this verifies
 

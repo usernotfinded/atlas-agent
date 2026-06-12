@@ -249,8 +249,8 @@ def test_checklist_covers_version_and_tag() -> None:
     text = path.read_text(encoding="utf-8").lower()
     # The checklist must reference a real stable tag and a previous release.
     # We assert presence of known stable tags rather than hardcoding RCs.
-    assert "v0.6.6" in text
-    assert "v0.6.5" in text
+    assert "v0.6.9" in text
+    assert "v0.6.8" in text
 
 
 def test_targets_template_exists() -> None:

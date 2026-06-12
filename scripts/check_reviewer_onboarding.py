@@ -37,7 +37,7 @@ _metadata_path = Path(__file__).resolve().parent.parent / "docs" / "releases" / 
 _meta = ReleaseMetadata(load_metadata(_metadata_path))
 
 CURRENT_PACKAGE_VERSION = _meta.source_version
-HISTORICAL_STABLE_TAG = "v0.5.8.1"
+CURRENT_PUBLIC_TAG = _meta.current_public_release
 
 ONBOARDING_DOC_PATHS = [
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
@@ -249,7 +249,7 @@ def _run_checks() -> dict:
     result = {
         "passed": len(all_errors) == 0,
         "package_version": CURRENT_PACKAGE_VERSION,
-        "public_tag": HISTORICAL_STABLE_TAG,
+        "public_tag": CURRENT_PUBLIC_TAG,
         "errors": all_errors,
     }
     return result
@@ -287,7 +287,7 @@ def main() -> int:
 
     print("Reviewer onboarding check PASSED")
     print(f"  Current package version: {result['package_version']}")
-    print(f"  Historical stable tag: {result['public_tag']}")
+    print(f"  Current public tag: {result['public_tag']}")
     print(f"  Onboarding docs present: {len(ONBOARDING_DOC_PATHS)}")
     print(f"  Docs safe: yes")
     print(f"  No staged artifacts: yes")

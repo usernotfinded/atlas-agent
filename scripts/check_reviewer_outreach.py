@@ -44,8 +44,8 @@ REQUIRED_SAFETY_PHRASES: dict[Path, list] = {
         ("live trading", "disabled by default"),
         ("provider execution", "locked"),
         ("broker execution", "blocked"),
-        ("v0.6.6",),
-        ("v0.6.5",),
+        ("v0.6.9",),
+        ("v0.6.8",),
     ],
     TARGETS_TEMPLATE: [
         ("not financial advice",),
