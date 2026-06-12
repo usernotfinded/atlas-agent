@@ -1,63 +1,148 @@
 #!/usr/bin/env python3
 """Check existing backtest reports for schema contract compliance.
 
-Scans .atlas/backtests/*/result.json and validates each against the
-backtest report schema contract. Exits non-zero if any report fails
-validation.
+Scans <root>/*/result.json (default: .atlas/backtests) and validates each
+against the backtest report schema contract. Exits non-zero if any report
+fails validation, or if --fail-on-legacy is set and legacy reports are found.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
 
-from atlas_agent.backtest.report_schema import collect_backtest_report_schema_errors
+from atlas_agent.backtest.report_schema import (
+    get_schema_validation_result,
+    unreadable_schema_result,
+)
 
 
-def main() -> int:
-    reports_dir = Path(".atlas/backtests")
-    if not reports_dir.exists():
-        print("No .atlas/backtests directory found; skipping.")
-        return 0
+STATUS_COUNTS = {"valid": 0, "invalid": 0, "legacy": 0, "unreadable": 0}
 
-    report_paths = sorted(reports_dir.glob("*/result.json"))
-    if not report_paths:
-        print("No backtest reports found; skipping.")
-        return 0
 
-    errors = []
-    skipped = 0
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Check backtest report schema compliance."
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON summary.",
+    )
+    parser.add_argument(
+        "--fail-on-legacy",
+        action="store_true",
+        help="Treat legacy reports as failures.",
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path(".atlas/backtests"),
+        help="Root directory to scan (default: .atlas/backtests).",
+    )
+    return parser
+
+
+def check_reports(root: Path) -> dict:
+    report_paths = sorted(root.glob("*/result.json")) if root.exists() else []
+    reports = []
+    counts = dict(STATUS_COUNTS)
+
     for path in report_paths:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-        except json.JSONDecodeError as exc:
-            print(f"FAIL {path}: {exc}")
-            errors.append((path, exc))
-            continue
-
-        # Skip legacy reports that predate the schema contract
-        if "schema_version" not in data:
-            skipped += 1
-            continue
-
-        report_errors = collect_backtest_report_schema_errors(data)
-        if not report_errors:
-            print(f"OK   {path}")
+        except Exception as exc:
+            result = unreadable_schema_result(f"unreadable: {exc}")
         else:
-            print(f"FAIL {path}: {report_errors[0]}")
-            if len(report_errors) > 1:
-                for err in report_errors[1:]:
-                    print(f"      {err}")
-            errors.append((path, report_errors))
+            result = get_schema_validation_result(data)
 
-    if errors:
-        print(f"\n{len(errors)} report(s) failed schema validation.")
-        return 1
+        status = result.status
+        if status == "valid":
+            counts["valid"] += 1
+        elif status == "legacy":
+            counts["legacy"] += 1
+        elif status == "unreadable":
+            counts["unreadable"] += 1
+        elif status.startswith("invalid"):
+            counts["invalid"] += 1
 
-    checked = len(report_paths) - skipped
-    print(f"\nAll {checked} report(s) passed schema validation ({skipped} legacy report(s) skipped).")
-    return 0
+        reports.append({
+            "path": str(path),
+            "status": status,
+            "schema_version": result.schema_version,
+            "valid": result.valid,
+            "error": result.error,
+            "errors": result.errors,
+        })
+
+    errors = [
+        r
+        for r in reports
+        if r["status"].startswith("invalid") or r["status"] == "unreadable"
+    ]
+    return {
+        "ok": counts["invalid"] == 0 and counts["unreadable"] == 0,
+        "root": str(root),
+        "total": len(report_paths),
+        "counts": counts,
+        "reports": reports,
+        "errors": errors,
+    }
+
+
+def print_text_summary(result: dict, fail_on_legacy: bool) -> None:
+    counts = result["counts"]
+    for report in result["reports"]:
+        status = report["status"]
+        path = report["path"]
+        if status == "valid":
+            print(f"OK   {path}")
+        elif status.startswith("invalid"):
+            print(f"FAIL {path}: {report['error']}")
+            errors = report.get("errors") or []
+            for err in errors[1:]:
+                print(f"      {err}")
+        elif status == "unreadable":
+            print(f"UNREADABLE {path}: {report['error']}")
+
+    overall = "passed" if result["ok"] and not (fail_on_legacy and counts["legacy"] > 0) else "failed"
+    print(
+        f"\nSchema check {overall}: "
+        f"total={result['total']} "
+        f"valid={counts['valid']} "
+        f"invalid={counts['invalid']} "
+        f"legacy={counts['legacy']} "
+        f"unreadable={counts['unreadable']}"
+    )
+
+
+def build_json_output(result: dict, root: Path, ok: bool) -> dict:
+    return {
+        "ok": ok,
+        "root": str(root),
+        "total": result["total"],
+        "counts": result["counts"],
+        "reports": sorted(result["reports"], key=lambda r: r["path"]),
+        "errors": sorted(result["errors"], key=lambda r: r["path"]),
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    result = check_reports(args.root)
+    counts = result["counts"]
+    ok = result["ok"] and not (args.fail_on_legacy and counts["legacy"] > 0)
+
+    if args.json:
+        output = build_json_output(result, args.root, ok)
+        print(json.dumps(output, sort_keys=True, indent=2))
+    else:
+        print_text_summary(result, args.fail_on_legacy)
+
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

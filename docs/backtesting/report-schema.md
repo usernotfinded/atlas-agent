@@ -118,8 +118,21 @@ You can also validate existing runs via the CLI:
 atlas backtest runs --validate --json
 ```
 
-Reports that cannot be parsed as JSON are surfaced with `schema_status: unreadable`
-instead of being silently skipped, so corrupted run directories remain visible.
+### Standalone schema checker
+
+```bash
+python scripts/check_backtest_report_schema.py
+python scripts/check_backtest_report_schema.py --json
+python scripts/check_backtest_report_schema.py --fail-on-legacy
+```
+
+- `--json` emits a deterministic JSON summary with per-status counts (`valid`, `invalid`, `legacy`, `unreadable`).
+- `--fail-on-legacy` exits non-zero when legacy reports are present.
+- `--root <path>` scans a custom directory (useful for tests).
+
+The `atlas backtest runs --validate` output surfaces unreadable reports with
+`schema_status: unreadable` instead of silently skipping them, so corrupted run
+directories remain visible.
 
 ## Backward Compatibility
 

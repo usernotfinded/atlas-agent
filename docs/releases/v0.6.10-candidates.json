@@ -81,7 +81,7 @@
       "recommendation": "now",
       "ranking_reason": "Purely additive checker UX; aligns with the v0.6.9 validation theme.",
       "selected_for_v0610": true,
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "CAND-004",
