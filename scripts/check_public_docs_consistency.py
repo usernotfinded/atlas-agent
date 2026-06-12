@@ -100,8 +100,8 @@ REQUIRED_SAFETY_WORDING = [
 README_REQUIRED_SAFE = [
     "sandbox-only",
     "paper-first",
-    "offline-safe",
-    "live trading disabled by default",
+    "safe by default",
+    "live trading is disabled by default",
 ]
 
 # Forbidden command patterns in bash blocks.
