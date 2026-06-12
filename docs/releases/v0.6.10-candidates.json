@@ -174,7 +174,7 @@
       "recommendation": "now",
       "ranking_reason": "Direct follow-up to the README cleanup; low risk and reviewer-facing.",
       "selected_for_v0610": true,
-      "implemented": false
+      "implemented": true
     }
   ],
   "deferred": [

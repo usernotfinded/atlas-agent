@@ -268,10 +268,10 @@ class TestStaleRCReferencesBlocked:
 
 
 class TestReleaseDocConsistency:
-    def test_public_launch_readiness_doc_has_v068_as_current_release(self) -> None:
+    def test_public_launch_readiness_doc_has_v069_as_current_release(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
-        assert "latest stable public GitHub release is `v0.6.8`" in text, (
-            "public-launch-readiness.md must describe v0.6.8 as the current stable release"
+        assert "latest stable public GitHub release is `v0.6.9`" in text, (
+            "public-launch-readiness.md must describe v0.6.9 as the current stable release"
         )
 
     def test_public_launch_readiness_doc_does_not_claim_v062_as_latest(self) -> None:

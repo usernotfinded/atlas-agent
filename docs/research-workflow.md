@@ -564,9 +564,9 @@ New research workflow artifacts include `schema_version`. The current schema ver
 
 For the threat model, provider execution policy, and integration requirements that govern future real provider execution, see:
 
-- `docs/security/provider-integration-threat-model.md`
-- `docs/security/provider-execution-policy.md`
-- `docs/security/provider-integration-requirements.md`
-- `docs/adr/ADR-0001-provider-execution-boundary.md`
+- [Provider Integration Threat Model](security/provider-integration-threat-model.md)
+- [Provider Execution Policy](security/provider-execution-policy.md)
+- [Provider Integration Requirements](security/provider-integration-requirements.md)
+- [ADR-0001 Provider Execution Boundary](adr/ADR-0001-provider-execution-boundary.md)
 
 Real provider execution is not implemented in this version. The provider-preflight chain is frozen for development scope only.

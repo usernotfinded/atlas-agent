@@ -44,11 +44,12 @@ Expected: no output.
 - Absolute paths from your local machine
 - Internal infrastructure details
 
-## Release Candidate Status
+## Current Release Status
 
-Atlas is currently in release-candidate preflight:
-- **Package version:** `0.5.7rc7`
-- **Public tag:** `v0.5.7-rc7`
+Atlas is currently a public v0.6.9 source release with v0.6.10 planning in progress:
+- **Package version on `main`:** `0.6.9`
+- **Latest public tag:** `v0.6.9`
+- **Next planned release:** `v0.6.10`
 - Sandbox/paper/preflight positioning
 - Live trading disabled by default
 - Provider execution remains locked

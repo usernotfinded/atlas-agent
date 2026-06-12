@@ -1,5 +1,7 @@
 # Demo: Audit Verification
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 Atlas Agent writes a tamper-evident audit trail for every run. This demo shows how to verify the integrity of that trail.
 
 ## What is audited

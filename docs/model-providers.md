@@ -1,5 +1,7 @@
 # Model Providers
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 Atlas Agent uses a provider catalog to normalize model selection across different AI APIs. You choose the provider and model; Atlas routes the configuration to the right places.
 
 ## Where configuration is stored

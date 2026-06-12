@@ -1,5 +1,7 @@
 # Kill Switch Runbook
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 Atlas Agent supports hierarchical kill-switch modes, plus a dead-man heartbeat switch for automatic protection.
 
 ## Modes

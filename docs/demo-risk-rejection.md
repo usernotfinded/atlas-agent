@@ -1,5 +1,7 @@
 # Demo: Risk Rejection
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 Atlas Agent uses deterministic risk gates that operate independently of the LLM. This demo shows how an unsafe order is blocked before it reaches any broker.
 
 ## How risk gating works

@@ -1,5 +1,7 @@
 # Safety
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 Atlas Agent v0.6.9 prioritizes safety through multiple decoupled layers:
 
 ## 1. Deterministic Risk Manager

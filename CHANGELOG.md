@@ -499,7 +499,7 @@ Provider audit evidence:
 
 ## [0.5.8rc2] - 2026-05-29
 
-> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8rc2.md) for full details.
+> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8-rc2.md) for full details.
 
 ### Fixed
 - Fixed RC cutover verification so an existing RC tag is accepted only when it resolves to the current HEAD. Historical RC tags (e.g., `v0.5.8rc1`) are allowed without requiring them to match current HEAD.
@@ -511,7 +511,7 @@ Provider audit evidence:
 
 ## [0.5.8rc1] - 2026-05-29
 
-> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8rc1.md) for full details.
+> **Release candidate.** Not a stable final release. See [release notes](docs/releases/v0.5.8-rc1.md) for full details.
 
 ### Added
 - Added CLI command compatibility contract and local check to guard public command families.

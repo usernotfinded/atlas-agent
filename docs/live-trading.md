@@ -1,5 +1,7 @@
 # Live Trading
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 **DANGER:** Live trading involves real financial risk and can lose money.
 
 In Atlas Agent v0.6.9, live trading is strictly **disabled by default**. Enabling it requires passing through a multi-stage gate system. Live broker support is not production-grade.

@@ -33,6 +33,8 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "github-repo-settings.md",
     REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
     REPO_ROOT / "docs" / "reviewer-checklist.md",
+    REPO_ROOT / "docs" / "reviewer-golden-path.md",
+    REPO_ROOT / "docs" / "reviewer-outreach-checklist.md",
     REPO_ROOT / "docs" / "public-launch-messaging.md",
     REPO_ROOT / "docs" / "feedback-request-guide.md",
     REPO_ROOT / "docs" / "public-faq.md",
@@ -41,6 +43,20 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "stable-release-decision.md",
     REPO_ROOT / "docs" / "stable-release-checklist.md",
     REPO_ROOT / "docs" / "trust" / "README.md",
+    REPO_ROOT / "docs" / "demo-artifact-index.md",
+    REPO_ROOT / "docs" / "demo-paper-workflow.md",
+    REPO_ROOT / "docs" / "demo-audit.md",
+    REPO_ROOT / "docs" / "demo-risk-rejection.md",
+    REPO_ROOT / "docs" / "demo" / "provider-preflight-demo.md",
+    REPO_ROOT / "docs" / "safety.md",
+    REPO_ROOT / "docs" / "kill-switch.md",
+    REPO_ROOT / "docs" / "live-trading.md",
+    REPO_ROOT / "docs" / "providers.md",
+    REPO_ROOT / "docs" / "brokers.md",
+    REPO_ROOT / "docs" / "model-providers.md",
+    REPO_ROOT / "docs" / "product-capability-inventory.md",
+    REPO_ROOT / "docs" / "v0.6-capability-inventory.md",
+    REPO_ROOT / "docs" / "research-workflow.md",
 ]
 
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
@@ -114,7 +130,10 @@ STALE_VERSION_PATTERNS = [
     r"Current Status \(v0\.5\.8-rc\d+\)",
     r"Current Status \(0\.5\.8rc\d+\)",
     r"Current Status \(v0\.6\.0\)",
-    r"Current Status \(v0\.6\.3\)",
+    r"Current Status \(v0\.6\.[1-9]\)",
+    r"Current Status \(v0\.6\.10\)",
+    r"Current Status \(0\.6\.[1-9]\)",
+    r"Current Status \(0\.6\.10\)",
     r"v0\.5\.7\.dev[1-5][0-9](?!\d)",
     r"0\.5\.7\.dev[1-5][0-9](?!\d)",
 ]
@@ -145,6 +164,26 @@ def _get_current_version(repo_root: Path) -> str:
     except Exception as e:
         raise RuntimeError(f"Invalid release metadata: {e}")
 
+
+def _get_current_public_release(repo_root: Path) -> str:
+    """Read the current public release tag from release-metadata.json dynamically."""
+    if load_metadata is None or ReleaseMetadata is None:
+        raise RuntimeError("Failed to import release_metadata module")
+
+    metadata_path = repo_root / "docs" / "releases" / "release-metadata.json"
+    if not metadata_path.exists():
+        raise FileNotFoundError(f"Release metadata not found at {metadata_path}")
+
+    try:
+        meta = ReleaseMetadata(load_metadata(metadata_path))
+        current = meta.current_public_release
+        if not current:
+            raise ValueError("current_public_release is empty in metadata")
+        return current
+    except Exception as e:
+        raise RuntimeError(f"Invalid release metadata: {e}")
+
+
 # Release notes directory.
 RELEASES_DIR = REPO_ROOT / "docs" / "releases"
 CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
@@ -170,14 +209,27 @@ def _extract_bash_commands(text: str) -> list[str]:
 
 def _sentence_around(text: str, start: int, end: int) -> str:
     """Extract the sentence/paragraph containing the match."""
-    # Look backwards for sentence boundaries
-    boundary_chars = {'.', '!', '?', '\n'}
+    # Look backwards for sentence boundaries (.!? or newline, followed by whitespace/start)
     s = start
-    while s > 0 and text[s - 1] not in boundary_chars:
+    while s > 0:
+        prev = text[s - 1]
+        if prev in {'.', '!', '?'}:
+            # Avoid stopping inside version numbers like v0.6.8
+            if s == len(text) or text[s].isspace() or text[s] == '\n':
+                break
+        if prev == '\n':
+            break
         s -= 1
     # Look forwards for sentence boundaries
     e = end
-    while e < len(text) and text[e] not in boundary_chars:
+    while e < len(text):
+        ch = text[e]
+        if ch in {'.', '!', '?'}:
+            # Include the boundary char if it ends the sentence
+            e += 1
+            break
+        if ch == '\n':
+            break
         e += 1
     return text[s:e]
 
@@ -292,10 +344,14 @@ _HISTORICAL_RC_DOC_INDICATORS = [
 ]
 
 
-def _check_stale_version_refs(text: str, rel_path: str) -> list[str]:
+def _check_stale_version_refs(text: str, rel_path: str, current_version: str) -> list[str]:
     violations: list[str] = []
     for pattern in STALE_VERSION_PATTERNS:
         for m in re.finditer(pattern, text):
+            matched = m.group(0)
+            # Skip the actual current version (e.g., Current Status (v0.6.9))
+            if current_version in matched:
+                continue
             # Skip if this is inside an old release note filename or historical description
             context_start = max(0, m.start() - 60)
             context_end = min(len(text), m.end() + 60)
@@ -303,8 +359,59 @@ def _check_stale_version_refs(text: str, rel_path: str) -> list[str]:
             if "release note" in context or "changelog" in context or "history" in context:
                 continue
             violations.append(
-                f"[{rel_path}] Stale version reference looks like current-status claim: {m.group(0)}"
+                f"[{rel_path}] Stale version reference looks like current-status claim: {matched}"
             )
+    return violations
+
+
+# Patterns that flag a public-release current-status claim for any vX.Y.Z release.
+_STALE_PUBLIC_RELEASE_CLAIM_PATTERNS = [
+    re.compile(r"is the current stable version", re.IGNORECASE),
+    re.compile(r"is the latest stable public", re.IGNORECASE),
+    re.compile(r"is the latest tagged public", re.IGNORECASE),
+    re.compile(r"is current\.?$", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"is current[;:,]", re.IGNORECASE),
+]
+
+# Historical doc names where old public-release claims are expected.
+_HISTORICAL_PUBLIC_RELEASE_DOC_INDICATORS = [
+    "changelog",
+    "releases/v0.",
+    "trust/v0.",
+    "final-release-candidate-checklist",
+    "stable-release-checklist",
+]
+
+
+def _check_stale_public_release_claims(
+    text: str, rel_path: str, current_public_release: str
+) -> list[str]:
+    """Flag claims that an older release is the current/latest public release."""
+    violations: list[str] = []
+    if any(ind.lower() in rel_path.lower() for ind in _HISTORICAL_PUBLIC_RELEASE_DOC_INDICATORS):
+        return violations
+
+    for pattern in _STALE_PUBLIC_RELEASE_CLAIM_PATTERNS:
+        for m in pattern.finditer(text):
+            # Examine only the sentence containing the claim.
+            sentence = _sentence_around(text, m.start(), m.end())
+            lower_sentence = sentence.lower()
+            # Allow clearly historical contexts.
+            if "historical" in lower_sentence or "release note" in lower_sentence:
+                continue
+            # Find any vX.Y.Z tags in the sentence.
+            tags_in_sentence = re.findall(r"v\d+\.\d+\.\d+(?:[.-]\d+)?", sentence)
+            if not tags_in_sentence:
+                continue
+            # If the only tag is the current public release, the claim is accurate.
+            if set(tags_in_sentence) == {current_public_release}:
+                continue
+            for tag in tags_in_sentence:
+                if tag != current_public_release:
+                    violations.append(
+                        f"[{rel_path}] Stale public-release claim: '{tag}' is called current/latest "
+                        f"(expected {current_public_release})"
+                    )
     return violations
 
 
@@ -377,6 +484,7 @@ def _check_changelog_references_release_notes() -> list[str]:
 def main() -> int:
     try:
         current_version = _get_current_version(REPO_ROOT)
+        current_public_release = _get_current_public_release(REPO_ROOT)
     except Exception as e:
         print("Public docs consistency check FAILED")
         print(f"  - Metadata Error: {e}")
@@ -397,7 +505,8 @@ def main() -> int:
         all_violations.extend(_check_forbidden_commands(text, str(rel)))
         all_violations.extend(_check_required_safety_wording(text, str(rel)))
         all_violations.extend(_check_readme_required_safe(text, str(rel)))
-        all_violations.extend(_check_stale_version_refs(text, str(rel)))
+        all_violations.extend(_check_stale_version_refs(text, str(rel), current_version))
+        all_violations.extend(_check_stale_public_release_claims(text, str(rel), current_public_release))
         all_violations.extend(_check_stale_rc_status_claims(text, str(rel)))
         all_violations.extend(_check_readme_current_version(text, str(rel), current_version))
         all_violations.extend(_check_stale_current_status_in_readme(text, str(rel), current_version))

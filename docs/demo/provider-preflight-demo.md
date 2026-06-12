@@ -1,5 +1,7 @@
 # Provider Preflight Dry-Run Demo
 
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
 This demo runs the local provider preflight pipeline:
 
 ```text

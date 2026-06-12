@@ -1,7 +1,8 @@
 # Providers
 
-Atlas Agent v0.5.5 is model-agnostic
- and provider-neutral.
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
+Atlas Agent v0.6.9 is model-agnostic and provider-neutral.
 
 ## AI Provider Adapters
 Adapters implement the `AIProvider` interface (`src/atlas_agent/providers/base.py`). They are responsible for communicating with AI backends and normalizing their output into internal `ToolCall` and `LLMResponse` objects.

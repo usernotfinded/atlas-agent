@@ -53,9 +53,9 @@ Frame the request as looking for "technical feedback on safety boundaries, docs,
 ## Review checklist for responders
 
 If someone offers to review, point them to:
-- `docs/external-reviewer-walkthrough.md` — 10–15 minute safe review path
-- `docs/reviewer-checklist.md` — structured checklist before trusting or recommending
-- `docs/public-faq.md` — answers to common questions
+- [External Reviewer Walkthrough](external-reviewer-walkthrough.md) — 10–15 minute safe review path
+- [Reviewer Checklist](reviewer-checklist.md) — structured checklist before trusting or recommending
+- [Public FAQ](public-faq.md) — answers to common questions
 
 Encourage reviewers to check:
 1. README "What this is" and "What this is not"
@@ -68,7 +68,7 @@ Encourage reviewers to check:
 - Thank the reviewer for their time.
 - Do not argue that Atlas is "actually safe" or "ready for production."
 - Document valid concerns as issues or ADRs.
-- If the criticism is about missing features, note the v0.6.9 source / v0.6.8 public status and link to known limitations.
+- If the criticism is about missing features, note the v0.6.9 source / v0.6.9 public status and link to known limitations.
 - If the criticism is about safety wording, treat it as high priority and update docs promptly.
 
 ## How to handle security/safety reports

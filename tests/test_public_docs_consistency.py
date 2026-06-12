@@ -31,45 +31,24 @@ def _run_script_on_text(text: str) -> subprocess.CompletedProcess[str]:
     """Run the consistency script with a temporary doc under REPO_ROOT.
 
     The temporary doc is placed inside a temp directory under REPO_ROOT
-    so that Path.relative_to(REPO_ROOT) works in the script.
+    so that Path.relative_to(REPO_ROOT) works in the script. The script
+    is invoked via a small wrapper that imports the module and overrides
+    PUBLIC_DOC_PATHS, avoiding brittle string-replacement of the list.
     """
     tmp_dir = Path(tempfile.mkdtemp(dir=REPO_ROOT))
     tmp_path = tmp_dir / "test_doc.md"
     tmp_path.write_text(text, encoding="utf-8")
 
-    original_script = SCRIPT.read_text(encoding="utf-8")
-    # Replace the entire PUBLIC_DOC_PATHS list so only the temp doc is scanned
-    old_paths_block = (
-        'PUBLIC_DOC_PATHS = [\n'
-        '    REPO_ROOT / "README.md",\n'
-        '    REPO_ROOT / "SECURITY.md",\n'
-        '    REPO_ROOT / "CONTRIBUTING.md",\n'
-        '    REPO_ROOT / "docs" / "provider-safety-dossier.md",\n'
-        '    REPO_ROOT / "docs" / "examples" / "provider-safety-dossier-workflow.md",\n'
-        '    REPO_ROOT / "docs" / "release-checklist.md",\n'
-        '    REPO_ROOT / "docs" / "release-candidate-readiness.md",\n'
-        '    REPO_ROOT / "docs" / "release-candidate-cutover.md",\n'
-        '    REPO_ROOT / "docs" / "package-distribution-verification.md",\n'
-        '    REPO_ROOT / "docs" / "public-repo-hygiene.md",\n'
-        '    REPO_ROOT / "docs" / "public-launch-readiness.md",\n'
-        '    REPO_ROOT / "docs" / "github-repo-settings.md",\n'
-        '    REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",\n'
-        '    REPO_ROOT / "docs" / "reviewer-checklist.md",\n'
-        '    REPO_ROOT / "docs" / "public-launch-messaging.md",\n'
-        '    REPO_ROOT / "docs" / "feedback-request-guide.md",\n'
-        '    REPO_ROOT / "docs" / "public-faq.md",\n'
-        '    REPO_ROOT / "docs" / "final-rc-audit.md",\n'
-        '    REPO_ROOT / "docs" / "final-release-candidate-checklist.md",\n'
-        '    REPO_ROOT / "docs" / "stable-release-decision.md",\n'
-        '    REPO_ROOT / "docs" / "stable-release-checklist.md",\n'
-        '    REPO_ROOT / "docs" / "trust" / "README.md",\n'
-        ']'
-    )
-    new_paths_block = f'PUBLIC_DOC_PATHS = [Path("{tmp_path}")]'
-    patched_script = original_script.replace(old_paths_block, new_paths_block)
-
+    wrapper = f'''import sys
+from pathlib import Path
+sys.path.insert(0, {str(REPO_ROOT / "scripts")!r})
+sys.path.insert(0, {str(REPO_ROOT)!r})
+import check_public_docs_consistency as mod
+mod.PUBLIC_DOC_PATHS = [Path({str(tmp_path)!r})]
+sys.exit(mod.main())
+'''
     tmp_script = tmp_dir / "check.py"
-    tmp_script.write_text(patched_script, encoding="utf-8")
+    tmp_script.write_text(wrapper, encoding="utf-8")
 
     result = subprocess.run(
         [sys.executable, str(tmp_script)],
@@ -297,6 +276,34 @@ class TestChangelogReferencesReleaseNotes:
         finally:
             mod.RELEASES_DIR = original_releases_dir
             mod.CHANGELOG_PATH = original_changelog
+
+class TestStalePublicReleaseClaims:
+    def test_flags_stale_latest_stable_claim(self) -> None:
+        mod = _load_script_module()
+        text = "Atlas Agent `v0.6.8` is the latest stable public release. Not financial advice."
+        violations = mod._check_stale_public_release_claims(text, "public-faq.md", "v0.6.9")
+        assert len(violations) == 1
+        assert "v0.6.8" in violations[0]
+        assert "expected v0.6.9" in violations[0]
+
+    def test_passes_current_latest_stable_claim(self) -> None:
+        mod = _load_script_module()
+        text = "The latest stable public GitHub release is `v0.6.9`. Not financial advice."
+        violations = mod._check_stale_public_release_claims(text, "public-faq.md", "v0.6.9")
+        assert violations == []
+
+    def test_allows_historical_context(self) -> None:
+        mod = _load_script_module()
+        text = "`v0.6.8` is the latest stable public release, but it is now historical. Not financial advice."
+        violations = mod._check_stale_public_release_claims(text, "public-faq.md", "v0.6.9")
+        assert violations == []
+
+    def test_skips_historical_docs(self) -> None:
+        mod = _load_script_module()
+        text = "The latest stable public GitHub release is `v0.6.8`. Not financial advice."
+        violations = mod._check_stale_public_release_claims(text, "releases/v0.6.8.md", "v0.6.9")
+        assert violations == []
+
 
 class TestDynamicMetadata:
     def test_reads_dynamic_metadata(self, tmp_path: Path) -> None:

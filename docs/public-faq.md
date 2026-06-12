@@ -56,7 +56,7 @@ No broker, no network, no credentials, no live trading.
 
 ## How can I review the project safely?
 
-See `docs/external-reviewer-walkthrough.md` for a 10–15 minute safe review path that requires no credentials, no network, and no live trading.
+See [External Reviewer Walkthrough](external-reviewer-walkthrough.md) for a 10–15 minute safe review path that requires no credentials, no network, and no live trading.
 
 ## What kind of feedback is useful?
 
@@ -68,7 +68,7 @@ Technical feedback on:
 - CI/release gate design
 - Whether a new reviewer understands what is disabled
 
-See `docs/feedback-request-guide.md` for details.
+See [Feedback Request Guide](feedback-request-guide.md) for details.
 
 ## What should not be posted in issues?
 
@@ -84,4 +84,4 @@ No. Atlas Agent is software, not a financial advisor. Not financial advice. Trad
 
 ## Is this production ready?
 
-No. The v0.6.9 source is prepared and v0.6.8 is the latest stable public release. It is ready for public review and technical feedback, but it is not a live-trading-ready or production-ready product. Live trading disabled by default. Provider execution remains locked. Trust remains blocked.
+No. The v0.6.9 source is prepared and v0.6.9 is the latest stable public release. It is ready for public review and technical feedback, but it is not a live-trading-ready or production-ready product. Live trading disabled by default. Provider execution remains locked. Trust remains blocked.
