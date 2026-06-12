@@ -1,4 +1,4 @@
-"""Tests for backtest report schema contract (CAND-005)."""
+"""Tests for backtest report schema contract (CAND-003)."""
 from __future__ import annotations
 
 import json

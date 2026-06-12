@@ -127,7 +127,7 @@
       "recommendation": "now",
       "ranking_reason": "Low-risk documentation/test accuracy improvement.",
       "selected_for_v0610": true,
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "CAND-006",
