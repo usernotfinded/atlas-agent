@@ -103,7 +103,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 - **No Recommendations** — The framework does not prefer any specific broker or provider.
 - **Universal Interface** — Supports [OpenRouter](https://openrouter.ai) (200+ models), [OpenAI](https://platform.openai.com/home), [Anthropic](https://www.anthropic.com), [Google Gemini](https://ai.google.dev/gemini-api/docs), [DeepSeek](https://platform.deepseek.com/docs), [xAI / Grok](https://docs.x.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [Hugging Face](https://huggingface.co), [NVIDIA NIM](https://build.nvidia.com) (cloud and local/on-prem), [LM Studio](https://lmstudio.ai/docs), local / Ollama / llama.cpp endpoints, and other **custom** or **OpenAI-compatible** providers. See [Model Providers](docs/model-providers.md) for the full catalog.
 
-For guidance on which model to choose for finance-specific deployments, see the [Vals AI Finance Agent Benchmark](https://www.vals.ai/benchmarks/fabv2).
+For guidance on which model to choose, see the [Vals AI Finance Agent Benchmark](https://www.vals.ai/benchmarks/fabv2).
 
 ## Safety Model
 

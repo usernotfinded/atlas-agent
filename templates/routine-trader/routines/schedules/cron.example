@@ -1,6 +1,0 @@
-# Simulation routine schedule. Keep live routines behind approval.
-30 8 * * 1-5 atlas routine run pre_market --mode paper
-35 9 * * 1-5 atlas routine run market_open --mode paper
-0 12 * * 1-5 atlas routine run midday_scan --mode paper
-10 16 * * 1-5 atlas routine run market_close --mode paper
-30 17 * * 5 atlas routine run weekly_review --mode paper

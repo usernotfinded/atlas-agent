@@ -1,7 +1,0 @@
-market:
-  asset_class: us_equities
-  timezone: America/New_York
-  core_open: "09:30"
-  core_close: "16:00"
-  allow_extended_hours: false
-  closed_behavior: paper_research
