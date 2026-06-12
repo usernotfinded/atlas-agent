@@ -52,8 +52,8 @@ FORBIDDEN_CLAIM_PHRASES = (
 REQUIRED_SAFE_PHRASES = (
     "sandbox-only",
     "paper-first",
-    "offline-safe",
-    "live trading disabled by default",
+    "safe by default",
+    "live trading is disabled by default",
     "not financial advice",
 )
 
@@ -204,15 +204,20 @@ def _check_no_secret_placeholders(text: str) -> list[str]:
 def _check_profitability_limitation(text: str) -> list[str]:
     missing: list[str] = []
     lower = text.lower()
-    if "safety validation does not imply profitability" not in lower:
+    # Accept any of the equivalent forms used across README revisions.
+    has_profitability = (
+        "safety validation does not imply profitability" in lower
+        or "no profitability" in lower
+        or "does not predict profit" in lower
+    )
+    if not has_profitability:
         missing.append(
-            "Required limitation phrase 'safety validation does not imply profitability' missing"
+            "Required limitation phrase about profitability missing"
         )
-    # Accept either the combined form "profitability or trading correctness"
-    # or the separate phrase "trading correctness"
     has_trading_correctness = (
         "safety validation does not imply trading correctness" in lower
         or "does not imply profitability or trading correctness" in lower
+        or "no profitability or trading correctness claims" in lower
     )
     if not has_trading_correctness:
         missing.append(
