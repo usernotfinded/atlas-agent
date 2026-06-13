@@ -46,7 +46,7 @@ class TestScriptExists:
 
 class TestPlanningModeValid:
     def test_planning_mode_passes(self) -> None:
-        """Planning mode should pass: source is 0.6.10, no v0.6.11 release artifacts exist."""
+        """Planning mode should pass while source remains 0.6.10 and no release artifacts exist."""
         result = _run_script()
         assert result.returncode == 0, result.stdout + result.stderr
         assert "PASS" in result.stdout
@@ -291,7 +291,7 @@ class TestPlanningModeValid:
         finally:
             mod.CANDIDATES_JSON = original
 
-    def test_implemented_candidate_fails(self, tmp_path: Path) -> None:
+    def test_implemented_candidate_without_selection_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_json = tmp_path / "v0.6.11-candidates.json"
         fake_json.write_text(
@@ -325,9 +325,89 @@ class TestPlanningModeValid:
             mod.CANDIDATES_JSON = fake_json
             code, result = mod.run_check()
             assert code == 1
-            assert any("marked implemented" in e for e in result["errors"])
+            assert any("without selected_for_v0611=true" in e for e in result["errors"])
         finally:
             mod.CANDIDATES_JSON = original
+
+    def test_selected_now_candidate_can_be_implemented(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_json = tmp_path / "v0.6.11-candidates.json"
+        fake_json.write_text(
+            json.dumps({
+                "artifact_type": "v0611_candidate_inventory",
+                "schema_version": 1,
+                "release": "v0.6.11",
+                "candidates": [
+                    {
+                        "id": "CAND-001",
+                        "title": "Implemented safely",
+                        "summary": "Documentation-only candidate",
+                        "user_value": "clear docs",
+                        "safety_boundary": "safe",
+                        "risk": "low",
+                        "likely_files": [],
+                        "tests_checks": [],
+                        "recommendation": "now",
+                        "ranking_reason": "test",
+                        "acceptance_criteria": ["test"],
+                        "selected_for_v0611": True,
+                        "implemented": True,
+                    }
+                ],
+                "rejected": [],
+            }),
+            encoding="utf-8",
+        )
+        original = mod.CANDIDATES_JSON
+        try:
+            mod.CANDIDATES_JSON = fake_json
+            code, result = mod.run_check()
+            assert code == 0, result["errors"]
+        finally:
+            mod.CANDIDATES_JSON = original
+
+    def test_selected_later_candidate_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_json = tmp_path / "v0.6.11-candidates.json"
+        fake_json.write_text(
+            json.dumps({
+                "artifact_type": "v0611_candidate_inventory",
+                "schema_version": 1,
+                "release": "v0.6.11",
+                "candidates": [
+                    {
+                        "id": "CAND-006",
+                        "title": "Deferred candidate",
+                        "summary": "Not selected now",
+                        "user_value": "none",
+                        "safety_boundary": "safe",
+                        "risk": "low",
+                        "likely_files": [],
+                        "tests_checks": [],
+                        "recommendation": "later",
+                        "ranking_reason": "test",
+                        "acceptance_criteria": ["test"],
+                        "selected_for_v0611": True,
+                        "implemented": False,
+                    }
+                ],
+                "rejected": [],
+            }),
+            encoding="utf-8",
+        )
+        original = mod.CANDIDATES_JSON
+        original_md = mod.CANDIDATES_MD
+        fake_md = tmp_path / "v0.6.11-candidates.md"
+        fake_md.write_text("# Candidates\n\nCAND-006\n", encoding="utf-8")
+        try:
+            mod.CANDIDATES_JSON = fake_json
+            mod.CANDIDATES_MD = fake_md
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("recommendation is 'later'" in e for e in result["errors"])
+        finally:
+            mod.CANDIDATES_JSON = original
+            mod.CANDIDATES_MD = original_md
 
     def test_live_default_candidate_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()

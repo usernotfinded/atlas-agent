@@ -211,13 +211,26 @@ def _check_no_immediate_cutover(candidates: list[dict]) -> list[str]:
     return errors
 
 
-def _check_no_implemented_candidates(candidates: list[dict]) -> list[str]:
-    """In planning mode, no candidates should be marked implemented."""
+def _check_candidate_tracking(candidates: list[dict]) -> list[str]:
+    """Validate incremental implementation tracking without implying release prep."""
     errors: list[str] = []
     for candidate in candidates:
         cid = candidate.get("id", "<missing-id>")
-        if candidate.get("implemented", False):
-            errors.append(f"Candidate {cid} is marked implemented in planning mode")
+        selected = candidate.get("selected_for_v0611")
+        implemented = candidate.get("implemented")
+        if not isinstance(selected, bool):
+            errors.append(f"Candidate {cid} selected_for_v0611 must be a boolean")
+        if not isinstance(implemented, bool):
+            errors.append(f"Candidate {cid} implemented must be a boolean")
+        if implemented and not selected:
+            errors.append(
+                f"Candidate {cid} is marked implemented without selected_for_v0611=true"
+            )
+        if selected and candidate.get("recommendation") != "now":
+            errors.append(
+                f"Candidate {cid} is selected for v0.6.11 but recommendation is "
+                f"'{candidate.get('recommendation')}'"
+            )
     return errors
 
 
@@ -387,8 +400,8 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict]:
         checks.append("no_immediate_cutover")
         errors.extend(_check_no_immediate_cutover(candidates))
 
-        checks.append("no_implemented_candidates")
-        errors.extend(_check_no_implemented_candidates(candidates))
+        checks.append("candidate_tracking")
+        errors.extend(_check_candidate_tracking(candidates))
 
         checks.append("no_live_default_candidate")
         errors.extend(_check_no_live_default_candidate(candidates))

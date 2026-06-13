@@ -6,9 +6,9 @@ Use this checklist before opening the repo for broader public feedback or outrea
 
 ## Repository state
 
-- [ ] `README.md` current development status is clear (v0.6.10 source / v0.6.9 public; v0.6.11 is the next planning line).
+- [ ] `README.md` current development status is clear (`v0.6.10` source and public release; `v0.6.11` is the next planning line).
 - [ ] `CHANGELOG.md` has current release notes referenced.
-- [ ] `v0.6.9` tag exists and is untouched.
+- [ ] `v0.6.10` tag exists and is untouched.
 - [ ] No forbidden claims in public docs.
 
 ## Deterministic checks

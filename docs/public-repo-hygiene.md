@@ -46,9 +46,9 @@ Expected: no output.
 
 ## Current Release Status
 
-Atlas is currently a public v0.6.10 source release (prepared, not yet tagged) with v0.6.11 planning in progress:
+Atlas is currently at public release `v0.6.10` (tagged and published), with v0.6.11 planning in progress:
 - **Package version on `main`:** `0.6.10`
-- **Latest public tag:** `v0.6.9`
+- **Latest public tag:** `v0.6.10`
 - **Next planned release:** `v0.6.11`
 - Sandbox/paper/preflight positioning
 - Live trading disabled by default

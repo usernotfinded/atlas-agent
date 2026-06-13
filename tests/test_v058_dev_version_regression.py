@@ -2,7 +2,7 @@
 
 Verifies the correct lifecycle model:
 - current main = 0.6.10
-- public stable = v0.6.9
+- public stable = v0.6.10
 - historical stable = v0.5.8.1
 - no stale 0.5.9 assertions on current main
 - forbidden phrases removed
@@ -169,8 +169,8 @@ def test_version_consistency_script_accepts_dev() -> None:
     assert result.returncode == 0, (
         f"Version consistency check failed:\n{result.stdout}\n{result.stderr}"
     )
-    assert "0.6.9" in result.stdout
-    assert "v0.6.9" in result.stdout
+    assert "0.6.10" in result.stdout
+    assert "v0.6.10" in result.stdout
 
 
 # ---------------------------------------------------------------------------

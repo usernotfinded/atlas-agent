@@ -68,7 +68,7 @@ Encourage reviewers to check:
 - Thank the reviewer for their time.
 - Do not argue that Atlas is "actually safe" or "ready for production."
 - Document valid concerns as issues or ADRs.
-- If the criticism is about missing features, note the v0.6.10 source / v0.6.9 public status and link to known limitations.
+- If the criticism is about missing features, note the `v0.6.10` source and public-release status and link to known limitations.
 - If the criticism is about safety wording, treat it as high priority and update docs promptly.
 
 ## How to handle security/safety reports

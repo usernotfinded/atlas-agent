@@ -59,6 +59,11 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "research-workflow.md",
 ]
 
+RELEASE_STATUS_DOC_PATHS = [
+    REPO_ROOT / "docs" / "public-feedback-checklist.md",
+    REPO_ROOT / "docs" / "security" / "release-readiness.md",
+]
+
 # Forbidden positive claims about live trading / provider execution / broker execution / trust.
 FORBIDDEN_POSITIVE_CLAIMS = [
     "live trading ready",
@@ -429,6 +434,62 @@ def _check_stale_public_release_claims(
     return violations
 
 
+def _check_stale_release_status_lines(
+    text: str, rel_path: str, current_public_release: str
+) -> list[str]:
+    """Flag stale release labels and mixed source/public status shorthand."""
+    violations: list[str] = []
+    if any(ind.lower() in rel_path.lower() for ind in _HISTORICAL_PUBLIC_RELEASE_DOC_INDICATORS):
+        return violations
+
+    normalized = re.sub(r"[`*_]", "", text)
+    tag = r"v\d+\.\d+\.\d+(?:[.-]\d+)?"
+    labeled_claim = re.compile(
+        rf"\b(?:current public(?: github)? release|latest public tag)\s*:\s*(?P<tag>{tag})",
+        re.IGNORECASE,
+    )
+    inline_public_claim = re.compile(
+        rf"(?P<tag>{tag})\s+public(?:\s+(?:github\s+)?release|\s+status)?\b",
+        re.IGNORECASE,
+    )
+    stale_state_pattern = re.compile(r"\b(?:prepared|not yet tagged|not tagged)\b", re.IGNORECASE)
+    tag_pattern = re.compile(tag, re.IGNORECASE)
+
+    seen: set[tuple[int, str]] = set()
+    for line_number, line in enumerate(normalized.splitlines(), start=1):
+        lower_line = line.lower()
+        historical_context = "historical" in lower_line or "previous public" in lower_line
+
+        for pattern in (labeled_claim, inline_public_claim):
+            for match in pattern.finditer(line):
+                claimed_tag = match.group("tag")
+                key = (line_number, claimed_tag)
+                if historical_context or claimed_tag == current_public_release or key in seen:
+                    continue
+                seen.add(key)
+                violations.append(
+                    f"[{rel_path}] Stale public-release status on line {line_number}: "
+                    f"'{claimed_tag}' (expected {current_public_release})"
+                )
+
+        for state_match in stale_state_pattern.finditer(line):
+            subject_tag: str | None = None
+            for tag_match in tag_pattern.finditer(line[:state_match.start()]):
+                subject_tag = tag_match.group(0)
+            if subject_tag is None:
+                suffix_match = tag_pattern.search(line[state_match.end():])
+                if suffix_match is not None:
+                    subject_tag = suffix_match.group(0)
+            if subject_tag == current_public_release:
+                violations.append(
+                    f"[{rel_path}] Current public release {current_public_release} is described as "
+                    f"prepared or untagged on line {line_number}"
+                )
+                break
+
+    return violations
+
+
 def _check_stale_rc_status_claims(text: str, rel_path: str) -> list[str]:
     violations: list[str] = []
     lower = text.lower()
@@ -521,9 +582,19 @@ def main() -> int:
         all_violations.extend(_check_readme_required_safe(text, str(rel)))
         all_violations.extend(_check_stale_version_refs(text, str(rel), current_version))
         all_violations.extend(_check_stale_public_release_claims(text, str(rel), current_public_release))
+        all_violations.extend(_check_stale_release_status_lines(text, str(rel), current_public_release))
         all_violations.extend(_check_stale_rc_status_claims(text, str(rel)))
         all_violations.extend(_check_readme_current_version(text, str(rel), current_version))
         all_violations.extend(_check_stale_current_status_in_readme(text, str(rel), current_version))
+
+    for path in RELEASE_STATUS_DOC_PATHS:
+        if not path.exists():
+            all_warnings.append(f"Release-status doc not found: {path}")
+            continue
+        rel = path.relative_to(REPO_ROOT)
+        text = _read(path)
+        all_violations.extend(_check_stale_public_release_claims(text, str(rel), current_public_release))
+        all_violations.extend(_check_stale_release_status_lines(text, str(rel), current_public_release))
 
     all_warnings.extend(_check_changelog_references_release_notes())
 
@@ -538,6 +609,7 @@ def main() -> int:
 
     print("Public docs consistency check PASSED")
     print(f"  Scanned {len(PUBLIC_DOC_PATHS)} public doc file(s)")
+    print(f"  Scanned {len(RELEASE_STATUS_DOC_PATHS)} release-status doc file(s)")
     if all_warnings:
         for w in all_warnings:
             print(f"  WARN: {w}")

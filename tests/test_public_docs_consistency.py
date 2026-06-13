@@ -305,6 +305,52 @@ class TestStalePublicReleaseClaims:
         assert violations == []
 
 
+class TestStaleReleaseStatusLines:
+    def test_flags_stale_latest_public_tag(self) -> None:
+        mod = _load_script_module()
+        text = "- **Latest public tag:** `v0.6.9`"
+        violations = mod._check_stale_release_status_lines(
+            text, "public-repo-hygiene.md", "v0.6.10"
+        )
+        assert len(violations) == 1
+        assert "v0.6.9" in violations[0]
+        assert "expected v0.6.10" in violations[0]
+
+    def test_flags_mixed_source_public_status(self) -> None:
+        mod = _load_script_module()
+        text = "Current status: v0.6.10 source / v0.6.9 public."
+        violations = mod._check_stale_release_status_lines(
+            text, "public-feedback-checklist.md", "v0.6.10"
+        )
+        assert len(violations) == 1
+        assert "v0.6.9" in violations[0]
+
+    def test_flags_current_release_described_as_untagged(self) -> None:
+        mod = _load_script_module()
+        text = "The v0.6.10 public release is prepared, not yet tagged."
+        violations = mod._check_stale_release_status_lines(
+            text, "reviewer-golden-path.md", "v0.6.10"
+        )
+        assert len(violations) == 1
+        assert "prepared or untagged" in violations[0]
+
+    def test_allows_current_public_and_historical_release(self) -> None:
+        mod = _load_script_module()
+        text = "v0.6.10 public; v0.6.9 is historical."
+        violations = mod._check_stale_release_status_lines(
+            text, "public-launch-messaging.md", "v0.6.10"
+        )
+        assert violations == []
+
+    def test_skips_historical_release_docs(self) -> None:
+        mod = _load_script_module()
+        text = "Latest public tag: v0.6.9"
+        violations = mod._check_stale_release_status_lines(
+            text, "releases/v0.6.9.md", "v0.6.10"
+        )
+        assert violations == []
+
+
 class TestDynamicMetadata:
     def test_reads_dynamic_metadata(self, tmp_path: Path) -> None:
         """Test that changing fixture metadata changes expected checker targets."""
