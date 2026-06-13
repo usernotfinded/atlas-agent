@@ -23,20 +23,12 @@ LOCAL_ONLY_ARTIFACT_PREFIXES = (
 )
 
 TRACKED_VERSIONED_EVIDENCE_PREFIXES = (
-    "artifacts/release_assurance/v0.5.9/",
-    "artifacts/release_assurance/v0.5.9-local-check/",
-    "artifacts/release_assurance/v0.5.9.5/",
-    "artifacts/release_assurance/v0.5.9.5-local-check/",
-    "artifacts/release_assurance/v0.6.0/",
-    "artifacts/release_assurance/v0.6.0-local-check/",
-    "artifacts/release_assurance/v0.6.6/",
-    "artifacts/release_assurance/v0.6.6-local-check/",
-    "artifacts/release_assurance/v0.6.7/",
-    "artifacts/release_assurance/v0.6.7-local-check/",
-    "artifacts/release_assurance/v0.6.8/",
-    "artifacts/release_assurance/v0.6.8-local-check/",
-    "artifacts/release_assurance/v0.6.9/",
-    "artifacts/release_assurance/v0.6.9-local-check/",
+    # Historical v0.5.9 release-assurance packs are preserved under an archive
+    # prefix. New versioned evidence packs should only be added here when a task
+    # explicitly requests a committed evidence pack.
+    "artifacts/release_assurance/archive/v0.5.9/",
+    "artifacts/release_assurance/archive/v0.5.9-local-check/",
+    "artifacts/release_assurance/archive/v0.5.9.5-local-check/",
 )
 
 SECRET_TEMPLATE_ALLOWLIST = {
@@ -286,7 +278,11 @@ def collect_report(repo_root: Path, git_runner: GitRunner = _run_git) -> Hygiene
         for path in tracked_paths
         if _is_local_only_artifact(path) and not _is_tracked_versioned_evidence(path)
     ]
-    staged_local = [path for path in staged_paths if _is_local_only_artifact(path)]
+    staged_local = [
+        path
+        for path in staged_paths
+        if _is_local_only_artifact(path) and not _is_tracked_versioned_evidence(path)
+    ]
     tracked_secrets = [path for path in tracked_paths if _is_secret_like_path(path)]
     staged_secrets = [path for path in staged_paths if _is_secret_like_path(path)]
     staged_dangerous_artifacts = [

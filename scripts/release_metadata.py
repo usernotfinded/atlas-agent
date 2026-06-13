@@ -19,6 +19,10 @@ class ReleaseMetadata:
         return self.data.get("next_planned_release", "")
 
     @property
+    def historical_stable_baseline(self) -> str:
+        return self.data.get("historical_stable_baseline", "")
+
+    @property
     def pypi_published(self) -> bool:
         return self.data.get("pypi_published", False)
 

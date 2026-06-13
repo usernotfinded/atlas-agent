@@ -30,7 +30,6 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_BIN = os.environ.get("PYTHON_BIN", sys.executable)
-PUBLIC_STABLE_TAG = "v0.5.8.1"
 # Provide a fallback module path injection for scripts directory imports
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -43,6 +42,7 @@ _metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
 _meta = ReleaseMetadata(load_metadata(_metadata_path))
 
 PACKAGE_VERSION = _meta.source_version
+PUBLIC_STABLE_TAG = _meta.historical_stable_baseline or "v0.5.8"
 
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "artifacts" / "release_evidence"
 
@@ -318,15 +318,17 @@ def _build_markdown(evidence: dict[str, Any]) -> str:
             lines.append("```")
             lines.append("")
 
-    lines.append("## Changed Files Since v0.5.8")
+    baseline = evidence.get("public_stable_tag", PUBLIC_STABLE_TAG)
+    lines.append(f"## Changed Files Since {baseline}")
     lines.append("")
-    if evidence["changed_since_v0_5_7"]:
+    changed_since = evidence.get("changed_since_v0_5_7", [])
+    if changed_since:
         lines.append("```")
-        for line in evidence["changed_since_v0_5_7"]:
+        for line in changed_since:
             lines.append(line)
         lines.append("```")
     else:
-        lines.append("No changes since v0.5.8.")
+        lines.append(f"No changes since {baseline}.")
     lines.append("")
 
     lines.append("## Protected Boundary Status")

@@ -308,14 +308,21 @@ def test_release_assurance_tracked_versioned_evidence_allowed(
     tmp_path: Path, capsys
 ) -> None:
     repo = tmp_path
-    (repo / "artifacts" / "release_assurance" / "v0.5.9-local-check").mkdir(parents=True)
-    (repo / "artifacts" / "release_assurance" / "v0.5.9-local-check" / "release-assurance-summary.json").write_text(
-        "{}\n", encoding="utf-8"
-    )
+    (
+        repo / "artifacts" / "release_assurance" / "archive" / "v0.5.9-local-check"
+    ).mkdir(parents=True)
+    (
+        repo
+        / "artifacts"
+        / "release_assurance"
+        / "archive"
+        / "v0.5.9-local-check"
+        / "release-assurance-summary.json"
+    ).write_text("{}\n", encoding="utf-8")
     exit_code = CHECKER.main(
         [str(repo)],
         git_runner=_runner(
-            tracked="artifacts/release_assurance/v0.5.9-local-check/release-assurance-summary.json\n",
+            tracked="artifacts/release_assurance/archive/v0.5.9-local-check/release-assurance-summary.json\n",
             status="",
         ),
     )

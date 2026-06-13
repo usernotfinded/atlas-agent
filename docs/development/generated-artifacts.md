@@ -52,9 +52,10 @@ for it. Examples include:
 - a frozen artifact fixture required by tests;
 - a documented versioned evidence pack.
 
-The repository already contains versioned `v0.5.9` release assurance evidence
-under `artifacts/release_assurance/`. Those tracked files are source evidence,
-not permission to stage newly generated local outputs.
+The repository archives historical versioned `v0.5.9` release assurance
+evidence under `artifacts/release_assurance/archive/`. Those tracked files are
+preserved historical source evidence, not permission to stage newly generated
+local outputs.
 
 ## What Not To Commit
 

@@ -152,10 +152,10 @@
         "git status",
         "scripts/check_generated_artifacts.py"
       ],
-      "recommendation": "later",
-      "ranking_reason": "Touches tracked historical evidence and generated artifact hygiene; isolate to avoid accidental data loss.",
-      "selected_for_v0610": false,
-      "implemented": false
+      "recommendation": "now",
+      "ranking_reason": "Cleans stale hardcoded baselines from release-assurance scripts, archives historical v0.5.9 evidence, and tightens .gitignore for generated local workspaces.",
+      "selected_for_v0610": true,
+      "implemented": true
     },
     {
       "id": "CAND-007",
@@ -185,13 +185,7 @@
       "implemented": true
     }
   ],
-  "deferred": [
-    {
-      "id": "CAND-006",
-      "title": "Release-assurance metadata cleanup",
-      "reason": "Touches tracked historical evidence; defer to a focused generated-artifact hygiene batch."
-    }
-  ],
+  "deferred": [],
   "rejected": [
     {
       "id": "REJ-001",

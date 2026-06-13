@@ -9,6 +9,17 @@ from datetime import datetime, timezone
 import hashlib
 import tempfile
 
+# Load canonical release metadata so version baselines are not hardcoded.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    from scripts.release_metadata import load_metadata, ReleaseMetadata
+
+_metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+_meta = ReleaseMetadata(load_metadata(_metadata_path))
+
 
 def normalize_release_version(version: str) -> str:
     """Return the package version for a release/tag version."""
@@ -95,7 +106,30 @@ def main():
     # 6. README
     try:
         readme = Path("README.md").read_text(encoding="utf-8")
-        checks["readme_public_metadata_current"] = "Current Status (v0.5.7" not in readme and "Current Status (v0.5.8" not in readme and "Current Status (v0.6.1" not in readme and "Current Status (v0.6.2" not in readme
+        # The README must reference the requested release as the current status
+        # and must not claim any historical release is current.
+        historical_tags = [
+            r.get("tag")
+            for r in _meta.data.get("releases", [])
+            if r.get("status") == "historical" and r.get("tag")
+        ]
+        current_status_claim = f"Current Status ({version})"
+        readme_current = current_status_claim in readme
+        stale_claims = [
+            f"Current Status ({tag})"
+            for tag in historical_tags
+            if f"Current Status ({tag})" in readme
+        ]
+        checks["readme_public_metadata_current"] = readme_current and not stale_claims
+        if stale_claims:
+            findings.append(
+                "README.md contains stale current-status claim(s): "
+                + ", ".join(stale_claims)
+            )
+        if not readme_current:
+            findings.append(
+                f"README.md does not contain expected current-status claim: {current_status_claim}"
+            )
     except OSError:
         checks["readme_public_metadata_current"] = False
 
@@ -306,7 +340,7 @@ Generated at: {summary['generated_at']}
 ## Updater Delivery Verification
 - {version} stable detection
 - {dev_tag} rejected as public stable
-- v0.5.8.1 older than {version}
+- historical baseline {_meta.historical_stable_baseline} older than {version}
 - dry-run behavior
 
 ## Safety Non-Claims

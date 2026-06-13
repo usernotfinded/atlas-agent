@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-CURRENT_RELEASE_TAG = "v0.6.8"
+CURRENT_RELEASE_TAG = "v0.6.9"
 REQUIRED_DEV_SCRIPTS = [
     "scripts/check_version_consistency.py",
     "scripts/check_forbidden_claims.py",
