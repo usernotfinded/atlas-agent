@@ -367,14 +367,68 @@ def _check_release_metadata() -> list[str]:
     return errors
 
 
-def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple[int, dict]:
+def _check_release_metadata_post_release() -> list[str]:
+    errors: list[str] = []
+    if not RELEASE_METADATA.exists():
+        errors.append(f"Release metadata missing: {RELEASE_METADATA}")
+        return errors
+    try:
+        data = json.loads(RELEASE_METADATA.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        errors.append(f"Invalid release metadata JSON: {exc}")
+        return errors
+    if data.get("source_version") != RELEASE_VERSION:
+        errors.append(
+            f"source_version mismatch: expected {RELEASE_VERSION}, got {data.get('source_version')}"
+        )
+    if data.get("current_public_release") != PUBLIC_TAG:
+        errors.append(
+            f"current_public_release mismatch: expected {PUBLIC_TAG}, got {data.get('current_public_release')}"
+        )
+    if data.get("next_planned_release") != "v0.6.11":
+        errors.append(
+            f"next_planned_release mismatch: expected v0.6.11, got {data.get('next_planned_release')}"
+        )
+    if data.get("pypi_published") is not False:
+        errors.append("pypi_published must be false in post-release mode")
+    releases = data.get("releases", [])
+    v0610 = next((r for r in releases if r.get("tag") == PUBLIC_TAG), None)
+    if v0610 is None:
+        errors.append(f"Release metadata missing {PUBLIC_TAG} record")
+    else:
+        if v0610.get("status") != "current_public":
+            errors.append(f"{PUBLIC_TAG} status must be 'current_public'")
+        if v0610.get("github_release") is not True:
+            errors.append(f"{PUBLIC_TAG} github_release must be true")
+        if v0610.get("pypi_published") is not False:
+            errors.append(f"{PUBLIC_TAG} pypi_published must be false")
+    v069 = next((r for r in releases if r.get("tag") == "v0.6.9"), None)
+    if v069 is not None and v069.get("status") != "historical":
+        errors.append("v0.6.9 status must be 'historical'")
+    return errors
+
+
+def run_check(
+    *,
+    json_output: bool = False,
+    release_prep: bool = False,
+    post_release: bool = False,
+) -> tuple[int, dict]:
     errors: list[str] = []
     warnings: list[str] = []
     checks: list[str] = []
 
-    mode = "release-prep" if release_prep else "planning"
+    if release_prep and post_release:
+        mode = "unknown"
+        errors.append("Cannot use --release-prep and --post-release together")
+    elif release_prep:
+        mode = "release-prep"
+    elif post_release:
+        mode = "post-release"
+    else:
+        mode = "planning"
 
-    if release_prep:
+    if release_prep or post_release:
         checks.append("release_prep_version")
         errors.extend(_check_release_prep_version())
         checks.append("release_notes_exist")
@@ -394,7 +448,10 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         checks.append("backtest_schema_referenced_in_release_notes")
         errors.extend(_check_backtest_schema_referenced_in_release_notes())
         checks.append("release_metadata")
-        errors.extend(_check_release_metadata())
+        if post_release:
+            errors.extend(_check_release_metadata_post_release())
+        else:
+            errors.extend(_check_release_metadata())
     else:
         checks.append("planning_version")
         errors.extend(_check_planning_version())
@@ -417,11 +474,12 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
     checks.append("no_publish_claim")
     errors.extend(_check_no_publish_claim())
 
-    if release_prep:
+    if release_prep or post_release:
         checks.append("release_notes_safe")
         errors.extend(_check_release_notes_safe())
-        checks.append("no_tag_claim")
-        errors.extend(_check_no_tag_claim())
+        if release_prep:
+            checks.append("no_tag_claim")
+            errors.extend(_check_no_tag_claim())
 
     checks.append("v069_history_intact")
     errors.extend(_check_v069_history_intact())
@@ -448,10 +506,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Validate release-prep state (version bumped, artifacts present)",
     )
+    parser.add_argument(
+        "--post-release",
+        action="store_true",
+        help="Validate post-release state (v0.6.10 is current public release)",
+    )
     args = parser.parse_args(argv)
 
     try:
-        code, result = run_check(json_output=args.json, release_prep=args.release_prep)
+        code, result = run_check(
+            json_output=args.json,
+            release_prep=args.release_prep,
+            post_release=args.post_release,
+        )
     except Exception as exc:
         result = {
             "artifact_type": "v0610_release_prep_report",
@@ -472,7 +539,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
         status = "PASS" if result["valid"] else "FAIL"
-        mode_label = "release-prep" if args.release_prep else "planning"
+        mode_label = result["mode"]
         print(f"v0.6.10 release prep check ({mode_label}) {status}")
         if result["errors"]:
             for err in result["errors"]:

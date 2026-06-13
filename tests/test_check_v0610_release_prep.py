@@ -156,17 +156,18 @@ class TestPlanningModeValid:
 
 
 class TestReleasePrepMode:
-    def test_release_prep_mode_passes_on_real_repo(self) -> None:
-        """Release-prep mode passes on real repo because v0.6.10 artifacts are present."""
+    def test_release_prep_mode_fails_on_real_repo_after_cutover(self) -> None:
+        """Release-prep mode fails on real repo after v0.6.10 is public."""
         result = _run_script("--release-prep")
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "PASS" in result.stdout
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "FAIL" in result.stdout
+        assert "v0.6.10 status must be 'prepared'" in result.stdout
 
-    def test_release_prep_json_passes_on_real_repo(self) -> None:
+    def test_release_prep_json_fails_on_real_repo_after_cutover(self) -> None:
         result = _run_script("--release-prep", "--json")
-        assert result.returncode == 0, result.stderr
+        assert result.returncode == 1, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is True
+        assert data["valid"] is False
         assert data["mode"] == "release-prep"
 
     def test_release_prep_version_missing_fails(self, tmp_path: Path) -> None:
@@ -324,6 +325,74 @@ class TestReleasePrepMode:
             mod.RELEASE_NOTES = original
 
 
+class TestPostReleaseMode:
+    def test_post_release_mode_passes_on_real_repo(self) -> None:
+        """Post-release mode passes on real repo because v0.6.10 is now public."""
+        result = _run_script("--post-release")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "PASS" in result.stdout
+        assert "post-release" in result.stdout
+
+    def test_post_release_json_passes_on_real_repo(self) -> None:
+        result = _run_script("--post-release", "--json")
+        assert result.returncode == 0, result.stderr
+        data = json.loads(result.stdout)
+        assert data["valid"] is True
+        assert data["mode"] == "post-release"
+
+    def test_post_release_missing_public_tag_record_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "source_version": "0.6.10",
+                "current_public_release": "v0.6.10",
+                "next_planned_release": "v0.6.11",
+                "pypi_published": False,
+                "releases": [],
+            })
+        )
+        original = mod.RELEASE_METADATA
+        try:
+            mod.RELEASE_METADATA = fake_metadata
+            code, result = mod.run_check(post_release=True)
+            assert code == 1
+            assert any("Release metadata missing v0.6.10 record" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_METADATA = original
+
+    def test_post_release_v0610_not_current_public_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "source_version": "0.6.10",
+                "current_public_release": "v0.6.10",
+                "next_planned_release": "v0.6.11",
+                "pypi_published": False,
+                "releases": [
+                    {
+                        "tag": "v0.6.10",
+                        "version": "0.6.10",
+                        "status": "prepared",
+                        "github_release": True,
+                        "pypi_published": False,
+                    }
+                ],
+            })
+        )
+        original = mod.RELEASE_METADATA
+        try:
+            mod.RELEASE_METADATA = fake_metadata
+            code, result = mod.run_check(post_release=True)
+            assert code == 1
+            assert any("v0.6.10 status must be 'current_public'" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_METADATA = original
+
+
 class TestDeterminism:
     def test_planning_output_is_deterministic(self) -> None:
         result1 = _run_script("--json")
@@ -334,6 +403,12 @@ class TestDeterminism:
     def test_release_prep_output_is_deterministic(self) -> None:
         result1 = _run_script("--json", "--release-prep")
         result2 = _run_script("--json", "--release-prep")
+        assert result1.returncode == result2.returncode
+        assert result1.stdout == result2.stdout
+
+    def test_post_release_output_is_deterministic(self) -> None:
+        result1 = _run_script("--json", "--post-release")
+        result2 = _run_script("--json", "--post-release")
         assert result1.returncode == result2.returncode
         assert result1.stdout == result2.stdout
 
