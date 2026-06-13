@@ -195,12 +195,9 @@ def main():
     checks["updater_dry_run_ok"] = "Current version: " in out and rc == 0
 
     # 12-13. Updater sources test
-    # This is tested implicitly by checking the sources.py directly or trusting the test suite. 
+    # This is tested implicitly by checking the sources.py directly or trusting the test suite.
     # But we can also do a quick python check
     dev_tag = f"{version}.dev0"
-    # Handle v0.6.1/v0.6.2 historical checks
-    if version in ("v0.6.1", "v0.6.2"):
-        dev_tag = f"{version}.dev0"
     out, rc, err = run_cmd(
         [
             sys.executable,

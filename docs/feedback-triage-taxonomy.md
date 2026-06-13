@@ -135,11 +135,11 @@ Maintainers must not:
 - Respond to "is this safe to trade live?" with anything other than a reference to the safety docs and disclaimer.
 - Treat broker setup or credential configuration as a supported use case for public feedback.
 
-## Mapping the taxonomy to possible v0.5.8 work
+## Mapping the taxonomy to current planning work
 
-Feedback that meets blocker criteria is a candidate for the `v0.5.8` milestone. Typical `v0.5.8` work includes:
+Feedback that meets blocker criteria is a candidate for the current planning milestone (e.g., `v0.6.10`). Typical planning work includes:
 
-- Post-v0.5.7 CLI refactor regression fixes.
+- Post-release CLI refactor regression fixes.
 - New check scripts and compatibility contracts.
 - Docs honesty and clarity improvements.
 - Release engineering automation.

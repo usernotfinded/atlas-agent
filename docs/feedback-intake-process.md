@@ -58,7 +58,7 @@ Incoming feedback is triaged within a few business days:
 3. **Blocker assessment** — classify as blocker or non-blocker:
    - **Blocker** — affects install, breaks deterministic checks, or weakens safety wording.
    - **Non-blocker** — docs clarity, UX polish, or enhancement ideas.
-4. **Map to milestone** — blocker issues are candidates for `v0.5.8`; non-blockers are backlog.
+4. **Map to milestone** — blocker issues are candidates for the current planning milestone (e.g., `v0.6.10`); non-blockers are backlog.
 5. **Close out-of-scope** — requests for live trading enablement, profit evaluation, or safety bypass are closed with a reference to this policy.
 
 ## Labels and categories
@@ -97,11 +97,11 @@ Safety and security reports are treated as high priority:
 - Document resolved issues in `SECURITY.md` and changelog if appropriate.
 - For private disclosure, use GitHub Security Advisories.
 
-## Mapping feedback to v0.5.8 work
+## Mapping feedback to current planning work
 
-Feedback that meets blocker criteria is triaged into the `v0.5.8` milestone. Typical v0.5.8 work includes:
+Feedback that meets blocker criteria is triaged into the current planning milestone (e.g., `v0.6.10`). Typical planning work includes:
 
-- Post-v0.5.7 CLI refactor regression fixes
+- Post-release CLI refactor regression fixes
 - New check scripts and compatibility contracts
 - Docs honesty and clarity improvements
 - Release engineering automation

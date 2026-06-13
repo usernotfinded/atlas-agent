@@ -130,6 +130,7 @@ For the roadmap that turns these capabilities into prioritized work items, see t
 | Broker model and protocols | implemented | safe_to_claim | Broker-neutral. Every new broker implements the Broker interface. |
 | Alpaca read-only live sync | implemented | claim_with_limits | GET-only via urllib. Fail-closed on critical sync failures. |
 | Broker adapters (Binance, CCXT, IBKR) | partial | claim_with_limits | Binance partial; CCXT disabled; IBKR placeholder. |
+| Broker roadmap and guarded adapter status | implemented | safe_to_claim | Static support inventory with fail-closed guards. No broker API calls in status/list. |
 | Provider catalog and configuration | implemented | safe_to_claim | 15+ profiles with credential resolution via env. |
 | ClickUp notifications | implemented | claim_with_limits | urllib POST. Requires CLICKUP_API_TOKEN. |
 | Telegram gateway bot | implemented | claim_with_limits | TOTP challenge for money-touching actions. Keyring secret storage. |

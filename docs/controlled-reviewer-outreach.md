@@ -88,7 +88,7 @@ Use the [Feedback Triage Taxonomy](feedback-triage-taxonomy.md) to classify inco
 1. Apply type, area, priority, and risk labels.
 2. Mark out-of-scope requests as `status: rejected-out-of-scope`.
 3. Escalate safety-sensitive reports immediately.
-4. Map blocker issues to the `v0.5.8` milestone.
+4. Map blocker issues to the current planning milestone (e.g., `v0.6.10`).
 5. Document non-blockers as backlog.
 
 ## How to avoid overclaiming

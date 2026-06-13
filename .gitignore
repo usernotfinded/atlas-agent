@@ -73,6 +73,13 @@ tmp*/
 audit/*.log
 audit/manifests/
 artifacts/release_evidence/
+artifacts/release_assurance/*
+!artifacts/release_assurance/archive/
+!artifacts/release_assurance/archive/**
+artifacts/provider_audit_pack/
+artifacts/provider_preflight/
+artifacts/provider_preflight_bundles/
+artifacts/provider_preflight_smoke/
 
 # Local Atlas runtime/update state
 /.atlas_update_state.json

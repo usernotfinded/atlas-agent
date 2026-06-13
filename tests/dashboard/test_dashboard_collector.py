@@ -149,7 +149,7 @@ def test_collect_dashboard_snapshot_warnings_in_live_mode(tmp_path: Path):
     assert any("Live trading" in w for w in snapshot.warnings)
 
 
-def test_collect_dashboard_snapshot_orders_backtests_by_timestamp(tmp_path: Path):
+def test_collect_dashboard_snapshot_orders_backtests_by_run_id(tmp_path: Path):
     config = AtlasConfig(audit_dir=tmp_path / "audit")
     backtests_dir = tmp_path / ".atlas" / "backtests"
     runs = [

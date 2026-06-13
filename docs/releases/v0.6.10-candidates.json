@@ -39,7 +39,7 @@
     {
       "id": "CAND-002",
       "title": "Dashboard/report UX polish after v0.6.9",
-      "summary": "Fix dashboard status-badge mapping for schema statuses, add the HTML safety banner to Markdown dashboard output, improve empty/redacted diagnostics rendering, and sort backtest runs deterministically by timestamp.",
+      "summary": "Fix dashboard status-badge mapping for schema statuses, add the HTML safety banner to Markdown dashboard output, improve empty/redacted diagnostics rendering, and sort backtest runs deterministically by run_id.",
       "user_value": "Report-quality output and static dashboard exports are more useful and less misleading for reviewers.",
       "safety_boundary": "Dashboard remains read-only, local, and has no execution controls or external assets.",
       "risk": "low",
