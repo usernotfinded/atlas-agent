@@ -12,7 +12,11 @@ def test_no_forbidden_terms(file_path):
     # Skip reports and memory files which might contain legacy data or logs
     if "reports/" in str(file_path) or "memory/" in str(file_path):
         return
-        
+
+    # Skip files that were removed after collection (e.g., generated evidence bundles).
+    if not file_path.exists():
+        pytest.skip(f"File no longer exists: {file_path}")
+
     content = file_path.read_text(encoding="utf-8").lower()
     
     forbidden = [

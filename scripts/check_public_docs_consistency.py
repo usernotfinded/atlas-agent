@@ -209,8 +209,8 @@ def _extract_bash_commands(text: str) -> list[str]:
     return commands
 
 
-def _sentence_around(text: str, start: int, end: int) -> str:
-    """Extract the sentence/paragraph containing the match."""
+def _sentence_around(text: str, start: int, end: int) -> tuple[str, int]:
+    """Extract the sentence/paragraph containing the match and its start index."""
     # Look backwards for sentence boundaries (.!? or newline, followed by whitespace/start)
     s = start
     while s > 0:
@@ -233,7 +233,7 @@ def _sentence_around(text: str, start: int, end: int) -> str:
         if ch == '\n':
             break
         e += 1
-    return text[s:e]
+    return text[s:e], s
 
 
 def _check_forbidden_positive_claims(text: str, rel_path: str) -> list[str]:
@@ -241,7 +241,8 @@ def _check_forbidden_positive_claims(text: str, rel_path: str) -> list[str]:
     lower_text = text.lower()
     for phrase in FORBIDDEN_POSITIVE_CLAIMS:
         for m in re.finditer(re.escape(phrase), lower_text):
-            sentence = _sentence_around(lower_text, m.start(), m.end()).lower()
+            sentence, _ = _sentence_around(lower_text, m.start(), m.end())
+            sentence = sentence.lower()
             negative_indicators = (
                 "not ",
                 "does not",
@@ -393,27 +394,38 @@ def _check_stale_public_release_claims(
     if any(ind.lower() in rel_path.lower() for ind in _HISTORICAL_PUBLIC_RELEASE_DOC_INDICATORS):
         return violations
 
+    tag_pattern = re.compile(r"v\d+\.\d+\.\d+(?:[.-]\d+)?")
     for pattern in _STALE_PUBLIC_RELEASE_CLAIM_PATTERNS:
         for m in pattern.finditer(text):
             # Examine only the sentence containing the claim.
-            sentence = _sentence_around(text, m.start(), m.end())
+            sentence, sentence_start = _sentence_around(text, m.start(), m.end())
             lower_sentence = sentence.lower()
             # Allow clearly historical contexts.
             if "historical" in lower_sentence or "release note" in lower_sentence:
                 continue
-            # Find any vX.Y.Z tags in the sentence.
-            tags_in_sentence = re.findall(r"v\d+\.\d+\.\d+(?:[.-]\d+)?", sentence)
-            if not tags_in_sentence:
+
+            # Determine the subject of the claim: the version nearest the claim phrase.
+            # Prefer a tag immediately before the claim (e.g., "v0.6.9 is the latest stable public").
+            subject_tag: str | None = None
+            match_start_in_sentence = m.start() - sentence_start
+            match_end_in_sentence = m.end() - sentence_start
+            prefix = sentence[:match_start_in_sentence]
+            for tag_m in tag_pattern.finditer(prefix):
+                subject_tag = tag_m.group(0)
+            # If no tag before the claim, use the first tag after it.
+            if subject_tag is None:
+                suffix = sentence[match_end_in_sentence:]
+                for tag_m in tag_pattern.finditer(suffix):
+                    subject_tag = tag_m.group(0)
+                    break
+
+            if subject_tag is None:
                 continue
-            # If the only tag is the current public release, the claim is accurate.
-            if set(tags_in_sentence) == {current_public_release}:
-                continue
-            for tag in tags_in_sentence:
-                if tag != current_public_release:
-                    violations.append(
-                        f"[{rel_path}] Stale public-release claim: '{tag}' is called current/latest "
-                        f"(expected {current_public_release})"
-                    )
+            if subject_tag != current_public_release:
+                violations.append(
+                    f"[{rel_path}] Stale public-release claim: '{subject_tag}' is called current/latest "
+                    f"(expected {current_public_release})"
+                )
     return violations
 
 

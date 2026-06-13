@@ -237,6 +237,23 @@ class TestReleasePrepMode:
         finally:
             mod.RELEASE_NOTES = original
 
+    def test_release_prep_premature_tag_claim_fails(self, tmp_path: Path) -> None:
+        """A doc that mentions v0.6.10 and claims the tag was created must fail."""
+        mod = _load_script_module()
+        fake_notes = tmp_path / "v0.6.10.md"
+        fake_notes.write_text(
+            "# v0.6.10\n\nThe v0.6.10 tag created and the GitHub release created.\n"
+        )
+        original = mod.RELEASE_NOTES
+        try:
+            mod.RELEASE_NOTES = fake_notes
+            code, result = mod.run_check(release_prep=True)
+            assert code == 1
+            assert any("tag was already created" in e for e in result["errors"])
+            assert any("GitHub release was already created" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_NOTES = original
+
     def test_release_prep_readme_stale_version_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         original_readme = mod.README

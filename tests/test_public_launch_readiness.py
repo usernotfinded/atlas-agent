@@ -292,19 +292,19 @@ class TestReleaseDocConsistency:
             "release-checklist.md must not reference v0.6.2 as the current public tag"
         )
 
-    def test_readme_release_assurance_example_uses_v069(self) -> None:
+    def test_readme_release_assurance_example_uses_v0610(self) -> None:
         text = (ROOT / "README.md").read_text(encoding="utf-8")
-        assert "--version v0.6.9" in text, (
-            "README release assurance example must use v0.6.9"
+        assert "--version v0.6.10" in text, (
+            "README release assurance example must use v0.6.10"
         )
         assert "v0.6.1-local-check" not in text, (
             "README must not use stale v0.6.1 release assurance example"
         )
 
-    def test_checks_reference_release_assurance_uses_v069(self) -> None:
+    def test_checks_reference_release_assurance_uses_v0610(self) -> None:
         text = (ROOT / "docs" / "development" / "checks-reference.md").read_text(encoding="utf-8")
-        assert "--version v0.6.9" in text, (
-            "checks-reference.md release assurance example must use v0.6.9"
+        assert "--version v0.6.10" in text, (
+            "checks-reference.md release assurance example must use v0.6.10"
         )
         assert "v0.6.0-local-check" not in text, (
             "checks-reference.md must not use stale v0.6.0 release assurance example"

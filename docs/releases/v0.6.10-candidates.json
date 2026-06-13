@@ -4,7 +4,7 @@
   "release": "v0.6.10",
   "generated_for": "release-prep",
   "status": "release_prep",
-  "generated_at": "2026-06-11",
+  "generated_at": "2026-06-13",
   "candidates": [
     {
       "id": "CAND-001",
@@ -235,22 +235,22 @@
     {
       "id": "REJ-010",
       "title": "Version bump to 0.6.10",
-      "reason": "Not authorized in planning-only batch."
+      "reason": "Completed in the release-prep batch."
     },
     {
       "id": "REJ-011",
       "title": "Creation of docs/releases/v0.6.10.md",
-      "reason": "Not authorized in planning-only batch."
+      "reason": "Completed in the release-prep batch."
     },
     {
       "id": "REJ-012",
       "title": "Creation of docs/trust/v0.6.10-status.md",
-      "reason": "Not authorized in planning-only batch."
+      "reason": "Completed in the release-prep batch."
     },
     {
       "id": "REJ-013",
       "title": "Creation of tag v0.6.10 or GitHub Release v0.6.10",
-      "reason": "Not authorized in planning-only batch."
+      "reason": "Requires explicit owner approval in the separate cutover batch; not yet performed."
     },
     {
       "id": "REJ-014",
@@ -274,9 +274,9 @@
     "docs/releases/v0.6.10-candidates.md created",
     "docs/releases/v0.6.10-candidates.json created",
     "scripts/check_v0610_planning.py and matching tests created",
-    "Source/package version remains 0.6.9",
-    "No docs/releases/v0.6.10.md created",
-    "No docs/trust/v0.6.10-status.md created",
+    "Source/package version bumped to 0.6.10",
+    "docs/releases/v0.6.10.md created",
+    "docs/trust/v0.6.10-status.md created",
     "No tag, GitHub release, or PyPI publish yet",
     "No runtime trading behavior changes"
   ],

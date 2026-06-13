@@ -6,7 +6,7 @@ This guide is the fastest safe path for an external reviewer to verify the curre
 
 ## Quick validation path
 
-After cloning and installing (`python3.11 -m pip install -e .`), run these commands in order to verify the current `v0.6.9` public release / `v0.6.10` planning state:
+After cloning and installing (`python3.11 -m pip install -e .`), run these commands in order to verify the current `v0.6.9` public release / `v0.6.10` prepared state:
 
 ```bash
 # Release metadata and version consistency

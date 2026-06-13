@@ -257,9 +257,6 @@ def _check_no_tag_claim() -> list[str]:
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8").lower()
-        # Allow claims for the current released version
-        if PUBLIC_TAG.lower() in text:
-            continue
         if "tag created" in text and "not created" not in text:
             errors.append(f"{path.name} may claim tag was already created")
         if "github release created" in text and "not created" not in text:
