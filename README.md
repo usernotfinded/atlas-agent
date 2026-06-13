@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.6.9)** — latest stable public release on GitHub. Source package version is `0.6.9`. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
+> **Current Status (v0.6.10)** — package/source version is `0.6.10` in active development. `v0.6.9` is the latest stable public release on GitHub. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -100,7 +100,7 @@ The research workflow is paper-only and analysis-only. All commands operate on l
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-`v0.6.9` is the latest stable release and the package/source version is `0.6.9`. `v0.6.10` is the next planning line (not yet tagged). Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
+`v0.6.9` is the latest stable public GitHub release. The package/source version on main is `0.6.10` (active development). `v0.6.11` is the next planning line (not yet tagged). Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
 
 ## Broker-Neutral Model
 

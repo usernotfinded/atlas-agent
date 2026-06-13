@@ -2,8 +2,8 @@
   "artifact_type": "v0610_candidate_inventory",
   "schema_version": 1,
   "release": "v0.6.10",
-  "generated_for": "planning",
-  "status": "planning",
+  "generated_for": "release-prep",
+  "status": "release_prep",
   "generated_at": "2026-06-11",
   "candidates": [
     {

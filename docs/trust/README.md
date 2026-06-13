@@ -7,9 +7,10 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.9` (tagged)
 - Previous public release: `v0.6.8`
-- Source package version on `main`: `0.6.9`
+- Source package version on `main`: `0.6.10`
 - GitHub release: `v0.6.9` (current public)
-- Next planning line: `v0.6.10`
+- Next planning line: `v0.6.11`
+- Public v0.6.10: prepared, not public — [v0.6.10 Trust and Release Status](v0.6.10-status.md)
 - PyPI was not published
 - Current public release status: [v0.6.9 Trust and Release Status](v0.6.9-status.md) (current public)
 - Previous release status: [v0.6.8 Trust and Release Status](v0.6.8-status.md) (historical)
@@ -77,14 +78,14 @@ brokers, enable trading, or require credentials.
 
 - GitHub release: `v0.6.9` (current public)
 - PyPI was not published
-- Package version in source metadata: `0.6.9`
+- Package version in source metadata: `0.6.10`
 - Auto-updater delivery: verified for `v0.6.9`; not yet verified for `v0.6.10`
 
 ## What Is Ready
 
 - Public v0.6.9 release notes and release status documentation (current public).
 - Public v0.6.8 release notes and release status documentation (historical).
-- Next planning line v0.6.10 release notes and release status documentation (not yet prepared).
+- Prepared v0.6.10 release notes and release status documentation (not yet tagged or released).
 - Local and CI release assurance generation.
 - Local and CI provider audit pack generation and verification.
 - Deterministic local backtesting and paper-first workflows.
@@ -109,6 +110,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
+- [v0.6.10 Release Notes](../releases/v0.6.10.md) (prepared, not public)
+- [v0.6.10 Trust and Release Status](v0.6.10-status.md) (prepared, not public)
 - [v0.6.9 Release Notes](../releases/v0.6.9.md) (current public)
 - [v0.6.9 Trust and Release Status](v0.6.9-status.md) (current public)
 - [v0.6.8 Release Notes](../releases/v0.6.8.md) (historical)

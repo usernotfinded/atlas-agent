@@ -45,18 +45,18 @@ class TestScriptExists:
 
 
 class TestPlanningModeValid:
-    def test_planning_mode_passes_on_real_repo(self) -> None:
-        """Planning mode passes because source is still 0.6.9 and artifacts are present."""
+    def test_planning_mode_fails_after_bump(self) -> None:
+        """Planning mode fails because source is now 0.6.10 and release-prep artifacts exist."""
         result = _run_script()
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "PASS" in result.stdout
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "FAIL" in result.stdout
         assert "planning" in result.stdout
 
-    def test_planning_json_output_passes(self) -> None:
+    def test_planning_json_output_fails_after_bump(self) -> None:
         result = _run_script("--json")
-        assert result.returncode == 0, result.stderr
+        assert result.returncode == 1, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is True
+        assert data["valid"] is False
         assert data["mode"] == "planning"
         assert "checks" in data
 

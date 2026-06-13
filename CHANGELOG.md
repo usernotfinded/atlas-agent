@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 
+## [0.6.10] - 2026-06-13
+
+### Added
+- Reviewer validation command guide refresh (CAND-001): updated reviewer walkthroughs, golden path, checklist, FAQ, safety docs, and stale-link repairs.
+- Dashboard/report UX polish after v0.6.9 (CAND-002): fixed schema-status badge mapping, added HTML safety banner to Markdown dashboard exports, improved empty/redacted diagnostics, and sorted backtest runs deterministically by `run_id`.
+- Backtest report schema checker ergonomics (CAND-003): added `--json`, per-status counts (`valid/invalid/legacy/unreadable`), `--fail-on-legacy`, final summary, and direct unit tests for `scripts/check_backtest_report_schema.py`.
+- Template source-of-truth simplification (CAND-004): made `src/atlas_agent/templates/routine-trader/` the canonical packaged copy, removed the root-level duplicate, and updated checkers/tests/docs to reference the packaged copy.
+- Code inventory follow-up import/API classification (CAND-005): refreshed `docs/development/code-inventory-followups.md` and `tests/test_code_inventory_imports.py`.
+- Release-assurance metadata cleanup (CAND-006): removed stale hardcoded v0.5.x-era copy-paste from `scripts/release_assurance.py`, archived old `artifacts/release_assurance/v0.5.9*` packs, and tightened `.gitignore` for generated local evidence.
+- Public docs link/reference hardening after README cleanup (CAND-007): fixed broken CHANGELOG links to v0.5.8 rc notes, refreshed capability-inventory headers, converted backticked doc paths to Markdown links, and extended the public-docs consistency scan list.
+- `docs/releases/v0.6.10.md`, `docs/trust/v0.6.10-status.md`, `docs/releases/v0.6.10-candidates.md`, and `docs/releases/v0.6.10-candidates.json`.
+- `scripts/check_v0610_release_prep.py` and matching tests for v0.6.10 release-prep state validation.
+
+### Changed
+- Bumped package/source version from `0.6.9` to `0.6.10`.
+- Updated release metadata to reflect `v0.6.9` as the current public GitHub release and `v0.6.10` as the prepared source version.
+- Updated README, SECURITY.md, `docs/trust/README.md`, and `docs/development/main-health.md` to reflect `v0.6.9` as current public release, `0.6.10` as source version, and `v0.6.11` as next planned release.
+
+### Fixed
+
+### Safety
+- No live trading, broker execution, provider execution, risk gate, approval gate, kill switch, or audit behavior changes.
+- `v0.6.10` is prepared but **not yet tagged**, **not yet released on GitHub**, and **PyPI was not published**.
+
 ## [0.6.9] - 2026-06-11
 
 ### Added

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -105,13 +106,18 @@ def _check_no_release_notes() -> list[str]:
     return errors
 
 
+def _version_present(text: str, version: str) -> bool:
+    """Check for an exact version token to avoid substring false positives (e.g. 0.6.10 matching 0.6.1)."""
+    return re.search(rf"\b{re.escape(version)}\b", text) is not None
+
+
 def _check_no_version_bump() -> list[str]:
     errors: list[str] = []
     for path in (PYPROJECT, INIT_PY):
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8")
-        if "0.6.1" in text:
+        if _version_present(text, "0.6.1"):
             errors.append(f"Version bump to 0.6.1 detected in {path}")
     return errors
 
@@ -192,8 +198,8 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         for path in (PYPROJECT, INIT_PY):
             if path.exists():
                 text = path.read_text(encoding="utf-8")
-                if "0.6.1" not in text and "0.6.2" not in text and "0.6.3" not in text and "0.6.4" not in text and "0.6.5" not in text and "0.6.6" not in text and "0.6.7" not in text:
-                    errors.append(f"Version bump to 0.6.1 or later missing in {path}")
+                if not _version_present(text, "0.6.1"):
+                    errors.append(f"Version bump to 0.6.1 missing in {path}")
     errors.extend(_check_no_unsafe_selected())
     errors.extend(_check_no_publish_claim())
     errors.extend(_check_json_exists())

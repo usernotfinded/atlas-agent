@@ -238,12 +238,12 @@ class TestStaleRCReferencesBlocked:
             f"Expected pass for historical RC changelog entry:\n{result.stdout}"
         )
 
-    def test_current_stable_version_068_accepted(self) -> None:
+    def test_current_stable_version_0610_accepted(self) -> None:
         text = (
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.6.9)\n"
+            "Current Status (v0.6.10)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (

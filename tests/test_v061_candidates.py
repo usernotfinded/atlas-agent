@@ -54,13 +54,13 @@ class TestScriptExists:
 
 class TestCheckerValid:
     def test_valid_candidate_doc_passes_release_prep(self) -> None:
-        """Fails on real repo because source is now 0.6.8."""
+        """Fails on real repo because source is not 0.6.1."""
         result = _run_script("--release-prep")
         assert result.returncode == 1, result.stdout + result.stderr
         assert "FAIL" in result.stdout
 
     def test_valid_json_output_release_prep(self) -> None:
-        """Fails on real repo because source is now 0.6.8."""
+        """Fails on real repo because source is not 0.6.1."""
         result = _run_script("--json", "--release-prep")
         assert result.returncode == 1, result.stderr
         data = json.loads(result.stdout)
@@ -73,14 +73,14 @@ class TestCheckerValid:
         assert data["schema_version"] == 1
 
     def test_release_prep_mode_allows_version_bump(self) -> None:
-        """Fails on real repo because source is now 0.6.8."""
+        """Fails on real repo because source is not 0.6.1."""
         mod = _load_script_module()
         code, result = mod.run_check(release_prep=True)
         assert code == 1
         assert any("Version bump" in e for e in result["errors"])
 
     def test_release_prep_mode_allows_release_notes(self) -> None:
-        """Fails on real repo because source is now 0.6.8."""
+        """Fails on real repo because source is not 0.6.1."""
         mod = _load_script_module()
         code, result = mod.run_check(release_prep=True)
         assert code == 1

@@ -887,6 +887,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Cleaned up output directory: {_redact(str(output_dir))}")
         elif output_dir is not None and args.keep_artifacts:
             print(f"Kept output directory: {_redact(str(output_dir))}")
+        # python -m build leaves a repo-root build/ directory even when --outdir is used.
+        # Clean it up so this dry-run verification does not pollute the workspace.
+        build_dir = REPO_ROOT / "build"
+        if build_dir.exists():
+            shutil.rmtree(build_dir, ignore_errors=True)
+            print(f"Cleaned up build directory: {_redact(str(build_dir))}")
 
 
 if __name__ == "__main__":

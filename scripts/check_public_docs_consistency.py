@@ -132,8 +132,10 @@ STALE_VERSION_PATTERNS = [
     r"Current Status \(v0\.6\.0\)",
     r"Current Status \(v0\.6\.[1-9]\)",
     r"Current Status \(v0\.6\.10\)",
+    r"Current Status \(v0\.6\.11\)",
     r"Current Status \(0\.6\.[1-9]\)",
     r"Current Status \(0\.6\.10\)",
+    r"Current Status \(0\.6\.11\)",
     r"v0\.5\.7\.dev[1-5][0-9](?!\d)",
     r"0\.5\.7\.dev[1-5][0-9](?!\d)",
 ]
