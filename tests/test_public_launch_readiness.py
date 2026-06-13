@@ -110,7 +110,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.6.9" in readme_text, "README must reference v0.6.9 as current status"
+        assert "v0.6.10" in readme_text, "README must reference v0.6.10 as current status"
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -268,10 +268,10 @@ class TestStaleRCReferencesBlocked:
 
 
 class TestReleaseDocConsistency:
-    def test_public_launch_readiness_doc_has_v069_as_current_release(self) -> None:
+    def test_public_launch_readiness_doc_has_v0610_as_current_release(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
-        assert "latest stable public GitHub release is `v0.6.9`" in text, (
-            "public-launch-readiness.md must describe v0.6.9 as the current stable release"
+        assert "latest stable public GitHub release is `v0.6.10`" in text, (
+            "public-launch-readiness.md must describe v0.6.10 as the current stable release"
         )
 
     def test_public_launch_readiness_doc_does_not_claim_v062_as_latest(self) -> None:

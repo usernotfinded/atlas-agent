@@ -85,8 +85,8 @@ class TestReadmeLinks:
             or "stable release checklist" in lower
         )
 
-    def test_readme_current_status_is_v069(self, readme_text: str) -> None:
-        assert "v0.6.9" in readme_text
+    def test_readme_current_status_is_v0610(self, readme_text: str) -> None:
+        assert "v0.6.10" in readme_text
 
 
 class TestDecisionDocSafety:
@@ -273,9 +273,9 @@ class TestVersionConsistency:
         assert m.group(1) == "0.6.10"
 
     def test_release_note_exists(self) -> None:
-        assert (ROOT / "docs" / "releases" / "v0.6.9.md").exists()
+        assert (ROOT / "docs" / "releases" / "v0.6.10.md").exists()
 
     def test_changelog_has_stable_entry(self) -> None:
         changelog = ROOT / "CHANGELOG.md"
         text = changelog.read_text(encoding="utf-8")
-        assert "[0.6.9]" in text
+        assert "[0.6.10]" in text

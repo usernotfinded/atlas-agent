@@ -30,14 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Bumped package/source version from `0.6.9` to `0.6.10`.
-- Updated release metadata to reflect `v0.6.9` as the current public GitHub release and `v0.6.10` as the prepared source version.
-- Updated README, SECURITY.md, `docs/trust/README.md`, and `docs/development/main-health.md` to reflect `v0.6.9` as current public release, `0.6.10` as source version, and `v0.6.11` as next planned release.
+- Updated release metadata to reflect `v0.6.10` as the current public GitHub release and `v0.6.9` as historical.
+- Updated README, SECURITY.md, `docs/trust/README.md`, and `docs/development/main-health.md` to reflect `v0.6.10` as current public release, `v0.6.9` as historical, and `v0.6.11` as next planned release.
 
 ### Fixed
 
 ### Safety
 - No live trading, broker execution, provider execution, risk gate, approval gate, kill switch, or audit behavior changes.
-- `v0.6.10` is prepared but **not yet tagged**, **not yet released on GitHub**, and **PyPI was not published**.
+- Tag `v0.6.10` created and pushed; GitHub release `v0.6.10` published; **PyPI was not published**.
 
 ## [0.6.9] - 2026-06-11
 
