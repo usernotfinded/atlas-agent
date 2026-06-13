@@ -49,7 +49,7 @@ def test_init_uses_package_resource_template(tmp_path) -> None:
     assert (workspace / "configs" / "market.example.yaml").exists()
 
 
-def test_init_falls_back_to_repo_template_when_package_resource_unavailable(
+def test_init_falls_back_to_packaged_template_when_package_resource_unavailable(
     tmp_path, monkeypatch
 ) -> None:
     class MissingResources:

@@ -12,11 +12,13 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.6.9)** — latest stable public release on GitHub. Source package version is `0.6.9`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
+> **Current Status (v0.6.9)** — latest stable public release on GitHub. Source package version is `0.6.9`. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
 ## Why Atlas?
+
+### What this is
 
 Atlas Agent is a **local-first research and paper-trading workbench** with deterministic safety gates, audit logs, and sandbox-only provider safety workflows.
 
@@ -27,9 +29,12 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 - **Persistent trading memory** — Markdown journals carry lessons across sessions through a continuous learning loop.
 - **Tamper-evident audit logs** — Cryptographic hash-chain tracking for accountability, read-only replay, and forensic review.
 - **Bring-your-own model and provider** — Provider-neutral by design. You select the APIs, the models, and the credentials.
+
+### What this is not
+
 - **Not a live trading system by default** — live trading requires explicit multi-factor opt-in. Not a broker (no custody). Not a financial advisor. Not autonomous.
 
-## Getting Started
+## Quickstart
 
 Atlas Agent is **paper-first** and **safe by default**. No live trading, no broker credentials, and no provider API keys are required.
 
@@ -55,6 +60,8 @@ atlas --help
 # 6. Run the reproducible paper demo
 ./scripts/demo_paper_workflow.sh
 ```
+
+This quickstart is offline-safe, sandbox-only, and paper-first. No credentials loaded, no broker/order path, and live trading disabled by default. Safety validation does not imply profitability or trading correctness.
 
 This path produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
 
@@ -93,7 +100,7 @@ The research workflow is paper-only and analysis-only. All commands operate on l
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-`v0.6.9` is the latest stable release. `v0.6.10` is the next planning line (not yet tagged). Provider execution remains locked. Trust remains blocked. No profitability or trading correctness claims.
+`v0.6.9` is the latest stable release and the package/source version is `0.6.9`. `v0.6.10` is the next planning line (not yet tagged). Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
 
 ## Broker-Neutral Model
 
@@ -101,7 +108,7 @@ Atlas Agent does not bundle, force, custody, or recommend broker accounts. It is
 
 - **No Custody** — Atlas never touches your funds. It communicates with your chosen broker via your own API credentials.
 - **No Recommendations** — The framework does not prefer any specific broker or provider.
-- **Universal Interface** — Supports [OpenRouter](https://openrouter.ai) (200+ models), [OpenAI](https://platform.openai.com/home), [Anthropic](https://www.anthropic.com), [Google Gemini](https://ai.google.dev/gemini-api/docs), [DeepSeek](https://platform.deepseek.com/docs), [xAI / Grok](https://docs.x.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [Hugging Face](https://huggingface.co), [NVIDIA NIM](https://build.nvidia.com) (cloud and local/on-prem), [LM Studio](https://lmstudio.ai/docs), local / Ollama / llama.cpp endpoints, and other **custom** or **OpenAI-compatible** providers. See [Model Providers](docs/model-providers.md) for the full catalog.
+- **Universal Interface** — Supports [OpenRouter](https://openrouter.ai) (200+ models), [OpenAI](https://platform.openai.com/home), [Anthropic](https://www.anthropic.com), [Google Gemini](https://ai.google.dev/gemini-api/docs), [DeepSeek](https://platform.deepseek.com/docs), [xAI / Grok](https://docs.x.ai), [Z.ai/GLM](https://www.z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [Hugging Face](https://huggingface.co), [NVIDIA NIM](https://build.nvidia.com) (cloud and local/on-prem), [LM Studio](https://lmstudio.ai/docs), local / Ollama / llama.cpp endpoints, and other **custom** or **OpenAI-compatible** providers. See [Model Providers](docs/model-providers.md) for the full catalog.
 
 For guidance on which model to choose, see the [Vals AI Finance Agent Benchmark](https://www.vals.ai/benchmarks/fabv2).
 
@@ -112,6 +119,7 @@ For guidance on which model to choose, see the [Vals AI Finance Agent Benchmark]
 - **Kill Switch** — Advanced emergency stop with hierarchical modes. Dead-man heartbeat monitoring ensures the system fails closed if the process is interrupted.
 - **Live-Submit Safety Contract** — See [docs/live-submit-safety-contract.md](docs/live-submit-safety-contract.md) for the complete gating, state-machine, and audit rules.
 - **Responsibility** — You are responsible for your API keys, broker permissions, and any financial outcomes.
+- **Artifact-Based Safety Policy** — Provider execution follows an artifact-based safety policy enforced by the risk manager (`RiskManager`); there is no runtime network block on the host, so the policy is applied deterministically at the execution boundary.
 
 ## Backtesting
 
@@ -148,7 +156,7 @@ Common command families:
 | **Workspace setup** | `atlas init`, `atlas setup`, `atlas validate`, `atlas config set ...` | Create and configure a safe paper workspace. |
 | **Paper workflow** | `atlas run --mode paper`, `atlas agent run --mode paper`, `atlas run-once --mode paper` | Run the agent in simulation without broker orders. |
 | **Backtesting** | `atlas backtest run --data ... --symbol ...`, `atlas backtest list-strategies` | Deterministic local strategy simulation. |
-| **Research** | `atlas research run --symbol ...`, `atlas research plan`, `atlas research verify`, `atlas research summary` | Paper-only artifact generation and inspection. |
+| **Research** | `atlas research run --symbol ...`, `atlas research list`, `atlas research show`, `atlas research plan`, `atlas research verify`, `atlas research summary`, `atlas research evaluate`, `atlas research prompt`, `atlas research simulate-provider`, `atlas research review-response`, `atlas research dossier` | Paper-only artifact generation and inspection. |
 | **Risk & safety** | `atlas risk status`, `atlas kill-switch status`, `atlas approve-order` | Inspect gates, kill switch, and approval queues. |
 | **Broker (read-only)** | `atlas broker sync` | Synchronize account, positions, and orders from the broker. |
 | **Diagnostics** | `atlas memory doctor --json`, `atlas events doctor`, `atlas audit verify --all` | Local health and audit checks. |
@@ -167,11 +175,21 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[Risk Rejection](docs/demo-risk-rejection.md)** — see how deterministic risk gates block unsafe orders.
 - **[Audit Verification](docs/demo-audit.md)** — verify the tamper-evident hash-chain and run manifests.
 
+No `assets/atlas-demo.gif` recording is checked in yet; the walkthroughs above are the canonical demo surface.
+
+## Provider Safety Dossier
+
+The provider safety dossier is a sandbox-only, paper-only workflow for inspecting and mocking the provider response pipeline. It keeps provider execution locked, loads no credentials, follows no broker/order path, and has no network enabled. See [docs/provider-safety-dossier.md](docs/provider-safety-dossier.md) for the offline mock workflow.
+
+## Telegram & Notifications
+
+Atlas supports optional notification channels. For Telegram control and alerts, see [docs/telegram-control.md](docs/telegram-control.md).
+
 ## Contributing and Security
 
 We welcome contributions that respect the safe-by-default design. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, safety boundaries, and contribution rules. See the [Atlas Agent Trust Center](docs/trust/README.md) for security posture and release assurance. To report security or safety issues privately, use [GitHub Security Advisories](https://github.com/usernotfinded/atlas-agent/security/advisories). See [SECURITY.md](SECURITY.md) for the full security policy.
 
-New to the repo? Start with the [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md) and the [Reviewer Golden-Path Validation Guide](docs/reviewer-golden-path.md). See also: [Reviewer Checklist](docs/reviewer-checklist.md) · [Public FAQ](docs/public-faq.md) · [Public Launch Readiness](docs/public-launch-readiness.md) · [Product Capability Inventory](docs/product-capability-inventory.md).
+New to the repo? Start with the [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md) and the [Reviewer Golden-Path Validation Guide](docs/reviewer-golden-path.md). See also: [Reviewer Checklist](docs/reviewer-checklist.md) · [Public FAQ](docs/public-faq.md) · [Public Launch Readiness](docs/public-launch-readiness.md) · [Public Launch Messaging](docs/public-launch-messaging.md) · [Feedback Request Guide](docs/feedback-request-guide.md) · [Product Capability Inventory](docs/product-capability-inventory.md).
 
 ## Release Assurance
 
@@ -182,6 +200,10 @@ python scripts/release_assurance.py --version v0.6.9 --output artifacts/release_
 ```
 
 Or run `.github/workflows/release-assurance.yml` via `workflow_dispatch` in GitHub Actions. Both are read-only and non-publishing — they do not create tags, publish packages, call providers, or enable trading.
+
+## Release Process & Deployment
+
+Release readiness is governed by the [Final RC Audit](docs/final-rc-audit.md), [Final Release Candidate Checklist](docs/final-release-candidate-checklist.md), [Stable Release Checklist](docs/stable-release-checklist.md), and [Stable Release Decision](docs/stable-release-decision.md) documents. For deployment options, see [docs/deployment.md](docs/deployment.md).
 
 ## Disclaimer
 

@@ -131,7 +131,6 @@ def main() -> int:
 
     env_files = [
         repo_root / ".env.example",
-        repo_root / "templates" / "routine-trader" / ".env.example",
         repo_root / "src" / "atlas_agent" / "templates" / "routine-trader" / ".env.example",
     ]
 
@@ -150,7 +149,6 @@ def main() -> int:
     # Parity check: root vs packaged templates (same key/value pairs)
     root_path = repo_root / ".env.example"
     tmpl_paths = [
-        repo_root / "templates" / "routine-trader" / ".env.example",
         repo_root / "src" / "atlas_agent" / "templates" / "routine-trader" / ".env.example",
     ]
     if root_path.exists():

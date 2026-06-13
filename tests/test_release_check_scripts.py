@@ -5,8 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 
 def _run_script(script_name: str, *args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
     repo_root = Path(__file__).resolve().parent.parent
@@ -784,11 +782,11 @@ class TestDevCheckSh:
         assert "check_trust_center.py" in content
         assert "check_onboarding_docs.py" in content
         assert "check_generated_artifacts.py" in content
-        assert "check_template_parity.py" in content
+        assert "test_template_packaging.py" in content
         assert "check_github_actions_versions.py" in content
         assert "tests/test_generated_artifacts.py" in content
         assert "tests/test_github_actions_versions.py" in content
-        assert "tests/test_template_parity.py" in content
+        assert "tests/test_template_packaging.py" in content
         assert "tests/research/test_research_sandbox_cli.py" in content
         assert "tests/test_release_check_scripts.py" in content
         assert "git diff --check" in content

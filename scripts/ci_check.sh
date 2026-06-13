@@ -51,9 +51,9 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "4a. template parity checks"
+echo "4a. packaged template integrity check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_template_parity.py
+"$PYTHON_BIN" -m pytest tests/test_template_packaging.py -q "${PYTEST_EXTRA_ARGS[@]}"
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
@@ -241,7 +241,6 @@ SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_stable_release_decision.py -q
 "$PYTHON_BIN" -m pytest tests/test_v0581_hotfix_cutover.py -q
 "$PYTHON_BIN" -m pytest tests/test_env_templates.py -q
-"$PYTHON_BIN" -m pytest tests/test_template_parity.py -q
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

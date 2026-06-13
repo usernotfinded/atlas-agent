@@ -65,7 +65,7 @@ All modules remain importable, preventing `ModuleNotFoundError` crashes. Because
 # Recommended next batch
 
 1. Deep architectural review of whether the `strategies` and `ai` modules can be deprecated via semantic versioning.
-2. Template source-of-truth simplification (CAND-004).
+2. Deep architectural review of remaining public-API candidates for deprecation path.
 
 # Commands used for import/reference search
 

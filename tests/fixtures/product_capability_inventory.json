@@ -29,7 +29,7 @@
       "source_paths": [
         "src/atlas_agent/workspace.py",
         "src/atlas_agent/cli_commands/workspace.py",
-        "templates/routine-trader/"
+        "src/atlas_agent/templates/routine-trader/"
       ],
       "docs_paths": [
         "README.md",

@@ -86,28 +86,33 @@
     {
       "id": "CAND-004",
       "title": "Template source-of-truth simplification",
-      "summary": "Resolve the duplicated templates/routine-trader/ and src/atlas_agent/templates/routine-trader/ trees by making the packaged copy the canonical source and removing or symlinking the root tree.",
-      "user_value": "Removes a long-standing drift hazard and simplifies template parity checks.",
+      "summary": "Make src/atlas_agent/templates/routine-trader/ the single canonical source, delete the byte-identical root-level duplicate, and update checkers/tests/docs to reference the packaged copy.",
+      "user_value": "Removes a long-standing drift hazard and eliminates duplicate template maintenance.",
       "safety_boundary": "Must preserve fail-closed defaults in .env.example, risk.example.yaml, and brokers.example.yaml; no execution changes.",
       "risk": "medium",
       "likely_files": [
-        "pyproject.toml",
-        "src/atlas_agent/cli.py",
-        "scripts/check_template_parity.py",
+        "MANIFEST.in",
+        ".gitignore",
+        "src/atlas_agent/workspace.py",
         "scripts/check_env_templates.py",
-        "tests/test_template_parity.py",
-        "tests/test_template_packaging.py"
+        "scripts/check_generated_artifacts.py",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        "tests/test_template_packaging.py",
+        "tests/test_env_templates.py",
+        "tests/test_workspace_init.py",
+        "tests/test_release_check_scripts.py"
       ],
       "tests_checks": [
-        "check_template_parity",
+        "tests/test_template_packaging.py",
         "check_env_templates",
         "wheel/sdist packaging tests",
         "atlas init smoke from clean checkout"
       ],
-      "recommendation": "later",
-      "ranking_reason": "Packaging/init path change; safer to isolate in its own batch with clean-install verification.",
-      "selected_for_v0610": false,
-      "implemented": false
+      "recommendation": "now",
+      "ranking_reason": "Packaged copy is canonical; root duplicate removed; workspace fallback uses packaged filesystem path.",
+      "selected_for_v0610": true,
+      "implemented": true
     },
     {
       "id": "CAND-005",
@@ -181,11 +186,6 @@
     }
   ],
   "deferred": [
-    {
-      "id": "CAND-004",
-      "title": "Template source-of-truth simplification",
-      "reason": "Medium packaging/init risk; isolate in a dedicated batch with clean-install and wheel verification."
-    },
     {
       "id": "CAND-006",
       "title": "Release-assurance metadata cleanup",

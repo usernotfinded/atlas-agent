@@ -4,8 +4,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).parent.parent
 CHECKER = REPO_ROOT / "scripts" / "check_env_templates.py"
 
@@ -67,9 +65,9 @@ class TestEnvTemplateCheckerSynthetic:
         assert result.returncode == 1
         assert "ENABLE_LIVE_TRADING: safety default mismatch" in result.stdout
 
-    def test_detects_template_parity_mismatch(self, tmp_path: Path) -> None:
+    def test_detects_packaged_template_parity_mismatch(self, tmp_path: Path) -> None:
         root = tmp_path / ".env.example"
-        tmpl = tmp_path / "templates" / "routine-trader" / ".env.example"
+        tmpl = tmp_path / "src" / "atlas_agent" / "templates" / "routine-trader" / ".env.example"
         tmpl.parent.mkdir(parents=True)
         root.write_text("TRADING_MODE=paper\nENABLE_LIVE_TRADING=false\nMINIMUM_CONFIDENCE=0.6\n")
         tmpl.write_text("TRADING_MODE=paper\nENABLE_LIVE_TRADING=false\nMINIMUM_CONFIDENCE=0.55\n")
@@ -91,8 +89,6 @@ class TestEnvTemplateCheckerSynthetic:
         ]
         text = "\n".join(lines) + "\n"
         (tmp_path / ".env.example").write_text(text)
-        (tmp_path / "templates" / "routine-trader").mkdir(parents=True)
-        (tmp_path / "templates" / "routine-trader" / ".env.example").write_text(text)
         (tmp_path / "src" / "atlas_agent" / "templates" / "routine-trader").mkdir(parents=True)
         (tmp_path / "src" / "atlas_agent" / "templates" / "routine-trader" / ".env.example").write_text(text)
         result = _run_checker(str(tmp_path))

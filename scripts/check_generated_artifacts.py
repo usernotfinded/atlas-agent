@@ -42,7 +42,6 @@ TRACKED_VERSIONED_EVIDENCE_PREFIXES = (
 SECRET_TEMPLATE_ALLOWLIST = {
     ".env.example",
     "src/atlas_agent/templates/routine-trader/.env.example",
-    "templates/routine-trader/.env.example",
 }
 
 SECRET_EXACT_BASENAMES = {

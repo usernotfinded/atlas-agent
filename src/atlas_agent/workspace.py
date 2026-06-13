@@ -131,7 +131,7 @@ def _load_default_config() -> dict[str, Any]:
                 parsed = json.loads(legacy_path.read_text(encoding="utf-8"))
                 if isinstance(parsed, dict):
                     return parsed
-            except:
+            except Exception:
                 pass
         return {}
     
@@ -190,8 +190,9 @@ def init_workspace(
     template_source = _resolve_template(template)
     if template_source is None:
         raise WorkspaceInitError(
-            f"template not found: {template}. Expected packaged resource "
-            f"atlas_agent/templates/{template} or repo fallback templates/{template}."
+            f"Template '{template}' not found. "
+            "Ensure atlas_agent is installed with package data "
+            f"(src/atlas_agent/templates/{template})."
         )
 
     _copy_template_tree(template_source, target_path)
@@ -214,7 +215,7 @@ def _resolve_template(template: str) -> Traversable | Path | None:
     except (FileNotFoundError, ModuleNotFoundError, AttributeError):
         pass
 
-    fallback = Path(__file__).parent.parent.parent / "templates" / template
+    fallback = Path(__file__).parent / "templates" / template
     if fallback.is_dir():
         return fallback
     return None
