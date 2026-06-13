@@ -62,8 +62,8 @@
         "All existing dashboard tests pass",
         "Dashboard remains read-only with no execution controls"
       ],
-      "selected_for_v0611": false,
-      "implemented": false
+      "selected_for_v0611": true,
+      "implemented": true
     },
     {
       "id": "CAND-003",

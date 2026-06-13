@@ -49,6 +49,9 @@ class TestDashboardCLI:
         out = capsys.readouterr().out
         assert "# Atlas Agent Dashboard" in out
         assert "## System Health" in out
+        assert "**Export Timestamp:**" in out
+        assert "| Metric | Value |" in out
+        assert "| :--- | ---: |" in out
         assert "This dashboard is read-only" in out
 
     def test_dashboard_html_output(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -64,6 +67,8 @@ class TestDashboardCLI:
         assert html_path.exists()
         html = html_path.read_text(encoding="utf-8")
         assert "Atlas Agent Dashboard" in html
+        assert "Export timestamp:" in html
+        assert '<table class="summary-table">' in html
         assert "Safety status:" in html
         assert "This dashboard is read-only." in html
         assert "This dashboard does not execute trades." in html

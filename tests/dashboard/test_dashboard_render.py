@@ -145,9 +145,34 @@ def test_render_dashboard_html_empty_states_are_explicit(tmp_path: Path):
     render_dashboard_html(snapshot, output_path)
 
     content = output_path.read_text(encoding="utf-8")
-    assert "No data available" in content
+    assert "No local portfolio snapshot found." in content
+    assert "No backtest runs found. Run a local backtest to populate this section." in content
+    assert "No local report exports found." in content
     assert "Missing Data" in content
     assert "Warnings" in content
+
+
+def test_render_dashboard_html_includes_export_timestamp_header(tmp_path: Path):
+    snapshot = _full_snapshot()
+    snapshot.generated_at = "2026-06-13T20:00:00+00:00"
+    output_path = tmp_path / "dashboard.html"
+    render_dashboard_html(snapshot, output_path)
+
+    content = output_path.read_text(encoding="utf-8")
+    assert "Export timestamp: 2026-06-13T20:00:00+00:00" in content
+
+
+def test_render_dashboard_html_aligns_backtest_summary_table(tmp_path: Path):
+    output_path = tmp_path / "dashboard.html"
+    render_dashboard_html(_full_snapshot(), output_path)
+
+    content = output_path.read_text(encoding="utf-8")
+    assert '<table class="summary-table">' in content
+    assert '<th scope="col">Metric</th>' in content
+    assert '<th scope="col">Value</th>' in content
+    assert ".summary-table th:last-child, .summary-table td:last-child { text-align: right; }" in content
+    assert "<th scope=\"row\">Latest symbol</th>" in content
+    assert "<td>AAPL</td>" in content
 
 
 def test_render_dashboard_html_has_no_mutating_controls_or_external_assets(tmp_path: Path):
@@ -216,8 +241,7 @@ def test_render_dashboard_markdown_contains_sections():
     assert "## System Health" in md
     assert "## Portfolio" in md
     assert "## Backtests" in md
-    assert "Latest Schema Version" in md
-    assert "Latest Validation Status" in md
+    assert "No backtest runs found. Run a local backtest to populate this section." in md
     assert "## Reports" in md
     assert "## Reflections" in md
     assert "## Skills" in md
@@ -225,6 +249,26 @@ def test_render_dashboard_markdown_contains_sections():
     assert "## Audit" in md
     assert "## Safety" in md
     assert "read-only" in md.lower()
+
+
+def test_render_dashboard_markdown_includes_export_timestamp_and_aligned_backtest_table():
+    snapshot = _full_snapshot()
+    snapshot.generated_at = "2026-06-13T20:00:00+00:00"
+    md = render_dashboard_markdown(snapshot)
+
+    assert "**Export Timestamp:** 2026-06-13T20:00:00+00:00" in md
+    assert "| Metric | Value |" in md
+    assert "| :--- | ---: |" in md
+    assert "| Latest Symbol | AAPL |" in md
+    assert "| Latest Validation Status | valid |" in md
+
+
+def test_render_dashboard_markdown_empty_backtests_are_actionable():
+    md = render_dashboard_markdown(DashboardSnapshot(workspace="/test"))
+
+    assert "## Backtests" in md
+    assert "No backtest runs found. Run a local backtest to populate this section." in md
+    assert "| Metric | Value |" not in md
 
 
 def test_render_dashboard_markdown_with_warnings():

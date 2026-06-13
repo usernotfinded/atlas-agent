@@ -65,10 +65,13 @@ def _row(label: str, value: Any, *, status: Any | None = None, default: str = "N
                     </div>"""
 
 
-def _empty_if_unavailable(available: bool) -> str:
+def _empty_if_unavailable(
+    available: bool,
+    message: str = "No data available",
+) -> str:
     if available:
         return ""
-    return '<p class="empty-state">No data available</p>'
+    return f'<p class="empty-state">{escape(message)}</p>'
 
 
 def _status_breakdown(items: dict[str, int]) -> str:
@@ -110,6 +113,84 @@ def _diagnostics_markdown(diagnostics: dict[str, Any]) -> str:
     if diagnostics.get("redacted"):
         return "Diagnostics redacted."
     return f"```json\n{json.dumps(diagnostics, indent=2)}\n```"
+
+
+def _markdown_cell(value: Any, default: str = "N/A") -> str:
+    return _text(value, default).replace("|", r"\|").replace("\n", " ")
+
+
+def _backtest_summary_html(snapshot: DashboardSnapshot) -> str:
+    backtests = snapshot.backtests
+    if not backtests.available:
+        return _empty_if_unavailable(
+            False,
+            "No backtest runs found. Run a local backtest to populate this section.",
+        )
+
+    rows = [
+        ("Total runs", backtests.total_runs, None),
+        ("Recent runs", backtests.recent_count, None),
+        ("Latest run", backtests.latest_run_id, None),
+        ("Latest symbol", backtests.latest_symbol, None),
+        ("Latest return pct", backtests.latest_return_pct, None),
+        ("Latest status", backtests.latest_status, backtests.latest_status),
+        ("Latest schema version", backtests.latest_schema_version, None),
+        (
+            "Latest validation status",
+            backtests.latest_validation_status,
+            backtests.latest_validation_status,
+        ),
+    ]
+    rendered_rows = []
+    for label, value, status in rows:
+        rendered_value = _badge(status, value) if status is not None else _html(value)
+        rendered_rows.append(
+            f"""
+                    <tr>
+                        <th scope="row">{escape(label)}</th>
+                        <td>{rendered_value}</td>
+                    </tr>"""
+        )
+    return f"""
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Metric</th>
+                            <th scope="col">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+{''.join(rendered_rows)}
+                    </tbody>
+                </table>"""
+
+
+def _backtest_summary_markdown(snapshot: DashboardSnapshot) -> list[str]:
+    backtests = snapshot.backtests
+    if not backtests.available:
+        return [
+            "No backtest runs found. Run a local backtest to populate this section.",
+        ]
+
+    rows = [
+        ("Total Runs", backtests.total_runs),
+        ("Recent Runs", backtests.recent_count),
+        ("Latest Run", backtests.latest_run_id),
+        ("Latest Symbol", backtests.latest_symbol),
+        ("Latest Return Pct", backtests.latest_return_pct),
+        ("Latest Status", backtests.latest_status),
+        ("Latest Schema Version", backtests.latest_schema_version),
+        ("Latest Validation Status", backtests.latest_validation_status),
+    ]
+    lines = [
+        "| Metric | Value |",
+        "| :--- | ---: |",
+    ]
+    lines.extend(
+        f"| {_markdown_cell(label)} | {_markdown_cell(value)} |"
+        for label, value in rows
+    )
+    return lines
 
 
 def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Path:
@@ -195,6 +276,12 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
         .plain-list, .check-list {{ margin: 0; padding-left: 1.1rem; }}
         .plain-list li, .check-list li {{ margin: 0.35rem 0; }}
         .check-list li {{ display: flex; gap: 0.5rem; align-items: baseline; }}
+        .summary-table {{ width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }}
+        .summary-table th, .summary-table td {{ border-bottom: 1px solid var(--line); padding: 0.45rem 0; }}
+        .summary-table thead th {{ color: var(--muted); font-size: 0.78rem; text-transform: uppercase; }}
+        .summary-table th:first-child {{ text-align: left; padding-right: 1rem; }}
+        .summary-table th:last-child, .summary-table td:last-child {{ text-align: right; }}
+        .summary-table tbody th {{ color: var(--muted); font-weight: 400; }}
         pre {{ background: #f1f3f1; border: 1px solid var(--line); padding: 0.75rem; border-radius: 6px; font-size: 0.78rem; overflow-x: auto; color: var(--ink); }}
         footer {{ margin-top: 1.5rem; color: var(--muted); font-size: 0.9rem; }}
         @media (max-width: 720px) {{ .container {{ padding: 1rem; }} .header-top {{ display: block; }} .timestamp {{ margin-top: 0.75rem; }} .stat-row {{ display: block; }} .stat-label {{ display: block; padding-right: 0; }} }}
@@ -208,7 +295,10 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
                     <h1>Atlas Agent Dashboard</h1>
                     <div class="workspace">Workspace: {_html(snapshot.workspace)}</div>
                 </div>
-                <div class="timestamp">Generated: {_html(snapshot.generated_at)}</div>
+                <div class="timestamp">
+                    <div>Generated: {_html(snapshot.generated_at)}</div>
+                    <div>Export timestamp: {_html(snapshot.generated_at)}</div>
+                </div>
             </div>
             <div class="meta-bar" aria-label="Dashboard mode indicators">
                 <span class="pill">dashboard: {_html(snapshot.dashboard_mode)}</span>
@@ -241,7 +331,7 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card" aria-labelledby="portfolio-heading">
                 <h2 id="portfolio-heading">Portfolio Summary</h2>
-                {_empty_if_unavailable(portfolio.available)}
+                {_empty_if_unavailable(portfolio.available, "No local portfolio snapshot found.")}
                 {_row("Cash", portfolio.cash)}
                 {_row("Equity", portfolio.equity)}
                 {_row("Positions", portfolio.positions_count)}
@@ -250,20 +340,12 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card" aria-labelledby="backtests-heading">
                 <h2 id="backtests-heading">Backtest Summary</h2>
-                {_empty_if_unavailable(backtests.available)}
-                {_row("Total runs", backtests.total_runs)}
-                {_row("Recent runs", backtests.recent_count)}
-                {_row("Latest run", backtests.latest_run_id)}
-                {_row("Latest symbol", backtests.latest_symbol)}
-                {_row("Latest return pct", backtests.latest_return_pct)}
-                {_row("Latest status", backtests.latest_status, status=backtests.latest_status)}
-                {_row("Latest schema version", backtests.latest_schema_version)}
-                {_row("Latest validation status", backtests.latest_validation_status, status=backtests.latest_validation_status)}
+                {_backtest_summary_html(snapshot)}
             </section>
 
             <section class="card" aria-labelledby="reports-heading">
                 <h2 id="reports-heading">Report Summary</h2>
-                {_empty_if_unavailable(reports.available)}
+                {_empty_if_unavailable(reports.available, "No local report exports found.")}
                 {_row("Report count", reports.report_count)}
                 {_row("Latest type", reports.latest_report_type)}
                 {_row("Latest generated", reports.latest_generated_at)}
@@ -271,7 +353,7 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card" aria-labelledby="reflections-heading">
                 <h2 id="reflections-heading">Reflection Summary</h2>
-                {_empty_if_unavailable(reflections.available)}
+                {_empty_if_unavailable(reflections.available, "No local reflection artifacts found.")}
                 {_row("Total reflections", reflections.total_count)}
                 <h3>Status breakdown</h3>
                 {_status_breakdown(reflections.by_status)}
@@ -279,7 +361,7 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card" aria-labelledby="skills-heading">
                 <h2 id="skills-heading">Skills Summary</h2>
-                {_empty_if_unavailable(skills.available)}
+                {_empty_if_unavailable(skills.available, "No local skill candidates or library entries found.")}
                 {_row("Skill candidates", skills.candidate_count)}
                 {_row("Library entries", skills.library_count)}
                 <h3>Candidate status breakdown</h3>
@@ -288,7 +370,7 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card" aria-labelledby="learning-heading">
                 <h2 id="learning-heading">Learning Summary</h2>
-                {_empty_if_unavailable(learning.available)}
+                {_empty_if_unavailable(learning.available, "No local learning suggestions found.")}
                 {_row("Suggestions", learning.suggestion_count)}
                 <h3>Suggestion status breakdown</h3>
                 {_status_breakdown(learning.by_status)}
@@ -296,7 +378,7 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card" aria-labelledby="audit-events-heading">
                 <h2 id="audit-events-heading">Audit / Event Summary</h2>
-                {_empty_if_unavailable(audit_model.available)}
+                {_empty_if_unavailable(audit_model.available, "No local audit events found.")}
                 {_row("Recent events", audit_model.recent_events)}
                 {_row("Risk approved", audit_model.recent_risk_approved)}
                 {_row("Risk rejected", audit_model.recent_risk_rejected)}
@@ -329,12 +411,12 @@ def render_dashboard_html(snapshot: DashboardSnapshot, output_path: Path) -> Pat
 
             <section class="card" aria-labelledby="warnings-heading" role="status">
                 <h2 id="warnings-heading">Warnings</h2>
-                {_list_section(snapshot.warnings)}
+                {_list_section(snapshot.warnings, "No dashboard warnings.")}
             </section>
 
             <section class="card" aria-labelledby="missing-data-heading" role="status">
                 <h2 id="missing-data-heading">Missing Data</h2>
-                {_list_section(snapshot.missing_data)}
+                {_list_section(snapshot.missing_data, "No missing data detected.")}
             </section>
 
             <section class="card wide" aria-labelledby="diagnostics-heading">
@@ -362,6 +444,7 @@ def render_dashboard_markdown(snapshot: DashboardSnapshot) -> str:
     lines.append("")
     lines.append(f"**Workspace:** {snapshot.workspace}")
     lines.append(f"**Generated:** {snapshot.generated_at}")
+    lines.append(f"**Export Timestamp:** {snapshot.generated_at}")
     mode_label = snapshot.mode if snapshot.mode != "unknown" else "paper_or_sandbox"
     lines.append(f"**Mode:** {mode_label}")
     lines.append(f"**Dashboard Mode:** {snapshot.dashboard_mode}")
@@ -404,14 +487,7 @@ def render_dashboard_markdown(snapshot: DashboardSnapshot) -> str:
     lines.append("")
 
     lines.append("## Backtests")
-    bt = snapshot.backtests
-    lines.append(f"- **Available:** {bt.available}")
-    lines.append(f"- **Total Runs:** {bt.total_runs}")
-    lines.append(f"- **Latest Run:** {bt.latest_run_id or 'N/A'}")
-    lines.append(f"- **Latest Symbol:** {bt.latest_symbol or 'N/A'}")
-    lines.append(f"- **Latest Return:** {bt.latest_return_pct if bt.latest_return_pct is not None else 'N/A'}%")
-    lines.append(f"- **Latest Schema Version:** {bt.latest_schema_version or 'N/A'}")
-    lines.append(f"- **Latest Validation Status:** {bt.latest_validation_status or 'N/A'}")
+    lines.extend(_backtest_summary_markdown(snapshot))
     lines.append("")
 
     lines.append("## Reports")
