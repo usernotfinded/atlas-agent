@@ -1,9 +1,38 @@
+import os
 import subprocess
 import json
 import pytest
-from pathlib import Path
 
 from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION, validate_backtest_report
+
+pytestmark = pytest.mark.slow
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_backtest_workspace(tmp_path_factory):
+    workspace = tmp_path_factory.mktemp("backtest-cli-workspace")
+    result = subprocess.run(
+        [
+            "python3.11",
+            "-m",
+            "atlas_agent.cli",
+            "init",
+            "--template",
+            "routine-trader",
+            str(workspace),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    previous_cwd = os.getcwd()
+    os.chdir(workspace)
+    try:
+        yield
+    finally:
+        os.chdir(previous_cwd)
+
 
 def test_cli_backtest_run_json(tmp_path):
     # Create sample data
@@ -288,7 +317,6 @@ def test_cli_backtest_report_json_validates_schema(tmp_path):
 
 def test_cli_backtest_runs_validate_json(tmp_path):
     import json
-    import os
     # Init workspace in tmp_path
     init_cmd = ["python3.11", "-m", "atlas_agent.cli", "init", "--template", "routine-trader", str(tmp_path)]
     init_proc = subprocess.run(init_cmd, capture_output=True, text=True)
@@ -536,7 +564,6 @@ def test_cli_backtest_runs_validate_mixed_valid_and_unreadable(tmp_path):
 
 
 def test_cli_backtest_runs_validate_unreadable_report_text(tmp_path):
-    import json
     init_cmd = ["python3.11", "-m", "atlas_agent.cli", "init", "--template", "routine-trader", str(tmp_path)]
     init_proc = subprocess.run(init_cmd, capture_output=True, text=True)
     assert init_proc.returncode == 0, f"init failed: {init_proc.stdout} {init_proc.stderr}"

@@ -68,3 +68,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "src"]
+markers = [
+  "slow: subprocess-heavy integration coverage retained for full pytest and CI",
+]

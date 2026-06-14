@@ -24,6 +24,15 @@ These paths are usually generated evidence outputs and should remain local:
 - `artifacts/provider_preflight_bundles/`
 - `artifacts/provider_preflight_smoke/`
 
+Local runtime, packaging, and one-off analysis outputs must also remain
+untracked:
+
+- `.atlas/`, including `.atlas/backtests/`
+- `build/`, `dist/`, and `*.egg-info/`
+- `*.whl`, `*.tar.gz`, `*.zip`, and `*.tmp`
+- one-off `analyze_*.py`, `*_analysis.py`, `inventory_*.py`,
+  `references_*.json`, and `walkthrough.md` files
+
 Do not commit local generated evidence unless explicitly requested. Prefer CI
 artifact upload for generated assurance, audit-pack, and preflight outputs.
 
@@ -97,6 +106,10 @@ The checker inspects git path metadata only. It checks tracked paths, staged
 paths, and status output without modifying files, staging files, unstaging
 files, calling the network, or reading credential values.
 
+Ignored `.atlas/` and packaging outputs may remain in a developer workspace,
+but tests must write new runtime artifacts to pytest temporary workspaces.
+This keeps full-suite runs from adding more repository-local backtest output.
+
 ## How To Handle Untracked Local Artifacts
 
 Untracked local evidence artifacts may appear after release evidence,
@@ -151,8 +164,10 @@ gates:
 
 Blocking findings include tracked or staged local-only evidence outputs,
 tracked or staged secret-like filenames, and dangerous generated file types
-staged from `artifacts/`. Untracked local evidence outputs are reported as
-warnings so contributors can clean exact files when they are no longer needed.
+staged from `artifacts/`. Tracked or staged runtime, build, package, and
+temporary analysis outputs are also blocking. Untracked local evidence or
+temporary outputs are reported as warnings so contributors can clean exact
+files when they are no longer needed.
 
 After a direct-main maintenance push, run
 `python3.11 scripts/main_health.py` to confirm generated artifact hygiene is

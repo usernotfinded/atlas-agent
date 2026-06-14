@@ -115,6 +115,7 @@ _run "18. git diff --cached --check" \
 
 # --- Tier 3: focused pytest subset ---
 # Includes core unit tests and fast script tests.
+# Subprocess-heavy tests marked "slow" remain in full pytest and CI.
 # Excludes:
 #   - slow subprocess-heavy integration tests (demo workflow, clean install, package build)
 #   - historical release checker tests (v0.5.8, v0.6.0–v0.6.6)
@@ -169,6 +170,7 @@ _run "18. focused pytest subset" \
         tests/test_reviewer_outreach.py \
         tests/test_product_capability_inventory.py \
         tests/test_demo_command_smoke.py \
+        -m "not slow" \
         -q \
         "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 

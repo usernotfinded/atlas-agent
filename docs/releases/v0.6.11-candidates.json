@@ -174,31 +174,33 @@
     {
       "id": "CAND-006",
       "title": "Test-suite performance and generated-artifact hygiene",
-      "summary": "Profile slow tests, skip or mark known-slow tests for targeted runs, and ensure generated artifacts (.atlas/backtests/) do not accumulate unboundedly in CI or dev environments.",
+      "summary": "Profile slow tests, mark subprocess-heavy tests for targeted runs, isolate CLI test workspaces, batch focused CI pytest collection, and harden generated-artifact detection.",
       "user_value": "Faster local development cycle and cleaner CI runs.",
       "safety_boundary": "No runtime behavior changes. Test-only and hygiene improvements.",
       "risk": "low",
       "likely_files": [
-        "conftest.py",
-        "pytest.ini",
         "pyproject.toml",
-        ".gitignore",
-        "scripts/ci_check.sh"
+        "scripts/check_generated_artifacts.py",
+        "scripts/local_quick_check.sh",
+        "scripts/ci_check.sh",
+        ".github/workflows/ci.yml",
+        "tests/cli/test_backtest_cli.py"
       ],
       "tests_checks": [
-        "pytest --durations=20",
-        "scripts/check_generated_artifacts.py"
+        "python -m pytest --durations=20",
+        "scripts/check_generated_artifacts.py",
+        "scripts/local_quick_check.sh"
       ],
-      "recommendation": "later",
-      "ranking_reason": "Useful but not blocking; can be done incrementally.",
+      "recommendation": "now",
+      "ranking_reason": "Improves local and CI feedback while preserving complete pytest coverage and historical evidence.",
       "acceptance_criteria": [
         "Slow tests are identified and marked",
         "Generated artifacts do not accumulate unboundedly",
         "All existing tests continue to pass",
         "No runtime behavior changes"
       ],
-      "selected_for_v0611": false,
-      "implemented": false
+      "selected_for_v0611": true,
+      "implemented": true
     },
     {
       "id": "CAND-007",
@@ -309,11 +311,6 @@
     }
   ],
   "deferred": [
-    {
-      "id": "CAND-006",
-      "title": "Test-suite performance and generated-artifact hygiene",
-      "reason": "Useful but not blocking; can be done incrementally."
-    },
     {
       "id": "CAND-007",
       "title": "User-facing quickstart and reviewer demo consolidation",

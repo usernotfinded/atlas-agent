@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+
+import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -87,6 +90,99 @@ def test_checker_flags_tracked_local_evidence_artifacts(tmp_path: Path) -> None:
     assert report.exit_code == 1
     assert report.checks["no_tracked_local_evidence_artifacts"] is False
     assert any(f.code == "tracked_local_evidence_artifact" for f in report.findings)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ".atlas/backtests/bt-test/result.json",
+        "build/lib/atlas_agent/module.py",
+        "dist/atlas_agent-0.6.10-py3-none-any.whl",
+        "src/atlas_agent.egg-info/PKG-INFO",
+        "release/atlas-agent.tar.gz",
+        "release/atlas-agent.zip",
+        "analyze_slow_tests.py",
+        "local_analysis.py",
+        "inventory_tests.py",
+        "references_local.json",
+        "walkthrough.md",
+        "notes.tmp",
+    ],
+)
+def test_checker_flags_tracked_generated_artifacts(
+    tmp_path: Path,
+    path: str,
+) -> None:
+    report = CHECKER.collect_report(
+        tmp_path,
+        git_runner=_runner(tracked=f"{path}\n"),
+    )
+
+    assert report.exit_code == 1
+    assert report.checks["no_tracked_generated_artifacts"] is False
+    assert any(
+        finding.code == "tracked_generated_artifact" and finding.path == path
+        for finding in report.findings
+    )
+
+
+def test_checker_flags_staged_generated_artifacts(tmp_path: Path) -> None:
+    report = CHECKER.collect_report(
+        tmp_path,
+        git_runner=_runner(staged=".atlas/backtests/bt-test/result.json\n"),
+    )
+
+    assert report.exit_code == 1
+    assert report.checks["no_staged_generated_artifacts"] is False
+    assert any(f.code == "staged_generated_artifact" for f in report.findings)
+
+
+def test_checker_warns_for_untracked_temporary_analysis_file(tmp_path: Path) -> None:
+    report = CHECKER.collect_report(
+        tmp_path,
+        git_runner=_runner(status="?? analyze_slow_tests.py\n"),
+    )
+
+    assert report.exit_code == 0
+    assert any(f.code == "untracked_generated_artifact" for f in report.warnings)
+
+
+def test_checker_allows_tracked_docs_and_historical_checker_archive(
+    tmp_path: Path,
+) -> None:
+    report = CHECKER.collect_report(
+        tmp_path,
+        git_runner=_runner(
+            tracked=(
+                "docs/development/generated-artifacts.md\n"
+                "docs/external-reviewer-walkthrough.md\n"
+                "scripts/historical_release_checkers/check_v069_release_prep.py\n"
+            )
+        ),
+    )
+
+    assert report.exit_code == 0
+    assert report.findings == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ".atlas/backtests/hygiene-probe/result.json",
+        "dist/hygiene-probe.whl",
+        "build/hygiene-probe/module.py",
+        "src/atlas_agent.egg-info/PKG-INFO",
+    ],
+)
+def test_runtime_and_package_artifacts_are_gitignored(path: str) -> None:
+    result = subprocess.run(
+        ["git", "check-ignore", "--no-index", path],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
 
 
 def test_checker_flags_staged_secret_like_filenames(tmp_path: Path) -> None:
@@ -182,10 +278,28 @@ def test_dev_check_includes_generated_artifact_checker() -> None:
     assert "check_generated_artifacts.py" in text
 
 
+def test_local_quick_check_includes_generated_artifact_checker() -> None:
+    text = (REPO_ROOT / "scripts" / "local_quick_check.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert "check_generated_artifacts.py" in text
+
+
 def test_ci_check_includes_generated_artifact_checker() -> None:
     text = (REPO_ROOT / "scripts" / "ci_check.sh").read_text(encoding="utf-8")
 
     assert "check_generated_artifacts.py" in text
+
+
+def test_release_quick_preserves_generated_artifact_gate() -> None:
+    release_text = (REPO_ROOT / "scripts" / "release_check.sh").read_text(
+        encoding="utf-8"
+    )
+    dev_text = (REPO_ROOT / "scripts" / "dev_check.sh").read_text(encoding="utf-8")
+
+    assert "./scripts/dev_check.sh" in release_text
+    assert "check_generated_artifacts.py" in dev_text
 
 
 def test_github_ci_includes_generated_artifact_checker() -> None:

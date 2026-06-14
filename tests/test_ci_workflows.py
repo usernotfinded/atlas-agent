@@ -94,6 +94,11 @@ class TestCiWorkflow:
     def test_includes_generated_artifact_tests(self, ci_content: str) -> None:
         assert "tests/test_generated_artifacts.py" in ci_content
 
+    def test_focused_subset_uses_one_pytest_process(self, ci_content: str) -> None:
+        focused = ci_content.split("- name: Focused pytest subset", 1)[1]
+        focused = focused.split("- name: Release check quick", 1)[0]
+        assert focused.count("python3.11 -m pytest") == 1
+
     def test_includes_github_actions_version_tests(self, ci_content: str) -> None:
         assert "tests/test_github_actions_versions.py" in ci_content
 
@@ -380,6 +385,13 @@ class TestCiCheckScript:
 
     def test_includes_generated_artifact_tests(self, ci_check_content: str) -> None:
         assert "tests/test_generated_artifacts.py" in ci_check_content
+
+    def test_focused_subset_uses_one_pytest_process(
+        self, ci_check_content: str
+    ) -> None:
+        focused = ci_check_content.split('echo "25. focused pytest subset"', 1)[1]
+        focused = focused.split('echo "26. pip check"', 1)[0]
+        assert focused.count("-m pytest") == 1
 
     def test_includes_github_actions_version_tests(self, ci_check_content: str) -> None:
         assert "tests/test_github_actions_versions.py" in ci_check_content

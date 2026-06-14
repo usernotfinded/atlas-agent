@@ -11,6 +11,7 @@ from atlas_agent.config import AtlasConfig
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+pytestmark = pytest.mark.slow
 
 
 def _config(tmp_path: Path) -> AtlasConfig:

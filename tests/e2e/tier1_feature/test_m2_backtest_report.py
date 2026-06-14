@@ -8,12 +8,42 @@ No network calls. No real credentials. No provider or broker API calls.
 """
 import json
 import os
+import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 import pytest
 
 from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION, validate_backtest_report
+
+pytestmark = pytest.mark.slow
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_e2e_workspace(tmp_path_factory):
+    workspace = tmp_path_factory.mktemp("m2-backtest-report-workspace")
+    init_result = subprocess.run(
+        [
+            "atlas",
+            "init",
+            str(workspace),
+            "--template",
+            "routine-trader",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert init_result.returncode == 0, init_result.stdout + init_result.stderr
+    shutil.copytree(REPO_ROOT / "data", workspace / "data", dirs_exist_ok=True)
+
+    previous_cwd = os.getcwd()
+    os.chdir(workspace)
+    try:
+        yield
+    finally:
+        os.chdir(previous_cwd)
 
 
 def _run(*args: str) -> subprocess.CompletedProcess:

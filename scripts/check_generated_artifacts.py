@@ -22,6 +22,27 @@ LOCAL_ONLY_ARTIFACT_PREFIXES = (
     "artifacts/provider_preflight_smoke/",
 )
 
+GENERATED_ARTIFACT_PREFIXES = (
+    ".atlas/",
+    "build/",
+    "dist/",
+)
+
+GENERATED_ARTIFACT_SUFFIXES = (
+    ".tmp",
+    ".whl",
+    ".tar.gz",
+    ".zip",
+)
+
+TEMPORARY_ARTIFACT_PATTERNS = (
+    re.compile(r"^analyze_.*\.py$"),
+    re.compile(r"^.*_analysis\.py$"),
+    re.compile(r"^inventory_.*\.py$"),
+    re.compile(r"^references_.*\.json$"),
+    re.compile(r"^walkthrough\.md$"),
+)
+
 TRACKED_VERSIONED_EVIDENCE_PREFIXES = (
     # Historical v0.5.9 release-assurance packs are preserved under an archive
     # prefix. New versioned evidence packs should only be added here when a task
@@ -176,6 +197,17 @@ def _basename(path: str) -> str:
     return path.rsplit("/", 1)[-1]
 
 
+def _is_generated_artifact_path(path: str) -> bool:
+    lower_path = path.lower()
+    if _is_under(path, GENERATED_ARTIFACT_PREFIXES):
+        return True
+    if any(part.endswith(".egg-info") for part in path.split("/")):
+        return True
+    if lower_path.endswith(GENERATED_ARTIFACT_SUFFIXES):
+        return True
+    return any(pattern.fullmatch(_basename(path)) for pattern in TEMPORARY_ARTIFACT_PATTERNS)
+
+
 def _is_secret_like_path(path: str) -> bool:
     if path in SECRET_TEMPLATE_ALLOWLIST:
         return False
@@ -240,6 +272,8 @@ def collect_report(repo_root: Path, git_runner: GitRunner = _run_git) -> Hygiene
         "no_tracked_secret_like_files": False,
         "no_staged_secret_like_files": False,
         "no_staged_dangerous_artifact_file_types": False,
+        "no_tracked_generated_artifacts": False,
+        "no_staged_generated_artifacts": False,
     }
     errors: list[str] = []
 
@@ -288,10 +322,21 @@ def collect_report(repo_root: Path, git_runner: GitRunner = _run_git) -> Hygiene
     staged_dangerous_artifacts = [
         path for path in staged_paths if _is_dangerous_artifact_path(path)
     ]
+    tracked_generated = [
+        path for path in tracked_paths if _is_generated_artifact_path(path)
+    ]
+    staged_generated = [
+        path for path in staged_paths if _is_generated_artifact_path(path)
+    ]
     untracked_local = [
         path
         for status, path in status_paths
         if status == "??" and _is_local_only_artifact(path)
+    ]
+    untracked_generated = [
+        path
+        for status, path in status_paths
+        if status == "??" and _is_generated_artifact_path(path)
     ]
 
     checks["no_tracked_local_evidence_artifacts"] = not tracked_local
@@ -299,6 +344,8 @@ def collect_report(repo_root: Path, git_runner: GitRunner = _run_git) -> Hygiene
     checks["no_tracked_secret_like_files"] = not tracked_secrets
     checks["no_staged_secret_like_files"] = not staged_secrets
     checks["no_staged_dangerous_artifact_file_types"] = not staged_dangerous_artifacts
+    checks["no_tracked_generated_artifacts"] = not tracked_generated
+    checks["no_staged_generated_artifacts"] = not staged_generated
 
     findings = _dedupe(
         [
@@ -342,16 +389,42 @@ def collect_report(repo_root: Path, git_runner: GitRunner = _run_git) -> Hygiene
                 )
                 for path in staged_dangerous_artifacts
             ],
+            *[
+                _finding(
+                    "tracked_generated_artifact",
+                    path,
+                    "tracked generated runtime, build, package, or temporary artifact: {path}",
+                )
+                for path in tracked_generated
+            ],
+            *[
+                _finding(
+                    "staged_generated_artifact",
+                    path,
+                    "staged generated runtime, build, package, or temporary artifact: {path}",
+                )
+                for path in staged_generated
+            ],
         ]
     )
     warnings = _dedupe(
         [
-            _finding(
-                "untracked_local_evidence_artifact",
-                path,
-                "untracked local-only generated evidence artifact remains local: {path}",
-            )
-            for path in untracked_local
+            *[
+                _finding(
+                    "untracked_local_evidence_artifact",
+                    path,
+                    "untracked local-only generated evidence artifact remains local: {path}",
+                )
+                for path in untracked_local
+            ],
+            *[
+                _finding(
+                    "untracked_generated_artifact",
+                    path,
+                    "untracked generated runtime, build, package, or temporary artifact remains local: {path}",
+                )
+                for path in untracked_generated
+            ],
         ]
     )
 

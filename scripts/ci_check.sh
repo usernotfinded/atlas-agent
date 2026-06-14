@@ -9,6 +9,18 @@ require_python_311 "$PYTHON_BIN"
 
 cd "$REPO_ROOT"
 
+PYTEST_EXTRA_ARGS=()
+if [[ "${ATLAS_CHECK_FAIL_FAST:-}" == "1" ]]; then
+    PYTEST_EXTRA_ARGS+=("-x")
+fi
+if [[ "${ATLAS_CHECK_LAST_FAILED:-}" == "1" ]]; then
+    PYTEST_EXTRA_ARGS+=("--lf")
+fi
+if [[ -n "${ATLAS_CHECK_PYTEST_ARGS:-}" ]]; then
+    read -ra USER_ARGS <<< "$ATLAS_CHECK_PYTEST_ARGS"
+    PYTEST_EXTRA_ARGS+=("${USER_ARGS[@]}")
+fi
+
 TOTAL_ELAPSED=0
 
 echo "========================================"
@@ -214,27 +226,30 @@ echo "  → elapsed: ${SECONDS}s"
 echo ""
 echo "25. focused pytest subset"
 SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_clean_install_check.py -q
-"$PYTHON_BIN" -m pytest tests/test_package_distribution_check.py -q
-"$PYTHON_BIN" -m pytest tests/test_rc1_cutover_consistency.py -q
-"$PYTHON_BIN" -m pytest tests/test_changelog_consistency.py -q
-"$PYTHON_BIN" -m pytest tests/test_public_docs_consistency.py -q
-"$PYTHON_BIN" -m pytest tests/test_generated_artifacts.py -q
-"$PYTHON_BIN" -m pytest tests/test_github_actions_versions.py -q
-"$PYTHON_BIN" -m pytest tests/test_trust_center.py -q
-"$PYTHON_BIN" -m pytest tests/test_onboarding_docs.py -q
-"$PYTHON_BIN" -m pytest tests/test_readme_quickstart_verification.py -q
-"$PYTHON_BIN" -m pytest tests/test_release_check_scripts.py -q
-"$PYTHON_BIN" -m pytest tests/test_ci_workflows.py -q
-"$PYTHON_BIN" -m pytest tests/test_docs_v040.py -q
-"$PYTHON_BIN" -m pytest tests/test_public_launch_readiness.py -q
-"$PYTHON_BIN" -m pytest tests/test_reviewer_onboarding.py -q
-"$PYTHON_BIN" -m pytest tests/test_public_launch_messaging.py -q
-"$PYTHON_BIN" -m pytest tests/test_final_rc_audit.py -q
-"$PYTHON_BIN" -m pytest tests/test_stable_release_decision.py -q
-"$PYTHON_BIN" -m pytest tests/test_check_v0610_release_prep.py -q
-"$PYTHON_BIN" -m pytest tests/test_check_v0611_planning.py -q
-"$PYTHON_BIN" -m pytest tests/test_env_templates.py -q
+"$PYTHON_BIN" -m pytest \
+    tests/test_clean_install_check.py \
+    tests/test_package_distribution_check.py \
+    tests/test_rc1_cutover_consistency.py \
+    tests/test_changelog_consistency.py \
+    tests/test_public_docs_consistency.py \
+    tests/test_generated_artifacts.py \
+    tests/test_github_actions_versions.py \
+    tests/test_trust_center.py \
+    tests/test_onboarding_docs.py \
+    tests/test_readme_quickstart_verification.py \
+    tests/test_release_check_scripts.py \
+    tests/test_ci_workflows.py \
+    tests/test_docs_v040.py \
+    tests/test_public_launch_readiness.py \
+    tests/test_reviewer_onboarding.py \
+    tests/test_public_launch_messaging.py \
+    tests/test_final_rc_audit.py \
+    tests/test_stable_release_decision.py \
+    tests/test_check_v0610_release_prep.py \
+    tests/test_check_v0611_planning.py \
+    tests/test_env_templates.py \
+    -q \
+    "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

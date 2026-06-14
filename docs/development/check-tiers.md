@@ -80,6 +80,8 @@ while skipping low-value or subprocess-heavy work.
   `check_package_distribution.py`)
 - Release-gate-only checks (public launch readiness/messaging, RC audit,
   stable release decision, reviewer onboarding)
+- Tests marked `slow`, which are subprocess-heavy integration tests retained
+  in the complete pytest suite and CI core-functional job
 
 ## Dev Check
 
@@ -145,6 +147,10 @@ ATLAS_CHECK_PYTEST_ARGS="-n auto" ./scripts/local_quick_check.sh
 
 The default serial execution is chosen to keep Macs cool during normal
 development. CI runs the full suite in GitHub Actions workers.
+
+The `slow` marker identifies subprocess-heavy CLI, end-to-end, and gate
+integration tests. `local_quick_check.sh` deselects that marker for its focused
+loop; `python -m pytest` still runs every marked test.
 
 ## Historical Tests
 
