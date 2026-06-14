@@ -21,17 +21,17 @@ The following scripts check current release constraints. They have been migrated
 * `scripts/check_trust_center.py`
 * `scripts/main_health.py`
 
-*(Note: `scripts/check_v0581_hotfix_cutover.py` was also migrated to use dynamic version checking as it actively verified the current repository state against the `EXPECTED_VERSION`.)*
+*(Note: `scripts/historical_release_checkers/check_v0581_hotfix_cutover.py` was also migrated to use dynamic version checking as it actively verified the current repository state against the `EXPECTED_VERSION`.)*
 
 ## Static / Historical Scripts (Preserved)
 The following scripts perform checks against specific historical contexts, versions, or tags. They have deliberately been left untouched to maintain historical CI guarantees and prevent regression testing drift.
 
-* `scripts/check_v058_rc1_readiness.py` (Checks v0.5.8 RC1)
-* `scripts/check_v061_release_prep.py` (Checks v0.6.1 prep)
-* `scripts/check_v062_release_prep.py` (Checks v0.6.2 prep)
-* `scripts/check_v063_release_prep.py` (Checks v0.6.3 prep)
-* `scripts/check_v068_release_prep.py` (Checks v0.6.8 prep)
-* `scripts/check_v069_release_prep.py` (Checks v0.6.9 prep)
+* `scripts/historical_release_checkers/check_v058_rc1_readiness.py` (Checks v0.5.8 RC1)
+* `scripts/historical_release_checkers/check_v061_release_prep.py` (Checks v0.6.1 prep)
+* `scripts/historical_release_checkers/check_v062_release_prep.py` (Checks v0.6.2 prep)
+* `scripts/historical_release_checkers/check_v063_release_prep.py` (Checks v0.6.3 prep)
+* `scripts/historical_release_checkers/check_v068_release_prep.py` (Checks v0.6.8 prep)
+* `scripts/historical_release_checkers/check_v069_release_prep.py` (Checks v0.6.9 prep)
 * `scripts/check_rc1_cutover.py` (Verifies historical RC cutover patterns)
 * `scripts/check_demo_command_smoke.py` (References specific v0.6.8 candidate files)
 * `scripts/check_demo_proof.py` (Validates explicit string references to "v0.6.8 release notes" in documentation)

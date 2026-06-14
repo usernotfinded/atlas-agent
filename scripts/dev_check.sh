@@ -127,23 +127,16 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "13. v0.5.8 gap prioritization check"
+echo "13. v0.6.10 post-release check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v058_gap_prioritization.py
+"$PYTHON_BIN" scripts/check_v0610_release_prep.py --post-release
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "13a. v0.5.8 RC1 readiness dry run"
+echo "13a. v0.6.11 planning check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "13b. v0.5.8.1 hotfix cutover check"
-SECONDS=0
-"$PYTHON_BIN" scripts/check_v0581_hotfix_cutover.py
+"$PYTHON_BIN" scripts/check_v0611_planning.py
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

@@ -328,14 +328,8 @@ Runs fast, safe checks without heavy demos or full pytest:
 - `python3.11 scripts/check_feedback_taxonomy.py`
 - `python3.11 scripts/check_reviewer_outreach.py`
 - `python3.11 scripts/check_product_capability_inventory.py`
-- `python3.11 scripts/check_v058_gap_prioritization.py`
-- `python3.11 scripts/check_v058_rc1_readiness.py` — v0.5.8 RC readiness dry run (does not tag or publish)
-- `python3.11 scripts/check_v0581_hotfix_cutover.py` — v0.5.8.1 hotfix cutover verification (supports both pre-tag and post-tag states; does not tag or publish)
-- `python3.11 scripts/check_v058_stable_cutover.py` — v0.5.8 stable cutover verification (supports both pre-tag and post-tag states; does not tag or publish)
-- `python3.11 scripts/check_v058_rc5_cutover.py` — historical v0.5.8rc5 cutover verification (kept for historical testing)
-- `python3.11 scripts/check_v058_rc4_cutover.py` — historical v0.5.8rc4 cutover verification (kept for historical testing)
-- `python3.11 scripts/check_v058_rc2_cutover.py` — historical v0.5.8rc2 cutover verification (kept for historical testing)
-- `python3.11 scripts/check_v058_rc1_cutover.py` — historical v0.5.8rc1 cutover verification (kept for historical testing)
+- `python3.11 scripts/check_v0610_release_prep.py --post-release`
+- `python3.11 scripts/check_v0611_planning.py`
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/verify_readme_quickstart.py`
 - `python3.11 scripts/check_rc1_cutover.py` — historical v0.5.7 release record check (verifies stable tag and current dev posture)
@@ -353,6 +347,13 @@ Runs fast, safe checks without heavy demos or full pytest:
   - `tests/test_public_docs_consistency.py`
   - `tests/test_readme_quickstart_verification.py`
   - `tests/test_release_check_scripts.py`
+  - `tests/test_check_v0610_release_prep.py`
+  - `tests/test_check_v0611_planning.py`
+
+Historical version-specific checkers, including the `v0.5.8.1` hotfix
+cutover checker, are archived under `scripts/historical_release_checkers/`
+and remain covered by the full test suite. They are not direct CI quick-gate
+commands.
   - `tests/test_ci_workflows.py`
   - `tests/test_docs_v040.py`
   - `tests/test_public_launch_readiness.py`

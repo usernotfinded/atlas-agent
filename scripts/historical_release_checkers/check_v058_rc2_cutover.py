@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""v0.5.8 stable cutover verification checker.
+"""v0.5.8rc2 cutover verification checker.
 
 Deterministic local checks that verify the repo is correctly prepared
-for the stable v0.5.8 release state.
-
-Historical RC tags (v0.5.8rc1 through v0.5.8rc5) are allowed to exist and do not
-need to match current HEAD. Only the active stable tag (v0.5.8) is verified
-against HEAD.
+for the v0.5.8rc2 release candidate state.
 
 This script does NOT:
 - create tags
@@ -33,12 +29,12 @@ import tomllib
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
-EXPECTED_VERSION = "0.5.8"
+EXPECTED_VERSION = "0.5.8rc2"
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-ACTIVE_RELEASE_TAG = "v0.5.8"
+ACTIVE_RC_TAG = "v0.5.8rc2"
 
 # Forbidden positive claims about live trading / profit / autonomy.
 FORBIDDEN_POSITIVE_CLAIMS = [
@@ -143,21 +139,21 @@ def _check_historical_tag() -> list[str]:
 
 def _check_release_notes_exist() -> list[str]:
     errors: list[str] = []
-    path = REPO_ROOT / "docs" / "releases" / "v0.5.8.md"
+    path = REPO_ROOT / "docs" / "releases" / "v0.5.8-rc2.md"
     if not path.exists():
         errors.append(f"Missing release notes: {path.relative_to(REPO_ROOT)}")
     return errors
 
 
-def _check_changelog_has_stable_section() -> list[str]:
+def _check_changelog_has_rc2_section() -> list[str]:
     errors: list[str] = []
     path = REPO_ROOT / "CHANGELOG.md"
     if not path.exists():
         errors.append("CHANGELOG.md not found")
         return errors
     text = path.read_text(encoding="utf-8")
-    if "[0.5.8]" not in text:
-        errors.append("CHANGELOG.md missing [0.5.8] section")
+    if "[0.5.8rc2]" not in text:
+        errors.append("CHANGELOG.md missing [0.5.8rc2] section")
     return errors
 
 
@@ -168,11 +164,12 @@ def _check_readme_current_status() -> list[str]:
         errors.append("README.md not found")
         return errors
     text = path.read_text(encoding="utf-8")
-    public_label = "v" + EXPECTED_VERSION
+    # Accept either package version (0.5.8rc2) or public label (v0.5.8-rc2)
+    public_label = "v" + EXPECTED_VERSION.replace("rc", "-rc")
     if EXPECTED_VERSION not in text and public_label not in text:
         errors.append("README.md missing current version reference")
-    if "latest stable public release" not in text.lower():
-        errors.append("README.md should indicate this is the latest stable public release")
+    if "release candidate" not in text.lower() and "rc" not in text.lower():
+        errors.append("README.md should indicate this is a release candidate")
     return errors
 
 
@@ -206,7 +203,7 @@ def _check_public_docs_safe() -> list[str]:
     scan_targets = [
         REPO_ROOT / "README.md",
         REPO_ROOT / "CHANGELOG.md",
-        REPO_ROOT / "docs" / "releases" / "v0.5.8.md",
+        REPO_ROOT / "docs" / "releases" / "v0.5.8-rc2.md",
         REPO_ROOT / "docs" / "public-launch-readiness.md",
         REPO_ROOT / "docs" / "public-launch-messaging.md",
         REPO_ROOT / "docs" / "product-capability-inventory.md",
@@ -264,21 +261,10 @@ def _check_no_generated_artifacts_staged() -> list[str]:
     return errors
 
 
-def _list_historical_rc_tags() -> list[str]:
-    result = subprocess.run(
-        ["git", "tag", "--list", "v0.5.8rc*"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    all_tags = [t.strip() for t in result.stdout.splitlines() if t.strip()]
-    return sorted(all_tags)
-
-
 def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
-    """Check whether the active release tag exists and whether it points to current HEAD.
+    """Check whether the active RC tag exists and whether it points to current HEAD.
 
-    Historical release tags are allowed and do not need to match HEAD.
+    Historical RC tags (e.g. v0.5.8rc1) are allowed and do not need to match HEAD.
 
     Returns:
         (errors, tag_state, tag_commit, head_commit, tag_matches_head)
@@ -294,7 +280,7 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
     head_commit = head_result.stdout.strip() if head_result.returncode == 0 else None
 
     tag_result = subprocess.run(
-        ["git", "tag", "--list", ACTIVE_RELEASE_TAG],
+        ["git", "tag", "--list", ACTIVE_RC_TAG],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -306,7 +292,7 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
 
     # Tag exists — verify it resolves to HEAD
     tag_rev_result = subprocess.run(
-        ["git", "rev-parse", f"{ACTIVE_RELEASE_TAG}" + "^{}"],
+        ["git", "rev-parse", f"{ACTIVE_RC_TAG}" + "^{}"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -315,16 +301,16 @@ def _check_tag_state() -> tuple[list[str], str, str | None, str | None, bool]:
 
     if tag_commit is None:
         errors.append(
-            f"{ACTIVE_RELEASE_TAG} tag exists locally but cannot be resolved."
+            f"{ACTIVE_RC_TAG} tag exists locally but cannot be resolved."
         )
         return errors, "unresolvable", None, head_commit, False
 
     tag_matches_head = tag_commit == head_commit
     if not tag_matches_head:
         errors.append(
-            f"{ACTIVE_RELEASE_TAG} tag exists locally but points to {tag_commit[:12]}, "
+            f"{ACTIVE_RC_TAG} tag exists locally but points to {tag_commit[:12]}, "
             f"while HEAD is {head_commit[:12] if head_commit else 'unknown'}. "
-            "Force-pushing or moving release tags is not allowed."
+            "Force-pushing or moving RC tags is not allowed."
         )
         return errors, "present_mismatch", tag_commit, head_commit, False
 
@@ -337,7 +323,7 @@ def _gather() -> dict:
     all_errors.extend(_check_current_version())
     all_errors.extend(_check_historical_tag())
     all_errors.extend(_check_release_notes_exist())
-    all_errors.extend(_check_changelog_has_stable_section())
+    all_errors.extend(_check_changelog_has_rc2_section())
     all_errors.extend(_check_readme_current_status())
     all_errors.extend(_check_public_docs_safe())
     all_errors.extend(_check_protected_boundaries_clean())
@@ -346,15 +332,12 @@ def _gather() -> dict:
     tag_errors, tag_state, tag_commit, head_commit, tag_matches_head = _check_tag_state()
     all_errors.extend(tag_errors)
 
-    historical_rc_tags = _list_historical_rc_tags()
-
     return {
         "passed": len(all_errors) == 0,
         "errors": all_errors,
         "expected_version": EXPECTED_VERSION,
         "stable_tag": HISTORICAL_STABLE_TAG,
-        "active_release": ACTIVE_RELEASE_TAG,
-        "historical_rc_tags": historical_rc_tags,
+        "active_rc": ACTIVE_RC_TAG,
         "tag_state": tag_state,
         "tag_commit": tag_commit,
         "head_commit": head_commit,
@@ -364,7 +347,7 @@ def _gather() -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="v0.5.8 stable cutover verification checker"
+        description="v0.5.8rc2 cutover verification checker"
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON envelope")
     args = parser.parse_args()
@@ -375,12 +358,12 @@ def main() -> int:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
         if result["errors"]:
-            print("v0.5.8 stable cutover check FAILED")
+            print("v0.5.8rc2 cutover check FAILED")
             for e in result["errors"]:
                 print(f"  - {e}")
         else:
             print(
-                f"v0.5.8 stable cutover check PASSED: "
+                f"v0.5.8rc2 cutover check PASSED: "
                 f"version={result['expected_version']} stable_tag={result['stable_tag']}"
             )
 

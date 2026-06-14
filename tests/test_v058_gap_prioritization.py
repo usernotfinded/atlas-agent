@@ -26,7 +26,7 @@ from unittest.mock import patch
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CHECKER_SCRIPT = REPO_ROOT / "scripts" / "check_v058_gap_prioritization.py"
+CHECKER_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v058_gap_prioritization.py"
 
 
 def _load_checker_module() -> ModuleType:

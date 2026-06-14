@@ -17,7 +17,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "check_v061_candidates.py"
+SCRIPT = ROOT / "scripts" / "historical_release_checkers" / "check_v061_candidates.py"
 CANDIDATES_MD = ROOT / "docs" / "releases" / "v0.6.1-candidates.md"
 CANDIDATES_JSON = ROOT / "docs" / "releases" / "v0.6.1-candidates.json"
 

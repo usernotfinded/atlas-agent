@@ -11,7 +11,7 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_ROOT / "scripts" / "check_v065_candidates.py"
+SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v065_candidates.py"
 
 
 def _run_script(*args: str) -> subprocess.CompletedProcess[str]:
@@ -69,9 +69,9 @@ class TestPlanningMode:
         (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.4"\n', encoding="utf-8")
 
         # Run checker against temp repo by modifying script path resolution
-        # Since the script uses Path(__file__).resolve().parent.parent,
+        # Since the archived script resolves the repository two parents up,
         # we run it from the temp repo by copying the script
-        script_copy = repo / "scripts" / "check_v065_candidates.py"
+        script_copy = repo / "scripts" / "historical_release_checkers" / "check_v065_candidates.py"
         script_copy.parent.mkdir(parents=True, exist_ok=True)
         script_copy.write_text(SCRIPT.read_text(encoding="utf-8"), encoding="utf-8")
 
@@ -103,7 +103,7 @@ class TestPlanningMode:
         (repo / "pyproject.toml").write_text('version = "0.6.5"\n', encoding="utf-8")
         (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.5"\n', encoding="utf-8")
 
-        script_copy = repo / "scripts" / "check_v065_candidates.py"
+        script_copy = repo / "scripts" / "historical_release_checkers" / "check_v065_candidates.py"
         script_copy.parent.mkdir(parents=True, exist_ok=True)
         script_copy.write_text(SCRIPT.read_text(encoding="utf-8"), encoding="utf-8")
 
@@ -137,7 +137,7 @@ class TestReleasePrepMode:
         (repo / "pyproject.toml").write_text('version = "0.6.5"\n', encoding="utf-8")
         (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.5"\n', encoding="utf-8")
 
-        script_copy = repo / "scripts" / "check_v065_candidates.py"
+        script_copy = repo / "scripts" / "historical_release_checkers" / "check_v065_candidates.py"
         script_copy.parent.mkdir(parents=True, exist_ok=True)
         script_copy.write_text(SCRIPT.read_text(encoding="utf-8"), encoding="utf-8")
 

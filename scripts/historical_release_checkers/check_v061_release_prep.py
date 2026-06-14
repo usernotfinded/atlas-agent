@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Read-only v0.6.3 release prep checker.
+"""Read-only v0.6.1 release prep checker.
 
-Verifies that the repository is correctly prepared for a v0.6.3 release:
-- version is 0.6.3
-- docs/releases/v0.6.3.md exists
-- docs/trust/v0.6.3-status.md exists
-- CHANGELOG has 0.6.3 entry
+Verifies that the repository is correctly prepared for a v0.6.1 release:
+- version is 0.6.1
+- docs/releases/v0.6.1.md exists
+- docs/trust/v0.6.1-status.md exists
+- CHANGELOG has 0.6.1 entry
 - no unsafe claims
-- no docs/releases/v0.6.4.md
-- v0.6.2 tag/release history remains intact
+- no docs/releases/v0.6.2.md
 
 Exit codes:
   0 = valid
@@ -34,19 +33,17 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
-RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.3.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.3-status.md"
+RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.1.md"
+TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.1-status.md"
 FUTURE_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.8.md"
-V062_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.2.md"
-V062_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.2-status.md"
 
-REQUIRED_VERSION = "0.6.3"
-PUBLIC_TAG = "v0.6.3"
+REQUIRED_VERSION = "0.6.1"
+PUBLIC_TAG = "v0.6.1"
 
 UNSAFE_CLAIMS = [
     "tag created",
@@ -63,7 +60,7 @@ UNSAFE_CLAIMS = [
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {
-        "artifact_type": "v063_release_prep_report",
+        "artifact_type": "v061_release_prep_report",
         "schema_version": 1,
         "valid": False,
         "errors": [message],
@@ -74,13 +71,33 @@ def _fail(message: str) -> tuple[int, dict]:
 
 def _check_version_bump() -> list[str]:
     errors: list[str] = []
+    found_required = False
+    found_next = False
     for path in (PYPROJECT, INIT_PY):
         if not path.exists():
             errors.append(f"Missing file: {path}")
             continue
         text = path.read_text(encoding="utf-8")
-        if REQUIRED_VERSION not in text and "0.6.4" not in text and "0.6.5" not in text and "0.6.6" not in text and "0.6.7" not in text:
-            errors.append(f"Version {REQUIRED_VERSION}, 0.6.4, 0.6.5, 0.6.6, or 0.6.7 not found in {path}")
+        if REQUIRED_VERSION in text:
+            found_required = True
+        if "0.6.2" in text:
+            found_next = True
+        if "0.6.3" in text:
+            found_next = True
+        if "0.6.4" in text:
+            found_next = True
+        if "0.6.5" in text:
+            found_next = True
+        if "0.6.6" in text:
+            found_next = True
+        if "0.6.7" in text:
+            found_next = True
+    if not found_required and not found_next:
+        errors.append(f"Version {REQUIRED_VERSION}, 0.6.2, 0.6.3, 0.6.4, 0.6.5, 0.6.6, or 0.6.7 not found in pyproject.toml/__init__.py")
+    elif not found_required and found_next:
+        # Post-bump state: verify v0.6.1 artifacts remain
+        if not RELEASE_NOTES.exists() or not TRUST_STATUS.exists():
+            errors.append(f"Version bumped past {REQUIRED_VERSION} but v0.6.1 artifacts missing")
     return errors
 
 
@@ -148,15 +165,6 @@ def _check_no_tag_claim() -> list[str]:
     return errors
 
 
-def _check_v062_history_intact() -> list[str]:
-    errors: list[str] = []
-    if not V062_RELEASE_NOTES.exists():
-        errors.append(f"v0.6.2 history missing: {V062_RELEASE_NOTES}")
-    if not V062_TRUST_STATUS.exists():
-        errors.append(f"v0.6.2 trust status missing: {V062_TRUST_STATUS}")
-    return errors
-
-
 def run_check(*, json_output: bool = False) -> tuple[int, dict]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -168,11 +176,10 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict]:
     errors.extend(_check_no_future_release_notes())
     errors.extend(_check_release_notes_safe())
     errors.extend(_check_no_tag_claim())
-    errors.extend(_check_v062_history_intact())
 
     valid = len(errors) == 0
     result = {
-        "artifact_type": "v063_release_prep_report",
+        "artifact_type": "v061_release_prep_report",
         "schema_version": 1,
         "valid": valid,
         "errors": errors,
@@ -183,7 +190,7 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="v0.6.3 release prep checker")
+    parser = argparse.ArgumentParser(description="v0.6.1 release prep checker")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     args = parser.parse_args(argv)
 
@@ -191,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
         code, result = run_check(json_output=args.json)
     except Exception as exc:
         result = {
-            "artifact_type": "v063_release_prep_report",
+            "artifact_type": "v061_release_prep_report",
             "schema_version": 1,
             "valid": False,
             "errors": [f"Operational error: {exc}"],
@@ -207,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, indent=2))
     else:
         status = "PASS" if result["valid"] else "FAIL"
-        print(f"v0.6.3 release prep check {status}")
+        print(f"v0.6.1 release prep check {status}")
         if result["errors"]:
             for err in result["errors"]:
                 print(f"  ERROR: {err}")

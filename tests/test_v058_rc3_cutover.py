@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "check_v058_rc3_cutover.py"
+CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v058_rc3_cutover.py"
 
 
 def test_rc3_cutover_checker_fails_against_rc4_repo() -> None:

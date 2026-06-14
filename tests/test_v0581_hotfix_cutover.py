@@ -29,7 +29,7 @@ from unittest.mock import patch
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "check_v0581_hotfix_cutover.py"
+CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v0581_hotfix_cutover.py"
 
 
 def _load_cutover_module() -> ModuleType:

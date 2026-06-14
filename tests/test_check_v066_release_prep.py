@@ -17,7 +17,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "check_v066_release_prep.py"
+SCRIPT = ROOT / "scripts" / "historical_release_checkers" / "check_v066_release_prep.py"
 
 
 def _load_script_module() -> ModuleType:

@@ -160,7 +160,8 @@ _run "18. focused pytest subset" \
         tests/test_readme_quickstart_verification.py \
         tests/test_changelog_consistency.py \
         tests/test_ci_workflows.py \
-        tests/test_check_v067_release_prep.py \
+        tests/test_check_v0610_release_prep.py \
+        tests/test_check_v0611_planning.py \
         tests/test_submit_execution_safety_check.py \
         tests/test_cli_smoke.py \
         tests/test_feedback_intake.py \

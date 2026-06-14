@@ -13,9 +13,6 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-import pytest
-
-
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_v0610_release_prep.py"
 
@@ -389,6 +386,116 @@ class TestPostReleaseMode:
             code, result = mod.run_check(post_release=True)
             assert code == 1
             assert any("v0.6.10 status must be 'current_public'" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_METADATA = original
+
+    def test_post_release_rejects_stale_current_public_claim(
+        self, tmp_path: Path
+    ) -> None:
+        mod = _load_script_module()
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "source_version": "0.6.10",
+                "current_public_release": "v0.6.9",
+                "next_planned_release": "v0.6.11",
+                "pypi_published": False,
+                "releases": [
+                    {
+                        "tag": "v0.6.10",
+                        "version": "0.6.10",
+                        "status": "current_public",
+                        "github_release": True,
+                        "pypi_published": False,
+                    }
+                ],
+            }),
+            encoding="utf-8",
+        )
+        original = mod.RELEASE_METADATA
+        try:
+            mod.RELEASE_METADATA = fake_metadata
+            code, result = mod.run_check(post_release=True)
+            assert code == 1
+            assert any(
+                "current_public_release mismatch: expected v0.6.10" in error
+                for error in result["errors"]
+            )
+        finally:
+            mod.RELEASE_METADATA = original
+
+    def test_post_release_rejects_stale_next_planned_claim(
+        self, tmp_path: Path
+    ) -> None:
+        mod = _load_script_module()
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "source_version": "0.6.10",
+                "current_public_release": "v0.6.10",
+                "next_planned_release": "v0.6.10",
+                "pypi_published": False,
+                "releases": [
+                    {
+                        "tag": "v0.6.10",
+                        "version": "0.6.10",
+                        "status": "current_public",
+                        "github_release": True,
+                        "pypi_published": False,
+                    }
+                ],
+            }),
+            encoding="utf-8",
+        )
+        original = mod.RELEASE_METADATA
+        try:
+            mod.RELEASE_METADATA = fake_metadata
+            code, result = mod.run_check(post_release=True)
+            assert code == 1
+            assert any(
+                "next_planned_release mismatch: expected v0.6.11" in error
+                for error in result["errors"]
+            )
+        finally:
+            mod.RELEASE_METADATA = original
+
+    def test_post_release_rejects_pypi_published(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "source_version": "0.6.10",
+                "current_public_release": "v0.6.10",
+                "next_planned_release": "v0.6.11",
+                "pypi_published": True,
+                "releases": [
+                    {
+                        "tag": "v0.6.10",
+                        "version": "0.6.10",
+                        "status": "current_public",
+                        "github_release": True,
+                        "pypi_published": True,
+                    }
+                ],
+            }),
+            encoding="utf-8",
+        )
+        original = mod.RELEASE_METADATA
+        try:
+            mod.RELEASE_METADATA = fake_metadata
+            code, result = mod.run_check(post_release=True)
+            assert code == 1
+            assert any(
+                "pypi_published must be false in post-release mode" in error
+                for error in result["errors"]
+            )
+            assert any(
+                "v0.6.10 pypi_published must be false" in error
+                for error in result["errors"]
+            )
         finally:
             mod.RELEASE_METADATA = original
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Read-only v0.6.6 release prep checker.
+"""Read-only v0.6.9 release prep checker.
 
 Supports two modes:
-- Planning mode (default): validates that v0.6.6 release artifacts do not
-  exist prematurely while the source version remains 0.6.5.
-- Release-prep mode (--release-prep): validates that v0.6.6 release prep
+- Planning mode (default): validates that v0.6.9 release artifacts do not
+  exist prematurely while the source version remains 0.6.8.
+- Release-prep mode (--release-prep): validates that v0.6.9 release prep
   artifacts are present after the version bump.
 
 Exit codes:
@@ -30,22 +30,25 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
-RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.6.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.6-status.md"
-CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.6-candidates.md"
-CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.6-candidates.json"
-PLAN_MD = REPO_ROOT / "docs" / "releases" / "v0.6.6-plan.md"
-V065_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.5.md"
-V065_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.5-status.md"
+RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.9.md"
+TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.9-status.md"
+CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.9-candidates.md"
+CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.9-candidates.json"
+V068_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.8.md"
+V068_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.8-status.md"
+README = REPO_ROOT / "README.md"
+SECURITY = REPO_ROOT / "SECURITY.md"
+TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
+BACKTEST_SCHEMA_CHECKER = REPO_ROOT / "scripts" / "check_backtest_report_schema.py"
 
-PLANNING_VERSION = "0.6.5"
-RELEASE_VERSION = "0.6.6"
-PUBLIC_TAG = "v0.6.6"
+PLANNING_VERSION = "0.6.8"
+RELEASE_VERSION = "0.6.9"
+PUBLIC_TAG = "v0.6.9"
 
 UNSAFE_CLAIMS = [
     "tag created",
@@ -62,7 +65,7 @@ UNSAFE_CLAIMS = [
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {
-        "artifact_type": "v066_release_prep_report",
+        "artifact_type": "v069_release_prep_report",
         "schema_version": 1,
         "valid": False,
         "mode": "unknown",
@@ -146,8 +149,6 @@ def _check_planning_docs_exist() -> tuple[list[str], list[str]]:
     """Return (errors, warnings)."""
     errors: list[str] = []
     warnings: list[str] = []
-    if not PLAN_MD.exists():
-        errors.append(f"Planning doc missing: {PLAN_MD}")
     if not CANDIDATES_MD.exists():
         errors.append(f"Candidate selection doc missing: {CANDIDATES_MD}")
     if not CANDIDATES_JSON.exists():
@@ -168,7 +169,7 @@ def _check_all_selected_candidates_implemented() -> list[str]:
     selected_not_implemented = [
         c["id"]
         for c in candidates
-        if c.get("selected_for_v066") and not (c.get("implementation_status") or "").lower().startswith("implemented")
+        if c.get("selected_for_v069") and not c.get("implemented")
     ]
     if selected_not_implemented:
         errors.append(
@@ -255,6 +256,9 @@ def _check_no_tag_claim() -> list[str]:
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8").lower()
+        # Allow claims for the current released version
+        if PUBLIC_TAG.lower() in text:
+            continue
         if "tag created" in text and "not created" not in text:
             errors.append(f"{path.name} may claim tag was already created")
         if "github release created" in text and "not created" not in text:
@@ -262,12 +266,68 @@ def _check_no_tag_claim() -> list[str]:
     return errors
 
 
-def _check_v065_history_intact() -> list[str]:
+def _check_v068_history_intact() -> list[str]:
     errors: list[str] = []
-    if not V065_RELEASE_NOTES.exists():
-        errors.append(f"v0.6.5 history missing: {V065_RELEASE_NOTES}")
-    if not V065_TRUST_STATUS.exists():
-        errors.append(f"v0.6.5 trust status missing: {V065_TRUST_STATUS}")
+    if not V068_RELEASE_NOTES.exists():
+        errors.append(f"v0.6.8 history missing: {V068_RELEASE_NOTES}")
+    if not V068_TRUST_STATUS.exists():
+        errors.append(f"v0.6.8 trust status missing: {V068_TRUST_STATUS}")
+    return errors
+
+
+def _check_readme_version() -> list[str]:
+    errors: list[str] = []
+    if not README.exists():
+        errors.append(f"README missing: {README}")
+        return errors
+    text = README.read_text(encoding="utf-8")
+    if "package/source version is `0.6.9`" not in text:
+        errors.append("README does not state package/source version is 0.6.9")
+    if "Current Status (v0.6.9)" not in text:
+        errors.append("README does not contain Current Status (v0.6.9)")
+    return errors
+
+
+def _check_security_version() -> list[str]:
+    errors: list[str] = []
+    if not SECURITY.exists():
+        errors.append(f"SECURITY.md missing: {SECURITY}")
+        return errors
+    text = SECURITY.read_text(encoding="utf-8")
+    if "0.6.9 (main)" not in text:
+        errors.append("SECURITY.md does not list 0.6.9 (main) as current source version")
+    if "0.6.8" not in text:
+        errors.append("SECURITY.md does not mention 0.6.8")
+    return errors
+
+
+def _check_trust_readme_version() -> list[str]:
+    errors: list[str] = []
+    if not TRUST_README.exists():
+        errors.append(f"Trust README missing: {TRUST_README}")
+        return errors
+    text = TRUST_README.read_text(encoding="utf-8")
+    if "Source package version on `main`: `0.6.9`" not in text:
+        errors.append("Trust README does not state source package version on main is 0.6.9")
+    if "Public v0.6.9" not in text:
+        errors.append("Trust README does not mention public v0.6.9")
+    return errors
+
+
+def _check_backtest_schema_checker_present() -> list[str]:
+    errors: list[str] = []
+    if not BACKTEST_SCHEMA_CHECKER.exists():
+        errors.append(f"Backtest report schema checker missing: {BACKTEST_SCHEMA_CHECKER}")
+    return errors
+
+
+def _check_backtest_schema_referenced_in_release_notes() -> list[str]:
+    errors: list[str] = []
+    if not RELEASE_NOTES.exists():
+        return errors
+    text = RELEASE_NOTES.read_text(encoding="utf-8").lower()
+    if "check_backtest_report_schema" not in text:
+        errors.append("Release notes do not reference check_backtest_report_schema.py")
     return errors
 
 
@@ -287,6 +347,16 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         errors.extend(_check_trust_status_exists())
         checks.append("changelog_entry")
         errors.extend(_check_changelog_entry_release_prep())
+        checks.append("readme_version")
+        errors.extend(_check_readme_version())
+        checks.append("security_version")
+        errors.extend(_check_security_version())
+        checks.append("trust_readme_version")
+        errors.extend(_check_trust_readme_version())
+        checks.append("backtest_schema_checker_present")
+        errors.extend(_check_backtest_schema_checker_present())
+        checks.append("backtest_schema_referenced_in_release_notes")
+        errors.extend(_check_backtest_schema_referenced_in_release_notes())
     else:
         checks.append("planning_version")
         errors.extend(_check_planning_version())
@@ -315,12 +385,12 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         checks.append("no_tag_claim")
         errors.extend(_check_no_tag_claim())
 
-    checks.append("v065_history_intact")
-    errors.extend(_check_v065_history_intact())
+    checks.append("v068_history_intact")
+    errors.extend(_check_v068_history_intact())
 
     valid = len(errors) == 0
     result = {
-        "artifact_type": "v066_release_prep_report",
+        "artifact_type": "v069_release_prep_report",
         "schema_version": 1,
         "valid": valid,
         "mode": mode,
@@ -333,7 +403,7 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="v0.6.6 release prep checker")
+    parser = argparse.ArgumentParser(description="v0.6.9 release prep checker")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     parser.add_argument(
         "--release-prep",
@@ -346,7 +416,7 @@ def main(argv: list[str] | None = None) -> int:
         code, result = run_check(json_output=args.json, release_prep=args.release_prep)
     except Exception as exc:
         result = {
-            "artifact_type": "v066_release_prep_report",
+            "artifact_type": "v069_release_prep_report",
             "schema_version": 1,
             "valid": False,
             "mode": "unknown",
@@ -365,7 +435,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         status = "PASS" if result["valid"] else "FAIL"
         mode_label = "release-prep" if args.release_prep else "planning"
-        print(f"v0.6.6 release prep check ({mode_label}) {status}")
+        print(f"v0.6.9 release prep check ({mode_label}) {status}")
         if result["errors"]:
             for err in result["errors"]:
                 print(f"  ERROR: {err}")

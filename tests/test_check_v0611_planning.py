@@ -516,20 +516,94 @@ class TestDeterminism:
 
 
 class TestCurrentCandidateState:
-    def test_only_cand_001_through_004_are_implemented(self) -> None:
+    def test_only_cand_001_through_005_are_selected_and_implemented(self) -> None:
         candidates_path = ROOT / "docs" / "releases" / "v0.6.11-candidates.json"
         data = json.loads(candidates_path.read_text(encoding="utf-8"))
         candidates = {candidate["id"]: candidate for candidate in data["candidates"]}
 
-        for candidate_id in ("CAND-001", "CAND-002", "CAND-003", "CAND-004"):
+        for candidate_id in (
+            "CAND-001",
+            "CAND-002",
+            "CAND-003",
+            "CAND-004",
+            "CAND-005",
+        ):
             assert candidates[candidate_id]["selected_for_v0611"] is True
             assert candidates[candidate_id]["implemented"] is True
         for candidate_id in (
-            "CAND-005",
             "CAND-006",
             "CAND-007",
             "CAND-008",
             "CAND-009",
             "CAND-010",
         ):
+            assert candidates[candidate_id]["selected_for_v0611"] is False
             assert candidates[candidate_id]["implemented"] is False
+
+
+class TestReleaseMetadataState:
+    def _run_with_metadata(self, tmp_path: Path, metadata: dict) -> tuple[int, dict]:
+        mod = _load_script_module()
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(json.dumps(metadata), encoding="utf-8")
+        original = mod.RELEASE_METADATA
+        try:
+            mod.RELEASE_METADATA = fake_metadata
+            return mod.run_check()
+        finally:
+            mod.RELEASE_METADATA = original
+
+    @staticmethod
+    def _metadata() -> dict:
+        return {
+            "schema_version": 1,
+            "source_version": "0.6.10",
+            "current_public_release": "v0.6.10",
+            "next_planned_release": "v0.6.11",
+            "pypi_published": False,
+            "releases": [
+                {
+                    "tag": "v0.6.10",
+                    "version": "0.6.10",
+                    "status": "current_public",
+                    "github_release": True,
+                    "pypi_published": False,
+                }
+            ],
+        }
+
+    def test_stale_current_public_claim_fails(self, tmp_path: Path) -> None:
+        metadata = self._metadata()
+        metadata["current_public_release"] = "v0.6.9"
+
+        code, result = self._run_with_metadata(tmp_path, metadata)
+
+        assert code == 1
+        assert any(
+            "current_public_release mismatch: expected v0.6.10" in error
+            for error in result["errors"]
+        )
+
+    def test_stale_next_planned_claim_fails(self, tmp_path: Path) -> None:
+        metadata = self._metadata()
+        metadata["next_planned_release"] = "v0.6.10"
+
+        code, result = self._run_with_metadata(tmp_path, metadata)
+
+        assert code == 1
+        assert any(
+            "next_planned_release mismatch: expected v0.6.11" in error
+            for error in result["errors"]
+        )
+
+    def test_pypi_published_claim_fails(self, tmp_path: Path) -> None:
+        metadata = self._metadata()
+        metadata["pypi_published"] = True
+
+        code, result = self._run_with_metadata(tmp_path, metadata)
+
+        assert code == 1
+        assert any(
+            "pypi_published must be false in planning mode" in error
+            for error in result["errors"]
+        )

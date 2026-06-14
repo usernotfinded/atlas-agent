@@ -86,23 +86,16 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "8. v0.5.8 gap prioritization check"
+echo "8. v0.6.10 post-release check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v058_gap_prioritization.py
+"$PYTHON_BIN" scripts/check_v0610_release_prep.py --post-release
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "8a. v0.5.8 RC1 readiness dry run"
+echo "8a. v0.6.11 planning check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v058_rc1_readiness.py
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8b. v0.5.8.1 hotfix cutover check"
-SECONDS=0
-"$PYTHON_BIN" scripts/check_v0581_hotfix_cutover.py
+"$PYTHON_BIN" scripts/check_v0611_planning.py
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
@@ -239,7 +232,8 @@ SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_public_launch_messaging.py -q
 "$PYTHON_BIN" -m pytest tests/test_final_rc_audit.py -q
 "$PYTHON_BIN" -m pytest tests/test_stable_release_decision.py -q
-"$PYTHON_BIN" -m pytest tests/test_v0581_hotfix_cutover.py -q
+"$PYTHON_BIN" -m pytest tests/test_check_v0610_release_prep.py -q
+"$PYTHON_BIN" -m pytest tests/test_check_v0611_planning.py -q
 "$PYTHON_BIN" -m pytest tests/test_env_templates.py -q
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"

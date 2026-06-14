@@ -127,26 +127,30 @@ class TestCiWorkflow:
     def test_includes_stable_release_decision(self, ci_content: str) -> None:
         assert "check_stable_release_decision.py" in ci_content
 
-    def test_includes_v060_post_release_readiness(self, ci_content: str) -> None:
-        assert "check_v060_readiness.py --post-release" in ci_content
+    def test_includes_current_post_release_readiness(self, ci_content: str) -> None:
+        assert "check_v0610_release_prep.py --post-release" in ci_content
 
     def test_post_release_readiness_does_not_use_broad_or_true(self, ci_content: str) -> None:
         # The post-release step must not silence errors with || true
         lines = ci_content.splitlines()
         for i, line in enumerate(lines):
-            if "check_v060_readiness.py --post-release" in line:
+            if "check_v0610_release_prep.py --post-release" in line:
                 # Check the same line and next line for broad || true
                 window = "\n".join(lines[i : i + 2])
                 assert "|| true" not in window, "post-release check must not use || true"
                 break
         else:
-            pytest.fail("v0.6 post-release readiness step not found")
+            pytest.fail("v0.6.10 post-release readiness step not found")
 
-    def test_includes_hotfix_cutover_gate(self, ci_content: str) -> None:
-        assert "check_v0581_hotfix_cutover.py" in ci_content
+    def test_includes_next_release_planning_gate(self, ci_content: str) -> None:
+        assert "check_v0611_planning.py" in ci_content
 
-    def test_obsolete_rc5_cutover_not_direct_ci_gate(self, ci_content: str) -> None:
-        assert "python3.11 scripts/check_v058_rc5_cutover.py" not in ci_content
+    def test_historical_release_checkers_are_not_direct_ci_gates(
+        self, ci_content: str
+    ) -> None:
+        assert "scripts/historical_release_checkers/" not in ci_content
+        assert "python3.11 scripts/check_v058" not in ci_content
+        assert "python3.11 scripts/check_v060_readiness.py" not in ci_content
 
     def test_includes_release_check_quick(self, ci_content: str) -> None:
         assert "release_check.sh --quick" in ci_content

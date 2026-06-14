@@ -35,7 +35,7 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 PACKAGE_VERSION = "0.6.0"
 PUBLIC_TAG = "v0.6.0"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only v0.6.4 patch candidate selection checker.
+"""Read-only v0.6.5 patch candidate selection checker.
 
 Verifies that the patch candidate selection document exists, contains
 required sections, respects safety boundaries, and does not claim
@@ -28,25 +28,22 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
-CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.4-candidates.md"
-CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.4-candidates.json"
-RELEASE_NOTES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.4.md"
+CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.5-candidates.md"
+CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.5-candidates.json"
+RELEASE_NOTES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.5.md"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 
 REQUIRED_MD_SECTIONS = [
-    "## Status",
-    "## Selection Criteria",
-    "## Candidate Table",
-    "## Accepted Candidates",
-    "## Deferred Candidates",
-    "## Rejected / Out-of-Scope Candidates",
-    "## Safety Boundaries",
-    "## Test and Release Criteria",
-    "## Non-Goals",
-    "## Next Steps",
+    "## Selection criteria",
+    "## Candidates",
+    "## Deferred candidates",
+    "## Rejected items",
+    "## Safety boundaries",
+    "## Constraints",
+    "## Release criteria",
 ]
 
 FORBIDDEN_SELECTED_PHRASES = [
@@ -68,15 +65,15 @@ FORBIDDEN_CLAIM_PHRASES = [
     "publish to PyPI",
     "pypi published",
     "pyPI published",
-    "tag v0.6.4",
-    "release v0.6.4",
-    "github release v0.6.4",
+    "tag v0.6.5",
+    "release v0.6.5",
+    "github release v0.6.5",
 ]
 
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {
-        "artifact_type": "v064_candidate_check_report",
+        "artifact_type": "v065_candidate_check_report",
         "schema_version": 1,
         "valid": False,
         "errors": [message],
@@ -116,8 +113,8 @@ def _check_no_version_bump() -> list[str]:
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8")
-        if "0.6.4" in text:
-            errors.append(f"Version bump to 0.6.4 detected in {path}")
+        if "0.6.5" in text:
+            errors.append(f"Version bump to 0.6.5 detected in {path}")
     return errors
 
 
@@ -127,7 +124,7 @@ def _check_no_unsafe_selected() -> list[str]:
         return errors
     text = CANDIDATES_MD.read_text(encoding="utf-8")
     accepted_start = text.find("## Accepted Candidates")
-    rejected_start = text.find("## Rejected / Out-of-Scope Candidates")
+    rejected_start = text.find("## Rejected items")
     if accepted_start == -1:
         return errors
     scan_text = text[accepted_start:rejected_start if rejected_start != -1 else len(text)]
@@ -174,11 +171,11 @@ def _check_json_schema() -> list[str]:
     for key in ("artifact_type", "schema_version", "release", "candidates", "rejected"):
         if key not in data:
             errors.append(f"Missing key in JSON inventory: {key}")
-    if data.get("release") != "v0.6.4":
-        errors.append(f"JSON inventory release mismatch: expected v0.6.4, got {data.get('release')}")
-    if data.get("artifact_type") != "v064_patch_candidate_inventory":
+    if data.get("release") != "v0.6.5":
+        errors.append(f"JSON inventory release mismatch: expected v0.6.5, got {data.get('release')}")
+    if data.get("artifact_type") != "v065_patch_candidate_inventory":
         errors.append(
-            f"JSON inventory artifact_type mismatch: expected v064_patch_candidate_inventory, "
+            f"JSON inventory artifact_type mismatch: expected v065_patch_candidate_inventory, "
             f"got {data.get('artifact_type')}"
         )
     return errors
@@ -199,8 +196,8 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
         for path in (PYPROJECT, INIT_PY):
             if path.exists():
                 text = path.read_text(encoding="utf-8")
-                if "0.6.4" not in text and "0.6.5" not in text and "0.6.6" not in text and "0.6.7" not in text:
-                    errors.append(f"Version bump to 0.6.4 or later missing in {path}")
+                if "0.6.5" not in text:
+                    errors.append(f"Version bump to 0.6.5 missing in {path}")
     errors.extend(_check_no_unsafe_selected())
     errors.extend(_check_no_publish_claim())
     errors.extend(_check_json_exists())
@@ -208,7 +205,7 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
 
     valid = len(errors) == 0
     result = {
-        "artifact_type": "v064_candidate_check_report",
+        "artifact_type": "v065_candidate_check_report",
         "schema_version": 1,
         "valid": valid,
         "errors": errors,
@@ -219,7 +216,7 @@ def run_check(*, json_output: bool = False, release_prep: bool = False) -> tuple
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="v0.6.4 patch candidate selection checker")
+    parser = argparse.ArgumentParser(description="v0.6.5 patch candidate selection checker")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     parser.add_argument("--release-prep", action="store_true", help="Allow version bump and release notes (release-prep mode)")
     args = parser.parse_args(argv)
@@ -228,23 +225,23 @@ def main(argv: list[str] | None = None) -> int:
         code, result = run_check(json_output=args.json, release_prep=args.release_prep)
     except Exception as exc:
         result = {
-            "artifact_type": "v064_candidate_check_report",
+            "artifact_type": "v065_candidate_check_report",
             "schema_version": 1,
             "valid": False,
             "errors": [f"Operational error: {exc}"],
             "warnings": [],
         }
         if args.json:
-            print(json.dumps(result, indent=2))
+            print(json.dumps(result, indent=2, sort_keys=True))
         else:
             print(f"ERROR: {exc}")
         return 2
 
     if args.json:
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2, sort_keys=True))
     else:
         status = "PASS" if result["valid"] else "FAIL"
-        print(f"v0.6.4 candidate check {status}")
+        print(f"v0.6.5 candidate check {status}")
         if result["errors"]:
             for err in result["errors"]:
                 print(f"  ERROR: {err}")

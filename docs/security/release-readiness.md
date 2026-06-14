@@ -70,13 +70,23 @@ The trust center is checked by `scripts/check_trust_center.py` to prevent stale 
 Contributor onboarding docs are checked by `scripts/check_onboarding_docs.py`
 to keep local setup, safe-check, and release-sensitive command guidance current.
 
+Current release-state gates use:
+
+```bash
+python3.11 scripts/check_v0610_release_prep.py --post-release
+python3.11 scripts/check_v0611_planning.py
+```
+
+The version-specific commands below are retained in
+`scripts/historical_release_checkers/` for audit and regression use only.
+
 ## v0.6.6 readiness
 
 For v0.6.6 release readiness and post-cutover verification, run the v0.6.6 release prep checker:
 
 ```bash
-python3.11 scripts/check_v066_release_prep.py --release-prep
-python3.11 scripts/check_v066_release_prep.py --release-prep --json
+python3.11 scripts/historical_release_checkers/check_v066_release_prep.py --release-prep
+python3.11 scripts/historical_release_checkers/check_v066_release_prep.py --release-prep --json
 ```
 
 ## v0.6.4 readiness
@@ -84,8 +94,8 @@ python3.11 scripts/check_v066_release_prep.py --release-prep --json
 For v0.6.4 release readiness and post-cutover verification, run the v0.6.4 release prep checker:
 
 ```bash
-python3.11 scripts/check_v064_release_prep.py --release-prep
-python3.11 scripts/check_v064_release_prep.py --release-prep --json
+python3.11 scripts/historical_release_checkers/check_v064_release_prep.py --release-prep
+python3.11 scripts/historical_release_checkers/check_v064_release_prep.py --release-prep --json
 ```
 
 The checker verifies required docs, source modules, test files, CLI contract
@@ -97,8 +107,8 @@ v0.6.4 tag, forbidden claims, and generated artifact hygiene.
 For v0.6.3 release readiness and post-cutover verification, run the v0.6.3 release prep checker:
 
 ```bash
-python3.11 scripts/check_v063_release_prep.py
-python3.11 scripts/check_v063_release_prep.py --json
+python3.11 scripts/historical_release_checkers/check_v063_release_prep.py
+python3.11 scripts/historical_release_checkers/check_v063_release_prep.py --json
 ```
 
 The checker verifies required docs, source modules, test files, CLI contract

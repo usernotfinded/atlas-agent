@@ -185,14 +185,35 @@ requires `actions/checkout@v6`, `actions/setup-python@v6`, and
 dependencies, modify files, or require GitHub credentials. See
 [GitHub Actions Maintenance](github-actions.md).
 
+## Active Release-State Checks
+
+Only the current public-release and next-planning checkers are active gates:
+
+```bash
+python3.11 scripts/check_v0610_release_prep.py --post-release
+python3.11 scripts/check_v0611_planning.py
+```
+
+The first command requires `v0.6.10` to be the current public GitHub release,
+with source version `0.6.10` and PyPI unpublished. The second requires the
+`v0.6.11` planning-only state, rejects release-prep artifacts, and validates
+candidate tracking.
+
+## Historical Release Checker Archive
+
+Version-specific checkers for `v0.5.8` through `v0.6.9` are retained under
+`scripts/historical_release_checkers/`. They remain runnable and covered by
+the full test suite for audit purposes, but are not active development or CI
+gates. See `scripts/historical_release_checkers/README.md`.
+
 ## v0.6.3 Release Prep Checks
 
-`scripts/check_v063_release_prep.py` is a read-only checker for the v0.6.3 release
+`scripts/historical_release_checkers/check_v063_release_prep.py` is a read-only checker for the v0.6.3 release
 prep state:
 
 ```bash
-python3.11 scripts/check_v063_release_prep.py
-python3.11 scripts/check_v063_release_prep.py --json
+python3.11 scripts/historical_release_checkers/check_v063_release_prep.py
+python3.11 scripts/historical_release_checkers/check_v063_release_prep.py --json
 ```
 
 It verifies that the package version is `0.6.3`, `docs/releases/v0.6.3.md` exists,
@@ -201,12 +222,12 @@ no premature `v0.6.4` release notes exist.
 
 ## v0.6.5 Release Prep Checks
 
-`scripts/check_v065_release_prep.py` is a read-only checker for the v0.6.5 release
+`scripts/historical_release_checkers/check_v065_release_prep.py` is a read-only checker for the v0.6.5 release
 prep state (historical):
 
 ```bash
-python3.11 scripts/check_v065_release_prep.py --release-prep
-python3.11 scripts/check_v065_release_prep.py --release-prep --json
+python3.11 scripts/historical_release_checkers/check_v065_release_prep.py --release-prep
+python3.11 scripts/historical_release_checkers/check_v065_release_prep.py --release-prep --json
 ```
 
 It verifies that `docs/releases/v0.6.5.md` exists,
@@ -216,12 +237,12 @@ the package version is `0.6.5`, and no premature `v0.6.6` release notes exist.
 
 ## v0.6.6 Release Prep Checks
 
-`scripts/check_v066_release_prep.py` is a read-only checker for the v0.6.6 release
-prep state (next planning line):
+`scripts/historical_release_checkers/check_v066_release_prep.py` is the
+archived read-only checker for the historical v0.6.6 release-prep state:
 
 ```bash
-python3.11 scripts/check_v066_release_prep.py
-python3.11 scripts/check_v066_release_prep.py --json
+python3.11 scripts/historical_release_checkers/check_v066_release_prep.py
+python3.11 scripts/historical_release_checkers/check_v066_release_prep.py --json
 ```
 
 Default planning mode verifies that the package version is `0.6.5`,
@@ -230,30 +251,30 @@ and `v0.6.6` planning docs exist. After the version bump, use `--release-prep` t
 validate that `docs/releases/v0.6.6.md` and `docs/trust/v0.6.6-status.md` exist,
 the CHANGELOG has a `[0.6.6]` entry, and the package version is `0.6.6`.
 
-`scripts/check_v065_candidates.py` is the v0.6.5 candidate checker
+`scripts/historical_release_checkers/check_v065_candidates.py` is the v0.6.5 candidate checker
 (used before the version bump; exits in planning mode after source version bump):
 
 ```bash
-python3.11 scripts/check_v065_candidates.py
+python3.11 scripts/historical_release_checkers/check_v065_candidates.py
 ```
 
 ## v0.6.4 Release Prep Checks
 
-`scripts/check_v064_release_prep.py` is a read-only checker for the v0.6.4 release
+`scripts/historical_release_checkers/check_v064_release_prep.py` is a read-only checker for the v0.6.4 release
 prep state (historical):
 
 ```bash
-python3.11 scripts/check_v064_release_prep.py --release-prep
+python3.11 scripts/historical_release_checkers/check_v064_release_prep.py --release-prep
 ```
 
 ## v0.6.1 Patch Candidate Checks
 
-`scripts/check_v061_candidates.py` is a read-only checker for the v0.6.1 patch
+`scripts/historical_release_checkers/check_v061_candidates.py` is a read-only checker for the v0.6.1 patch
 candidate selection document:
 
 ```bash
-python3.11 scripts/check_v061_candidates.py
-python3.11 scripts/check_v061_candidates.py --json
+python3.11 scripts/historical_release_checkers/check_v061_candidates.py
+python3.11 scripts/historical_release_checkers/check_v061_candidates.py --json
 ```
 
 It verifies that `docs/releases/v0.6.1-candidates.md` exists, contains required
@@ -268,12 +289,12 @@ See also [v0.6.5 Release Prep Checks](#v065-release-prep-checks),
 
 ## v0.6.1 Release Prep Checks
 
-`scripts/check_v061_release_prep.py` is a read-only checker for the v0.6.1 release
+`scripts/historical_release_checkers/check_v061_release_prep.py` is a read-only checker for the v0.6.1 release
 prep state (historical or post-bump compatible):
 
 ```bash
-python3.11 scripts/check_v061_release_prep.py
-python3.11 scripts/check_v061_release_prep.py --json
+python3.11 scripts/historical_release_checkers/check_v061_release_prep.py
+python3.11 scripts/historical_release_checkers/check_v061_release_prep.py --json
 ```
 
 It verifies that `docs/releases/v0.6.1.md` exists,
@@ -283,12 +304,12 @@ being `0.6.2` or `0.6.3` as a valid post-bump state.
 
 ## v0.6.0 Readiness Checks
 
-`scripts/check_v060_readiness.py` is a read-only checker for the v0.6.0
+`scripts/historical_release_checkers/check_v060_readiness.py` is a read-only checker for the v0.6.0
 capability expansion audit:
 
 ```bash
-python3.11 scripts/check_v060_readiness.py
-python3.11 scripts/check_v060_readiness.py --json
+python3.11 scripts/historical_release_checkers/check_v060_readiness.py
+python3.11 scripts/historical_release_checkers/check_v060_readiness.py --json
 ```
 
 Default mode is **pre-release**: it verifies required docs, source modules,
@@ -300,8 +321,8 @@ After `v0.6.0` is published, use **post-release** mode to validate the
 published state:
 
 ```bash
-python3.11 scripts/check_v060_readiness.py --post-release
-python3.11 scripts/check_v060_readiness.py --post-release --json
+python3.11 scripts/historical_release_checkers/check_v060_readiness.py --post-release
+python3.11 scripts/historical_release_checkers/check_v060_readiness.py --post-release --json
 ```
 
 Post-release mode expects the `v0.6.0` tag to exist and checks that the

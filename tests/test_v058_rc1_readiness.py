@@ -26,7 +26,7 @@ from unittest.mock import patch
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-READINESS_SCRIPT = REPO_ROOT / "scripts" / "check_v058_rc1_readiness.py"
+READINESS_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v058_rc1_readiness.py"
 
 
 def _load_readiness_module() -> ModuleType:
