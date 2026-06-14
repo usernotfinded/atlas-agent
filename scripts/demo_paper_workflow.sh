@@ -40,7 +40,8 @@ printf 'Atlas Agent paper workflow demo\n'
 printf 'Workspace: %s\n' "$WORKSPACE"
 printf 'Symbol: %s\n' "$DEMO_SYMBOL"
 printf 'Sample-data backtest symbol: %s\n' "$BACKTEST_SYMBOL"
-printf 'This demo is paper-only and does not require broker credentials.\n'
+printf 'This demo is paper-only, offline, and does not require credentials.\n'
+printf 'Guide: docs/paper-trading-guide.md\n'
 
 cd "$REPO_ROOT"
 run_step init "$WORKSPACE" --template routine-trader
@@ -49,6 +50,7 @@ cd "$WORKSPACE"
 run_step discipline setup --manual --yes
 run_step config set market.symbol "$DEMO_SYMBOL"
 run_step validate
+run_step doctor --json
 run_step run --mode paper --dry-run --symbol "$DEMO_SYMBOL"
 run_step backtest run --symbol "$BACKTEST_SYMBOL" --data "$SAMPLE_DATA"
 run_step audit verify --all

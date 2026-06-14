@@ -1,20 +1,37 @@
 # Paper Trading Demo
 
-Paper trading is the default and safest way to run Atlas Agent. It uses the high-fidelity `PaperBrokerAdapter` to simulate execution without any financial risk.
+> **Not financial advice.** Simulated results do not guarantee future
+> performance.
 
-## Quickstart
-Run a single autonomous cycle in paper mode:
+Paper mode is the default Atlas Agent workflow. It records simulated activity
+locally and does not submit orders to a live broker.
+
+## Reproducible Demo
+
+From the repository root:
+
 ```bash
-atlas run --mode paper --once
+./scripts/demo_paper_workflow.sh
 ```
 
-Run continuously (default 60s interval):
+The script creates a new temporary workspace, validates fail-closed settings,
+runs a paper dry-run, and executes the bundled deterministic backtest.
+
+## Manual Dry-Run
+
 ```bash
-atlas run --mode paper --continuous
+atlas init paper-workspace --template routine-trader
+cd paper-workspace
+atlas discipline setup --manual --yes
+atlas config set market.symbol ATLAS-DEMO
+atlas validate
+atlas doctor --json
+atlas run --mode paper --dry-run --symbol ATLAS-DEMO
 ```
 
-## Features
-- **Deterministic Risk**: All paper orders are validated by the `RiskManager`.
-- **Full Audit**: Every simulated action is recorded in the tamper-evident audit hash-chain.
-- **Realistic Fills**: Uses historical market data to simulate realistic fill prices.
+The adjacent [`config.toml`](config.toml) is a non-secret review example. It
+keeps live trading, live submit, and leverage disabled. Do not add credentials
+to it.
 
+See the canonical [Paper-Trading Guide](../../docs/paper-trading-guide.md) for
+the complete workflow, safety boundary, backtest step, and expected failures.

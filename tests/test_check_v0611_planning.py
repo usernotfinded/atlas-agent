@@ -13,9 +13,6 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-import pytest
-
-
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_v0611_planning.py"
 
@@ -516,3 +513,23 @@ class TestDeterminism:
         result = _run_script("--json")
         data = json.loads(result.stdout)
         assert list(data.keys()) == sorted(data.keys())
+
+
+class TestCurrentCandidateState:
+    def test_only_cand_001_through_004_are_implemented(self) -> None:
+        candidates_path = ROOT / "docs" / "releases" / "v0.6.11-candidates.json"
+        data = json.loads(candidates_path.read_text(encoding="utf-8"))
+        candidates = {candidate["id"]: candidate for candidate in data["candidates"]}
+
+        for candidate_id in ("CAND-001", "CAND-002", "CAND-003", "CAND-004"):
+            assert candidates[candidate_id]["selected_for_v0611"] is True
+            assert candidates[candidate_id]["implemented"] is True
+        for candidate_id in (
+            "CAND-005",
+            "CAND-006",
+            "CAND-007",
+            "CAND-008",
+            "CAND-009",
+            "CAND-010",
+        ):
+            assert candidates[candidate_id]["implemented"] is False

@@ -1,0 +1,33 @@
+# Non-secret example for local paper-workflow review.
+trading_mode = "paper"
+
+[broker]
+provider = "none"
+enable_live_trading = false
+enable_live_submit = false
+paper_broker_default = "paper"
+
+[market]
+symbol = "ATLAS-DEMO"
+
+[risk]
+max_daily_loss = 100.0
+max_position_notional = 100.0
+max_trades_per_day = 5
+max_portfolio_exposure = 1000.0
+max_order_notional = 100.0
+allow_leverage = false
+
+[safety]
+require_order_approval = true
+order_approval_mode = "manual_live"
+
+[audit]
+enabled = true
+redact_secrets = true
+log_raw_prompts = false
+log_provider_text = false
+
+[notifications]
+enabled = false
+transport = "disabled"

@@ -65,7 +65,12 @@ This quickstart is offline-safe, sandbox-only, and paper-first. No credentials l
 
 This path produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
 
-For the canonical reviewer path, see [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md). For expected demo output, see [Demo: Paper Workflow](docs/demo-paper-workflow.md). For an indexed view of every demo artifact, see [Demo Artifact Index](docs/demo-artifact-index.md).
+For setup details and an annotated fail-closed configuration, see the
+[Paper-Trading Guide](docs/paper-trading-guide.md). For the canonical reviewer
+path, see [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md).
+For expected demo output, see [Demo: Paper Workflow](docs/demo-paper-workflow.md).
+For an indexed view of every demo artifact, see
+[Demo Artifact Index](docs/demo-artifact-index.md).
 
 ### What is intentionally disabled
 

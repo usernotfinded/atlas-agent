@@ -4,6 +4,8 @@
 
 This demo shows Atlas Agent running in **paper mode**, the default and safest way to explore the system. No live broker orders are sent.
 
+For installation, manual setup, and the annotated safe configuration, see the
+[Paper-Trading Guide](paper-trading-guide.md).
 For the canonical reviewer path, see [External Reviewer Walkthrough](external-reviewer-walkthrough.md).
 For an indexed view of every artifact, see [Demo Artifact Index](demo-artifact-index.md).
 
@@ -13,7 +15,7 @@ For a reproducible terminal run, use:
 ./scripts/demo_paper_workflow.sh
 ```
 
-The script creates a temporary workspace, writes a safe discipline profile, sets `ATLAS-DEMO`, validates the workspace, runs a paper dry-run, runs the deterministic sample-data backtest with the `DEMO-SYMBOL` fixture, and verifies audit manifests when present.
+The script creates a temporary workspace, writes a safe discipline profile, sets `ATLAS-DEMO`, validates the workspace, runs redacted local diagnostics, runs a paper dry-run, runs the deterministic sample-data backtest with the `DEMO-SYMBOL` fixture, and verifies audit manifests when present.
 
 ## Prerequisites
 

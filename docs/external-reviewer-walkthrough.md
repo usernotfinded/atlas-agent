@@ -98,6 +98,9 @@ Run the reproducible demo script to see a full paper-mode workflow:
 ./scripts/demo_paper_workflow.sh
 ```
 
+For manual setup and the annotated fail-closed example configuration, see the
+[Paper-Trading Guide](paper-trading-guide.md).
+
 **What to expect:**
 - A temporary workspace is created.
 - A safe discipline profile and demo symbol are configured.

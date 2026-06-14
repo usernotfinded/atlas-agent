@@ -121,8 +121,8 @@
         "No live trading enabled by documentation or example configs",
         "check_public_docs_consistency.py passes"
       ],
-      "selected_for_v0611": false,
-      "implemented": false
+      "selected_for_v0611": true,
+      "implemented": true
     },
     {
       "id": "CAND-005",
