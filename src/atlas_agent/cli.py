@@ -152,6 +152,20 @@ Safety First:
         action="store_true",
         help="Exit non-zero when readiness checks fail.",
     )
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Inspect local broker/provider readiness without network or execution.",
+        description=(
+            "Inspect local broker/provider configuration, credential presence, "
+            "optional dependencies, and safety blocks. Read-only: no network, "
+            "provider calls, broker clients, or execution."
+        ),
+    )
+    doctor_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output a deterministic, secret-redacted JSON report.",
+    )
     subparsers.add_parser("configure")
     subparsers.add_parser("setup")
 
@@ -2277,7 +2291,7 @@ def config_has_workspace_context(config: AtlasConfig) -> bool:
 def _command_requires_workspace(args: argparse.Namespace) -> bool:
     if args.command is None:
         return False
-    if args.command in {"init", "workspace", "models", "validate", "deploy", "configure", "setup", "discipline"}:
+    if args.command in {"init", "workspace", "models", "validate", "doctor", "deploy", "configure", "setup", "discipline"}:
         return False
     if args.command == "providers" and args.providers_command in (
         "list",
@@ -3767,18 +3781,18 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
         if load_error:
-            if args.command == "validate" and getattr(args, "json", False):
+            if args.command in {"validate", "doctor"} and getattr(args, "json", False):
                 return emit_cli_error(
-                    "atlas validate",
+                    f"atlas {args.command}",
                     code="config_load_failed",
                     message=load_error,
                 )
             print(load_error, file=sys.stderr)
             return 1
         if config is None:
-            if args.command == "validate" and getattr(args, "json", False):
+            if args.command in {"validate", "doctor"} and getattr(args, "json", False):
                 return emit_cli_error(
-                    "atlas validate",
+                    f"atlas {args.command}",
                     code="config_load_failed",
                     message="Configuration error: unable to load AtlasConfig.",
                 )
@@ -4064,6 +4078,18 @@ def main(argv: list[str] | None = None) -> int:
         print_readiness_report(report)
         if strict and not passed:
             return 2
+        return 0
+    if args.command == "doctor":
+        from atlas_agent.diagnostics.preflight import (
+            build_preflight_report,
+            render_preflight_report,
+        )
+
+        report = build_preflight_report(config)
+        if getattr(args, "json", False):
+            print(json.dumps(report, indent=2, sort_keys=True))
+            return 0
+        print(render_preflight_report(report))
         return 0
     if args.command == "providers" and args.providers_command == "list":
         print("openai_compatible, anthropic, openrouter")

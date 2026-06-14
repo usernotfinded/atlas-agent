@@ -92,8 +92,8 @@
         "check_submit_execution_safety.py passes",
         "No live execution triggered by diagnostic output"
       ],
-      "selected_for_v0611": false,
-      "implemented": false
+      "selected_for_v0611": true,
+      "implemented": true
     },
     {
       "id": "CAND-004",

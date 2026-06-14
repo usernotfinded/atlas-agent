@@ -159,10 +159,12 @@ Common command families:
 | **Research** | `atlas research run --symbol ...`, `atlas research list`, `atlas research show`, `atlas research plan`, `atlas research verify`, `atlas research summary`, `atlas research evaluate`, `atlas research prompt`, `atlas research simulate-provider`, `atlas research review-response`, `atlas research dossier` | Paper-only artifact generation and inspection. |
 | **Risk & safety** | `atlas risk status`, `atlas kill-switch status`, `atlas approve-order` | Inspect gates, kill switch, and approval queues. |
 | **Broker (read-only)** | `atlas broker sync` | Synchronize account, positions, and orders from the broker. |
-| **Diagnostics** | `atlas memory doctor --json`, `atlas events doctor`, `atlas audit verify --all` | Local health and audit checks. |
+| **Diagnostics** | `atlas doctor`, `atlas memory doctor --json`, `atlas events doctor`, `atlas audit verify --all` | Local health and audit checks. `atlas doctor` inspects broker/provider config without network or execution. |
 | **Deployment** | `atlas deploy systemd`, `atlas deploy docker`, `atlas deploy vps` | Deployment helpers. |
 
 For a full parser-level inventory, see [docs/cli-command-compatibility.md](docs/cli-command-compatibility.md).
+For the broker/provider diagnostic fields and safety limits, see
+[Broker and Provider Preflight Diagnostics](docs/preflight-diagnostics.md).
 
 ## Demos
 
