@@ -5,9 +5,11 @@ Supports three modes:
 - Planning mode (default): validates that v0.6.11 release artifacts do not
   exist prematurely while the source version remains 0.6.10.
 - Release-prep mode (--release-prep): validates that v0.6.11 release prep
-  artifacts are present and that v0.6.11 is prepared but not public.
+  artifacts are present and that v0.6.11 is prepared but not public (for use
+  before cutover).
 - Post-release mode (--post-release): validates that v0.6.11 is the current
-  public release (for use after cutover).
+  public release, v0.6.10 is historical, tag and GitHub Release exist, and
+  PyPI was not published (for use after cutover).
 
 Exit codes:
   0 = valid
@@ -419,6 +421,26 @@ def _check_no_v0611_local_tag() -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def _check_v0611_local_tag_exists() -> tuple[list[str], list[str]]:
+    """Return (errors, warnings). Check local git tag v0.6.11 exists."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    try:
+        result = subprocess.run(
+            ["git", "tag", "--list", PUBLIC_TAG],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        if result.returncode != 0:
+            warnings.append(f"Could not list local git tags: {result.stderr.strip()}")
+        elif PUBLIC_TAG not in result.stdout.splitlines():
+            errors.append(f"Local git tag {PUBLIC_TAG} not found")
+    except FileNotFoundError:
+        warnings.append("git not available; cannot verify local tag existence")
+    return errors, warnings
+
+
 def _check_no_v0611_github_release() -> tuple[list[str], list[str]]:
     """Return (errors, warnings). Check GitHub Release v0.6.11 does not exist."""
     errors: list[str] = []
@@ -526,12 +548,19 @@ def run_check(
             errors.extend(_check_release_metadata_post_release())
         else:
             errors.extend(_check_release_metadata_release_prep())
-        checks.append("no_v0611_local_tag")
-        tag_errors, tag_warnings = _check_no_v0611_local_tag()
-        errors.extend(tag_errors)
-        warnings.extend(tag_warnings)
-        checks.append("no_premature_public_claims")
-        errors.extend(_check_no_premature_public_claims())
+        if release_prep:
+            checks.append("no_v0611_local_tag")
+            tag_errors, tag_warnings = _check_no_v0611_local_tag()
+            errors.extend(tag_errors)
+            warnings.extend(tag_warnings)
+        else:
+            checks.append("v0611_local_tag_exists")
+            tag_errors, tag_warnings = _check_v0611_local_tag_exists()
+            errors.extend(tag_errors)
+            warnings.extend(tag_warnings)
+        if release_prep:
+            checks.append("no_premature_public_claims")
+            errors.extend(_check_no_premature_public_claims())
         if release_prep:
             checks.append("no_v0611_github_release")
             gh_errors, gh_warnings = _check_no_v0611_github_release()

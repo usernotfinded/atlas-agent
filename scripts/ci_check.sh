@@ -98,16 +98,9 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "8. v0.6.10 post-release check"
+echo "8. v0.6.11 post-release check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v0610_release_prep.py --post-release
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8a. v0.6.11 release-prep check"
-SECONDS=0
-"$PYTHON_BIN" scripts/check_v0611_release_prep.py --release-prep
+"$PYTHON_BIN" scripts/check_v0611_release_prep.py --post-release
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

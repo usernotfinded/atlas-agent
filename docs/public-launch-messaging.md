@@ -18,7 +18,7 @@ Atlas Agent is a broker-neutral supervised workspace for paper and sandbox tradi
 
 ## Short Reddit/Discord feedback request
 
-Hi — I’m working on Atlas Agent, a local-first Python CLI workbench for paper/sandbox trading research with deterministic safety gates and audit logs. The latest stable public GitHub release is v0.6.10; v0.6.9 is historical. It is not a live trading product.
+Hi — I’m working on Atlas Agent, a local-first Python CLI workbench for paper/sandbox trading research with deterministic safety gates and audit logs. The latest stable public GitHub release is v0.6.11; v0.6.10 and v0.6.9 are historical. It is not a live trading product.
 
 I’m looking for feedback on:
 - The safety model and what is disabled by default
@@ -113,4 +113,4 @@ Do not claim or imply:
 
 ## Current stable status
 
-v0.6.10 is the latest stable public release and v0.6.9 is historical. It is ready for public review and technical feedback, but it is not a live-trading-ready product. See [Public Launch Readiness](public-launch-readiness.md) for the full verified-checks list.
+v0.6.11 is the latest stable public release and v0.6.10 and v0.6.9 are historical. It is ready for public review and technical feedback, but it is not a live-trading-ready product. See [Public Launch Readiness](public-launch-readiness.md) for the full verified-checks list.

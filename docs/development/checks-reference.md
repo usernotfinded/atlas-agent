@@ -127,7 +127,7 @@ approve orders.
 `scripts/release_assurance.py` generates a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.10 --output artifacts/release_assurance/v0.6.10-local-check
+python scripts/release_assurance.py --version v0.6.11 --output artifacts/release_assurance/v0.6.11-local-check
 ```
 
 The release assurance pack includes identity, updater delivery, local evidence,
@@ -187,17 +187,15 @@ dependencies, modify files, or require GitHub credentials. See
 
 ## Active Release-State Checks
 
-Only the current public-release and next-planning checkers are active gates:
+Only the current public-release checker is an active gate; the `v0.6.12`
+planning checker will be added once `v0.6.12` candidate selection begins:
 
 ```bash
-python3.11 scripts/check_v0610_release_prep.py --post-release
-python3.11 scripts/check_v0611_planning.py
+python3.11 scripts/check_v0611_release_prep.py --post-release
 ```
 
-The first command requires `v0.6.10` to be the current public GitHub release,
-with source version `0.6.10` and PyPI unpublished. The second requires the
-`v0.6.11` planning-only state, rejects release-prep artifacts, and validates
-candidate tracking.
+This command requires `v0.6.11` to be the current public GitHub release,
+with source version `0.6.11` and PyPI unpublished.
 
 ## Historical Release Checker Archive
 

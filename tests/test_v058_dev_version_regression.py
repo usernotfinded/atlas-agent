@@ -169,8 +169,8 @@ def test_version_consistency_script_accepts_dev() -> None:
     assert result.returncode == 0, (
         f"Version consistency check failed:\n{result.stdout}\n{result.stderr}"
     )
-    assert "0.6.10" in result.stdout
-    assert "v0.6.10" in result.stdout
+    assert "0.6.11" in result.stdout
+    assert "v0.6.11" in result.stdout
 
 
 # ---------------------------------------------------------------------------

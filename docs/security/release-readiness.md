@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.10 public release is the current stable version. The v0.6.9, v0.6.8, v0.6.7, v0.6.6, v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
+The v0.6.11 public release is the current stable version. The v0.6.10, v0.6.9, v0.6.8, v0.6.7, v0.6.6, v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
 
 Release was performed after:
 - all security hardening PRs were merged;

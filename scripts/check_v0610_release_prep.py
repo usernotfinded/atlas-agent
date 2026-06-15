@@ -510,7 +510,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--post-release",
         action="store_true",
-        help="Validate post-release state (v0.6.10 is current public release)",
+        help="Validate post-release/historical state (v0.6.10 is a historical public release)",
     )
     args = parser.parse_args(argv)
 
