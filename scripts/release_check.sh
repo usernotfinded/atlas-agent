@@ -185,6 +185,15 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "11. product demo and marketplace readiness check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_product_demo_pack.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "All release checks passed."
 echo "Total elapsed: ${TOTAL_ELAPSED}s"
 echo "========================================"

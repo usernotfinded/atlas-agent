@@ -21,8 +21,10 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_package_distribution.py` — package builds and metadata is correct
 - `python3.11 scripts/check_public_launch_readiness.py` — launch materials are present and safe
 - `python3.11 scripts/check_public_launch_messaging.py` — launch messaging is safe
+- `python3.11 scripts/check_product_demo_pack.py` — product demo and marketplace readiness pack is present and safe
 - `python3.11 -m pytest tests/test_public_launch_readiness.py` — launch readiness tests pass
 - `python3.11 -m pytest tests/test_public_launch_messaging.py` — launch messaging tests pass
+- `python3.11 -m pytest tests/test_product_demo_pack.py` — product demo pack tests pass
 - `python3.11 -m pytest tests/test_public_repo_hygiene.py` — repository hygiene tests pass
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
@@ -81,6 +83,9 @@ No broker, no network, no credentials, no live trading.
 - `docs/public-launch-messaging.md` present
 - `docs/feedback-request-guide.md` present
 - `docs/public-faq.md` present
+- `docs/product-demo-pack.md` present
+- `docs/marketplace-listing.md` present
+- `docs/autonomy-roadmap.md` present
 
 ## Release artifacts status
 

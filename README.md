@@ -178,6 +178,8 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 
 - **[Paper Workflow Script](scripts/demo_paper_workflow.sh)** — create a temporary workspace, validate config, run a paper dry-run, execute a deterministic sample-data backtest, and verify audit artifacts.
 - **[Research Workflow Script](scripts/demo_research_workflow.sh)** — create a temporary workspace, run the full paper-only research chain, validate JSON artifacts, and verify safety invariants.
+- **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
+- **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Provider Preflight Dry-Run](docs/demo/provider-preflight-demo.md)** — local provider preflight smoke chain and manual pipeline.
 - **[Provider Safety Dossier](docs/provider-safety-dossier.md)** — offline mock workflow for the provider response pipeline.
 - **[Risk Rejection](docs/demo-risk-rejection.md)** — see how deterministic risk gates block unsafe orders.
@@ -197,7 +199,7 @@ Atlas supports optional notification channels. For Telegram control and alerts, 
 
 We welcome contributions that respect the safe-by-default design. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, safety boundaries, and contribution rules. See the [Atlas Agent Trust Center](docs/trust/README.md) for security posture and release assurance. To report security or safety issues privately, use [GitHub Security Advisories](https://github.com/usernotfinded/atlas-agent/security/advisories). See [SECURITY.md](SECURITY.md) for the full security policy.
 
-New to the repo? Start with the [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md) and the [Reviewer Golden-Path Validation Guide](docs/reviewer-golden-path.md). See also: [Reviewer Checklist](docs/reviewer-checklist.md) · [Public FAQ](docs/public-faq.md) · [Public Launch Readiness](docs/public-launch-readiness.md) · [Public Launch Messaging](docs/public-launch-messaging.md) · [Feedback Request Guide](docs/feedback-request-guide.md) · [Product Capability Inventory](docs/product-capability-inventory.md).
+New to the repo? Start with the [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md), the [Reviewer Golden-Path Validation Guide](docs/reviewer-golden-path.md), and the [Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md). See also: [Reviewer Checklist](docs/reviewer-checklist.md) · [Public FAQ](docs/public-faq.md) · [Public Launch Readiness](docs/public-launch-readiness.md) · [Public Launch Messaging](docs/public-launch-messaging.md) · [Feedback Request Guide](docs/feedback-request-guide.md) · [Product Capability Inventory](docs/product-capability-inventory.md) · [Marketplace Listing](docs/marketplace-listing.md) · [Autonomy Roadmap](docs/autonomy-roadmap.md).
 
 ## Release Assurance
 

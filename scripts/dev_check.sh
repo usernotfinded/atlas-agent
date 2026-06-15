@@ -134,6 +134,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "13a. product demo and marketplace readiness check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_product_demo_pack.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "13b. product demo and marketplace readiness tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_product_demo_pack.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "14. generated artifact hygiene tests"
 SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_generated_artifacts.py -q "${PYTEST_EXTRA_ARGS[@]}"

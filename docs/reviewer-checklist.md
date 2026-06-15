@@ -63,6 +63,18 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `git diff -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk` shows no output
 - [ ] `git diff --cached -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk` shows no output
 
+## Product demo and marketplace readiness
+
+- [ ] `README.md` Demos section links to `docs/product-demo-pack.md` and `scripts/demo_product_walkthrough.sh`.
+- [ ] `docs/product-demo-pack.md`, `docs/marketplace-listing.md`, and `docs/autonomy-roadmap.md` are present.
+- [ ] `scripts/demo_product_walkthrough.sh` is executable and uses `--mode paper --dry-run`.
+- [ ] `scripts/check_product_demo_pack.py` is executable and passes.
+- [ ] Demo scripts and docs run locally without credentials, API keys, broker setup, network calls, or live trading enablement.
+- [ ] Marketplace/outreach docs contain no profit, performance, live-trading-readiness, or autonomous-trading claims.
+- [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.
+- [ ] No absolute user paths (home-directory or temp-folder prefixes) or credential examples appear in public demo or outreach docs.
+- [ ] All demo/marketplace language remains paper-first, sandbox/preflight-first, broker-neutral, and safe-by-default.
+
 ## Known limitations
 
 - [ ] Final public release, not a release candidate
@@ -71,6 +83,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] Broker adapters in beta (Alpaca read-only sync available; others deferred)
 - [ ] Dashboard is basic and read-only
 - [ ] Backtesting is a research tool; historical results do not guarantee future performance
+- [ ] Autonomous live trading is not supported and not a project goal
 
 ## Red flags to report
 
