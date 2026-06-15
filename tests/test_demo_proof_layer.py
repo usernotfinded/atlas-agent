@@ -11,7 +11,7 @@ DEMO_GIF = ROOT / "assets" / "atlas-demo.gif"
 DEMO_SURFACES = [
     ROOT / "README.md",
     ROOT / "docs" / "demo-paper-workflow.md",
-    ROOT / "docs" / "demo-recording-guide.md",
+    ROOT / "docs" / "archive" / "legacy-demos" / "demo-recording-guide.md",
     ROOT / "docs" / "demo-audit.md",
     DEMO_SCRIPT,
 ]

@@ -189,12 +189,12 @@ def test_script_source_no_github_api() -> None:
 
 
 def test_gap_doc_exists() -> None:
-    path = REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md"
+    path = REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md"
     assert path.exists()
 
 
 def test_gap_doc_has_safety_posture() -> None:
-    path = REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md"
+    path = REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md"
     text = path.read_text(encoding="utf-8").lower()
     assert "live trading" in text
     assert "disabled by default" in text
@@ -203,13 +203,13 @@ def test_gap_doc_has_safety_posture() -> None:
 
 
 def test_gap_doc_has_non_goals() -> None:
-    path = REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md"
+    path = REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md"
     text = path.read_text(encoding="utf-8").lower()
     assert "non-goals" in text or "non goals" in text
 
 
 def test_gap_doc_has_do_not_build() -> None:
-    path = REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md"
+    path = REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md"
     text = path.read_text(encoding="utf-8").lower()
     assert "do-not-build" in text or "do not build" in text
 

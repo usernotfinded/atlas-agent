@@ -36,13 +36,13 @@ HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 
 GAP_FILE = REPO_ROOT / "tests" / "fixtures" / "v058_gap_prioritization.json"
-GAP_DOC = REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md"
+GAP_DOC = REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md"
 INVENTORY_FILE = REPO_ROOT / "tests" / "fixtures" / "product_capability_inventory.json"
 INVENTORY_DOC = REPO_ROOT / "docs" / "product-capability-inventory.md"
 
 REQUIRED_DOCS = [
     REPO_ROOT / "docs" / "product-capability-inventory.md",
-    REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md",
+    REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md",
     REPO_ROOT / "docs" / "release-evidence-bundle.md",
     REPO_ROOT / "docs" / "controlled-reviewer-outreach.md",
     REPO_ROOT / "docs" / "reviewer-outreach-checklist.md",
@@ -296,8 +296,8 @@ def _check_public_docs_safe() -> list[str]:
         REPO_ROOT / "docs" / "public-launch-readiness.md",
         REPO_ROOT / "docs" / "public-launch-messaging.md",
         REPO_ROOT / "docs" / "product-capability-inventory.md",
-        REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md",
-        REPO_ROOT / "docs" / "v0.5.8-rc1-readiness.md",
+        REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md",
+        REPO_ROOT / "docs" / "archive" / "release-candidates" / "v0.5.8-rc1-readiness.md",
     ]
     for path in scan_targets:
         if not path.exists():
@@ -314,7 +314,7 @@ def _check_safety_posture_in_docs() -> list[str]:
     # safety-posture references. README uses its own wording.
     targets = [
         REPO_ROOT / "docs" / "product-capability-inventory.md",
-        REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md",
+        REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md",
     ]
     for path in targets:
         if not path.exists():

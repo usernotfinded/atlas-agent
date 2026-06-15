@@ -16,7 +16,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GAP_FILE = REPO_ROOT / "tests" / "fixtures" / "v058_gap_prioritization.json"
-GAP_DOC = REPO_ROOT / "docs" / "v0.5.8-gap-prioritization.md"
+GAP_DOC = REPO_ROOT / "docs" / "archive" / "legacy-plans" / "v0.5.8-gap-prioritization.md"
 INVENTORY_FILE = REPO_ROOT / "tests" / "fixtures" / "product_capability_inventory.json"
 
 ALLOWED_PRIORITIES = {

@@ -183,6 +183,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "13h. docs archive hygiene check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_docs_archive_hygiene.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "13i. docs archive hygiene tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_docs_archive_hygiene.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "14. generated artifact hygiene tests"
 SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_generated_artifacts.py -q "${PYTEST_EXTRA_ARGS[@]}"

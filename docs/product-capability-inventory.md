@@ -24,7 +24,7 @@ This inventory is organized by capability group (e.g., Core workspace, Paper tra
 - **Public claim** tells you whether it is safe to mention the capability in public docs and outreach. `safe_to_claim` means yes; `do_not_claim` means it exists but should not be highlighted.
 - **Notes** provide implementation details, safety boundaries, and caveats.
 
-For the roadmap that turns these capabilities into prioritized work items, see the [v0.5.8 Gap Prioritization Plan](v0.5.8-gap-prioritization.md) and the [v0.6.x Roadmap](v0.6-roadmap.md).
+For the historical roadmap that turned these capabilities into prioritized work items, see the [archived v0.5.8 Gap Prioritization Plan](archive/legacy-plans/v0.5.8-gap-prioritization.md) and the current [v0.6.x Roadmap](v0.6-roadmap.md).
 
 ## How to read capability statuses
 

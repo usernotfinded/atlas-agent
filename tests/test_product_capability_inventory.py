@@ -249,7 +249,7 @@ def test_inventory_doc_has_how_to_read_section() -> None:
 def test_inventory_doc_links_to_gap_prioritization() -> None:
     path = REPO_ROOT / "docs" / "product-capability-inventory.md"
     text = path.read_text(encoding="utf-8")
-    assert "v0.5.8-gap-prioritization.md" in text or "v0.5.8 gap prioritization" in text.lower()
+    assert "archive/legacy-plans/v0.5.8-gap-prioritization.md" in text or "v0.5.8 gap prioritization" in text.lower()
 
 
 def test_inventory_avoids_profit_claims() -> None:

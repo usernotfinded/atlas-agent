@@ -147,6 +147,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "8g. docs archive hygiene check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_docs_archive_hygiene.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8h. docs archive hygiene tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_docs_archive_hygiene.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "9. public docs consistency"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py
@@ -286,6 +300,7 @@ SECONDS=0
     tests/test_env_templates.py \
     tests/test_product_demo_pack.py \
     tests/test_reviewer_trust_snapshot_workflow.py \
+    tests/test_docs_archive_hygiene.py \
     -q \
     "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))

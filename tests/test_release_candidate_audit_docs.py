@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 
-AUDIT_PATH = Path("docs/release-candidate-audit-v0.5.7.dev2.md")
+AUDIT_PATH = Path("docs/archive/release-candidates/release-candidate-audit-v0.5.7.dev2.md")
 
 
 class TestReleaseCandidateAuditDocs:
