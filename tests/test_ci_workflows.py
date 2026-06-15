@@ -133,22 +133,24 @@ class TestCiWorkflow:
         assert "check_stable_release_decision.py" in ci_content
 
     def test_includes_current_post_release_readiness(self, ci_content: str) -> None:
-        assert "check_v0610_release_prep.py --post-release" in ci_content
+        assert "check_v0611_release_prep.py --post-release" in ci_content
 
     def test_post_release_readiness_does_not_use_broad_or_true(self, ci_content: str) -> None:
         # The post-release step must not silence errors with || true
         lines = ci_content.splitlines()
         for i, line in enumerate(lines):
-            if "check_v0610_release_prep.py --post-release" in line:
+            if "check_v0611_release_prep.py --post-release" in line:
                 # Check the same line and next line for broad || true
                 window = "\n".join(lines[i : i + 2])
                 assert "|| true" not in window, "post-release check must not use || true"
                 break
         else:
-            pytest.fail("v0.6.10 post-release readiness step not found")
+            pytest.fail("v0.6.11 post-release readiness step not found")
 
-    def test_includes_next_release_prep_gate(self, ci_content: str) -> None:
-        assert "check_v0611_release_prep.py --release-prep" in ci_content
+    def test_does_not_include_stale_release_prep_gate(self, ci_content: str) -> None:
+        # After the v0.6.11 public cutover, the old release-prep gate must not remain.
+        assert "check_v0611_release_prep.py --release-prep" not in ci_content
+        assert "check_v0610_release_prep.py --post-release" not in ci_content
 
     def test_historical_release_checkers_are_not_direct_ci_gates(
         self, ci_content: str
@@ -170,7 +172,14 @@ class TestCiWorkflow:
         assert "check_no_protected_staged.py" in ci_content
 
     def test_does_not_require_secrets(self, ci_content: str) -> None:
-        assert "secrets." not in ci_content.lower()
+        # The only secret the read-only CI workflow may reference is the
+        # automatically-provided GITHUB_TOKEN, used to verify release visibility.
+        lower = ci_content.lower()
+        assert "secrets." not in lower or "secrets.github_token" in lower
+        # Reject any other secret names (e.g. API keys, personal tokens).
+        for line in lower.splitlines():
+            if "secrets." in line and "secrets.github_token" not in line:
+                pytest.fail(f"ci.yml references an unexpected secret: {line.strip()}")
 
     def test_does_not_mention_env_atlas(self, ci_content: str) -> None:
         assert ".env.atlas" not in ci_content
