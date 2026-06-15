@@ -136,6 +136,7 @@ brokers, enable trading, or require credentials.
 - [v0.6.2 Trust and Release Status](v0.6.2-status.md) (historical)
 - [v0.6.1 Trust and Release Status (historical)](v0.6.1-status.md)
 - [v0.6.0 Trust and Release Status (historical)](v0.6.0-status.md)
+- [Reviewer Trust Snapshot](reviewer-trust-snapshot.md) — compact release-identity and safety-posture summary
 - [SECURITY.md](../../SECURITY.md)
 - [Release Readiness](../security/release-readiness.md)
 - [Provider Audit Pack](../security/provider-audit-pack.md)

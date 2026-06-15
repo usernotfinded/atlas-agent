@@ -119,6 +119,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "8c. reviewer trust snapshot check (self-test)"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_reviewer_trust_snapshot.py --self-test
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8d. reviewer trust snapshot tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_reviewer_trust_snapshot.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "9. public docs consistency"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py

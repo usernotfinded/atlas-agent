@@ -122,3 +122,4 @@ Marketplace operators can ask candidates to submit the bundle alongside the demo
 - [Evidence Checker](../scripts/check_product_demo_evidence.py) — deterministic validation of a bundle.
 - [Marketplace Listing](marketplace-listing.md) — safe public description.
 - [Autonomy Roadmap](autonomy-roadmap.md) — bounded autonomy levels.
+- [Reviewer Trust Snapshot](trust/reviewer-trust-snapshot.md) — compact release-identity and safety-posture summary that can reference this bundle.

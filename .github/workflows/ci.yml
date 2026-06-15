@@ -60,6 +60,10 @@ jobs:
         run: python3.11 scripts/check_product_demo_pack.py
       - name: Product demo evidence tests (fast)
         run: python3.11 -m pytest tests/test_product_demo_evidence.py -m "not slow" -q
+      - name: Reviewer trust snapshot check (self-test)
+        run: python3.11 scripts/check_reviewer_trust_snapshot.py --self-test
+      - name: Reviewer trust snapshot tests (fast)
+        run: python3.11 -m pytest tests/test_reviewer_trust_snapshot.py -q
       - name: Trust center check
         run: python3.11 scripts/check_trust_center.py
       - name: Onboarding docs check

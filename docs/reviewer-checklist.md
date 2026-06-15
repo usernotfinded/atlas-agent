@@ -72,6 +72,11 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `scripts/build_product_demo_evidence.py` and `scripts/check_product_demo_evidence.py` are executable.
 - [ ] Running `./scripts/demo_product_walkthrough.sh --output-dir <path>` produces a valid evidence bundle.
 - [ ] `python3.11 scripts/check_product_demo_evidence.py <path>` passes on the generated bundle.
+- [ ] `scripts/build_reviewer_trust_snapshot.py` and `scripts/check_reviewer_trust_snapshot.py` are executable.
+- [ ] `python3.11 scripts/check_reviewer_trust_snapshot.py --self-test` passes.
+- [ ] `python3.11 -m pytest tests/test_reviewer_trust_snapshot.py -q` passes.
+- [ ] Running `python3.11 scripts/build_reviewer_trust_snapshot.py --output-dir <path>` produces a valid trust snapshot.
+- [ ] `python3.11 scripts/check_reviewer_trust_snapshot.py <path>` passes on the generated snapshot.
 - [ ] Demo scripts and docs run locally without credentials, API keys, broker setup, network calls, or live trading enablement.
 - [ ] Marketplace/outreach docs contain no profit, performance, live-trading-readiness, or autonomous-trading claims.
 - [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.

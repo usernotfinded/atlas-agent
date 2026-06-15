@@ -1,0 +1,146 @@
+# Atlas Agent Reviewer Trust Snapshot
+
+> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+
+## What is the reviewer trust snapshot?
+
+The reviewer trust snapshot is a **local, offline, deterministic artifact** produced by [`scripts/build_reviewer_trust_snapshot.py`](../../scripts/build_reviewer_trust_snapshot.py). It gives reviewers, founders, and marketplace operators a one-page Markdown summary plus a machine-readable JSON file that proves the project's current release identity, disabled-by-default safety posture, CI evidence references, and demo evidence checksum.
+
+The snapshot is intentionally small and self-contained so it can be handed to an external reviewer without exposing credentials, broker details, provider API keys, or private financial data.
+
+## What it proves
+
+- Current source/package version and public release identity.
+- Next planned release line.
+- Whether PyPI was published (it was not).
+- Whether a GitHub release/tag exists for the current public release.
+- CI run IDs supplied by the builder.
+- A deterministic checksum reference for a CAND-002 product demo evidence bundle.
+- All required safety invariants are set to their expected values:
+  - `live_trading_disabled_by_default: true`
+  - `live_submit_disabled_by_default: true`
+  - `provider_execution_disabled_by_default: true`
+  - `broker_execution_disabled_by_default: true`
+  - `credentials_required_for_demo: false`
+  - `network_required_for_demo: false`
+  - `autonomous_trading_claimed: false`
+  - `profit_claims_absent: true`
+  - `no_risk_claims_absent: true`
+
+## What it does not prove
+
+- It does not prove profitability, strategy correctness, or future performance.
+- It does not prove production readiness or suitability for live trading.
+- It does not prove real-market behavior, broker connectivity, or provider reliability.
+- CI run IDs are provided by the operator at build time and are not independently verified against GitHub.
+
+## Build a snapshot
+
+```bash
+python3.11 -m pip install -e .
+python3.11 scripts/build_reviewer_trust_snapshot.py --output-dir ./artifacts/trust-snapshot
+```
+
+Use `--deterministic` to produce stable timestamps and sorted output for tests:
+
+```bash
+python3.11 scripts/build_reviewer_trust_snapshot.py \
+  --output-dir ./artifacts/trust-snapshot \
+  --deterministic
+```
+
+### Pass CI run IDs
+
+```bash
+python3.11 scripts/build_reviewer_trust_snapshot.py \
+  --output-dir ./artifacts/trust-snapshot \
+  --ci-run-id 27578051644 \
+  --research-ci-run-id 27577320648
+```
+
+`--ci-run-id` may be repeated if multiple main CI runs are relevant.
+
+### Link a CAND-002 evidence bundle
+
+```bash
+python3.11 scripts/build_reviewer_trust_snapshot.py \
+  --output-dir ./artifacts/trust-snapshot \
+  --evidence-bundle ./artifacts/product_demo/my-evidence \
+  --ci-run-id 27578051644 \
+  --research-ci-run-id 27577320648
+```
+
+The builder computes a stable SHA-256 checksum over the bundle contents and records it in `reviewer-trust-snapshot.json` and `reviewer-trust-snapshot.md`.
+
+## Validate a snapshot
+
+```bash
+python3.11 scripts/check_reviewer_trust_snapshot.py ./artifacts/trust-snapshot
+```
+
+JSON output:
+
+```bash
+python3.11 scripts/check_reviewer_trust_snapshot.py ./artifacts/trust-snapshot --json
+```
+
+Self-test mode (builds a deterministic temp snapshot and validates it):
+
+```bash
+python3.11 scripts/check_reviewer_trust_snapshot.py --self-test
+```
+
+The checker fails closed if any of the following are true:
+
+- A required file is missing.
+- `reviewer-trust-snapshot.json` has an unsafe value such as `live_trading_disabled_by_default: false`.
+- `pypi_published` is not `false`.
+- Required Markdown sections or safety phrases are missing.
+- A secret-like pattern or forbidden marketing claim appears in any snapshot file.
+- A recorded checksum does not match the file.
+
+## Snapshot contents
+
+| File | Purpose |
+|---|---|
+| `reviewer-trust-snapshot.json` | Machine-readable snapshot schema with release identity, safety invariants, capability status, and checksums. |
+| `reviewer-trust-snapshot.md` | One-page human-readable summary for reviewers and marketplace operators. |
+| `checksums.sha256` | SHA-256 checksums of every file in the snapshot (except this file). |
+
+## JSON schema
+
+Key fields (all required):
+
+| Field | Expected value | Meaning |
+|---|---|---|
+| `schema_version` | `"atlas-reviewer-trust-snapshot/1.0"` | Snapshot schema version. |
+| `generated_at` | ISO-8601 timestamp or deterministic placeholder | When the snapshot was produced. |
+| `repository` | `"usernotfinded/atlas-agent"` | Repository identifier. |
+| `source_version` | e.g. `"0.6.11"` | Current source/package version. |
+| `current_public_release` | e.g. `"v0.6.11"` | Current public GitHub release. |
+| `next_planned_release` | e.g. `"v0.6.12"` | Next planned release line. |
+| `pypi_published` | `false` | PyPI publication status. |
+| `release_status` | human-readable string | Summary of release/tag/PyPI state. |
+| `ci_runs` | object | Supplied CI run IDs and explanatory note. |
+| `evidence_bundle` | object or `null` | Evidence bundle path, checksum, and file count. |
+| `safety_invariants` | object of booleans | All values must match expected. |
+| `capability_status` | object of strings | Default state of key capabilities. |
+| `forbidden_claims_absent` | object of booleans | All values must be `true`. |
+| `generated_files` | object | Relative paths of generated files. |
+| `checksums` | object | SHA-256 of generated files. |
+
+## Safety and scope
+
+The builder and checker are:
+
+- **Local-only**: no network calls.
+- **Credential-free**: no API keys, broker credentials, or secrets loaded.
+- **Read-only**: no broker orders, provider calls, or live trading enabled.
+- **Deterministic**: `--deterministic` produces stable output for tests and diffs.
+
+## Related docs and scripts
+
+- [Product Demo Evidence Bundle](../product-demo-evidence.md) — CAND-002 evidence bundle.
+- [Product Demo and Marketplace Readiness Pack](../product-demo-pack.md) — CAND-001 overview.
+- [Atlas Agent Trust Center](README.md) — trust center entry point.
+- [Trust and Release Status](v0.6.11-status.md) — current public release status.

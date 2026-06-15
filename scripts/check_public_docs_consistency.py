@@ -52,6 +52,7 @@ PUBLIC_DOC_PATHS = [
     REPO_ROOT / "docs" / "marketplace-listing.md",
     REPO_ROOT / "docs" / "autonomy-roadmap.md",
     REPO_ROOT / "docs" / "product-demo-evidence.md",
+    REPO_ROOT / "docs" / "trust" / "reviewer-trust-snapshot.md",
     REPO_ROOT / "docs" / "safety.md",
     REPO_ROOT / "docs" / "kill-switch.md",
     REPO_ROOT / "docs" / "live-trading.md",

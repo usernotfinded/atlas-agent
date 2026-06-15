@@ -181,6 +181,7 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.
+- **[Reviewer Trust Snapshot](docs/trust/reviewer-trust-snapshot.md)** — compact one-page release-identity and safety-posture summary for external reviewers, founders, and marketplace operators.
 - **[Provider Preflight Dry-Run](docs/demo/provider-preflight-demo.md)** — local provider preflight smoke chain and manual pipeline.
 - **[Provider Safety Dossier](docs/provider-safety-dossier.md)** — offline mock workflow for the provider response pipeline.
 - **[Risk Rejection](docs/demo-risk-rejection.md)** — see how deterministic risk gates block unsafe orders.

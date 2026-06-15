@@ -23,6 +23,8 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_public_launch_messaging.py` — launch messaging is safe
 - `python3.11 scripts/check_product_demo_pack.py` — product demo and marketplace readiness pack is present and safe
 - `python3.11 scripts/check_product_demo_evidence.py <bundle-dir>` — generated evidence bundle is schema-valid and safe
+- `python3.11 scripts/check_reviewer_trust_snapshot.py --self-test` — reviewer trust snapshot builds and validates locally
+- `python3.11 -m pytest tests/test_reviewer_trust_snapshot.py -q` — trust snapshot tests pass
 - `python3.11 -m pytest tests/test_public_launch_readiness.py` — launch readiness tests pass
 - `python3.11 -m pytest tests/test_public_launch_messaging.py` — launch messaging tests pass
 - `python3.11 -m pytest tests/test_product_demo_pack.py` — product demo pack tests pass
