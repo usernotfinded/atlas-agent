@@ -44,6 +44,7 @@ def test_historical_release_checkers_are_not_in_active_scripts_root() -> None:
         "check_v0610_planning.py",
         "check_v0610_release_prep.py",
         "check_v0611_planning.py",
+        "check_v0611_release_prep.py",
         "check_version_consistency.py",
     }.issubset(active_names)
 
@@ -55,6 +56,9 @@ def test_active_gates_use_current_release_state_checkers() -> None:
         ".github/workflows/ci.yml",
     ):
         text = (ROOT / relative_path).read_text(encoding="utf-8")
-        assert "scripts/check_v0610_release_prep.py --post-release" in text
-        assert "scripts/check_v0611_release_prep.py --release-prep" in text
+        # After the v0.6.11 public cutover, the active gate is the v0.6.11
+        # post-release checker. Stale release-prep gates must not remain.
+        assert "scripts/check_v0611_release_prep.py --post-release" in text
+        assert "scripts/check_v0610_release_prep.py --post-release" not in text
+        assert "scripts/check_v0611_release_prep.py --release-prep" not in text
         assert "scripts/historical_release_checkers/" not in text
