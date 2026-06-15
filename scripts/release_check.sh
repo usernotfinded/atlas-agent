@@ -194,6 +194,25 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "12. product demo walkthrough with evidence bundle"
+echo "========================================"
+SECONDS=0
+PRODUCT_DEMO_EVIDENCE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/atlas-agent-release-evidence.XXXXXX")"
+./scripts/demo_product_walkthrough.sh --output-dir "$PRODUCT_DEMO_EVIDENCE_DIR" --deterministic
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "13. product demo evidence check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_product_demo_evidence.py "$PRODUCT_DEMO_EVIDENCE_DIR"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "All release checks passed."
 echo "Total elapsed: ${TOTAL_ELAPSED}s"
 echo "========================================"

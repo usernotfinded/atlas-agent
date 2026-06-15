@@ -148,6 +148,13 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "13c. product demo evidence tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_product_demo_evidence.py -m "not slow" -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "14. generated artifact hygiene tests"
 SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_generated_artifacts.py -q "${PYTEST_EXTRA_ARGS[@]}"

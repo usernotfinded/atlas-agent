@@ -69,6 +69,9 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `docs/product-demo-pack.md`, `docs/marketplace-listing.md`, and `docs/autonomy-roadmap.md` are present.
 - [ ] `scripts/demo_product_walkthrough.sh` is executable and uses `--mode paper --dry-run`.
 - [ ] `scripts/check_product_demo_pack.py` is executable and passes.
+- [ ] `scripts/build_product_demo_evidence.py` and `scripts/check_product_demo_evidence.py` are executable.
+- [ ] Running `./scripts/demo_product_walkthrough.sh --output-dir <path>` produces a valid evidence bundle.
+- [ ] `python3.11 scripts/check_product_demo_evidence.py <path>` passes on the generated bundle.
 - [ ] Demo scripts and docs run locally without credentials, API keys, broker setup, network calls, or live trading enablement.
 - [ ] Marketplace/outreach docs contain no profit, performance, live-trading-readiness, or autonomous-trading claims.
 - [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.

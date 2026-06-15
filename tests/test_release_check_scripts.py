@@ -444,6 +444,26 @@ class TestReleaseCheckSh:
         )
         fake_demo_research.chmod(0o755)
 
+        # Fake demo_product_walkthrough.sh (used by release_check.sh full mode)
+        fake_demo_product = scripts_dir / "demo_product_walkthrough.sh"
+        fake_demo_product.write_text(
+            '#!/usr/bin/env bash\n'
+            'set -euo pipefail\n'
+            'MARKER_DIR="' + str(marker_dir) + '"\n'
+            'touch "$MARKER_DIR/demo_product_walkthrough.marker"\n'
+            'while [[ $# -gt 0 ]]; do\n'
+            '  case "$1" in\n'
+            '    --output-dir) mkdir -p "$2"; shift 2 ;;\n'
+            '    --deterministic|--keep-workspace|--no-output) shift ;;\n'
+            '    --help|-h) exit 0 ;;\n'
+            '    *) printf "Unknown option: %s\\n" "$1" >&2; exit 1 ;;\n'
+            '  esac\n'
+            'done\n'
+            'exit 0\n',
+            encoding="utf-8",
+        )
+        fake_demo_product.chmod(0o755)
+
         # Fake dev_check.sh
         fake_dev = scripts_dir / "dev_check.sh"
         fake_dev.write_text(
@@ -918,6 +938,8 @@ class TestReleaseCheckTieredModes:
         assert "pip check" in content
         assert "demo_paper_workflow.sh" in content
         assert "demo_research_workflow.sh" in content
+        assert "demo_product_walkthrough.sh" in content
+        assert "check_product_demo_evidence.py" in content
         assert "git diff --check" in content
         assert "git diff --cached --check" in content
 

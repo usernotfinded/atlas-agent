@@ -69,6 +69,13 @@ The canonical demo is a single script that creates a temporary paper workspace, 
 ./scripts/demo_product_walkthrough.sh
 ```
 
+Optionally generate a reviewable evidence bundle for marketplace or reviewer evaluation:
+
+```bash
+./scripts/demo_product_walkthrough.sh --output-dir ./atlas-evidence --deterministic
+python3.11 scripts/check_product_demo_evidence.py ./atlas-evidence
+```
+
 What it does:
 - Creates an isolated temporary workspace.
 - Runs `atlas init`, `atlas discipline setup`, `atlas config set market.symbol ATLAS-DEMO`.

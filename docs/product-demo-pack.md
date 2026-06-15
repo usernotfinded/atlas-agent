@@ -98,6 +98,11 @@ python3.11 scripts/check_demo_proof.py
 python3.11 scripts/check_forbidden_claims.py
 python3.11 scripts/check_public_docs_consistency.py
 python3.11 scripts/check_product_demo_pack.py
+
+# Generate and validate a reviewable evidence bundle
+./scripts/demo_product_walkthrough.sh --output-dir /tmp/atlas-evidence --deterministic
+python3.11 scripts/check_product_demo_evidence.py /tmp/atlas-evidence
+
 ./scripts/release_check.sh --quick
 ```
 
@@ -227,6 +232,17 @@ Notes:
 
 See [Demo Artifact Index](demo-artifact-index.md) for a complete indexed view of each artifact, its purpose, and the safety invariant it demonstrates.
 
+## Product demo evidence bundle
+
+For reviewer-facing, deterministic proof that the demo ran in paper/dry-run mode without credentials, provider calls, broker contact, or network access, use the optional evidence bundle:
+
+```bash
+./scripts/demo_product_walkthrough.sh --output-dir /tmp/atlas-evidence --deterministic
+python3.11 scripts/check_product_demo_evidence.py /tmp/atlas-evidence
+```
+
+The bundle includes `evidence.json`, `summary.md`, `safety-boundaries.md`, `artifacts-index.md`, `commands.txt`, captured command outputs, copied workspace artifacts, and `checksums.sha256`. See [Product Demo Evidence](product-demo-evidence.md) for the full contract.
+
 ### Success criteria
 
 - All demo scripts and checks exit with code `0`.
@@ -292,6 +308,7 @@ Use this flow when showing Atlas to someone who has never seen the repo.
 - [Feedback Request Guide](feedback-request-guide.md) — how to ask for technical feedback safely.
 - [Marketplace Listing](marketplace-listing.md) — safe, copy-pasteable public listing.
 - [Autonomy Roadmap](autonomy-roadmap.md) — bounded autonomy levels from research to supervised live suggestions.
+- [Product Demo Evidence](product-demo-evidence.md) — deterministic evidence bundle contract and reviewer guide.
 - [scripts/demo_product_walkthrough.sh](../scripts/demo_product_walkthrough.sh) — one-command product walkthrough (canonical demo for this pack).
 - [scripts/demo_paper_workflow.sh](../scripts/demo_paper_workflow.sh) — legacy one-command paper workflow.
 - [scripts/check_product_demo_pack.py](../scripts/check_product_demo_pack.py) — deterministic static checker for this pack.
