@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -146,6 +147,10 @@ def _load_commands(commands_file: Path | None) -> list[str]:
     ]
 
 
+def _paper_mode_from_config(config_text: str) -> bool:
+    return bool(re.search(r'trading_mode\s*=\s*"?paper"?', config_text))
+
+
 def _evaluate_safety(
     output_dir: Path, output_files: dict[str, Path], artifact_paths: dict[str, str]
 ) -> dict[str, bool]:
@@ -155,18 +160,23 @@ def _evaluate_safety(
     doctor_text = _read_lower(
         output_dir / output_files["doctor"] if "doctor" in output_files else None
     )
+    paper_dry_run_text = _read_lower(
+        output_dir / output_files["paper-dry-run"] if "paper-dry-run" in output_files else None
+    )
     config_text = _read_lower(
         output_dir / artifact_paths.get("config_toml", "") if "config_toml" in artifact_paths else None
     )
-    combined = validate_text + "\n" + doctor_text
+    combined = validate_text + "\n" + doctor_text + "\n" + paper_dry_run_text
 
     return {
         "live_trading_disabled": (
             ("live trading" in validate_text and ("disabled" in validate_text or "false" in validate_text))
             or ("live_execution_blocked" in doctor_text and "true" in doctor_text)
         ),
-        "paper_mode": 'trading_mode = "paper"' in config_text or (
-            "paper" in validate_text and "mode" in validate_text
+        "paper_mode": (
+            _paper_mode_from_config(config_text)
+            or "requested mode: paper" in paper_dry_run_text
+            or "paper" in validate_text
         ),
         "provider_execution_locked": (
             (("provider execution" in combined or "provider_execution" in combined)
