@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""Read-only v0.6.10 release prep checker.
+"""Read-only v0.6.11 release prep checker.
 
-Supports two modes:
-- Planning mode (default): validates that v0.6.10 release artifacts do not
-  exist prematurely while the source version remains 0.6.9.
-- Release-prep mode (--release-prep): validates that v0.6.10 release prep
-  artifacts are present after the version bump.
+Supports three modes:
+- Planning mode (default): validates that v0.6.11 release artifacts do not
+  exist prematurely while the source version remains 0.6.10.
+- Release-prep mode (--release-prep): validates that v0.6.11 release prep
+  artifacts are present and that v0.6.11 is prepared but not public.
+- Post-release mode (--post-release): validates that v0.6.11 is the current
+  public release (for use after cutover).
 
 Exit codes:
   0 = valid
   1 = blocking findings
   2 = operational error
 
-Deterministic and local. Does not:
-- call network
+Deterministic and local except for optional GitHub Release visibility via `gh`,
+which is treated as a warning if unavailable. Does not:
 - publish
 - tag
 - push
@@ -26,6 +28,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -35,21 +39,22 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
-RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.10.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.10-status.md"
-CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.10-candidates.md"
-CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.10-candidates.json"
-V069_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.9.md"
-V069_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.9-status.md"
+RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.11.md"
+TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.11-status.md"
+CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.11-candidates.md"
+CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.11-candidates.json"
+V0610_RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.10.md"
+V0610_TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.10-status.md"
 README = REPO_ROOT / "README.md"
 SECURITY = REPO_ROOT / "SECURITY.md"
 TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
-BACKTEST_SCHEMA_CHECKER = REPO_ROOT / "scripts" / "check_backtest_report_schema.py"
 RELEASE_METADATA = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
 
-PLANNING_VERSION = "0.6.9"
-RELEASE_VERSION = "0.6.10"
-PUBLIC_TAG = "v0.6.10"
+PLANNING_VERSION = "0.6.10"
+RELEASE_VERSION = "0.6.11"
+PUBLIC_TAG = "v0.6.11"
+CURRENT_PUBLIC_TAG = "v0.6.10"
+NEXT_PLANNED_TAG = "v0.6.12"
 
 UNSAFE_CLAIMS = [
     "tag created",
@@ -66,7 +71,7 @@ UNSAFE_CLAIMS = [
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {
-        "artifact_type": "v0610_release_prep_report",
+        "artifact_type": "v0611_release_prep_report",
         "schema_version": 1,
         "valid": False,
         "mode": "unknown",
@@ -170,7 +175,7 @@ def _check_all_selected_candidates_implemented() -> list[str]:
     selected_not_implemented = [
         c["id"]
         for c in candidates
-        if c.get("selected_for_v0610") and not c.get("implemented")
+        if c.get("selected_for_v0611") and not c.get("implemented")
     ]
     if selected_not_implemented:
         errors.append(
@@ -264,12 +269,12 @@ def _check_no_tag_claim() -> list[str]:
     return errors
 
 
-def _check_v069_history_intact() -> list[str]:
+def _check_v0610_history_intact() -> list[str]:
     errors: list[str] = []
-    if not V069_RELEASE_NOTES.exists():
-        errors.append(f"v0.6.9 history missing: {V069_RELEASE_NOTES}")
-    if not V069_TRUST_STATUS.exists():
-        errors.append(f"v0.6.9 trust status missing: {V069_TRUST_STATUS}")
+    if not V0610_RELEASE_NOTES.exists():
+        errors.append(f"v0.6.10 history missing: {V0610_RELEASE_NOTES}")
+    if not V0610_TRUST_STATUS.exists():
+        errors.append(f"v0.6.10 trust status missing: {V0610_TRUST_STATUS}")
     return errors
 
 
@@ -279,10 +284,10 @@ def _check_readme_version() -> list[str]:
         errors.append(f"README missing: {README}")
         return errors
     text = README.read_text(encoding="utf-8")
-    if "package/source version is `0.6.10`" not in text:
-        errors.append("README does not state package/source version is 0.6.10")
-    if "Current Status (v0.6.10)" not in text:
-        errors.append("README does not contain Current Status (v0.6.10)")
+    if "package/source version is `0.6.11`" not in text:
+        errors.append("README does not state package/source version is 0.6.11")
+    if "Current Status (v0.6.11)" not in text:
+        errors.append("README does not contain Current Status (v0.6.11)")
     return errors
 
 
@@ -292,10 +297,10 @@ def _check_security_version() -> list[str]:
         errors.append(f"SECURITY.md missing: {SECURITY}")
         return errors
     text = SECURITY.read_text(encoding="utf-8")
-    if "0.6.10 (main)" not in text:
-        errors.append("SECURITY.md does not list 0.6.10 (main) as current source version")
-    if "0.6.9" not in text:
-        errors.append("SECURITY.md does not mention 0.6.9")
+    if "0.6.11 (main)" not in text:
+        errors.append("SECURITY.md does not list 0.6.11 (main) as current source version")
+    if "0.6.10" not in text:
+        errors.append("SECURITY.md does not mention 0.6.10")
     return errors
 
 
@@ -305,31 +310,14 @@ def _check_trust_readme_version() -> list[str]:
         errors.append(f"Trust README missing: {TRUST_README}")
         return errors
     text = TRUST_README.read_text(encoding="utf-8")
-    if "Source package version on `main`: `0.6.10`" not in text:
-        errors.append("Trust README does not state source package version on main is 0.6.10")
+    if "Source package version on `main`: `0.6.11`" not in text:
+        errors.append("Trust README does not state source package version on main is 0.6.11")
     if "Public v0.6.10" not in text:
         errors.append("Trust README does not mention public v0.6.10")
     return errors
 
 
-def _check_backtest_schema_checker_present() -> list[str]:
-    errors: list[str] = []
-    if not BACKTEST_SCHEMA_CHECKER.exists():
-        errors.append(f"Backtest report schema checker missing: {BACKTEST_SCHEMA_CHECKER}")
-    return errors
-
-
-def _check_backtest_schema_referenced_in_release_notes() -> list[str]:
-    errors: list[str] = []
-    if not RELEASE_NOTES.exists():
-        return errors
-    text = RELEASE_NOTES.read_text(encoding="utf-8").lower()
-    if "check_backtest_report_schema" not in text:
-        errors.append("Release notes do not reference check_backtest_report_schema.py")
-    return errors
-
-
-def _check_release_metadata() -> list[str]:
+def _check_release_metadata_release_prep() -> list[str]:
     errors: list[str] = []
     if not RELEASE_METADATA.exists():
         errors.append(f"Release metadata missing: {RELEASE_METADATA}")
@@ -343,27 +331,30 @@ def _check_release_metadata() -> list[str]:
         errors.append(
             f"source_version mismatch: expected {RELEASE_VERSION}, got {data.get('source_version')}"
         )
-    if data.get("current_public_release") != "v0.6.9":
+    if data.get("current_public_release") != CURRENT_PUBLIC_TAG:
         errors.append(
-            f"current_public_release mismatch: expected v0.6.9, got {data.get('current_public_release')}"
+            f"current_public_release mismatch: expected {CURRENT_PUBLIC_TAG}, got {data.get('current_public_release')}"
         )
-    if data.get("next_planned_release") != "v0.6.11":
+    if data.get("next_planned_release") != NEXT_PLANNED_TAG:
         errors.append(
-            f"next_planned_release mismatch: expected v0.6.11, got {data.get('next_planned_release')}"
+            f"next_planned_release mismatch: expected {NEXT_PLANNED_TAG}, got {data.get('next_planned_release')}"
         )
     if data.get("pypi_published") is not False:
         errors.append("pypi_published must be false in release-prep mode")
     releases = data.get("releases", [])
-    v0610 = next((r for r in releases if r.get("tag") == PUBLIC_TAG), None)
-    if v0610 is None:
+    v0611 = next((r for r in releases if r.get("tag") == PUBLIC_TAG), None)
+    if v0611 is None:
         errors.append(f"Release metadata missing {PUBLIC_TAG} record")
     else:
-        if v0610.get("status") != "prepared":
+        if v0611.get("status") != "prepared":
             errors.append(f"{PUBLIC_TAG} status must be 'prepared'")
-        if v0610.get("github_release") is not False:
+        if v0611.get("github_release") is not False:
             errors.append(f"{PUBLIC_TAG} github_release must be false")
-        if v0610.get("pypi_published") is not False:
+        if v0611.get("pypi_published") is not False:
             errors.append(f"{PUBLIC_TAG} pypi_published must be false")
+    v0610 = next((r for r in releases if r.get("tag") == CURRENT_PUBLIC_TAG), None)
+    if v0610 is not None and v0610.get("status") != "current_public":
+        errors.append("v0.6.10 status must be 'current_public'")
     return errors
 
 
@@ -377,33 +368,121 @@ def _check_release_metadata_post_release() -> list[str]:
     except json.JSONDecodeError as exc:
         errors.append(f"Invalid release metadata JSON: {exc}")
         return errors
-    # Source version moves on after release prep; only validate current-public claims.
+    if data.get("source_version") != RELEASE_VERSION:
+        errors.append(
+            f"source_version mismatch: expected {RELEASE_VERSION}, got {data.get('source_version')}"
+        )
     if data.get("current_public_release") != PUBLIC_TAG:
         errors.append(
             f"current_public_release mismatch: expected {PUBLIC_TAG}, got {data.get('current_public_release')}"
         )
-    # v0.6.10 post-release mode is valid while the next release is still prepared.
-    next_planned = data.get("next_planned_release")
-    if next_planned not in ("v0.6.11", "v0.6.12"):
+    if data.get("next_planned_release") != "v0.6.12":
         errors.append(
-            f"next_planned_release mismatch: expected v0.6.11 or v0.6.12, got {next_planned}"
+            f"next_planned_release mismatch: expected v0.6.12, got {data.get('next_planned_release')}"
         )
     if data.get("pypi_published") is not False:
         errors.append("pypi_published must be false in post-release mode")
     releases = data.get("releases", [])
-    v0610 = next((r for r in releases if r.get("tag") == PUBLIC_TAG), None)
-    if v0610 is None:
+    v0611 = next((r for r in releases if r.get("tag") == PUBLIC_TAG), None)
+    if v0611 is None:
         errors.append(f"Release metadata missing {PUBLIC_TAG} record")
     else:
-        if v0610.get("status") != "current_public":
+        if v0611.get("status") != "current_public":
             errors.append(f"{PUBLIC_TAG} status must be 'current_public'")
-        if v0610.get("github_release") is not True:
+        if v0611.get("github_release") is not True:
             errors.append(f"{PUBLIC_TAG} github_release must be true")
-        if v0610.get("pypi_published") is not False:
+        if v0611.get("pypi_published") is not False:
             errors.append(f"{PUBLIC_TAG} pypi_published must be false")
-    v069 = next((r for r in releases if r.get("tag") == "v0.6.9"), None)
-    if v069 is not None and v069.get("status") != "historical":
-        errors.append("v0.6.9 status must be 'historical'")
+    v0610 = next((r for r in releases if r.get("tag") == CURRENT_PUBLIC_TAG), None)
+    if v0610 is not None and v0610.get("status") != "historical":
+        errors.append("v0.6.10 status must be 'historical'")
+    return errors
+
+
+def _check_no_v0611_local_tag() -> tuple[list[str], list[str]]:
+    """Return (errors, warnings). Check local git tag v0.6.11 does not exist."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    try:
+        result = subprocess.run(
+            ["git", "tag", "--list", PUBLIC_TAG],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        if result.returncode != 0:
+            warnings.append(f"Could not list local git tags: {result.stderr.strip()}")
+        elif PUBLIC_TAG in result.stdout.splitlines():
+            errors.append(f"Local git tag {PUBLIC_TAG} already exists")
+    except FileNotFoundError:
+        warnings.append("git not available; cannot verify local tag absence")
+    return errors, warnings
+
+
+def _check_no_v0611_github_release() -> tuple[list[str], list[str]]:
+    """Return (errors, warnings). Check GitHub Release v0.6.11 does not exist."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    if shutil.which("gh") is None:
+        warnings.append("GitHub CLI (gh) not available; cannot verify GitHub Release absence")
+        return errors, warnings
+    try:
+        result = subprocess.run(
+            ["gh", "release", "view", PUBLIC_TAG, "--repo", "usernotfinded/atlas-agent"],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        if result.returncode == 0:
+            errors.append(f"GitHub Release {PUBLIC_TAG} already exists")
+    except Exception as exc:
+        warnings.append(f"Could not query GitHub Release status: {exc}")
+    return errors, warnings
+
+
+def _check_v0611_github_release_exists() -> tuple[list[str], list[str]]:
+    """Return (errors, warnings). Check GitHub Release v0.6.11 exists."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    if shutil.which("gh") is None:
+        warnings.append("GitHub CLI (gh) not available; cannot verify GitHub Release existence")
+        return errors, warnings
+    try:
+        result = subprocess.run(
+            ["gh", "release", "view", PUBLIC_TAG, "--repo", "usernotfinded/atlas-agent"],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        if result.returncode != 0:
+            errors.append(f"GitHub Release {PUBLIC_TAG} not found")
+    except Exception as exc:
+        warnings.append(f"Could not query GitHub Release status: {exc}")
+    return errors, warnings
+
+
+def _check_no_premature_public_claims() -> list[str]:
+    """Scan release notes and trust status for premature public-release claims."""
+    errors: list[str] = []
+    premature_phrases = [
+        ("current public release", "is current public release"),
+        ("latest stable public", "is latest stable public"),
+        ("tagged and published", "is tagged and published"),
+    ]
+    for path in (RELEASE_NOTES, TRUST_STATUS):
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8").lower()
+        # Positive claims that v0.6.11 is public/tagged/published
+        if f"{PUBLIC_TAG} is the current public" in text:
+            errors.append(f"{path.name} claims {PUBLIC_TAG} is current public release")
+        if f"{PUBLIC_TAG} is the latest stable public" in text:
+            errors.append(f"{path.name} claims {PUBLIC_TAG} is latest stable public release")
+        if f"github release: {PUBLIC_TAG} (current public)" in text:
+            errors.append(f"{path.name} claims GitHub release {PUBLIC_TAG} is current public")
+        # Check for "tagged and published" applied to v0.6.11
+        if f"{PUBLIC_TAG} (tagged" in text and "published" in text:
+            errors.append(f"{path.name} may claim {PUBLIC_TAG} is tagged and published")
     return errors
 
 
@@ -428,31 +507,41 @@ def run_check(
         mode = "planning"
 
     if release_prep or post_release:
-        if release_prep:
-            checks.append("release_prep_version")
-            errors.extend(_check_release_prep_version())
+        checks.append("release_prep_version")
+        errors.extend(_check_release_prep_version())
         checks.append("release_notes_exist")
         errors.extend(_check_release_notes_exist())
         checks.append("trust_status_exists")
         errors.extend(_check_trust_status_exists())
         checks.append("changelog_entry")
         errors.extend(_check_changelog_entry_release_prep())
-        if release_prep:
-            checks.append("readme_version")
-            errors.extend(_check_readme_version())
-            checks.append("security_version")
-            errors.extend(_check_security_version())
-            checks.append("trust_readme_version")
-            errors.extend(_check_trust_readme_version())
-        checks.append("backtest_schema_checker_present")
-        errors.extend(_check_backtest_schema_checker_present())
-        checks.append("backtest_schema_referenced_in_release_notes")
-        errors.extend(_check_backtest_schema_referenced_in_release_notes())
+        checks.append("readme_version")
+        errors.extend(_check_readme_version())
+        checks.append("security_version")
+        errors.extend(_check_security_version())
+        checks.append("trust_readme_version")
+        errors.extend(_check_trust_readme_version())
         checks.append("release_metadata")
         if post_release:
             errors.extend(_check_release_metadata_post_release())
         else:
-            errors.extend(_check_release_metadata())
+            errors.extend(_check_release_metadata_release_prep())
+        checks.append("no_v0611_local_tag")
+        tag_errors, tag_warnings = _check_no_v0611_local_tag()
+        errors.extend(tag_errors)
+        warnings.extend(tag_warnings)
+        checks.append("no_premature_public_claims")
+        errors.extend(_check_no_premature_public_claims())
+        if release_prep:
+            checks.append("no_v0611_github_release")
+            gh_errors, gh_warnings = _check_no_v0611_github_release()
+            errors.extend(gh_errors)
+            warnings.extend(gh_warnings)
+        else:
+            checks.append("v0611_github_release_exists")
+            gh_errors, gh_warnings = _check_v0611_github_release_exists()
+            errors.extend(gh_errors)
+            warnings.extend(gh_warnings)
     else:
         checks.append("planning_version")
         errors.extend(_check_planning_version())
@@ -482,12 +571,12 @@ def run_check(
             checks.append("no_tag_claim")
             errors.extend(_check_no_tag_claim())
 
-    checks.append("v069_history_intact")
-    errors.extend(_check_v069_history_intact())
+    checks.append("v0610_history_intact")
+    errors.extend(_check_v0610_history_intact())
 
     valid = len(errors) == 0
     result = {
-        "artifact_type": "v0610_release_prep_report",
+        "artifact_type": "v0611_release_prep_report",
         "schema_version": 1,
         "valid": valid,
         "mode": mode,
@@ -500,17 +589,17 @@ def run_check(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="v0.6.10 release prep checker")
+    parser = argparse.ArgumentParser(description="v0.6.11 release prep checker")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     parser.add_argument(
         "--release-prep",
         action="store_true",
-        help="Validate release-prep state (version bumped, artifacts present)",
+        help="Validate release-prep state (version bumped, artifacts present, not public)",
     )
     parser.add_argument(
         "--post-release",
         action="store_true",
-        help="Validate post-release state (v0.6.10 is current public release)",
+        help="Validate post-release state (v0.6.11 is current public release)",
     )
     args = parser.parse_args(argv)
 
@@ -522,7 +611,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     except Exception as exc:
         result = {
-            "artifact_type": "v0610_release_prep_report",
+            "artifact_type": "v0611_release_prep_report",
             "schema_version": 1,
             "valid": False,
             "mode": "unknown",
@@ -541,7 +630,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         status = "PASS" if result["valid"] else "FAIL"
         mode_label = result["mode"]
-        print(f"v0.6.10 release prep check ({mode_label}) {status}")
+        print(f"v0.6.11 release prep check ({mode_label}) {status}")
         if result["errors"]:
             for err in result["errors"]:
                 print(f"  ERROR: {err}")

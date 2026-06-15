@@ -56,5 +56,5 @@ def test_active_gates_use_current_release_state_checkers() -> None:
     ):
         text = (ROOT / relative_path).read_text(encoding="utf-8")
         assert "scripts/check_v0610_release_prep.py --post-release" in text
-        assert "scripts/check_v0611_planning.py" in text
+        assert "scripts/check_v0611_release_prep.py --release-prep" in text
         assert "scripts/historical_release_checkers/" not in text

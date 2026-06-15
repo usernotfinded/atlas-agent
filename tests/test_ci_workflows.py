@@ -147,8 +147,8 @@ class TestCiWorkflow:
         else:
             pytest.fail("v0.6.10 post-release readiness step not found")
 
-    def test_includes_next_release_planning_gate(self, ci_content: str) -> None:
-        assert "check_v0611_planning.py" in ci_content
+    def test_includes_next_release_prep_gate(self, ci_content: str) -> None:
+        assert "check_v0611_release_prep.py --release-prep" in ci_content
 
     def test_historical_release_checkers_are_not_direct_ci_gates(
         self, ci_content: str

@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 
+## [0.6.11] - 2026-06-15
+
+### Added
+- Post-release hardening and observability cleanup (CAND-001): refreshed stale version references across reviewer-facing docs, public-repo hygiene, and public-feedback checklists; aligned consistency and trust-center checkers with the v0.6.10 public / v0.6.11 planning state.
+- Backtest/report dashboard usability follow-up (CAND-002): improved dashboard empty-state messaging, added export timestamp headers, and improved backtest summary table column alignment for Markdown/HTML output.
+- Broker/provider preflight diagnostics without enabling execution (CAND-003): added deterministic, redacted `atlas doctor` output for configured-but-not-activated broker/provider settings, credential-presence checks, and connection-readiness hints with no network calls.
+- Paper-trading workflow documentation and safe examples (CAND-004): refreshed `docs/paper-trading-guide.md`, `scripts/demo_paper_workflow.sh`, and `examples/paper_trading_demo/config.toml` as canonical offline, paper-only, fail-closed references.
+- Release/checker simplification after v0.6.10 (CAND-005): archived historical version-specific release checkers into `scripts/historical_release_checkers/` while preserving active v0.6.10 post-release and v0.6.11 planning validation; added `scripts/check_v0611_release_prep.py` and matching tests.
+- Test-suite performance and generated-artifact hygiene (CAND-006): marked subprocess-heavy integration tests for targeted runs, isolated CLI test workspaces, batched focused CI pytest collection, and hardened generated-artifact detection.
+- User-facing quickstart and reviewer demo consolidation (CAND-007): merged overlapping quickstart/demo content across README, external-reviewer-walkthrough, and reviewer-golden-path into one canonical flow.
+- `docs/releases/v0.6.11.md`, `docs/trust/v0.6.11-status.md`, and `docs/releases/release-metadata.json` prepared-state artifacts.
+- `scripts/check_v0611_release_prep.py` and matching tests for v0.6.11 release-prep state validation.
+
+### Changed
+- Bumped package/source version from `0.6.10` to `0.6.11`.
+- Updated release metadata to reflect `v0.6.10` as the current public GitHub release and `v0.6.11` as prepared (not public), with `v0.6.12` as the next planned release.
+- Updated README, SECURITY.md, `docs/trust/README.md`, and `docs/development/main-health.md` to reflect `v0.6.10` as current public release, `v0.6.11` as prepared, and `v0.6.12` as next planned release.
+
+### Fixed
+
+### Safety
+- No live trading, broker execution, provider execution, risk gate, approval gate, kill switch, or audit behavior changes.
+- Tag `v0.6.11` not created; GitHub Release `v0.6.11` not created; **PyPI was not published**.
+
 ## [0.6.10] - 2026-06-13
 
 ### Added

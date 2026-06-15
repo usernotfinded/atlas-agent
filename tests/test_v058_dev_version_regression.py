@@ -1,7 +1,7 @@
 """Regression tests for post-v0.5.8.1 development transition.
 
 Verifies the correct lifecycle model:
-- current main = 0.6.10
+- current main = 0.6.11
 - public stable = v0.6.10
 - historical stable = v0.5.8.1
 - no stale 0.5.9 assertions on current main
@@ -31,7 +31,7 @@ def test_pyproject_version_is_current_dev() -> None:
     import tomllib
     with open(ROOT / "pyproject.toml", "rb") as f:
         data = tomllib.load(f)
-    assert data.get("project", {}).get("version") == "0.6.10"
+    assert data.get("project", {}).get("version") == "0.6.11"
 
 
 def test_init_version_is_current_dev() -> None:
@@ -39,7 +39,7 @@ def test_init_version_is_current_dev() -> None:
     text = init.read_text(encoding="utf-8")
     m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
     assert m is not None
-    assert m.group(1) == "0.6.10"
+    assert m.group(1) == "0.6.11"
 
 
 def test_public_stable_v058_tag_exists() -> None:

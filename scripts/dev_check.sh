@@ -134,9 +134,9 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "13a. v0.6.11 planning check"
+echo "13a. v0.6.11 release-prep check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v0611_planning.py
+"$PYTHON_BIN" scripts/check_v0611_release_prep.py --release-prep
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

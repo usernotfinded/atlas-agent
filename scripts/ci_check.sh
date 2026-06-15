@@ -105,9 +105,9 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "8a. v0.6.11 planning check"
+echo "8a. v0.6.11 release-prep check"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v0611_planning.py
+"$PYTHON_BIN" scripts/check_v0611_release_prep.py --release-prep
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
@@ -246,6 +246,7 @@ SECONDS=0
     tests/test_final_rc_audit.py \
     tests/test_stable_release_decision.py \
     tests/test_check_v0610_release_prep.py \
+    tests/test_check_v0611_release_prep.py \
     tests/test_check_v0611_planning.py \
     tests/test_env_templates.py \
     -q \

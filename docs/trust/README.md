@@ -7,16 +7,20 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.10` (tagged)
 - Previous public release: `v0.6.9`
-- Source package version on `main`: `0.6.10`
+- Prepared release: `v0.6.11` (not yet public)
+- Source package version on `main`: `0.6.11`
 - GitHub release: `v0.6.10` (current public)
-- Next planning line: `v0.6.11`
+- Next planning line: `v0.6.12`
 - Public v0.6.10: current public — [v0.6.10 Trust and Release Status](v0.6.10-status.md)
+- Prepared v0.6.11 — [v0.6.11 Trust and Release Status](v0.6.11-status.md) (prepared, not public)
 - PyPI was not published
 - Current public release status: [v0.6.10 Trust and Release Status](v0.6.10-status.md) (current public)
+- Prepared release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (prepared, not public)
 - Previous release status: [v0.6.9 Trust and Release Status](v0.6.9-status.md) (historical)
 - Previous previous release status: [v0.6.8 Trust and Release Status](v0.6.8-status.md) (historical)
 - Previous previous previous release status: [v0.6.7 Trust and Release Status](v0.6.7-status.md) (historical)
 - Current public release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (current public)
+- Prepared release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (prepared, not public)
 - Previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.8.md](../releases/v0.6.8.md) (historical)
 - Previous previous previous release notes: [docs/releases/v0.6.7.md](../releases/v0.6.7.md) (historical)
@@ -70,20 +74,24 @@ requires a versioned evidence pack.
 ## Auto-Updater Delivery
 
 Auto-updater delivery for `v0.6.10` is verified against the GitHub release/tag.
-Auto-updater delivery for `v0.6.11` is not yet verified.
+Auto-updater delivery for `v0.6.11` is not yet verified because `v0.6.11` is prepared, not public.
+Auto-updater delivery for `v0.6.12` is not yet verified.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
 - GitHub release: `v0.6.10` (current public)
+- GitHub release: `v0.6.11` (not created; prepared only)
+- Tag: `v0.6.11` (not created)
 - PyPI was not published
-- Package version in source metadata: `0.6.10`
-- Auto-updater delivery: verified for `v0.6.10`; not yet verified for `v0.6.11`
+- Package version in source metadata: `0.6.11`
+- Auto-updater delivery: verified for `v0.6.10`; not yet verified for `v0.6.11` or `v0.6.12`
 
 ## What Is Ready
 
 - Public v0.6.10 release notes and release status documentation (current public).
+- Prepared v0.6.11 release notes and release status documentation (prepared, not public).
 - Public v0.6.9 release notes and release status documentation (historical).
 - Public v0.6.8 release notes and release status documentation (historical).
 - Local and CI release assurance generation.
@@ -94,7 +102,9 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, or `v0.6.10`.
+- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, or `v0.6.11`.
+- `v0.6.11` is prepared, not public; tag and GitHub Release do not exist.
+- `v0.6.12` is the next planning line and is not yet implemented or released.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -110,6 +120,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
+- [v0.6.11 Release Notes](../releases/v0.6.11.md) (prepared, not public)
+- [v0.6.11 Trust and Release Status](v0.6.11-status.md) (prepared, not public)
 - [v0.6.10 Release Notes](../releases/v0.6.10.md) (current public)
 - [v0.6.10 Trust and Release Status](v0.6.10-status.md) (current public)
 - [v0.6.9 Release Notes](../releases/v0.6.9.md) (historical)

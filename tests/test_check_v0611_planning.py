@@ -42,18 +42,18 @@ class TestScriptExists:
 
 
 class TestPlanningModeValid:
-    def test_planning_mode_passes(self) -> None:
-        """Planning mode should pass while source remains 0.6.10 and no release artifacts exist."""
+    def test_planning_mode_fails_on_real_repo_in_release_prep(self) -> None:
+        """Planning mode fails once release-prep artifacts and version bump exist."""
         result = _run_script()
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "PASS" in result.stdout
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "FAIL" in result.stdout
         assert "planning" in result.stdout
 
-    def test_planning_json_output_passes(self) -> None:
+    def test_planning_json_output_fails_on_real_repo_in_release_prep(self) -> None:
         result = _run_script("--json")
-        assert result.returncode == 0, result.stderr
+        assert result.returncode == 1, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is True
+        assert data["valid"] is False
         assert data["mode"] == "planning"
         assert "checks" in data
 
@@ -66,6 +66,16 @@ class TestPlanningModeValid:
         assert "checks" in data
         assert "errors" in data
         assert "warnings" in data
+
+    def test_real_repo_errors_include_release_prep_indicators(self) -> None:
+        result = _run_script("--json")
+        assert result.returncode == 1, result.stderr
+        data = json.loads(result.stdout)
+        errors = "\n".join(data["errors"])
+        assert "Release notes must not exist" in errors
+        assert "Trust status must not exist" in errors
+        assert "CHANGELOG must not contain [0.6.11]" in errors
+        assert "Version bump to 0.6.11" in errors
 
     def test_missing_candidate_md_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
@@ -355,13 +365,58 @@ class TestPlanningModeValid:
             }),
             encoding="utf-8",
         )
+        fake_pyproject = tmp_path / "pyproject.toml"
+        fake_pyproject.write_text('version = "0.6.10"\n')
+        fake_init = tmp_path / "__init__.py"
+        fake_init.write_text('__version__ = "0.6.10"\n')
+        fake_changelog = tmp_path / "CHANGELOG.md"
+        fake_changelog.write_text("# Changelog\n\n## [Unreleased]\n")
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "source_version": "0.6.10",
+                "current_public_release": "v0.6.10",
+                "next_planned_release": "v0.6.11",
+                "pypi_published": False,
+                "releases": [
+                    {
+                        "tag": "v0.6.10",
+                        "version": "0.6.10",
+                        "status": "current_public",
+                        "github_release": True,
+                        "pypi_published": False,
+                    }
+                ],
+            }),
+            encoding="utf-8",
+        )
+
         original = mod.CANDIDATES_JSON
+        original_pyproject = mod.PYPROJECT
+        original_init = mod.INIT_PY
+        original_changelog = mod.CHANGELOG
+        original_metadata = mod.RELEASE_METADATA
+        original_notes = mod.RELEASE_NOTES
+        original_status = mod.TRUST_STATUS
         try:
             mod.CANDIDATES_JSON = fake_json
+            mod.PYPROJECT = fake_pyproject
+            mod.INIT_PY = fake_init
+            mod.CHANGELOG = fake_changelog
+            mod.RELEASE_METADATA = fake_metadata
+            mod.RELEASE_NOTES = tmp_path / "nonexistent-v0.6.11.md"
+            mod.TRUST_STATUS = tmp_path / "nonexistent-v0.6.11-status.md"
             code, result = mod.run_check()
             assert code == 0, result["errors"]
         finally:
             mod.CANDIDATES_JSON = original
+            mod.PYPROJECT = original_pyproject
+            mod.INIT_PY = original_init
+            mod.CHANGELOG = original_changelog
+            mod.RELEASE_METADATA = original_metadata
+            mod.RELEASE_NOTES = original_notes
+            mod.TRUST_STATUS = original_status
 
     def test_selected_later_candidate_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
