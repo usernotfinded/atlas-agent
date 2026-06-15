@@ -138,9 +138,32 @@ The builder and checker are:
 - **Read-only**: no broker orders, provider calls, or live trading enabled.
 - **Deterministic**: `--deterministic` produces stable output for tests and diffs.
 
-## Related docs and scripts
+## Run the manual GitHub Actions workflow
+
+A maintainer can also build the snapshot through a manual, read-only GitHub Actions workflow:
+
+1. Go to **Actions → Reviewer Trust Snapshot** in the repository.
+2. Click **Run workflow**.
+3. Optionally provide:
+   - `main_ci_run_id` — a main CI run ID to reference.
+   - `research_ci_run_id` — a Research CI run ID to reference.
+   - `evidence_bundle_path` — a path to a generated CAND-002 evidence bundle (rarely available in CI; leave empty to omit).
+   - `deterministic` — enable to produce stable timestamps and redacted paths.
+4. The workflow builds the snapshot, validates it with `scripts/check_reviewer_trust_snapshot.py`, and uploads `reviewer-trust-snapshot` as a GitHub Actions artifact.
+
+The workflow does not create tags, releases, or PyPI packages. It does not enable live trading, provider execution, broker execution, or order submission. It requires no secrets or credentials.
+
+## Validate the workflow file locally
+
+```bash
+python3.11 scripts/check_reviewer_trust_snapshot_workflow.py
+python3.11 -m pytest tests/test_reviewer_trust_snapshot_workflow.py -q
+```
+
+## Related docs, scripts, and workflows
 
 - [Product Demo Evidence Bundle](../product-demo-evidence.md) — CAND-002 evidence bundle.
 - [Product Demo and Marketplace Readiness Pack](../product-demo-pack.md) — CAND-001 overview.
 - [Atlas Agent Trust Center](README.md) — trust center entry point.
 - [Trust and Release Status](v0.6.11-status.md) — current public release status.
+- [Reviewer Trust Snapshot GitHub Actions Workflow](../../.github/workflows/reviewer-trust-snapshot.yml) — manual workflow.

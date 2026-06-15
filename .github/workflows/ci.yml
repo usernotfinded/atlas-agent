@@ -64,6 +64,10 @@ jobs:
         run: python3.11 scripts/check_reviewer_trust_snapshot.py --self-test
       - name: Reviewer trust snapshot tests (fast)
         run: python3.11 -m pytest tests/test_reviewer_trust_snapshot.py -q
+      - name: Reviewer trust snapshot workflow check
+        run: python3.11 scripts/check_reviewer_trust_snapshot_workflow.py
+      - name: Reviewer trust snapshot workflow tests (fast)
+        run: python3.11 -m pytest tests/test_reviewer_trust_snapshot_workflow.py -q
       - name: Trust center check
         run: python3.11 scripts/check_trust_center.py
       - name: Onboarding docs check
@@ -118,6 +122,7 @@ jobs:
             tests/test_check_v0611_release_prep.py \
             tests/test_check_v0611_planning.py \
             tests/test_product_demo_pack.py \
+            tests/test_reviewer_trust_snapshot_workflow.py \
             -q
       - name: Release check quick
         run: ./scripts/release_check.sh --quick

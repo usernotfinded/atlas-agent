@@ -133,6 +133,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "8e. reviewer trust snapshot workflow check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_reviewer_trust_snapshot_workflow.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8f. reviewer trust snapshot workflow tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_reviewer_trust_snapshot_workflow.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "9. public docs consistency"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py
@@ -271,6 +285,7 @@ SECONDS=0
     tests/test_check_v0611_planning.py \
     tests/test_env_templates.py \
     tests/test_product_demo_pack.py \
+    tests/test_reviewer_trust_snapshot_workflow.py \
     -q \
     "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))

@@ -1,0 +1,90 @@
+name: Reviewer Trust Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      main_ci_run_id:
+        description: "Optional main CI run ID to reference in the snapshot"
+        required: false
+        default: ""
+      research_ci_run_id:
+        description: "Optional Research CI run ID to reference in the snapshot"
+        required: false
+        default: ""
+      evidence_bundle_path:
+        description: "Optional path to a CAND-002 product demo evidence bundle directory"
+        required: false
+        default: ""
+      deterministic:
+        description: "Use deterministic timestamps and redact absolute paths"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_BIN: python3.11
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  reviewer-trust-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      ENABLE_LIVE_TRADING: "false"
+      PROVIDER_EXECUTION_ENABLED: "false"
+      BROKER_EXECUTION_ENABLED: "false"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Fetch release tags
+        run: git fetch --force --tags origin
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install -e ".[dev]"
+
+      - name: Build reviewer trust snapshot
+        run: |
+          ARGS=(
+            --output-dir artifacts/reviewer-trust-snapshot
+          )
+          if [[ -n "${{ inputs.main_ci_run_id }}" ]]; then
+            ARGS+=(--ci-run-id "${{ inputs.main_ci_run_id }}")
+          fi
+          if [[ -n "${{ inputs.research_ci_run_id }}" ]]; then
+            ARGS+=(--research-ci-run-id "${{ inputs.research_ci_run_id }}")
+          fi
+          if [[ -n "${{ inputs.evidence_bundle_path }}" ]]; then
+            ARGS+=(--evidence-bundle "${{ inputs.evidence_bundle_path }}")
+          fi
+          if [[ "${{ inputs.deterministic }}" == "true" ]]; then
+            ARGS+=(--deterministic)
+          fi
+          python3.11 scripts/build_reviewer_trust_snapshot.py "${ARGS[@]}"
+
+      - name: Validate reviewer trust snapshot
+        run: python3.11 scripts/check_reviewer_trust_snapshot.py artifacts/reviewer-trust-snapshot
+
+      - name: Upload reviewer trust snapshot artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: reviewer-trust-snapshot
+          path: artifacts/reviewer-trust-snapshot
+          if-no-files-found: error
+          retention-days: 14
