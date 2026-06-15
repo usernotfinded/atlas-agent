@@ -39,38 +39,39 @@ Atlas Agent is a **local-first research and paper-trading workbench** with deter
 Atlas Agent is **paper-first** and **safe by default**. No live trading, no broker credentials, and no provider API keys are required.
 
 ```bash
-# 1. Install
 python3.11 -m pip install -e .
-
-# 2. Create a workspace
-atlas init my-workspace --template routine-trader
-cd my-workspace
-atlas discipline setup --manual --yes
-atlas config set market.symbol ATLAS-DEMO
-
-# 3. Validate
-atlas validate
-
-# 4. Run a safe local backtest
-atlas backtest run --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL
-
-# 5. Explore the CLI
-atlas --help
-
-# 6. Run the reproducible paper demo
 ./scripts/demo_paper_workflow.sh
 ```
 
-This quickstart is offline-safe, sandbox-only, and paper-first. No credentials loaded, no broker/order path, and live trading disabled by default. Safety validation does not imply profitability or trading correctness.
+This is the canonical first run. The script creates an isolated temporary
+workspace, applies `atlas config set market.symbol ATLAS-DEMO`, validates local
+paper state, runs redacted diagnostics, prints a paper dry-run, and executes the
+bundled deterministic `DEMO-SYMBOL` backtest.
 
-This path produces local audit evidence only. It does not submit orders, call providers, use the network, or enable live trading.
+This quickstart is offline-safe, sandbox-only, and paper-first. No credentials loaded.
+There is no broker/order path and no provider call. Live trading disabled by default.
+Safety validation does not imply profitability or trading correctness.
 
-For setup details and an annotated fail-closed configuration, see the
-[Paper-Trading Guide](docs/paper-trading-guide.md). For the canonical reviewer
-path, see [External Reviewer Walkthrough](docs/external-reviewer-walkthrough.md).
-For expected demo output, see [Demo: Paper Workflow](docs/demo-paper-workflow.md).
-For an indexed view of every demo artifact, see
-[Demo Artifact Index](docs/demo-artifact-index.md).
+Optional local inspection commands:
+
+```bash
+atlas --help
+atlas validate
+atlas backtest runs --validate --json
+```
+
+Use these canonical references instead of copying the workflow into another
+guide:
+
+- [Reviewer Golden-Path Validation Guide](docs/reviewer-golden-path.md) for the
+  reviewer command sequence and release checks.
+- [Paper-Trading Guide](docs/paper-trading-guide.md) for manual setup and the
+  annotated fail-closed configuration.
+- [Broker and Provider Preflight Diagnostics](docs/preflight-diagnostics.md)
+  for the read-only `atlas doctor` contract.
+- [Demo: Paper Workflow](docs/demo-paper-workflow.md) for expected output.
+- [Demo Artifact Index](docs/demo-artifact-index.md) for generated local
+  evidence.
 
 ### What is intentionally disabled
 

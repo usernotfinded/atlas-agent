@@ -32,6 +32,8 @@ def test_guide_has_complete_safe_local_workflow() -> None:
         "atlas audit verify --all",
         "Trading and simulated trading involve uncertainty",
         "results do not guarantee future performance",
+        "preflight-diagnostics.md",
+        "reviewer-golden-path.md",
     )
     for phrase in required:
         assert phrase in text
@@ -89,7 +91,7 @@ def test_demo_script_remains_offline_dry_run_only() -> None:
     assert "wget " not in text
 
 
-def test_only_cand_001_through_006_are_implemented() -> None:
+def test_only_cand_001_through_007_are_implemented() -> None:
     data = json.loads(CANDIDATES_JSON.read_text(encoding="utf-8"))
     candidates = {candidate["id"]: candidate for candidate in data["candidates"]}
 
@@ -100,13 +102,15 @@ def test_only_cand_001_through_006_are_implemented() -> None:
         "CAND-004",
         "CAND-005",
         "CAND-006",
+        "CAND-007",
     ):
         assert candidates[candidate_id]["selected_for_v0611"] is True
         assert candidates[candidate_id]["implemented"] is True
-    for candidate_id in ("CAND-007", "CAND-008", "CAND-009", "CAND-010"):
+    for candidate_id in ("CAND-008", "CAND-009", "CAND-010"):
         assert candidates[candidate_id]["selected_for_v0611"] is False
         assert candidates[candidate_id]["implemented"] is False
 
     markdown = CANDIDATES_MD.read_text(encoding="utf-8")
     assert "CAND-004** — Paper-trading workflow documentation and safe examples — **implemented**" in markdown
     assert "CAND-005** — Release/checker simplification after v0.6.10 — **implemented**" in markdown
+    assert "CAND-007** — User-facing quickstart and reviewer demo consolidation — **implemented**" in markdown

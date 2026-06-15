@@ -44,6 +44,8 @@ ONBOARDING_DOC_PATHS = [
     REPO_ROOT / "docs" / "reviewer-checklist.md",
 ]
 
+REVIEWER_GOLDEN_PATH = REPO_ROOT / "docs" / "reviewer-golden-path.md"
+
 LINKING_DOC_PATHS = [
     REPO_ROOT / "README.md",
     REPO_ROOT / "docs" / "public-launch-readiness.md",
@@ -132,6 +134,24 @@ def _check_linking_docs() -> list[str]:
     return errors
 
 
+def _check_canonical_reviewer_path() -> list[str]:
+    errors: list[str] = []
+    if not REVIEWER_GOLDEN_PATH.exists():
+        errors.append(
+            f"Canonical reviewer doc missing: {REVIEWER_GOLDEN_PATH.relative_to(REPO_ROOT)}"
+        )
+        return errors
+
+    for path in (REPO_ROOT / "README.md", REPO_ROOT / "docs" / "external-reviewer-walkthrough.md"):
+        if not path.exists():
+            continue
+        if "reviewer-golden-path.md" not in _read(path):
+            errors.append(
+                f"[{path.relative_to(REPO_ROOT)}] Missing link to canonical reviewer path"
+            )
+    return errors
+
+
 def _check_version_match() -> list[str]:
     errors: list[str] = []
     pyproject = REPO_ROOT / "pyproject.toml"
@@ -204,9 +224,8 @@ def _check_onboarding_doc_safety() -> list[str]:
 
 def _check_safe_commands_present() -> list[str]:
     errors: list[str] = []
-    walkthrough = REPO_ROOT / "docs" / "external-reviewer-walkthrough.md"
-    if walkthrough.exists():
-        text = walkthrough.read_text(encoding="utf-8").lower()
+    if REVIEWER_GOLDEN_PATH.exists():
+        text = REVIEWER_GOLDEN_PATH.read_text(encoding="utf-8").lower()
         required_commands = [
             "check_version_consistency.py",
             "check_forbidden_claims.py",
@@ -217,7 +236,7 @@ def _check_safe_commands_present() -> list[str]:
         ]
         for cmd in required_commands:
             if cmd.lower() not in text:
-                errors.append(f"[external-reviewer-walkthrough.md] Missing safe command: {cmd}")
+                errors.append(f"[reviewer-golden-path.md] Missing safe command: {cmd}")
     return errors
 
 
@@ -241,6 +260,7 @@ def _run_checks() -> dict:
     all_errors: list[str] = []
     all_errors.extend(_check_onboarding_docs_exist())
     all_errors.extend(_check_linking_docs())
+    all_errors.extend(_check_canonical_reviewer_path())
     all_errors.extend(_check_version_match())
     all_errors.extend(_check_onboarding_doc_safety())
     all_errors.extend(_check_safe_commands_present())
@@ -289,8 +309,8 @@ def main() -> int:
     print(f"  Current package version: {result['package_version']}")
     print(f"  Current public tag: {result['public_tag']}")
     print(f"  Onboarding docs present: {len(ONBOARDING_DOC_PATHS)}")
-    print(f"  Docs safe: yes")
-    print(f"  No staged artifacts: yes")
+    print("  Docs safe: yes")
+    print("  No staged artifacts: yes")
     return 0
 
 

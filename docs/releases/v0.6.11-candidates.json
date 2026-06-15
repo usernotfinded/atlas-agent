@@ -220,15 +220,15 @@
         "scripts/check_reviewer_onboarding.py",
         "scripts/verify_readme_quickstart.py"
       ],
-      "recommendation": "later",
-      "ranking_reason": "Important for onboarding clarity but not urgent after v0.6.10 cleanup.",
+      "recommendation": "now",
+      "ranking_reason": "Consolidates the safe paper/reviewer path after the supporting demo, diagnostics, and hygiene work landed.",
       "acceptance_criteria": [
         "Overlapping content is consolidated into one canonical flow",
         "All doc consistency checks pass",
         "No runtime changes"
       ],
-      "selected_for_v0611": false,
-      "implemented": false
+      "selected_for_v0611": true,
+      "implemented": true
     },
     {
       "id": "CAND-008",
@@ -311,11 +311,6 @@
     }
   ],
   "deferred": [
-    {
-      "id": "CAND-007",
-      "title": "User-facing quickstart and reviewer demo consolidation",
-      "reason": "Important but not urgent after v0.6.10 cleanup."
-    },
     {
       "id": "CAND-008",
       "title": "Dashboard/export polish without live execution changes",
@@ -420,6 +415,7 @@
     "docs/releases/v0.6.11-candidates.md created",
     "docs/releases/v0.6.11-candidates.json created",
     "scripts/check_v0611_planning.py and matching tests created",
+    "CAND-007 canonical quickstart and reviewer demo consolidation implemented",
     "Source/package version remains 0.6.10 (not bumped)",
     "No docs/releases/v0.6.11.md yet",
     "No docs/trust/v0.6.11-status.md yet",

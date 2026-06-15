@@ -85,6 +85,9 @@ Confirm that validation reports paper mode and disabled live trading.
 state using redacted values, skips network checks, and does not construct a
 submit-capable broker client.
 
+See [Broker and Provider Preflight Diagnostics](preflight-diagnostics.md) for
+the complete output and safety contract.
+
 ### 6. Print the paper plan without execution
 
 ```bash
@@ -181,5 +184,5 @@ as permission to remove or relax any gate.
 - Backtest input is the bundled local CSV.
 - No pending live orders or approvals are created.
 
-For reviewer-oriented expected output, continue with the
-[External Reviewer Walkthrough](external-reviewer-walkthrough.md).
+For the canonical reviewer sequence, continue with the
+[Reviewer Golden-Path Validation Guide](reviewer-golden-path.md).

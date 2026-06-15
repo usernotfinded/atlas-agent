@@ -6,7 +6,8 @@ This demo shows Atlas Agent running in **paper mode**, the default and safest wa
 
 For installation, manual setup, and the annotated safe configuration, see the
 [Paper-Trading Guide](paper-trading-guide.md).
-For the canonical reviewer path, see [External Reviewer Walkthrough](external-reviewer-walkthrough.md).
+For the canonical reviewer path, see the
+[Reviewer Golden-Path Validation Guide](reviewer-golden-path.md).
 For an indexed view of every artifact, see [Demo Artifact Index](demo-artifact-index.md).
 
 For a reproducible terminal run, use:

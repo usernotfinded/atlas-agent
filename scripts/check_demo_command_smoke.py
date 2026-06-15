@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Lightweight static smoke checker for the demo command surface (CAND-004).
+"""Lightweight static smoke checker for the canonical demo surface.
 
 Validates that the demo script exists, is executable, is referenced in key docs,
-contains expected safe-command wording, and excludes forbidden high-risk patterns.
-Static, read-only, no execution, no network, no credentials.
+the canonical reviewer/paper/preflight links remain connected, and the demo
+excludes forbidden high-risk patterns. Static, read-only, no execution, no
+network, no credentials.
 """
 
 from __future__ import annotations
@@ -21,6 +22,9 @@ CHECK_DEMO_PROOF = REPO_ROOT / "scripts" / "check_demo_proof.py"
 ARTIFACT_INDEX = REPO_ROOT / "docs" / "demo-artifact-index.md"
 PAPER_WORKFLOW_DOC = REPO_ROOT / "docs" / "demo-paper-workflow.md"
 EXTERNAL_REVIEWER_DOC = REPO_ROOT / "docs" / "external-reviewer-walkthrough.md"
+REVIEWER_GOLDEN_DOC = REPO_ROOT / "docs" / "reviewer-golden-path.md"
+PAPER_GUIDE = REPO_ROOT / "docs" / "paper-trading-guide.md"
+PREFLIGHT_DOC = REPO_ROOT / "docs" / "preflight-diagnostics.md"
 README = REPO_ROOT / "README.md"
 CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.md"
 CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.json"
@@ -68,7 +72,13 @@ def _check_script_exists() -> list[str]:
 
 def _check_canonical_command_references() -> list[str]:
     violations: list[str] = []
-    for path in (README, EXTERNAL_REVIEWER_DOC, PAPER_WORKFLOW_DOC):
+    for path in (
+        README,
+        EXTERNAL_REVIEWER_DOC,
+        REVIEWER_GOLDEN_DOC,
+        PAPER_GUIDE,
+        PAPER_WORKFLOW_DOC,
+    ):
         if not path.exists():
             violations.append(f"Doc not found: {path.name}")
             continue
@@ -77,12 +87,58 @@ def _check_canonical_command_references() -> list[str]:
     return violations
 
 
+def _check_canonical_doc_links() -> list[str]:
+    violations: list[str] = []
+    if not PREFLIGHT_DOC.exists():
+        violations.append(f"Canonical preflight doc not found: {PREFLIGHT_DOC.name}")
+
+    required_links = {
+        README: (
+            "reviewer-golden-path.md",
+            "paper-trading-guide.md",
+            "preflight-diagnostics.md",
+        ),
+        EXTERNAL_REVIEWER_DOC: (
+            "reviewer-golden-path.md",
+            "paper-trading-guide.md",
+            "preflight-diagnostics.md",
+        ),
+        REVIEWER_GOLDEN_DOC: (
+            "paper-trading-guide.md",
+            "preflight-diagnostics.md",
+            "demo-paper-workflow.md",
+        ),
+        PAPER_GUIDE: (
+            "reviewer-golden-path.md",
+            "preflight-diagnostics.md",
+        ),
+        PAPER_WORKFLOW_DOC: (
+            "reviewer-golden-path.md",
+            "paper-trading-guide.md",
+        ),
+    }
+    for path, links in required_links.items():
+        if not path.exists():
+            violations.append(f"Doc not found: {path.name}")
+            continue
+        text = _read(path)
+        for link in links:
+            if link not in text:
+                violations.append(f"Doc missing canonical link '{link}': {path.name}")
+    return violations
+
+
 def _check_demo_proof_references() -> list[str]:
     violations: list[str] = []
     if not CHECK_DEMO_PROOF.exists():
         violations.append(f"Demo proof checker not found: {CHECK_DEMO_PROOF.relative_to(REPO_ROOT)}")
 
-    for path in (EXTERNAL_REVIEWER_DOC, PAPER_WORKFLOW_DOC, ARTIFACT_INDEX):
+    for path in (
+        EXTERNAL_REVIEWER_DOC,
+        REVIEWER_GOLDEN_DOC,
+        PAPER_WORKFLOW_DOC,
+        ARTIFACT_INDEX,
+    ):
         if not path.exists():
             violations.append(f"Doc not found: {path.name}")
             continue
@@ -165,6 +221,7 @@ def main() -> int:
 
     # Doc cross-references
     violations.extend(_check_canonical_command_references())
+    violations.extend(_check_canonical_doc_links())
     violations.extend(_check_demo_proof_references())
     violations.extend(_check_artifact_index_references())
 

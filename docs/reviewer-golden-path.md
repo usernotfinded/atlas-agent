@@ -2,41 +2,53 @@
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
-This guide is the fastest safe path for an external reviewer to verify the current Atlas Agent state.
+This is the canonical reviewer entry point for verifying the current Atlas
+Agent state. Other reviewer and demo documents link here instead of repeating
+their own command sequences.
 
-## Quick validation path
+## Canonical reviewer flow
 
-After cloning and installing (`python3.11 -m pip install -e .`), run these commands in order to verify the current `v0.6.10` public release and `v0.6.11` planning state:
+From the repository root:
 
 ```bash
-# Release metadata and version consistency
+python3.11 -m pip install -e .
+python3.11 scripts/smoke_reviewer_golden_path.py
+./scripts/demo_paper_workflow.sh
+```
+
+The smoke script creates an isolated temporary workspace and exercises the
+safe local CLI path. The paper demo creates a separate temporary workspace and
+shows validation, redacted diagnostics, a paper dry-run, and a deterministic
+sample-data backtest. Neither command requires credentials or network access.
+
+For manual paper setup, use the [Paper-Trading Guide](paper-trading-guide.md).
+For the `atlas doctor` field contract, use
+[Broker and Provider Preflight Diagnostics](preflight-diagnostics.md). Expected
+demo output is documented in [Demo: Paper Workflow](demo-paper-workflow.md),
+and generated files are mapped in the
+[Demo Artifact Index](demo-artifact-index.md).
+
+## Release and documentation assurance
+
+Run these checks after the canonical flow to verify the current `v0.6.10`
+public release and `v0.6.11` planning state:
+
+```bash
 python3.11 scripts/check_release_metadata.py
 python3.11 scripts/check_version_consistency.py
-
-# Trust center and public docs consistency
+python3.11 scripts/check_forbidden_claims.py
 python3.11 scripts/check_trust_center.py
 python3.11 scripts/check_public_docs_consistency.py
-
-# Backtest report schema and v0.6.11 planning baseline
+python3.11 scripts/check_public_launch_readiness.py
+python3.11 scripts/check_reviewer_onboarding.py
 python3.11 scripts/check_backtest_report_schema.py
 python3.11 scripts/check_v0611_planning.py
-
-# Local gates
-./scripts/dev_check.sh
-./scripts/ci_check.sh
+python3.11 scripts/check_demo_proof.py
 ./scripts/release_check.sh --quick
 ```
 
-Optional reviewer CLI checks:
-
-```bash
-atlas validate
-atlas backtest runs --validate --json
-```
-
-For a safe paper demo, see the [Paper Workflow Demo](demo-paper-workflow.md) or run `./scripts/demo_paper_workflow.sh`.
-
-All commands above are local, deterministic, and require no credentials, providers, brokers, or network access.
+All commands above are local and deterministic. They do not authorize provider
+execution, contact brokers, submit orders, or enable live trading.
 
 ## What this verifies
 
@@ -72,7 +84,7 @@ All of these commands are local-only and deterministic. No API keys, `.env` file
 - **Live trading.** Live trading remains disabled by default. This test never enables it.
 - **Network resilience.** The test does not call external endpoints.
 
-## How to run it
+## Smoke script options
 
 From the repository root:
 
@@ -86,7 +98,7 @@ python3.11 scripts/smoke_reviewer_golden_path.py --json
 # Keep the temporary workspace for inspection
 python3.11 scripts/smoke_reviewer_golden_path.py --keep-temp
 
-# Skip the release_check.sh --quick step for faster iteration
+# Skip release_check.sh --quick for focused local iteration
 python3.11 scripts/smoke_reviewer_golden_path.py --skip-release-check
 ```
 
@@ -110,3 +122,6 @@ The script creates a temporary workspace under `$TMPDIR` (or `/tmp`), runs the c
 - It does not load credentials or require `.env.atlas`.
 - It does not submit orders or enable live trading.
 - It does not mutate the repository.
+- Live trading is disabled by default.
+- Provider execution remains locked.
+- Trust remains blocked.

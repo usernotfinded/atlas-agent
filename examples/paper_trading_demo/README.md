@@ -35,3 +35,6 @@ to it.
 
 See the canonical [Paper-Trading Guide](../../docs/paper-trading-guide.md) for
 the complete workflow, safety boundary, backtest step, and expected failures.
+Reviewers should use the
+[Reviewer Golden-Path Validation Guide](../../docs/reviewer-golden-path.md) as
+the single runnable verification sequence.

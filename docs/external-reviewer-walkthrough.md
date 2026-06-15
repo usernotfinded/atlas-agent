@@ -1,180 +1,58 @@
 # External Reviewer Walkthrough
 
-> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
+> **Not financial advice.** Atlas Agent is a software tool, not a financial
+> advisor. Trading involves significant risk of loss.
 
-## Who this walkthrough is for
+This page orients external technical reviewers. The runnable command sequence
+lives in the [Reviewer Golden-Path Validation Guide](reviewer-golden-path.md);
+this walkthrough intentionally does not maintain a second copy.
 
-This walkthrough is for external technical reviewers who want to evaluate Atlas Agent safely and quickly without credentials, providers, brokers, or live trading.
+## Start here
 
-## What Atlas Agent is
+1. Follow the [Reviewer Golden-Path Validation Guide](reviewer-golden-path.md).
+2. Use the [Paper-Trading Guide](paper-trading-guide.md) only when you want the
+   manual setup path and annotated fail-closed configuration.
+3. Use [Broker and Provider Preflight Diagnostics](preflight-diagnostics.md)
+   for the read-only `atlas doctor` field and redaction contract.
+4. Read [Demo: Paper Workflow](demo-paper-workflow.md) for expected output and
+   the [Demo Artifact Index](demo-artifact-index.md) for generated local files.
 
-Atlas Agent is a **local-first sandbox/paper trading research workbench** with deterministic safety gates, audit logs, and provider-neutral analysis tools. It is designed as a broker-neutral supervised workspace above user-selected models, broker/API providers, credentials, and risk limits.
+The canonical demo command is `./scripts/demo_paper_workflow.sh`. The
+[Demo Proof Checker](../scripts/check_demo_proof.py) and
+[Demo Command Smoke Checker](../scripts/check_demo_command_smoke.py) validate
+the documented surface without contacting providers or brokers.
 
-## What Atlas Agent is not
+## Review boundary
 
-- **Not a live trading system by default.** Live trading is disabled by default and requires explicit multi-factor opt-in.
-- **Does not imply profitable outcomes.** Atlas does not predict profit, guarantee returns, or claim future performance.
-- **Not a broker.** Atlas is broker-neutral and does not custody funds.
-- **Not a licensed financial advisor.** This is software, not financial advice.
-- **Not autonomous.** All live actions require explicit human confirmation when enabled.
+The canonical path is local, deterministic, paper-only, and fail-closed:
 
-## Canonical reviewer demo path
+- no credentials required;
+- no provider, broker, exchange, or remote API calls;
+- no order submission or live-submit enablement;
+- live trading disabled by default;
+- provider execution remains locked;
+- trust remains blocked.
 
-The recommended path to review the paper demo is:
+Atlas is not a broker, financial advisor, autonomous trading system, or
+assurance of future outcomes. Historical and simulated results do not predict
+future performance.
 
-1. Install Atlas (this page).
-2. Read the [Reviewer Golden-Path Validation Guide](reviewer-golden-path.md) for the compact deterministic command list.
-3. Run the paper demo or inspect the safe command list.
-4. Read expected output in [Demo: Paper Workflow](demo-paper-workflow.md).
-5. Inspect the [Demo Artifact Index](demo-artifact-index.md) for artifact details.
-6. Run the deterministic [Demo Proof Checker](../scripts/check_demo_proof.py) to validate docs and safety invariants without executing the demo.
-7. Run the lightweight [Demo Command Smoke Checker](../scripts/check_demo_command_smoke.py) to validate that the demo script surface remains intact in the fastest local gates.
+## Repository areas to inspect
 
-These commands run locally without credentials, network calls, or live trading.
+- `README.md` for positioning, current release status, and the short quickstart.
+- `SECURITY.md` and `CONTRIBUTING.md` for reporting and contribution boundaries.
+- `docs/reviewer-checklist.md` for a structured review checklist.
+- `src/atlas_agent/risk/` and `src/atlas_agent/safety/` for deterministic gates.
+- `src/atlas_agent/brokers/` for adapter boundaries.
 
-### Install / local setup
+Do not infer live-trading readiness from the presence of broker adapters. Live
+trading remains disabled unless every explicit config, credential, risk,
+approval, kill-switch, audit, manifest, and opt-in requirement is satisfied.
 
-```bash
-python3.11 -m pip install -e .
-```
+## Reporting findings
 
-### Safe commands to run
-
-```bash
-# Version consistency
-python3.11 scripts/check_version_consistency.py
-
-# Forbidden claims scan
-python3.11 scripts/check_forbidden_claims.py
-
-# Public docs consistency
-python3.11 scripts/check_public_docs_consistency.py
-
-# Public launch readiness
-python3.11 scripts/check_public_launch_readiness.py
-
-# Reviewer onboarding check
-python3.11 scripts/check_reviewer_onboarding.py
-
-# Clean install dry-run
-python3.11 scripts/check_clean_install.py --dry-run
-
-# Package distribution dry-run
-python3.11 scripts/check_package_distribution.py --dry-run
-
-# Quick release gate
-./scripts/release_check.sh --quick
-
-# Backtest report schema validation
-python3.11 scripts/check_backtest_report_schema.py
-
-# List backtest runs with schema validation
-atlas backtest runs --validate --json
-```
-
-### Optional longer commands
-
-These may take several minutes:
-
-```bash
-# Full clean install verification
-python3.11 scripts/check_clean_install.py
-
-# Full package distribution verification
-python3.11 scripts/check_package_distribution.py
-
-# Research gate (research tests + demo)
-./scripts/release_check.sh --research
-
-# Full release gate (all tests + demos)
-./scripts/release_check.sh --full
-```
-
-### Paper workflow demo
-
-Run the reproducible demo script to see a full paper-mode workflow:
-
-```bash
-./scripts/demo_paper_workflow.sh
-```
-
-For manual setup and the annotated fail-closed example configuration, see the
-[Paper-Trading Guide](paper-trading-guide.md).
-
-**What to expect:**
-- A temporary workspace is created.
-- A safe discipline profile and demo symbol are configured.
-- `atlas validate` confirms the workspace is paper-only.
-- A paper dry-run prints the planned workflow without sending orders.
-- A deterministic sample-data backtest runs and writes a local report.
-- The script exits `0` with no credentials required.
-
-**How to know it worked:**
-- The final line reads `Demo complete. Review the temporary workspace at: ...`
-- No provider API keys or broker credentials were requested.
-- `atlas validate` reports `Live trading: Disabled by default`.
-
-For full expected output, success criteria, and artifact locations, see [Demo: Paper Workflow](demo-paper-workflow.md).
-For an indexed view of every demo artifact and the safety invariant it demonstrates, see [Demo Artifact Index](demo-artifact-index.md).
-
-### Expected safe failures
-
-- `atlas validate` may report missing provider API keys. This is expected and safe — Atlas does not require real credentials for paper and backtest workflows.
-- `atlas research provider-safety-dossier-latest` may return `found: false` if no dossier exists. This is safe.
-- `scripts/check_package_distribution.py` may skip the twine check if `twine` is not installed. This is safe.
-
-## What to inspect in the repo
-
-1. README.md — "What this is" and "What this is not" sections
-1. SECURITY.md — security policy and reporting path
-1. CONTRIBUTING.md — safety boundaries for contributors
-1. docs/public-launch-readiness.md — verified checks and disabled features
-1. docs/reviewer-checklist.md — structured checklist for review
-1. docs/public-faq.md — answers to common questions
-1. docs/feedback-request-guide.md — how to ask for feedback safely
-1. docs/provider-safety-dossier.md — sandbox-only safety workflow
-1. src/atlas_agent/brokers/ — broker adapter boundaries
-1. src/atlas_agent/risk/ — deterministic risk gate implementations
-1. src/atlas_agent/safety/ — safety invariants and kill switch
-
-## Safety boundaries to verify
-
-Run these commands to confirm protected boundaries are clean:
-
-```bash
-git diff -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk
-git diff --cached -- src/atlas_agent/config src/atlas_agent/brokers src/atlas_agent/execution src/atlas_agent/safety src/atlas_agent/risk
-```
-
-Expected: no output.
-
-## What should remain disabled
-
-- **Live trading disabled by default** — requires explicit multi-factor opt-in.
-- **Provider execution remains locked** — no real LLM/provider calls are made by default.
-- **Broker order submission** is blocked by `can_submit=false`.
-- **Credentials** are not loaded unless explicitly configured. No credentials required for default verification.
-- **Trust remains blocked** — mock responses in safety workflows are explicitly not trusted.
-
-## Validation
-
-Run the deterministic demo proof checker to verify documentation and safety invariants without executing the demo:
-
-```bash
-python3.11 scripts/check_demo_proof.py
-```
-
-## How to report findings
-
-- Security or safety issues: [GitHub Security Advisories](https://github.com/usernotfinded/atlas-agent/security/advisories)
-- Bugs: use the bug report issue template
-- Documentation issues: use the docs issue template
-- General feedback: use the feature request template or open a discussion
-
-## What not to assume
-
-- Do not assume Atlas is appropriate for trading real money.
-- Do not assume historical backtest results predict future performance.
-- Do not assume provider execution is enabled or trustworthy.
-- Do not assume the presence of broker adapters implies live trading readiness.
-- Do not assume this is financial advice.
+- Security or safety issues: use
+  [GitHub Security Advisories](https://github.com/usernotfinded/atlas-agent/security/advisories).
+- Bugs: use the bug report issue template.
+- Documentation issues: use the docs issue template.
+- General feedback: use the feature request template or a discussion.

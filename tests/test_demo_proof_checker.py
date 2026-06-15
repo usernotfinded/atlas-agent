@@ -47,6 +47,7 @@ def _run_checker_with_patched_doc(original_text: str, patched_text: str, doc_nam
         "docs/demo-artifact-index.md": ARTIFACT_INDEX,
         "docs/demo-paper-workflow.md": REPO_ROOT / "docs" / "demo-paper-workflow.md",
         "docs/external-reviewer-walkthrough.md": REPO_ROOT / "docs" / "external-reviewer-walkthrough.md",
+        "docs/reviewer-golden-path.md": REPO_ROOT / "docs" / "reviewer-golden-path.md",
         "README.md": REPO_ROOT / "README.md",
         "docs/trust/README.md": REPO_ROOT / "docs" / "trust" / "README.md",
         "docs/brokers.md": REPO_ROOT / "docs" / "brokers.md",
@@ -183,12 +184,12 @@ class TestCheckerDetectsMissingCrossLinks:
 
 
 class TestCheckerDetectsCanonicalReviewerPathIssues:
-    def test_rejects_missing_walkthrough_link_in_readme(self) -> None:
+    def test_rejects_missing_golden_path_link_in_readme(self) -> None:
         original = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        injected = original.replace("external-reviewer-walkthrough.md", "reviewer-guide.md")
+        injected = original.replace("reviewer-golden-path.md", "reviewer-guide.md")
         result = _run_checker_with_patched_doc(original, injected, "README.md")
         assert result.returncode != 0
-        assert "external-reviewer-walkthrough" in result.stdout.lower()
+        assert "reviewer-golden-path" in result.stdout.lower()
 
     def test_rejects_missing_proof_checker_link_in_walkthrough(self) -> None:
         original = (REPO_ROOT / "docs/external-reviewer-walkthrough.md").read_text(encoding="utf-8")

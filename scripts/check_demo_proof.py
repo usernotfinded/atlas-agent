@@ -25,6 +25,7 @@ DEMO_SCRIPT = REPO_ROOT / "scripts" / "demo_paper_workflow.sh"
 ARTIFACT_INDEX = REPO_ROOT / "docs" / "demo-artifact-index.md"
 PAPER_WORKFLOW_DOC = REPO_ROOT / "docs" / "demo-paper-workflow.md"
 EXTERNAL_REVIEWER_DOC = REPO_ROOT / "docs" / "external-reviewer-walkthrough.md"
+REVIEWER_GOLDEN_DOC = REPO_ROOT / "docs" / "reviewer-golden-path.md"
 README = REPO_ROOT / "README.md"
 TRUST_README = REPO_ROOT / "docs" / "trust" / "README.md"
 BROKERS_DOC = REPO_ROOT / "docs" / "brokers.md"
@@ -35,11 +36,17 @@ DEMO_SURFACES = [
     README,
     PAPER_WORKFLOW_DOC,
     EXTERNAL_REVIEWER_DOC,
+    REVIEWER_GOLDEN_DOC,
     ARTIFACT_INDEX,
     DEMO_SCRIPT,
 ]
 
-LINKING_DOCS = [README, PAPER_WORKFLOW_DOC, EXTERNAL_REVIEWER_DOC]
+LINKING_DOCS = [
+    README,
+    PAPER_WORKFLOW_DOC,
+    EXTERNAL_REVIEWER_DOC,
+    REVIEWER_GOLDEN_DOC,
+]
 
 REQUIRED_SCRIPT_COMMANDS = [
     "mktemp -d",
@@ -258,7 +265,13 @@ def _check_linking_docs_reference_index() -> list[str]:
 
 def _check_docs_mention_script() -> list[str]:
     violations: list[str] = []
-    for path in [README, PAPER_WORKFLOW_DOC, EXTERNAL_REVIEWER_DOC, ARTIFACT_INDEX]:
+    for path in [
+        README,
+        PAPER_WORKFLOW_DOC,
+        EXTERNAL_REVIEWER_DOC,
+        REVIEWER_GOLDEN_DOC,
+        ARTIFACT_INDEX,
+    ]:
         if not path.exists():
             violations.append(f"Doc not found: {path.name}")
             continue
@@ -272,13 +285,14 @@ def _check_canonical_reviewer_path() -> list[str]:
     """Validate that the canonical reviewer path is linked across docs."""
     violations: list[str] = []
 
-    # README must link to external reviewer walkthrough
+    # README and the orientation page must link to the canonical golden path.
     readme_text = _read(README) if README.exists() else ""
-    if "external-reviewer-walkthrough.md" not in readme_text:
-        violations.append("README missing link to external-reviewer-walkthrough.md")
+    if "reviewer-golden-path.md" not in readme_text:
+        violations.append("README missing link to reviewer-golden-path.md")
 
-    # External reviewer walkthrough must link to paper workflow and artifact index
     reviewer_text = _read(EXTERNAL_REVIEWER_DOC) if EXTERNAL_REVIEWER_DOC.exists() else ""
+    if "reviewer-golden-path.md" not in reviewer_text:
+        violations.append("External reviewer walkthrough missing link to reviewer-golden-path.md")
     if "demo-paper-workflow.md" not in reviewer_text:
         violations.append("External reviewer walkthrough missing link to demo-paper-workflow.md")
     if "demo-artifact-index.md" not in reviewer_text:
@@ -286,10 +300,24 @@ def _check_canonical_reviewer_path() -> list[str]:
     if "check_demo_proof.py" not in reviewer_text:
         violations.append("External reviewer walkthrough missing link to check_demo_proof.py")
 
-    # Paper workflow doc must link to external reviewer walkthrough and artifact index
+    # The canonical reviewer path owns runnable commands and links to supporting docs.
+    golden_text = _read(REVIEWER_GOLDEN_DOC) if REVIEWER_GOLDEN_DOC.exists() else ""
+    for required in (
+        "paper-trading-guide.md",
+        "preflight-diagnostics.md",
+        "demo-paper-workflow.md",
+        "demo-artifact-index.md",
+        "check_demo_proof.py",
+    ):
+        if required not in golden_text:
+            violations.append(
+                f"Reviewer golden path missing canonical reference: {required}"
+            )
+
+    # Paper workflow doc points reviewers back to the canonical golden path.
     paper_text = _read(PAPER_WORKFLOW_DOC) if PAPER_WORKFLOW_DOC.exists() else ""
-    if "external-reviewer-walkthrough.md" not in paper_text:
-        violations.append("Demo paper workflow doc missing link to external-reviewer-walkthrough.md")
+    if "reviewer-golden-path.md" not in paper_text:
+        violations.append("Demo paper workflow doc missing link to reviewer-golden-path.md")
     if "demo-artifact-index.md" not in paper_text:
         violations.append("Demo paper workflow doc missing link to demo-artifact-index.md")
 

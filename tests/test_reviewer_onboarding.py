@@ -17,6 +17,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_reviewer_onboarding.py"
 WALKTHROUGH = ROOT / "docs" / "external-reviewer-walkthrough.md"
+GOLDEN_PATH = ROOT / "docs" / "reviewer-golden-path.md"
 CHECKLIST = ROOT / "docs" / "reviewer-checklist.md"
 
 _FORBIDDEN_POSITIVE_CLAIMS = (
@@ -62,6 +63,9 @@ class TestDocsExist:
     def test_checklist_exists(self) -> None:
         assert CHECKLIST.exists(), f"Checklist not found: {CHECKLIST}"
 
+    def test_golden_path_exists(self) -> None:
+        assert GOLDEN_PATH.exists(), f"Golden path not found: {GOLDEN_PATH}"
+
     def test_script_exists(self) -> None:
         assert SCRIPT.exists(), f"Script not found: {SCRIPT}"
 
@@ -77,6 +81,9 @@ class TestReadmeLinks:
             "external-reviewer-walkthrough.md" in readme_text
             or "reviewer walkthrough" in lower
         )
+
+    def test_readme_links_to_canonical_golden_path(self, readme_text: str) -> None:
+        assert "reviewer-golden-path.md" in readme_text
 
     def test_readme_links_to_checklist(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -184,12 +191,19 @@ class TestOnboardingDocsSafety:
             assert "trust remains blocked" in text
 
     def test_safe_commands_present(self) -> None:
-        text = WALKTHROUGH.read_text(encoding="utf-8").lower()
+        text = GOLDEN_PATH.read_text(encoding="utf-8").lower()
         assert "check_version_consistency.py" in text
         assert "check_forbidden_claims.py" in text
         assert "check_public_docs_consistency.py" in text
         assert "check_public_launch_readiness.py" in text
         assert "release_check.sh --quick" in text
+
+    def test_walkthrough_routes_to_canonical_docs_without_command_blocks(self) -> None:
+        text = WALKTHROUGH.read_text(encoding="utf-8")
+        assert "reviewer-golden-path.md" in text
+        assert "paper-trading-guide.md" in text
+        assert "preflight-diagnostics.md" in text
+        assert "```bash" not in text
 
 
 class TestScriptBehavior:

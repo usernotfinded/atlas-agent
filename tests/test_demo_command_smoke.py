@@ -154,6 +154,30 @@ class TestCheckerRejectsMissingCanonicalDocLink:
         )
         assert "canonical command" in result.stdout.lower()
 
+    def test_rejects_missing_reviewer_golden_path_link(self) -> None:
+        result = _run_checker_in_isolated_repo(
+            doc_patch={
+                "README.md": (
+                    "reviewer-golden-path.md",
+                    "reviewer-golden-path-MISSING.md",
+                ),
+            }
+        )
+        assert result.returncode != 0
+        assert "canonical link" in result.stdout.lower()
+
+    def test_rejects_missing_preflight_link(self) -> None:
+        result = _run_checker_in_isolated_repo(
+            doc_patch={
+                "docs/paper-trading-guide.md": (
+                    "preflight-diagnostics.md",
+                    "preflight-diagnostics-MISSING.md",
+                ),
+            }
+        )
+        assert result.returncode != 0
+        assert "canonical link" in result.stdout.lower()
+
 
 class TestCheckerRejectsForbiddenPatterns:
     def test_rejects_live_mode_in_demo(self) -> None:
