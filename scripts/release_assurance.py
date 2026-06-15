@@ -64,6 +64,11 @@ def main():
     parser = argparse.ArgumentParser(description="Generate a local release assurance pack.")
     parser.add_argument("--version", required=True, help="Release version to assure (e.g., v0.6.0)")
     parser.add_argument("--output", required=True, help="Output directory for the assurance pack")
+    parser.add_argument(
+        "--include-reviewer-trust-snapshot",
+        action="store_true",
+        help="Include a deterministic reviewer trust snapshot in the assurance output.",
+    )
     args = parser.parse_args()
 
     version = args.version
@@ -404,6 +409,23 @@ or `stash drop` to remove generated artifacts.
         + "\n",
         encoding="utf-8",
     )
+
+    if args.include_reviewer_trust_snapshot:
+        import build_reviewer_trust_snapshot
+        import check_reviewer_trust_snapshot
+
+        snapshot_dir = out_dir / "reviewer-trust-snapshot"
+        build_reviewer_trust_snapshot.build_snapshot(snapshot_dir, deterministic=True)
+        check_result = check_reviewer_trust_snapshot.run_checks(snapshot_dir)
+        summary["reviewer_trust_snapshot_included"] = check_result["passed"]
+        if not check_result["passed"]:
+            valid = False
+            summary["valid"] = valid
+            findings.extend(check_result["errors"])
+        (out_dir / "release-assurance-summary.json").write_text(
+            json.dumps(summary, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
 
     # checksums
     def get_sha256(path):
