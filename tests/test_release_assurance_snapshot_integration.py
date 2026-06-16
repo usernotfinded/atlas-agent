@@ -276,3 +276,16 @@ def test_checker_json_reports_failure(tmp_path: Path) -> None:
     data = json.loads(result.stdout)
     assert data["passed"] is False
     assert data["errors"]
+
+
+def test_checker_fails_when_required_scripts_missing(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path), "--json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, result.stderr
+    data = json.loads(result.stdout)
+    assert data["passed"] is False
+    assert any("build_reviewer_trust_snapshot.py" in e for e in data["errors"])

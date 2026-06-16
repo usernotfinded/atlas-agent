@@ -6,8 +6,7 @@ enable live trading, or invoke broker/provider execution.
 
 Exit codes:
   0 = integration check passed
-  1 = blocking findings
-  2 = operational error (e.g., missing script)
+  1 = blocking findings or operational error (e.g., missing script)
 """
 
 from __future__ import annotations
@@ -193,7 +192,16 @@ def check_release_assurance_snapshot_integration(
             "warnings": warnings,
         }
 
-    source = _read(release_assurance_path)
+    try:
+        source = _read(release_assurance_path)
+    except OSError as e:
+        errors.append(f"Could not read {RELEASE_ASSURANCE_SCRIPT}: {e}")
+        return {
+            "passed": False,
+            "errors": errors,
+            "warnings": warnings,
+        }
+
     try:
         tree = ast.parse(source)
     except SyntaxError as e:
