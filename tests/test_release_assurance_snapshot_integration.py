@@ -11,6 +11,9 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_ASSURANCE_SCRIPT = REPO_ROOT / "scripts" / "release_assurance.py"
+CHECKER_SCRIPT = (
+    REPO_ROOT / "scripts" / "check_release_assurance_snapshot_integration.py"
+)
 
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import release_assurance  # noqa: E402
@@ -118,3 +121,158 @@ def test_opt_in_release_assurance_fails_when_snapshot_invalid(
 
     report = (tmp_path / "release-assurance-report.md").read_text(encoding="utf-8")
     assert "mock snapshot validation failure" in report
+
+
+def _write_minimal_release_assurance(
+    path: Path,
+    *,
+    include_flag: bool = True,
+    extra_body: str = "",
+    unsafe_command: str = "",
+) -> None:
+    flag_arg = (
+        """    parser.add_argument(
+        "--include-reviewer-trust-snapshot",
+        action="store_true",
+        help="Include snapshot.",
+    )
+"""
+        if include_flag
+        else ""
+    )
+    body = f"""
+    if args.include_reviewer_trust_snapshot:
+        import build_reviewer_trust_snapshot
+        import check_reviewer_trust_snapshot
+        snapshot_dir = out_dir / "reviewer-trust-snapshot"
+        build_reviewer_trust_snapshot.build_snapshot(snapshot_dir, deterministic=True)
+        check_result = check_reviewer_trust_snapshot.run_checks(snapshot_dir)
+        print(check_result)
+{extra_body}
+"""
+    source = f"""import argparse
+import subprocess
+from pathlib import Path
+
+def run_cmd(cmd):
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+def main():
+    parser = argparse.ArgumentParser()
+{flag_arg}    args = parser.parse_args()
+    out_dir = Path(".")
+{body}{unsafe_command}
+    return 0
+
+if __name__ == "__main__":
+    main()
+"""
+    path.write_text(source, encoding="utf-8")
+
+
+def _setup_temp_repo(tmp_path: Path) -> Path:
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir()
+    (scripts_dir / "build_reviewer_trust_snapshot.py").write_text("", encoding="utf-8")
+    (scripts_dir / "check_reviewer_trust_snapshot.py").write_text("", encoding="utf-8")
+    return scripts_dir
+
+
+def test_checker_passes_on_real_repo() -> None:
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "PASSED" in result.stdout
+
+
+def test_checker_json_passes_on_real_repo() -> None:
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["passed"] is True
+    assert "Release assurance snapshot integration check PASSED" in data["summary"]
+    assert data["errors"] == []
+
+
+def test_checker_fails_when_snapshot_flag_missing(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(
+        scripts_dir / "release_assurance.py", include_flag=False
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "does not expose --include-reviewer-trust-snapshot" in result.stdout
+
+
+def test_checker_fails_on_unsafe_command(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(
+        scripts_dir / "release_assurance.py",
+        unsafe_command='    run_cmd(["git", "push"])\n',
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "unsafe command" in result.stdout
+    assert "git push" in result.stdout
+
+
+def test_checker_fails_on_secret_reference(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(
+        scripts_dir / "release_assurance.py",
+        extra_body='        secret = "sk-12345678901234567890"\n',
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "Secret-like reference" in result.stdout
+
+
+def test_checker_json_reports_failure(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(
+        scripts_dir / "release_assurance.py", include_flag=False
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(CHECKER_SCRIPT),
+            "--repo-root",
+            str(tmp_path),
+            "--json",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, result.stderr
+    data = json.loads(result.stdout)
+    assert data["passed"] is False
+    assert data["errors"]
