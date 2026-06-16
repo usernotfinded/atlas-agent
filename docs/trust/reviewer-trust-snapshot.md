@@ -179,7 +179,9 @@ trading. It also does not prove profitability, production readiness, or
 suitability for live trading.
 
 The manual Release Assurance workflow supports the same opt-in through the
-`include_reviewer_trust_snapshot` input (default `false`). See
+`include_reviewer_trust_snapshot` input (default `false`). It also supports an
+optional `run_bundle_demo` input (default `false`) that runs the full bundle
+ demo and uploads the output as a `release-assurance-bundle-demo` artifact. See
 [`.github/workflows/release-assurance.yml`](../../.github/workflows/release-assurance.yml).
 
 ## Validate the integration locally

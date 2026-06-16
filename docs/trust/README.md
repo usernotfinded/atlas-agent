@@ -139,7 +139,7 @@ brokers, enable trading, or require credentials.
 - [v0.6.0 Trust and Release Status (historical)](v0.6.0-status.md)
 - [Reviewer Trust Snapshot](reviewer-trust-snapshot.md) — compact release-identity and safety-posture summary
 - [Reviewer Trust Snapshot GitHub Actions Workflow](../../.github/workflows/reviewer-trust-snapshot.yml) — manual, read-only snapshot artifact workflow
-- [Release Assurance CI Workflow](../../.github/workflows/release-assurance.yml) — manual release assurance workflow with optional reviewer trust snapshot integration
+- [Release Assurance CI Workflow](../../.github/workflows/release-assurance.yml) — manual release assurance workflow with optional reviewer trust snapshot integration and optional `run_bundle_demo` artifact upload
 - [SECURITY.md](../../SECURITY.md)
 - [Release Readiness](../security/release-readiness.md)
 - [Provider Audit Pack](../security/provider-audit-pack.md)

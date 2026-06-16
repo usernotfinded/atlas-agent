@@ -12,6 +12,16 @@ on:
         type: boolean
         required: false
         default: false
+      run_bundle_demo:
+        description: "Run the release assurance bundle end-to-end demo and upload its artifacts"
+        type: boolean
+        required: false
+        default: false
+      bundle_demo_version:
+        description: "Release tag to use for the bundle demo (default: current public release)"
+        type: string
+        required: false
+        default: "v0.6.11"
 
 permissions:
   contents: read
@@ -64,5 +74,29 @@ jobs:
         with:
           name: release-assurance-${{ inputs.release }}
           path: artifacts/release_assurance/${{ inputs.release }}-ci
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Run release assurance bundle demo
+        if: ${{ inputs.run_bundle_demo }}
+        run: |
+          mkdir -p artifacts/release_assurance_bundle_demo
+          bash scripts/demo_release_assurance_snapshot_bundle.sh \
+            --version "${{ inputs.bundle_demo_version }}" \
+            --output-dir "artifacts/release_assurance_bundle_demo/${{ inputs.bundle_demo_version }}" \
+            --deterministic
+
+      - name: Validate release assurance bundle manifest
+        if: ${{ inputs.run_bundle_demo }}
+        run: |
+          python scripts/check_release_assurance_bundle_manifest.py \
+            "artifacts/release_assurance_bundle_demo/${{ inputs.bundle_demo_version }}"
+
+      - name: Upload release assurance bundle demo artifact
+        if: ${{ inputs.run_bundle_demo }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-assurance-bundle-demo
+          path: artifacts/release_assurance_bundle_demo/${{ inputs.bundle_demo_version }}
           if-no-files-found: error
           retention-days: 14

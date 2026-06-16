@@ -182,6 +182,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "8l. release assurance bundle workflow check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_release_assurance_bundle_workflow.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8m. release assurance bundle workflow tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_bundle_workflow.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "9. public docs consistency"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py

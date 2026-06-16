@@ -90,6 +90,19 @@ The checker verifies:
 - It does not replace an external security audit or funded-use due diligence.
 - It does not verify that the generated checksums match a separately published official release artifact.
 
+## Running the demo from GitHub Actions
+
+The manual **Release Assurance** workflow (`.github/workflows/release-assurance.yml`) can optionally run this demo and upload the resulting bundle as a CI artifact.
+
+1. Go to **Actions → Release Assurance** in the repository.
+2. Click **Run workflow**.
+3. Keep `run_bundle_demo` unchecked to preserve the existing behavior (only the standard release assurance pack is generated and uploaded).
+4. Set `run_bundle_demo` to `true` to also run `scripts/demo_release_assurance_snapshot_bundle.sh`.
+   - `bundle_demo_version` defaults to the current public release (`v0.6.11`).
+5. The workflow validates the generated manifest with `scripts/check_release_assurance_bundle_manifest.py` and uploads the entire output directory as the `release-assurance-bundle-demo` artifact.
+
+The optional path is disabled by default. It does not create tags, create GitHub releases, publish to PyPI, use secrets, call providers or brokers, enable live trading, or modify repository files.
+
 ## No tag/release/PyPI is created
 
 The demo is read-only and non-publishing. It does not:
@@ -101,6 +114,8 @@ The demo is read-only and non-publishing. It does not:
 - Call providers or brokers.
 - Enable live trading or order submission.
 - Load credentials or secrets.
+
+The optional GitHub Actions path has the same constraints.
 
 ## Related docs
 

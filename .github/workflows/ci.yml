@@ -78,6 +78,10 @@ jobs:
         run: python3.11 -m pytest tests/test_release_assurance_snapshot_integration.py -q
       - name: Release assurance bundle manifest tests (fast)
         run: python3.11 -m pytest tests/test_release_assurance_bundle_manifest.py -m "not slow" -q
+      - name: Release assurance bundle workflow check
+        run: python3.11 scripts/check_release_assurance_bundle_workflow.py
+      - name: Release assurance bundle workflow tests (fast)
+        run: python3.11 -m pytest tests/test_release_assurance_bundle_workflow.py -q
       - name: Trust center check
         run: python3.11 scripts/check_trust_center.py
       - name: Onboarding docs check

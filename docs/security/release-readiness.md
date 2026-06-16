@@ -74,6 +74,12 @@ The workflow verifies release identity, public metadata, updater delivery, provi
 
 It is read-only and non-publishing. It does not create tags, create GitHub releases, publish to PyPI, use secrets, call providers, touch brokers, or enable trading.
 
+### Optional release assurance bundle demo
+
+The workflow has an additional opt-in input, `run_bundle_demo` (default `false`). When set to `true`, the workflow also runs `scripts/demo_release_assurance_snapshot_bundle.sh`, validates the resulting manifest with `scripts/check_release_assurance_bundle_manifest.py`, and uploads the baseline bundle, opt-in snapshot bundle, and manifest as the `release-assurance-bundle-demo` artifact.
+
+This optional path is disabled by default so that normal workflow dispatches behave exactly as before. It uses no secrets, creates no tags or releases, publishes no packages, and does not enable live trading, provider execution, broker execution, or order submission.
+
 Generated release assurance and provider evidence outputs should stay local or
 be uploaded as CI artifacts unless a task explicitly requires a versioned
 evidence pack. See [Generated Artifacts](../development/generated-artifacts.md)
