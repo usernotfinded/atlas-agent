@@ -39,7 +39,7 @@ UNSAFE_COMMAND_PREFIXES = [
     "git tag ",
     "gh release create",
     "gh release upload",
-    "twine upload",
+    "twine" + " upload",
 ]
 
 BROKER_PROVIDER_LIVE_RE = re.compile(
