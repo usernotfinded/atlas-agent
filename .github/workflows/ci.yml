@@ -72,6 +72,10 @@ jobs:
         run: python3.11 scripts/check_docs_archive_hygiene.py
       - name: Docs archive hygiene tests (fast)
         run: python3.11 -m pytest tests/test_docs_archive_hygiene.py -q
+      - name: Release assurance snapshot integration check
+        run: python3.11 scripts/check_release_assurance_snapshot_integration.py
+      - name: Release assurance snapshot integration tests (fast)
+        run: python3.11 -m pytest tests/test_release_assurance_snapshot_integration.py -q
       - name: Trust center check
         run: python3.11 scripts/check_trust_center.py
       - name: Onboarding docs check
@@ -128,6 +132,7 @@ jobs:
             tests/test_product_demo_pack.py \
             tests/test_reviewer_trust_snapshot_workflow.py \
             tests/test_docs_archive_hygiene.py \
+            tests/test_release_assurance_snapshot_integration.py \
             -q
       - name: Release check quick
         run: ./scripts/release_check.sh --quick
