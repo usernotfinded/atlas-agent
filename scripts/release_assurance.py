@@ -20,6 +20,87 @@ except ImportError:
 _metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
 _meta = ReleaseMetadata(load_metadata(_metadata_path))
 
+# Redaction patterns for credential-like values in diagnostic output.
+# These intentionally match values, not safe phrases like "secret regression coverage".
+_REDACTION_PATTERNS = [
+    # Environment variable assignments: NAME=value (case-insensitive, value may be quoted).
+    (re.compile(r"(?i)\b([A-Z_]*TOKEN[A-Z_]*)\s*=\s*(\S+)"), r"\1=<redacted>"),
+    # GitHub token patterns.
+    (re.compile(r"gh[pousr]_[A-Za-z0-9_]{36,}"), "<redacted>"),
+    # Generic secret/API key prefixes.
+    (re.compile(r"\b(sk-[A-Za-z0-9]{20,})"), "<redacted>"),
+    (
+        re.compile(
+            r"\b(APCA-[A-Za-z0-9]{4,}-[A-Za-z0-9]{4,}-[A-Za-z0-9]{4,}-[A-Za-z0-9]{12,})"
+        ),
+        "<redacted>",
+    ),
+    # Bearer tokens.
+    (re.compile(r"(?i)(Bearer\s+)\S+"), r"\1<redacted>"),
+    # Account-like UUIDs.
+    (
+        re.compile(
+            r"\b([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+        ),
+        "<redacted>",
+    ),
+]
+
+
+def redact_text(text: str) -> str:
+    """Sanitize a string by redacting credential-like values."""
+    if not text:
+        return text
+    for pattern, replacement in _REDACTION_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+_REMEDIATIONS = {
+    "package_version_aligned": "Verify pyproject.toml and src/atlas_agent/__init__.py both declare the expected version.",
+    "release_notes_present": "Create docs/releases/{version}.md with required safety non-claims.",
+    "changelog_present": "Add a [{clean_version}] section to CHANGELOG.md.",
+    "readme_public_metadata_current": "Update README.md current-status claim to the release being verified and remove stale historical claims.",
+    "security_md_current": "Add package version {clean_version} to SECURITY.md supported-versions table.",
+    "local_tag_present": "Create local tag with: git tag {version}",
+    "remote_tag_present": "Push local tag with: git push origin {version}",
+    "github_release_present": "Create a GitHub release for {version} or verify GH_TOKEN is set and gh CLI is authenticated.",
+    "updater_dry_run_ok": "Run updater dry-run locally: PYTHONPATH=src python -m atlas_agent.cli init <tmp> --template routine-trader && python -m atlas_agent.cli update check --dry-run",
+    "dev_version_not_public_stable": "Verify atlas_agent.update.sources.is_public_stable rejects dev tags.",
+    "provider_audit_pack_commands_present": "Ensure provider audit-pack CLI commands are registered.",
+    "provider_audit_pack_workflow_present": "Ensure .github/workflows/provider-audit-pack.yml exists.",
+    "non_claims_preserved": "Add required safety non-claims to docs/releases/{version}.md.",
+    "protected_boundaries_clean": "Revert changes in src/atlas_agent/{config,brokers,execution,safety,risk} or exclude from release.",
+    "reviewer_trust_snapshot_valid": "Run scripts/check_reviewer_trust_snapshot.py on the snapshot directory.",
+}
+
+
+def _remediation(check_name: str, version: str, clean_version: str) -> str:
+    template = _REMEDIATIONS.get(
+        check_name,
+        "Investigate the failed check and re-run release_assurance.py after fixing the underlying issue.",
+    )
+    return template.format(version=version, clean_version=clean_version)
+
+
+def _record_diagnostic(
+    diagnostics: dict,
+    check_name: str,
+    command: str,
+    passed: bool,
+    stdout: str = "",
+    stderr: str = "",
+    exit_code: int | None = None,
+) -> None:
+    diagnostics[check_name] = {
+        "check": check_name,
+        "command": command,
+        "passed": passed,
+        "exit_code": exit_code,
+        "stdout_excerpt": redact_text(stdout[-500:]) if stdout else "",
+        "stderr_excerpt": redact_text(stderr[-500:]) if stderr else "",
+    }
+
 
 def normalize_release_version(version: str) -> str:
     """Return the package version for a release/tag version."""
@@ -83,6 +164,11 @@ def main():
         action="store_true",
         help="Include a deterministic reviewer trust snapshot in the assurance output.",
     )
+    parser.add_argument(
+        "--diagnostics-json",
+        default=None,
+        help="Optional path to write a machine-readable diagnostics JSON file on failure.",
+    )
     args = parser.parse_args()
 
     version = args.version
@@ -100,6 +186,7 @@ def main():
         "pypi_publish_performed": False,
     }
     findings = []
+    diagnostics: dict[str, dict] = {}
 
     # 1-3. Version checks
     try:
@@ -113,10 +200,22 @@ def main():
     except OSError as e:
         checks["package_version_aligned"] = False
         findings.append(f"Failed to read version files: {e}")
+    _record_diagnostic(
+        diagnostics,
+        "package_version_aligned",
+        "internal: read pyproject.toml and src/atlas_agent/__init__.py",
+        checks["package_version_aligned"],
+    )
 
     # 4. Release notes
     release_notes_path = Path(f"docs/releases/{version}.md")
     checks["release_notes_present"] = release_notes_path.exists()
+    _record_diagnostic(
+        diagnostics,
+        "release_notes_present",
+        f"internal: Path.exists({release_notes_path})",
+        checks["release_notes_present"],
+    )
 
     # 5. Changelog
     try:
@@ -124,6 +223,12 @@ def main():
         checks["changelog_present"] = f"[{clean_version}]" in changelog
     except OSError:
         checks["changelog_present"] = False
+    _record_diagnostic(
+        diagnostics,
+        "changelog_present",
+        "internal: read CHANGELOG.md",
+        checks["changelog_present"],
+    )
 
     # 6. README
     try:
@@ -154,6 +259,12 @@ def main():
             )
     except OSError:
         checks["readme_public_metadata_current"] = False
+    _record_diagnostic(
+        diagnostics,
+        "readme_public_metadata_current",
+        "internal: read README.md",
+        checks["readme_public_metadata_current"],
+    )
 
     # 7. SECURITY.md
     try:
@@ -168,22 +279,55 @@ def main():
             "SECURITY.md supported versions do not include "
             f"package version {clean_version} for release tag {tag_version}."
         )
+    _record_diagnostic(
+        diagnostics,
+        "security_md_current",
+        "internal: read SECURITY.md",
+        checks["security_md_current"],
+    )
 
     # 8. Local tag
     out, rc, err = run_cmd(["git", "tag", "-l", version], check=False)
     checks["local_tag_present"] = version in out
+    _record_diagnostic(
+        diagnostics,
+        "local_tag_present",
+        f"git tag -l {version}",
+        checks["local_tag_present"],
+        out,
+        err,
+        rc,
+    )
 
     # 9. Remote tag
     out, rc, err = run_cmd(
         ["git", "ls-remote", "--tags", "origin", version], check=False
     )
     checks["remote_tag_present"] = version in out
+    _record_diagnostic(
+        diagnostics,
+        "remote_tag_present",
+        f"git ls-remote --tags origin {version}",
+        checks["remote_tag_present"],
+        out,
+        err,
+        rc,
+    )
 
     # 10. GitHub Release
     out, rc, err = run_cmd(
         ["gh", "release", "view", version, "--json", "url"], check=False
     )
     checks["github_release_present"] = rc == 0
+    _record_diagnostic(
+        diagnostics,
+        "github_release_present",
+        f"gh release view {version} --json url",
+        checks["github_release_present"],
+        out,
+        err,
+        rc,
+    )
 
     # 11. Updater dry-run
     src_path = Path("src").resolve()
@@ -218,9 +362,20 @@ def main():
                 cwd=tmp_workspace,
                 env=python_env,
             )
+            updater_command = "atlas_agent.cli update check --dry-run"
         else:
             out, rc, err = init_out, init_rc, init_err
+            updater_command = "atlas_agent.cli init <tmp> --template routine-trader"
     checks["updater_dry_run_ok"] = "Current version: " in out and rc == 0
+    _record_diagnostic(
+        diagnostics,
+        "updater_dry_run_ok",
+        updater_command,
+        checks["updater_dry_run_ok"],
+        out,
+        err,
+        rc,
+    )
 
     # 12-13. Updater sources test
     # This is tested implicitly by checking the sources.py directly or trusting the test suite.
@@ -239,14 +394,23 @@ def main():
         env={"PYTHONPATH": "src"},
     )
     checks["dev_version_not_public_stable"] = out == "False"
+    _record_diagnostic(
+        diagnostics,
+        "dev_version_not_public_stable",
+        "internal: is_public_stable({dev_tag})",
+        checks["dev_version_not_public_stable"],
+        out,
+        err,
+        rc,
+    )
 
     # 14. Audit pack CLI
-    out1, rc1, _ = run_cmd(
+    out1, rc1, err1 = run_cmd(
         [sys.executable, "-m", "atlas_agent.cli", "providers", "audit-pack", "--help"],
         check=False,
         env={"PYTHONPATH": "src"},
     )
-    out2, rc2, _ = run_cmd(
+    out2, rc2, err2 = run_cmd(
         [
             sys.executable,
             "-m",
@@ -259,11 +423,26 @@ def main():
         env={"PYTHONPATH": "src"},
     )
     checks["provider_audit_pack_commands_present"] = rc1 == 0 and rc2 == 0
+    _record_diagnostic(
+        diagnostics,
+        "provider_audit_pack_commands_present",
+        "atlas_agent.cli providers audit-pack --help && verify-audit-pack --help",
+        checks["provider_audit_pack_commands_present"],
+        f"{out1}\n{out2}",
+        f"{err1}\n{err2}",
+        rc1 if rc1 != 0 else rc2,
+    )
 
     # 15. Audit workflow
     checks["provider_audit_pack_workflow_present"] = Path(
         ".github/workflows/provider-audit-pack.yml"
     ).exists()
+    _record_diagnostic(
+        diagnostics,
+        "provider_audit_pack_workflow_present",
+        "internal: Path.exists(.github/workflows/provider-audit-pack.yml)",
+        checks["provider_audit_pack_workflow_present"],
+    )
 
     # 16. Non-claims
     if checks["release_notes_present"]:
@@ -295,6 +474,12 @@ def main():
         )
     else:
         checks["non_claims_preserved"] = False
+    _record_diagnostic(
+        diagnostics,
+        "non_claims_preserved",
+        f"internal: read docs/releases/{version}.md",
+        checks["non_claims_preserved"],
+    )
 
     # 17. Protected boundaries
     out, rc, err = run_cmd(
@@ -313,8 +498,63 @@ def main():
         check=False,
     )
     checks["protected_boundaries_clean"] = out == ""
+    _record_diagnostic(
+        diagnostics,
+        "protected_boundaries_clean",
+        "git diff HEAD --name-only -- src/atlas_agent/{config,brokers,execution,safety,risk}",
+        checks["protected_boundaries_clean"],
+        out,
+        err,
+        rc,
+    )
 
     valid = all(checks.values()) and not any(safety.values())
+
+    if not valid:
+        failed_checks = [name for name, passed in checks.items() if not passed]
+        failed_check = failed_checks[0] if failed_checks else "unknown"
+        diag = diagnostics.get(failed_check, {})
+        remediation = _remediation(failed_check, version, clean_version)
+        print("\n=== Release Assurance Diagnostic ===", file=sys.stderr)
+        print(f"Release: {version}", file=sys.stderr)
+        print(f"Output directory: {out_dir}", file=sys.stderr)
+        print(f"Failed check: {failed_check}", file=sys.stderr)
+        if diag.get("command"):
+            print(f"Command/function: {diag['command']}", file=sys.stderr)
+        if diag.get("exit_code") is not None:
+            print(f"Exit code: {diag['exit_code']}", file=sys.stderr)
+        if diag.get("stdout_excerpt"):
+            print(f"Stdout excerpt:\n{diag['stdout_excerpt']}", file=sys.stderr)
+        if diag.get("stderr_excerpt"):
+            print(f"Stderr excerpt:\n{diag['stderr_excerpt']}", file=sys.stderr)
+        print(f"Remediation: {remediation}", file=sys.stderr)
+        print("=====================================\n", file=sys.stderr)
+
+        if args.diagnostics_json:
+            diag_output = {
+                "schema_version": "atlas-release-assurance-diagnostics/1.0",
+                "passed": valid,
+                "release": version,
+                "failed_phase": "release_assurance",
+                "failed_check": failed_check,
+                "command": diag.get("command"),
+                "exit_code": diag.get("exit_code"),
+                "stdout_excerpt": diag.get("stdout_excerpt"),
+                "stderr_excerpt": diag.get("stderr_excerpt"),
+                "remediation": remediation,
+                "redactions_applied": [
+                    "*_TOKEN",
+                    "GH_TOKEN",
+                    "GITHUB_TOKEN",
+                    "Bearer tokens",
+                    "API keys",
+                    "account IDs",
+                ],
+            }
+            Path(args.diagnostics_json).write_text(
+                json.dumps(diag_output, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
 
     summary = {
         "artifact_type": "release_assurance_summary",
@@ -386,6 +626,13 @@ def main():
         build_reviewer_trust_snapshot.build_snapshot(snapshot_dir, deterministic=True)
         check_result = check_reviewer_trust_snapshot.run_checks(snapshot_dir)
         summary["reviewer_trust_snapshot_valid"] = check_result["passed"]
+        _record_diagnostic(
+            diagnostics,
+            "reviewer_trust_snapshot_valid",
+            "check_reviewer_trust_snapshot.run_checks",
+            check_result["passed"],
+            stderr="\n".join(check_result.get("errors", [])),
+        )
         if not check_result["passed"]:
             valid = False
             summary["valid"] = valid

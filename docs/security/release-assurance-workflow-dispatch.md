@@ -121,4 +121,5 @@ Exit codes:
 
 - [Release Assurance Bundle Demo](release-assurance-bundle-demo.md) — local-only demo that builds the same structure.
 - [Release Readiness](release-readiness.md) — full release assurance documentation.
+- [Release Assurance Diagnostics](release-assurance-diagnostics.md) — how to read redacted failure diagnostics and use `--diagnostics-json`.
 - [Reviewer Trust Snapshot](../trust/reviewer-trust-snapshot.md) — compact release-identity and safety-posture summary.

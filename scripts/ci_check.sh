@@ -196,7 +196,21 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "8n. release assurance workflow artifact check (deterministic fixture)"
+echo "8n. release assurance diagnostics check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_release_assurance_diagnostics.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8o. release assurance diagnostics tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_diagnostics.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8p. release assurance workflow artifact check (deterministic fixture)"
 SECONDS=0
 "$PYTHON_BIN" - "$REPO_ROOT" <<'PY'
 import json, subprocess, sys, tempfile
@@ -237,7 +251,7 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "8o. release assurance workflow artifact tests (fast)"
+echo "8q. release assurance workflow artifact tests (fast)"
 SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_release_assurance_workflow_artifact.py -q "${PYTEST_EXTRA_ARGS[@]}"
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))

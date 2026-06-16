@@ -232,6 +232,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "13q. release assurance diagnostics check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_release_assurance_diagnostics.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "13r. release assurance diagnostics tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_diagnostics.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "13o. release assurance workflow artifact check (deterministic fixture)"
 SECONDS=0
 "$PYTHON_BIN" - "$REPO_ROOT" <<'PY'

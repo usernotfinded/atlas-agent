@@ -37,6 +37,8 @@ The pack verifies release identity, public metadata, updater delivery, provider 
 
 It does not create tags, publish packages, call providers, enable trading, or modify runtime behavior.
 
+If a check fails, `release_assurance.py` emits a redacted diagnostic block to `stderr` and can write a machine-readable `release-assurance-diagnostics.json` via `--diagnostics-json`. See [Release Assurance Diagnostics](release-assurance-diagnostics.md) for details on redaction, usage, and debugging workflow failures.
+
 ### End-to-end bundle demo
 
 A fully local, offline demo generates a baseline release-assurance bundle, an opt-in bundle with a reviewer trust snapshot, and a manifest describing both:
