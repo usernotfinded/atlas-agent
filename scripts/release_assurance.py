@@ -26,7 +26,9 @@ def normalize_release_version(version: str) -> str:
     return version[1:] if version.startswith("v") else version
 
 
-def security_md_supports_package_version(security_md: str, package_version: str) -> bool:
+def security_md_supports_package_version(
+    security_md: str, package_version: str
+) -> bool:
     version_pattern = re.compile(
         rf"(?<![0-9A-Za-z.]){re.escape(package_version)}(?![0-9A-Za-z.])"
     )
@@ -41,7 +43,12 @@ def security_md_supports_package_version(security_md: str, package_version: str)
     return False
 
 
-def run_cmd(cmd: list[str], check: bool = True, cwd: str | Path | None = None, env: dict[str, str] | None = None):
+def run_cmd(
+    cmd: list[str],
+    check: bool = True,
+    cwd: str | Path | None = None,
+    env: dict[str, str] | None = None,
+):
     run_env = os.environ.copy()
     if env is not None:
         run_env.update(env)
@@ -60,10 +67,17 @@ def run_cmd(cmd: list[str], check: bool = True, cwd: str | Path | None = None, e
             raise
         return (e.stdout or "").strip(), e.returncode, (e.stderr or "").strip()
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Generate a local release assurance pack.")
-    parser.add_argument("--version", required=True, help="Release version to assure (e.g., v0.6.0)")
-    parser.add_argument("--output", required=True, help="Output directory for the assurance pack")
+    parser = argparse.ArgumentParser(
+        description="Generate a local release assurance pack."
+    )
+    parser.add_argument(
+        "--version", required=True, help="Release version to assure (e.g., v0.6.0)"
+    )
+    parser.add_argument(
+        "--output", required=True, help="Output directory for the assurance pack"
+    )
     parser.add_argument(
         "--include-reviewer-trust-snapshot",
         action="store_true",
@@ -86,13 +100,16 @@ def main():
         "pypi_publish_performed": False,
     }
     findings = []
-    
+
     # 1-3. Version checks
     try:
         pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
         checks["package_version_aligned"] = f'version = "{clean_version}"' in pyproject
         init_py = Path("src/atlas_agent/__init__.py").read_text(encoding="utf-8")
-        checks["package_version_aligned"] = checks["package_version_aligned"] and f'__version__ = "{clean_version}"' in init_py
+        checks["package_version_aligned"] = (
+            checks["package_version_aligned"]
+            and f'__version__ = "{clean_version}"' in init_py
+        )
     except OSError as e:
         checks["package_version_aligned"] = False
         findings.append(f"Failed to read version files: {e}")
@@ -100,7 +117,7 @@ def main():
     # 4. Release notes
     release_notes_path = Path(f"docs/releases/{version}.md")
     checks["release_notes_present"] = release_notes_path.exists()
-    
+
     # 5. Changelog
     try:
         changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
@@ -141,7 +158,9 @@ def main():
     # 7. SECURITY.md
     try:
         security = Path("SECURITY.md").read_text(encoding="utf-8")
-        checks["security_md_current"] = security_md_supports_package_version(security, clean_version)
+        checks["security_md_current"] = security_md_supports_package_version(
+            security, clean_version
+        )
     except OSError:
         checks["security_md_current"] = False
     if not checks["security_md_current"]:
@@ -152,15 +171,19 @@ def main():
 
     # 8. Local tag
     out, rc, err = run_cmd(["git", "tag", "-l", version], check=False)
-    checks["local_tag_present"] = (version in out)
+    checks["local_tag_present"] = version in out
 
     # 9. Remote tag
-    out, rc, err = run_cmd(["git", "ls-remote", "--tags", "origin", version], check=False)
-    checks["remote_tag_present"] = (version in out)
+    out, rc, err = run_cmd(
+        ["git", "ls-remote", "--tags", "origin", version], check=False
+    )
+    checks["remote_tag_present"] = version in out
 
     # 10. GitHub Release
-    out, rc, err = run_cmd(["gh", "release", "view", version, "--json", "url"], check=False)
-    checks["github_release_present"] = (rc == 0)
+    out, rc, err = run_cmd(
+        ["gh", "release", "view", version, "--json", "url"], check=False
+    )
+    checks["github_release_present"] = rc == 0
 
     # 11. Updater dry-run
     src_path = Path("src").resolve()
@@ -215,7 +238,7 @@ def main():
         check=False,
         env={"PYTHONPATH": "src"},
     )
-    checks["dev_version_not_public_stable"] = (out == "False")
+    checks["dev_version_not_public_stable"] = out == "False"
 
     # 14. Audit pack CLI
     out1, rc1, _ = run_cmd(
@@ -224,14 +247,23 @@ def main():
         env={"PYTHONPATH": "src"},
     )
     out2, rc2, _ = run_cmd(
-        [sys.executable, "-m", "atlas_agent.cli", "providers", "verify-audit-pack", "--help"],
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "providers",
+            "verify-audit-pack",
+            "--help",
+        ],
         check=False,
         env={"PYTHONPATH": "src"},
     )
-    checks["provider_audit_pack_commands_present"] = (rc1 == 0 and rc2 == 0)
+    checks["provider_audit_pack_commands_present"] = rc1 == 0 and rc2 == 0
 
     # 15. Audit workflow
-    checks["provider_audit_pack_workflow_present"] = Path(".github/workflows/provider-audit-pack.yml").exists()
+    checks["provider_audit_pack_workflow_present"] = Path(
+        ".github/workflows/provider-audit-pack.yml"
+    ).exists()
 
     # 16. Non-claims
     if checks["release_notes_present"]:
@@ -280,10 +312,10 @@ def main():
         ],
         check=False,
     )
-    checks["protected_boundaries_clean"] = (out == "")
+    checks["protected_boundaries_clean"] = out == ""
 
     valid = all(checks.values()) and not any(safety.values())
-    
+
     summary = {
         "artifact_type": "release_assurance_summary",
         "schema_version": 1,
@@ -295,7 +327,7 @@ def main():
         "local_only_evidence": True,
         "checks": checks,
         "safety_summary": safety,
-        "findings": findings
+        "findings": findings,
     }
 
     (out_dir / "release-assurance-summary.json").write_text(
@@ -303,11 +335,73 @@ def main():
         encoding="utf-8",
     )
 
+    # Generate detail json files to match directory structure request if they are supposed to be separate files
+    (out_dir / "release-checks.json").write_text(
+        json.dumps(
+            {"package_version_aligned": checks["package_version_aligned"]},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "public-metadata-checks.json").write_text(
+        json.dumps(
+            {
+                "readme_public_metadata_current": checks[
+                    "readme_public_metadata_current"
+                ],
+                "security_md_current": checks["security_md_current"],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "updater-delivery-checks.json").write_text(
+        json.dumps({"updater_dry_run_ok": checks["updater_dry_run_ok"]}, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "provider-audit-pack-checks.json").write_text(
+        json.dumps(
+            {
+                "provider_audit_pack_commands_present": checks[
+                    "provider_audit_pack_commands_present"
+                ],
+                "provider_audit_pack_workflow_present": checks[
+                    "provider_audit_pack_workflow_present"
+                ],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    if args.include_reviewer_trust_snapshot:
+        import build_reviewer_trust_snapshot
+        import check_reviewer_trust_snapshot
+
+        snapshot_dir = out_dir / "reviewer-trust-snapshot"
+        build_reviewer_trust_snapshot.build_snapshot(snapshot_dir, deterministic=True)
+        check_result = check_reviewer_trust_snapshot.run_checks(snapshot_dir)
+        summary["reviewer_trust_snapshot_valid"] = check_result["passed"]
+        if not check_result["passed"]:
+            valid = False
+            summary["valid"] = valid
+            findings.extend(
+                f"Reviewer trust snapshot: {e}" for e in check_result["errors"]
+            )
+        (out_dir / "release-assurance-summary.json").write_text(
+            json.dumps(summary, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
     report_md = f"""# {version} Release Assurance Report
 
 ## Summary
 Valid: {valid}
-Generated at: {summary['generated_at']}
+Generated at: {summary["generated_at"]}
 
 ## Release Identity
 - package version: {clean_version}
@@ -352,6 +446,9 @@ Generated at: {summary['generated_at']}
 - not financial advice
 - PyPI was not published
 
+## Reviewer Trust Snapshot
+{"Included and valid." if summary.get("reviewer_trust_snapshot_valid") else ("Included but validation failed." if args.include_reviewer_trust_snapshot else "Not included (opt-in flag was not set).")}
+
 ## Findings
 {"No findings." if not findings else chr(10).join(f"- {x}" for x in findings)}
 
@@ -378,55 +475,6 @@ or `stash drop` to remove generated artifacts.
 """
     (out_dir / "release-assurance-report.md").write_text(report_md, encoding="utf-8")
 
-    # Generate dummy json files to match directory structure request if they are supposed to be separate files
-    (out_dir / "release-checks.json").write_text(
-        json.dumps({"package_version_aligned": checks["package_version_aligned"]}, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    (out_dir / "public-metadata-checks.json").write_text(
-        json.dumps(
-            {
-                "readme_public_metadata_current": checks["readme_public_metadata_current"],
-                "security_md_current": checks["security_md_current"],
-            },
-            sort_keys=True,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    (out_dir / "updater-delivery-checks.json").write_text(
-        json.dumps({"updater_dry_run_ok": checks["updater_dry_run_ok"]}, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    (out_dir / "provider-audit-pack-checks.json").write_text(
-        json.dumps(
-            {
-                "provider_audit_pack_commands_present": checks["provider_audit_pack_commands_present"],
-                "provider_audit_pack_workflow_present": checks["provider_audit_pack_workflow_present"],
-            },
-            sort_keys=True,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-
-    if args.include_reviewer_trust_snapshot:
-        import build_reviewer_trust_snapshot
-        import check_reviewer_trust_snapshot
-
-        snapshot_dir = out_dir / "reviewer-trust-snapshot"
-        build_reviewer_trust_snapshot.build_snapshot(snapshot_dir, deterministic=True)
-        check_result = check_reviewer_trust_snapshot.run_checks(snapshot_dir)
-        summary["reviewer_trust_snapshot_included"] = check_result["passed"]
-        if not check_result["passed"]:
-            valid = False
-            summary["valid"] = valid
-            findings.extend(check_result["errors"])
-        (out_dir / "release-assurance-summary.json").write_text(
-            json.dumps(summary, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
-
     # checksums
     def get_sha256(path):
         h = hashlib.sha256()
@@ -437,11 +485,14 @@ or `stash drop` to remove generated artifacts.
     for p in sorted(out_dir.iterdir()):
         if p.is_file() and p.name != "sha256sums.txt":
             checksums.append(f"{get_sha256(p)}  {p.name}")
-    
-    (out_dir / "sha256sums.txt").write_text("\n".join(checksums) + "\n", encoding="utf-8")
+
+    (out_dir / "sha256sums.txt").write_text(
+        "\n".join(checksums) + "\n", encoding="utf-8"
+    )
 
     print(f"Release assurance pack written to {out_dir}")
     sys.exit(0 if valid else 1)
+
 
 if __name__ == "__main__":
     main()
