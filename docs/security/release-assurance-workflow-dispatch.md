@@ -145,6 +145,48 @@ The workflow downloads the artifact, runs `scripts/check_release_assurance_diagn
 
 The workflow is `workflow_dispatch` only, declares `contents: read` and `actions: read`, and uses only `GH_TOKEN: ${{ github.token }}`. It does not create tags or releases, publish to PyPI, call providers, submit broker orders, or enable live trading.
 
+## Artifact retention audit
+
+The manual [Release Assurance Artifact Retention Audit](../../.github/workflows/release-assurance-artifact-retention-audit.yml)
+workflow checks whether release-assurance artifacts are still available, nearing expiry, or
+already expired. It is `workflow_dispatch` only, uses `contents: read` and `actions: read`
+permissions, and only references `GH_TOKEN: ${{ github.token }}`. It does not download or
+delete artifacts, create tags or releases, publish packages, call providers/brokers, or
+enable live trading.
+
+### Inputs
+
+- `older_than_days` — age threshold in days for older artifacts (default: `7`)
+- `near_expiry_days` — days before expiry to flag artifacts as near expiry (default: `3`)
+- `artifact_names` — comma-separated watched artifact names (default:
+  `release-assurance-diagnostics,release-assurance-diagnostics-validation,release-assurance-bundle-demo,reviewer-trust-snapshot`)
+
+### Dispatch via GitHub CLI
+
+```bash
+gh workflow run release-assurance-artifact-retention-audit.yml \
+  --repo usernotfinded/atlas-agent \
+  --field older_than_days=7 \
+  --field near_expiry_days=3 \
+  --field artifact_names=release-assurance-diagnostics,release-assurance-diagnostics-validation,release-assurance-bundle-demo,reviewer-trust-snapshot
+```
+
+Follow the run with:
+
+```bash
+gh run list --workflow=release-assurance-artifact-retention-audit.yml --repo usernotfinded/atlas-agent
+```
+
+### Downloading the report
+
+After the run completes, download the JSON/Markdown reports with:
+
+```bash
+gh run download <run-id> --name release-assurance-artifact-retention-audit --dir ./retention-report
+```
+
+The audit is visibility-only and does not modify or clean up artifacts.
+
 ## How to validate the bundle artifact
 
 Validate an extracted bundle artifact directory:

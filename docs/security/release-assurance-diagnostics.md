@@ -293,6 +293,76 @@ gh run download <run-id> --name release-assurance-diagnostics-validation --dir .
 
 The report JSON contains the same fields emitted by the validator's `--json` flag, including `passed`, `artifact_path`, `diagnostics_path`, `summary`, `errors`, and `warnings`.
 
+## Retention audit
+
+The manual [Release Assurance Artifact Retention Audit](../../.github/workflows/release-assurance-artifact-retention-audit.yml)
+workflow provides read-only visibility into whether release-assurance artifacts are still
+available, nearing expiration, or already expired. It queries GitHub artifact metadata only;
+it does not download, delete, or clean up artifacts, and it does not create tags, releases,
+or packages.
+
+### What the audit does and does not do
+
+- **Does**: list artifact metadata (name, id, source run, `created_at`, `expires_at`) and
+  produce JSON/Markdown reports classifying each watched artifact as `available`,
+  `near_expiry`, `expired`, or `unknown`.
+- **Does not**: download artifacts, delete artifacts, modify repository settings, create tags
+  or releases, publish to PyPI, call providers/brokers, or enable live trading.
+
+### Local fixture mode
+
+Run the audit against a local JSON fixture (matching the `gh api repos/{owner}/{repo}/actions/artifacts`
+response shape) to verify the reporting logic without GitHub API calls:
+
+```bash
+python3.11 scripts/audit_release_assurance_artifact_retention.py \
+  --input-json fixture.json \
+  --output-dir ./retention-report
+```
+
+The output directory will contain:
+
+- `release-assurance-artifact-retention-report.json`
+- `release-assurance-artifact-retention-report.md`
+
+### Manual workflow dispatch
+
+Dispatch the workflow from the GitHub CLI:
+
+```bash
+gh workflow run release-assurance-artifact-retention-audit.yml \
+  --repo usernotfinded/atlas-agent \
+  --field older_than_days=7 \
+  --field near_expiry_days=3 \
+  --field artifact_names=release-assurance-diagnostics,release-assurance-diagnostics-validation,release-assurance-bundle-demo,reviewer-trust-snapshot
+```
+
+You can then follow the run with:
+
+```bash
+gh run list --workflow=release-assurance-artifact-retention-audit.yml --repo usernotfinded/atlas-agent
+```
+
+### Reading the reports
+
+The JSON report contains one record per artifact with:
+
+| Field | Description |
+|---|---|
+| `name` | Artifact name. |
+| `id` | GitHub artifact id. |
+| `source_run_id` | Source workflow run id, when available. |
+| `created_at` | Artifact creation timestamp. |
+| `expires_at` | Artifact expiration timestamp. |
+| `expired` | Whether GitHub reports the artifact as expired. |
+| `age_days` | Integer days since creation. |
+| `days_until_expiry` | Integer days until expiration. |
+| `matches_watched_names` | Whether the artifact name matches the watched list. |
+| `retention_status` | `available`, `near_expiry`, `expired`, or `unknown`. |
+
+The Markdown report contains the same data in a human-readable table plus a short summary.
+The audit is visibility-only; it does not perform any cleanup or modification.
+
 ## Safety constraints
 
 Release assurance diagnostics are produced by a read-only, non-publishing script:

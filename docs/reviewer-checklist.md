@@ -45,6 +45,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] CI does not publish, upload, tag, or push
 - [ ] `scripts/release_check.sh --quick` passes locally
 - [ ] No secrets required in CI workflows
+- [ ] `.github/workflows/release-assurance-artifact-retention-audit.yml` is `workflow_dispatch` only, declares `contents: read` and `actions: read` permissions, references no arbitrary secrets, and performs only read-only artifact retention visibility checks (no download, delete, cleanup, tag, release, or PyPI); `scripts/check_release_assurance_artifact_retention_audit.py` and `python3.11 -m pytest tests/test_release_assurance_artifact_retention_audit.py -q` pass
 
 ## Package checks
 

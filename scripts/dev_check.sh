@@ -322,6 +322,70 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "13y. release assurance artifact retention audit check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_release_assurance_artifact_retention_audit.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "13z. release assurance artifact retention audit (deterministic fixture)"
+SECONDS=0
+"$PYTHON_BIN" - "$REPO_ROOT" <<'PY'
+import json, subprocess, sys, tempfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+repo_root = Path(sys.argv[1]).resolve()
+audit_script = repo_root / "scripts" / "audit_release_assurance_artifact_retention.py"
+
+with tempfile.TemporaryDirectory() as tmp:
+    fixture_path = Path(tmp) / "artifacts.json"
+    report_dir = Path(tmp) / "report"
+    report_dir.mkdir()
+    now = datetime.now(timezone.utc)
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "total_count": 1,
+                "artifacts": [
+                    {
+                        "name": "release-assurance-diagnostics",
+                        "id": 123456,
+                        "workflow_run": {"id": 789012},
+                        "created_at": (now - timedelta(days=10)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "expires_at": (now + timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "expired": False,
+                    }
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    subprocess.run([
+        sys.executable, str(audit_script),
+        "--input-json", str(fixture_path),
+        "--output-dir", str(report_dir),
+        "--json",
+    ], check=True)
+    json_report = report_dir / "release-assurance-artifact-retention-report.json"
+    md_report = report_dir / "release-assurance-artifact-retention-report.md"
+    assert json_report.exists(), f"JSON report not found: {json_report}"
+    assert md_report.exists(), f"Markdown report not found: {md_report}"
+PY
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "13za. release assurance artifact retention audit tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_artifact_retention_audit.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "13o. release assurance workflow artifact check (deterministic fixture)"
 SECONDS=0
 "$PYTHON_BIN" - "$REPO_ROOT" <<'PY'

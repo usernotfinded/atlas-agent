@@ -1,0 +1,67 @@
+name: Release Assurance Artifact Retention Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      older_than_days:
+        description: "Highlight watched artifacts older than this many days"
+        type: string
+        required: false
+        default: "7"
+      near_expiry_days:
+        description: "Flag watched artifacts within this many days of expiry"
+        type: string
+        required: false
+        default: "3"
+      artifact_names:
+        description: "Comma-separated artifact names to watch"
+        type: string
+        required: false
+        default: "release-assurance-diagnostics,release-assurance-diagnostics-validation,release-assurance-bundle-demo,reviewer-trust-snapshot"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  retention-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      ENABLE_LIVE_TRADING: "false"
+      PROVIDER_EXECUTION_ENABLED: "false"
+      BROKER_EXECUTION_ENABLED: "false"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Audit artifact retention
+        run: |
+          mkdir -p artifacts/release-assurance-artifact-retention-audit
+          python3.11 scripts/audit_release_assurance_artifact_retention.py \
+            --repo "${GITHUB_REPOSITORY}" \
+            --artifact-name "${ARTIFACT_NAMES}" \
+            --older-than-days "${OLDER_THAN_DAYS}" \
+            --near-expiry-days "${NEAR_EXPIRY_DAYS}" \
+            --output-dir artifacts/release-assurance-artifact-retention-audit
+        env:
+          OLDER_THAN_DAYS: ${{ inputs.older_than_days }}
+          NEAR_EXPIRY_DAYS: ${{ inputs.near_expiry_days }}
+          ARTIFACT_NAMES: ${{ inputs.artifact_names }}
+
+      - name: Upload retention audit report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-assurance-artifact-retention-audit
+          path: artifacts/release-assurance-artifact-retention-audit/*
+          if-no-files-found: ignore
+          retention-days: 14
