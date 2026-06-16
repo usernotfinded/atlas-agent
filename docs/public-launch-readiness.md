@@ -34,6 +34,8 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_release_assurance_workflow_artifact.py <path>` — downloaded release-assurance-bundle-demo artifact is valid
 - `python3.11 -m pytest tests/test_release_assurance_workflow_artifact.py -q` — release assurance workflow artifact tests pass
 - `docs/security/release-assurance-diagnostics.md` — release-assurance failure diagnostics, redaction rules, and `--diagnostics-json` usage are documented
+- `python3.11 scripts/check_release_assurance_diagnostics_workflow.py` — release assurance diagnostics workflow path is safe
+- `python3.11 -m pytest tests/test_release_assurance_diagnostics_workflow.py -q` — release assurance diagnostics workflow tests pass
 - `python3.11 -m pytest tests/test_public_launch_readiness.py` — launch readiness tests pass
 - `python3.11 -m pytest tests/test_public_launch_messaging.py` — launch messaging tests pass
 - `python3.11 -m pytest tests/test_product_demo_pack.py` — product demo pack tests pass

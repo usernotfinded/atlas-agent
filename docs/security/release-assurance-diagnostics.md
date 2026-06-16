@@ -81,6 +81,32 @@ The JSON schema is versioned as `atlas-release-assurance-diagnostics/1.0` and co
 | `remediation` | Human-readable remediation hint |
 | `redactions_applied` | List of redaction categories applied |
 
+## Workflow diagnostics artifact
+
+The manual [Release Assurance workflow](../../.github/workflows/release-assurance.yml)
+has an opt-in input, `upload_diagnostics_json` (default `false`). When set to `true`,
+if `release_assurance.py` fails, the workflow uploads the redacted diagnostics JSON
+as a `release-assurance-diagnostics` artifact.
+
+Dispatch with diagnostics upload:
+
+```bash
+gh workflow run release-assurance.yml \
+  --repo usernotfinded/atlas-agent \
+  --field release=v0.6.11 \
+  --field upload_diagnostics_json=true
+```
+
+Download the artifact after the run:
+
+```bash
+gh run download <run-id> --name release-assurance-diagnostics --dir ./diagnostics
+```
+
+The artifact only appears when the workflow fails and diagnostics are enabled.
+If the workflow succeeds, no diagnostics file is created and the upload step is skipped.
+The workflow still fails after uploading the diagnostics artifact.
+
 ## How to debug workflow failures
 
 The [Release Assurance workflow](../../.github/workflows/release-assurance.yml) runs `release_assurance.py` in GitHub Actions. If it fails:

@@ -1,4 +1,4 @@
-"""Static tests for the release assurance bundle demo workflow and its checker."""
+"""Static tests for the release assurance diagnostics workflow and its checker."""
 
 from __future__ import annotations
 
@@ -6,33 +6,33 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
-from scripts.check_release_assurance_bundle_workflow import check_workflow
+from scripts.check_release_assurance_diagnostics_workflow import (
+    check_workflow,
+    _step_has_if,
+    _step_if_line,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "release-assurance.yml"
-CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_bundle_workflow.py"
-DEMO_SCRIPT = "scripts/demo_release_assurance_snapshot_bundle.sh"
-MANIFEST_CHECK_SCRIPT = "scripts/check_release_assurance_bundle_manifest.py"
-ARTIFACT_NAME = "release-assurance-bundle-demo"
+CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_diagnostics_workflow.py"
+ARTIFACT_NAME = "release-assurance-diagnostics"
 
 
 def _workflow_text() -> str:
     return WORKFLOW_PATH.read_text(encoding="utf-8")
 
 
-def _modified_workflow(replacement: tuple[str, str]) -> Path:
+def _modified_workflow(replacement: tuple[str, str], tmp_path: Path) -> Path:
     original = _workflow_text()
     modified = original.replace(replacement[0], replacement[1])
-    tmp = REPO_ROOT / ".pytest_cache" / "release-assurance-bundle-workflow-test.yml"
+    tmp = tmp_path / "release-assurance-diagnostics-workflow-test.yml"
     tmp.parent.mkdir(parents=True, exist_ok=True)
     tmp.write_text(modified, encoding="utf-8")
     return tmp
 
 
-class TestReleaseAssuranceBundleWorkflow:
+class TestReleaseAssuranceDiagnosticsWorkflow:
     def test_workflow_file_exists(self) -> None:
         assert WORKFLOW_PATH.exists(), "release-assurance.yml must exist"
 
@@ -40,17 +40,17 @@ class TestReleaseAssuranceBundleWorkflow:
         text = _workflow_text()
         assert "workflow_dispatch:" in text
 
-    def test_run_bundle_demo_input_exists(self) -> None:
+    def test_upload_diagnostics_json_input_exists(self) -> None:
         text = _workflow_text()
-        assert "run_bundle_demo:" in text
+        assert "upload_diagnostics_json:" in text
         assert "type: boolean" in text
 
-    def test_run_bundle_demo_defaults_to_false(self) -> None:
+    def test_upload_diagnostics_json_defaults_to_false(self) -> None:
         text = _workflow_text()
         lines = text.splitlines()
         start_idx: int | None = None
         for i, line in enumerate(lines):
-            if line.strip().startswith("run_bundle_demo:"):
+            if line.strip().startswith("upload_diagnostics_json:"):
                 start_idx = i
                 break
         assert start_idx is not None
@@ -67,44 +67,25 @@ class TestReleaseAssuranceBundleWorkflow:
         block = "\n".join(block_lines)
         assert "default: false" in block
 
-    def test_bundle_demo_step_is_conditional(self) -> None:
+    def test_diagnostics_flag_is_conditional(self) -> None:
         text = _workflow_text()
-        demo_idx = text.find(DEMO_SCRIPT)
-        assert demo_idx != -1
-        preceding = text[:demo_idx]
-        assert "inputs.run_bundle_demo" in preceding
+        diag_idx = text.find("--diagnostics-json")
+        assert diag_idx != -1
+        preceding = text[:diag_idx]
+        assert "UPLOAD_DIAGNOSTICS_JSON" in preceding
 
-    def test_manifest_checker_step_is_conditional(self) -> None:
-        text = _workflow_text()
-        manifest_idx = text.find(MANIFEST_CHECK_SCRIPT)
-        assert manifest_idx != -1
-        preceding = text[:manifest_idx]
-        assert "inputs.run_bundle_demo" in preceding
-
-    def test_manifest_checker_runs_before_upload(self) -> None:
-        text = _workflow_text()
-        manifest_idx = text.find(MANIFEST_CHECK_SCRIPT)
-        artifact_name_idx = text.lower().find(ARTIFACT_NAME)
-        assert manifest_idx != -1
-        assert artifact_name_idx != -1
-        assert manifest_idx < artifact_name_idx, "manifest checker must run before artifact upload"
-
-    def test_bundle_demo_script_runs_before_manifest_checker(self) -> None:
-        text = _workflow_text()
-        demo_idx = text.find(DEMO_SCRIPT)
-        manifest_idx = text.find(MANIFEST_CHECK_SCRIPT)
-        assert demo_idx != -1
-        assert manifest_idx != -1
-        assert demo_idx < manifest_idx, "demo script must run before manifest checker"
-
-    def test_artifact_upload_is_conditional(self) -> None:
+    def test_diagnostics_artifact_upload_is_conditional(self) -> None:
         text = _workflow_text()
         artifact_idx = text.lower().find(ARTIFACT_NAME)
         assert artifact_idx != -1
         preceding = text[:artifact_idx]
-        assert "inputs.run_bundle_demo" in preceding
+        assert "inputs.upload_diagnostics_json" in preceding
 
-    def test_artifact_upload_uses_upload_artifact_action(self) -> None:
+    def test_diagnostics_artifact_upload_uses_ignore_if_no_files_found(self) -> None:
+        text = _workflow_text()
+        assert "if-no-files-found: ignore" in text
+
+    def test_diagnostics_artifact_uses_upload_artifact_action(self) -> None:
         text = _workflow_text().lower()
         assert "actions/upload-artifact" in text
         assert ARTIFACT_NAME in text
@@ -122,12 +103,6 @@ class TestReleaseAssuranceBundleWorkflow:
         assert "secrets.my_token" not in text
         assert "secrets.api_token" not in text
 
-    def test_does_not_reference_unsafe_secrets(self) -> None:
-        text = _workflow_text().lower()
-        # The only allowed secrets.* reference is secrets.GITHUB_TOKEN.
-        for token_name in ("secrets.my_token", "secrets.api_token", "secrets.pypi_token"):
-            assert token_name not in text, f"workflow references unsafe secret {token_name}"
-
     def test_does_not_publish_or_release(self) -> None:
         text = _workflow_text().lower()
         assert "twine upload" not in text
@@ -142,8 +117,19 @@ class TestReleaseAssuranceBundleWorkflow:
         assert 'PROVIDER_EXECUTION_ENABLED: "false"' in text
         assert 'BROKER_EXECUTION_ENABLED: "false"' in text
 
+    def test_failure_step_exists_and_is_conditional(self) -> None:
+        text = _workflow_text()
+        assert "Fail if release assurance failed" in text
+        assert _step_has_if(text, "Fail if release assurance failed"), (
+            "failure step must be conditional"
+        )
+        if_line = _step_if_line(text, "Fail if release assurance failed")
+        assert if_line is not None
+        assert "steps.release_assurance.outputs.exit_code" in if_line
+        assert "!= '0'" in if_line
 
-class TestReleaseAssuranceBundleWorkflowChecker:
+
+class TestReleaseAssuranceDiagnosticsWorkflowChecker:
     def test_checker_passes_on_valid_workflow(self) -> None:
         result = check_workflow(WORKFLOW_PATH)
         assert result["passed"], f"Expected workflow to pass, got errors: {result['errors']}"
@@ -153,68 +139,108 @@ class TestReleaseAssuranceBundleWorkflowChecker:
         assert not result["passed"]
         assert any("not found" in e.lower() for e in result["errors"])
 
-    def test_checker_fails_on_injected_secrets(self) -> None:
+    def test_checker_fails_on_injected_secrets(self, tmp_path: Path) -> None:
         tmp = _modified_workflow(
             (
                 "permissions:\n  contents: read",
                 "permissions:\n  contents: read\n  id-token: write\n\nenv:\n  TOKEN: ${{ secrets.MY_TOKEN }}",
-            )
+            ),
+            tmp_path,
         )
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("secret" in e.lower() for e in result["errors"])
 
-    def test_checker_fails_on_injected_git_push(self) -> None:
+    def test_checker_fails_on_injected_git_push(self, tmp_path: Path) -> None:
         tmp = _modified_workflow(
             (
-                "- name: Run release assurance bundle demo",
-                "- name: Bad step\n        run: git push origin main\n      - name: Run release assurance bundle demo",
-            )
+                "- name: Upload release assurance diagnostics artifact",
+                "- name: Bad step\n        run: git push origin main\n      - name: Upload release assurance diagnostics artifact",
+            ),
+            tmp_path,
         )
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("git push" in e.lower() for e in result["errors"])
 
-    def test_checker_fails_on_injected_git_tag(self) -> None:
+    def test_checker_fails_on_injected_gh_release_create(self, tmp_path: Path) -> None:
         tmp = _modified_workflow(
             (
-                "- name: Run release assurance bundle demo",
-                "- name: Bad step\n        run: git tag v0.0.0\n      - name: Run release assurance bundle demo",
-            )
-        )
-        result = check_workflow(tmp)
-        assert not result["passed"]
-        assert any("git tag" in e.lower() for e in result["errors"])
-
-    def test_checker_fails_on_injected_gh_release_create(self) -> None:
-        tmp = _modified_workflow(
-            (
-                "- name: Run release assurance bundle demo",
-                "- name: Bad step\n        run: gh release create v0.0.0 --title test\n      - name: Run release assurance bundle demo",
-            )
+                "- name: Upload release assurance diagnostics artifact",
+                "- name: Bad step\n        run: gh release create v0.0.0 --title test\n      - name: Upload release assurance diagnostics artifact",
+            ),
+            tmp_path,
         )
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("release create" in e.lower() for e in result["errors"])
 
-    def test_checker_fails_on_injected_twine_upload(self) -> None:
+    def test_checker_fails_on_injected_twine_upload(self, tmp_path: Path) -> None:
         tmp = _modified_workflow(
             (
-                "- name: Run release assurance bundle demo",
-                "- name: Bad step\n        run: twine upload dist/*\n      - name: Run release assurance bundle demo",
-            )
+                "- name: Upload release assurance diagnostics artifact",
+                "- name: Bad step\n        run: twine upload dist/*\n      - name: Upload release assurance diagnostics artifact",
+            ),
+            tmp_path,
         )
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("twine upload" in e.lower() for e in result["errors"])
 
-    def test_checker_fails_if_run_bundle_demo_defaults_to_true(self) -> None:
-        # Replace the default inside the run_bundle_demo input block.
+    def test_checker_fails_if_diagnostics_flag_unconditional(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                '          if [[ "${UPLOAD_DIAGNOSTICS_JSON}" == "true" ]]; then\n            flags+=(--diagnostics-json artifacts/release_assurance_diagnostics/release-assurance-diagnostics.json)\n          fi',
+                '          flags+=(--diagnostics-json artifacts/x.json)',
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("conditional" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_on_injected_git_tag(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "- name: Upload release assurance diagnostics artifact",
+                "- name: Bad step\n        run: git tag v0.0.0\n      - name: Upload release assurance diagnostics artifact",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("git tag" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_on_injected_gh_release_upload(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "- name: Upload release assurance diagnostics artifact",
+                "- name: Bad step\n        run: gh release upload v0.0.0 dist/*\n      - name: Upload release assurance diagnostics artifact",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("release upload" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_on_injected_twine_publish(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "- name: Upload release assurance diagnostics artifact",
+                "- name: Bad step\n        run: twine publish dist/*\n      - name: Upload release assurance diagnostics artifact",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("twine publish" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_if_upload_diagnostics_defaults_to_true(self, tmp_path: Path) -> None:
         original = _workflow_text()
         lines = original.splitlines()
         start_idx: int | None = None
         for i, line in enumerate(lines):
-            if line.strip().startswith("run_bundle_demo:"):
+            if line.strip().startswith("upload_diagnostics_json:"):
                 start_idx = i
                 break
         assert start_idx is not None
@@ -229,11 +255,9 @@ class TestReleaseAssuranceBundleWorkflowChecker:
                 break
             block_end += 1
         modified_lines = lines[:start_idx] + lines[block_end:]
-        modified = "\n".join(modified_lines)
-        # Insert a run_bundle_demo input that defaults to true.
         new_input = (
             " " * start_indent
-            + "run_bundle_demo:\n"
+            + "upload_diagnostics_json:\n"
             + " " * (start_indent + 2)
             + 'description: "bad"\n'
             + " " * (start_indent + 2)
@@ -243,20 +267,19 @@ class TestReleaseAssuranceBundleWorkflowChecker:
         )
         modified_lines.insert(start_idx, new_input.rstrip())
         modified = "\n".join(modified_lines)
-        tmp = REPO_ROOT / ".pytest_cache" / "release-assurance-bundle-default-true.yml"
+        tmp = tmp_path / "release-assurance-diagnostics-default-true.yml"
         tmp.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text(modified, encoding="utf-8")
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("default to false" in e.lower() for e in result["errors"])
 
-    def test_checker_fails_if_artifact_upload_is_unconditional(self) -> None:
+    def test_checker_fails_if_diagnostics_artifact_upload_is_unconditional(self, tmp_path: Path) -> None:
         original = _workflow_text()
-        # Remove the `if:` line immediately before the bundle demo artifact upload step.
         lines = original.splitlines()
         upload_idx: int | None = None
         for i, line in enumerate(lines):
-            if "Upload release assurance bundle demo artifact" in line:
+            if "Upload release assurance diagnostics artifact" in line:
                 upload_idx = i
                 break
         assert upload_idx is not None
@@ -272,64 +295,76 @@ class TestReleaseAssuranceBundleWorkflowChecker:
         assert if_idx is not None, "Could not find conditional line for upload step"
         modified_lines = lines[:if_idx] + lines[if_idx + 1 :]
         modified = "\n".join(modified_lines)
-        tmp = REPO_ROOT / ".pytest_cache" / "release-assurance-bundle-upload-unconditional.yml"
+        tmp = tmp_path / "release-assurance-diagnostics-upload-unconditional.yml"
         tmp.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text(modified, encoding="utf-8")
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("conditional" in e.lower() for e in result["errors"])
 
-    def test_checker_allows_safe_github_token(self) -> None:
-        result = check_workflow(WORKFLOW_PATH)
-        assert result["passed"], f"Expected workflow to pass, got errors: {result['errors']}"
-        assert not any("secret" in e.lower() for e in result["errors"])
-
-    def test_checker_rejects_arbitrary_secret(self) -> None:
+    def test_checker_rejects_arbitrary_secret(self, tmp_path: Path) -> None:
         tmp = _modified_workflow(
             (
                 "- name: Run static release checks",
                 "- name: Run static release checks\n        env:\n          GH_TOKEN: ${{ secrets.MY_TOKEN }}",
-            )
+            ),
+            tmp_path,
         )
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("secret" in e.lower() for e in result["errors"])
 
-    def test_checker_rejects_contents_write(self) -> None:
+    def test_checker_rejects_contents_write(self, tmp_path: Path) -> None:
         tmp = _modified_workflow(
             (
                 "permissions:\n  contents: read",
                 "permissions:\n  contents: write",
-            )
+            ),
+            tmp_path,
         )
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("broad/write permission" in e.lower() for e in result["errors"])
 
-    def test_checker_requires_gh_token_for_static_checks(self) -> None:
+    def test_checker_rejects_id_token_write(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "permissions:\n  contents: read",
+                "permissions:\n  contents: read\n  id-token: write",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("broad/write permission" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_if_failure_step_if_is_wrong(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "if: steps.release_assurance.outputs.exit_code != '0'\n        env:\n          RA_EXIT_CODE: ${{ steps.release_assurance.outputs.exit_code }}",
+                "if: false\n        env:\n          RA_EXIT_CODE: ${{ steps.release_assurance.outputs.exit_code }}",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any(
+            "steps.release_assurance.outputs.exit_code != '0'" in e
+            for e in result["errors"]
+        )
+
+    def test_checker_requires_gh_token_for_static_checks(self, tmp_path: Path) -> None:
         original = _workflow_text()
-        # Remove every GH_TOKEN line from the workflow.
         modified = "\n".join(
             line for line in original.splitlines() if "GH_TOKEN" not in line
         )
         assert "GH_TOKEN" not in modified
-        tmp = REPO_ROOT / ".pytest_cache" / "release-assurance-no-gh-token.yml"
+        tmp = tmp_path / "release-assurance-diagnostics-no-gh-token.yml"
         tmp.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text(modified, encoding="utf-8")
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("gh_token" in e.lower() or "github_token" in e.lower() for e in result["errors"])
-
-    def test_checker_rejects_unsafe_token_source(self) -> None:
-        tmp = _modified_workflow(
-            (
-                "GH_TOKEN: ${{ github.token }}",
-                "GH_TOKEN: ${{ secrets.MY_TOKEN }}",
-            )
-        )
-        result = check_workflow(tmp)
-        assert not result["passed"]
-        assert any("secret" in e.lower() for e in result["errors"])
 
     def test_cli_returns_zero_on_valid_workflow(self) -> None:
         result = subprocess.run(
@@ -348,12 +383,13 @@ class TestReleaseAssuranceBundleWorkflowChecker:
         assert result.returncode == 0, result.stdout + result.stderr
         assert '"passed": true' in result.stdout
 
-    def test_cli_fails_on_injected_secrets(self) -> None:
+    def test_cli_fails_on_injected_secrets(self, tmp_path: Path) -> None:
         tmp = _modified_workflow(
             (
                 "permissions:\n  contents: read",
                 "permissions:\n  contents: read\n  id-token: write\n\nenv:\n  TOKEN: ${{ secrets.MY_TOKEN }}",
-            )
+            ),
+            tmp_path,
         )
         result = subprocess.run(
             [sys.executable, str(CHECK_SCRIPT), "--workflow", str(tmp)],

@@ -86,6 +86,10 @@ jobs:
         run: python3.11 scripts/check_release_assurance_diagnostics.py
       - name: Release assurance diagnostics tests
         run: python3.11 -m pytest tests/test_release_assurance_diagnostics.py -q
+      - name: Release assurance diagnostics workflow check
+        run: python3.11 scripts/check_release_assurance_diagnostics_workflow.py
+      - name: Release assurance diagnostics workflow tests
+        run: python3.11 -m pytest tests/test_release_assurance_diagnostics_workflow.py -q
       - name: Release assurance workflow artifact check (deterministic fixture)
         run: |
           python3.11 - <<'PY'

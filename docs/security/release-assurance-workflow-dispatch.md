@@ -27,6 +27,7 @@ The only credential used is the repository-provided read-only GitHub token (`${{
    - `include_reviewer_trust_snapshot`: `true`
    - `run_bundle_demo`: `true`
    - `bundle_demo_version`: `v0.6.11`
+   - `upload_diagnostics_json`: `false` (optional)
 4. Click **Run workflow**.
 
 ### Via the GitHub CLI
@@ -37,7 +38,8 @@ gh workflow run release-assurance.yml \
   --field release=v0.6.11 \
   --field include_reviewer_trust_snapshot=true \
   --field run_bundle_demo=true \
-  --field bundle_demo_version=v0.6.11
+  --field bundle_demo_version=v0.6.11 \
+  --field upload_diagnostics_json=false
 ```
 
 You can then follow the run with:
@@ -55,6 +57,17 @@ gh run download <run-id> --name release-assurance-bundle-demo --dir ./local-arti
 ```
 
 The downloaded directory (or a `.zip` downloaded from the GitHub UI) can be validated locally.
+
+## How to download the diagnostics artifact
+
+If the workflow was dispatched with `upload_diagnostics_json=true` and release assurance failed,
+a `release-assurance-diagnostics` artifact is uploaded. Download it with:
+
+```bash
+gh run download <run-id> --name release-assurance-diagnostics --dir ./local-diagnostics
+```
+
+The JSON file is redacted; see [Release Assurance Diagnostics](release-assurance-diagnostics.md) for the schema and redaction rules.
 
 ## How to validate the artifact
 

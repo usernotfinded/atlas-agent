@@ -22,6 +22,11 @@ on:
         type: string
         required: false
         default: "v0.6.11"
+      upload_diagnostics_json:
+        description: "Upload a redacted release-assurance diagnostics JSON artifact on failure"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -64,13 +69,35 @@ jobs:
           ./scripts/release_check.sh --quick
 
       - name: Generate release assurance pack
+        id: release_assurance
+        shell: bash
+        env:
+          INCLUDE_REVIEWER_TRUST_SNAPSHOT: ${{ inputs.include_reviewer_trust_snapshot }}
+          UPLOAD_DIAGNOSTICS_JSON: ${{ inputs.upload_diagnostics_json }}
         run: |
+          mkdir -p artifacts/release_assurance_diagnostics
+          flags=()
+          if [[ "${INCLUDE_REVIEWER_TRUST_SNAPSHOT}" == "true" ]]; then
+            flags+=(--include-reviewer-trust-snapshot)
+          fi
+          if [[ "${UPLOAD_DIAGNOSTICS_JSON}" == "true" ]]; then
+            flags+=(--diagnostics-json artifacts/release_assurance_diagnostics/release-assurance-diagnostics.json)
+          fi
+          set +e
           python scripts/release_assurance.py \
             --version "${RELEASE_TAG}" \
             --output "artifacts/release_assurance/${RELEASE_TAG}-ci" \
-            ${{ inputs.include_reviewer_trust_snapshot && '--include-reviewer-trust-snapshot' || '' }}
+            "${flags[@]}"
+          exit_code=$?
+          set -e
+          echo "exit_code=${exit_code}" >> "${GITHUB_OUTPUT}"
+          if [[ "${exit_code}" -ne 0 ]]; then
+            echo "::warning::Release assurance pack generation failed (exit ${exit_code})."
+          fi
+          exit 0
 
       - name: Upload release assurance artifact
+        if: steps.release_assurance.outputs.exit_code == '0'
         uses: actions/upload-artifact@v6
         with:
           name: release-assurance-${{ inputs.release }}
@@ -78,26 +105,48 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Upload release assurance diagnostics artifact
+        if: inputs.upload_diagnostics_json && steps.release_assurance.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-assurance-diagnostics
+          path: artifacts/release_assurance_diagnostics/release-assurance-diagnostics.json
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Run release assurance bundle demo
-        if: ${{ inputs.run_bundle_demo }}
+        if: inputs.run_bundle_demo && steps.release_assurance.outputs.exit_code == '0'
+        env:
+          BUNDLE_DEMO_VERSION: ${{ inputs.bundle_demo_version }}
         run: |
           mkdir -p artifacts/release_assurance_bundle_demo
           bash scripts/demo_release_assurance_snapshot_bundle.sh \
-            --version "${{ inputs.bundle_demo_version }}" \
-            --output-dir "artifacts/release_assurance_bundle_demo/${{ inputs.bundle_demo_version }}" \
+            --version "${BUNDLE_DEMO_VERSION}" \
+            --output-dir "artifacts/release_assurance_bundle_demo/${BUNDLE_DEMO_VERSION}" \
             --deterministic
 
       - name: Validate release assurance bundle manifest
-        if: ${{ inputs.run_bundle_demo }}
+        if: inputs.run_bundle_demo && steps.release_assurance.outputs.exit_code == '0'
+        env:
+          BUNDLE_DEMO_VERSION: ${{ inputs.bundle_demo_version }}
         run: |
           python scripts/check_release_assurance_bundle_manifest.py \
-            "artifacts/release_assurance_bundle_demo/${{ inputs.bundle_demo_version }}"
+            "artifacts/release_assurance_bundle_demo/${BUNDLE_DEMO_VERSION}"
 
       - name: Upload release assurance bundle demo artifact
-        if: ${{ inputs.run_bundle_demo }}
+        if: inputs.run_bundle_demo && steps.release_assurance.outputs.exit_code == '0'
         uses: actions/upload-artifact@v6
         with:
           name: release-assurance-bundle-demo
           path: artifacts/release_assurance_bundle_demo/${{ inputs.bundle_demo_version }}
           if-no-files-found: error
           retention-days: 14
+
+      - name: Fail if release assurance failed
+        if: steps.release_assurance.outputs.exit_code != '0'
+        env:
+          RA_EXIT_CODE: ${{ steps.release_assurance.outputs.exit_code }}
+        run: |
+          exit_code="${RA_EXIT_CODE}"
+          echo "Release assurance failed with exit code ${exit_code}"
+          exit "${exit_code:-1}"
