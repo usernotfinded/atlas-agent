@@ -88,6 +88,9 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `python3.11 -m pytest tests/test_release_assurance_bundle_workflow.py -q` passes.
 - [ ] Running `bash scripts/demo_release_assurance_snapshot_bundle.sh --version v0.6.11 --output-dir <path> --deterministic` produces a valid baseline bundle, opt-in snapshot bundle, and manifest; `python3.11 scripts/check_release_assurance_bundle_manifest.py <path>` passes.
 - [ ] `.github/workflows/release-assurance.yml` remains `workflow_dispatch` only, keeps `contents: read` permissions, references no secrets, and only runs the bundle demo when `run_bundle_demo` is explicitly set to `true`.
+- [ ] `scripts/check_release_assurance_workflow_artifact.py` exists, is executable, and passes on a valid local artifact fixture.
+- [ ] `python3.11 -m pytest tests/test_release_assurance_workflow_artifact.py -q` passes.
+- [ ] Downloaded `release-assurance-bundle-demo` artifacts (extracted directory or `.zip`) pass `python3.11 scripts/check_release_assurance_workflow_artifact.py <path>`.
 - [ ] Demo scripts and docs run locally without credentials, API keys, broker setup, network calls, or live trading enablement.
 - [ ] Marketplace/outreach docs contain no profit, performance, live-trading-readiness, or autonomous-trading claims.
 - [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.

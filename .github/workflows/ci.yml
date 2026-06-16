@@ -82,6 +82,48 @@ jobs:
         run: python3.11 scripts/check_release_assurance_bundle_workflow.py
       - name: Release assurance bundle workflow tests (fast)
         run: python3.11 -m pytest tests/test_release_assurance_bundle_workflow.py -q
+      - name: Release assurance workflow artifact check (deterministic fixture)
+        run: |
+          python3.11 - <<'PY'
+          import json, subprocess, sys, tempfile
+          from pathlib import Path
+
+          release = "v0.6.11"
+          repo_root = Path.cwd()
+          build_script = repo_root / "scripts" / "build_release_assurance_bundle_manifest.py"
+          check_script = repo_root / "scripts" / "check_release_assurance_workflow_artifact.py"
+
+          with tempfile.TemporaryDirectory() as tmp:
+              artifact_dir = Path(tmp) / "release-assurance-bundle-demo"
+              baseline_dir = artifact_dir / "baseline"
+              snapshot_dir = artifact_dir / "with-reviewer-trust-snapshot"
+              baseline_dir.mkdir(parents=True)
+              snapshot_dir.mkdir(parents=True)
+              for bundle in (baseline_dir, snapshot_dir):
+                  for name in ("release-assurance-summary.json", "release-assurance-report.md", "sha256sums.txt"):
+                      (bundle / name).write_text("{}", encoding="utf-8")
+              snap_dir = snapshot_dir / "reviewer-trust-snapshot"
+              snap_dir.mkdir()
+              (snap_dir / "reviewer-trust-snapshot.json").write_text(
+                  json.dumps({"schema_version": "atlas-reviewer-trust-snapshot/1.0"}, indent=2),
+                  encoding="utf-8",
+              )
+              (snap_dir / "reviewer-trust-snapshot.md").write_text("# Reviewer trust snapshot\n", encoding="utf-8")
+
+              subprocess.run([
+                  sys.executable, str(build_script),
+                  "--baseline-dir", str(baseline_dir),
+                  "--snapshot-dir", str(snapshot_dir),
+                  "--release", release,
+                  "--output-dir", str(artifact_dir),
+              ], check=True)
+
+              subprocess.run([
+                  sys.executable, str(check_script), str(artifact_dir),
+              ], check=True)
+          PY
+      - name: Release assurance workflow artifact tests (fast)
+        run: python3.11 -m pytest tests/test_release_assurance_workflow_artifact.py -q
       - name: Trust center check
         run: python3.11 scripts/check_trust_center.py
       - name: Onboarding docs check

@@ -63,6 +63,14 @@ JSON output is available with `--json`:
 python3.11 scripts/check_release_assurance_bundle_manifest.py <output-dir> --json
 ```
 
+If you downloaded the artifact from the optional `run_bundle_demo` GitHub Actions path, validate the entire artifact (directory or `.zip`) with:
+
+```bash
+python3.11 scripts/check_release_assurance_workflow_artifact.py <path>
+```
+
+See [Release Assurance Workflow Dispatch](release-assurance-workflow-dispatch.md) for how to dispatch the workflow and download the artifact.
+
 The checker verifies:
 
 - Manifest schema version and required keys.

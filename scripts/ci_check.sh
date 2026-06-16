@@ -196,6 +196,54 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "8n. release assurance workflow artifact check (deterministic fixture)"
+SECONDS=0
+"$PYTHON_BIN" - "$REPO_ROOT" <<'PY'
+import json, subprocess, sys, tempfile
+from pathlib import Path
+
+release = "v0.6.11"
+repo_root = Path(sys.argv[1]).resolve()
+build_script = repo_root / "scripts" / "build_release_assurance_bundle_manifest.py"
+check_script = repo_root / "scripts" / "check_release_assurance_workflow_artifact.py"
+
+with tempfile.TemporaryDirectory() as tmp:
+    artifact_dir = Path(tmp) / "release-assurance-bundle-demo"
+    baseline_dir = artifact_dir / "baseline"
+    snapshot_dir = artifact_dir / "with-reviewer-trust-snapshot"
+    baseline_dir.mkdir(parents=True)
+    snapshot_dir.mkdir(parents=True)
+    for bundle in (baseline_dir, snapshot_dir):
+        for name in ("release-assurance-summary.json", "release-assurance-report.md", "sha256sums.txt"):
+            (bundle / name).write_text("{}", encoding="utf-8")
+    snap_dir = snapshot_dir / "reviewer-trust-snapshot"
+    snap_dir.mkdir()
+    (snap_dir / "reviewer-trust-snapshot.json").write_text(json.dumps({"schema_version": "atlas-reviewer-trust-snapshot/1.0"}, indent=2), encoding="utf-8")
+    (snap_dir / "reviewer-trust-snapshot.md").write_text("# Reviewer trust snapshot\n", encoding="utf-8")
+
+    subprocess.run([
+        sys.executable, str(build_script),
+        "--baseline-dir", str(baseline_dir),
+        "--snapshot-dir", str(snapshot_dir),
+        "--release", release,
+        "--output-dir", str(artifact_dir),
+    ], check=True)
+
+    subprocess.run([
+        sys.executable, str(check_script), str(artifact_dir),
+    ], check=True)
+PY
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8o. release assurance workflow artifact tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_workflow_artifact.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "9. public docs consistency"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py

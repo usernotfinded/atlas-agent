@@ -80,6 +80,14 @@ The workflow has an additional opt-in input, `run_bundle_demo` (default `false`)
 
 This optional path is disabled by default so that normal workflow dispatches behave exactly as before. It uses no secrets, creates no tags or releases, publishes no packages, and does not enable live trading, provider execution, broker execution, or order submission.
 
+After downloading the artifact, validate it locally with:
+
+```bash
+python3.11 scripts/check_release_assurance_workflow_artifact.py <path>
+```
+
+This checker accepts either an extracted artifact directory or a downloaded `.zip`, verifies the manifest, bundle structure, reviewer trust snapshot files, checksums, and scans all text files for credential-like strings, forbidden claims, and unsafe publishing commands. See [Release Assurance Workflow Dispatch](release-assurance-workflow-dispatch.md) for the full dispatch and validation guide.
+
 Generated release assurance and provider evidence outputs should stay local or
 be uploaded as CI artifacts unless a task explicitly requires a versioned
 evidence pack. See [Generated Artifacts](../development/generated-artifacts.md)

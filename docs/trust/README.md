@@ -65,6 +65,7 @@ requires a versioned evidence pack.
 
 - [Release Readiness](../security/release-readiness.md)
 - [Release Assurance Bundle Demo](../security/release-assurance-bundle-demo.md)
+- [Release Assurance Workflow Dispatch](../security/release-assurance-workflow-dispatch.md) — how to dispatch, download, and validate the optional `run_bundle_demo` artifact
 - [Release Assurance CI Workflow](../../.github/workflows/release-assurance.yml)
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [GitHub Actions Maintenance](../development/github-actions.md)
