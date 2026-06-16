@@ -199,45 +199,25 @@ def _check_required_env(text: str) -> list[str]:
 
 
 def _check_gh_token_for_static_checks(text: str) -> list[str]:
-    """Require a read-only GitHub token for the static release checks step.
+    """Require a read-only GitHub token for workflow steps that use `gh`.
 
-    `scripts/check_v0611_release_prep.py --post-release` calls `gh release view`
-    to verify the chosen release exists. In GitHub Actions this requires either
-    `GH_TOKEN` or `GITHUB_TOKEN` to be set for that step. The token must come
-    from the repository-provided `${{ github.token }}` or the repo-standard
+    `scripts/check_v0611_release_prep.py --post-release` and
+    `scripts/release_assurance.py` call `gh release view` to verify the chosen
+    release exists. In GitHub Actions this requires either `GH_TOKEN` or
+    `GITHUB_TOKEN` to be set at job or step level. The token must come from the
+    repository-provided `${{ github.token }}` or the repo-standard
     `${{ secrets.GITHUB_TOKEN }}`; arbitrary secrets are rejected elsewhere.
     """
     errors: list[str] = []
-    lines = text.splitlines()
-    step_idx: int | None = None
-    for i, line in enumerate(lines):
-        if line.strip() == "- name: Run static release checks":
-            step_idx = i
-            break
-    if step_idx is None:
-        errors.append("Workflow must contain a 'Run static release checks' step")
+    masked = _mask_safe_tokens(text)
+    if re.search(r"\bGH_TOKEN\s*:\s*__SAFE_GITHUB_TOKEN__", masked) or re.search(
+        r"\bGITHUB_TOKEN\s*:\s*__SAFE_GITHUB_TOKEN__", masked
+    ):
         return errors
 
-    for j in range(step_idx + 1, len(lines)):
-        stripped = lines[j].strip()
-        # Stop at the next named step (same indentation as the current step).
-        if stripped.startswith("- name:"):
-            break
-        if re.search(r"\bGH_TOKEN\s*:", stripped) or re.search(
-            r"\bGITHUB_TOKEN\s*:", stripped
-        ):
-            # Ensure the value uses an allowed read-only token source.
-            if SAFE_TOKEN_PATTERN.search(stripped):
-                return errors
-            errors.append(
-                f"Line {j + 1}: GH_TOKEN/GITHUB_TOKEN must use an allowed "
-                f"read-only token source: {', '.join(SAFE_TOKEN_SOURCES)}"
-            )
-            return errors
-
     errors.append(
-        "The 'Run static release checks' step must set GH_TOKEN or GITHUB_TOKEN "
-        "so `gh release view` checks can read public release metadata"
+        "Workflow must set GH_TOKEN or GITHUB_TOKEN (from github.token or "
+        "secrets.GITHUB_TOKEN) so `gh release view` checks can read public release metadata"
     )
     return errors
 

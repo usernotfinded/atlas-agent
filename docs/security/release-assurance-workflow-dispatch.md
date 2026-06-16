@@ -14,7 +14,7 @@ The artifact contains:
 
 The workflow and the artifact checker are read-only and local-only. They do not create tags, create GitHub releases, publish to PyPI, call providers or brokers, enable live trading, or load external secrets.
 
-The only credential used is the repository-provided read-only GitHub token (`${{ github.token }}`), passed as `GH_TOKEN` to the static release checks step so `gh release view` can verify the chosen release tag exists. This is the same read-only token used by the normal CI workflow; it is not a custom secret and grants no write permissions beyond `contents: read`.
+The only credential used is the repository-provided read-only GitHub token (`${{ github.token }}`), passed as `GH_TOKEN` at the job level so `gh release view` can verify the chosen release tag exists. This is the same read-only token used by the normal CI workflow; it is not a custom secret and grants no write permissions beyond `contents: read`.
 
 ## How to dispatch the workflow
 

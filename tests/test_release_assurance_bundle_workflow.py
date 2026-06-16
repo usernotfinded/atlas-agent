@@ -311,10 +311,9 @@ class TestReleaseAssuranceBundleWorkflowChecker:
 
     def test_checker_requires_gh_token_for_static_checks(self) -> None:
         original = _workflow_text()
-        # Remove the env block from the static release checks step.
-        modified = original.replace(
-            "      - name: Run static release checks\n        env:\n          GH_TOKEN: ${{ github.token }}\n        run:",
-            "      - name: Run static release checks\n        run:",
+        # Remove every GH_TOKEN line from the workflow.
+        modified = "\n".join(
+            line for line in original.splitlines() if "GH_TOKEN" not in line
         )
         assert "GH_TOKEN" not in modified
         tmp = REPO_ROOT / ".pytest_cache" / "release-assurance-no-gh-token.yml"
