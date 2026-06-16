@@ -24,6 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_ASSURANCE_SCRIPT = "scripts/release_assurance.py"
 BUILD_SCRIPT = "scripts/build_reviewer_trust_snapshot.py"
 CHECK_SCRIPT = "scripts/check_reviewer_trust_snapshot.py"
+WORKFLOW_FILE = ".github/workflows/release-assurance.yml"
 
 SNAPSHOT_FLAG = "--include-reviewer-trust-snapshot"
 SNAPSHOT_ATTR = "include_reviewer_trust_snapshot"
@@ -165,6 +166,48 @@ def _is_unsafe_command(command: str) -> bool:
     return False
 
 
+def _check_workflow(repo_root: Path) -> list[str]:
+    """Validate the release-assurance workflow if it exists."""
+    errors: list[str] = []
+    path = repo_root / WORKFLOW_FILE
+    if not path.exists():
+        return errors
+
+    try:
+        text = _read(path)
+    except OSError as e:
+        errors.append(f"Could not read {WORKFLOW_FILE}: {e}")
+        return errors
+
+    if "workflow_dispatch" not in text:
+        errors.append(f"{WORKFLOW_FILE} is not triggered by workflow_dispatch")
+
+    if "include_reviewer_trust_snapshot" in text:
+        if "type: boolean" not in text:
+            errors.append(
+                f"{WORKFLOW_FILE} input include_reviewer_trust_snapshot must be type boolean"
+            )
+        if "default: false" not in text:
+            errors.append(
+                f"{WORKFLOW_FILE} input include_reviewer_trust_snapshot must default to false"
+            )
+
+    if re.search(r"\bsecrets\.", text):
+        errors.append(f"{WORKFLOW_FILE} references secrets")
+
+    if "contents: write" in text:
+        errors.append(f"{WORKFLOW_FILE} must not use contents: write")
+    elif "contents: read" not in text:
+        errors.append(f"{WORKFLOW_FILE} must use contents: read")
+
+    lower = text.lower()
+    for unsafe in UNSAFE_COMMAND_PREFIXES:
+        if unsafe in lower:
+            errors.append(f"{WORKFLOW_FILE} contains unsafe command: {unsafe}")
+
+    return errors
+
+
 def _check_script_exists(repo_root: Path, rel_path: str) -> list[str]:
     errors: list[str] = []
     path = repo_root / rel_path
@@ -182,6 +225,7 @@ def check_release_assurance_snapshot_integration(
 
     errors.extend(_check_script_exists(repo_root, BUILD_SCRIPT))
     errors.extend(_check_script_exists(repo_root, CHECK_SCRIPT))
+    errors.extend(_check_workflow(repo_root))
 
     release_assurance_path = repo_root / RELEASE_ASSURANCE_SCRIPT
     if not release_assurance_path.exists():

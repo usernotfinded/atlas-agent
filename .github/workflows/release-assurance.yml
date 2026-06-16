@@ -6,7 +6,12 @@ on:
       release:
         description: "Release tag to verify"
         required: true
-        default: "v0.6.9"
+        default: "v0.6.11"
+      include_reviewer_trust_snapshot:
+        description: "Include a reviewer trust snapshot in the assurance output"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -51,7 +56,8 @@ jobs:
         run: |
           python scripts/release_assurance.py \
             --version "${RELEASE_TAG}" \
-            --output "artifacts/release_assurance/${RELEASE_TAG}-ci"
+            --output "artifacts/release_assurance/${RELEASE_TAG}-ci" \
+            ${{ inputs.include_reviewer_trust_snapshot && '--include-reviewer-trust-snapshot' || '' }}
 
       - name: Upload release assurance artifact
         uses: actions/upload-artifact@v6

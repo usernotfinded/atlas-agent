@@ -178,6 +178,48 @@ def _setup_temp_repo(tmp_path: Path) -> Path:
     return scripts_dir
 
 
+def _write_minimal_workflow(
+    path: Path,
+    *,
+    include_input: bool = True,
+    input_default_false: bool = True,
+    secret: str = "",
+) -> None:
+    input_block = ""
+    if include_input:
+        default_line = "        default: false" if input_default_false else "        default: true"
+        input_block = f"""      include_reviewer_trust_snapshot:
+        description: "Include snapshot"
+        type: boolean
+        required: false
+{default_line}
+"""
+    source = f"""name: Release Assurance
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release tag to verify"
+        required: true
+        default: "v0.6.11"
+{input_block}
+permissions:
+  contents: read
+
+jobs:
+  release-assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Generate pack
+        run: python scripts/release_assurance.py --version v0.6.11 --output out
+{secret}
+"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(source, encoding="utf-8")
+
+
 def test_checker_passes_on_real_repo() -> None:
     result = subprocess.run(
         [sys.executable, str(CHECKER_SCRIPT)],
@@ -289,3 +331,43 @@ def test_checker_fails_when_required_scripts_missing(tmp_path: Path) -> None:
     data = json.loads(result.stdout)
     assert data["passed"] is False
     assert any("build_reviewer_trust_snapshot.py" in e for e in data["errors"])
+
+
+def test_checker_fails_when_workflow_input_defaults_to_true(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(scripts_dir / "release_assurance.py")
+    _write_minimal_workflow(
+        tmp_path / ".github" / "workflows" / "release-assurance.yml",
+        input_default_false=False,
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path), "--json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, result.stderr
+    data = json.loads(result.stdout)
+    assert data["passed"] is False
+    assert any("default to false" in e for e in data["errors"])
+
+
+def test_checker_fails_when_workflow_has_secret(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(scripts_dir / "release_assurance.py")
+    _write_minimal_workflow(
+        tmp_path / ".github" / "workflows" / "release-assurance.yml",
+        secret='        env:\n          TOKEN: "${{ secrets.GITHUB_TOKEN }}"\n',
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path), "--json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, result.stderr
+    data = json.loads(result.stdout)
+    assert data["passed"] is False
+    assert any("references secrets" in e for e in data["errors"])
