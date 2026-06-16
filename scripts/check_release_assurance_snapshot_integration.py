@@ -58,6 +58,18 @@ SECRET_PATTERNS = [
     ),
 ]
 
+# Read-only GitHub token sources allowed for `gh release view` checks.
+SAFE_TOKEN_SOURCES = ("github.token", "secrets.GITHUB_TOKEN")
+SAFE_TOKEN_PATTERN = re.compile(
+    r"\$\{\{\s*(?:github\.token|secrets\.GITHUB_TOKEN)\s*\}\}",
+    re.IGNORECASE,
+)
+
+
+def _mask_safe_tokens(text: str) -> str:
+    """Replace allowed read-only token expressions with a placeholder."""
+    return SAFE_TOKEN_PATTERN.sub("__SAFE_GITHUB_TOKEN__", text)
+
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:
@@ -192,7 +204,8 @@ def _check_workflow(repo_root: Path) -> list[str]:
                 f"{WORKFLOW_FILE} input include_reviewer_trust_snapshot must default to false"
             )
 
-    if re.search(r"\bsecrets\.", text):
+    masked = _mask_safe_tokens(text)
+    if re.search(r"\bsecrets\.", masked):
         errors.append(f"{WORKFLOW_FILE} references secrets")
 
     if "contents: write" in text:

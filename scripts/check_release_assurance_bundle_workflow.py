@@ -123,9 +123,26 @@ def _check_permissions(text: str) -> list[str]:
     return errors
 
 
+# Read-only GitHub token sources allowed for `gh release view` checks.
+# `github.token` is the repository-provided token exposed by GitHub Actions.
+# `secrets.GITHUB_TOKEN` is the same token via the secrets context and is the
+# repo's existing CI pattern; arbitrary `secrets.*` references are rejected.
+SAFE_TOKEN_SOURCES = ("github.token", "secrets.GITHUB_TOKEN")
+SAFE_TOKEN_PATTERN = re.compile(
+    r"\$\{\{\s*(?:github\.token|secrets\.GITHUB_TOKEN)\s*\}\}",
+    re.IGNORECASE,
+)
+
+
+def _mask_safe_tokens(text: str) -> str:
+    """Replace allowed read-only token expressions with a placeholder."""
+    return SAFE_TOKEN_PATTERN.sub("__SAFE_GITHUB_TOKEN__", text)
+
+
 def _check_no_secrets(text: str) -> list[str]:
     errors: list[str] = []
-    lower = text.lower()
+    masked = _mask_safe_tokens(text)
+    lower = masked.lower()
     for m in re.finditer(r"\$\{\{\s*secrets\.\w+\s*\}\}", lower):
         line = _line_no(text, m.start())
         errors.append(f"Line {line}: workflow references a secret (${{{{ secrets.* }}}}")
@@ -178,6 +195,50 @@ def _check_required_env(text: str) -> list[str]:
     for snippet in REQUIRED_ENV_SNIPPETS:
         if snippet not in text:
             errors.append(f"Workflow must declare safety env var '{snippet}'")
+    return errors
+
+
+def _check_gh_token_for_static_checks(text: str) -> list[str]:
+    """Require a read-only GitHub token for the static release checks step.
+
+    `scripts/check_v0611_release_prep.py --post-release` calls `gh release view`
+    to verify the chosen release exists. In GitHub Actions this requires either
+    `GH_TOKEN` or `GITHUB_TOKEN` to be set for that step. The token must come
+    from the repository-provided `${{ github.token }}` or the repo-standard
+    `${{ secrets.GITHUB_TOKEN }}`; arbitrary secrets are rejected elsewhere.
+    """
+    errors: list[str] = []
+    lines = text.splitlines()
+    step_idx: int | None = None
+    for i, line in enumerate(lines):
+        if line.strip() == "- name: Run static release checks":
+            step_idx = i
+            break
+    if step_idx is None:
+        errors.append("Workflow must contain a 'Run static release checks' step")
+        return errors
+
+    for j in range(step_idx + 1, len(lines)):
+        stripped = lines[j].strip()
+        # Stop at the next named step (same indentation as the current step).
+        if stripped.startswith("- name:"):
+            break
+        if re.search(r"\bGH_TOKEN\s*:", stripped) or re.search(
+            r"\bGITHUB_TOKEN\s*:", stripped
+        ):
+            # Ensure the value uses an allowed read-only token source.
+            if SAFE_TOKEN_PATTERN.search(stripped):
+                return errors
+            errors.append(
+                f"Line {j + 1}: GH_TOKEN/GITHUB_TOKEN must use an allowed "
+                f"read-only token source: {', '.join(SAFE_TOKEN_SOURCES)}"
+            )
+            return errors
+
+    errors.append(
+        "The 'Run static release checks' step must set GH_TOKEN or GITHUB_TOKEN "
+        "so `gh release view` checks can read public release metadata"
+    )
     return errors
 
 
@@ -296,6 +357,7 @@ def check_workflow(workflow_path: Path | None = None) -> dict[str, Any]:
     errors.extend(_check_manual_dispatch_only(text))
     errors.extend(_check_permissions(text))
     errors.extend(_check_no_secrets(text))
+    errors.extend(_check_gh_token_for_static_checks(text))
     errors.extend(_check_forbidden_commands(text))
     errors.extend(_check_no_live_trading(text))
     errors.extend(_check_no_execution_commands(text))

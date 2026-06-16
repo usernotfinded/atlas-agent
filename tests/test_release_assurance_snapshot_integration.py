@@ -353,12 +353,50 @@ def test_checker_fails_when_workflow_input_defaults_to_true(tmp_path: Path) -> N
     assert any("default to false" in e for e in data["errors"])
 
 
-def test_checker_fails_when_workflow_has_secret(tmp_path: Path) -> None:
+def test_checker_allows_safe_github_token(tmp_path: Path) -> None:
     scripts_dir = _setup_temp_repo(tmp_path)
     _write_minimal_release_assurance(scripts_dir / "release_assurance.py")
     _write_minimal_workflow(
         tmp_path / ".github" / "workflows" / "release-assurance.yml",
-        secret='        env:\n          TOKEN: "${{ secrets.GITHUB_TOKEN }}"\n',
+        secret='        env:\n          GH_TOKEN: "${{ github.token }}"\n',
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path), "--json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["passed"] is True
+
+
+def test_checker_allows_repo_standard_github_token(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(scripts_dir / "release_assurance.py")
+    _write_minimal_workflow(
+        tmp_path / ".github" / "workflows" / "release-assurance.yml",
+        secret='        env:\n          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"\n',
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_SCRIPT), "--repo-root", str(tmp_path), "--json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["passed"] is True
+
+
+def test_checker_fails_when_workflow_has_arbitrary_secret(tmp_path: Path) -> None:
+    scripts_dir = _setup_temp_repo(tmp_path)
+    _write_minimal_release_assurance(scripts_dir / "release_assurance.py")
+    _write_minimal_workflow(
+        tmp_path / ".github" / "workflows" / "release-assurance.yml",
+        secret='        env:\n          TOKEN: "${{ secrets.MY_TOKEN }}"\n',
     )
 
     result = subprocess.run(

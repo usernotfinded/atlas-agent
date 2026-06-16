@@ -12,7 +12,9 @@ The artifact contains:
 - `with-reviewer-trust-snapshot/` — release assurance output generated **with** `--include-reviewer-trust-snapshot`.
 - `release-assurance-bundle-manifest.json` — manifest describing both bundles, file checksums, and safety invariants.
 
-The workflow and the artifact checker are read-only, local-only, and credential-free. They do not create tags, create GitHub releases, publish to PyPI, call providers or brokers, enable live trading, or load secrets.
+The workflow and the artifact checker are read-only and local-only. They do not create tags, create GitHub releases, publish to PyPI, call providers or brokers, enable live trading, or load external secrets.
+
+The only credential used is the repository-provided read-only GitHub token (`${{ github.token }}`), passed as `GH_TOKEN` to the static release checks step so `gh release view` can verify the chosen release tag exists. This is the same read-only token used by the normal CI workflow; it is not a custom secret and grants no write permissions beyond `contents: read`.
 
 ## How to dispatch the workflow
 
@@ -110,7 +112,7 @@ Exit codes:
 
 - The workflow is `workflow_dispatch` only and defaults `run_bundle_demo` to `false`.
 - It declares `permissions: contents: read` only.
-- It references no secrets.
+- It uses only the repository-provided read-only GitHub token (`${{ github.token }}`) for public release visibility checks; it references no arbitrary or external secrets.
 - It does not push tags, create releases, or publish to PyPI.
 - It does not call providers, submit broker orders, or enable live trading.
 - The local artifact checker performs only static, read-only validation. It makes no network calls and loads no credentials.

@@ -55,6 +55,8 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Run static release checks
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python scripts/check_release_metadata.py
 

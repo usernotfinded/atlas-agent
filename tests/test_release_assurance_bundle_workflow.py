@@ -116,8 +116,17 @@ class TestReleaseAssuranceBundleWorkflow:
         assert "contents: write" not in text
         assert "actions: write" not in text
 
-    def test_does_not_reference_secrets(self) -> None:
-        assert "secrets." not in _workflow_text().lower()
+    def test_uses_only_safe_github_token(self) -> None:
+        text = _workflow_text().lower()
+        assert "github.token" in text or "secrets.github_token" in text
+        assert "secrets.my_token" not in text
+        assert "secrets.api_token" not in text
+
+    def test_does_not_reference_unsafe_secrets(self) -> None:
+        text = _workflow_text().lower()
+        # The only allowed secrets.* reference is secrets.GITHUB_TOKEN.
+        for token_name in ("secrets.my_token", "secrets.api_token", "secrets.pypi_token"):
+            assert token_name not in text, f"workflow references unsafe secret {token_name}"
 
     def test_does_not_publish_or_release(self) -> None:
         text = _workflow_text().lower()
@@ -272,6 +281,59 @@ class TestReleaseAssuranceBundleWorkflowChecker:
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("conditional" in e.lower() for e in result["errors"])
+
+    def test_checker_allows_safe_github_token(self) -> None:
+        result = check_workflow(WORKFLOW_PATH)
+        assert result["passed"], f"Expected workflow to pass, got errors: {result['errors']}"
+        assert not any("secret" in e.lower() for e in result["errors"])
+
+    def test_checker_rejects_arbitrary_secret(self) -> None:
+        tmp = _modified_workflow(
+            (
+                "- name: Run static release checks",
+                "- name: Run static release checks\n        env:\n          GH_TOKEN: ${{ secrets.MY_TOKEN }}",
+            )
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("secret" in e.lower() for e in result["errors"])
+
+    def test_checker_rejects_contents_write(self) -> None:
+        tmp = _modified_workflow(
+            (
+                "permissions:\n  contents: read",
+                "permissions:\n  contents: write",
+            )
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("broad/write permission" in e.lower() for e in result["errors"])
+
+    def test_checker_requires_gh_token_for_static_checks(self) -> None:
+        original = _workflow_text()
+        # Remove the env block from the static release checks step.
+        modified = original.replace(
+            "      - name: Run static release checks\n        env:\n          GH_TOKEN: ${{ github.token }}\n        run:",
+            "      - name: Run static release checks\n        run:",
+        )
+        assert "GH_TOKEN" not in modified
+        tmp = REPO_ROOT / ".pytest_cache" / "release-assurance-no-gh-token.yml"
+        tmp.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(modified, encoding="utf-8")
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("gh_token" in e.lower() or "github_token" in e.lower() for e in result["errors"])
+
+    def test_checker_rejects_unsafe_token_source(self) -> None:
+        tmp = _modified_workflow(
+            (
+                "GH_TOKEN: ${{ github.token }}",
+                "GH_TOKEN: ${{ secrets.MY_TOKEN }}",
+            )
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("secret" in e.lower() for e in result["errors"])
 
     def test_cli_returns_zero_on_valid_workflow(self) -> None:
         result = subprocess.run(
