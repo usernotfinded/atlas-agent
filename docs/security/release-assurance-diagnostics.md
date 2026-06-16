@@ -250,6 +250,49 @@ python3.11 scripts/check_release_assurance_diagnostics_artifact.py \
 
 If the validator reports an unredacted secret, treat the artifact as unsafe, rotate the exposed credential, and file a bug against the redaction patterns in `scripts/release_assurance.py`.
 
+## Revalidating a diagnostics artifact in GitHub Actions
+
+After a `release-assurance-diagnostics` artifact has been uploaded by a failed [Release Assurance workflow](../../.github/workflows/release-assurance.yml) run, you can re-download and re-validate it with the separate manual workflow [Release Assurance Diagnostics Artifact Validate](../../.github/workflows/release-assurance-diagnostics-artifact-validate.yml).
+
+This workflow is `workflow_dispatch` only, declares only `contents: read` and `actions: read` permissions, and uses only the repository-provided read-only token (`GH_TOKEN: ${{ github.token }}`). It does not create tags, releases, or packages, and it does not call providers, brokers, or enable live trading.
+
+### Required input
+
+- `source_run_id` — the GitHub Actions run ID that produced the `release-assurance-diagnostics` artifact.
+
+### Optional inputs
+
+- `artifact_name` — artifact name to download (default: `release-assurance-diagnostics`).
+- `expect_release` — expected `release` value in the diagnostics JSON.
+- `expect_failed_check` — expected `failed_check` value in the diagnostics JSON.
+- `allow_passed` — allow diagnostics where `passed` is `true` (default: `false`).
+
+### Example dispatch
+
+Revalidate the diagnostics artifact from the controlled-failure run:
+
+```bash
+gh workflow run release-assurance-diagnostics-artifact-validate.yml \
+  --repo usernotfinded/atlas-agent \
+  --field source_run_id=27639645906 \
+  --field artifact_name=release-assurance-diagnostics \
+  --field expect_release=v0.0.0-does-not-exist \
+  --field expect_failed_check=package_version_aligned \
+  --field allow_passed=false
+```
+
+The workflow downloads the source artifact, validates it with `scripts/check_release_assurance_diagnostics_artifact.py`, writes a JSON validation report to `artifacts/release_assurance_diagnostics_revalidation/diagnostics-artifact-validation.json`, and uploads that report as a `release-assurance-diagnostics-validation` artifact. The workflow fails if validation fails.
+
+### Downloading the validation report
+
+After the revalidation run completes, download the report with:
+
+```bash
+gh run download <run-id> --name release-assurance-diagnostics-validation --dir ./validation-report
+```
+
+The report JSON contains the same fields emitted by the validator's `--json` flag, including `passed`, `artifact_path`, `diagnostics_path`, `summary`, `errors`, and `warnings`.
+
 ## Safety constraints
 
 Release assurance diagnostics are produced by a read-only, non-publishing script:

@@ -1,0 +1,101 @@
+name: Release Assurance Diagnostics Artifact Validate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "GitHub Actions run ID that produced the diagnostics artifact"
+        type: string
+        required: true
+      artifact_name:
+        description: "Name of the diagnostics artifact to download"
+        type: string
+        required: false
+        default: release-assurance-diagnostics
+      expect_release:
+        description: "Expected release value in the diagnostics JSON (optional)"
+        type: string
+        required: false
+        default: ""
+      expect_failed_check:
+        description: "Expected failed_check value in the diagnostics JSON (optional)"
+        type: string
+        required: false
+        default: ""
+      allow_passed:
+        description: "Allow diagnostics where 'passed' is true"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate-diagnostics-artifact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      ENABLE_LIVE_TRADING: "false"
+      PROVIDER_EXECUTION_ENABLED: "false"
+      BROKER_EXECUTION_ENABLED: "false"
+      GH_TOKEN: ${{ github.token }}
+      EXPECT_RELEASE: ${{ inputs.expect_release }}
+      EXPECT_FAILED_CHECK: ${{ inputs.expect_failed_check }}
+      ALLOW_PASSED: ${{ inputs.allow_passed }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Download diagnostics artifact
+        run: |
+          mkdir -p artifacts/release_assurance_diagnostics_revalidation
+          gh run download "${SOURCE_RUN_ID}" \
+            --name "${ARTIFACT_NAME}" \
+            --dir artifacts/release_assurance_diagnostics_revalidation
+        env:
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name }}
+
+      - name: Validate diagnostics artifact
+        id: validate_diagnostics
+        run: |
+          mkdir -p artifacts/release_assurance_diagnostics_revalidation
+          flags=()
+          if [[ -n "${EXPECT_RELEASE}" ]]; then
+            flags+=(--expect-release "${EXPECT_RELEASE}")
+          fi
+          if [[ -n "${EXPECT_FAILED_CHECK}" ]]; then
+            flags+=(--expect-failed-check "${EXPECT_FAILED_CHECK}")
+          fi
+          if [[ "${ALLOW_PASSED}" == "true" ]]; then
+            flags+=(--allow-passed)
+          fi
+          python3.11 scripts/check_release_assurance_diagnostics_artifact.py \
+            artifacts/release_assurance_diagnostics_revalidation \
+            "${flags[@]}" \
+            --json \
+            > artifacts/release_assurance_diagnostics_revalidation/diagnostics-artifact-validation.json
+
+      - name: Upload validation report artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-assurance-diagnostics-validation
+          path: artifacts/release_assurance_diagnostics_revalidation/diagnostics-artifact-validation.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Fail if validation failed
+        if: steps.validate_diagnostics.outcome == 'failure'
+        run: |
+          echo "Diagnostics artifact validation failed"
+          exit 1

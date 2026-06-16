@@ -125,6 +125,26 @@ Exit codes:
 - `1` — validation failure (schema, expectations, or safety scan).
 - `2` — operational error (missing path, bad zip, invalid JSON, missing file).
 
+## Revalidating a diagnostics artifact in CI
+
+The separate manual workflow [Release Assurance Diagnostics Artifact Validate](../../.github/workflows/release-assurance-diagnostics-artifact-validate.yml) can re-download and re-validate a previously uploaded `release-assurance-diagnostics` artifact from a known run ID. This avoids rerunning the full release assurance workflow and avoids relying on local manual `gh run download` commands.
+
+Dispatch the workflow with the source run ID and optional expectations:
+
+```bash
+gh workflow run release-assurance-diagnostics-artifact-validate.yml \
+  --repo usernotfinded/atlas-agent \
+  --field source_run_id=27639645906 \
+  --field artifact_name=release-assurance-diagnostics \
+  --field expect_release=v0.0.0-does-not-exist \
+  --field expect_failed_check=package_version_aligned \
+  --field allow_passed=false
+```
+
+The workflow downloads the artifact, runs `scripts/check_release_assurance_diagnostics_artifact.py`, uploads a `release-assurance-diagnostics-validation` report artifact, and fails if validation fails.
+
+The workflow is `workflow_dispatch` only, declares `contents: read` and `actions: read`, and uses only `GH_TOKEN: ${{ github.token }}`. It does not create tags or releases, publish to PyPI, call providers, submit broker orders, or enable live trading.
+
 ## How to validate the bundle artifact
 
 Validate an extracted bundle artifact directory:

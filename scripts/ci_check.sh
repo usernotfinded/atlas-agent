@@ -272,6 +272,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "8v. release assurance diagnostics artifact workflow check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_release_assurance_diagnostics_artifact_workflow.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "8w. release assurance diagnostics artifact workflow tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_diagnostics_artifact_workflow.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "8p. release assurance workflow artifact check (deterministic fixture)"
 SECONDS=0
 "$PYTHON_BIN" - "$REPO_ROOT" <<'PY'

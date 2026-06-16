@@ -104,6 +104,8 @@ python3.11 scripts/check_release_assurance_diagnostics_artifact.py <path> \
 
 This checker accepts a JSON file, a directory containing `release-assurance-diagnostics.json`, or a downloaded `.zip`. It verifies the schema, failure semantics, release identity, redaction metadata, and scans all string values for unredacted secrets, credentials, account IDs, and unsafe publishing commands. See [Release Assurance Workflow Dispatch](release-assurance-workflow-dispatch.md) for the full dispatch and validation guide.
 
+A separate manual workflow, [Release Assurance Diagnostics Artifact Validate](../../.github/workflows/release-assurance-diagnostics-artifact-validate.yml), can re-download and re-validate a previously uploaded diagnostics artifact from a known run ID. It is `workflow_dispatch` only, uses `contents: read` and `actions: read` permissions, and relies only on `GH_TOKEN: ${{ github.token }}`. It uploads a `release-assurance-diagnostics-validation` report artifact and fails if validation fails. It does not create tags, releases, or packages, and does not call providers, brokers, or enable live trading.
+
 Generated release assurance and provider evidence outputs should stay local or
 be uploaded as CI artifacts unless a task explicitly requires a versioned
 evidence pack. See [Generated Artifacts](../development/generated-artifacts.md)
