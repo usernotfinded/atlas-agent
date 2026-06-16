@@ -89,13 +89,14 @@ When set to `true`, a failed `release_assurance.py` run writes a redacted
 `release-assurance-diagnostics.json` and uploads it as the `release-assurance-diagnostics`
 artifact. The workflow still concludes failure after the upload.
 
-After downloading the artifact, validate it locally with:
+After downloading the diagnostics artifact, validate it locally with:
 
 ```bash
-python3.11 scripts/check_release_assurance_workflow_artifact.py <path>
+python3.11 scripts/check_release_assurance_diagnostics_artifact.py <path> \
+  --expect-release <release>
 ```
 
-This checker accepts either an extracted artifact directory or a downloaded `.zip`, verifies the manifest, bundle structure, reviewer trust snapshot files, checksums, and scans all text files for credential-like strings, forbidden claims, and unsafe publishing commands. See [Release Assurance Workflow Dispatch](release-assurance-workflow-dispatch.md) for the full dispatch and validation guide.
+This checker accepts a JSON file, a directory containing `release-assurance-diagnostics.json`, or a downloaded `.zip`. It verifies the schema, failure semantics, release identity, redaction metadata, and scans all string values for unredacted secrets, credentials, account IDs, and unsafe publishing commands. See [Release Assurance Workflow Dispatch](release-assurance-workflow-dispatch.md) for the full dispatch and validation guide.
 
 Generated release assurance and provider evidence outputs should stay local or
 be uploaded as CI artifacts unless a task explicitly requires a versioned

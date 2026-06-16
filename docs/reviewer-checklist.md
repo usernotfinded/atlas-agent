@@ -95,6 +95,9 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `.github/workflows/release-assurance.yml` has an opt-in `upload_diagnostics_json` input defaulting to `false`, conditionally passes `--diagnostics-json`, and uploads a `release-assurance-diagnostics` artifact only on failure.
 - [ ] `scripts/check_release_assurance_diagnostics_workflow.py` passes.
 - [ ] `python3.11 -m pytest tests/test_release_assurance_diagnostics_workflow.py -q` passes.
+- [ ] `scripts/check_release_assurance_diagnostics_artifact.py` exists and passes on a valid local diagnostics fixture.
+- [ ] `python3.11 -m pytest tests/test_release_assurance_diagnostics_artifact.py -q` passes.
+- [ ] Downloaded `release-assurance-diagnostics` artifacts (JSON file, extracted directory, or `.zip`) pass `python3.11 scripts/check_release_assurance_diagnostics_artifact.py <path> --expect-release <release>`.
 - [ ] Demo scripts and docs run locally without credentials, API keys, broker setup, network calls, or live trading enablement.
 - [ ] Marketplace/outreach docs contain no profit, performance, live-trading-readiness, or autonomous-trading claims.
 - [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.

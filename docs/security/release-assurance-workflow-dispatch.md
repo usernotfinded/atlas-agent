@@ -69,9 +69,35 @@ gh run download <run-id> --name release-assurance-diagnostics --dir ./local-diag
 
 The JSON file is redacted; see [Release Assurance Diagnostics](release-assurance-diagnostics.md) for the schema and redaction rules.
 
-## How to validate the artifact
+## How to validate the diagnostics artifact
 
-Validate an extracted artifact directory:
+After downloading the diagnostics artifact, validate it with:
+
+```bash
+python3.11 scripts/check_release_assurance_diagnostics_artifact.py ./local-diagnostics \
+  --expect-release v0.0.0-does-not-exist
+```
+
+Add `--expect-failed-check` when you know the failing check name:
+
+```bash
+python3.11 scripts/check_release_assurance_diagnostics_artifact.py \
+  ./local-diagnostics/release-assurance-diagnostics.json \
+  --expect-release v0.0.0-does-not-exist \
+  --expect-failed-check package_version_aligned
+```
+
+The validator accepts a JSON file, a directory containing `release-assurance-diagnostics.json`, or a downloaded `.zip`. It checks the schema, failure semantics, release identity, redaction metadata, and scans every string value for unredacted secrets, credentials, account IDs, and unsafe publishing commands. See [Release Assurance Diagnostics](release-assurance-diagnostics.md) for the full validation checklist.
+
+Exit codes:
+
+- `0` — diagnostics artifact passed validation.
+- `1` — validation failure (schema, expectations, or safety scan).
+- `2` — operational error (missing path, bad zip, invalid JSON, missing file).
+
+## How to validate the bundle artifact
+
+Validate an extracted bundle artifact directory:
 
 ```bash
 python3.11 scripts/check_release_assurance_workflow_artifact.py ./local-artifact

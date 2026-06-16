@@ -182,6 +182,60 @@ Release assurance diagnostics never print credential values. Even when the under
 
 If you encounter a diagnostic that appears to contain an unredacted secret, treat it as a bug and rotate the exposed credential immediately.
 
+## Validating a downloaded diagnostics artifact
+
+`scripts/check_release_assurance_diagnostics_artifact.py` validates a downloaded `release-assurance-diagnostics.json` artifact, a directory containing it, or a downloaded `.zip`.
+
+Validate the artifact after downloading:
+
+```bash
+python3.11 scripts/check_release_assurance_diagnostics_artifact.py \
+  ./local-diagnostics \
+  --expect-release v0.0.0-does-not-exist
+```
+
+If you know which check failed, add `--expect-failed-check`:
+
+```bash
+python3.11 scripts/check_release_assurance_diagnostics_artifact.py \
+  ./local-diagnostics/release-assurance-diagnostics.json \
+  --expect-release v0.0.0-does-not-exist \
+  --expect-failed-check package_version_aligned
+```
+
+Emit machine-readable JSON output:
+
+```bash
+python3.11 scripts/check_release_assurance_diagnostics_artifact.py \
+  ./local-diagnostics --json
+```
+
+### What the validator checks
+
+- **Schema**: required fields are present and `schema_version` is `atlas-release-assurance-diagnostics/1.0`.
+- **Failure semantics**: by default `passed` must be `false`. Use `--allow-passed` only when validating a successful-run diagnostics file.
+- **Release identity**: `release` is a non-empty string and matches `--expect-release` when provided.
+- **Failed check**: `failed_check` is non-empty when `passed` is `false` and matches `--expect-failed-check` when provided.
+- **Remediation**: a non-empty remediation hint is present.
+- **Redactions**: `redactions_applied` is a non-empty list.
+- **Safety scan**: every string value is scanned for unredacted secrets, credentials, account IDs, and unsafe publishing commands:
+  - `GH_TOKEN=...`, `GITHUB_TOKEN=...`, and any `*_TOKEN=...` assignment with an unredacted value.
+  - GitHub token prefixes (`ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`).
+  - `sk-...` API keys.
+  - `APCA-...` keys.
+  - `Bearer <token>` authorization headers.
+  - UUID-like account IDs.
+  - Unsafe commands such as `git push`, `git tag`, `gh release create`, `gh release upload`, `twine upload`, and `twine publish`.
+
+### What the validator does not prove
+
+- It does not prove that the workflow run was free of manual intervention or environment compromise.
+- It does not prove that the redaction patterns are exhaustive for every possible secret format.
+- It does not prove that the underlying failure cause has been fixed locally.
+- It does not replace an external security audit or manual secret rotation after a suspected leak.
+
+If the validator reports an unredacted secret, treat the artifact as unsafe, rotate the exposed credential, and file a bug against the redaction patterns in `scripts/release_assurance.py`.
+
 ## Safety constraints
 
 Release assurance diagnostics are produced by a read-only, non-publishing script:
@@ -194,4 +248,4 @@ Release assurance diagnostics are produced by a read-only, non-publishing script
 - No live trading or order submission is enabled.
 - No repository file is modified.
 
-The diagnostics output itself is also read-only: it describes a failure but does not change configuration, safety defaults, or runtime boundaries.
+The diagnostics output itself is also read-only: it describes a failure but does not change configuration, safety defaults, or runtime boundaries. The validator is also static, local-only, and read-only; it makes no network calls and loads no credentials.

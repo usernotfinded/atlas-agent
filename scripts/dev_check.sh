@@ -260,6 +260,54 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "13u. release assurance diagnostics artifact check (deterministic fixture)"
+SECONDS=0
+"$PYTHON_BIN" - "$REPO_ROOT" <<'PY'
+import json, subprocess, sys, tempfile
+from pathlib import Path
+
+repo_root = Path(sys.argv[1]).resolve()
+check_script = repo_root / "scripts" / "check_release_assurance_diagnostics_artifact.py"
+
+with tempfile.TemporaryDirectory() as tmp:
+    diag_path = Path(tmp) / "release-assurance-diagnostics.json"
+    diag_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "atlas-release-assurance-diagnostics/1.0",
+                "passed": False,
+                "release": "v0.0.0-does-not-exist",
+                "failed_phase": "release_assurance",
+                "failed_check": "package_version_aligned",
+                "command": "internal: read pyproject.toml",
+                "exit_code": 0,
+                "stdout_excerpt": "",
+                "stderr_excerpt": "",
+                "remediation": "Verify versions are aligned.",
+                "redactions_applied": ["*_TOKEN"],
+            },
+            indent=2,
+            sort_keys=True,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    subprocess.run([
+        sys.executable, str(check_script), str(diag_path),
+        "--expect-release", "v0.0.0-does-not-exist",
+        "--expect-failed-check", "package_version_aligned",
+    ], check=True)
+PY
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "13v. release assurance diagnostics artifact tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_diagnostics_artifact.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "13o. release assurance workflow artifact check (deterministic fixture)"
 SECONDS=0
 "$PYTHON_BIN" - "$REPO_ROOT" <<'PY'
