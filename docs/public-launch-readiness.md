@@ -27,6 +27,8 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 -m pytest tests/test_reviewer_trust_snapshot.py -q` — trust snapshot tests pass
 - `python3.11 scripts/check_reviewer_trust_snapshot_workflow.py` — reviewer trust snapshot workflow is safe
 - `python3.11 -m pytest tests/test_reviewer_trust_snapshot_workflow.py -q` — trust snapshot workflow tests pass
+- `python3.11 scripts/check_release_assurance_snapshot_integration.py` — release assurance snapshot integration is safe
+- `python3.11 -m pytest tests/test_release_assurance_snapshot_integration.py -q` — release assurance snapshot integration tests pass
 - `python3.11 -m pytest tests/test_public_launch_readiness.py` — launch readiness tests pass
 - `python3.11 -m pytest tests/test_public_launch_messaging.py` — launch messaging tests pass
 - `python3.11 -m pytest tests/test_product_demo_pack.py` — product demo pack tests pass

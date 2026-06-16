@@ -80,6 +80,9 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `.github/workflows/reviewer-trust-snapshot.yml` exists, is `workflow_dispatch` only, has `contents: read` permissions, references no secrets, and uploads a `reviewer-trust-snapshot` artifact.
 - [ ] `python3.11 scripts/check_reviewer_trust_snapshot_workflow.py` passes.
 - [ ] `python3.11 -m pytest tests/test_reviewer_trust_snapshot_workflow.py -q` passes.
+- [ ] `python3.11 scripts/check_release_assurance_snapshot_integration.py` passes.
+- [ ] `python3.11 -m pytest tests/test_release_assurance_snapshot_integration.py -q` passes.
+- [ ] Running `python3.11 scripts/release_assurance.py --version v0.6.11 --output <dir> --include-reviewer-trust-snapshot` produces a valid assurance pack with a validated reviewer trust snapshot.
 - [ ] Demo scripts and docs run locally without credentials, API keys, broker setup, network calls, or live trading enablement.
 - [ ] Marketplace/outreach docs contain no profit, performance, live-trading-readiness, or autonomous-trading claims.
 - [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.

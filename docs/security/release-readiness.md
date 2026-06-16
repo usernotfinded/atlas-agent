@@ -37,6 +37,22 @@ The pack verifies release identity, public metadata, updater delivery, provider 
 
 It does not create tags, publish packages, call providers, enable trading, or modify runtime behavior.
 
+### Optional reviewer trust snapshot
+
+You can include a deterministic reviewer trust snapshot in the assurance output:
+
+```bash
+python scripts/release_assurance.py \
+  --version v0.6.11 \
+  --output artifacts/release_assurance/v0.6.11-local \
+  --include-reviewer-trust-snapshot
+```
+
+This is opt-in only. The snapshot is written to
+`<output>/reviewer-trust-snapshot/` and validated before the pack is finalized.
+It remains local-only and does not tag, release, publish, call providers/brokers,
+or enable live trading.
+
 ## CI release assurance
 
 `.github/workflows/release-assurance.yml` can be run manually with `workflow_dispatch` to generate a fresh release assurance pack in GitHub Actions.

@@ -90,7 +90,7 @@ Run `check_release_assurance_snapshot_integration.py` and focused pytest file.
 - No runtime behavior changed.
 - Live trading, provider execution, broker execution remain disabled.
 - No credentials loaded.
-- No unsafe autonomy/profit/no-risk claims added.
+- No unsafe autonomy, profit, or risk claims added.
 - No tag/release/PyPI created.
 
 ## Out of scope

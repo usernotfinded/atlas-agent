@@ -153,6 +153,39 @@ A maintainer can also build the snapshot through a manual, read-only GitHub Acti
 
 The workflow does not create tags, releases, or PyPI packages. It does not enable live trading, provider execution, broker execution, or order submission. It requires no secrets or credentials.
 
+## Include in a release assurance pack
+
+The reviewer trust snapshot can optionally be bundled into the local release
+assurance output. This is off by default and must be requested explicitly.
+
+```bash
+python scripts/release_assurance.py \
+  --version v0.6.11 \
+  --output artifacts/release_assurance/v0.6.11-local \
+  --include-reviewer-trust-snapshot
+```
+
+With the flag, `scripts/release_assurance.py` writes a deterministic snapshot to
+`<output>/reviewer-trust-snapshot/` and validates it with
+`scripts/check_reviewer_trust_snapshot.py`. If validation fails, the assurance
+pack exits non-zero.
+
+This integration is local-only. It does not create tags or GitHub releases, does
+not publish to PyPI, does not call providers or brokers, and does not enable live
+trading. It also does not prove profitability, production readiness, or
+suitability for live trading.
+
+The manual Release Assurance workflow supports the same opt-in through the
+`include_reviewer_trust_snapshot` input (default `false`). See
+[`.github/workflows/release-assurance.yml`](../../.github/workflows/release-assurance.yml).
+
+## Validate the integration locally
+
+```bash
+python3.11 scripts/check_release_assurance_snapshot_integration.py
+python3.11 -m pytest tests/test_release_assurance_snapshot_integration.py -q
+```
+
 ## Validate the workflow file locally
 
 ```bash
