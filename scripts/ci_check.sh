@@ -175,6 +175,13 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "8k. release assurance bundle manifest tests (fast)"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_release_assurance_bundle_manifest.py -m "not slow" -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "9. public docs consistency"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_public_docs_consistency.py

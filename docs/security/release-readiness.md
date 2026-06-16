@@ -37,6 +37,19 @@ The pack verifies release identity, public metadata, updater delivery, provider 
 
 It does not create tags, publish packages, call providers, enable trading, or modify runtime behavior.
 
+### End-to-end bundle demo
+
+A fully local, offline demo generates a baseline release-assurance bundle, an opt-in bundle with a reviewer trust snapshot, and a manifest describing both:
+
+```bash
+bash scripts/demo_release_assurance_snapshot_bundle.sh \
+  --version v0.6.11 \
+  --output-dir artifacts/release_assurance/v0.6.11-bundle-demo \
+  --deterministic
+```
+
+See [Release Assurance Bundle Demo](release-assurance-bundle-demo.md) for details.
+
 ### Optional reviewer trust snapshot
 
 You can include a deterministic reviewer trust snapshot in the assurance output:

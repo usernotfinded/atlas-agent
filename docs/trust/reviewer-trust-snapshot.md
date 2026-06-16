@@ -158,6 +158,9 @@ The workflow does not create tags, releases, or PyPI packages. It does not enabl
 The reviewer trust snapshot can optionally be bundled into the local release
 assurance output. This is off by default and must be requested explicitly.
 
+A bundle demo runs both variants side by side and produces a manifest. See
+[Release Assurance Bundle Demo](../security/release-assurance-bundle-demo.md).
+
 ```bash
 python scripts/release_assurance.py \
   --version v0.6.11 \
