@@ -97,6 +97,20 @@ gh workflow run release-assurance.yml \
   --field upload_diagnostics_json=true
 ```
 
+To validate the diagnostics JSON before upload, also set `validate_diagnostics_artifact=true`:
+
+```bash
+gh workflow run release-assurance.yml \
+  --repo usernotfinded/atlas-agent \
+  --field release=v0.0.0-does-not-exist \
+  --field upload_diagnostics_json=true \
+  --field validate_diagnostics_artifact=true
+```
+
+The validator runs only when release assurance failed, `upload_diagnostics_json=true`,
+and `validate_diagnostics_artifact=true`. The artifact is uploaded only if validation
+succeeds. The workflow still fails afterward because release assurance failed.
+
 Download the artifact after the run:
 
 ```bash

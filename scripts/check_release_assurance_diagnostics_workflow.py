@@ -71,6 +71,9 @@ DIAGNOSTICS_CONDITIONAL_MARKERS = (
     "diagnostics_flag",
 )
 
+VALIDATOR_STEP_NAME = "Validate release assurance diagnostics artifact"
+VALIDATOR_COMMAND_MARKER = "scripts/check_release_assurance_diagnostics_artifact.py"
+
 
 def _mask_safe_tokens(text: str) -> str:
     """Replace allowed read-only token expressions with a placeholder."""
@@ -284,17 +287,16 @@ def _check_python_311(text: str) -> list[str]:
     return errors
 
 
-def _check_diagnostics_input(text: str) -> list[str]:
-    errors: list[str] = []
+def _input_block(text: str, input_name: str) -> str:
+    """Return the YAML block for a named workflow input, or empty string."""
     lines = text.splitlines()
     start_idx: int | None = None
     for i, line in enumerate(lines):
-        if line.strip().startswith("upload_diagnostics_json:"):
+        if line.strip().startswith(f"{input_name}:"):
             start_idx = i
             break
     if start_idx is None:
-        errors.append("Workflow must declare an upload_diagnostics_json input")
-        return errors
+        return ""
 
     start_indent = len(lines[start_idx]) - len(lines[start_idx].lstrip())
     block_lines: list[str] = []
@@ -306,13 +308,30 @@ def _check_diagnostics_input(text: str) -> list[str]:
         if indent <= start_indent:
             break
         block_lines.append(line)
-    block = "\n".join(block_lines)
+    return "\n".join(block_lines)
+
+
+def _check_boolean_input(text: str, input_name: str) -> list[str]:
+    """Validate a boolean workflow input that defaults to false."""
+    errors: list[str] = []
+    block = _input_block(text, input_name)
+    if not block:
+        errors.append(f"Workflow must declare a {input_name} input")
+        return errors
 
     if "type: boolean" not in block:
-        errors.append("upload_diagnostics_json input must be type boolean")
+        errors.append(f"{input_name} input must be type boolean")
     if "default: false" not in block:
-        errors.append("upload_diagnostics_json input must default to false")
+        errors.append(f"{input_name} input must default to false")
     return errors
+
+
+def _check_diagnostics_input(text: str) -> list[str]:
+    return _check_boolean_input(text, "upload_diagnostics_json")
+
+
+def _check_validation_input(text: str) -> list[str]:
+    return _check_boolean_input(text, "validate_diagnostics_artifact")
 
 
 def _step_has_if(text: str, step_name: str) -> bool:
@@ -321,20 +340,50 @@ def _step_has_if(text: str, step_name: str) -> bool:
 
 
 def _step_if_line(text: str, step_name: str) -> str | None:
-    """Return the `if:` line for the named step, or None if absent."""
+    """Return the `if:` expression for the named step, or None if absent.
+
+    Handles both inline conditions and folded/block scalars (``>-``, ``>``, ``|``).
+    """
     lines = text.splitlines()
+    start_idx: int | None = None
     for i, line in enumerate(lines):
         if f"- name: {step_name}" in line:
-            for j in range(i + 1, len(lines)):
-                next_line = lines[j].strip()
-                if next_line == "":
-                    continue
-                if next_line.startswith("- name:"):
-                    break
-                if next_line.startswith("if:"):
-                    return next_line
+            start_idx = i
             break
-    return None
+    if start_idx is None:
+        return None
+
+    if_idx: int | None = None
+    for j in range(start_idx + 1, len(lines)):
+        next_line = lines[j].strip()
+        if next_line == "":
+            continue
+        if next_line.startswith("- name:"):
+            break
+        if next_line.startswith("if:"):
+            if_idx = j
+            break
+    if if_idx is None:
+        return None
+
+    first_line = lines[if_idx].strip()
+    inline = first_line.split(":", 1)[1].strip()
+    if inline and inline not in (">-", ">", "|", "|-", "|+"):
+        return first_line
+
+    # Folded or block scalar: collect indented continuation lines.
+    base_indent = len(lines[if_idx]) - len(lines[if_idx].lstrip())
+    condition_lines: list[str] = []
+    for j in range(if_idx + 1, len(lines)):
+        line = lines[j]
+        stripped = line.strip()
+        if stripped == "":
+            continue
+        indent = len(line) - len(line.lstrip())
+        if indent <= base_indent:
+            break
+        condition_lines.append(stripped)
+    return " ".join(condition_lines)
 
 
 def _check_diagnostics_flag_conditional(text: str) -> list[str]:
@@ -460,6 +509,64 @@ def _check_failure_semantics(text: str) -> list[str]:
     return errors
 
 
+def _step_position(text: str, step_name: str) -> int:
+    return text.find(f"- name: {step_name}")
+
+
+def _check_diagnostics_validator_step(text: str) -> list[str]:
+    errors: list[str] = []
+
+    if VALIDATOR_STEP_NAME not in text:
+        errors.append(f"Workflow must declare a step named '{VALIDATOR_STEP_NAME}'")
+        return errors
+
+    if VALIDATOR_COMMAND_MARKER not in text:
+        errors.append(
+            "Workflow must call scripts/check_release_assurance_diagnostics_artifact.py "
+            "to validate the diagnostics artifact"
+        )
+
+    if_line = _step_if_line(text, VALIDATOR_STEP_NAME)
+    if if_line is None:
+        errors.append("Diagnostics validator step must be conditional")
+    else:
+        if_line_lower = if_line.lower()
+        if "inputs.upload_diagnostics_json" not in if_line_lower:
+            errors.append(
+                "Diagnostics validator step must be conditional on inputs.upload_diagnostics_json"
+            )
+        if "inputs.validate_diagnostics_artifact" not in if_line_lower:
+            errors.append(
+                "Diagnostics validator step must be conditional on inputs.validate_diagnostics_artifact"
+            )
+        if not (
+            "steps.release_assurance.outputs.exit_code != '0'" in if_line_lower
+            or "failure()" in if_line_lower
+        ):
+            errors.append(
+                "Diagnostics validator step must only run on release assurance failure"
+            )
+
+    return errors
+
+
+def _check_validator_before_upload(text: str) -> list[str]:
+    errors: list[str] = []
+    validator_pos = _step_position(text, VALIDATOR_STEP_NAME)
+    upload_pos = _step_position(text, "Upload release assurance diagnostics artifact")
+
+    if validator_pos == -1:
+        errors.append("Cannot check ordering: diagnostics validator step missing")
+    if upload_pos == -1:
+        errors.append("Cannot check ordering: diagnostics artifact upload step missing")
+    if validator_pos != -1 and upload_pos != -1 and validator_pos > upload_pos:
+        errors.append(
+            "Diagnostics validator step must run before diagnostics artifact upload"
+        )
+
+    return errors
+
+
 def check_workflow(workflow_path: Path | None = None) -> dict[str, Any]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -485,8 +592,11 @@ def check_workflow(workflow_path: Path | None = None) -> dict[str, Any]:
     errors.extend(_check_required_env(text))
     errors.extend(_check_python_311(text))
     errors.extend(_check_diagnostics_input(text))
+    errors.extend(_check_validation_input(text))
     errors.extend(_check_diagnostics_flag_conditional(text))
     errors.extend(_check_diagnostics_upload_step(text))
+    errors.extend(_check_diagnostics_validator_step(text))
+    errors.extend(_check_validator_before_upload(text))
     errors.extend(_check_failure_semantics(text))
 
     return {

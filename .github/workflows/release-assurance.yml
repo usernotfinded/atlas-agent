@@ -27,6 +27,11 @@ on:
         type: boolean
         required: false
         default: false
+      validate_diagnostics_artifact:
+        description: "Validate the diagnostics JSON before uploading it"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -104,6 +109,15 @@ jobs:
           path: artifacts/release_assurance/${{ inputs.release }}-ci
           if-no-files-found: error
           retention-days: 14
+
+      - name: Validate release assurance diagnostics artifact
+        if: >-
+          inputs.upload_diagnostics_json &&
+          inputs.validate_diagnostics_artifact &&
+          steps.release_assurance.outputs.exit_code != '0'
+        run: |
+          python3.11 scripts/check_release_assurance_diagnostics_artifact.py \
+            artifacts/release_assurance_diagnostics/release-assurance-diagnostics.json
 
       - name: Upload release assurance diagnostics artifact
         if: inputs.upload_diagnostics_json && steps.release_assurance.outputs.exit_code != '0'

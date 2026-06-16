@@ -28,6 +28,7 @@ The only credential used is the repository-provided read-only GitHub token (`${{
    - `run_bundle_demo`: `true`
    - `bundle_demo_version`: `v0.6.11`
    - `upload_diagnostics_json`: `false` (optional)
+   - `validate_diagnostics_artifact`: `false` (optional, only meaningful when `upload_diagnostics_json=true`)
 4. Click **Run workflow**.
 
 ### Via the GitHub CLI
@@ -39,7 +40,8 @@ gh workflow run release-assurance.yml \
   --field include_reviewer_trust_snapshot=true \
   --field run_bundle_demo=true \
   --field bundle_demo_version=v0.6.11 \
-  --field upload_diagnostics_json=false
+  --field upload_diagnostics_json=false \
+  --field validate_diagnostics_artifact=false
 ```
 
 You can then follow the run with:
@@ -68,6 +70,34 @@ gh run download <run-id> --name release-assurance-diagnostics --dir ./local-diag
 ```
 
 The JSON file is redacted; see [Release Assurance Diagnostics](release-assurance-diagnostics.md) for the schema and redaction rules.
+
+## Validating diagnostics before upload
+
+The workflow has an additional opt-in input, `validate_diagnostics_artifact` (default `false`).
+When both `upload_diagnostics_json=true` and `validate_diagnostics_artifact=true` are set,
+the workflow runs `scripts/check_release_assurance_diagnostics_artifact.py` against the
+generated `release-assurance-diagnostics.json` before uploading it.
+
+The validator step runs only when release assurance failed, because diagnostics JSON is
+only generated on failure. If validation fails (for example, an unredacted secret or a
+schema mismatch), the workflow stops and the diagnostics artifact is **not** uploaded.
+If validation succeeds, the artifact is uploaded and the workflow still concludes failure
+because release assurance failed.
+
+Recommended safe controlled-failure dispatch to exercise the validator:
+
+```bash
+gh workflow run release-assurance.yml \
+  --repo usernotfinded/atlas-agent \
+  --field release=v0.0.0-does-not-exist \
+  --field upload_diagnostics_json=true \
+  --field validate_diagnostics_artifact=true \
+  --field run_bundle_demo=false \
+  --field bundle_demo_version=v0.6.11
+```
+
+This intentionally fails the `package_version_aligned` check, produces diagnostics,
+validates them, uploads the artifact, and preserves the final workflow failure.
 
 ## How to validate the diagnostics artifact
 

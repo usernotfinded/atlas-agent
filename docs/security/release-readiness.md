@@ -84,10 +84,16 @@ This optional path is disabled by default so that normal workflow dispatches beh
 
 #### Optional diagnostics artifact
 
-The workflow also has an opt-in input, `upload_diagnostics_json` (default `false`).
-When set to `true`, a failed `release_assurance.py` run writes a redacted
-`release-assurance-diagnostics.json` and uploads it as the `release-assurance-diagnostics`
-artifact. The workflow still concludes failure after the upload.
+The workflow also has opt-in inputs:
+
+- `upload_diagnostics_json` (default `false`)
+- `validate_diagnostics_artifact` (default `false`)
+
+When `upload_diagnostics_json=true`, a failed `release_assurance.py` run writes a redacted
+`release-assurance-diagnostics.json`. If `validate_diagnostics_artifact=true`, the workflow
+validates that JSON with `scripts/check_release_assurance_diagnostics_artifact.py` before
+uploading it. The artifact is uploaded only if validation succeeds, and the workflow still
+concludes failure after the upload.
 
 After downloading the diagnostics artifact, validate it locally with:
 

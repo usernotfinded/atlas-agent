@@ -128,6 +128,55 @@ class TestReleaseAssuranceDiagnosticsWorkflow:
         assert "steps.release_assurance.outputs.exit_code" in if_line
         assert "!= '0'" in if_line
 
+    def test_validate_diagnostics_artifact_input_exists(self) -> None:
+        text = _workflow_text()
+        assert "validate_diagnostics_artifact:" in text
+        assert "type: boolean" in text
+
+    def test_validate_diagnostics_artifact_defaults_to_false(self) -> None:
+        text = _workflow_text()
+        lines = text.splitlines()
+        start_idx: int | None = None
+        for i, line in enumerate(lines):
+            if line.strip().startswith("validate_diagnostics_artifact:"):
+                start_idx = i
+                break
+        assert start_idx is not None
+        start_indent = len(lines[start_idx]) - len(lines[start_idx].lstrip())
+        block_lines: list[str] = []
+        for line in lines[start_idx + 1 :]:
+            if line.strip() == "":
+                block_lines.append(line)
+                continue
+            indent = len(line) - len(line.lstrip())
+            if indent <= start_indent:
+                break
+            block_lines.append(line)
+        block = "\n".join(block_lines)
+        assert "default: false" in block
+
+    def test_validator_step_exists(self) -> None:
+        text = _workflow_text()
+        assert "Validate release assurance diagnostics artifact" in text
+        assert "scripts/check_release_assurance_diagnostics_artifact.py" in text
+
+    def test_validator_step_is_conditional(self) -> None:
+        text = _workflow_text()
+        if_line = _step_if_line(text, "Validate release assurance diagnostics artifact")
+        assert if_line is not None
+        if_line_lower = if_line.lower()
+        assert "inputs.upload_diagnostics_json" in if_line_lower
+        assert "inputs.validate_diagnostics_artifact" in if_line_lower
+        assert "steps.release_assurance.outputs.exit_code != '0'" in if_line_lower
+
+    def test_validator_step_runs_before_upload(self) -> None:
+        text = _workflow_text()
+        validator_pos = text.find("Validate release assurance diagnostics artifact")
+        upload_pos = text.find("Upload release assurance diagnostics artifact")
+        assert validator_pos != -1
+        assert upload_pos != -1
+        assert validator_pos < upload_pos
+
 
 class TestReleaseAssuranceDiagnosticsWorkflowChecker:
     def test_checker_passes_on_valid_workflow(self) -> None:
@@ -365,6 +414,122 @@ class TestReleaseAssuranceDiagnosticsWorkflowChecker:
         result = check_workflow(tmp)
         assert not result["passed"]
         assert any("gh_token" in e.lower() or "github_token" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_if_validate_diagnostics_defaults_to_true(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "validate_diagnostics_artifact:\n        description: \"Validate the diagnostics JSON before uploading it\"\n        type: boolean\n        required: false\n        default: false",
+                "validate_diagnostics_artifact:\n        description: \"bad\"\n        type: boolean\n        required: false\n        default: true",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any(
+            "validate_diagnostics_artifact" in e and "default to false" in e.lower()
+            for e in result["errors"]
+        )
+
+    def test_checker_fails_if_validator_step_missing(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "      - name: Validate release assurance diagnostics artifact\n        if: >-\n          inputs.upload_diagnostics_json &&\n          inputs.validate_diagnostics_artifact &&\n          steps.release_assurance.outputs.exit_code != '0'\n        run: |\n          python3.11 scripts/check_release_assurance_diagnostics_artifact.py \\\n            artifacts/release_assurance_diagnostics/release-assurance-diagnostics.json\n\n",
+                "",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("validate release assurance diagnostics artifact" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_if_validator_step_unconditional(self, tmp_path: Path) -> None:
+        original = _workflow_text()
+        lines = original.splitlines()
+        validator_idx: int | None = None
+        for i, line in enumerate(lines):
+            if "Validate release assurance diagnostics artifact" in line:
+                validator_idx = i
+                break
+        assert validator_idx is not None
+        if_idx: int | None = None
+        for j in range(validator_idx + 1, len(lines)):
+            stripped = lines[j].strip()
+            if stripped.startswith("- name:"):
+                break
+            if stripped.startswith("if:"):
+                if_idx = j
+                break
+        assert if_idx is not None
+        modified_lines = lines[:if_idx] + lines[if_idx + 1 :]
+        modified = "\n".join(modified_lines)
+        tmp = tmp_path / "release-assurance-diagnostics-validator-unconditional.yml"
+        tmp.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(modified, encoding="utf-8")
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("validator step must be conditional" in e.lower() for e in result["errors"])
+
+    def test_checker_fails_if_upload_before_validator(self, tmp_path: Path) -> None:
+        original = _workflow_text()
+        lines = original.splitlines()
+        validator_idx: int | None = None
+        upload_idx: int | None = None
+        for i, line in enumerate(lines):
+            if "Validate release assurance diagnostics artifact" in line:
+                validator_idx = i
+            if "Upload release assurance diagnostics artifact" in line:
+                upload_idx = i
+        assert validator_idx is not None
+        assert upload_idx is not None
+
+        def block_end(start: int) -> int:
+            for j in range(start + 1, len(lines)):
+                if lines[j].strip().startswith("- name:"):
+                    return j
+            return len(lines)
+
+        validator_end = block_end(validator_idx)
+        upload_end = block_end(upload_idx)
+        validator_block = lines[validator_idx:validator_end]
+        upload_block = lines[upload_idx:upload_end]
+        if validator_idx < upload_idx:
+            modified_lines = (
+                lines[:validator_idx]
+                + upload_block
+                + lines[validator_end:upload_idx]
+                + validator_block
+                + lines[upload_end:]
+            )
+        else:
+            modified_lines = (
+                lines[:upload_idx]
+                + validator_block
+                + lines[upload_end:validator_idx]
+                + upload_block
+                + lines[validator_end:]
+            )
+        modified = "\n".join(modified_lines)
+        tmp = tmp_path / "release-assurance-diagnostics-upload-before-validator.yml"
+        tmp.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(modified, encoding="utf-8")
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any(
+            "validator step must run before diagnostics artifact upload" in e.lower()
+            for e in result["errors"]
+        )
+
+    def test_checker_fails_if_validator_command_missing(self, tmp_path: Path) -> None:
+        tmp = _modified_workflow(
+            (
+                "scripts/check_release_assurance_diagnostics_artifact.py",
+                "scripts/check_release_assurance_diagnostics_artifact_MISSING.py",
+            ),
+            tmp_path,
+        )
+        result = check_workflow(tmp)
+        assert not result["passed"]
+        assert any("check_release_assurance_diagnostics_artifact.py" in e for e in result["errors"])
 
     def test_cli_returns_zero_on_valid_workflow(self) -> None:
         result = subprocess.run(

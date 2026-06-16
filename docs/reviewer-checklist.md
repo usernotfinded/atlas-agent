@@ -93,6 +93,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] Downloaded `release-assurance-bundle-demo` artifacts (extracted directory or `.zip`) pass `python3.11 scripts/check_release_assurance_workflow_artifact.py <path>`.
 - [ ] `scripts/release_assurance.py` failure diagnostics are documented in `docs/security/release-assurance-diagnostics.md`, redact secrets/credentials, and support `--diagnostics-json`.
 - [ ] `.github/workflows/release-assurance.yml` has an opt-in `upload_diagnostics_json` input defaulting to `false`, conditionally passes `--diagnostics-json`, and uploads a `release-assurance-diagnostics` artifact only on failure.
+- [ ] `.github/workflows/release-assurance.yml` has an opt-in `validate_diagnostics_artifact` input defaulting to `false` and, when enabled, validates the diagnostics JSON with `scripts/check_release_assurance_diagnostics_artifact.py` before uploading the artifact.
 - [ ] `scripts/check_release_assurance_diagnostics_workflow.py` passes.
 - [ ] `python3.11 -m pytest tests/test_release_assurance_diagnostics_workflow.py -q` passes.
 - [ ] `scripts/check_release_assurance_diagnostics_artifact.py` exists and passes on a valid local diagnostics fixture.
