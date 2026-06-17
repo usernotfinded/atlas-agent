@@ -86,6 +86,42 @@
       "safety_scope": "docs/checker/test/demo-script",
       "selected_for_v0613": true,
       "implemented": true
+    },
+    {
+      "id": "CAND-024",
+      "title": "Paper Mode Offline Provider Isolation and No-Network Gate",
+      "summary": "Wire NullProvider into the provider factory; add paper-mode missing-credential fallback and explicit --offline flag; add doc, checker, tests, demo update, and cross-doc/gate integration.",
+      "user_value": "Paper agentic workflows can run without provider credentials or network; live mode stays fail-closed.",
+      "safety_boundary": "Provider/CLI/runner wiring only; no broker, execution, safety, risk, or config boundary changes.",
+      "risk": "low",
+      "recommendation": "now — implemented/audited",
+      "ranking_reason": "Removes the local provider transport failure blocker for paper mode while preserving live fail-closed behavior.",
+      "primary_files": [
+        "docs/paper-provider-isolation.md",
+        "scripts/check_paper_provider_isolation.py",
+        "tests/test_paper_provider_isolation.py",
+        "src/atlas_agent/providers/factory.py",
+        "src/atlas_agent/agent/runner.py",
+        "src/atlas_agent/cli.py",
+        "scripts/demo_autonomous_paper_workflow.sh",
+        "README.md",
+        "docs/bounded-live-autonomy-governance.md",
+        "docs/autonomy-roadmap.md",
+        "docs/public-launch-readiness.md",
+        "docs/trust/README.md",
+        "docs/reviewer-checklist.md",
+        "docs/releases/v0.6.13-candidate-selection.md",
+        "docs/releases/v0.6.13-plan.md",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": ["scripts/check_paper_provider_isolation.py"],
+      "tests": ["tests/test_paper_provider_isolation.py"],
+      "workflows": [".github/workflows/ci.yml"],
+      "safety_scope": "provider/CLI/runner wiring",
+      "selected_for_v0613": true,
+      "implemented": true
     }
   ],
   "rejected": [

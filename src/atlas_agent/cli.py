@@ -217,6 +217,11 @@ Safety First:
     run_parser.add_argument("--symbol", help="Trading symbol (defaults to market.symbol config)")
     run_parser.add_argument("--continuous", action="store_true")
     run_parser.add_argument("--dry-run", action="store_true")
+    run_parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Use the offline null provider for this run. No API key or network required.",
+    )
     run_parser.add_argument("--interval", type=int, default=60)
     run_parser.add_argument("--max-cycles", type=int, default=None)
 
@@ -443,6 +448,11 @@ Safety First:
     agent_run.add_argument("--symbol", help="Trading symbol (defaults to market.symbol config)")
     agent_run.add_argument("--once", action="store_true")
     agent_run.add_argument("--continuous", action="store_true")
+    agent_run.add_argument(
+        "--offline",
+        action="store_true",
+        help="Use the offline null provider for this run. No API key or network required.",
+    )
     agent_run.add_argument("--interval", type=int, default=60)
     agent_run.add_argument("--max-cycles", type=int, default=None)
     agent_status = agent_sub.add_parser("status")
@@ -4029,6 +4039,9 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(args, "dry_run", False):
             print(get_agent_plan(config))
             return 0
+        if getattr(args, "offline", False):
+            config.model.provider = "null"
+            config.model.model = "null"
         _check_discipline_or_exit(config)
         resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
         result = run_agent(
@@ -4810,6 +4823,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Reflection generated: {report}")
             return 0
         elif args.agent_command == "run":
+            if getattr(args, "offline", False):
+                config.model.provider = "null"
+                config.model.model = "null"
             _check_discipline_or_exit(config)
             resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
             result = run_agent(

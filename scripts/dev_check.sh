@@ -99,6 +99,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "4e. paper provider isolation check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_paper_provider_isolation.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "4f. paper provider isolation tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_paper_provider_isolation.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "5. trust center check"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_trust_center.py

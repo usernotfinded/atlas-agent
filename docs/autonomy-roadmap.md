@@ -147,6 +147,7 @@ Level 1 is **operator-supervised, local-only automation that runs entirely insid
 ### Concrete demo
 
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md) — a deterministic, offline, no-credential L1 paper workflow demonstration. It is not a live-trading or production-readiness claim.
+- [Paper Mode Provider Isolation](paper-provider-isolation.md) — paper-mode agentic workflows can run without an AI provider API key or network access; explicit `--offline` path and automatic missing-credential fallback are available. Live mode remains fail-closed.
 
 ## L2 — Live Suggestions with Human Approval
 

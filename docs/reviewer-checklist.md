@@ -58,6 +58,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] Provider safety dossier is described as sandbox-only and offline
 - [ ] No broker/order path in provider safety workflows
 - [ ] No credentials loaded by default in safety workflows
+- [ ] Paper mode can run without provider credentials or network ([docs/paper-provider-isolation.md](paper-provider-isolation.md))
 
 ## Protected boundaries
 

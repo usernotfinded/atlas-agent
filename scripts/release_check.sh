@@ -133,6 +133,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "5a. paper provider isolation check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_paper_provider_isolation.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "5b. paper provider isolation tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_paper_provider_isolation.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "6. git diff --check"
 echo "========================================"
 SECONDS=0

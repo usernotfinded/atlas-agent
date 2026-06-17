@@ -58,7 +58,7 @@ def test_agent_run_paper_mode(base_config, monkeypatch, capsys):
             with patch("atlas_agent.agent.runner.get_provider_from_runtime_config", return_value=NullProvider()) as mock_provider_builder:
                 ret = main(["agent", "run", "--mode", "paper"])
     assert ret == 0
-    mock_provider_builder.assert_called_once_with(base_config)
+    mock_provider_builder.assert_called_once_with(base_config, mode="paper")
     captured = capsys.readouterr()
     assert "agent run paper:" in captured.out
 

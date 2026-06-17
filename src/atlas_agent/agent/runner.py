@@ -113,7 +113,13 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
             errors=["No trading symbol configured. Set one with `atlas config set market.symbol <SYMBOL>` or pass `--symbol <SYMBOL>`."],
         )
 
-    provider = get_provider_from_runtime_config(config)
+    # Decide effective mode before resolving a provider so paper mode can use the
+    # offline NullProvider when no real provider credentials are configured.
+    effective_mode = mode
+    if effective_mode == "auto":
+        effective_mode = "live" if (config.trading_mode == "live" and config.enable_live_trading) else "paper"
+
+    provider = get_provider_from_runtime_config(config, mode=effective_mode)
     registry = ToolRegistry()
     for tool in BUILTIN_TOOLS:
         registry.register(tool)
@@ -121,7 +127,7 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     audit_path = config.audit_dir / "events.jsonl"
     audit_writer = AuditWriter(audit_path)
     
-    run_id = f"run_{int(time.time())}"
+    run_id = generate_run_id()
 
     # Advanced Kill Switch
     safety_dir = Path(".atlas/safety")
@@ -136,10 +142,6 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     
     # Broker Sync
     from atlas_agent.brokers.resolver import BrokerResolver
-
-    effective_mode = mode
-    if effective_mode == "auto":
-        effective_mode = "live" if (config.trading_mode == "live" and config.enable_live_trading) else "paper"
 
     resolver = BrokerResolver(config)
 
@@ -168,10 +170,12 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
             diagnostics={"broker_status": resolution.status.to_dict()},
         )
 
+    # Broker sync events are audited under a derived run id so they do not
+    # interfere with the agent-run manifest, which is sealed by AgentLoop.
     sync_service = BrokerSyncService(
         broker=resolution.sync_provider,
         audit_writer=audit_writer,
-        run_id=run_id
+        run_id=f"{run_id}_broker_sync"
     )
 
     sync_result = sync_service.sync()

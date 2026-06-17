@@ -37,6 +37,7 @@ atlas discipline setup --manual --yes
 atlas config set market.symbol ATLAS-DEMO
 atlas validate
 atlas run --mode paper --dry-run --symbol ATLAS-DEMO --max-cycles 1
+atlas run --mode paper --offline --symbol ATLAS-DEMO --max-cycles 1
 atlas routine run pre_market --mode paper --symbol ATLAS-DEMO
 atlas backtest run --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL
 atlas report generate --type daily --format text
@@ -45,6 +46,8 @@ atlas report generate --type daily --format text
 These commands require no credentials, no network, and no broker access.
 `ATLAS-DEMO` is a documentation symbol for agent/routine steps; `DEMO-SYMBOL` is the
 symbol used in the bundled sample OHLCV data for backtesting.
+The `--offline` flag uses the provider-free paper path described in
+[Paper Mode Provider Isolation](paper-provider-isolation.md).
 
 ## Evidence outputs
 
@@ -78,5 +81,6 @@ python3.11 -m pytest tests/test_autonomous_paper_workflow_demo.py -q
 - [Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md)
 - [Autonomy Roadmap](autonomy-roadmap.md)
 - [Paper-Trading Guide](paper-trading-guide.md)
+- [Paper Mode Provider Isolation](paper-provider-isolation.md)
 - [scripts/demo_autonomous_paper_workflow.sh](../scripts/demo_autonomous_paper_workflow.sh)
 - [scripts/check_autonomous_paper_workflow_demo.py](../scripts/check_autonomous_paper_workflow_demo.py)

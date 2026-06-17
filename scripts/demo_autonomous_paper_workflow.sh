@@ -60,6 +60,7 @@ run_step config set market.symbol "$DEMO_SYMBOL"
 run_step validate
 run_step doctor --json
 run_step run --mode paper --dry-run --symbol "$DEMO_SYMBOL" --max-cycles 1
+run_step run --mode paper --offline --symbol "$DEMO_SYMBOL" --max-cycles 1
 run_step routine run pre_market --mode paper --symbol "$DEMO_SYMBOL" || true
 run_step backtest run --symbol "$BACKTEST_SYMBOL" --data "$SAMPLE_DATA"
 run_step report generate --type daily --format text || true
