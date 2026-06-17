@@ -127,6 +127,16 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] Autonomous paper workflow docs, scripts, and tests contain no live-trading-readiness, profit, performance, or autonomous-live-trading claims.
 - [ ] `scripts/dev_check.sh`, `scripts/ci_check.sh`, and `.github/workflows/ci.yml` include the autonomous paper workflow checker and tests after the bounded autonomy governance checks.
 
+### Paper strategy evaluation
+
+- [ ] `docs/paper-strategy-evaluation.md` exists, links to paper/autonomy/safety docs, and states paper-only, no-provider/no-broker/no-network, not financial advice, no live readiness, and no profit guarantee.
+- [ ] `scripts/demo_paper_strategy_evaluation.sh` exists, is executable, uses `atlas backtest compare`, requires no credentials, and exits with code `0`.
+- [ ] `scripts/check_paper_strategy_evaluation.py` exists, passes, and supports `--json` output with `"passed": true`.
+- [ ] `python3.11 -m pytest tests/test_paper_strategy_evaluation.py -q` passes.
+- [ ] Running `bash scripts/demo_paper_strategy_evaluation.sh` prints a "Paper strategy evaluation demo PASS" summary and produces only local, untracked evidence.
+- [ ] Paper strategy evaluation docs, scripts, and tests contain no live-trading-readiness, profit, performance, or autonomous-live-trading claims.
+- [ ] `scripts/dev_check.sh`, `scripts/ci_check.sh`, `scripts/release_check.sh --quick`, and `.github/workflows/ci.yml` include the paper strategy evaluation checker and tests.
+
 ## Known limitations
 
 - [ ] Final public release, not a release candidate

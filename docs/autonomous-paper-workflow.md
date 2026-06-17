@@ -19,6 +19,8 @@ commands.
 - Atlas can run one or more paper-only cycles (`atlas run --mode paper --dry-run`,
   `atlas routine run --mode paper`, `atlas backtest run`, `atlas report generate`)
   without manual intervention.
+- Atlas can run the paper-only strategy evaluation gate (`atlas backtest compare`)
+  on bundled sample data for further paper follow-up decisions.
 - Atlas can produce local evidence.
 - Live paths remain disabled or fail safely.
 
@@ -40,6 +42,7 @@ atlas run --mode paper --dry-run --symbol ATLAS-DEMO --max-cycles 1
 atlas run --mode paper --offline --symbol ATLAS-DEMO --max-cycles 1
 atlas routine run pre_market --mode paper --symbol ATLAS-DEMO
 atlas backtest run --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL
+atlas backtest compare --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 atlas report generate --type daily --format text
 ```
 
@@ -82,5 +85,6 @@ python3.11 -m pytest tests/test_autonomous_paper_workflow_demo.py -q
 - [Autonomy Roadmap](autonomy-roadmap.md)
 - [Paper-Trading Guide](paper-trading-guide.md)
 - [Paper Mode Provider Isolation](paper-provider-isolation.md)
+- [Paper Strategy Evaluation](paper-strategy-evaluation.md)
 - [scripts/demo_autonomous_paper_workflow.sh](../scripts/demo_autonomous_paper_workflow.sh)
 - [scripts/check_autonomous_paper_workflow_demo.py](../scripts/check_autonomous_paper_workflow_demo.py)

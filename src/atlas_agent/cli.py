@@ -24,10 +24,13 @@ from atlas_agent.backtest import (
     describe_strategy,
     list_strategies,
     load_market_data,
+    build_paper_strategy_evaluation,
+    parse_strategy_list,
     render_empty_json_report,
     render_empty_markdown_report,
     render_json_report,
     render_markdown_report,
+    write_strategy_evaluation_reports,
     validate_strategy,
     write_report_from_result,
 )
@@ -416,6 +419,29 @@ Safety First:
     backtest_run.add_argument("--end-date", default=None, help="ISO or YYYY-MM-DD date to end the backtest (inclusive).")
     backtest_run.add_argument("--report", choices=("json", "markdown"), default=None, help="Generate a report summary in the specified format.")
     backtest_run.add_argument("--json", action="store_true")
+    backtest_compare = backtest_sub.add_parser(
+        "compare",
+        help="Compare backtest strategies through a deterministic paper-only evaluation gate.",
+        description=(
+            "Compare strategies against local OHLCV data and write paper-only "
+            "strategy-evaluation.json and strategy-evaluation.md artifacts. "
+            "No provider, broker, network, or live trading path is used."
+        ),
+    )
+    backtest_compare.add_argument("--symbol", required=True)
+    backtest_compare.add_argument("--data", required=True)
+    backtest_compare.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_compare.add_argument("--output-dir", required=True)
+    backtest_compare.add_argument("--initial-equity", type=float, default=10000.0)
+    backtest_compare.add_argument("--slippage-bps", type=float, default=0.0)
+    backtest_compare.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_compare.add_argument("--start-date", default=None)
+    backtest_compare.add_argument("--end-date", default=None)
+    backtest_compare.add_argument("--json", action="store_true")
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
     backtest_runs = backtest_sub.add_parser("runs")
@@ -4409,6 +4435,46 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "broker" and args.brokers_command == "opt-out":
         return _cmd_broker_opt_out(args, config)
     if args.command == "backtest":
+        if args.backtest_command == "compare":
+            try:
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                report = build_paper_strategy_evaluation(
+                    data_path=getattr(args, "data"),
+                    symbol=getattr(args, "symbol"),
+                    strategies=strategy_ids,
+                    initial_equity=getattr(args, "initial_equity", 10000.0),
+                    slippage_bps=getattr(args, "slippage_bps", 0.0),
+                    commission_bps=getattr(args, "commission_bps", 0.0),
+                    start_date=getattr(args, "start_date", None),
+                    end_date=getattr(args, "end_date", None),
+                )
+                json_path, markdown_path = write_strategy_evaluation_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            decisions: dict[str, int] = {}
+            for item in report.get("strategies", []):
+                decision = item.get("paper_gate", {}).get("decision", "unknown")
+                decisions[decision] = decisions.get(decision, 0) + 1
+            decision_summary = ", ".join(
+                f"{name}={count}" for name, count in sorted(decisions.items())
+            )
+            print(f"Paper strategy evaluation complete: {report['symbol']}")
+            print(f"Strategies evaluated: {len(report['strategies'])}")
+            print(f"Paper gate decisions: {decision_summary}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {markdown_path}")
+            print("No live trading, broker calls, provider calls, or network calls.")
+            return 0
+
         if args.backtest_command == "list-strategies":
             strategies = list_strategies()
             if getattr(args, "json", False):

@@ -66,6 +66,7 @@ it is not released or version-bumped. Candidate selection for `v0.6.13` is
 governed by `v0.6.13-candidate-selection.md`.
 
 Paper-mode provider isolation is documented in [docs/paper-provider-isolation.md](../paper-provider-isolation.md).
+Paper strategy evaluation is documented in [docs/paper-strategy-evaluation.md](../paper-strategy-evaluation.md).
 
 - [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md) — deterministic cutover evidence and canonical public record
 - [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — non-committal next-line planning notes
@@ -119,6 +120,9 @@ brokers, enable trading, or require credentials.
   and aligned long-term autonomy roadmap (`docs/autonomy-roadmap.md`).
 - L1 autonomous paper workflow demo documentation (`docs/autonomous-paper-workflow.md`)
   and evidence gate script (`scripts/demo_autonomous_paper_workflow.sh`) — paper-only, offline, no credentials.
+- Paper strategy evaluation documentation (`docs/paper-strategy-evaluation.md`),
+  demo script (`scripts/demo_paper_strategy_evaluation.sh`), and checker
+  (`scripts/check_paper_strategy_evaluation.py`) — paper-only, offline, no credentials.
 
 ## What Is Not Ready
 

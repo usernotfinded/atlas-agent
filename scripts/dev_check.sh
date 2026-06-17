@@ -113,6 +113,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "4g. paper strategy evaluation check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_paper_strategy_evaluation.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "4h. paper strategy evaluation tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "5. trust center check"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_trust_center.py

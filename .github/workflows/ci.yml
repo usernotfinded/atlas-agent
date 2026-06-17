@@ -56,6 +56,10 @@ jobs:
         run: python3.11 scripts/check_paper_provider_isolation.py
       - name: Paper provider isolation tests
         run: python3.11 -m pytest tests/test_paper_provider_isolation.py -q
+      - name: Paper strategy evaluation check
+        run: python3.11 scripts/check_paper_strategy_evaluation.py
+      - name: Paper strategy evaluation tests
+        run: python3.11 -m pytest tests/test_paper_strategy_evaluation.py -q
       - name: Feedback intake check
         run: python3.11 scripts/check_feedback_intake.py
       - name: Feedback taxonomy check
@@ -315,6 +319,7 @@ jobs:
             tests/test_docs_archive_hygiene.py \
             tests/test_release_assurance_snapshot_integration.py \
             tests/test_bounded_autonomy_governance.py \
+            tests/test_paper_strategy_evaluation.py \
             -q
       - name: Release check quick
         run: ./scripts/release_check.sh --quick

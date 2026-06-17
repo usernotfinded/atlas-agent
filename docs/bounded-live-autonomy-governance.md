@@ -57,6 +57,8 @@ As of the current release line (`v0.6.12` public, `v0.6.13` planning only):
 ### What each level is not
 
 - **L0–L1 are not live trading.** They touch no real money, no broker, and no provider by default. See [Paper Mode Provider Isolation](paper-provider-isolation.md) for the provider-free paper path.
+- **Paper strategy evaluation is L1 research only.** It ranks sample-data
+  backtests for paper follow-up; see [Paper Strategy Evaluation](paper-strategy-evaluation.md).
 - **L2 is not autonomous order submission.** Proposals are advisory until a human approves them.
 - **L3 is not unsupervised trading.** The operator remains responsible for configuration, broker selection, risk limits, and monitoring.
 - **L4 is not a current goal.** It is a hypothetical direction that requires explicit external gates before any consideration.
@@ -124,6 +126,7 @@ and disabled by default. It must preserve:
 
 - [Autonomy Roadmap](autonomy-roadmap.md) — staged autonomy levels and current/future state.
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md) — concrete L1 autonomy proof (paper-only, local-only, no broker/provider contact).
+- [Paper Strategy Evaluation](paper-strategy-evaluation.md) — deterministic paper-only strategy comparison and follow-up gate.
 - [Live-Submit Safety Contract](live-submit-safety-contract.md) — detailed gating for any live submit.
 - [Risk Model](risk-model.md) — deterministic risk gate design.
 - [Kill Switch Runbook](kill-switch.md) — kill-switch controls and escalation.

@@ -46,12 +46,15 @@ If any of these are missing, live mode fails safely with an error and exit code 
 ## What this means for autonomy
 
 - **L1 autonomous paper workflows** can run offline, with no provider, no broker contact, and no credentials.
+- **Paper strategy evaluation** can compare registered backtest strategies offline with
+  `atlas backtest compare`; see [Paper Strategy Evaluation](paper-strategy-evaluation.md).
 - **L3/L4 live autonomy** remains out of scope and disabled by default.
 - This is not a claim of autonomous-live-trading-readiness, production readiness, or trading without risk.
 
 ## Related documents
 
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md)
+- [Paper Strategy Evaluation](paper-strategy-evaluation.md)
 - [Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md)
 - [Live Submit Safety Contract](live-submit-safety-contract.md)
 - [Paper Trading Guide](paper-trading-guide.md)

@@ -18,6 +18,13 @@ from atlas_agent.backtest.report import (
     render_empty_markdown_report,
     write_report_from_result,
 )
+from atlas_agent.backtest.evaluation import (
+    ALLOWED_PAPER_DECISIONS,
+    build_paper_strategy_evaluation,
+    parse_strategy_list,
+    render_strategy_evaluation_markdown,
+    write_strategy_evaluation_reports,
+)
 from atlas_agent.backtest.strategy import (
     BacktestStrategy,
     StrategyContext,
@@ -58,4 +65,9 @@ __all__ = [
     "render_empty_json_report",
     "render_empty_markdown_report",
     "write_report_from_result",
+    "ALLOWED_PAPER_DECISIONS",
+    "build_paper_strategy_evaluation",
+    "parse_strategy_list",
+    "render_strategy_evaluation_markdown",
+    "write_strategy_evaluation_reports",
 ]

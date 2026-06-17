@@ -55,6 +55,9 @@ The following checks pass on a clean local clone without credentials or network 
 - `bash scripts/demo_autonomous_paper_workflow.sh` — autonomous paper workflow runs offline without credentials, network, or broker contact
 - `python3.11 scripts/check_paper_provider_isolation.py` — paper-mode provider isolation gate is safe and present
 - `python3.11 -m pytest tests/test_paper_provider_isolation.py -q` — paper provider isolation tests pass
+- `python3.11 scripts/check_paper_strategy_evaluation.py` — paper strategy evaluation gate is safe and present
+- `python3.11 -m pytest tests/test_paper_strategy_evaluation.py -q` — paper strategy evaluation tests pass
+- `bash scripts/demo_paper_strategy_evaluation.sh` — paper strategy evaluation runs offline without credentials, network, or broker contact
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI
@@ -117,6 +120,7 @@ No broker, no network, no credentials, no live trading.
 - `docs/autonomy-roadmap.md` present
 - `docs/bounded-live-autonomy-governance.md` present — bounded autonomy governance and long-term product direction
 - `docs/paper-provider-isolation.md` present — paper-mode provider isolation and offline path
+- `docs/paper-strategy-evaluation.md` present — paper-only strategy evaluation matrix and follow-up gate
 - `docs/product-demo-evidence.md` present
 - `docs/releases/v0.6.12-post-release-evidence.md` present — canonical v0.6.12 public evidence record
 - `docs/releases/v0.6.12-post-release-evidence.json` present — machine-readable v0.6.12 evidence

@@ -151,6 +151,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "5c. paper strategy evaluation check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_paper_strategy_evaluation.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "5d. paper strategy evaluation tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "6. git diff --check"
 echo "========================================"
 SECONDS=0
