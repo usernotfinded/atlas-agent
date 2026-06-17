@@ -20,8 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Release preparation and owner approval gate (CAND-018): bumped package/source version to `0.6.12`, created `docs/releases/v0.6.12.md`, `docs/trust/v0.6.12-status.md`, and `docs/releases/v0.6.12-owner-approval.md`.
 - Public release cutover (CAND-019): created annotated tag `v0.6.12`, pushed it to origin, and created GitHub Release `v0.6.12` from `docs/releases/v0.6.12.md`.
+- Post-release evidence and next-line planning seed (CAND-020): added `docs/releases/v0.6.12-post-release-evidence.md`, `docs/releases/v0.6.12-post-release-evidence.json`, and `docs/releases/v0.6.13-plan.md`.
 - `scripts/check_v0612_release_prep.py` and `tests/test_v0612_release_prep.py` for v0.6.12 release-prep and post-release state validation.
 - `scripts/check_v0612_release_cutover.py` and `tests/test_v0612_release_cutover.py` for v0.6.12 public-release cutover validation.
+- `scripts/check_v0612_post_release_evidence.py` and `tests/test_v0612_post_release_evidence.py` for deterministic v0.6.12 post-release evidence validation.
 - `tests/test_v0612_release_candidate_readiness.py` for the updated v0.6.12 release-candidate readiness checker.
 
 ### Changed

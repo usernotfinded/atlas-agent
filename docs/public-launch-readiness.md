@@ -121,6 +121,8 @@ No broker, no network, no credentials, no live trading.
 - Artifact retention visibility is provided by the manual `release-assurance-artifact-retention-audit` workflow; it is read-only and does not download, delete, or clean up artifacts.
 - Version on `main` is `0.6.12`; latest stable public GitHub release is `v0.6.12`. `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
 - `v0.6.12` is the current public release (tagged and published on GitHub); `v0.6.13` is the next planning line.
+- [v0.6.12 Post-Release Evidence](./releases/v0.6.12-post-release-evidence.md) records the deterministic cutover evidence.
+- [v0.6.13 Planning Seed](./releases/v0.6.13-plan.md) seeds the next planning line and does not claim a release.
 
 ## Known limitations
 

@@ -58,6 +58,15 @@ provider execution, broker execution, live trading, or order approval.
 - [Provider Audit Pack](../security/provider-audit-pack.md)
 - [Provider Audit Pack CI Workflow](../../.github/workflows/provider-audit-pack.yml)
 
+## v0.6.12 Post-Release Evidence
+
+The `v0.6.12` public release cutover evidence is captured in a deterministic,
+reviewer-verifiable pack. The next planning line is seeded in `v0.6.13-plan.md`;
+it is not released or version-bumped.
+
+- [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md) — deterministic cutover evidence
+- [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — non-committal next-line planning notes
+
 ## Release Assurance
 
 Release assurance is available locally and through a manual CI workflow. It

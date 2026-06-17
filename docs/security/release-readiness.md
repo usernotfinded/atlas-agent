@@ -192,6 +192,14 @@ See [v0.6.0 Readiness Audit](../releases/v0.6.0-readiness.md) for the full
 capability summary, safety boundaries, test coverage, docs coverage, deferred
 items, non-goals, release blockers, and release recommendation.
 
+## v0.6.12 post-release evidence
+
+After the v0.6.12 public cutover, deterministic post-release evidence and the
+v0.6.13 planning seed were added:
+
+- [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md)
+- [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md)
+
 ## v0.6.12 candidate readiness
 
 For the v0.6.12 planning-line candidate readiness consolidation, see

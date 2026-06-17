@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "release": "v0.6.12",
+  "source_version": "0.6.12",
+  "main_commit": "c6f4ddc572902bbc04d8f8b4b262b626999a7abd",
+  "tag": "v0.6.12",
+  "github_release": "v0.6.12",
+  "push_ci_run_id": "27696853914",
+  "current_public_release": "v0.6.12",
+  "next_planned_release": "v0.6.13",
+  "pypi_published": false,
+  "release_notes_path": "docs/releases/v0.6.12.md",
+  "trust_status_path": "docs/trust/v0.6.12-status.md",
+  "live_trading_enabled": false,
+  "provider_execution_enabled": false,
+  "broker_execution_enabled": false,
+  "protected_runtime_boundaries_changed": false,
+  "forbidden_claims_check": true,
+  "release_check_quick": true,
+  "created_after_cutover": true
+}

@@ -230,6 +230,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "9g. v0.6.12 post-release evidence check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_v0612_post_release_evidence.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "9h. v0.6.12 post-release evidence tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_v0612_post_release_evidence.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "10. forbidden claims scan"
 echo "========================================"
 SECONDS=0
