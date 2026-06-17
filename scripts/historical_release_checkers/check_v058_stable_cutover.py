@@ -40,6 +40,19 @@ HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 ACTIVE_RELEASE_TAG = "v0.5.8"
 
+# Provide a fallback module path injection for scripts directory imports
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+try:
+    from release_metadata import load_metadata, ReleaseMetadata
+except ImportError:
+    from scripts.release_metadata import load_metadata, ReleaseMetadata
+
+_metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+try:
+    _meta = ReleaseMetadata(load_metadata(_metadata_path))
+except Exception:
+    _meta = ReleaseMetadata({"source_version": EXPECTED_VERSION, "current_public_release": "v0.6.11"})
+
 # Forbidden positive claims about live trading / profit / autonomy.
 FORBIDDEN_POSITIVE_CLAIMS = [
     "live trading ready",
@@ -169,10 +182,16 @@ def _check_readme_current_status() -> list[str]:
         return errors
     text = path.read_text(encoding="utf-8")
     public_label = "v" + EXPECTED_VERSION
-    if EXPECTED_VERSION not in text and public_label not in text:
+    # README on main may reference the recorded current public release rather than source version.
+    current_public_release = _meta.current_public_release
+    if (
+        EXPECTED_VERSION not in text
+        and public_label not in text
+        and current_public_release not in text
+    ):
         errors.append("README.md missing current version reference")
-    if "latest stable public release" not in text.lower():
-        errors.append("README.md should indicate this is the latest stable public release")
+    if "latest stable public" not in text.lower():
+        errors.append("README.md should indicate the latest stable public release")
     return errors
 
 

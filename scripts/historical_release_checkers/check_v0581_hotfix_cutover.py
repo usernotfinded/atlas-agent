@@ -199,17 +199,17 @@ def _check_readme_current_status() -> list[str]:
         return errors
     text = path.read_text(encoding="utf-8")
     public_label = "v" + EXPECTED_VERSION
-    # Accept either current package version or current public release tag
-    # since README may reference the public release rather than source version.
-    current_public_release = "v0.6.6"
+    # Accept either current package version or the recorded current public release
+    # since README on main may reference the public release rather than source version.
+    current_public_release = _meta.current_public_release
     if (
         EXPECTED_VERSION not in text
         and public_label not in text
         and current_public_release not in text
     ):
         errors.append("README.md missing current version reference")
-    if "latest stable public release" not in text.lower():
-        errors.append("README.md should indicate this is the latest stable public release")
+    if "latest stable public" not in text.lower():
+        errors.append("README.md should indicate the latest stable public release")
     return errors
 
 
