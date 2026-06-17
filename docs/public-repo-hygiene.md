@@ -46,12 +46,12 @@ Expected: no output.
 
 ## Current Release Status
 
-Atlas is currently at public release `v0.6.11` (tagged and published), with
-`v0.6.10` as the historical previous public release:
-- **Package version on `main`:** `0.6.11`
-- **Latest public tag:** `v0.6.11`
-- **Previous public release:** `v0.6.10`
-- **Next planned release:** `v0.6.12`
+Atlas is currently at public release `v0.6.12` (tagged and published), with
+`v0.6.11` as the historical previous public release:
+- **Package version on `main`:** `0.6.12`
+- **Latest public tag:** `v0.6.12`
+- **Previous public release:** `v0.6.11`
+- **Next planned release:** `v0.6.13`
 - Sandbox/paper/preflight positioning
 - Live trading disabled by default
 - Provider execution remains locked

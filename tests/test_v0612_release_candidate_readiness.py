@@ -54,7 +54,7 @@ class TestScriptPassesOnCurrentRepo:
         assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
         assert data["valid"] is True
-        assert data["expected_current_public_release"] == "v0.6.11"
+        assert data["expected_current_public_release"] == "v0.6.12"
         assert data["expected_source_version"] == "0.6.12"
         assert data["next_planned_release"] == "v0.6.13"
 
@@ -98,36 +98,6 @@ class TestReleaseMetadata:
             json.dumps({
                 "schema_version": 1,
                 "source_version": "0.6.12",
-                "current_public_release": "v0.6.12",
-                "next_planned_release": "v0.6.13",
-                "pypi_published": False,
-                "releases": [
-                    {
-                        "tag": "v0.6.12",
-                        "version": "0.6.12",
-                        "status": "prepared",
-                        "github_release": False,
-                        "pypi_published": False,
-                    }
-                ],
-            })
-        )
-        original = mod.RELEASE_METADATA
-        try:
-            mod.RELEASE_METADATA = fake_metadata
-            code, result = mod.run_check()
-            assert code == 1
-            assert any("current_public_release mismatch" in e for e in result["errors"])
-        finally:
-            mod.RELEASE_METADATA = original
-
-    def test_v0612_not_prepared_fails(self, tmp_path: Path) -> None:
-        mod = _load_script_module()
-        fake_metadata = tmp_path / "release-metadata.json"
-        fake_metadata.write_text(
-            json.dumps({
-                "schema_version": 1,
-                "source_version": "0.6.12",
                 "current_public_release": "v0.6.11",
                 "next_planned_release": "v0.6.13",
                 "pypi_published": False,
@@ -147,24 +117,54 @@ class TestReleaseMetadata:
             mod.RELEASE_METADATA = fake_metadata
             code, result = mod.run_check()
             assert code == 1
-            assert any("status must be 'prepared'" in e for e in result["errors"])
+            assert any("current_public_release mismatch" in e for e in result["errors"])
+        finally:
+            mod.RELEASE_METADATA = original
+
+    def test_v0612_not_current_public_fails(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        fake_metadata = tmp_path / "release-metadata.json"
+        fake_metadata.write_text(
+            json.dumps({
+                "schema_version": 1,
+                "source_version": "0.6.12",
+                "current_public_release": "v0.6.12",
+                "next_planned_release": "v0.6.13",
+                "pypi_published": False,
+                "releases": [
+                    {
+                        "tag": "v0.6.12",
+                        "version": "0.6.12",
+                        "status": "prepared",
+                        "github_release": False,
+                        "pypi_published": False,
+                    }
+                ],
+            })
+        )
+        original = mod.RELEASE_METADATA
+        try:
+            mod.RELEASE_METADATA = fake_metadata
+            code, result = mod.run_check()
+            assert code == 1
+            assert any("status must be 'current_public'" in e for e in result["errors"])
         finally:
             mod.RELEASE_METADATA = original
 
 
 class TestPrematureClaims:
-    def test_premature_public_claim_in_readme_fails(self, tmp_path: Path) -> None:
+    def test_pypi_publish_claim_in_readme_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         fake_readme = tmp_path / "README.md"
         fake_readme.write_text(
-            "# README\n\nv0.6.12 is the current public release.\n"
+            "# README\n\nv0.6.12 was published to PyPI.\n"
         )
         original = mod.README
         try:
             mod.README = fake_readme
             code, result = mod.run_check()
             assert code == 1
-            assert any("current public release" in e.lower() for e in result["errors"])
+            assert any("published to pypi" in e.lower() for e in result["errors"])
         finally:
             mod.README = original
 

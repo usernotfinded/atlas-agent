@@ -194,16 +194,34 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
-echo "9c. v0.6.12 release prep check"
+echo "9c. v0.6.12 release cutover check"
 echo "========================================"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v0612_release_prep.py --release-prep
+"$PYTHON_BIN" scripts/check_v0612_release_cutover.py
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
-echo "9d. v0.6.12 release prep tests"
+echo "9d. v0.6.12 release cutover tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_v0612_release_cutover.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "9e. v0.6.12 release prep check (post-release)"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_v0612_release_prep.py --post-release
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "9f. v0.6.12 release prep tests"
 echo "========================================"
 SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_v0612_release_prep.py -q

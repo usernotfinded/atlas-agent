@@ -153,18 +153,18 @@ class TestPlanningModeValid:
 
 
 class TestReleasePrepMode:
-    def test_release_prep_mode_passes_on_real_repo(self) -> None:
-        """Release-prep mode passes on real repo after the version bump."""
+    def test_release_prep_mode_fails_on_real_repo_after_cutover(self) -> None:
+        """Release-prep mode fails on real repo after public cutover."""
         result = _run_script("--release-prep")
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "PASS" in result.stdout
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "FAIL" in result.stdout
         assert "release-prep" in result.stdout
 
-    def test_release_prep_json_passes_on_real_repo(self) -> None:
+    def test_release_prep_json_fails_on_real_repo_after_cutover(self) -> None:
         result = _run_script("--release-prep", "--json")
-        assert result.returncode == 0, result.stderr
+        assert result.returncode == 1, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is True
+        assert data["valid"] is False
         assert data["mode"] == "release-prep"
 
     def test_release_prep_version_missing_fails(self, tmp_path: Path) -> None:
@@ -352,18 +352,18 @@ class TestReleasePrepMode:
 
 
 class TestPostReleaseMode:
-    def test_post_release_mode_fails_on_real_repo(self) -> None:
-        """Post-release mode fails on real repo because v0.6.12 is not public yet."""
+    def test_post_release_mode_passes_on_real_repo(self) -> None:
+        """Post-release mode passes on real repo after public cutover."""
         result = _run_script("--post-release")
-        assert result.returncode == 1, result.stdout + result.stderr
-        assert "FAIL" in result.stdout
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "PASS" in result.stdout
         assert "post-release" in result.stdout
 
-    def test_post_release_json_fails_on_real_repo(self) -> None:
+    def test_post_release_json_passes_on_real_repo(self) -> None:
         result = _run_script("--post-release", "--json")
-        assert result.returncode == 1, result.stderr
+        assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
-        assert data["valid"] is False
+        assert data["valid"] is True
         assert data["mode"] == "post-release"
 
     def test_post_release_missing_public_tag_record_fails(self, tmp_path: Path) -> None:

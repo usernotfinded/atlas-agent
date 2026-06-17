@@ -85,8 +85,8 @@ class TestReadmeLinks:
             or "stable release checklist" in lower
         )
 
-    def test_readme_current_status_is_v0610(self, readme_text: str) -> None:
-        assert "v0.6.10" in readme_text
+    def test_readme_current_status_is_v0612(self, readme_text: str) -> None:
+        assert "v0.6.12" in readme_text
 
 
 class TestDecisionDocSafety:

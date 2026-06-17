@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.11 public release is the current stable version. The v0.6.10, v0.6.9, v0.6.8, v0.6.7, v0.6.6, v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
+The v0.6.12 public release is the current stable version. The v0.6.11, v0.6.10, v0.6.9, v0.6.8, v0.6.7, v0.6.6, v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.10, the public GitHub release is `v0.6.10`. v0.6.9 is historical.
+For v0.6.12, the public GitHub release is `v0.6.12`. v0.6.11 is historical.
 
 PyPI was not published. A separate approval process is required for any future PyPI publish.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.10 --output artifacts/release_assurance/v0.6.10-local-check
+python scripts/release_assurance.py --version v0.6.12 --output artifacts/release_assurance/v0.6.12-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
@@ -45,8 +45,8 @@ A fully local, offline demo generates a baseline release-assurance bundle, an op
 
 ```bash
 bash scripts/demo_release_assurance_snapshot_bundle.sh \
-  --version v0.6.11 \
-  --output-dir artifacts/release_assurance/v0.6.11-bundle-demo \
+  --version v0.6.12 \
+  --output-dir artifacts/release_assurance/v0.6.12-bundle-demo \
   --deterministic
 ```
 
@@ -58,8 +58,8 @@ You can include a deterministic reviewer trust snapshot in the assurance output:
 
 ```bash
 python scripts/release_assurance.py \
-  --version v0.6.11 \
-  --output artifacts/release_assurance/v0.6.11-local \
+  --version v0.6.12 \
+  --output artifacts/release_assurance/v0.6.12-local \
   --include-reviewer-trust-snapshot
 ```
 
@@ -144,8 +144,10 @@ to keep local setup, safe-check, and release-sensitive command guidance current.
 Current release-state gates use:
 
 ```bash
-python3.11 scripts/check_v0610_release_prep.py --post-release
-python3.11 scripts/check_v0611_planning.py
+python3.11 scripts/check_v0612_release_cutover.py
+python3.11 scripts/check_v0612_release_prep.py --post-release
+python3.11 -m pytest tests/test_v0612_release_cutover.py -q
+python3.11 -m pytest tests/test_v0612_release_prep.py -q
 ```
 
 The version-specific commands below are retained in

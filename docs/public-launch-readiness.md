@@ -4,9 +4,9 @@
 
 ## Public launch status
 
-Atlas Agent is a **v0.6.11 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The latest tagged public GitHub release is `v0.6.11`; `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
+Atlas Agent is a **v0.6.12 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The current tagged public GitHub release is `v0.6.12`; `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
 
-The source package version on `main` is `0.6.12` (release-prep for the next patch line). `v0.6.12` is not yet tagged or released.
+The source package version on `main` is `0.6.12`. `v0.6.12` is tagged and released.
 
 This document explains what is verified, what remains disabled, and what reviewers should check.
 
@@ -46,8 +46,8 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 -m pytest tests/test_public_launch_messaging.py` — launch messaging tests pass
 - `python3.11 -m pytest tests/test_product_demo_pack.py` — product demo pack tests pass
 - `python3.11 -m pytest tests/test_public_repo_hygiene.py` — repository hygiene tests pass
-- `python3.11 scripts/check_v0611_release_prep.py --post-release` — v0.6.11 post-release state is valid
-- `python3.11 scripts/check_v0612_release_prep.py --release-prep` — v0.6.12 release-prep state is valid
+- `python3.11 scripts/check_v0612_release_cutover.py` — v0.6.12 public-release cutover state is valid
+- `python3.11 scripts/check_v0612_release_prep.py --post-release` — v0.6.12 post-release state is valid
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI
@@ -109,9 +109,9 @@ No broker, no network, no credentials, no live trading.
 - `docs/marketplace-listing.md` present
 - `docs/autonomy-roadmap.md` present
 - `docs/product-demo-evidence.md` present
-- `docs/releases/v0.6.12-candidate-readiness.md` present — v0.6.12 candidate readiness consolidation doc (planning line)
-- `docs/releases/v0.6.12.md` present — v0.6.12 release notes (prepared, not yet released)
-- `docs/trust/v0.6.12-status.md` present — v0.6.12 trust status (prepared, not yet released)
+- `docs/releases/v0.6.12-candidate-readiness.md` present — v0.6.12 candidate readiness consolidation doc
+- `docs/releases/v0.6.12.md` present — v0.6.12 release notes (current public)
+- `docs/trust/v0.6.12-status.md` present — v0.6.12 trust status (current public)
 
 ## Release artifacts status
 
@@ -119,8 +119,8 @@ No broker, no network, no credentials, no live trading.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
 - Artifact retention visibility is provided by the manual `release-assurance-artifact-retention-audit` workflow; it is read-only and does not download, delete, or clean up artifacts.
-- Version on `main` is `0.6.12`; latest stable public GitHub release is `v0.6.11`. `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
-- `v0.6.12` is prepared but not yet tagged or released; `v0.6.13` is the next planning line.
+- Version on `main` is `0.6.12`; latest stable public GitHub release is `v0.6.12`. `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
+- `v0.6.12` is the current public release (tagged and published on GitHub); `v0.6.13` is the next planning line.
 
 ## Known limitations
 

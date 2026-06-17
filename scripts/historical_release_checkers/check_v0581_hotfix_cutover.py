@@ -208,7 +208,8 @@ def _check_readme_current_status() -> list[str]:
         and current_public_release not in text
     ):
         errors.append("README.md missing current version reference")
-    if "latest stable public" not in text.lower():
+    lower = text.lower()
+    if "latest stable public" not in lower and "current public" not in lower:
         errors.append("README.md should indicate the latest stable public release")
     return errors
 

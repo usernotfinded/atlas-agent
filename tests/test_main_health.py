@@ -96,7 +96,7 @@ def _runner(
         if key == ("tag", "--list", "v0.6.11"):
             return CHECKER.CommandResult(0, "v0.6.11\n", "")
         if key == ("tag", "--list", "v0.6.12"):
-            return CHECKER.CommandResult(0, tag, "")
+            return CHECKER.CommandResult(0, "v0.6.12\n" if not tag else tag, "")
         if key == ("tag", "--list", "v0.6.13"):
             return CHECKER.CommandResult(0, future_tag, "")
         if key == (
@@ -144,10 +144,10 @@ def test_reports_source_version_check(tmp_path: Path) -> None:
     assert report.checks["expected_source_version"] is True
 
 
-def test_reports_public_release_v0611(tmp_path: Path) -> None:
+def test_reports_public_release_v0612(tmp_path: Path) -> None:
     report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
 
-    assert report.public_release == "v0.6.11"
+    assert report.public_release == "v0.6.12"
     assert report.checks["public_release_expected"] is True
 
 
@@ -172,13 +172,13 @@ def test_release_metadata_drift_detected_when_source_version_mismatches(
 
 
 def test_public_release_tag_missing_detected(tmp_path: Path) -> None:
-    def no_v0611_tag(repo_root: Path, args: list[str]):
+    def no_v0612_tag(repo_root: Path, args: list[str]):
         key = tuple(args)
-        if key == ("tag", "--list", "v0.6.11"):
+        if key == ("tag", "--list", "v0.6.12"):
             return CHECKER.CommandResult(0, "", "")
         return _runner()(repo_root, args)
 
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=no_v0611_tag)
+    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=no_v0612_tag)
 
     assert any(f.code == "public_release_tag_missing" for f in report.findings)
 
@@ -345,7 +345,7 @@ def test_docs_mention_main_source_version_can_differ_from_public_release() -> No
     text = DOC.read_text(encoding="utf-8").lower()
 
     assert "main source version can differ from public release" in text
-    assert "public github release is `v0.6.11`" in text
+    assert "public github release is `v0.6.12`" in text
 
 
 def test_docs_discourage_destructive_git_cleanup() -> None:

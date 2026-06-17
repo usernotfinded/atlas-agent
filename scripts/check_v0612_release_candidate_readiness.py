@@ -43,21 +43,14 @@ DOCS_DIR = REPO_ROOT / "docs"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 
-EXPECTED_CURRENT_PUBLIC = "v0.6.11"
+EXPECTED_CURRENT_PUBLIC = "v0.6.12"
 EXPECTED_SOURCE_VERSION = "0.6.12"
 NEXT_PLANNED = "v0.6.13"
 
 CAND_IDS = [f"CAND-{i:03d}" for i in range(1, 17)]
 
 FORBIDDEN_PUBLIC_CLAIMS = [
-    "v0.6.12 is the current public release",
-    "current public release is v0.6.12",
-    "v0.6.12 is released",
-    "latest stable v0.6.12",
     "published to pypi",
-    "tag v0.6.12 created",
-    "release v0.6.12 created",
-    "github release v0.6.12 created",
 ]
 
 NEGATION_HINTS = [
@@ -126,18 +119,13 @@ REQUIRED_SAFETY_PHRASES = [
         ],
     ),
     (
-        "no tag / no release",
+        "tag and release created",
         [
-            "no tag",
-            "tag not created",
-            "tag is not created",
-            "no release",
-            "release not created",
-            "release is not created",
-            "not tagged",
-            "not released",
-            "no tag or github release",
-            "not yet tagged",
+            "tag: created",
+            "github release: created",
+            "tag and github release",
+            "tag created",
+            "github release created",
         ],
     ),
 ]
@@ -245,12 +233,16 @@ def _check_release_metadata() -> list[str]:
     if v0612 is None:
         errors.append("Release metadata missing v0.6.12 record")
     else:
-        if v0612.get("status") != "prepared":
-            errors.append("v0.6.12 release metadata status must be 'prepared'")
-        if v0612.get("github_release") is not False:
-            errors.append("v0.6.12 github_release must be false")
+        if v0612.get("status") != "current_public":
+            errors.append("v0.6.12 release metadata status must be 'current_public'")
+        if v0612.get("github_release") is not True:
+            errors.append("v0.6.12 github_release must be true")
         if v0612.get("pypi_published") is not False:
             errors.append("v0.6.12 pypi_published must be false")
+
+    v0611 = next((r for r in releases if r.get("tag") == "v0.6.11"), None)
+    if v0611 is not None and v0611.get("status") != "historical":
+        errors.append("v0.6.11 release metadata status must be 'historical'")
     return errors
 
 
@@ -367,7 +359,7 @@ def _check_forbidden_claims_in_readiness(readiness_text: str) -> list[str]:
 def _check_no_stale_wording(readiness_text: str) -> list[str]:
     errors: list[str] = []
     lower = readiness_text.lower()
-    stale = "current public v0.6.12"
+    stale = "current public v0.6.11"
     if stale in lower:
         errors.append(f"Stale wording found in readiness doc: {stale!r}")
     return errors

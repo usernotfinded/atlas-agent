@@ -52,14 +52,16 @@ jobs:
         run: python3.11 scripts/check_reviewer_outreach.py
       - name: Product capability inventory check
         run: python3.11 scripts/check_product_capability_inventory.py
-      - name: v0.6.11 post-release check
-        run: python3.11 scripts/check_v0611_release_prep.py --post-release
+      - name: v0.6.12 release cutover check
+        run: python3.11 scripts/check_v0612_release_cutover.py
+      - name: v0.6.12 release cutover tests
+        run: python3.11 -m pytest tests/test_v0612_release_cutover.py -q
       - name: v0.6.12 release candidate readiness check
         run: python3.11 scripts/check_v0612_release_candidate_readiness.py
       - name: v0.6.12 release candidate readiness tests
         run: python3.11 -m pytest tests/test_v0612_release_candidate_readiness.py -q
-      - name: v0.6.12 release prep check
-        run: python3.11 scripts/check_v0612_release_prep.py --release-prep
+      - name: v0.6.12 release prep check (post-release)
+        run: python3.11 scripts/check_v0612_release_prep.py --post-release
       - name: v0.6.12 release prep tests
         run: python3.11 -m pytest tests/test_v0612_release_prep.py -q
       - name: Public docs consistency
@@ -286,6 +288,8 @@ jobs:
             tests/test_stable_release_decision.py \
             tests/test_check_v0611_release_prep.py \
             tests/test_check_v0611_planning.py \
+            tests/test_v0612_release_prep.py \
+            tests/test_v0612_release_cutover.py \
             tests/test_product_demo_pack.py \
             tests/test_reviewer_trust_snapshot_workflow.py \
             tests/test_docs_archive_hygiene.py \

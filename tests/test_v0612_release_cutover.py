@@ -285,6 +285,23 @@ class TestCutoverFailures:
             mod.RELEASE_METADATA = original_metadata
 
 
+class TestCutoverOnRealRepo:
+    def test_cutover_passes_on_real_repo(self) -> None:
+        """Cutover checker passes on real repo after tag/GitHub Release creation."""
+        result = _run_script()
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "PASS" in result.stdout
+
+    def test_cutover_json_passes_on_real_repo(self) -> None:
+        result = _run_script("--json")
+        assert result.returncode == 0, result.stderr
+        data = json.loads(result.stdout)
+        assert data["valid"] is True
+        assert data["public_tag"] == "v0.6.12"
+        assert data["previous_public_tag"] == "v0.6.11"
+        assert data["next_planned_tag"] == "v0.6.13"
+
+
 class TestDeterminism:
     def test_json_output_is_deterministic(self) -> None:
         result1 = _run_script("--json")
