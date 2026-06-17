@@ -1,0 +1,521 @@
+{
+  "artifact_type": "v0612_candidate_inventory",
+  "schema_version": 1,
+  "release": "v0.6.12",
+  "release_line": "v0.6.12",
+  "current_public_release": "v0.6.11",
+  "next_planned_release": "v0.6.12",
+  "source_version": "0.6.11",
+  "generated_for": "planning",
+  "status": "planning",
+  "generated_at": "2026-06-17",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Product Demo and Marketplace Readiness Pack",
+      "summary": "Create docs/product-demo-pack.md, scripts/check_product_demo_pack.py, and tests/test_product_demo_pack.py.",
+      "user_value": "Reviewers get a packaged, checkable overview of product-demo readiness.",
+      "safety_boundary": "Docs/checker/test only; no runtime trading or execution changes.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Establishes a single source of truth for demo readiness; low risk.",
+      "primary_files": [
+        "docs/product-demo-pack.md",
+        "scripts/check_product_demo_pack.py",
+        "tests/test_product_demo_pack.py"
+      ],
+      "checkers": [
+        "scripts/check_product_demo_pack.py"
+      ],
+      "tests": [
+        "tests/test_product_demo_pack.py"
+      ],
+      "workflows": [],
+      "safety_scope": "docs/checker/test only; no runtime trading or execution",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-002",
+      "title": "Product Demo Evidence Bundle",
+      "summary": "Create docs/product-demo-evidence.md, scripts/build_product_demo_evidence.py, scripts/check_product_demo_evidence.py, and tests/test_product_demo_evidence.py.",
+      "user_value": "Demo evidence is generated and verified deterministically for reviewers.",
+      "safety_boundary": "Local deterministic artifact build/check; no network calls.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Makes demo claims reproducible offline; low risk.",
+      "primary_files": [
+        "docs/product-demo-evidence.md",
+        "scripts/build_product_demo_evidence.py",
+        "scripts/check_product_demo_evidence.py",
+        "tests/test_product_demo_evidence.py"
+      ],
+      "checkers": [
+        "scripts/check_product_demo_evidence.py"
+      ],
+      "tests": [
+        "tests/test_product_demo_evidence.py"
+      ],
+      "workflows": [],
+      "safety_scope": "local deterministic evidence bundle build/check; no network calls",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-003",
+      "title": "Reviewer Trust Snapshot",
+      "summary": "Create docs/trust/reviewer-trust-snapshot.md, scripts/build_reviewer_trust_snapshot.py, scripts/check_reviewer_trust_snapshot.py, and tests/test_reviewer_trust_snapshot.py.",
+      "user_value": "Reviewers see a periodic, checkable trust snapshot of safety invariants.",
+      "safety_boundary": "Read-only trust snapshot docs/checker; no execution changes.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Improves transparency without touching runtime behavior.",
+      "primary_files": [
+        "docs/trust/reviewer-trust-snapshot.md",
+        "scripts/build_reviewer_trust_snapshot.py",
+        "scripts/check_reviewer_trust_snapshot.py",
+        "tests/test_reviewer_trust_snapshot.py"
+      ],
+      "checkers": [
+        "scripts/check_reviewer_trust_snapshot.py"
+      ],
+      "tests": [
+        "tests/test_reviewer_trust_snapshot.py"
+      ],
+      "workflows": [],
+      "safety_scope": "read-only trust snapshot docs/checker; no execution changes",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-004",
+      "title": "Reviewer Trust Snapshot Workflow",
+      "summary": "Create .github/workflows/reviewer-trust-snapshot.yml, scripts/check_reviewer_trust_snapshot_workflow.py, and tests/test_reviewer_trust_snapshot_workflow.py.",
+      "user_value": "Trust snapshots are generated automatically in CI for reviewers.",
+      "safety_boundary": "CI workflow is read-only/docs generation; no broker/provider execution.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Automates a safe, read-only reviewer artifact.",
+      "primary_files": [
+        ".github/workflows/reviewer-trust-snapshot.yml",
+        "scripts/check_reviewer_trust_snapshot_workflow.py",
+        "tests/test_reviewer_trust_snapshot_workflow.py"
+      ],
+      "checkers": [
+        "scripts/check_reviewer_trust_snapshot_workflow.py"
+      ],
+      "tests": [
+        "tests/test_reviewer_trust_snapshot_workflow.py"
+      ],
+      "workflows": [
+        ".github/workflows/reviewer-trust-snapshot.yml"
+      ],
+      "safety_scope": "CI workflow generates read-only trust snapshot; no broker/provider execution",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-005",
+      "title": "Legacy Planning and Demo Document Archive",
+      "summary": "Create docs/archive/ hygiene layer with scripts/check_docs_archive_hygiene.py and tests/test_docs_archive_hygiene.py.",
+      "user_value": "Active docs stay clean while historical planning evidence is preserved.",
+      "safety_boundary": "Archival/hygiene only; no active logic removed.",
+      "risk": "medium",
+      "recommendation": "now",
+      "ranking_reason": "Reduces clutter; medium risk because it touches archival structure.",
+      "primary_files": [
+        "docs/archive/",
+        "scripts/check_docs_archive_hygiene.py",
+        "tests/test_docs_archive_hygiene.py"
+      ],
+      "checkers": [
+        "scripts/check_docs_archive_hygiene.py"
+      ],
+      "tests": [
+        "tests/test_docs_archive_hygiene.py"
+      ],
+      "workflows": [],
+      "safety_scope": "archival/hygiene only; preserves historical evidence",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-006",
+      "title": "Release Assurance Snapshot Integration",
+      "summary": "Create scripts/check_release_assurance_snapshot_integration.py, update scripts/build_release_assurance_bundle_manifest.py and .github/workflows/release-assurance.yml snapshot input, and add tests/test_release_assurance_snapshot_integration.py.",
+      "user_value": "Release assurance snapshots feed cleanly into bundle manifests.",
+      "safety_boundary": "Release-assurance metadata/checker integration; no runtime execution.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Tightens release metadata without changing runtime code.",
+      "primary_files": [
+        "scripts/check_release_assurance_snapshot_integration.py",
+        "scripts/build_release_assurance_bundle_manifest.py",
+        ".github/workflows/release-assurance.yml",
+        "tests/test_release_assurance_snapshot_integration.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_snapshot_integration.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_snapshot_integration.py"
+      ],
+      "workflows": [
+        ".github/workflows/release-assurance.yml"
+      ],
+      "safety_scope": "release-assurance metadata/checker integration; no runtime execution",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-007",
+      "title": "Release Assurance Bundle Demo and Manifest",
+      "summary": "Create docs/security/release-assurance-bundle-demo.md, scripts/build_release_assurance_bundle_manifest.py, scripts/check_release_assurance_bundle_manifest.py, scripts/check_release_assurance_bundle_workflow.py, and matching tests.",
+      "user_value": "Reviewers can understand and verify the release assurance bundle.",
+      "safety_boundary": "Docs/checker/test for release assurance bundle; no execution changes.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Makes release assurance reviewer-friendly and verifiable.",
+      "primary_files": [
+        "docs/security/release-assurance-bundle-demo.md",
+        "scripts/build_release_assurance_bundle_manifest.py",
+        "scripts/check_release_assurance_bundle_manifest.py",
+        "scripts/check_release_assurance_bundle_workflow.py",
+        "tests/test_release_assurance_bundle_manifest.py",
+        "tests/test_release_assurance_bundle_workflow.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_bundle_manifest.py",
+        "scripts/check_release_assurance_bundle_workflow.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_bundle_manifest.py",
+        "tests/test_release_assurance_bundle_workflow.py"
+      ],
+      "workflows": [],
+      "safety_scope": "docs/checker/test for release assurance bundle; no execution changes",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-008",
+      "title": "Not separately tracked",
+      "summary": "No separately tracked candidate; gap folded into adjacent release-assurance work.",
+      "user_value": "—",
+      "safety_boundary": "Not separately tracked.",
+      "risk": "—",
+      "recommendation": "not separately tracked",
+      "ranking_reason": "Folded into adjacent candidates.",
+      "primary_files": [],
+      "checkers": [],
+      "tests": [],
+      "workflows": [],
+      "safety_scope": "not separately tracked",
+      "selected_for_v0612": true,
+      "implemented": false
+    },
+    {
+      "id": "CAND-009",
+      "title": "Release Assurance Workflow Artifact Validation",
+      "summary": "Create scripts/check_release_assurance_workflow_artifact.py and tests/test_release_assurance_workflow_artifact.py.",
+      "user_value": "Release-assurance workflow artifacts are validated automatically.",
+      "safety_boundary": "Artifact validation checker/test only; no execution.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Improves CI artifact confidence; small and safe.",
+      "primary_files": [
+        "scripts/check_release_assurance_workflow_artifact.py",
+        "tests/test_release_assurance_workflow_artifact.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_workflow_artifact.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_workflow_artifact.py"
+      ],
+      "workflows": [],
+      "safety_scope": "artifact validation checker/test only",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-010",
+      "title": "Not separately tracked",
+      "summary": "No separately tracked candidate; gap folded into adjacent release-assurance work.",
+      "user_value": "—",
+      "safety_boundary": "Not separately tracked.",
+      "risk": "—",
+      "recommendation": "not separately tracked",
+      "ranking_reason": "Folded into adjacent candidates.",
+      "primary_files": [],
+      "checkers": [],
+      "tests": [],
+      "workflows": [],
+      "safety_scope": "not separately tracked",
+      "selected_for_v0612": true,
+      "implemented": false
+    },
+    {
+      "id": "CAND-011",
+      "title": "Release Assurance Failure Diagnostics",
+      "summary": "Add scripts/release_assurance.py --diagnostics-json, scripts/check_release_assurance_diagnostics.py, and tests/test_release_assurance_diagnostics.py.",
+      "user_value": "Failures produce structured diagnostics for offline debugging.",
+      "safety_boundary": "Diagnostic output/checker only; no execution or broker/provider calls.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Reduces incident debugging time without crossing boundaries.",
+      "primary_files": [
+        "scripts/release_assurance.py",
+        "scripts/check_release_assurance_diagnostics.py",
+        "tests/test_release_assurance_diagnostics.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_diagnostics.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_diagnostics.py"
+      ],
+      "workflows": [],
+      "safety_scope": "diagnostics output/checker only; no execution or broker/provider calls",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-012",
+      "title": "Release Assurance Diagnostics Artifact",
+      "summary": "Add diagnostics upload to .github/workflows/release-assurance.yml, plus scripts/check_release_assurance_diagnostics_workflow.py and matching tests.",
+      "user_value": "Diagnostics are captured as CI artifacts for later inspection.",
+      "safety_boundary": "CI diagnostics artifact upload; no secrets; no execution.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Supports offline failure analysis safely.",
+      "primary_files": [
+        ".github/workflows/release-assurance.yml",
+        "scripts/check_release_assurance_diagnostics_workflow.py",
+        "tests/test_release_assurance_diagnostics_workflow.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_diagnostics_workflow.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_diagnostics_workflow.py"
+      ],
+      "workflows": [
+        ".github/workflows/release-assurance.yml"
+      ],
+      "safety_scope": "CI diagnostics artifact upload; no secrets; no execution",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-013",
+      "title": "Release Assurance Diagnostics Artifact Validator",
+      "summary": "Create scripts/check_release_assurance_diagnostics_artifact.py and tests/test_release_assurance_diagnostics_artifact.py.",
+      "user_value": "Downloaded diagnostics artifacts can be validated locally.",
+      "safety_boundary": "Local deterministic artifact validation; no network.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Reusable validator for offline artifact review.",
+      "primary_files": [
+        "scripts/check_release_assurance_diagnostics_artifact.py",
+        "tests/test_release_assurance_diagnostics_artifact.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_diagnostics_artifact.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_diagnostics_artifact.py"
+      ],
+      "workflows": [],
+      "safety_scope": "local deterministic artifact validation; no network",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-014",
+      "title": "Release Assurance Diagnostics Artifact Workflow Integration",
+      "summary": "Add diagnostics artifact validation step to .github/workflows/release-assurance.yml, plus checker and tests.",
+      "user_value": "Validation of diagnostics artifacts is integrated into the release workflow.",
+      "safety_boundary": "CI validation step; no trading execution.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Completes the diagnostics artifact loop in CI.",
+      "primary_files": [
+        ".github/workflows/release-assurance.yml",
+        "scripts/check_release_assurance_diagnostics_artifact_workflow.py",
+        "tests/test_release_assurance_diagnostics_artifact_workflow.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_diagnostics_artifact_workflow.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_diagnostics_artifact_workflow.py"
+      ],
+      "workflows": [
+        ".github/workflows/release-assurance.yml"
+      ],
+      "safety_scope": "CI validation step; no trading execution",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-015",
+      "title": "Release Assurance Diagnostics Artifact Revalidation Workflow",
+      "summary": "Create .github/workflows/release-assurance-diagnostics-artifact-validate.yml.",
+      "user_value": "Artifacts can be revalidated on demand without re-running a full release.",
+      "safety_boundary": "On-demand revalidation workflow only; no execution.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Adds reviewer/operator convenience safely.",
+      "primary_files": [
+        ".github/workflows/release-assurance-diagnostics-artifact-validate.yml"
+      ],
+      "checkers": [],
+      "tests": [],
+      "workflows": [
+        ".github/workflows/release-assurance-diagnostics-artifact-validate.yml"
+      ],
+      "safety_scope": "on-demand revalidation workflow only; no execution",
+      "selected_for_v0612": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-016",
+      "title": "Release Assurance Artifact Retention Audit",
+      "summary": "Create scripts/audit_release_assurance_artifact_retention.py, scripts/check_release_assurance_artifact_retention_audit.py, .github/workflows/release-assurance-artifact-retention-audit.yml, and matching tests.",
+      "user_value": "Artifact retention is audited for compliance and evidence continuity.",
+      "safety_boundary": "Retention audit/checker only; no runtime changes.",
+      "risk": "low",
+      "recommendation": "now",
+      "ranking_reason": "Supports governance without affecting trading code.",
+      "primary_files": [
+        "scripts/audit_release_assurance_artifact_retention.py",
+        "scripts/check_release_assurance_artifact_retention_audit.py",
+        ".github/workflows/release-assurance-artifact-retention-audit.yml",
+        "tests/test_release_assurance_artifact_retention_audit.py"
+      ],
+      "checkers": [
+        "scripts/check_release_assurance_artifact_retention_audit.py"
+      ],
+      "tests": [
+        "tests/test_release_assurance_artifact_retention_audit.py"
+      ],
+      "workflows": [
+        ".github/workflows/release-assurance-artifact-retention-audit.yml"
+      ],
+      "safety_scope": "retention audit/checker only; no runtime changes",
+      "selected_for_v0612": true,
+      "implemented": true
+    }
+  ],
+  "deferred": [
+    {
+      "id": "CAND-008",
+      "title": "Not separately tracked",
+      "reason": "Not separately tracked in the v0.6.12 planning line; folded into adjacent release-assurance candidates."
+    },
+    {
+      "id": "CAND-010",
+      "title": "Not separately tracked",
+      "reason": "Not separately tracked in the v0.6.12 planning line; folded into adjacent release-assurance candidates."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution unlock",
+      "reason": "Safety boundary. Never changed in a patch."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous trading",
+      "reason": "Not claimed or enabled."
+    },
+    {
+      "id": "REJ-005",
+      "title": "PyPI publish",
+      "reason": "Not approved in this planning batch; requires separate process."
+    },
+    {
+      "id": "REJ-006",
+      "title": "Tag/release creation",
+      "reason": "Not approved; requires explicit owner cutover."
+    },
+    {
+      "id": "REJ-007",
+      "title": "Version bump to 0.6.12",
+      "reason": "Not approved; requires release-prep batch."
+    },
+    {
+      "id": "REJ-008",
+      "title": "Runtime trading features",
+      "reason": "Out of scope for this conservative hygiene batch."
+    },
+    {
+      "id": "REJ-009",
+      "title": "Creation of docs/releases/v0.6.12.md",
+      "reason": "Not approved; requires release-prep batch."
+    },
+    {
+      "id": "REJ-010",
+      "title": "Creation of docs/trust/v0.6.12-status.md",
+      "reason": "Not approved; requires release-prep batch."
+    },
+    {
+      "id": "REJ-011",
+      "title": "Any new broker adapters",
+      "reason": "New features, not maintenance. Defer to v0.7.0 or later."
+    },
+    {
+      "id": "REJ-012",
+      "title": "Any new provider integrations",
+      "reason": "New features, not maintenance. Defer to v0.7.0 or later."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading remains disabled by default.",
+    "Live submit remains disabled by default.",
+    "Provider execution remains disabled by default.",
+    "Broker execution remains disabled by default.",
+    "Risk gates remain deterministic and unchanged.",
+    "Approval queue behavior remains unchanged.",
+    "Kill-switch behavior remains unchanged.",
+    "Human approval remains required for live order flow.",
+    "Credentials are not loaded unless explicitly configured.",
+    "No provider APIs, broker APIs, or real webhooks are called from CI or local checks."
+  ],
+  "constraints": [
+    "docs/releases/v0.6.12-candidates.md created",
+    "docs/releases/v0.6.12-candidates.json created",
+    "CAND-001 through CAND-007 implemented/audited",
+    "CAND-009 and CAND-011 through CAND-016 implemented/audited",
+    "CAND-008 and CAND-010 explicitly marked as not separately tracked",
+    "Source/package version remains 0.6.11 (not bumped)",
+    "No docs/releases/v0.6.12.md yet",
+    "No docs/trust/v0.6.12-status.md yet",
+    "No tag, GitHub release, or PyPI publish for v0.6.12",
+    "No runtime trading behavior changes"
+  ],
+  "release_criteria": [
+    "Accepted candidates are implemented/audited and CAND-008/010 disposition is documented",
+    "dev_check, ci_check, and release_check --quick pass locally",
+    "CI on main is green after each batch is pushed",
+    "Version is bumped to 0.6.12 in pyproject.toml and src/atlas_agent/__init__.py",
+    "docs/releases/v0.6.12.md and docs/trust/v0.6.12-status.md are created",
+    "CHANGELOG.md has a [0.6.12] entry",
+    "scripts/check_v0612_release_prep.py and matching tests are created (release-prep mode)",
+    "Protected boundary diff is empty",
+    "Forbidden claims scan is clean",
+    "Owner approval is obtained for tag cutover"
+  ]
+}

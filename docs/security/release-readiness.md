@@ -189,3 +189,9 @@ v0.6.3 tag, forbidden claims, and generated artifact hygiene.
 See [v0.6.0 Readiness Audit](../releases/v0.6.0-readiness.md) for the full
 capability summary, safety boundaries, test coverage, docs coverage, deferred
 items, non-goals, release blockers, and release recommendation.
+
+## v0.6.12 candidate readiness
+
+For the v0.6.12 planning-line candidate readiness consolidation, see
+[docs/releases/v0.6.12-candidate-readiness.md](../releases/v0.6.12-candidate-readiness.md)
+and run `python3.11 scripts/check_v0612_release_candidate_readiness.py`.

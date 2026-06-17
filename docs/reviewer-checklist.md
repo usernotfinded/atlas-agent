@@ -109,6 +109,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.
 - [ ] No absolute user paths (home-directory or temp-folder prefixes) or credential examples appear in public demo or outreach docs.
 - [ ] All demo/marketplace language remains paper-first, sandbox/preflight-first, broker-neutral, and safe-by-default.
+- [ ] `docs/releases/v0.6.12-candidate-readiness.md` exists and `python3.11 scripts/check_v0612_release_candidate_readiness.py` passes.
 
 ## Known limitations
 

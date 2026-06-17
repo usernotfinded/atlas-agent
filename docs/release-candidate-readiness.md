@@ -88,6 +88,10 @@ atlas research release-candidate-readiness-summary <REPORT_ID> --json
 atlas research release-candidate-readiness-doctor <REPORT_ID> --json
 ```
 
+## Version-specific candidate readiness
+
+- [v0.6.12 Candidate Readiness](releases/v0.6.12-candidate-readiness.md) — release-candidate readiness consolidation for the v0.6.12 planning line.
+
 ## Limitations
 
 - The report is **repository-local** and **read-only**.

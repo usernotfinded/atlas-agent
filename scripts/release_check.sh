@@ -176,6 +176,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "9a. v0.6.12 release candidate readiness check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_v0612_release_candidate_readiness.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "9b. v0.6.12 release candidate readiness tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_v0612_release_candidate_readiness.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "10. forbidden claims scan"
 echo "========================================"
 SECONDS=0

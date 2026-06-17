@@ -9,7 +9,7 @@ users, contributors, auditors, and potential adopters.
 - Previous public release: `v0.6.10`
 - Source package version on `main`: `0.6.11`
 - GitHub release: `v0.6.11` (current public)
-- Next planning line: `v0.6.12`
+- Next planning line: `v0.6.12` — [v0.6.12 Candidate Readiness](../releases/v0.6.12-candidate-readiness.md) (planning line)
 - Public v0.6.11: current public — [v0.6.11 Trust and Release Status](v0.6.11-status.md)
 - Previous public v0.6.10 — [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
 - PyPI was not published

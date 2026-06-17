@@ -105,6 +105,7 @@ No broker, no network, no credentials, no live trading.
 - `docs/marketplace-listing.md` present
 - `docs/autonomy-roadmap.md` present
 - `docs/product-demo-evidence.md` present
+- `docs/releases/v0.6.12-candidate-readiness.md` present — v0.6.12 candidate readiness consolidation doc (planning line)
 
 ## Release artifacts status
 
