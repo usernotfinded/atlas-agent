@@ -2,7 +2,7 @@
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
-Atlas Agent v0.6.9 uses an adapter-based architecture for broker integration.
+Atlas Agent uses an adapter-based architecture for broker integration.
 
 See also: [Broker Roadmap and Guarded Adapter Status](broker-roadmap.md) for the
 authoritative support inventory, fail-closed behavior, and CLI usage.

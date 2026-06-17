@@ -110,6 +110,7 @@ No broker, no network, no credentials, no live trading.
 - `docs/product-demo-pack.md` present
 - `docs/marketplace-listing.md` present
 - `docs/autonomy-roadmap.md` present
+- `docs/bounded-live-autonomy-governance.md` present — bounded autonomy governance and long-term product direction
 - `docs/product-demo-evidence.md` present
 - `docs/releases/v0.6.12-post-release-evidence.md` present — canonical v0.6.12 public evidence record
 - `docs/releases/v0.6.12-post-release-evidence.json` present — machine-readable v0.6.12 evidence

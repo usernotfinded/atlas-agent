@@ -44,6 +44,10 @@ jobs:
         run: python3.11 scripts/check_cli_command_compatibility.py
       - name: Forbidden claims scan
         run: python3.11 scripts/check_forbidden_claims.py
+      - name: Bounded autonomy governance check
+        run: python3.11 scripts/check_bounded_autonomy_governance.py
+      - name: Bounded autonomy governance tests
+        run: python3.11 -m pytest tests/test_bounded_autonomy_governance.py -q
       - name: Feedback intake check
         run: python3.11 scripts/check_feedback_intake.py
       - name: Feedback taxonomy check
@@ -302,6 +306,7 @@ jobs:
             tests/test_reviewer_trust_snapshot_workflow.py \
             tests/test_docs_archive_hygiene.py \
             tests/test_release_assurance_snapshot_integration.py \
+            tests/test_bounded_autonomy_governance.py \
             -q
       - name: Release check quick
         run: ./scripts/release_check.sh --quick

@@ -2,7 +2,13 @@
 
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
-Atlas Agent is intentionally **supervised, not autonomous**. Every execution path is bounded by deterministic risk gates, approval queues, kill-switch controls, and an auditable decision record. Autonomy in this roadmap refers only to incremental improvements in local workflow orchestration, memory management, and research summarization — never to unsupervised real-money trading or AI-to-broker execution.
+Atlas Agent is intentionally **supervised by default** and is supervised, not autonomous. Bounded autonomy is a long-term product/research direction, not
+a current capability. Every execution path that exists today is bounded by
+deterministic risk gates, approval queues, kill-switch controls, and an auditable
+decision record. Autonomy in this roadmap refers only to incremental, opt-in
+improvements in local workflow orchestration, memory management, and research
+summarization — never to unsupervised real-money trading or direct
+AI-to-broker execution in the current release.
 
 **No promise of profitability.** Atlas does not predict profits, guarantee returns, or claim that any strategy, backtest result, research artifact, or configuration will produce positive real-money outcomes. Past simulated or historical results do not guarantee future performance. Risk controls can reduce certain categories of unintended action, but they cannot eliminate trading risk, market risk, slippage, or the risk of loss. Use Paper Mode until you are fully confident in your own strategy, configuration, and risk limits.
 
@@ -22,7 +28,10 @@ Out of scope:
 - Auto-approval of live orders, kill-switch overrides, or risk-limit changes.
 - Any claim of production readiness, guaranteed performance, or safe live operation.
 
-This roadmap applies to the `v0.6.12` planning line. All milestones remain subordinate to the live-submit safety contract, the `RiskManager`, approval gates, and the kill switch.
+This roadmap applies to the current release planning line. All milestones remain
+subordinate to the [Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md),
+the live-submit safety contract, the `RiskManager`, approval gates, and the kill
+switch.
 
 ## Autonomy levels
 
@@ -32,7 +41,7 @@ This roadmap applies to the `v0.6.12` planning line. All milestones remain subor
 | L1 | Autonomous paper workflows | Run scheduled paper routines autonomously within deterministic limits. No broker contact. | Paper mode is the default runtime. |
 | L2 | Live suggestions with human approval | Consume live broker snapshots for analysis and propose orders; every proposal requires explicit human approval. | Requires live config, credentials, and kill-switch normal state. |
 | L3 | Bounded live-autonomy research concept | Not implemented; would require every live order to pass per-order human approval, strict RiskManager limits, and explicit opt-in. | Not enabled by default; not production-ready; not unattended-safe. |
-| L4 | Unsupervised execution tier | Not a project goal. Atlas does not pursue unattended real-money trading. | Not implemented and not targeted in this roadmap. |
+| L4 | Broad autonomous live execution | Not a current capability or milestone. Any future consideration requires external legal, security, risk, operational, and regulatory review. | Not implemented; cannot be claimed without external review. |
 
 ### Cross-level invariants
 
@@ -45,7 +54,7 @@ This roadmap applies to the `v0.6.12` planning line. All milestones remain subor
 
 Atlas Agent is designed as a **supervised, human-in-the-loop workspace**, not an unattended trading system. The autonomy roadmap moves from strict manual oversight toward limited, gated automation, while keeping live execution disabled by default and real-money autonomy off the table.
 
-| Dimension | Current State (v0.6.11) | Future State Direction |
+| Dimension | Current State | Future State Direction |
 |---|---|---|
 | **Default execution mode** | `paper` — local simulation only, no broker contact. | Paper remains the default; live remains opt-in only. |
 | **Trust / approval model** | Manual review for live orders; proposals are advisory-only. | Gradual policy support for supervised paper automation; live submit stays approval-gated. |
@@ -63,7 +72,9 @@ Atlas Agent is designed as a **supervised, human-in-the-loop workspace**, not an
 
 ### What autonomy will never mean
 
-The following remain **out of scope** for all future versions unless this roadmap is explicitly amended by a dedicated safety batch:
+The following remain **out of scope** unless the
+[Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md) is
+explicitly amended and all required external gates are satisfied:
 
 - Autonomous real-money order submission without human approval.
 - Removing or bypassing `RiskManager`, approval gates, kill switch, or audit hash-chain.
@@ -209,28 +220,44 @@ Every rejected order is recorded as a `risk_evaluation_blocked` or `live_submit_
 
 ### Roadmap status
 
-L3 bounded live autonomy is a planning-line capability for `v0.6.12`+ and is not implemented in the current release. The default path remains paper-only with full manual approval for any live submit.
+L3 bounded live autonomy is a future research concept and is not implemented in the current release. The default path remains paper-only with full manual approval for any live submit.
 
-## L4 — Unsupervised Execution Tier (Not a Project Goal)
+## L4 — Broad Autonomous Live Execution (Not a Current Capability)
 
-L4 would describe a hypothetical tier with broader execution authority. **Atlas does not target L4 for v0.6.12 or any current roadmap milestone.**
+L4 would describe a hypothetical future tier with broader execution authority.
+**It is not a current capability or milestone and is not a project goal of Atlas Agent.**
+Any future consideration of an L4-like path is governed by the
+[Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md) and
+requires all external gates listed there.
 
-Before L4 could even be considered, all of the following must be satisfied by qualified external parties, not by self-assessment:
+Before L4 could even be considered, all of the following must be satisfied by
+qualified external parties, not by self-assessment:
 
-1. **Legal review** — Confirm compliance with securities, derivatives, consumer-protection, and local financial regulations for every jurisdiction where the deployment is intended.
-2. **Security audit** — Independent review of broker adapters, credentials handling, kill-switch logic, audit hash-chain, approval integrity, and access controls.
-3. **Operational audit** — Validate monitoring, incident response, failover behavior, and proof that the system fails closed under error or interruption.
-4. **Risk audit** — Verify that deterministic risk gates remain hard-coded, non-overrideable by provider output, and independently testable.
-5. **Regulatory approval where required** — Any necessary registrations, licenses, or no-action relief for the intended use case.
+1. **Legal review** — Confirm compliance with securities, derivatives,
+   consumer-protection, and local financial regulations for every intended
+   jurisdiction.
+2. **Security audit** — Independent review of broker adapters, credentials
+   handling, kill-switch logic, audit hash-chain, approval integrity, and access
+   controls.
+3. **Operational audit** — Validate monitoring, incident response, failover
+   behavior, and proof that the system fails closed under error or interruption.
+4. **Risk audit** — Verify that deterministic risk gates remain hard-coded,
+   non-overrideable by provider output, and independently testable.
+5. **Regulatory approval where required** — Any necessary registrations,
+   licenses, or no-action relief for the intended use case.
 
-Even if those reviews pass, L4 remains **opt-in, broker-neutral, and disabled by default**. It must preserve:
+Even if those reviews pass, any broader autonomy remains **opt-in,
+broker-neutral, and disabled by default**. It must preserve:
 
 - Human-enablable kill switch and manual pause.
 - Per-deployment risk limits that cannot be raised by autonomous logic.
 - Tamper-evident audit logging for every autonomous decision.
-- A clear "revert to paper" path that disables execution without deleting configuration.
+- A clear "revert to paper" path that disables execution without deleting
+  configuration.
 
-Until these external gates are documented and accepted, Atlas stays at supervised, approval-gated execution. Autonomous execution is not a v0.6.12 goal and is not implied by any demo or marketing language.
+Until these external gates are documented and accepted, Atlas stays at
+supervised, approval-gated execution. Autonomous live trading is not a current
+goal and is not implied by any demo or marketing language.
 
 ## Governance and safeguards
 

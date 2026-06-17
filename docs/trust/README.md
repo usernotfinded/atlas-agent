@@ -113,6 +113,8 @@ brokers, enable trading, or require credentials.
 - Deterministic local backtesting and paper-first workflows.
 - Read-only dashboard security documentation.
 - Approval safety documentation and tests.
+- Bounded autonomy governance documentation (`docs/bounded-live-autonomy-governance.md`)
+  and aligned long-term autonomy roadmap (`docs/autonomy-roadmap.md`).
 
 ## What Is Not Ready
 

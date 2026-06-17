@@ -71,6 +71,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "4a. bounded autonomy governance check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_bounded_autonomy_governance.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "4b. bounded autonomy governance tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_bounded_autonomy_governance.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "5. trust center check"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_trust_center.py

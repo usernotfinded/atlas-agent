@@ -275,6 +275,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10a. bounded autonomy governance check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_bounded_autonomy_governance.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10b. bounded autonomy governance tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_bounded_autonomy_governance.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0
