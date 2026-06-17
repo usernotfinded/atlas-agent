@@ -70,6 +70,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "3c. autonomous paper workflow demo check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_autonomous_paper_workflow_demo.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "3d. autonomous paper workflow demo tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_autonomous_paper_workflow_demo.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "4. env template checks"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_env_templates.py

@@ -123,6 +123,7 @@ and disabled by default. It must preserve:
 ## Relationship to other documents
 
 - [Autonomy Roadmap](autonomy-roadmap.md) — staged autonomy levels and current/future state.
+- [Autonomous Paper Workflow](autonomous-paper-workflow.md) — concrete L1 autonomy proof (paper-only, local-only, no broker/provider contact).
 - [Live-Submit Safety Contract](live-submit-safety-contract.md) — detailed gating for any live submit.
 - [Risk Model](risk-model.md) — deterministic risk gate design.
 - [Kill Switch Runbook](kill-switch.md) — kill-switch controls and escalation.

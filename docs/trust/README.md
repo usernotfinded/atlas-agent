@@ -115,6 +115,8 @@ brokers, enable trading, or require credentials.
 - Approval safety documentation and tests.
 - Bounded autonomy governance documentation (`docs/bounded-live-autonomy-governance.md`)
   and aligned long-term autonomy roadmap (`docs/autonomy-roadmap.md`).
+- L1 autonomous paper workflow demo documentation (`docs/autonomous-paper-workflow.md`)
+  and evidence gate script (`scripts/demo_autonomous_paper_workflow.sh`) — paper-only, offline, no credentials.
 
 ## What Is Not Ready
 

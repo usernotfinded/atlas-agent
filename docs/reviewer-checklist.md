@@ -116,6 +116,16 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] No active doc claims `v0.6.13` is released, tagged, published on GitHub, or published to PyPI.
 - [ ] No active doc claims `v0.6.11` is the current public release.
 
+### Autonomous paper workflow
+
+- [ ] `docs/autonomous-paper-workflow.md` exists, links to `docs/bounded-live-autonomy-governance.md` and `docs/autonomy-roadmap.md`, and contains "paper-only", "not financial advice", and a statement that it does not claim autonomous-live-trading-readiness.
+- [ ] `scripts/demo_autonomous_paper_workflow.sh` exists, is executable, uses `--mode paper --dry-run`, requires no credentials, and exits with code `0`.
+- [ ] `scripts/check_autonomous_paper_workflow_demo.py` exists, passes, and supports `--json` output with `"passed": true`.
+- [ ] `python3.11 -m pytest tests/test_autonomous_paper_workflow_demo.py -q` passes.
+- [ ] Running `bash scripts/demo_autonomous_paper_workflow.sh` prints an "Autonomous paper workflow demo PASS" summary and produces only local, untracked evidence.
+- [ ] Autonomous paper workflow docs, scripts, and tests contain no live-trading-readiness, profit, performance, or autonomous-live-trading claims.
+- [ ] `scripts/dev_check.sh`, `scripts/ci_check.sh`, and `.github/workflows/ci.yml` include the autonomous paper workflow checker and tests after the bounded autonomy governance checks.
+
 ## Known limitations
 
 - [ ] Final public release, not a release candidate

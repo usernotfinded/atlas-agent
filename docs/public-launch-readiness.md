@@ -50,6 +50,9 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_v0612_release_prep.py --post-release` — v0.6.12 post-release state is valid
 - `python3.11 scripts/check_v0612_post_release_evidence.py` — v0.6.12 post-release evidence bundle is valid
 - `python3.11 scripts/check_v0613_post_release_hygiene.py` — v0.6.13 planning hygiene is valid
+- `python3.11 scripts/check_autonomous_paper_workflow_demo.py` — autonomous paper workflow demo gate is safe and present
+- `python3.11 -m pytest tests/test_autonomous_paper_workflow_demo.py -q` — autonomous paper workflow demo tests pass
+- `bash scripts/demo_autonomous_paper_workflow.sh` — autonomous paper workflow runs offline without credentials, network, or broker contact
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI
@@ -116,6 +119,7 @@ No broker, no network, no credentials, no live trading.
 - `docs/releases/v0.6.12-post-release-evidence.json` present — machine-readable v0.6.12 evidence
 - `docs/releases/v0.6.13-plan.md` present — v0.6.13 planning seed (planning only)
 - `docs/releases/v0.6.13-candidate-selection.md` present — v0.6.13 candidate-selection gate (planning only)
+- `docs/autonomous-paper-workflow.md` present — L1 paper-only autonomy demo doc
 - `docs/releases/v0.6.12.md` present — v0.6.12 release notes (current public)
 - `docs/trust/v0.6.12-status.md` present — v0.6.12 trust status (current public)
 - `docs/releases/v0.6.12-candidate-readiness.md` present — historical v0.6.12 candidate readiness record

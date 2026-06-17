@@ -144,6 +144,10 @@ Level 1 is **operator-supervised, local-only automation that runs entirely insid
 - **Not production-ready.** Paper results do not guarantee future performance, execution quality, liquidity, or live-trading safety; paper simulation still involves risk.
 - **Not a provider unlock.** LLM/provider execution stays locked by default.
 
+### Concrete demo
+
+- [Autonomous Paper Workflow](autonomous-paper-workflow.md) — a deterministic, offline, no-credential L1 paper workflow demonstration. It is not a live-trading or production-readiness claim.
+
 ## L2 — Live Suggestions with Human Approval
 
 L2 is the highest autonomy level Atlas Agent supports for live-market workflows. At L2 the agent may consume live broker snapshots, analyze real positions and exposure, and **propose** orders or safety actions. It does **not** submit orders, approve itself, or bypass any gate.

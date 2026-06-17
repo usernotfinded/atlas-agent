@@ -1,0 +1,147 @@
+{
+  "artifact_type": "v0613_candidate_inventory",
+  "schema_version": 1,
+  "release_line": "v0.6.13",
+  "current_public_release": "v0.6.12",
+  "next_planned_release": "v0.6.13",
+  "source_version": "0.6.12",
+  "generated_for": "release-prep",
+  "status": "planning",
+  "generated_at": "2026-06-17T20:17:46+00:00",
+  "candidates": [
+    {
+      "id": "CAND-021",
+      "title": "Post-Release Hygiene Consolidation",
+      "summary": "Make v0.6.12-post-release-evidence the canonical record; tighten the v0.6.13 candidate-selection gate; add deterministic checker/test coverage.",
+      "user_value": "Reviewers have a single canonical evidence record and a clearer selection gate.",
+      "safety_boundary": "Docs/checker/test only; no runtime or boundary changes.",
+      "risk": "low",
+      "recommendation": "now — implemented/audited",
+      "ranking_reason": "Consolidates release evidence; low risk.",
+      "primary_files": [
+        "docs/releases/v0.6.12-post-release-evidence.md",
+        "docs/releases/v0.6.12-post-release-evidence.json",
+        "docs/releases/v0.6.13-candidate-selection.md",
+        "scripts/check_v0613_post_release_hygiene.py",
+        "tests/test_v0613_post_release_hygiene.py"
+      ],
+      "checkers": ["scripts/check_v0613_post_release_hygiene.py"],
+      "tests": ["tests/test_v0613_post_release_hygiene.py"],
+      "workflows": [],
+      "safety_scope": "docs/checker/test",
+      "selected_for_v0613": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-022",
+      "title": "Bounded Autonomy Governance",
+      "summary": "Create docs/bounded-live-autonomy-governance.md and align docs/autonomy-roadmap.md with staged autonomy levels and hard invariants.",
+      "user_value": "Reviewers can verify the project's conservative autonomy stance and governance ladder.",
+      "safety_boundary": "Governance docs only; no runtime or boundary changes.",
+      "risk": "low",
+      "recommendation": "now — implemented/audited",
+      "ranking_reason": "Documents existing safety posture; low risk.",
+      "primary_files": [
+        "docs/bounded-live-autonomy-governance.md",
+        "docs/autonomy-roadmap.md",
+        "scripts/check_bounded_autonomy_governance.py",
+        "tests/test_bounded_autonomy_governance.py"
+      ],
+      "checkers": ["scripts/check_bounded_autonomy_governance.py"],
+      "tests": ["tests/test_bounded_autonomy_governance.py"],
+      "workflows": [],
+      "safety_scope": "docs/checker/test",
+      "selected_for_v0613": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-023",
+      "title": "Autonomous Paper Workflow Demo and Evidence Gate",
+      "summary": "Add docs/autonomous-paper-workflow.md, scripts/demo_autonomous_paper_workflow.sh, scripts/check_autonomous_paper_workflow_demo.py, tests/test_autonomous_paper_workflow_demo.py, and cross-doc/gate integration.",
+      "user_value": "Reviewers can run and verify a deterministic L1 paper-only autonomy demo locally.",
+      "safety_boundary": "Docs/checker/test only; paper-only, offline, no credentials; no runtime or boundary changes.",
+      "risk": "low",
+      "recommendation": "now — implemented/audited",
+      "ranking_reason": "Concrete L1 autonomy proof without live-trading claims; low risk.",
+      "primary_files": [
+        "docs/autonomous-paper-workflow.md",
+        "scripts/demo_autonomous_paper_workflow.sh",
+        "scripts/check_autonomous_paper_workflow_demo.py",
+        "tests/test_autonomous_paper_workflow_demo.py",
+        "README.md",
+        "docs/bounded-live-autonomy-governance.md",
+        "docs/autonomy-roadmap.md",
+        "docs/public-launch-readiness.md",
+        "docs/trust/README.md",
+        "docs/reviewer-checklist.md",
+        "docs/releases/v0.6.13-candidate-selection.md",
+        "docs/releases/v0.6.13-plan.md",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": ["scripts/check_autonomous_paper_workflow_demo.py"],
+      "tests": ["tests/test_autonomous_paper_workflow_demo.py"],
+      "workflows": [".github/workflows/ci.yml"],
+      "safety_scope": "docs/checker/test/demo-script",
+      "selected_for_v0613": true,
+      "implemented": true
+    }
+  ],
+  "rejected": [
+    {
+      "id": "REJ-001",
+      "title": "Live trading default changes",
+      "reason": "Live trading must remain disabled by default; requires explicit opt-in and owner approval."
+    },
+    {
+      "id": "REJ-002",
+      "title": "Broker execution enablement",
+      "reason": "Broker order submission remains blocked for non-paper brokers; no adapter or execution changes."
+    },
+    {
+      "id": "REJ-003",
+      "title": "Provider execution enablement",
+      "reason": "Provider execution remains locked by default; no real provider calls in CI or demo."
+    },
+    {
+      "id": "REJ-004",
+      "title": "Autonomous live trading",
+      "reason": "Autonomous live trading is not a current capability or milestone; requires external gates."
+    },
+    {
+      "id": "REJ-005",
+      "title": "Version bump to 0.6.13",
+      "reason": "Source/package version must remain 0.6.12 until release prep explicitly starts."
+    },
+    {
+      "id": "REJ-006",
+      "title": "v0.6.13 tag/release/PyPI",
+      "reason": "No annotated tag, GitHub Release, or PyPI publication for v0.6.13 without owner-approved release prep."
+    }
+  ],
+  "safety_boundaries": [
+    "Live trading disabled by default.",
+    "Live submit disabled by default.",
+    "Provider execution disabled by default.",
+    "Broker execution disabled by default.",
+    "Human approval required for live order flow.",
+    "No credentials, secrets, or API keys committed.",
+    "No real broker/provider calls in CI, tests, or demo."
+  ],
+  "constraints": [
+    "Source/package version must remain 0.6.12 until release prep starts.",
+    "PyPI must remain disabled unless explicitly approved.",
+    "No v0.6.13 tag or GitHub Release may be created from planning candidates.",
+    "Every candidate must have deterministic checker and/or test coverage.",
+    "Local gates and CI quick-gate must pass before a candidate is complete."
+  ],
+  "release_criteria": [
+    "Owner approval for release prep.",
+    "Owner approval for public cutover.",
+    "All accepted candidates implemented, tested, and documented.",
+    "All local gates pass.",
+    "CI quick-gate passes.",
+    "No protected runtime boundary changes unless separately approved."
+  ]
+}

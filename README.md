@@ -178,6 +178,7 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 
 - **[Paper Workflow Script](scripts/demo_paper_workflow.sh)** — create a temporary workspace, validate config, run a paper dry-run, execute a deterministic sample-data backtest, and verify audit artifacts.
 - **[Research Workflow Script](scripts/demo_research_workflow.sh)** — create a temporary workspace, run the full paper-only research chain, validate JSON artifacts, and verify safety invariants.
+- **[Autonomous Paper Workflow](docs/autonomous-paper-workflow.md)** — deterministic, offline, no-credential L1 autonomy demo that runs paper-only CLI commands autonomously, verifies live paths fail safely, and produces local evidence artifacts. See `scripts/demo_autonomous_paper_workflow.sh`.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.
