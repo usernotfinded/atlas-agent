@@ -75,7 +75,7 @@ class TestPlanningModeValid:
         assert "Release notes must not exist" in errors
         assert "Trust status must not exist" in errors
         assert "CHANGELOG must not contain [0.6.11]" in errors
-        assert "Version bump to 0.6.11" in errors
+        assert "Expected source version 0.6.10 not found" in errors
 
     def test_missing_candidate_md_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()

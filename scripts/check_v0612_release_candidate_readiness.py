@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Deterministic static checker for v0.6.12 release-candidate readiness.
+"""Deterministic static checker for v0.6.12 release-candidate / release-prep readiness.
 
 Validates that the v0.6.12 candidate consolidation docs exist, cite every
-CAND-001..CAND-016 candidate, keep v0.6.11 as the current public release, do
-not prematurely claim v0.6.12 is released, and preserve safety invariants.
+CAND-001..CAND-016 candidate, keep v0.6.11 as the current public release, accept
+the 0.6.12 source/package version bump and release-prep artifacts, and preserve
+safety invariants.
 
 Exit codes:
   0 = pass
@@ -34,14 +35,17 @@ READINESS_MD = REPO_ROOT / "docs" / "releases" / "v0.6.12-candidate-readiness.md
 CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.12-candidates.md"
 CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.12-candidates.json"
 RELEASE_METADATA = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.12.md"
+TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.12-status.md"
+CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 README = REPO_ROOT / "README.md"
 DOCS_DIR = REPO_ROOT / "docs"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 
 EXPECTED_CURRENT_PUBLIC = "v0.6.11"
-EXPECTED_SOURCE_VERSION = "0.6.11"
-NEXT_PLANNED = "v0.6.12"
+EXPECTED_SOURCE_VERSION = "0.6.12"
+NEXT_PLANNED = "v0.6.13"
 
 CAND_IDS = [f"CAND-{i:03d}" for i in range(1, 17)]
 
@@ -71,6 +75,8 @@ NEGATION_HINTS = [
     "readiness",
     "preparation",
     "preparing",
+    "prepared",
+    "owner approval",
 ]
 
 REQUIRED_SAFETY_PHRASES = [
@@ -131,6 +137,7 @@ REQUIRED_SAFETY_PHRASES = [
             "not tagged",
             "not released",
             "no tag or github release",
+            "not yet tagged",
         ],
     ),
 ]
@@ -141,6 +148,7 @@ REQUIRED_LINK_SUBSTRINGS = [
     "release-assurance-diagnostics",
     "release-assurance-diagnostics-artifact-validate",
     "release-assurance-artifact-retention-audit",
+    "v0.6.12-owner-approval",
 ]
 
 FORBIDDEN_READINESS_CLAIMS = [
@@ -221,10 +229,28 @@ def _check_release_metadata() -> list[str]:
         errors.append(
             f"current_public_release mismatch: expected {EXPECTED_CURRENT_PUBLIC}, got {current_public}"
         )
+    source_version = data.get("source_version")
+    if source_version != EXPECTED_SOURCE_VERSION:
+        errors.append(
+            f"source_version mismatch: expected {EXPECTED_SOURCE_VERSION}, got {source_version}"
+        )
     if data.get("next_planned_release") != NEXT_PLANNED:
         errors.append(
             f"next_planned_release should be {NEXT_PLANNED}, got {data.get('next_planned_release')}"
         )
+    if data.get("pypi_published") is not False:
+        errors.append("pypi_published must be false")
+    releases = data.get("releases", [])
+    v0612 = next((r for r in releases if r.get("tag") == "v0.6.12"), None)
+    if v0612 is None:
+        errors.append("Release metadata missing v0.6.12 record")
+    else:
+        if v0612.get("status") != "prepared":
+            errors.append("v0.6.12 release metadata status must be 'prepared'")
+        if v0612.get("github_release") is not False:
+            errors.append("v0.6.12 github_release must be false")
+        if v0612.get("pypi_published") is not False:
+            errors.append("v0.6.12 pypi_published must be false")
     return errors
 
 
@@ -270,7 +296,7 @@ def _scan_public_docs_for_premature_claims() -> list[str]:
     return errors
 
 
-def _check_source_version_unchanged() -> list[str]:
+def _check_source_version() -> list[str]:
     errors: list[str] = []
     for path in (PYPROJECT, INIT_PY):
         if not path.exists():
@@ -281,10 +307,20 @@ def _check_source_version_unchanged() -> list[str]:
             errors.append(
                 f"Expected active source version {EXPECTED_SOURCE_VERSION} not found in {path}"
             )
-        if "0.6.12" in text:
-            errors.append(
-                f"Active version appears bumped to 0.6.12 in {path}"
-            )
+    return errors
+
+
+def _check_release_prep_artifacts() -> list[str]:
+    errors: list[str] = []
+    if not RELEASE_NOTES.exists():
+        errors.append(f"Release notes missing: {RELEASE_NOTES}")
+    if not TRUST_STATUS.exists():
+        errors.append(f"Trust status missing: {TRUST_STATUS}")
+    if CHANGELOG.exists():
+        if f"[{EXPECTED_SOURCE_VERSION}]" not in CHANGELOG.read_text(encoding="utf-8"):
+            errors.append(f"CHANGELOG missing entry for [{EXPECTED_SOURCE_VERSION}]")
+    else:
+        errors.append(f"CHANGELOG missing: {CHANGELOG}")
     return errors
 
 
@@ -358,14 +394,17 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict]:
     checks.append("cand_coverage")
     errors.extend(_check_cand_coverage(readiness_text, candidates_text))
 
-    checks.append("release_metadata_current_public")
+    checks.append("release_metadata")
     errors.extend(_check_release_metadata())
 
     checks.append("no_premature_public_claims")
     errors.extend(_scan_public_docs_for_premature_claims())
 
-    checks.append("source_version_unchanged")
-    errors.extend(_check_source_version_unchanged())
+    checks.append("source_version_matches_expected")
+    errors.extend(_check_source_version())
+
+    checks.append("release_prep_artifacts_present")
+    errors.extend(_check_release_prep_artifacts())
 
     checks.append("required_safety_phrases")
     errors.extend(_check_required_safety_phrases(readiness_text, candidates_text))
@@ -397,7 +436,7 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="v0.6.12 release-candidate readiness checker"
+        description="v0.6.12 release-candidate / release-prep readiness checker"
     )
     parser.add_argument("--json", action="store_true", help="Output JSON")
     args = parser.parse_args(argv)
@@ -423,7 +462,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
         status = "PASS" if result["valid"] else "FAIL"
-        print(f"v0.6.12 release-candidate readiness check {status}")
+        print(f"v0.6.12 release candidate readiness check {status}")
         if result["errors"]:
             for err in result["errors"]:
                 print(f"  ERROR: {err}")

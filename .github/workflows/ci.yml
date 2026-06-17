@@ -58,6 +58,10 @@ jobs:
         run: python3.11 scripts/check_v0612_release_candidate_readiness.py
       - name: v0.6.12 release candidate readiness tests
         run: python3.11 -m pytest tests/test_v0612_release_candidate_readiness.py -q
+      - name: v0.6.12 release prep check
+        run: python3.11 scripts/check_v0612_release_prep.py --release-prep
+      - name: v0.6.12 release prep tests
+        run: python3.11 -m pytest tests/test_v0612_release_prep.py -q
       - name: Public docs consistency
         run: python3.11 scripts/check_public_docs_consistency.py
       - name: Product demo and marketplace readiness check

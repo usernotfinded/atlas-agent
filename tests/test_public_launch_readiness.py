@@ -110,7 +110,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.6.10" in readme_text, "README must reference v0.6.10 as current status"
+        assert "v0.6.12" in readme_text, "README must reference v0.6.12 as current source status"
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -238,12 +238,12 @@ class TestStaleRCReferencesBlocked:
             f"Expected pass for historical RC changelog entry:\n{result.stdout}"
         )
 
-    def test_current_source_version_0611_accepted(self) -> None:
+    def test_current_source_version_0612_accepted(self) -> None:
         text = (
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.6.11)\n"
+            "Current Status (v0.6.12)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (

@@ -194,6 +194,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "9c. v0.6.12 release prep check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_v0612_release_prep.py --release-prep
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "9d. v0.6.12 release prep tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_v0612_release_prep.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "10. forbidden claims scan"
 echo "========================================"
 SECONDS=0

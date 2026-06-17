@@ -5,9 +5,9 @@
   "release_line": "v0.6.12",
   "current_public_release": "v0.6.11",
   "next_planned_release": "v0.6.12",
-  "source_version": "0.6.11",
-  "generated_for": "planning",
-  "status": "planning",
+  "source_version": "0.6.12",
+  "generated_for": "release-prep",
+  "status": "release-prep",
   "generated_at": "2026-06-17",
   "candidates": [
     {
@@ -212,7 +212,7 @@
       "workflows": [],
       "safety_scope": "not separately tracked",
       "selected_for_v0612": true,
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "CAND-009",
@@ -253,7 +253,7 @@
       "workflows": [],
       "safety_scope": "not separately tracked",
       "selected_for_v0612": true,
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "CAND-011",
@@ -500,9 +500,9 @@
     "CAND-001 through CAND-007 implemented/audited",
     "CAND-009 and CAND-011 through CAND-016 implemented/audited",
     "CAND-008 and CAND-010 explicitly marked as not separately tracked",
-    "Source/package version remains 0.6.11 (not bumped)",
-    "No docs/releases/v0.6.12.md yet",
-    "No docs/trust/v0.6.12-status.md yet",
+    "Source/package version bumped to 0.6.12",
+    "docs/releases/v0.6.12.md created",
+    "docs/trust/v0.6.12-status.md created",
     "No tag, GitHub release, or PyPI publish for v0.6.12",
     "No runtime trading behavior changes"
   ],

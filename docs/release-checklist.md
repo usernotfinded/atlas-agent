@@ -54,7 +54,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Do not reference a demo GIF as present unless `assets/atlas-demo.gif` actually exists.
 - Confirm no private values or credential-like strings are committed in docs or scripts.
 - Verify `pyproject.toml` `project.version` matches `src/atlas_agent/__init__.py` `__version__`.
-- Verify release checklist references current source version `0.6.11` and public tag `v0.6.10` where applicable.
+- Verify release checklist references current source version `0.6.12` and public tag `v0.6.11` where applicable.
 - Verify `git status` does not include runtime files like `memory/`.
 - Stage files explicitly. Do not use `git add .`.
 - Do not stage `.atlas/`, `.env`, `.env.atlas`, `memory/`, `build/`, `dist/`, `*.egg-info/`, generated reports, credentials, local logs, scratch files.
@@ -328,8 +328,8 @@ Runs fast, safe checks without heavy demos or full pytest:
 - `python3.11 scripts/check_feedback_taxonomy.py`
 - `python3.11 scripts/check_reviewer_outreach.py`
 - `python3.11 scripts/check_product_capability_inventory.py`
-- `python3.11 scripts/check_v0610_release_prep.py --post-release`
-- `python3.11 scripts/check_v0611_release_prep.py --release-prep`
+- `python3.11 scripts/check_v0611_release_prep.py --post-release`
+- `python3.11 scripts/check_v0612_release_prep.py --release-prep`
 - `python3.11 scripts/check_public_docs_consistency.py`
 - `python3.11 scripts/verify_readme_quickstart.py`
 - `python3.11 scripts/check_rc1_cutover.py` — historical v0.5.7 release record check (verifies stable tag and current dev posture)

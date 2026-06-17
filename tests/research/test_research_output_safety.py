@@ -235,10 +235,12 @@ class TestVersionHygiene:
             # For dev, source-only maintenance, or release-prep versions (where release
             # notes exist but the tag has not been created yet), the smoke example
             # should use the latest actual public stable tag.
-            # Source of truth: scripts/check_version_consistency.py
-            consistency_text = Path("scripts/check_version_consistency.py").read_text(encoding="utf-8")
-            m = re.search(r'PUBLIC_TAG = "([^"]+)"', consistency_text)
-            expected_tag = m.group(1) if m else package_tag
+            # Source of truth: docs/releases/release-metadata.json
+            import json
+            metadata = json.loads(
+                Path("docs/releases/release-metadata.json").read_text(encoding="utf-8")
+            )
+            expected_tag = metadata.get("current_public_release", package_tag)
         else:
             expected_tag = package_tag
 

@@ -189,14 +189,28 @@ def main():
     diagnostics: dict[str, dict] = {}
 
     # 1-3. Version checks
+    release_record = _meta.release_by_tag(version)
+    release_status = release_record.get("status") if release_record else None
+    expected_package_version = (
+        release_record.get("version", clean_version) if release_record else clean_version
+    )
     try:
         pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
-        checks["package_version_aligned"] = f'version = "{clean_version}"' in pyproject
         init_py = Path("src/atlas_agent/__init__.py").read_text(encoding="utf-8")
-        checks["package_version_aligned"] = (
-            checks["package_version_aligned"]
-            and f'__version__ = "{clean_version}"' in init_py
-        )
+        if release_status == "current_public":
+            # Source on main may have moved forward after the public release; verify
+            # the release metadata records the expected package version and the
+            # source files declare the current development version.
+            checks["package_version_aligned"] = (
+                expected_package_version == clean_version
+                and f'version = "{_meta.source_version}"' in pyproject
+                and f'__version__ = "{_meta.source_version}"' in init_py
+            )
+        else:
+            checks["package_version_aligned"] = (
+                f'version = "{expected_package_version}"' in pyproject
+                and f'__version__ = "{expected_package_version}"' in init_py
+            )
     except OSError as e:
         checks["package_version_aligned"] = False
         findings.append(f"Failed to read version files: {e}")
@@ -233,14 +247,19 @@ def main():
     # 6. README
     try:
         readme = Path("README.md").read_text(encoding="utf-8")
-        # The README must reference the requested release as the current status
-        # and must not claim any historical release is current.
+        # The README must reference the active source version as the current status
+        # and must not claim any historical release is current. For a current_public
+        # release verified from main, the README is intentionally ahead of the
+        # public tag; use the source version from metadata as the expected status.
         historical_tags = [
             r.get("tag")
             for r in _meta.data.get("releases", [])
             if r.get("status") == "historical" and r.get("tag")
         ]
-        current_status_claim = f"Current Status ({version})"
+        expected_status_version = (
+            f"v{_meta.source_version}" if release_status == "current_public" else version
+        )
+        current_status_claim = f"Current Status ({expected_status_version})"
         readme_current = current_status_claim in readme
         stale_claims = [
             f"Current Status ({tag})"
@@ -286,9 +305,19 @@ def main():
         checks["security_md_current"],
     )
 
+    # Public-release artifacts are expected for current_public / historical releases
+    # and for unknown release records (legacy/mocked runs). Prepared releases must
+    # not have tags or GitHub releases yet.
+    expect_public_artifacts = (
+        release_status in ("current_public", "historical")
+        if release_record
+        else True
+    )
+
     # 8. Local tag
     out, rc, err = run_cmd(["git", "tag", "-l", version], check=False)
-    checks["local_tag_present"] = version in out
+    local_tag_present = version in out
+    checks["local_tag_present"] = local_tag_present == expect_public_artifacts
     _record_diagnostic(
         diagnostics,
         "local_tag_present",
@@ -303,7 +332,8 @@ def main():
     out, rc, err = run_cmd(
         ["git", "ls-remote", "--tags", "origin", version], check=False
     )
-    checks["remote_tag_present"] = version in out
+    remote_tag_present = version in out
+    checks["remote_tag_present"] = remote_tag_present == expect_public_artifacts
     _record_diagnostic(
         diagnostics,
         "remote_tag_present",
@@ -318,7 +348,10 @@ def main():
     out, rc, err = run_cmd(
         ["gh", "release", "view", version, "--json", "url"], check=False
     )
-    checks["github_release_present"] = rc == 0
+    github_release_present = rc == 0
+    checks["github_release_present"] = (
+        github_release_present == expect_public_artifacts
+    )
     _record_diagnostic(
         diagnostics,
         "github_release_present",

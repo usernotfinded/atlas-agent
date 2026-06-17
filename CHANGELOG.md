@@ -15,6 +15,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 
+## [0.6.12] - 2026-06-17
+
+### Added
+- Release preparation and owner approval gate (CAND-018): bumped package/source version to `0.6.12`, created `docs/releases/v0.6.12.md`, `docs/trust/v0.6.12-status.md`, and `docs/releases/v0.6.12-owner-approval.md`.
+- `scripts/check_v0612_release_prep.py` and `tests/test_v0612_release_prep.py` for v0.6.12 release-prep state validation in planning, release-prep, and post-release modes.
+- `tests/test_v0612_release_candidate_readiness.py` for the updated v0.6.12 release-candidate readiness checker.
+
+### Changed
+- Bumped package/source version from `0.6.11` to `0.6.12`.
+- Updated release metadata to reflect `v0.6.11` as the current public GitHub release, `v0.6.12` as prepared, and `v0.6.13` as the next planned release.
+- Updated README, SECURITY.md, `docs/trust/README.md`, `docs/development/main-health.md`, `docs/public-launch-readiness.md`, and `docs/release-checklist.md` to reflect `0.6.12` source / `v0.6.11` public / `v0.6.13` next state.
+- Integrated the v0.6.12 release-prep check into `scripts/dev_check.sh`, `scripts/ci_check.sh`, `scripts/release_check.sh`, and the GitHub Actions `quick-gate` workflow.
+
+### Safety
+- No live trading, broker execution, provider execution, risk gate, approval gate, kill switch, or audit behavior changes.
+- Tag `v0.6.12` was not created; GitHub Release `v0.6.12` was not published; **PyPI was not published**.
+- Public cutover for `v0.6.12` requires explicit owner approval documented in `docs/releases/v0.6.12-owner-approval.md`.
+
 ## [0.6.11] - 2026-06-15
 
 ### Added

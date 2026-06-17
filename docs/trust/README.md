@@ -7,9 +7,10 @@ users, contributors, auditors, and potential adopters.
 
 - Current public release: `v0.6.11` (tagged)
 - Previous public release: `v0.6.10`
-- Source package version on `main`: `0.6.11`
+- Source package version on `main`: `0.6.12`
 - GitHub release: `v0.6.11` (current public)
-- Next planning line: `v0.6.12` — [v0.6.12 Candidate Readiness](../releases/v0.6.12-candidate-readiness.md) (planning line)
+- Next planning line: `v0.6.13` (planning line; candidate docs will be created when the v0.6.13 cycle begins)
+- Public v0.6.12: release-prep — [v0.6.12 Trust and Release Status](v0.6.12-status.md) (prepared, not yet tagged)
 - Public v0.6.11: current public — [v0.6.11 Trust and Release Status](v0.6.11-status.md)
 - Previous public v0.6.10 — [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
 - PyPI was not published
@@ -18,6 +19,7 @@ users, contributors, auditors, and potential adopters.
 - Previous previous release status: [v0.6.9 Trust and Release Status](v0.6.9-status.md) (historical)
 - Previous previous previous release status: [v0.6.8 Trust and Release Status](v0.6.8-status.md) (historical)
 - Current public release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (current public)
+- v0.6.12 release notes: [docs/releases/v0.6.12.md](../releases/v0.6.12.md) (prepared, not yet released)
 - Previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
 - Previous previous previous release notes: [docs/releases/v0.6.8.md](../releases/v0.6.8.md) (historical)
@@ -84,12 +86,14 @@ brokers, enable trading, or require credentials.
 - GitHub release: `v0.6.10` (historical)
 - Tag: `v0.6.11` (created and pushed)
 - Tag: `v0.6.10` (historical)
+- Tag: `v0.6.12` (not created; release prep only)
 - PyPI was not published
-- Package version in source metadata: `0.6.11`
+- Package version in source metadata: `0.6.12`
 - Auto-updater delivery: verified for `v0.6.11`; not yet verified for `v0.6.12`
 
 ## What Is Ready
 
+- Public v0.6.12 release notes and release status documentation (prepared, not yet released).
 - Public v0.6.11 release notes and release status documentation (current public).
 - Public v0.6.10 release notes and release status documentation (historical).
 - Public v0.6.9 release notes and release status documentation (historical).
@@ -102,8 +106,9 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, or `v0.6.11`.
-- `v0.6.12` is the next planning line and is not yet implemented or released.
+- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, `v0.6.11`, or `v0.6.12`.
+- `v0.6.12` is prepared but not yet tagged or released.
+- `v0.6.13` is the next planning line and is not yet implemented or released.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -119,6 +124,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
+- [v0.6.12 Release Notes](../releases/v0.6.12.md) (prepared, not yet released)
+- [v0.6.12 Trust and Release Status](v0.6.12-status.md) (prepared, not yet released)
 - [v0.6.11 Release Notes](../releases/v0.6.11.md) (current public)
 - [v0.6.11 Trust and Release Status](v0.6.11-status.md) (current public)
 - [v0.6.10 Release Notes](../releases/v0.6.10.md) (historical)
