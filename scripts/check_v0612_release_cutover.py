@@ -71,7 +71,6 @@ PYPI_PUBLISH_PHRASES = [
     "pypi published",
     "publish to pypi",
     "published to pypi",
-    "twine upload",
 ]
 
 
