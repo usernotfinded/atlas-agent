@@ -16,7 +16,7 @@
       "user_value": "Reviewers have a single canonical evidence record and a clearer selection gate.",
       "safety_boundary": "Docs/checker/test only; no runtime or boundary changes.",
       "risk": "low",
-      "recommendation": "now — implemented/audited",
+      "recommendation": "now \u2014 implemented/audited",
       "ranking_reason": "Consolidates release evidence; low risk.",
       "primary_files": [
         "docs/releases/v0.6.12-post-release-evidence.md",
@@ -25,8 +25,12 @@
         "scripts/check_v0613_post_release_hygiene.py",
         "tests/test_v0613_post_release_hygiene.py"
       ],
-      "checkers": ["scripts/check_v0613_post_release_hygiene.py"],
-      "tests": ["tests/test_v0613_post_release_hygiene.py"],
+      "checkers": [
+        "scripts/check_v0613_post_release_hygiene.py"
+      ],
+      "tests": [
+        "tests/test_v0613_post_release_hygiene.py"
+      ],
       "workflows": [],
       "safety_scope": "docs/checker/test",
       "selected_for_v0613": true,
@@ -39,7 +43,7 @@
       "user_value": "Reviewers can verify the project's conservative autonomy stance and governance ladder.",
       "safety_boundary": "Governance docs only; no runtime or boundary changes.",
       "risk": "low",
-      "recommendation": "now — implemented/audited",
+      "recommendation": "now \u2014 implemented/audited",
       "ranking_reason": "Documents existing safety posture; low risk.",
       "primary_files": [
         "docs/bounded-live-autonomy-governance.md",
@@ -47,8 +51,12 @@
         "scripts/check_bounded_autonomy_governance.py",
         "tests/test_bounded_autonomy_governance.py"
       ],
-      "checkers": ["scripts/check_bounded_autonomy_governance.py"],
-      "tests": ["tests/test_bounded_autonomy_governance.py"],
+      "checkers": [
+        "scripts/check_bounded_autonomy_governance.py"
+      ],
+      "tests": [
+        "tests/test_bounded_autonomy_governance.py"
+      ],
       "workflows": [],
       "safety_scope": "docs/checker/test",
       "selected_for_v0613": true,
@@ -61,7 +69,7 @@
       "user_value": "Reviewers can run and verify a deterministic L1 paper-only autonomy demo locally.",
       "safety_boundary": "Docs/checker/test only; paper-only, offline, no credentials; no runtime or boundary changes.",
       "risk": "low",
-      "recommendation": "now — implemented/audited",
+      "recommendation": "now \u2014 implemented/audited",
       "ranking_reason": "Concrete L1 autonomy proof without live-trading claims; low risk.",
       "primary_files": [
         "docs/autonomous-paper-workflow.md",
@@ -80,9 +88,15 @@
         "scripts/ci_check.sh",
         ".github/workflows/ci.yml"
       ],
-      "checkers": ["scripts/check_autonomous_paper_workflow_demo.py"],
-      "tests": ["tests/test_autonomous_paper_workflow_demo.py"],
-      "workflows": [".github/workflows/ci.yml"],
+      "checkers": [
+        "scripts/check_autonomous_paper_workflow_demo.py"
+      ],
+      "tests": [
+        "tests/test_autonomous_paper_workflow_demo.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
       "safety_scope": "docs/checker/test/demo-script",
       "selected_for_v0613": true,
       "implemented": true
@@ -94,7 +108,7 @@
       "user_value": "Paper agentic workflows can run without provider credentials or network; live mode stays fail-closed.",
       "safety_boundary": "Provider/CLI/runner wiring only; no broker, execution, safety, risk, or config boundary changes.",
       "risk": "low",
-      "recommendation": "now — implemented/audited",
+      "recommendation": "now \u2014 implemented/audited",
       "ranking_reason": "Removes the local provider transport failure blocker for paper mode while preserving live fail-closed behavior.",
       "primary_files": [
         "docs/paper-provider-isolation.md",
@@ -116,9 +130,15 @@
         "scripts/ci_check.sh",
         ".github/workflows/ci.yml"
       ],
-      "checkers": ["scripts/check_paper_provider_isolation.py"],
-      "tests": ["tests/test_paper_provider_isolation.py"],
-      "workflows": [".github/workflows/ci.yml"],
+      "checkers": [
+        "scripts/check_paper_provider_isolation.py"
+      ],
+      "tests": [
+        "tests/test_paper_provider_isolation.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
       "safety_scope": "provider/CLI/runner wiring",
       "selected_for_v0613": true,
       "implemented": true
@@ -130,7 +150,7 @@
       "user_value": "Reviewers can compare sample-data strategy behavior and see paper-only candidate/reject/needs-more-testing decisions.",
       "safety_boundary": "Backtest/CLI/reporting/docs/checker/test only; no provider, broker, live, safety, risk, or config boundary changes.",
       "risk": "low",
-      "recommendation": "now — implemented/audited",
+      "recommendation": "now \u2014 implemented/audited",
       "ranking_reason": "Adds conservative paper research gating without live-promotion claims; low risk.",
       "primary_files": [
         "src/atlas_agent/backtest/evaluation.py",
@@ -154,12 +174,24 @@
         "scripts/release_check.sh",
         ".github/workflows/ci.yml"
       ],
-      "checkers": ["scripts/check_paper_strategy_evaluation.py"],
-      "tests": ["tests/test_paper_strategy_evaluation.py"],
-      "workflows": [".github/workflows/ci.yml"],
+      "checkers": [
+        "scripts/check_paper_strategy_evaluation.py"
+      ],
+      "tests": [
+        "tests/test_paper_strategy_evaluation.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
       "safety_scope": "backtest/CLI/reporting/docs/checker/test",
       "selected_for_v0613": true,
       "implemented": true
+    },
+    {
+      "id": "CAND-026",
+      "title": "Paper Strategy Sensitivity Matrix and Deterministic Fixture",
+      "status": "implemented",
+      "risk_level": "low"
     }
   ],
   "rejected": [

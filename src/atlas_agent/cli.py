@@ -34,6 +34,10 @@ from atlas_agent.backtest import (
     validate_strategy,
     write_report_from_result,
 )
+from atlas_agent.backtest.sensitivity import (
+    build_paper_strategy_sensitivity,
+    write_strategy_sensitivity_reports,
+)
 from atlas_agent.brokers.alpaca import AlpacaBroker
 from atlas_agent.brokers.base import BrokerConfigurationError
 from atlas_agent.brokers.binance import BinanceBroker
@@ -442,6 +446,29 @@ Safety First:
     backtest_compare.add_argument("--start-date", default=None)
     backtest_compare.add_argument("--end-date", default=None)
     backtest_compare.add_argument("--json", action="store_true")
+    backtest_sensitivity = backtest_sub.add_parser(
+        "sensitivity",
+        help="Evaluate parameter sensitivity through a deterministic paper-only gate.",
+        description=(
+            "Evaluate strategies across parameter variants against local OHLCV data "
+            "and write paper-only strategy-sensitivity.json and .md artifacts. "
+            "No provider, broker, network, or live trading path is used."
+        ),
+    )
+    backtest_sensitivity.add_argument("--symbol", required=True)
+    backtest_sensitivity.add_argument("--data", required=True)
+    backtest_sensitivity.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_sensitivity.add_argument("--output-dir", required=True)
+    backtest_sensitivity.add_argument("--initial-equity", type=float, default=10000.0)
+    backtest_sensitivity.add_argument("--slippage-bps", type=float, default=0.0)
+    backtest_sensitivity.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_sensitivity.add_argument("--start-date", default=None)
+    backtest_sensitivity.add_argument("--end-date", default=None)
+    backtest_sensitivity.add_argument("--json", action="store_true")
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
     backtest_runs = backtest_sub.add_parser("runs")
@@ -4468,6 +4495,47 @@ def main(argv: list[str] | None = None) -> int:
                 f"{name}={count}" for name, count in sorted(decisions.items())
             )
             print(f"Paper strategy evaluation complete: {report['symbol']}")
+            print(f"Strategies evaluated: {len(report['strategies'])}")
+            print(f"Paper gate decisions: {decision_summary}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {markdown_path}")
+            print("No live trading, broker calls, provider calls, or network calls.")
+            return 0
+
+        if args.backtest_command == "sensitivity":
+            try:
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                report = build_paper_strategy_sensitivity(
+                    data_path=getattr(args, "data"),
+                    symbol=getattr(args, "symbol"),
+                    strategies=strategy_ids,
+                    initial_equity=getattr(args, "initial_equity", 10000.0),
+                    slippage_bps=getattr(args, "slippage_bps", 0.0),
+                    commission_bps=getattr(args, "commission_bps", 0.0),
+                    start_date=getattr(args, "start_date", None),
+                    end_date=getattr(args, "end_date", None),
+                )
+                json_path, markdown_path = write_strategy_sensitivity_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            decisions: dict[str, int] = {}
+            for item in report.get("strategies", []):
+                for variant in item.get("variants", []):
+                    decision = variant.get("paper_gate", {}).get("decision", "unknown")
+                    decisions[decision] = decisions.get(decision, 0) + 1
+            decision_summary = ", ".join(
+                f"{name}={count}" for name, count in sorted(decisions.items())
+            )
+            print(f"Paper strategy sensitivity evaluation complete: {report['symbol']}")
             print(f"Strategies evaluated: {len(report['strategies'])}")
             print(f"Paper gate decisions: {decision_summary}")
             print(f"Report saved to: {json_path}")

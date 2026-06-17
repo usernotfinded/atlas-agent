@@ -86,5 +86,6 @@ python3.11 -m pytest tests/test_autonomous_paper_workflow_demo.py -q
 - [Paper-Trading Guide](paper-trading-guide.md)
 - [Paper Mode Provider Isolation](paper-provider-isolation.md)
 - [Paper Strategy Evaluation](paper-strategy-evaluation.md)
+- [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md)
 - [scripts/demo_autonomous_paper_workflow.sh](../scripts/demo_autonomous_paper_workflow.sh)
 - [scripts/check_autonomous_paper_workflow_demo.py](../scripts/check_autonomous_paper_workflow_demo.py)
