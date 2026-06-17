@@ -109,9 +109,12 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `docs/autonomy-roadmap.md` clearly marks higher autonomy levels as future/out-of-scope and not implemented.
 - [ ] No absolute user paths (home-directory or temp-folder prefixes) or credential examples appear in public demo or outreach docs.
 - [ ] All demo/marketplace language remains paper-first, sandbox/preflight-first, broker-neutral, and safe-by-default.
-- [ ] `docs/releases/v0.6.12-candidate-readiness.md` exists and `python3.11 scripts/check_v0612_release_candidate_readiness.py` passes.
 - [ ] `docs/releases/v0.6.12-post-release-evidence.md` and `docs/releases/v0.6.12-post-release-evidence.json` exist and `python3.11 scripts/check_v0612_post_release_evidence.py` passes.
+- [ ] `docs/releases/v0.6.12-candidate-readiness.md` exists as a historical planning record; `python3.11 scripts/check_v0612_release_candidate_readiness.py` still passes.
 - [ ] `docs/releases/v0.6.13-plan.md` exists and is referenced as a planning-only document; it does not claim `v0.6.13` is released.
+- [ ] `docs/releases/v0.6.13-candidate-selection.md` exists and `python3.11 scripts/check_v0613_post_release_hygiene.py` passes.
+- [ ] No active doc claims `v0.6.13` is released, tagged, published on GitHub, or published to PyPI.
+- [ ] No active doc claims `v0.6.11` is the current public release.
 
 ## Known limitations
 

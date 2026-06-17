@@ -183,6 +183,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "13.9. v0.6.13 post-release hygiene check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_v0613_post_release_hygiene.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "13.10. v0.6.13 post-release hygiene tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_v0613_post_release_hygiene.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "13a. product demo and marketplace readiness check"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_product_demo_pack.py

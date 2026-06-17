@@ -68,6 +68,10 @@ jobs:
         run: python3.11 scripts/check_v0612_post_release_evidence.py
       - name: v0.6.12 post-release evidence tests
         run: python3.11 -m pytest tests/test_v0612_post_release_evidence.py -q
+      - name: v0.6.13 post-release hygiene check
+        run: python3.11 scripts/check_v0613_post_release_hygiene.py
+      - name: v0.6.13 post-release hygiene tests
+        run: python3.11 -m pytest tests/test_v0613_post_release_hygiene.py -q
       - name: Public docs consistency
         run: python3.11 scripts/check_public_docs_consistency.py
       - name: Product demo and marketplace readiness check

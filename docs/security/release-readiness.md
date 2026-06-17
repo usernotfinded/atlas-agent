@@ -194,14 +194,22 @@ items, non-goals, release blockers, and release recommendation.
 
 ## v0.6.12 post-release evidence
 
-After the v0.6.12 public cutover, deterministic post-release evidence and the
-v0.6.13 planning seed were added:
+After the v0.6.12 public cutover, deterministic post-release evidence became the
+canonical public record for the released state. The v0.6.13 planning line is
+seeded but not released.
 
-- [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md)
-- [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md)
+- [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md) — canonical deterministic cutover evidence
+- [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — non-committal next-line planning notes
+- [v0.6.13 Candidate Selection](../releases/v0.6.13-candidate-selection.md) — planning-only candidate-selection gate
 
 ## v0.6.12 candidate readiness
 
-For the v0.6.12 planning-line candidate readiness consolidation, see
-[docs/releases/v0.6.12-candidate-readiness.md](../releases/v0.6.12-candidate-readiness.md)
-and run `python3.11 scripts/check_v0612_release_candidate_readiness.py`.
+The v0.6.12 planning-line candidate readiness consolidation is now a historical
+planning record:
+
+- [docs/releases/v0.6.12-candidate-readiness.md](../releases/v0.6.12-candidate-readiness.md) (historical)
+- `python3.11 scripts/check_v0612_release_candidate_readiness.py` still validates the historical record.
+
+For the current v0.6.13 planning line, use
+[docs/releases/v0.6.13-candidate-selection.md](../releases/v0.6.13-candidate-selection.md)
+and run `python3.11 scripts/check_v0613_post_release_hygiene.py`.

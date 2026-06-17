@@ -90,7 +90,12 @@ atlas research release-candidate-readiness-doctor <REPORT_ID> --json
 
 ## Version-specific candidate readiness
 
-- [v0.6.12 Candidate Readiness](releases/v0.6.12-candidate-readiness.md) — release-candidate readiness consolidation for the v0.6.12 planning line.
+- [v0.6.13 Candidate Selection](releases/v0.6.13-candidate-selection.md) —
+  planning-only candidate-selection gate for the v0.6.13 line.
+- [v0.6.12 Candidate Readiness](releases/v0.6.12-candidate-readiness.md) —
+  historical release-candidate readiness consolidation for the v0.6.12 planning
+  line. The canonical released-state evidence is
+  [v0.6.12 Post-Release Evidence](releases/v0.6.12-post-release-evidence.md).
 
 ## Limitations
 

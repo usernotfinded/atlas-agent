@@ -1,5 +1,12 @@
 # CAND-017 — v0.6.12 Release Candidate Consolidation and Cutover Readiness Audit Implementation Plan
 
+> **Status:** historical implementation plan. CAND-017 has been completed. The
+> resulting v0.6.12 candidate-readiness docs are now historical planning records;
+> the canonical released-state evidence is
+> [v0.6.12 Post-Release Evidence](../../releases/v0.6.12-post-release-evidence.md).
+> For the v0.6.13 planning line, see
+> [v0.6.13 Candidate Selection](../../releases/v0.6.13-candidate-selection.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Consolidate CAND-001 through CAND-016 into a v0.6.12 release-candidate readiness layer without creating a tag, release, or PyPI publish, and without bumping the version.
