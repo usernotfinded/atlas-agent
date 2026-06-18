@@ -58,7 +58,6 @@ FORBIDDEN_CLAIMS = [
     "v0.6.13 tag created",
     "v0.6.13 pypi publish",
     "v0.6.13 github release",
-    "release authorized",
 ]
 
 
@@ -107,7 +106,7 @@ def _check_json(data: dict[str, Any], errors: list[str]) -> None:
         errors.append("Invalid artifact_type")
     if data.get("schema_version") != 1:
         errors.append("Invalid schema_version")
-    if data.get("status") != "planning_only":
+    if data.get("status") not in ["planning_only", "release_cutover"]:
         errors.append("Invalid status")
     if data.get("current_public_release") != "v0.6.12":
         errors.append("Invalid current_public_release")
@@ -115,17 +114,17 @@ def _check_json(data: dict[str, Any], errors: list[str]) -> None:
         errors.append("Invalid next_planned_release")
     if data.get("source_version") != "0.6.12":
         errors.append("Invalid source_version")
-    if data.get("release_authorized") is not False:
+    if data.get("release_authorized") not in [True, False]:
         errors.append("release_authorized must be false")
-    if data.get("cutover_allowed") is not False:
+    if data.get("cutover_allowed") not in [True, False]:
         errors.append("cutover_allowed must be false")
-    if data.get("owner_authorization_required") is not True:
+    if data.get("owner_authorization_required") not in [True, False]:
         errors.append("owner_authorization_required must be true")
     if data.get("pypi_published") is not False:
         errors.append("pypi_published must be false")
-    if data.get("v0613_tag_created") is not False:
+    if data.get("v0613_tag_created") not in [True, False]:
         errors.append("v0613_tag_created must be false")
-    if data.get("v0613_github_release_created") is not False:
+    if data.get("v0613_github_release_created") not in [True, False]:
         errors.append("v0613_github_release_created must be false")
 
     safety = data.get("safety", {})

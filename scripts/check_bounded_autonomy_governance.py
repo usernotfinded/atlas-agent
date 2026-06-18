@@ -40,7 +40,7 @@ NEXT_PLANNED_TAG = _meta.next_planned_release
 
 GOVERNANCE_DOC = REPO_ROOT / "docs" / "bounded-live-autonomy-governance.md"
 ROADMAP_DOC = REPO_ROOT / "docs" / "autonomy-roadmap.md"
-CANDIDATE_SELECTION_DOC = REPO_ROOT / "docs" / "releases" / "v0.6.13-candidate-selection.md"
+CANDIDATE_SELECTION_DOC = REPO_ROOT / "docs" / "releases" / "v0.6.14-candidate-selection.md"
 
 # Public-facing locations that must not make positive autonomy claims.
 _SCAN_TARGETS = [
@@ -238,7 +238,7 @@ def _check_candidate_selection() -> list[str]:
 
     if "planning only" not in lower and "planning-only" not in lower:
         errors.append(
-            "v0.6.13-candidate-selection.md missing planning-only statement"
+            "v0.6.14-candidate-selection.md missing planning-only statement"
         )
 
     return errors
@@ -298,28 +298,28 @@ def _check_public_autonomy_claims() -> list[str]:
 
 def _check_version_planning_only() -> list[str]:
     errors: list[str] = []
-    if PACKAGE_VERSION != "0.6.12":
+    if PACKAGE_VERSION != "0.6.13":
         errors.append(
-            f"Source version {PACKAGE_VERSION} != 0.6.12 (v0.6.13 must remain planning-only)"
+            f"Source version {PACKAGE_VERSION} != 0.6.13 (v0.6.14 must remain planning-only)"
         )
-    if CURRENT_PUBLIC_TAG != "v0.6.12":
+    if CURRENT_PUBLIC_TAG != "v0.6.13":
         errors.append(
-            f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.12"
+            f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.13"
         )
-    if NEXT_PLANNED_TAG not in ("v0.6.13", "0.6.13"):
+    if NEXT_PLANNED_TAG not in ("v0.6.14", "0.6.14"):
         errors.append(
-            f"Next planned release {NEXT_PLANNED_TAG} != v0.6.13"
+            f"Next planned release {NEXT_PLANNED_TAG} != v0.6.14"
         )
 
-    # Ensure v0.6.13 has not been tagged locally.
+    # Ensure v0.6.14 has not been tagged locally.
     result = subprocess.run(
-        ["git", "tag", "--list", "v0.6.13"],
+        ["git", "tag", "--list", "v0.6.14"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
     )
     if result.stdout.strip():
-        errors.append("Local git tag v0.6.13 already exists")
+        errors.append("Local git tag v0.6.14 already exists")
 
     return errors
 

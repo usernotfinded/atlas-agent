@@ -75,7 +75,7 @@ def check_all() -> list[str]:
 
     # 4. Release metadata and candidate docs
     # Source version check is external, but we can quickly check v0.6.13 claims
-    cand_selection = Path("docs/releases/v0.6.13-candidate-selection.md")
+    cand_selection = Path("docs/releases/v0.6.13-candidates.md")
     if cand_selection.exists() and "released" in cand_selection.read_text().lower() and "v0.6.13 is released" in cand_selection.read_text().lower():
         issues.append("Must not claim v0.6.13 is released")
 

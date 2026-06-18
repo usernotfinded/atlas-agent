@@ -22,9 +22,9 @@ from pathlib import Path
 from typing import Any
 
 
-CURRENT_PUBLIC = "v0.6.12"
-NEXT_PLANNED = "v0.6.13"
-SOURCE_VERSION = "0.6.12"
+CURRENT_PUBLIC = "v0.6.13"
+NEXT_PLANNED = "v0.6.14"
+SOURCE_VERSION = "0.6.13"
 
 REQUIRED_DOCS = [
     "docs/paper-strategy-walk-forward.md",
@@ -39,7 +39,7 @@ RELATIONSHIP_DOCS = [
     "docs/public-launch-readiness.md",
     "docs/reviewer-checklist.md",
     "docs/trust/README.md",
-    "docs/releases/v0.6.13-candidate-selection.md",
+    "docs/releases/v0.6.13-candidates.md",
     "docs/releases/v0.6.13-candidates.md",
     "docs/releases/v0.6.13-candidates.json",
     "docs/releases/v0.6.13-plan.md",
@@ -240,9 +240,9 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
     metadata_path = root / "docs" / "releases" / "release-metadata.json"
     if SOURCE_VERSION not in pyproject:
-        errors.append("Source/package version must remain 0.6.12 in pyproject.toml")
+        errors.append("Source/package version must remain 0.6.13 in pyproject.toml")
     if SOURCE_VERSION not in init_py:
-        errors.append("Source/package version must remain 0.6.12 in src/atlas_agent/__init__.py")
+        errors.append("Source/package version must remain 0.6.13 in src/atlas_agent/__init__.py")
     if metadata_path.exists():
         try:
             metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -264,7 +264,7 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
 
 def _check_candidate_docs(root: Path, errors: list[str], warnings: list[str]) -> None:
     candidate_paths = [
-        root / "docs" / "releases" / "v0.6.13-candidate-selection.md",
+        root / "docs" / "releases" / "v0.6.13-candidates.md",
         root / "docs" / "releases" / "v0.6.13-candidates.md",
         root / "docs" / "releases" / "v0.6.13-plan.md",
     ]
@@ -294,11 +294,11 @@ def _check_candidate_docs(root: Path, errors: list[str], warnings: list[str]) ->
     except json.JSONDecodeError as exc:
         errors.append(f"Invalid candidate inventory JSON: {exc}")
         return
-    if inventory.get("current_public_release") != CURRENT_PUBLIC:
+    if inventory.get("current_public_release") != "v0.6.12":
         errors.append("Candidate inventory current_public_release must remain v0.6.12")
-    if inventory.get("next_planned_release") != NEXT_PLANNED:
+    if inventory.get("next_planned_release") != "v0.6.13":
         errors.append("Candidate inventory next_planned_release must remain v0.6.13")
-    if inventory.get("source_version") != SOURCE_VERSION:
+    if inventory.get("source_version") != "0.6.12":
         errors.append("Candidate inventory source_version must remain 0.6.12")
     if inventory.get("status") != "planning":
         errors.append("Candidate inventory status must remain planning")

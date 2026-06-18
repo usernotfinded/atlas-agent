@@ -1,15 +1,27 @@
 {
   "schema_version": 1,
-  "source_version": "0.6.12",
-  "current_public_release": "v0.6.12",
-  "next_planned_release": "v0.6.13",
+  "source_version": "0.6.13",
+  "current_public_release": "v0.6.13",
+  "next_planned_release": "v0.6.14",
   "historical_stable_baseline": "v0.5.8",
   "pypi_published": false,
   "releases": [
     {
+      "tag": "v0.6.13",
+      "version": "0.6.13",
+      "status": "current_public",
+      "release_notes": "docs/releases/v0.6.13.md",
+      "trust_status": "docs/trust/v0.6.13-status.md",
+      "github_release": true,
+      "pypi_published": false,
+      "release_authorized": true,
+      "tag_created": true,
+      "github_release_created": true
+    },
+    {
       "tag": "v0.6.12",
       "version": "0.6.12",
-      "status": "current_public",
+      "status": "historical",
       "release_notes": "docs/releases/v0.6.12.md",
       "trust_status": "docs/trust/v0.6.12-status.md",
       "github_release": true,

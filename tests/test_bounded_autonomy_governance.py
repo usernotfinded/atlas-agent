@@ -152,8 +152,8 @@ def test_version_planning_only_flags_bad_version(tmp_path: Path) -> None:
     """If source version is bumped prematurely, the checker must fail."""
     from scripts import check_bounded_autonomy_governance as checker
 
-    with patch.object(checker, "PACKAGE_VERSION", "0.6.13"), \
-         patch.object(checker, "CURRENT_PUBLIC_TAG", "v0.6.12"), \
-         patch.object(checker, "NEXT_PLANNED_TAG", "v0.6.13"):
+    with patch.object(checker, "PACKAGE_VERSION", "0.6.14"), \
+         patch.object(checker, "CURRENT_PUBLIC_TAG", "v0.6.13"), \
+         patch.object(checker, "NEXT_PLANNED_TAG", "v0.6.14"):
         errors = checker._check_version_planning_only()
-        assert any("0.6.13 must remain planning-only" in e for e in errors)
+        assert any("0.6.14 must remain planning-only" in e for e in errors)

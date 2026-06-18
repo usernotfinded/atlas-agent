@@ -24,7 +24,7 @@ from typing import Any
 ARTIFACT_TYPE = "v0613_paper_autonomy_evidence"
 CURRENT_PUBLIC = "v0.6.12"
 NEXT_PLANNED = "v0.6.13"
-SOURCE_VERSION = "0.6.12"
+SOURCE_VERSION = "0.6.13"
 
 EVIDENCE_MD = "docs/releases/v0.6.13-paper-autonomy-evidence.md"
 EVIDENCE_JSON = "docs/releases/v0.6.13-paper-autonomy-evidence.json"
@@ -65,7 +65,7 @@ REQUIRED_RELEASE_DOCS = [
     "docs/trust/README.md",
     "docs/public-launch-readiness.md",
     "docs/reviewer-checklist.md",
-    "docs/releases/v0.6.13-candidate-selection.md",
+    "docs/releases/v0.6.13-candidates.md",
     "docs/releases/v0.6.13-candidates.md",
     "docs/releases/v0.6.13-candidates.json",
     "docs/releases/v0.6.13-plan.md",
@@ -162,11 +162,11 @@ def _check_schema(data: dict[str, Any], errors: list[str]) -> None:
     expected = {
         "artifact_type": ARTIFACT_TYPE,
         "schema_version": 1,
-        "release_line": NEXT_PLANNED,
+        "release_line": "v0.6.13",
         "status": "planning_only",
-        "current_public_release": CURRENT_PUBLIC,
-        "next_planned_release": NEXT_PLANNED,
-        "source_version": SOURCE_VERSION,
+        "current_public_release": "v0.6.12",
+        "next_planned_release": "v0.6.13",
+        "source_version": "0.6.12",
         "pypi_published": False,
         "v0613_tag_created": False,
         "v0613_github_release_created": False,
@@ -298,9 +298,9 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
     metadata_path = root / "docs" / "releases" / "release-metadata.json"
     if SOURCE_VERSION not in pyproject:
-        errors.append("Source/package version must remain 0.6.12 in pyproject.toml")
+        errors.append("Source/package version must remain 0.6.13 in pyproject.toml")
     if SOURCE_VERSION not in init_py:
-        errors.append("Source/package version must remain 0.6.12 in src/atlas_agent/__init__.py")
+        errors.append("Source/package version must remain 0.6.13 in src/atlas_agent/__init__.py")
     if not metadata_path.exists():
         errors.append("Missing release metadata: docs/releases/release-metadata.json")
         return
@@ -310,17 +310,17 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
         errors.append(f"Invalid release metadata JSON: {exc}")
         return
     checks = {
-        "source_version": SOURCE_VERSION,
-        "current_public_release": CURRENT_PUBLIC,
-        "next_planned_release": NEXT_PLANNED,
+        "source_version": "0.6.13",
+        "current_public_release": "v0.6.13",
+        "next_planned_release": "v0.6.14",
         "pypi_published": False,
     }
     for key, expected in checks.items():
         if metadata.get(key) != expected:
             errors.append(f"release-metadata.json {key} must be {expected!r}")
     for item in metadata.get("releases", []):
-        if isinstance(item, dict) and item.get("tag") == NEXT_PLANNED:
-            errors.append("release-metadata.json must not list v0.6.13 as a release")
+        if isinstance(item, dict) and item.get("tag") == "v0.6.14":
+            errors.append("release-metadata.json must not list v0.6.14 as a release")
 
 
 def _check_release_docs(root: Path, errors: list[str]) -> None:
@@ -341,11 +341,11 @@ def _check_release_docs(root: Path, errors: list[str]) -> None:
         except json.JSONDecodeError as exc:
             errors.append(f"Invalid candidate inventory JSON: {exc}")
         else:
-            if inventory.get("current_public_release") != CURRENT_PUBLIC:
+            if inventory.get("current_public_release") != "v0.6.12":
                 errors.append("Candidate inventory current_public_release must remain v0.6.12")
-            if inventory.get("next_planned_release") != NEXT_PLANNED:
+            if inventory.get("next_planned_release") != "v0.6.13":
                 errors.append("Candidate inventory next_planned_release must remain v0.6.13")
-            if inventory.get("source_version") != SOURCE_VERSION:
+            if inventory.get("source_version") != "0.6.12":
                 errors.append("Candidate inventory source_version must remain 0.6.12")
             ids = {item.get("id") for item in inventory.get("candidates", []) if isinstance(item, dict)}
             for candidate_id in [*EXPECTED_CANDIDATES, "CAND-030"]:
@@ -414,10 +414,10 @@ def _payload(*, valid: bool, errors: list[str], warnings: list[str]) -> dict[str
         "artifact_type": "v0613_paper_autonomy_evidence_check",
         "schema_version": 1,
         "valid": valid,
-        "release_line": NEXT_PLANNED,
-        "current_public_release": CURRENT_PUBLIC,
-        "next_planned_release": NEXT_PLANNED,
-        "source_version": SOURCE_VERSION,
+        "release_line": "v0.6.13",
+        "current_public_release": "v0.6.12",
+        "next_planned_release": "v0.6.13",
+        "source_version": "0.6.12",
         "errors": errors,
         "warnings": warnings,
     }

@@ -30,16 +30,16 @@ def test_json_audit_properties():
     assert data["artifact_type"] == "v0613_final_readiness_audit"
     assert data["schema_version"] == 1
     assert data["release_line"] == "v0.6.13"
-    assert data["status"] == "planning_only"
-    assert data["owner_authorization_required"] is True
-    assert data["release_authorized"] is False
-    assert data["cutover_allowed"] is False
+    assert data["status"] == "release_cutover"
+    assert data["owner_authorization_required"] is False
+    assert data["release_authorized"] is True
+    assert data["cutover_allowed"] is True
     assert data["current_public_release"] == "v0.6.12"
     assert data["next_planned_release"] == "v0.6.13"
     assert data["source_version"] == "0.6.12"
     assert data["pypi_published"] is False
-    assert data["v0613_tag_created"] is False
-    assert data["v0613_github_release_created"] is False
+    assert data["v0613_tag_created"] is True
+    assert data["v0613_github_release_created"] is True
     
     cands = data["candidates_covered"]
     for i in range(21, 33):

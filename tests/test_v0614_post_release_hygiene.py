@@ -1,4 +1,4 @@
-"""Tests for v0.6.13 post-release hygiene checker.
+"""Tests for v0.6.14 post-release hygiene checker.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
@@ -11,18 +11,17 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-import pytest
 from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "check_v0613_post_release_hygiene.py"
+SCRIPT = ROOT / "scripts" / "check_v0614_post_release_hygiene.py"
 
 
 def _load_script_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("check_v0613_post_release_hygiene", SCRIPT)
+    spec = importlib.util.spec_from_file_location("check_v0614_post_release_hygiene", SCRIPT)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["check_v0613_post_release_hygiene"] = mod
+    sys.modules["check_v0614_post_release_hygiene"] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -41,9 +40,9 @@ def _make_release_metadata(tmp_path: Path, **overrides) -> Path:
     path = tmp_path / "release-metadata.json"
     data = {
         "schema_version": 1,
-        "source_version": "0.6.12",
-        "current_public_release": "v0.6.12",
-        "next_planned_release": "v0.6.13",
+        "source_version": "0.6.13",
+        "current_public_release": "v0.6.13",
+        "next_planned_release": "v0.6.14",
         "pypi_published": False,
         "releases": [],
     }
@@ -53,20 +52,20 @@ def _make_release_metadata(tmp_path: Path, **overrides) -> Path:
 
 
 def _make_evidence_json(tmp_path: Path, **overrides) -> Path:
-    path = tmp_path / "v0.6.12-post-release-evidence.json"
+    path = tmp_path / "v0.6.13-post-release-evidence.json"
     data = {
         "schema_version": 1,
-        "release": "v0.6.12",
-        "source_version": "0.6.12",
+        "release": "v0.6.13",
+        "source_version": "0.6.13",
         "main_commit": "c6f4ddc572902bbc04d8f8b4b262b626999a7abd",
-        "tag": "v0.6.12",
-        "github_release": "v0.6.12",
+        "tag": "v0.6.13",
+        "github_release": "v0.6.13",
         "push_ci_run_id": "27696853914",
-        "current_public_release": "v0.6.12",
-        "next_planned_release": "v0.6.13",
+        "current_public_release": "v0.6.13",
+        "next_planned_release": "v0.6.14",
         "pypi_published": False,
-        "release_notes_path": "docs/releases/v0.6.12.md",
-        "trust_status_path": "docs/trust/v0.6.12-status.md",
+        "release_notes_path": "docs/releases/v0.6.13.md",
+        "trust_status_path": "docs/trust/v0.6.13-status.md",
         "live_trading_enabled": False,
         "provider_execution_enabled": False,
         "broker_execution_enabled": False,
@@ -81,19 +80,19 @@ def _make_evidence_json(tmp_path: Path, **overrides) -> Path:
 
 
 def _make_selection_doc(tmp_path: Path, safe: bool = True) -> Path:
-    path = tmp_path / "v0.6.13-candidate-selection.md"
+    path = tmp_path / "v0.6.14-candidate-selection.md"
     if safe:
         path.write_text(
-            "# v0.6.13 Candidate Selection\n\n"
-            "Status: planning only. `v0.6.13` is not released.\n\n"
-            "Current public release: `v0.6.12`.\n\n"
+            "# v0.6.14 Candidate Selection\n\n"
+            "Status: planning only. `v0.6.14` is not released.\n\n"
+            "Current public release: `v0.6.13`.\n\n"
             "PyPI was not published.\n",
             encoding="utf-8",
         )
     else:
         path.write_text(
-            "# v0.6.13 Candidate Selection\n\n"
-            "`v0.6.13` is released and is the current public release.\n",
+            "# v0.6.14 Candidate Selection\n\n"
+            "`v0.6.14` is released and is the current public release.\n",
             encoding="utf-8",
         )
     return path
@@ -104,7 +103,6 @@ class TestScriptExists:
         assert SCRIPT.exists(), f"Script not found: {SCRIPT}"
 
 
-@pytest.mark.skip(reason='Old phase')
 class TestPassOnRealRepo:
     def test_passes_on_real_repo(self) -> None:
         result = _run_script()
@@ -116,11 +114,11 @@ class TestPassOnRealRepo:
         assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
         assert data["valid"] is True
-        assert data["artifact_type"] == "v0613_post_release_hygiene_report"
+        assert data["artifact_type"] == "v0614_post_release_hygiene_report"
         assert data["schema_version"] == 1
-        assert data["expected_current_public_release"] == "v0.6.12"
-        assert data["expected_source_version"] == "0.6.12"
-        assert data["next_planned_release"] == "v0.6.13"
+        assert data["expected_current_public_release"] == "v0.6.13"
+        assert data["expected_source_version"] == "0.6.13"
+        assert data["next_planned_release"] == "v0.6.14"
         assert "checks" in data
         assert "errors" in data
         assert "warnings" in data
@@ -145,7 +143,7 @@ class TestFailures:
         original = mod.RELEASE_METADATA
         try:
             mod.RELEASE_METADATA = _make_release_metadata(
-                tmp_path, current_public_release="v0.6.11"
+                tmp_path, current_public_release="v0.6.12"
             )
             code, result = mod.run_check()
             assert code == 1
@@ -158,7 +156,7 @@ class TestFailures:
         original = mod.RELEASE_METADATA
         try:
             mod.RELEASE_METADATA = _make_release_metadata(
-                tmp_path, next_planned_release="v0.6.14"
+                tmp_path, next_planned_release="v0.6.15"
             )
             code, result = mod.run_check()
             assert code == 1
@@ -172,15 +170,15 @@ class TestFailures:
         original_init = mod.INIT_PY
         try:
             fake_pyproject = tmp_path / "pyproject.toml"
-            fake_pyproject.write_text('version = "0.6.13"\n', encoding="utf-8")
+            fake_pyproject.write_text('version = "0.6.14"\n', encoding="utf-8")
             fake_init = tmp_path / "__init__.py"
-            fake_init.write_text('__version__ = "0.6.13"\n', encoding="utf-8")
+            fake_init.write_text('__version__ = "0.6.14"\n', encoding="utf-8")
             mod.PYPROJECT = fake_pyproject
             mod.INIT_PY = fake_init
             code, result = mod.run_check()
             assert code == 1
-            assert any("0.6.12" in e and "pyproject.toml" in e.lower() for e in result["errors"])
-            assert any("0.6.12" in e and "__init__.py" in e.lower() for e in result["errors"])
+            assert any("0.6.13" in e and "pyproject.toml" in e.lower() for e in result["errors"])
+            assert any("0.6.13" in e and "__init__.py" in e.lower() for e in result["errors"])
         finally:
             mod.PYPROJECT = original_pyproject
             mod.INIT_PY = original_init
@@ -203,39 +201,39 @@ class TestFailures:
             mod.V0613_SELECTION = tmp_path / "missing.md"
             code, result = mod.run_check()
             assert code == 1
-            assert any("v0.6.13 candidate-selection doc" in e for e in result["errors"])
+            assert any("v0.6.14 candidate-selection doc" in e for e in result["errors"])
         finally:
             mod.V0613_SELECTION = original
 
-    def test_v0613_release_claim_fails(self, tmp_path: Path) -> None:
+    def test_v0614_release_claim_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         original_readme = mod.README
         try:
             fake_readme = tmp_path / "README.md"
             fake_readme.write_text(
-                "# README\n\nv0.6.13 is released and is the current public release.\n",
+                "# README\n\nv0.6.14 is released and is the current public release.\n",
                 encoding="utf-8",
             )
             mod.README = fake_readme
             code, result = mod.run_check()
             assert code == 1
-            assert any("v0.6.13 release claim" in e for e in result["errors"])
+            assert any("v0.6.14 release claim" in e for e in result["errors"])
         finally:
             mod.README = original_readme
 
-    def test_stale_current_public_v0611_fails(self, tmp_path: Path) -> None:
+    def test_stale_current_public_v0612_fails(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         original_readme = mod.README
         try:
             fake_readme = tmp_path / "README.md"
             fake_readme.write_text(
-                "# README\n\nThe current public release is v0.6.11.\n",
+                "# README\n\nThe current public release is v0.6.12.\n",
                 encoding="utf-8",
             )
             mod.README = fake_readme
             code, result = mod.run_check()
             assert code == 1
-            assert any("Stale current-public v0.6.11" in e for e in result["errors"])
+            assert any("Stale current-public v0.6.12" in e for e in result["errors"])
         finally:
             mod.README = original_readme
 
@@ -245,7 +243,7 @@ class TestFailures:
         try:
             fake_readme = tmp_path / "README.md"
             fake_readme.write_text(
-                "# README\n\nPyPI published for v0.6.12.\n",
+                "# README\n\nPyPI published for v0.6.13.\n",
                 encoding="utf-8",
             )
             mod.README = fake_readme
@@ -275,9 +273,9 @@ class TestFailures:
         mod = _load_script_module()
         original = mod.EXPECTED_HISTORICAL_MARKED_DOCS
         try:
-            fake_historical = tmp_path / "v0.6.12-candidate-readiness.md"
+            fake_historical = tmp_path / "v0.6.13-candidate-readiness.md"
             fake_historical.write_text(
-                "# v0.6.12 Candidate Readiness\n\nThis doc is still active.\n",
+                "# v0.6.13 Candidate Readiness\n\nThis doc is still active.\n",
                 encoding="utf-8",
             )
             mod.EXPECTED_HISTORICAL_MARKED_DOCS = [fake_historical]

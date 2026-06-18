@@ -121,7 +121,7 @@ def _check_release_metadata() -> list[str]:
         errors.append(
             f"current_public_release mismatch: expected {PUBLIC_TAG}, got {data.get('current_public_release')}"
         )
-    if data.get("next_planned_release") != NEXT_PLANNED_TAG:
+    if data.get("next_planned_release") != "v0.6.14"_TAG:
         errors.append(
             f"next_planned_release mismatch: expected {NEXT_PLANNED_TAG}, got {data.get('next_planned_release')}"
         )

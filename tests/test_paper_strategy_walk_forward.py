@@ -285,14 +285,14 @@ def _minimal_checker_repo(tmp_path: Path) -> Path:
 
     shutil.copy2(FIXTURE, repo / "data" / "sample" / FIXTURE.name)
 
-    (repo / "pyproject.toml").write_text('version = "0.6.12"\n', encoding="utf-8")
-    (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.12"\n', encoding="utf-8")
+    (repo / "pyproject.toml").write_text('version = "0.6.13"\n', encoding="utf-8")
+    (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.13"\n', encoding="utf-8")
     (repo / "docs" / "releases" / "release-metadata.json").write_text(
         json.dumps(
             {
-                "source_version": "0.6.12",
-                "current_public_release": "v0.6.12",
-                "next_planned_release": "v0.6.13",
+                "source_version": "0.6.13",
+                "current_public_release": "v0.6.13",
+                "next_planned_release": "v0.6.14",
                 "pypi_published": False,
             }
         )

@@ -45,7 +45,7 @@ INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 
 EXPECTED_CURRENT_PUBLIC = "v0.6.12"
 EXPECTED_SOURCE_VERSION = "0.6.12"
-NEXT_PLANNED = "v0.6.13"
+NEXT_PLANNED = "v0.6.14"
 
 CAND_IDS = [f"CAND-{i:03d}" for i in range(1, 17)]
 
@@ -222,7 +222,7 @@ def _check_release_metadata() -> list[str]:
         errors.append(
             f"source_version mismatch: expected {EXPECTED_SOURCE_VERSION}, got {source_version}"
         )
-    if data.get("next_planned_release") != NEXT_PLANNED:
+    if data.get("next_planned_release") != "v0.6.14":
         errors.append(
             f"next_planned_release should be {NEXT_PLANNED}, got {data.get('next_planned_release')}"
         )

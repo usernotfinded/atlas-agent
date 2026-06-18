@@ -333,11 +333,11 @@ def _check_release_metadata_release_prep() -> list[str]:
         errors.append(
             f"source_version mismatch: expected {RELEASE_VERSION}, got {data.get('source_version')}"
         )
-    if data.get("current_public_release") != CURRENT_PUBLIC_TAG:
+    if data.get("current_public_release") != "v0.6.13"_TAG:
         errors.append(
             f"current_public_release mismatch: expected {CURRENT_PUBLIC_TAG}, got {data.get('current_public_release')}"
         )
-    if data.get("next_planned_release") != NEXT_PLANNED_TAG:
+    if data.get("next_planned_release") != "v0.6.14"_TAG:
         errors.append(
             f"next_planned_release mismatch: expected {NEXT_PLANNED_TAG}, got {data.get('next_planned_release')}"
         )

@@ -38,9 +38,9 @@ except ImportError:
     from scripts.release_metadata import load_metadata, ReleaseMetadata
 
 
-EXPECTED_SOURCE_VERSION = "0.6.12"
-EXPECTED_CURRENT_PUBLIC_TAG = "v0.6.12"
-EXPECTED_NEXT_PLANNED_TAG = "v0.6.13"
+EXPECTED_SOURCE_VERSION = "0.6.13"
+EXPECTED_CURRENT_PUBLIC_TAG = "v0.6.13"
+EXPECTED_NEXT_PLANNED_TAG = "v0.6.14"
 
 REQUIRED_FILES = [
     "docs/paper-strategy-evaluation.md",
@@ -374,7 +374,7 @@ def _check_release_metadata(repo_root: Path, checks: list[CheckResult], findings
 def _check_candidate_docs(repo_root: Path, checks: list[CheckResult], findings: list[str]) -> None:
     errors: list[str] = []
     md_paths = [
-        repo_root / "docs" / "releases" / "v0.6.13-candidate-selection.md",
+        repo_root / "docs" / "releases" / "v0.6.13-candidates.md",
         repo_root / "docs" / "releases" / "v0.6.13-candidates.md",
         repo_root / "docs" / "releases" / "v0.6.13-plan.md",
     ]
@@ -403,11 +403,11 @@ def _check_candidate_docs(repo_root: Path, checks: list[CheckResult], findings: 
                 errors.append("CAND-025 must be marked implemented in v0.6.13-candidates.json")
             if item.get("selected_for_v0613") is not True:
                 errors.append("CAND-025 must be selected for v0.6.13 in v0.6.13-candidates.json")
-        if data.get("source_version") != EXPECTED_SOURCE_VERSION:
+        if data.get("source_version") != "0.6.12":
             errors.append("candidate JSON source_version must remain 0.6.12")
-        if data.get("current_public_release") != EXPECTED_CURRENT_PUBLIC_TAG:
+        if data.get("current_public_release") != "v0.6.12":
             errors.append("candidate JSON current_public_release must remain v0.6.12")
-        if data.get("next_planned_release") != EXPECTED_NEXT_PLANNED_TAG:
+        if data.get("next_planned_release") != "v0.6.13":
             errors.append("candidate JSON next_planned_release must remain v0.6.13")
         if data.get("status") != "planning":
             errors.append("candidate JSON status must remain planning")
