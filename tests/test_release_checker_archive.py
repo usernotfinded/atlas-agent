@@ -56,10 +56,12 @@ def test_active_gates_use_current_release_state_checkers() -> None:
         ".github/workflows/ci.yml",
     ):
         text = (ROOT / relative_path).read_text(encoding="utf-8")
-        # After the v0.6.12 public cutover, the active gates are the v0.6.12
-        # cutover and post-release checkers. Stale release-prep gates must not remain.
-        assert "scripts/check_v0612_release_cutover.py" in text
-        assert "scripts/check_v0612_release_prep.py --post-release" in text
+        # After the v0.6.13 public cutover, active gates validate the current
+        # v0.6.13 public / v0.6.14 next-planned posture. v0.6.12 release-state
+        # gates are historical and must not block current main.
+        assert "scripts/check_v0613_post_release_hygiene.py" in text
+        assert "scripts/check_v0612_release_cutover.py" not in text
+        assert "scripts/check_v0612_release_prep.py --post-release" not in text
         assert "scripts/check_v0611_release_prep.py --post-release" not in text
         assert "scripts/check_v0610_release_prep.py --post-release" not in text
         assert "scripts/check_v0612_release_prep.py --release-prep" not in text

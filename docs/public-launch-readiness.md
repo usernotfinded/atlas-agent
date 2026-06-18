@@ -4,9 +4,9 @@
 
 ## Public launch status
 
-Atlas Agent is a **v0.6.12 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The current tagged public GitHub release is `v0.6.12`; `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
+Atlas Agent is a **v0.6.13 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The current tagged public GitHub release is `v0.6.13`; `v0.6.12`, `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
 
-The source package version on `main` is `0.6.12`. `v0.6.12` is tagged and released.
+The source package version on `main` is `0.6.13`. `v0.6.13` is tagged and released on GitHub.
 
 This document explains what is verified, what remains disabled, and what reviewers should check.
 
@@ -46,10 +46,7 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 -m pytest tests/test_public_launch_messaging.py` — launch messaging tests pass
 - `python3.11 -m pytest tests/test_product_demo_pack.py` — product demo pack tests pass
 - `python3.11 -m pytest tests/test_public_repo_hygiene.py` — repository hygiene tests pass
-- `python3.11 scripts/check_v0612_release_cutover.py` — v0.6.12 public-release cutover state is valid
-- `python3.11 scripts/check_v0612_release_prep.py --post-release` — v0.6.12 post-release state is valid
-- `python3.11 scripts/check_v0612_post_release_evidence.py` — v0.6.12 post-release evidence bundle is valid
-- `python3.11 scripts/check_v0613_post_release_hygiene.py` — v0.6.13 planning hygiene is valid
+- `python3.11 scripts/check_v0613_post_release_hygiene.py` — v0.6.13 public-release hygiene is valid
 - `python3.11 scripts/check_autonomous_paper_workflow_demo.py` — autonomous paper workflow demo gate is safe and present
 - `python3.11 -m pytest tests/test_autonomous_paper_workflow_demo.py -q` — autonomous paper workflow demo tests pass
 - `bash scripts/demo_autonomous_paper_workflow.sh` — autonomous paper workflow runs offline without credentials, network, or broker contact
@@ -129,15 +126,15 @@ No broker, no network, no credentials, no live trading.
 - `docs/paper-provider-isolation.md` present — paper-mode provider isolation and offline path
 - `docs/paper-strategy-evaluation.md` present — paper-only strategy evaluation matrix and follow-up gate
 - `docs/product-demo-evidence.md` present
-- `docs/releases/v0.6.12-post-release-evidence.md` present — canonical v0.6.12 public evidence record
-- `docs/releases/v0.6.12-post-release-evidence.json` present — machine-readable v0.6.12 evidence
-- `docs/releases/v0.6.13-plan.md` present — v0.6.13 planning seed (planning only)
+- `docs/releases/v0.6.13-post-release-evidence.md` present — canonical v0.6.13 public evidence record
+- `docs/releases/v0.6.13-post-release-evidence.json` present — machine-readable v0.6.13 evidence
+- `docs/releases/v0.6.14-plan.md` present — v0.6.14 planning seed
 - `docs/releases/v0.6.13-candidate-selection.md` present — v0.6.13 candidate-selection gate (planning only)
 - `docs/releases/v0.6.13-paper-autonomy-evidence.md` present — planning-only CAND-021 through CAND-029 evidence bundle
 - `docs/releases/v0.6.13-paper-autonomy-evidence.json` present — machine-readable planning-only paper-autonomy evidence
 - `docs/autonomous-paper-workflow.md` present — L1 paper-only autonomy demo doc
-- `docs/releases/v0.6.12.md` present — v0.6.12 release notes (current public)
-- `docs/trust/v0.6.12-status.md` present — v0.6.12 trust status (current public)
+- `docs/releases/v0.6.13.md` present — v0.6.13 release notes (current public)
+- `docs/trust/v0.6.13-status.md` present — v0.6.13 trust status (current public)
 - `docs/releases/v0.6.12-candidate-readiness.md` present — historical v0.6.12 candidate readiness record
 
 ## Release artifacts status
@@ -146,9 +143,9 @@ No broker, no network, no credentials, no live trading.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
 - Artifact retention visibility is provided by the manual `release-assurance-artifact-retention-audit` workflow; it is read-only and does not download, delete, or clean up artifacts.
-- Version on `main` is `0.6.12`; latest stable public GitHub release is `v0.6.12`. `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
-- `v0.6.12` is the current public release (tagged and published on GitHub); `v0.6.13` is the next planning line.
-- [v0.6.12 Post-Release Evidence](./releases/v0.6.12-post-release-evidence.md) records the deterministic cutover evidence.
+- Version on `main` is `0.6.13`; latest stable public GitHub release is `v0.6.13`. `v0.6.12`, `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
+- `v0.6.13` is the current public release (tagged and published on GitHub); `v0.6.14` is the next planning line.
+- [v0.6.13 Post-Release Evidence](./releases/v0.6.13-post-release-evidence.md) records the deterministic cutover evidence.
 - [v0.6.13 Planning Seed](./releases/v0.6.13-plan.md) seeds the next planning line and does not claim a release.
 
 ## Known limitations

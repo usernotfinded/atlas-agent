@@ -12,6 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_v0612_release_prep.py"
@@ -351,6 +352,7 @@ class TestReleasePrepMode:
             mod.RELEASE_METADATA = original
 
 
+@pytest.mark.skip(reason="Historical v0.6.12 real-repo posture superseded by v0.6.13")
 class TestPostReleaseMode:
     def test_post_release_mode_passes_on_real_repo(self) -> None:
         """Post-release mode passes on real repo after public cutover."""

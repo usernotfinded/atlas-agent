@@ -73,7 +73,7 @@ def test_cutover_script_json_output() -> None:
     data = json.loads(result.stdout)
     assert data["passed"] is True
     assert data["errors"] == []
-    assert data["expected_version"] == "0.6.12"
+    assert data["expected_version"] == "0.6.13"
     assert data["stable_tag"] == "v0.5.8"
     assert data["active_release"] == "v0.5.8.1"
     assert "historical_rc_tags" in data

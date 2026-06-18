@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """Deterministic v0.6.13 post-release hygiene checker.
 
-Validates that after the v0.6.12 public release:
+Validates that after the v0.6.13 public release:
 
-- v0.6.12 remains the current public release and v0.6.13 is the next planned
+- v0.6.13 remains the current public release and v0.6.14 is the next planned
   release.
-- The package/source version stays at ``0.6.12``.
-- Canonical v0.6.12 records (release notes, trust status, post-release evidence)
+- The package/source version stays at ``0.6.13``.
+- Canonical v0.6.13 records (release notes, trust status, post-release evidence)
   exist.
-- The v0.6.13 plan and candidate-selection gate exist.
-- No active doc claims v0.6.13 is released.
-- No active doc claims the current public release is v0.6.11.
-- No stale "v0.6.12 not released" wording remains in public-facing docs.
+- The v0.6.14 plan and candidate-selection gate exist.
+- No active doc claims v0.6.14 is released.
+- No active doc claims the current public release is v0.6.12.
+- No stale "v0.6.13 not released" wording remains in public-facing docs.
 - Historical/prep docs are clearly marked archived or historical.
 - No positive PyPI publication claims or forbidden unsafe claims appear.
 
@@ -43,12 +43,12 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 RELEASE_METADATA = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
-EVIDENCE_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.12-post-release-evidence.json"
-EVIDENCE_MD = REPO_ROOT / "docs" / "releases" / "v0.6.12-post-release-evidence.md"
-RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.12.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.12-status.md"
-V0613_PLAN = REPO_ROOT / "docs" / "releases" / "v0.6.13-plan.md"
-V0613_SELECTION = REPO_ROOT / "docs" / "releases" / "v0.6.13-candidate-selection.md"
+EVIDENCE_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.13-post-release-evidence.json"
+EVIDENCE_MD = REPO_ROOT / "docs" / "releases" / "v0.6.13-post-release-evidence.md"
+RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.13.md"
+TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.13-status.md"
+V0613_PLAN = REPO_ROOT / "docs" / "releases" / "v0.6.14-plan.md"
+V0613_SELECTION = REPO_ROOT / "docs" / "releases" / "v0.6.14-candidate-selection.md"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 README = REPO_ROOT / "README.md"
@@ -56,9 +56,9 @@ DOCS_DIR = REPO_ROOT / "docs"
 ARCHIVE_DIR = DOCS_DIR / "archive"
 SUPERPOWERS_DIR = DOCS_DIR / "superpowers"
 
-CURRENT_PUBLIC = "v0.6.12"
-SOURCE_VERSION = "0.6.12"
-NEXT_PLANNED = "v0.6.13"
+CURRENT_PUBLIC = "v0.6.13"
+SOURCE_VERSION = "0.6.13"
+NEXT_PLANNED = "v0.6.14"
 
 FORBIDDEN_CLAIMS = [
     "guaranteed profit",
@@ -75,23 +75,23 @@ PYPI_PUBLISH_PHRASES = [
 ]
 
 V0613_POSITIVE_RELEASE_CLAIMS = [
-    "v0.6.13 is released",
-    "current public release v0.6.13",
-    "tag v0.6.13 created",
-    "github release v0.6.13 published",
-    "v0.6.13 has been released",
+    "v0.6.14 is released",
+    "current public release v0.6.14",
+    "tag v0.6.14 created",
+    "github release v0.6.14 published",
+    "v0.6.14 has been released",
 ]
 
-STALE_V0612_NOT_RELEASED_PATTERNS = [
-    re.compile(r"v0\.6\.12\s+is\s+not\s+released", re.IGNORECASE),
-    re.compile(r"v0\.6\.12\s+not\s+released", re.IGNORECASE),
-    re.compile(r"not\s+released.*v0\.6\.12", re.IGNORECASE),
+STALE_V0613_NOT_RELEASED_PATTERNS = [
+    re.compile(r"v0\.6\.13\s+is\s+not\s+released", re.IGNORECASE),
+    re.compile(r"v0\.6\.13\s+not\s+released", re.IGNORECASE),
+    re.compile(r"not\s+released.*v0\.6\.13", re.IGNORECASE),
 ]
 
-STALE_CURRENT_PUBLIC_V0611_PATTERNS = [
-    re.compile(r"current\s+public\s+release\s+(?:is\s+)?v0\.6\.11", re.IGNORECASE),
-    re.compile(r"current\s+public\s+v0\.6\.11", re.IGNORECASE),
-    re.compile(r"current\s+public:\s*v0\.6\.11", re.IGNORECASE),
+STALE_CURRENT_PUBLIC_V0612_PATTERNS = [
+    re.compile(r"current\s+public\s+release\s+(?:is\s+)?v0\.6\.12", re.IGNORECASE),
+    re.compile(r"current\s+public\s+v0\.6\.12", re.IGNORECASE),
+    re.compile(r"current\s+public:\s*v0\.6\.12", re.IGNORECASE),
 ]
 
 NEGATION_HINTS = [
@@ -109,12 +109,12 @@ NEGATION_HINTS = [
     "disabled",
 ]
 
-# Docs that are expected to be marked as historical/archived after the v0.6.12
+# Docs that are expected to be marked as historical/archived after the v0.6.13
 # cutover because they are prep/cutover planning records.
 EXPECTED_HISTORICAL_MARKED_DOCS = [
-    DOCS_DIR / "releases" / "v0.6.12-candidate-readiness.md",
-    DOCS_DIR / "releases" / "v0.6.12-candidates.md",
-    DOCS_DIR / "releases" / "v0.6.12-owner-approval.md",
+    DOCS_DIR / "releases" / "v0.6.13-candidate-readiness.md",
+    DOCS_DIR / "releases" / "v0.6.13-candidates.md",
+    DOCS_DIR / "releases" / "v0.6.13-owner-approval.md",
     DOCS_DIR / "superpowers" / "plans" / "2026-06-16-cand017-release-candidate-readiness-plan.md",
 ]
 
@@ -223,15 +223,15 @@ def _check_canonical_records() -> list[str]:
     }
     for label, path in required.items():
         if not path.exists():
-            errors.append(f"Canonical v0.6.12 record missing: {label} ({path})")
+            errors.append(f"Canonical v0.6.13 record missing: {label} ({path})")
     return errors
 
 
 def _check_v0613_docs() -> list[str]:
     errors: list[str] = []
     for label, path in (
-        ("v0.6.13 plan", V0613_PLAN),
-        ("v0.6.13 candidate-selection doc", V0613_SELECTION),
+        ("v0.6.14 plan", V0613_PLAN),
+        ("v0.6.14 candidate-selection doc", V0613_SELECTION),
     ):
         if not path.exists():
             errors.append(f"Missing {label}: {path}")
@@ -290,17 +290,17 @@ def _check_no_v0613_release_claims(docs: list[Path]) -> list[str]:
                 except ValueError:
                     display = path
                 errors.append(
-                    f"v0.6.13 release claim in {display}: {phrase!r}"
+                    f"v0.6.14 release claim in {display}: {phrase!r}"
                 )
                 start = idx + 1
     return errors
 
 
-def _check_no_stale_v0612_not_released(docs: list[Path]) -> list[str]:
+def _check_no_stale_v0613_not_released(docs: list[Path]) -> list[str]:
     errors: list[str] = []
     for path in docs:
         text = _read_text(path)
-        for pattern in STALE_V0612_NOT_RELEASED_PATTERNS:
+        for pattern in STALE_V0613_NOT_RELEASED_PATTERNS:
             for m in pattern.finditer(text):
                 try:
                     display = path.relative_to(REPO_ROOT)
@@ -308,19 +308,19 @@ def _check_no_stale_v0612_not_released(docs: list[Path]) -> list[str]:
                     display = path
                 line_no = text[: m.start()].count("\n") + 1
                 errors.append(
-                    f"Stale 'v0.6.12 not released' wording in {display}:{line_no}: {m.group(0)!r}"
+                    f"Stale 'v0.6.13 not released' wording in {display}:{line_no}: {m.group(0)!r}"
                 )
     return errors
 
 
-def _check_no_stale_current_public_v0611(docs: list[Path]) -> list[str]:
+def _check_no_stale_current_public_v0612(docs: list[Path]) -> list[str]:
     errors: list[str] = []
     for path in docs:
-        # Skip historical docs that legitimately discuss the v0.6.11 state.
-        if "v0.6.11" in path.name:
+        # Skip historical docs that legitimately discuss the v0.6.12 state.
+        if "v0.6.12" in path.name:
             continue
         text = _read_text(path)
-        for pattern in STALE_CURRENT_PUBLIC_V0611_PATTERNS:
+        for pattern in STALE_CURRENT_PUBLIC_V0612_PATTERNS:
             for m in pattern.finditer(text):
                 try:
                     display = path.relative_to(REPO_ROOT)
@@ -328,7 +328,7 @@ def _check_no_stale_current_public_v0611(docs: list[Path]) -> list[str]:
                     display = path
                 line_no = text[: m.start()].count("\n") + 1
                 errors.append(
-                    f"Stale current-public v0.6.11 claim in {display}:{line_no}: {m.group(0)!r}"
+                    f"Stale current-public v0.6.12 claim in {display}:{line_no}: {m.group(0)!r}"
                 )
     return errors
 
@@ -420,11 +420,11 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict[str, Any]]:
     checks.append("no_v0613_release_claims")
     errors.extend(_check_no_v0613_release_claims(docs))
 
-    checks.append("no_stale_v0612_not_released")
-    errors.extend(_check_no_stale_v0612_not_released(docs))
+    checks.append("no_stale_v0613_not_released")
+    errors.extend(_check_no_stale_v0613_not_released(docs))
 
-    checks.append("no_stale_current_public_v0611")
-    errors.extend(_check_no_stale_current_public_v0611(docs))
+    checks.append("no_stale_current_public_v0612")
+    errors.extend(_check_no_stale_current_public_v0612(docs))
 
     checks.append("no_pypi_publish_claims")
     errors.extend(_check_no_pypi_publish_claims(docs))

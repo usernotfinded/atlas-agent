@@ -12,6 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_v0612_release_cutover.py"
@@ -285,6 +286,7 @@ class TestCutoverFailures:
             mod.RELEASE_METADATA = original_metadata
 
 
+@pytest.mark.skip(reason="Historical v0.6.12 real-repo posture superseded by v0.6.13")
 class TestCutoverOnRealRepo:
     def test_cutover_passes_on_real_repo(self) -> None:
         """Cutover checker passes on real repo after tag/GitHub Release creation."""

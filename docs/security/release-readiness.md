@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.12 public release is the current stable version. The v0.6.11, v0.6.10, v0.6.9, v0.6.8, v0.6.7, v0.6.6, v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
+The v0.6.13 public GitHub release is the current stable version. The v0.6.12, v0.6.11, v0.6.10, v0.6.9, v0.6.8, v0.6.7, v0.6.6, v0.6.5, v0.6.4, v0.6.3, v0.6.2, v0.6.1, and v0.6.0 releases are historical.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.12, the public GitHub release is `v0.6.12`. v0.6.11 is historical.
+For v0.6.13, the public GitHub release is `v0.6.13`. v0.6.12 is historical.
 
 PyPI was not published. A separate approval process is required for any future PyPI publish.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.12 --output artifacts/release_assurance/v0.6.12-local-check
+python scripts/release_assurance.py --version v0.6.13 --output artifacts/release_assurance/v0.6.13-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
@@ -192,14 +192,13 @@ See [v0.6.0 Readiness Audit](../releases/v0.6.0-readiness.md) for the full
 capability summary, safety boundaries, test coverage, docs coverage, deferred
 items, non-goals, release blockers, and release recommendation.
 
-## v0.6.12 post-release evidence
+## v0.6.13 post-release evidence
 
-After the v0.6.12 public cutover, deterministic post-release evidence became the
-canonical public record for the released state. The v0.6.13 planning line is
-seeded but not released.
+After the v0.6.13 public GitHub cutover, deterministic post-release evidence became the
+canonical public record for the released state. The v0.6.14 planning line is seeded.
 
-- [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md) — canonical deterministic cutover evidence
-- [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — non-committal next-line planning notes
+- [v0.6.13 Post-Release Evidence](../releases/v0.6.13-post-release-evidence.md) — canonical deterministic cutover evidence
+- [v0.6.14 Planning Seed](../releases/v0.6.14-plan.md) — next-line planning notes
 - [v0.6.13 Candidate Selection](../releases/v0.6.13-candidate-selection.md) — planning-only candidate-selection gate
 
 ## v0.6.12 candidate readiness

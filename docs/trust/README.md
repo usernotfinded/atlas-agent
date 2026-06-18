@@ -5,21 +5,22 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.12` (tagged)
-- Previous public release: `v0.6.11`
-- Source package version on `main`: `0.6.12`
-- GitHub release: `v0.6.12` (current public)
-- Next planning line: `v0.6.13` (planning line; CAND-021 through CAND-030 docs remain planning-only)
-- Public v0.6.12: current public — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
+- Current public release: `v0.6.13` (tagged)
+- Previous public release: `v0.6.12`
+- Source package version on `main`: `0.6.13`
+- GitHub release: `v0.6.13` (current public)
+- Next planning line: `v0.6.14`
+- Public v0.6.13: current public — [v0.6.13 Trust and Release Status](v0.6.13-status.md)
+- Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md)
 - Previous public v0.6.10 — [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.12 Trust and Release Status](v0.6.12-status.md) (current public)
+- Current public release status: [v0.6.13 Trust and Release Status](v0.6.13-status.md) (current public)
 - Previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - Previous previous release status: [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
 - Previous previous previous release status: [v0.6.9 Trust and Release Status](v0.6.9-status.md) (historical)
 - Previous previous previous previous release status: [v0.6.8 Trust and Release Status](v0.6.8-status.md) (historical)
-- Current public release notes: [docs/releases/v0.6.12.md](../releases/v0.6.12.md) (current public)
+- Current public release notes: [docs/releases/v0.6.13.md](../releases/v0.6.13.md) (current public)
 - v0.6.11 release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (historical)
 - Previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
@@ -58,12 +59,23 @@ provider execution, broker execution, live trading, or order approval.
 - [Provider Audit Pack](../security/provider-audit-pack.md)
 - [Provider Audit Pack CI Workflow](../../.github/workflows/provider-audit-pack.yml)
 
+## v0.6.13 Post-Release Evidence
+
+The `v0.6.13` public release cutover evidence is captured in deterministic,
+reviewer-verifiable records. The next planning line is seeded in
+`v0.6.14-plan.md`. PyPI remains unpublished, live trading remains disabled by
+default, and provider/broker execution remains locked behind the existing safety
+gates.
+
+- [v0.6.13 Post-Release Evidence](../releases/v0.6.13-post-release-evidence.md) — deterministic cutover evidence and canonical public record
+- [v0.6.14 Planning Seed](../releases/v0.6.14-plan.md) — next-line planning notes
+- [v0.6.14 Candidate Selection](../releases/v0.6.14-candidate-selection.md) — candidate-selection gate
+
 ## v0.6.12 Post-Release Evidence
 
-The `v0.6.12` public release cutover evidence is captured in a deterministic,
-reviewer-verifiable pack. The next planning line is seeded in `v0.6.13-plan.md`;
-it is not released or version-bumped. Candidate selection for `v0.6.13` is
-governed by `v0.6.13-candidate-selection.md`.
+The historical `v0.6.12` release cutover evidence is captured in a deterministic,
+reviewer-verifiable pack. That line is now historical after the `v0.6.13`
+public GitHub release cutover.
 
 Paper-mode provider isolation is documented in [docs/paper-provider-isolation.md](../paper-provider-isolation.md).
 Paper strategy evaluation is documented in [docs/paper-strategy-evaluation.md](../paper-strategy-evaluation.md)
@@ -71,13 +83,13 @@ Paper strategy sensitivity is documented in [docs/paper-strategy-sensitivity.md]
 Paper strategy robustness is documented in [docs/paper-strategy-robustness.md](../paper-strategy-robustness.md).
 Paper strategy walk-forward stability is documented in [docs/paper-strategy-walk-forward.md](../paper-strategy-walk-forward.md).
 Paper strategy scorecard evidence is documented in [docs/paper-strategy-scorecard.md](../paper-strategy-scorecard.md).
-The planning-only v0.6.13 paper-autonomy closure evidence is documented in
+The v0.6.13 paper-autonomy closure evidence is documented in
 [docs/releases/v0.6.13-paper-autonomy-evidence.md](../releases/v0.6.13-paper-autonomy-evidence.md).
 
 - [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md) — deterministic cutover evidence and canonical public record
-- [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — non-committal next-line planning notes
-- [v0.6.13 Candidate Selection](../releases/v0.6.13-candidate-selection.md) — planning-only candidate-selection gate
-- [v0.6.13 Paper Autonomy Evidence](../releases/v0.6.13-paper-autonomy-evidence.md) — planning-only CAND-021 through CAND-029 evidence bundle
+- [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — historical planning notes
+- [v0.6.13 Candidate Selection](../releases/v0.6.13-candidate-selection.md) — historical candidate-selection gate
+- [v0.6.13 Paper Autonomy Evidence](../releases/v0.6.13-paper-autonomy-evidence.md) — CAND-021 through CAND-029 evidence bundle
 
 ## Release Assurance
 
@@ -97,24 +109,24 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.12` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.13` is verified against the GitHub release/tag.
 Auto-updater delivery for `v0.6.11` remains verified.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.12` (current public)
+- GitHub release: `v0.6.13` (current public)
 - GitHub release: `v0.6.11` (historical)
-- Tag: `v0.6.12` (created and pushed)
+- Tag: `v0.6.13` (created and pushed)
 - Tag: `v0.6.11` (historical)
 - PyPI was not published
 - Package version in source metadata: `0.6.12`
-- Auto-updater delivery: verified for `v0.6.12`; verified for `v0.6.11`
+- Auto-updater delivery: verified for `v0.6.13`; verified for `v0.6.12`; verified for `v0.6.11`
 
 ## What Is Ready
 
-- Public v0.6.12 release notes and release status documentation (current public).
+- Public v0.6.13 release notes and release status documentation (current public).
 - Public v0.6.11 release notes and release status documentation (historical).
 - Public v0.6.10 release notes and release status documentation (historical).
 - Public v0.6.9 release notes and release status documentation (historical).
@@ -136,7 +148,7 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, `v0.6.11`, or `v0.6.12`.
+- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, `v0.6.11`, `v0.6.12`, or `v0.6.13`.
 - `v0.6.13` is the next planning line; CAND-021 through CAND-030 are planning
   candidates and do not create a release, tag, PyPI publication, or version bump.
 - Live trading is not enabled by default and requires explicit local operator
@@ -154,8 +166,8 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.12 Release Notes](../releases/v0.6.12.md) (current public)
-- [v0.6.12 Trust and Release Status](v0.6.12-status.md) (current public)
+- [v0.6.13 Release Notes](../releases/v0.6.13.md) (current public)
+- [v0.6.13 Trust and Release Status](v0.6.13-status.md) (current public)
 - [v0.6.11 Release Notes](../releases/v0.6.11.md) (historical)
 - [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - [v0.6.10 Release Notes](../releases/v0.6.10.md) (historical)

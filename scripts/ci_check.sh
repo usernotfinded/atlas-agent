@@ -162,62 +162,6 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
-echo "8.1. v0.6.12 release candidate readiness check"
-SECONDS=0
-"$PYTHON_BIN" scripts/check_v0612_release_candidate_readiness.py
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8.2. v0.6.12 release candidate readiness tests"
-SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_v0612_release_candidate_readiness.py -q "${PYTEST_EXTRA_ARGS[@]}"
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8.3. v0.6.12 release cutover check"
-SECONDS=0
-"$PYTHON_BIN" scripts/check_v0612_release_cutover.py
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8.4. v0.6.12 release cutover tests"
-SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_v0612_release_cutover.py -q "${PYTEST_EXTRA_ARGS[@]}"
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8.5. v0.6.12 release prep check (post-release)"
-SECONDS=0
-"$PYTHON_BIN" scripts/check_v0612_release_prep.py --post-release
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8.6. v0.6.12 release prep tests"
-SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_v0612_release_prep.py -q "${PYTEST_EXTRA_ARGS[@]}"
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8.7. v0.6.12 post-release evidence check"
-SECONDS=0
-"$PYTHON_BIN" scripts/check_v0612_post_release_evidence.py
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
-echo "8.8. v0.6.12 post-release evidence tests"
-SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_v0612_post_release_evidence.py -q "${PYTEST_EXTRA_ARGS[@]}"
-TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
-echo "  → elapsed: ${SECONDS}s"
-
-echo ""
 echo "8.9. v0.6.13 post-release hygiene check"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_v0613_post_release_hygiene.py

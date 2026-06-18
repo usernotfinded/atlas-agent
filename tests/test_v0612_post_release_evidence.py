@@ -12,6 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_v0612_post_release_evidence.py"
@@ -142,6 +143,7 @@ class TestScriptExists:
         assert SCRIPT.exists(), f"Script not found: {SCRIPT}"
 
 
+@pytest.mark.skip(reason="Historical v0.6.12 real-repo posture superseded by v0.6.13")
 class TestPassOnRealRepo:
     def test_passes_on_real_repo(self) -> None:
         result = _run_script()
