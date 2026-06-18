@@ -25,6 +25,12 @@ from atlas_agent.backtest.evaluation import (
     render_strategy_evaluation_markdown,
     write_strategy_evaluation_reports,
 )
+from atlas_agent.backtest.walk_forward import (
+    ALLOWED_WALK_FORWARD_STATUSES,
+    build_paper_strategy_walk_forward,
+    render_strategy_walk_forward_markdown,
+    write_strategy_walk_forward_reports,
+)
 from atlas_agent.backtest.robustness import (
     ALLOWED_ROBUSTNESS_STATUSES,
     build_paper_strategy_robustness,
@@ -77,6 +83,10 @@ __all__ = [
     "parse_strategy_list",
     "render_strategy_evaluation_markdown",
     "write_strategy_evaluation_reports",
+    "ALLOWED_WALK_FORWARD_STATUSES",
+    "build_paper_strategy_walk_forward",
+    "render_strategy_walk_forward_markdown",
+    "write_strategy_walk_forward_reports",
     "ALLOWED_ROBUSTNESS_STATUSES",
     "build_paper_strategy_robustness",
     "parse_fixture_list",

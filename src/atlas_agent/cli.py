@@ -38,6 +38,7 @@ from atlas_agent.backtest.sensitivity import (
     build_paper_strategy_sensitivity,
     write_strategy_sensitivity_reports,
 )
+from atlas_agent.backtest.walk_forward import build_paper_strategy_walk_forward, write_strategy_walk_forward_reports
 from atlas_agent.backtest.robustness import (
     build_paper_strategy_robustness,
     parse_fixture_list,
@@ -474,6 +475,30 @@ Safety First:
     backtest_sensitivity.add_argument("--start-date", default=None)
     backtest_sensitivity.add_argument("--end-date", default=None)
     backtest_sensitivity.add_argument("--json", action="store_true")
+    backtest_walk_forward = backtest_sub.add_parser(
+        "walk-forward",
+        help="Evaluate multi-window paper strategy walk-forward stability through a deterministic gate.",
+        description=(
+            "Evaluate strategies and parameter variants across chronological windows "
+            "and write paper-only strategy-walk-forward.json and .md artifacts. "
+            "No provider, broker, network, or live trading path is used."
+        ),
+    )
+    backtest_walk_forward.add_argument("--symbol", required=True)
+    backtest_walk_forward.add_argument("--data", required=True)
+    backtest_walk_forward.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_walk_forward.add_argument("--window-size", type=int, default=60)
+    backtest_walk_forward.add_argument("--step-size", type=int, default=30)
+    backtest_walk_forward.add_argument("--output-dir", required=True)
+    backtest_walk_forward.add_argument("--initial-equity", type=float, default=10000.0)
+    backtest_walk_forward.add_argument("--slippage-bps", type=float, default=0.0)
+    backtest_walk_forward.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_walk_forward.add_argument("--json", action="store_true")
+
     backtest_robustness = backtest_sub.add_parser(
         "robustness",
         help="Evaluate multi-regime paper strategy robustness through a deterministic gate.",
@@ -4575,6 +4600,50 @@ def main(argv: list[str] | None = None) -> int:
             print("No live trading, broker calls, provider calls, or network calls.")
             return 0
 
+        if args.backtest_command == "walk-forward":
+            try:
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                report = build_paper_strategy_walk_forward(
+                    data_path=getattr(args, "data"),
+                    symbol=getattr(args, "symbol"),
+                    window_size=getattr(args, "window_size", 60),
+                    step_size=getattr(args, "step_size", 30),
+                    strategies=strategy_ids,
+                    initial_equity=getattr(args, "initial_equity", 10000.0),
+                    slippage_bps=getattr(args, "slippage_bps", 0.0),
+                    commission_bps=getattr(args, "commission_bps", 0.0),
+                )
+                json_path, markdown_path = write_strategy_walk_forward_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                import json
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            decisions: dict[str, int] = {}
+            for item in report.get("strategies", []):
+                status = item.get("walk_forward_summary", {}).get("paper_follow_up_status", "unknown")
+                decisions[status] = decisions.get(status, 0) + 1
+            decision_summary = ", ".join(
+                f"{name}={count}" for name, count in sorted(decisions.items())
+            )
+            print(f"Paper strategy walk-forward evaluation complete: {report['symbol']}")
+            print(f"Windows evaluated: {report['windowing']['windows_evaluated']}")
+            print(f"Strategies evaluated: {len(report['strategies'])}")
+            print(f"Paper walk-forward decisions: {decision_summary}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {markdown_path}")
+
+            safety = report.get("safety", {})
+            if all(safety.values()):
+                print("No live trading, broker calls, provider calls, or network calls.")
+            return 0
         if args.backtest_command == "robustness":
             try:
                 strategy_ids = parse_strategy_list(getattr(args, "strategies", None))

@@ -240,6 +240,12 @@
       "safety_scope": "backtest/CLI/reporting/docs/checker/test/sample-data",
       "selected_for_v0613": true,
       "implemented": true
+    },
+    {
+      "id": "CAND-028",
+      "description": "Paper strategy walk-forward stability testing",
+      "implemented": true,
+      "gate_enforced": true
     }
   ],
   "rejected": [
