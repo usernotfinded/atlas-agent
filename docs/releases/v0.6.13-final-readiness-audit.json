@@ -1,0 +1,46 @@
+{
+  "artifact_type": "v0613_final_readiness_audit",
+  "schema_version": 1,
+  "release_line": "v0.6.13",
+  "status": "planning_only",
+  "readiness_status": "ready_for_owner_review",
+  "release_authorized": false,
+  "cutover_allowed": false,
+  "owner_authorization_required": true,
+  "current_public_release": "v0.6.12",
+  "next_planned_release": "v0.6.13",
+  "source_version": "0.6.12",
+  "pypi_published": false,
+  "v0613_tag_created": false,
+  "v0613_github_release_created": false,
+  "candidates_covered": [
+    "CAND-021",
+    "CAND-022",
+    "CAND-023",
+    "CAND-024",
+    "CAND-025",
+    "CAND-026",
+    "CAND-027",
+    "CAND-028",
+    "CAND-029",
+    "CAND-030",
+    "CAND-031",
+    "CAND-032"
+  ],
+  "required_owner_action_before_release": [
+    "explicit release authorization",
+    "separate release cutover task",
+    "tag/release/PyPI decision"
+  ],
+  "safety": {
+    "live_trading_enabled": false,
+    "live_submit_enabled": false,
+    "broker_execution_enabled": false,
+    "provider_execution_enabled_by_default": false,
+    "credentials_or_secrets_added": false,
+    "profit_claims": false,
+    "no_risk_claims": false,
+    "live_readiness_claims": false,
+    "autonomous_live_readiness_claims": false
+  }
+}
