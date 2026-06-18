@@ -338,6 +338,38 @@
       "safety_scope": "docs/checker/test/gate integration",
       "selected_for_v0613": true,
       "implemented": true
+    },
+    {
+      "id": "CAND-031",
+      "title": "Final Reviewer Index and Owner-Approval Checklist",
+      "summary": "Add reviewer-facing and machine-readable final reviewer index mapping evidence to the final checklist, checker, tests, and gate integration.",
+      "user_value": "Reviewers and owners get a single checklist connecting evidence to release readiness.",
+      "safety_boundary": "Docs/checker/test/gate integration only; no runtime or protected boundary changes.",
+      "risk": "low",
+      "recommendation": "now - implemented/audited",
+      "ranking_reason": "Bridges evidence bundle to final owner approval; low risk.",
+      "primary_files": [
+        "docs/releases/v0.6.13-final-reviewer-index.md",
+        "docs/releases/v0.6.13-final-reviewer-index.json",
+        "scripts/check_v0613_final_reviewer_index.py",
+        "tests/test_v0613_final_reviewer_index.py",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        "scripts/release_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": [
+        "scripts/check_v0613_final_reviewer_index.py"
+      ],
+      "tests": [
+        "tests/test_v0613_final_reviewer_index.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "safety_scope": "docs/checker/test/gate integration",
+      "selected_for_v0613": true,
+      "implemented": true
     }
   ],
   "rejected": [

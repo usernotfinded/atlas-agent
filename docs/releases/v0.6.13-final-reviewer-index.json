@@ -1,0 +1,36 @@
+{
+  "schema_version": "atlas-final-reviewer-index/1.0",
+  "planning_only": true,
+  "release_version": "v0.6.13",
+  "owner_decision_states": {
+    "owner_approval": "pending",
+    "release_tag_authorization": "pending",
+    "github_release_authorization": "pending",
+    "pypi_authorization": "disabled",
+    "live_trading_promotion": "prohibited"
+  },
+  "safety_invariants": {
+    "version_bump": false,
+    "tag_created": false,
+    "github_release": false,
+    "pypi_publish": false,
+    "live_trading_enabled": false,
+    "live_submit_enabled": false,
+    "provider_execution_enabled": false,
+    "broker_execution_enabled": false,
+    "credentials_exposed": false,
+    "profit_claims": false,
+    "live_readiness_claims": false,
+    "autonomous_live_readiness_claims": false
+  },
+  "evidence_bundle": {
+    "evidence_md": "v0.6.13-paper-autonomy-evidence.md",
+    "evidence_json": "v0.6.13-paper-autonomy-evidence.json",
+    "candidates_md": "v0.6.13-candidates.md",
+    "candidates_json": "v0.6.13-candidates.json",
+    "plan_md": "v0.6.13-plan.md",
+    "public_launch_readiness": "../public-launch-readiness.md",
+    "reviewer_checklist": "../reviewer-checklist.md",
+    "trust_center": "../trust/README.md"
+  }
+}
