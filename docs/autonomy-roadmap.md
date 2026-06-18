@@ -68,6 +68,7 @@ Atlas Agent is designed as a **supervised, human-in-the-loop workspace**, not an
 
 - **Paper mode autonomy is allowed** — local simulation, backtests, research artifact generation, and dry-runs can run without human interaction because they touch no real money, no broker, and no provider (by default).
 - **Paper strategy evaluation is allowed** — `atlas backtest compare` ranks bundled/sample-data strategy runs for paper-only follow-up and cannot promote a strategy to live trading.
+- **Paper strategy robustness is allowed** — `atlas backtest robustness` evaluates deterministic synthetic regimes for paper-only follow-up and cannot promote a strategy to live trading.
 - **Live mode is not autonomous** — even with live configuration, credentials, kill-switch normal state, and a valid opt-in record, every live submit still passes deterministic risk gates and approval checks before `place_order` is called.
 - **Self-improvement is advisory-only** — reflections, skills, and learning suggestions produce local artifacts for review; they do not alter execution paths, activate skills, or submit orders automatically.
 
@@ -151,6 +152,7 @@ Level 1 is **operator-supervised, local-only automation that runs entirely insid
 - [Paper Mode Provider Isolation](paper-provider-isolation.md) — paper-mode agentic workflows can run without an AI provider API key or network access; explicit `--offline` path and automatic missing-credential fallback are available. Live mode remains fail-closed.
 - [Paper Strategy Evaluation](paper-strategy-evaluation.md)
 - [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md) — deterministic sample-data strategy comparison with paper-only follow-up decisions.
+- [Paper Strategy Robustness Report](paper-strategy-robustness.md) — deterministic synthetic multi-regime strategy robustness for paper-only follow-up.
 
 ## L2 — Live Suggestions with Human Approval
 

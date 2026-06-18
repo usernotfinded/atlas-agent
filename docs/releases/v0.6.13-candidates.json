@@ -192,6 +192,54 @@
       "title": "Paper Strategy Sensitivity Matrix and Deterministic Fixture",
       "status": "implemented",
       "risk_level": "low"
+    },
+    {
+      "id": "CAND-027",
+      "title": "Multi-Regime Paper Strategy Robustness Report",
+      "summary": "Add atlas backtest robustness, deterministic synthetic regime fixtures, paper-only robustness artifacts, demo, checker, tests, and cross-doc/gate integration.",
+      "user_value": "Reviewers can verify strategy behavior across uptrend, downtrend, flat/choppy, and volatile synthetic regimes without live-promotion claims.",
+      "safety_boundary": "Backtest/CLI/reporting/docs/checker/test/sample-data only; no provider, broker, live, safety, risk, or config boundary changes.",
+      "risk": "low",
+      "recommendation": "now - implemented/audited",
+      "ranking_reason": "Adds conservative multi-regime paper follow-up evidence; low risk.",
+      "primary_files": [
+        "src/atlas_agent/backtest/robustness.py",
+        "src/atlas_agent/cli.py",
+        "data/sample/regimes/ohlcv_uptrend.csv",
+        "data/sample/regimes/ohlcv_downtrend.csv",
+        "data/sample/regimes/ohlcv_flat.csv",
+        "data/sample/regimes/ohlcv_volatile.csv",
+        "docs/paper-strategy-robustness.md",
+        "scripts/demo_paper_strategy_robustness.sh",
+        "scripts/check_paper_strategy_robustness.py",
+        "tests/test_paper_strategy_robustness.py",
+        "README.md",
+        "docs/autonomous-paper-workflow.md",
+        "docs/paper-provider-isolation.md",
+        "docs/bounded-live-autonomy-governance.md",
+        "docs/autonomy-roadmap.md",
+        "docs/public-launch-readiness.md",
+        "docs/trust/README.md",
+        "docs/reviewer-checklist.md",
+        "docs/releases/v0.6.13-candidate-selection.md",
+        "docs/releases/v0.6.13-plan.md",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        "scripts/release_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": [
+        "scripts/check_paper_strategy_robustness.py"
+      ],
+      "tests": [
+        "tests/test_paper_strategy_robustness.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "safety_scope": "backtest/CLI/reporting/docs/checker/test/sample-data",
+      "selected_for_v0613": true,
+      "implemented": true
     }
   ],
   "rejected": [

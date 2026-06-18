@@ -38,6 +38,11 @@ from atlas_agent.backtest.sensitivity import (
     build_paper_strategy_sensitivity,
     write_strategy_sensitivity_reports,
 )
+from atlas_agent.backtest.robustness import (
+    build_paper_strategy_robustness,
+    parse_fixture_list,
+    write_strategy_robustness_reports,
+)
 from atlas_agent.brokers.alpaca import AlpacaBroker
 from atlas_agent.brokers.base import BrokerConfigurationError
 from atlas_agent.brokers.binance import BinanceBroker
@@ -469,6 +474,33 @@ Safety First:
     backtest_sensitivity.add_argument("--start-date", default=None)
     backtest_sensitivity.add_argument("--end-date", default=None)
     backtest_sensitivity.add_argument("--json", action="store_true")
+    backtest_robustness = backtest_sub.add_parser(
+        "robustness",
+        help="Evaluate multi-regime paper strategy robustness through a deterministic gate.",
+        description=(
+            "Evaluate strategies and parameter variants across local synthetic OHLCV "
+            "regime fixtures and write paper-only strategy-robustness.json and .md "
+            "artifacts. No provider, broker, network, or live trading path is used."
+        ),
+    )
+    backtest_robustness.add_argument("--symbol", required=True)
+    backtest_robustness.add_argument(
+        "--fixtures",
+        required=True,
+        help="Comma-separated local OHLCV fixture paths for deterministic regimes.",
+    )
+    backtest_robustness.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_robustness.add_argument("--output-dir", required=True)
+    backtest_robustness.add_argument("--initial-equity", type=float, default=10000.0)
+    backtest_robustness.add_argument("--slippage-bps", type=float, default=0.0)
+    backtest_robustness.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_robustness.add_argument("--start-date", default=None)
+    backtest_robustness.add_argument("--end-date", default=None)
+    backtest_robustness.add_argument("--json", action="store_true")
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
     backtest_runs = backtest_sub.add_parser("runs")
@@ -4538,6 +4570,48 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Paper strategy sensitivity evaluation complete: {report['symbol']}")
             print(f"Strategies evaluated: {len(report['strategies'])}")
             print(f"Paper gate decisions: {decision_summary}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {markdown_path}")
+            print("No live trading, broker calls, provider calls, or network calls.")
+            return 0
+
+        if args.backtest_command == "robustness":
+            try:
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                fixture_paths = parse_fixture_list(getattr(args, "fixtures"))
+                report = build_paper_strategy_robustness(
+                    fixture_paths=fixture_paths,
+                    symbol=getattr(args, "symbol"),
+                    strategies=strategy_ids,
+                    initial_equity=getattr(args, "initial_equity", 10000.0),
+                    slippage_bps=getattr(args, "slippage_bps", 0.0),
+                    commission_bps=getattr(args, "commission_bps", 0.0),
+                    start_date=getattr(args, "start_date", None),
+                    end_date=getattr(args, "end_date", None),
+                )
+                json_path, markdown_path = write_strategy_robustness_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            decisions: dict[str, int] = {}
+            for item in report.get("strategies", []):
+                status = item.get("robustness_summary", {}).get("paper_follow_up_status", "unknown")
+                decisions[status] = decisions.get(status, 0) + 1
+            decision_summary = ", ".join(
+                f"{name}={count}" for name, count in sorted(decisions.items())
+            )
+            print(f"Paper strategy robustness evaluation complete: {report['symbol']}")
+            print(f"Regimes evaluated: {len(report['regimes'])}")
+            print(f"Strategies evaluated: {len(report['strategies'])}")
+            print(f"Paper robustness decisions: {decision_summary}")
             print(f"Report saved to: {json_path}")
             print(f"Markdown saved to: {markdown_path}")
             print("No live trading, broker calls, provider calls, or network calls.")

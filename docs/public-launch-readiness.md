@@ -58,6 +58,9 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_paper_strategy_evaluation.py` — paper strategy evaluation gate is safe and present
 - `python3.11 -m pytest tests/test_paper_strategy_evaluation.py -q` — paper strategy evaluation tests pass
 - `bash scripts/demo_paper_strategy_evaluation.sh` — paper strategy evaluation runs offline without credentials, network, or broker contact
+- `python3.11 scripts/check_paper_strategy_robustness.py` — paper strategy robustness gate is safe and present
+- `python3.11 -m pytest tests/test_paper_strategy_robustness.py -q` — paper strategy robustness tests pass
+- `bash scripts/demo_paper_strategy_robustness.sh` — paper strategy robustness runs offline without credentials, network, or broker contact
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI

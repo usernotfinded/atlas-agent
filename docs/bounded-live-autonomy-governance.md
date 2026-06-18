@@ -127,8 +127,9 @@ and disabled by default. It must preserve:
 
 - [Autonomy Roadmap](autonomy-roadmap.md) — staged autonomy levels and current/future state.
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md) — concrete L1 autonomy proof (paper-only, local-only, no broker/provider contact).
-- [Paper Strategy Evaluation](paper-strategy-evaluation.md)
-- [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md) — deterministic paper-only strategy comparison and follow-up gate.
+- [Paper Strategy Evaluation](paper-strategy-evaluation.md) — deterministic paper-only strategy comparison and follow-up gate.
+- [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md) — deterministic paper-only parameter sensitivity gate.
+- [Paper Strategy Robustness Report](paper-strategy-robustness.md) — deterministic paper-only multi-regime robustness gate.
 - [Live-Submit Safety Contract](live-submit-safety-contract.md) — detailed gating for any live submit.
 - [Risk Model](risk-model.md) — deterministic risk gate design.
 - [Kill Switch Runbook](kill-switch.md) — kill-switch controls and escalation.

@@ -25,6 +25,13 @@ from atlas_agent.backtest.evaluation import (
     render_strategy_evaluation_markdown,
     write_strategy_evaluation_reports,
 )
+from atlas_agent.backtest.robustness import (
+    ALLOWED_ROBUSTNESS_STATUSES,
+    build_paper_strategy_robustness,
+    parse_fixture_list,
+    render_strategy_robustness_markdown,
+    write_strategy_robustness_reports,
+)
 from atlas_agent.backtest.strategy import (
     BacktestStrategy,
     StrategyContext,
@@ -70,4 +77,9 @@ __all__ = [
     "parse_strategy_list",
     "render_strategy_evaluation_markdown",
     "write_strategy_evaluation_reports",
+    "ALLOWED_ROBUSTNESS_STATUSES",
+    "build_paper_strategy_robustness",
+    "parse_fixture_list",
+    "render_strategy_robustness_markdown",
+    "write_strategy_robustness_reports",
 ]

@@ -134,12 +134,14 @@ Atlas includes a deterministic, local-first backtesting engine to evaluate strat
 ```bash
 atlas backtest run --symbol AAPL --data path/to/data.csv
 atlas backtest compare --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
+atlas backtest robustness --fixtures data/sample/regimes/ohlcv_uptrend.csv,data/sample/regimes/ohlcv_downtrend.csv,data/sample/regimes/ohlcv_flat.csv,data/sample/regimes/ohlcv_volatile.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 ```
 
 For paper-only strategy comparison, see
-[Paper Strategy Evaluation](docs/paper-strategy-evaluation.md)
-- [Paper Strategy Sensitivity Evaluation](docs/paper-strategy-sensitivity.md). Historical
-results do not guarantee future performance.
+[Paper Strategy Evaluation](docs/paper-strategy-evaluation.md),
+[Paper Strategy Sensitivity Evaluation](docs/paper-strategy-sensitivity.md), and
+[Paper Strategy Robustness Report](docs/paper-strategy-robustness.md).
+Historical results do not guarantee future performance.
 
 ## Configuration & Security
 
@@ -165,7 +167,7 @@ Common command families:
 | :--- | :--- | :--- |
 | **Workspace setup** | `atlas init`, `atlas setup`, `atlas validate`, `atlas config set ...` | Create and configure a safe paper workspace. |
 | **Paper workflow** | `atlas run --mode paper`, `atlas agent run --mode paper`, `atlas run-once --mode paper` | Run the agent in simulation without broker orders. |
-| **Backtesting** | `atlas backtest run --data ... --symbol ...`, `atlas backtest compare --data ... --symbol ... --output-dir ...`, `atlas backtest list-strategies` | Deterministic local strategy simulation and paper-only strategy comparison. |
+| **Backtesting** | `atlas backtest run --data ... --symbol ...`, `atlas backtest compare --data ... --symbol ... --output-dir ...`, `atlas backtest robustness --fixtures ... --symbol ... --output-dir ...`, `atlas backtest list-strategies` | Deterministic local strategy simulation and paper-only strategy comparison. |
 | **Research** | `atlas research run --symbol ...`, `atlas research list`, `atlas research show`, `atlas research plan`, `atlas research verify`, `atlas research summary`, `atlas research evaluate`, `atlas research prompt`, `atlas research simulate-provider`, `atlas research review-response`, `atlas research dossier` | Paper-only artifact generation and inspection. |
 | **Risk & safety** | `atlas risk status`, `atlas kill-switch status`, `atlas approve-order` | Inspect gates, kill switch, and approval queues. |
 | **Broker (read-only)** | `atlas broker sync` | Synchronize account, positions, and orders from the broker. |
@@ -184,8 +186,9 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[Research Workflow Script](scripts/demo_research_workflow.sh)** — create a temporary workspace, run the full paper-only research chain, validate JSON artifacts, and verify safety invariants.
 - **[Autonomous Paper Workflow](docs/autonomous-paper-workflow.md)** — deterministic, offline, no-credential L1 autonomy demo that runs paper-only CLI commands autonomously, verifies live paths fail safely, and produces local evidence artifacts. See `scripts/demo_autonomous_paper_workflow.sh`.
 - **[Paper Mode Provider Isolation](docs/paper-provider-isolation.md)** — paper-mode workflows can run without an AI provider API key or network access; live mode remains fail-closed.
-- **[Paper Strategy Evaluation](docs/paper-strategy-evaluation.md)
-- [Paper Strategy Sensitivity Evaluation](docs/paper-strategy-sensitivity.md)** — deterministic sample-data strategy comparison with paper-only candidate/reject/needs-more-testing reports. See `scripts/demo_paper_strategy_evaluation.sh`.
+- **[Paper Strategy Evaluation](docs/paper-strategy-evaluation.md)** — deterministic sample-data strategy comparison with paper-only candidate/reject/needs-more-testing reports. See `scripts/demo_paper_strategy_evaluation.sh`.
+- **[Paper Strategy Sensitivity Evaluation](docs/paper-strategy-sensitivity.md)** — deterministic parameter sensitivity matrix for paper-only follow-up. See `scripts/demo_paper_strategy_sensitivity.sh`.
+- **[Paper Strategy Robustness Report](docs/paper-strategy-robustness.md)** — deterministic multi-regime synthetic fixture report for paper-only follow-up. See `scripts/demo_paper_strategy_robustness.sh`.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.

@@ -67,7 +67,8 @@ governed by `v0.6.13-candidate-selection.md`.
 
 Paper-mode provider isolation is documented in [docs/paper-provider-isolation.md](../paper-provider-isolation.md).
 Paper strategy evaluation is documented in [docs/paper-strategy-evaluation.md](../paper-strategy-evaluation.md)
-- [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md).
+Paper strategy sensitivity is documented in [docs/paper-strategy-sensitivity.md](../paper-strategy-sensitivity.md).
+Paper strategy robustness is documented in [docs/paper-strategy-robustness.md](../paper-strategy-robustness.md).
 
 - [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md) — deterministic cutover evidence and canonical public record
 - [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — non-committal next-line planning notes

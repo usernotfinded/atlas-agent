@@ -55,6 +55,7 @@ A strategy variant is evaluated and receives one of the following decisions:
 
 - [Paper Strategy Evaluation](paper-strategy-evaluation.md)
 - [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md)
+- [Paper Strategy Robustness Report](paper-strategy-robustness.md)
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md)
 - [Paper Provider Isolation](paper-provider-isolation.md)
 - [Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md)

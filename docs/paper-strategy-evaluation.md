@@ -76,5 +76,7 @@ research follow-up.
 
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md)
 - [Paper Mode Provider Isolation](paper-provider-isolation.md)
+- [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md)
+- [Paper Strategy Robustness Report](paper-strategy-robustness.md)
 - [Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md)
 - [Live Submit Safety Contract](live-submit-safety-contract.md)
