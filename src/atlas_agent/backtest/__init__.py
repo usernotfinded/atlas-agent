@@ -92,4 +92,14 @@ __all__ = [
     "parse_fixture_list",
     "render_strategy_robustness_markdown",
     "write_strategy_robustness_reports",
+    "ALLOWED_SCORECARD_DECISIONS",
+    "build_paper_strategy_scorecard",
+    "render_strategy_scorecard_markdown",
+    "write_strategy_scorecard_reports",
 ]
+from atlas_agent.backtest.scorecard import (
+    ALLOWED_SCORECARD_DECISIONS,
+    build_paper_strategy_scorecard,
+    render_strategy_scorecard_markdown,
+    write_strategy_scorecard_reports,
+)

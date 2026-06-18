@@ -526,6 +526,35 @@ Safety First:
     backtest_robustness.add_argument("--start-date", default=None)
     backtest_robustness.add_argument("--end-date", default=None)
     backtest_robustness.add_argument("--json", action="store_true")
+
+    backtest_scorecard = backtest_sub.add_parser(
+        "scorecard",
+        help="Evaluate a deterministic paper-only strategy candidate scorecard.",
+        description=(
+            "Evaluate strategies across evaluation, sensitivity, robustness, and walk-forward "
+            "paper gates to build a paper candidate scorecard. No provider, broker, network, "
+            "or live trading path is used."
+        ),
+    )
+    backtest_scorecard.add_argument("--symbol", required=True)
+    backtest_scorecard.add_argument("--data", required=True)
+    backtest_scorecard.add_argument(
+        "--fixtures",
+        default=None,
+        help="Comma-separated local OHLCV fixture paths for deterministic regimes. If provided, robustness is evaluated.",
+    )
+    backtest_scorecard.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_scorecard.add_argument("--window-size", type=int, default=60)
+    backtest_scorecard.add_argument("--step-size", type=int, default=30)
+    backtest_scorecard.add_argument("--output-dir", required=True)
+    backtest_scorecard.add_argument("--initial-equity", type=float, default=10000.0)
+    backtest_scorecard.add_argument("--slippage-bps", type=float, default=0.0)
+    backtest_scorecard.add_argument("--commission-bps", type=float, default=0.0)
+    backtest_scorecard.add_argument("--json", action="store_true")
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
     backtest_runs = backtest_sub.add_parser("runs")
@@ -4681,6 +4710,52 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Regimes evaluated: {len(report['regimes'])}")
             print(f"Strategies evaluated: {len(report['strategies'])}")
             print(f"Paper robustness decisions: {decision_summary}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {markdown_path}")
+            print("No live trading, broker calls, provider calls, or network calls.")
+            return 0
+
+
+        if args.backtest_command == "scorecard":
+            try:
+                from atlas_agent.backtest.scorecard import build_paper_strategy_scorecard, write_strategy_scorecard_reports
+                from atlas_agent.backtest.robustness import parse_fixture_list as parse_scorecard_fixtures
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                fixtures = parse_scorecard_fixtures(getattr(args, "fixtures")) if getattr(args, "fixtures", None) else None
+                report = build_paper_strategy_scorecard(
+                    data_path=getattr(args, "data"),
+                    symbol=getattr(args, "symbol"),
+                    fixtures=fixtures,
+                    strategies=strategy_ids,
+                    window_size=getattr(args, "window_size", 60),
+                    step_size=getattr(args, "step_size", 30),
+                    initial_equity=getattr(args, "initial_equity", 10000.0),
+                    slippage_bps=getattr(args, "slippage_bps", 0.0),
+                    commission_bps=getattr(args, "commission_bps", 0.0),
+                )
+                json_path, markdown_path = write_strategy_scorecard_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                import json
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            decisions: dict[str, int] = {}
+            for item in report.get("strategies", []):
+                status = item.get("scorecard", {}).get("decision", "unknown")
+                decisions[status] = decisions.get(status, 0) + 1
+            decision_summary = ", ".join(
+                f"{name}={count}" for name, count in sorted(decisions.items())
+            )
+            print(f"Paper strategy scorecard complete: {report['symbol']}")
+            print(f"Strategies evaluated: {len(report['strategies'])}")
+            print(f"Paper scorecard decisions: {decision_summary}")
             print(f"Report saved to: {json_path}")
             print(f"Markdown saved to: {markdown_path}")
             print("No live trading, broker calls, provider calls, or network calls.")
