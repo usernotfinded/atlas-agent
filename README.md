@@ -140,7 +140,11 @@ atlas backtest robustness --fixtures data/sample/regimes/ohlcv_uptrend.csv,data/
 For paper-only strategy comparison, see
 [Paper Strategy Evaluation](docs/paper-strategy-evaluation.md),
 [Paper Strategy Sensitivity Evaluation](docs/paper-strategy-sensitivity.md), and
-[Paper Strategy Robustness Report](docs/paper-strategy-robustness.md).
+[Paper Strategy Robustness Report](docs/paper-strategy-robustness.md),
+[Paper Strategy Walk-Forward Stability](docs/paper-strategy-walk-forward.md), and
+[Paper Strategy Scorecard](docs/paper-strategy-scorecard.md). The
+[v0.6.13 Paper Autonomy Evidence Bundle](docs/releases/v0.6.13-paper-autonomy-evidence.md)
+collects CAND-021 through CAND-029 evidence for the planning-only line.
 Historical results do not guarantee future performance.
 
 ## Configuration & Security
@@ -189,6 +193,9 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[Paper Strategy Evaluation](docs/paper-strategy-evaluation.md)** — deterministic sample-data strategy comparison with paper-only candidate/reject/needs-more-testing reports. See `scripts/demo_paper_strategy_evaluation.sh`.
 - **[Paper Strategy Sensitivity Evaluation](docs/paper-strategy-sensitivity.md)** — deterministic parameter sensitivity matrix for paper-only follow-up. See `scripts/demo_paper_strategy_sensitivity.sh`.
 - **[Paper Strategy Robustness Report](docs/paper-strategy-robustness.md)** — deterministic multi-regime synthetic fixture report for paper-only follow-up. See `scripts/demo_paper_strategy_robustness.sh`.
+- **[Paper Strategy Walk-Forward Stability](docs/paper-strategy-walk-forward.md)** — deterministic rolling-window paper stability checks. See `scripts/demo_paper_strategy_walk_forward.sh`.
+- **[Paper Strategy Scorecard](docs/paper-strategy-scorecard.md)** — paper-only candidate ledger across evaluation, sensitivity, robustness, and walk-forward gates. See `scripts/demo_paper_strategy_scorecard.sh`.
+- **[v0.6.13 Paper Autonomy Evidence Bundle](docs/releases/v0.6.13-paper-autonomy-evidence.md)** — planning-only CAND-021 through CAND-029 closure evidence with no release, tag, PyPI, or live-trading side effects.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.

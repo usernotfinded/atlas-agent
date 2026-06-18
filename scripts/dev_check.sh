@@ -120,13 +120,14 @@ SECONDS=0
 "$PYTHON_BIN" scripts/check_paper_strategy_robustness.py
 "$PYTHON_BIN" scripts/check_paper_strategy_walk_forward.py
 "$PYTHON_BIN" scripts/check_paper_strategy_scorecard.py
+"$PYTHON_BIN" scripts/check_v0613_paper_autonomy_evidence.py
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "4h. paper strategy evaluation tests"
 SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py -q "${PYTEST_EXTRA_ARGS[@]}"
+"$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_v0613_paper_autonomy_evidence.py -q "${PYTEST_EXTRA_ARGS[@]}"
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

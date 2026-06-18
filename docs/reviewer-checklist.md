@@ -115,6 +115,8 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `docs/releases/v0.6.12-candidate-readiness.md` exists as a historical planning record; `python3.11 scripts/check_v0612_release_candidate_readiness.py` still passes.
 - [ ] `docs/releases/v0.6.13-plan.md` exists and is referenced as a planning-only document; it does not claim `v0.6.13` is released.
 - [ ] `docs/releases/v0.6.13-candidate-selection.md` exists and `python3.11 scripts/check_v0613_post_release_hygiene.py` passes.
+- [ ] `docs/releases/v0.6.13-paper-autonomy-evidence.md` and `.json` exist and `python3.11 scripts/check_v0613_paper_autonomy_evidence.py` passes.
+- [ ] `python3.11 -m pytest tests/test_v0613_paper_autonomy_evidence.py -q` passes.
 - [ ] No active doc claims `v0.6.13` is released, tagged, published on GitHub, or published to PyPI.
 - [ ] No active doc claims `v0.6.11` is the current public release.
 

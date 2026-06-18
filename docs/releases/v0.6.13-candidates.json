@@ -7,7 +7,7 @@
   "source_version": "0.6.12",
   "generated_for": "release-prep",
   "status": "planning",
-  "generated_at": "2026-06-17T20:17:46+00:00",
+  "generated_at": "2026-06-18T13:30:00+00:00",
   "candidates": [
     {
       "id": "CAND-021",
@@ -16,7 +16,7 @@
       "user_value": "Reviewers have a single canonical evidence record and a clearer selection gate.",
       "safety_boundary": "Docs/checker/test only; no runtime or boundary changes.",
       "risk": "low",
-      "recommendation": "now \u2014 implemented/audited",
+      "recommendation": "now - implemented/audited",
       "ranking_reason": "Consolidates release evidence; low risk.",
       "primary_files": [
         "docs/releases/v0.6.12-post-release-evidence.md",
@@ -31,7 +31,9 @@
       "tests": [
         "tests/test_v0613_post_release_hygiene.py"
       ],
-      "workflows": [],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
       "safety_scope": "docs/checker/test",
       "selected_for_v0613": true,
       "implemented": true
@@ -43,7 +45,7 @@
       "user_value": "Reviewers can verify the project's conservative autonomy stance and governance ladder.",
       "safety_boundary": "Governance docs only; no runtime or boundary changes.",
       "risk": "low",
-      "recommendation": "now \u2014 implemented/audited",
+      "recommendation": "now - implemented/audited",
       "ranking_reason": "Documents existing safety posture; low risk.",
       "primary_files": [
         "docs/bounded-live-autonomy-governance.md",
@@ -57,7 +59,9 @@
       "tests": [
         "tests/test_bounded_autonomy_governance.py"
       ],
-      "workflows": [],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
       "safety_scope": "docs/checker/test",
       "selected_for_v0613": true,
       "implemented": true
@@ -69,21 +73,13 @@
       "user_value": "Reviewers can run and verify a deterministic L1 paper-only autonomy demo locally.",
       "safety_boundary": "Docs/checker/test only; paper-only, offline, no credentials; no runtime or boundary changes.",
       "risk": "low",
-      "recommendation": "now \u2014 implemented/audited",
+      "recommendation": "now - implemented/audited",
       "ranking_reason": "Concrete L1 autonomy proof without live-trading claims; low risk.",
       "primary_files": [
         "docs/autonomous-paper-workflow.md",
         "scripts/demo_autonomous_paper_workflow.sh",
         "scripts/check_autonomous_paper_workflow_demo.py",
         "tests/test_autonomous_paper_workflow_demo.py",
-        "README.md",
-        "docs/bounded-live-autonomy-governance.md",
-        "docs/autonomy-roadmap.md",
-        "docs/public-launch-readiness.md",
-        "docs/trust/README.md",
-        "docs/reviewer-checklist.md",
-        "docs/releases/v0.6.13-candidate-selection.md",
-        "docs/releases/v0.6.13-plan.md",
         "scripts/dev_check.sh",
         "scripts/ci_check.sh",
         ".github/workflows/ci.yml"
@@ -108,7 +104,7 @@
       "user_value": "Paper agentic workflows can run without provider credentials or network; live mode stays fail-closed.",
       "safety_boundary": "Provider/CLI/runner wiring only; no broker, execution, safety, risk, or config boundary changes.",
       "risk": "low",
-      "recommendation": "now \u2014 implemented/audited",
+      "recommendation": "now - implemented/audited",
       "ranking_reason": "Removes the local provider transport failure blocker for paper mode while preserving live fail-closed behavior.",
       "primary_files": [
         "docs/paper-provider-isolation.md",
@@ -118,14 +114,6 @@
         "src/atlas_agent/agent/runner.py",
         "src/atlas_agent/cli.py",
         "scripts/demo_autonomous_paper_workflow.sh",
-        "README.md",
-        "docs/bounded-live-autonomy-governance.md",
-        "docs/autonomy-roadmap.md",
-        "docs/public-launch-readiness.md",
-        "docs/trust/README.md",
-        "docs/reviewer-checklist.md",
-        "docs/releases/v0.6.13-candidate-selection.md",
-        "docs/releases/v0.6.13-plan.md",
         "scripts/dev_check.sh",
         "scripts/ci_check.sh",
         ".github/workflows/ci.yml"
@@ -150,7 +138,7 @@
       "user_value": "Reviewers can compare sample-data strategy behavior and see paper-only candidate/reject/needs-more-testing decisions.",
       "safety_boundary": "Backtest/CLI/reporting/docs/checker/test only; no provider, broker, live, safety, risk, or config boundary changes.",
       "risk": "low",
-      "recommendation": "now \u2014 implemented/audited",
+      "recommendation": "now - implemented/audited",
       "ranking_reason": "Adds conservative paper research gating without live-promotion claims; low risk.",
       "primary_files": [
         "src/atlas_agent/backtest/evaluation.py",
@@ -159,16 +147,6 @@
         "scripts/demo_paper_strategy_evaluation.sh",
         "scripts/check_paper_strategy_evaluation.py",
         "tests/test_paper_strategy_evaluation.py",
-        "README.md",
-        "docs/autonomous-paper-workflow.md",
-        "docs/paper-provider-isolation.md",
-        "docs/bounded-live-autonomy-governance.md",
-        "docs/autonomy-roadmap.md",
-        "docs/public-launch-readiness.md",
-        "docs/trust/README.md",
-        "docs/reviewer-checklist.md",
-        "docs/releases/v0.6.13-candidate-selection.md",
-        "docs/releases/v0.6.13-plan.md",
         "scripts/dev_check.sh",
         "scripts/ci_check.sh",
         "scripts/release_check.sh",
@@ -190,8 +168,37 @@
     {
       "id": "CAND-026",
       "title": "Paper Strategy Sensitivity Matrix and Deterministic Fixture",
-      "status": "implemented",
-      "risk_level": "low"
+      "summary": "Add atlas backtest sensitivity, paper-only evaluation artifacts across strategy variants, deterministic extended fixture, demo, checker, tests, and gate integration.",
+      "user_value": "Reviewers can verify strategy behavior across parameter variants without live-promotion claims.",
+      "safety_boundary": "Backtest/CLI/reporting/docs/checker/test/sample-data only; no provider, broker, live, safety, risk, or config boundary changes.",
+      "risk": "low",
+      "recommendation": "now - implemented/audited",
+      "ranking_reason": "Adds deterministic parameter sensitivity evidence; low risk.",
+      "primary_files": [
+        "src/atlas_agent/backtest/sensitivity.py",
+        "src/atlas_agent/cli.py",
+        "data/sample/ohlcv_extended.csv",
+        "docs/paper-strategy-sensitivity.md",
+        "scripts/demo_paper_strategy_sensitivity.sh",
+        "scripts/check_paper_strategy_sensitivity.py",
+        "tests/test_paper_strategy_sensitivity.py",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        "scripts/release_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": [
+        "scripts/check_paper_strategy_sensitivity.py"
+      ],
+      "tests": [
+        "tests/test_paper_strategy_sensitivity.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "safety_scope": "backtest/CLI/reporting/docs/checker/test/sample-data",
+      "selected_for_v0613": true,
+      "implemented": true
     },
     {
       "id": "CAND-027",
@@ -213,16 +220,6 @@
         "scripts/demo_paper_strategy_robustness.sh",
         "scripts/check_paper_strategy_robustness.py",
         "tests/test_paper_strategy_robustness.py",
-        "README.md",
-        "docs/autonomous-paper-workflow.md",
-        "docs/paper-provider-isolation.md",
-        "docs/bounded-live-autonomy-governance.md",
-        "docs/autonomy-roadmap.md",
-        "docs/public-launch-readiness.md",
-        "docs/trust/README.md",
-        "docs/reviewer-checklist.md",
-        "docs/releases/v0.6.13-candidate-selection.md",
-        "docs/releases/v0.6.13-plan.md",
         "scripts/dev_check.sh",
         "scripts/ci_check.sh",
         "scripts/release_check.sh",
@@ -243,9 +240,104 @@
     },
     {
       "id": "CAND-028",
-      "description": "Paper strategy walk-forward stability testing",
-      "implemented": true,
-      "gate_enforced": true
+      "title": "Paper Walk-Forward Robustness Pack and Stability Checks",
+      "summary": "Add atlas backtest walk-forward, chronological rolling-window paper artifacts, demo, checker, tests, and gate integration.",
+      "user_value": "Reviewers can inspect paper-only stability across rolling windows without live-promotion claims.",
+      "safety_boundary": "Backtest/CLI/reporting/docs/checker/test/sample-data only; no provider, broker, live, safety, risk, or config boundary changes.",
+      "risk": "low",
+      "recommendation": "now - implemented/audited",
+      "ranking_reason": "Adds rolling-window paper stability evidence; low risk.",
+      "primary_files": [
+        "src/atlas_agent/backtest/walk_forward.py",
+        "src/atlas_agent/cli.py",
+        "data/sample/ohlcv_extended.csv",
+        "docs/paper-strategy-walk-forward.md",
+        "scripts/demo_paper_strategy_walk_forward.sh",
+        "scripts/check_paper_strategy_walk_forward.py",
+        "tests/test_paper_strategy_walk_forward.py",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        "scripts/release_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": [
+        "scripts/check_paper_strategy_walk_forward.py"
+      ],
+      "tests": [
+        "tests/test_paper_strategy_walk_forward.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "safety_scope": "backtest/CLI/reporting/docs/checker/test/sample-data",
+      "selected_for_v0613": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-029",
+      "title": "Paper Strategy Candidate Scorecard and Promotion Ledger",
+      "summary": "Add atlas backtest scorecard, paper-only scorecard artifacts, demo, checker, tests, and gate integration.",
+      "user_value": "Reviewers can inspect one paper-only ledger across evaluation, sensitivity, robustness, and walk-forward gates.",
+      "safety_boundary": "Backtest/CLI/reporting/docs/checker/test only; no provider, broker, live, safety, risk, or config boundary changes.",
+      "risk": "low",
+      "recommendation": "now - implemented/audited",
+      "ranking_reason": "Aggregates paper-only evidence without live promotion; low risk.",
+      "primary_files": [
+        "src/atlas_agent/backtest/scorecard.py",
+        "src/atlas_agent/cli.py",
+        "docs/paper-strategy-scorecard.md",
+        "scripts/demo_paper_strategy_scorecard.sh",
+        "scripts/check_paper_strategy_scorecard.py",
+        "tests/test_paper_strategy_scorecard.py",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        "scripts/release_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": [
+        "scripts/check_paper_strategy_scorecard.py"
+      ],
+      "tests": [
+        "tests/test_paper_strategy_scorecard.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "safety_scope": "backtest/CLI/reporting/docs/checker/test",
+      "selected_for_v0613": true,
+      "implemented": true
+    },
+    {
+      "id": "CAND-030",
+      "title": "Paper Autonomy Evidence Bundle and Candidate Closure Gate",
+      "summary": "Add reviewer-facing and machine-readable CAND-021 through CAND-029 evidence bundle, checker, tests, and gate integration.",
+      "user_value": "Reviewers get one deterministic planning-only bundle proving the paper-autonomy line remains release-free and live-disabled.",
+      "safety_boundary": "Docs/checker/test/gate integration only; no runtime or protected boundary changes.",
+      "risk": "low",
+      "recommendation": "now - implemented/audited",
+      "ranking_reason": "Closes the paper-autonomy planning evidence loop; low risk.",
+      "primary_files": [
+        "docs/releases/v0.6.13-paper-autonomy-evidence.md",
+        "docs/releases/v0.6.13-paper-autonomy-evidence.json",
+        "scripts/check_v0613_paper_autonomy_evidence.py",
+        "tests/test_v0613_paper_autonomy_evidence.py",
+        "scripts/dev_check.sh",
+        "scripts/ci_check.sh",
+        "scripts/release_check.sh",
+        ".github/workflows/ci.yml"
+      ],
+      "checkers": [
+        "scripts/check_v0613_paper_autonomy_evidence.py"
+      ],
+      "tests": [
+        "tests/test_v0613_paper_autonomy_evidence.py"
+      ],
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "safety_scope": "docs/checker/test/gate integration",
+      "selected_for_v0613": true,
+      "implemented": true
     }
   ],
   "rejected": [

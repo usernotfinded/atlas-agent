@@ -61,6 +61,10 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_paper_strategy_robustness.py` — paper strategy robustness gate is safe and present
 - `python3.11 -m pytest tests/test_paper_strategy_robustness.py -q` — paper strategy robustness tests pass
 - `bash scripts/demo_paper_strategy_robustness.sh` — paper strategy robustness runs offline without credentials, network, or broker contact
+- `python3.11 scripts/check_paper_strategy_walk_forward.py` — paper strategy walk-forward gate is safe and present
+- `python3.11 scripts/check_paper_strategy_scorecard.py` — paper strategy scorecard gate is safe and present
+- `python3.11 scripts/check_v0613_paper_autonomy_evidence.py` — v0.6.13 planning-only paper-autonomy evidence bundle is safe and present
+- `python3.11 -m pytest tests/test_v0613_paper_autonomy_evidence.py -q` — evidence bundle tests pass
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI
@@ -129,6 +133,8 @@ No broker, no network, no credentials, no live trading.
 - `docs/releases/v0.6.12-post-release-evidence.json` present — machine-readable v0.6.12 evidence
 - `docs/releases/v0.6.13-plan.md` present — v0.6.13 planning seed (planning only)
 - `docs/releases/v0.6.13-candidate-selection.md` present — v0.6.13 candidate-selection gate (planning only)
+- `docs/releases/v0.6.13-paper-autonomy-evidence.md` present — planning-only CAND-021 through CAND-029 evidence bundle
+- `docs/releases/v0.6.13-paper-autonomy-evidence.json` present — machine-readable planning-only paper-autonomy evidence
 - `docs/autonomous-paper-workflow.md` present — L1 paper-only autonomy demo doc
 - `docs/releases/v0.6.12.md` present — v0.6.12 release notes (current public)
 - `docs/trust/v0.6.12-status.md` present — v0.6.12 trust status (current public)

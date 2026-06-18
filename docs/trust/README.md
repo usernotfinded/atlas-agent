@@ -9,7 +9,7 @@ users, contributors, auditors, and potential adopters.
 - Previous public release: `v0.6.11`
 - Source package version on `main`: `0.6.12`
 - GitHub release: `v0.6.12` (current public)
-- Next planning line: `v0.6.13` (planning line; candidate docs will be created when the v0.6.13 cycle begins)
+- Next planning line: `v0.6.13` (planning line; CAND-021 through CAND-030 docs remain planning-only)
 - Public v0.6.12: current public — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md)
 - Previous public v0.6.10 — [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
@@ -69,10 +69,15 @@ Paper-mode provider isolation is documented in [docs/paper-provider-isolation.md
 Paper strategy evaluation is documented in [docs/paper-strategy-evaluation.md](../paper-strategy-evaluation.md)
 Paper strategy sensitivity is documented in [docs/paper-strategy-sensitivity.md](../paper-strategy-sensitivity.md).
 Paper strategy robustness is documented in [docs/paper-strategy-robustness.md](../paper-strategy-robustness.md).
+Paper strategy walk-forward stability is documented in [docs/paper-strategy-walk-forward.md](../paper-strategy-walk-forward.md).
+Paper strategy scorecard evidence is documented in [docs/paper-strategy-scorecard.md](../paper-strategy-scorecard.md).
+The planning-only v0.6.13 paper-autonomy closure evidence is documented in
+[docs/releases/v0.6.13-paper-autonomy-evidence.md](../releases/v0.6.13-paper-autonomy-evidence.md).
 
 - [v0.6.12 Post-Release Evidence](../releases/v0.6.12-post-release-evidence.md) — deterministic cutover evidence and canonical public record
 - [v0.6.13 Planning Seed](../releases/v0.6.13-plan.md) — non-committal next-line planning notes
 - [v0.6.13 Candidate Selection](../releases/v0.6.13-candidate-selection.md) — planning-only candidate-selection gate
+- [v0.6.13 Paper Autonomy Evidence](../releases/v0.6.13-paper-autonomy-evidence.md) — planning-only CAND-021 through CAND-029 evidence bundle
 
 ## Release Assurance
 
@@ -125,11 +130,15 @@ brokers, enable trading, or require credentials.
 - Paper strategy evaluation documentation (`docs/paper-strategy-evaluation.md`),
   demo script (`scripts/demo_paper_strategy_evaluation.sh`), and checker
   (`scripts/check_paper_strategy_evaluation.py`) — paper-only, offline, no credentials.
+- Paper-autonomy evidence bundle (`docs/releases/v0.6.13-paper-autonomy-evidence.md`
+  and `.json`) plus `scripts/check_v0613_paper_autonomy_evidence.py` — planning-only,
+  local, and no release side effects.
 
 ## What Is Not Ready
 
 - PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, `v0.6.11`, or `v0.6.12`.
-- `v0.6.13` is the next planning line and is not yet implemented or released.
+- `v0.6.13` is the next planning line; CAND-021 through CAND-030 are planning
+  candidates and do not create a release, tag, PyPI publication, or version bump.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.

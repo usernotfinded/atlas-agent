@@ -1,0 +1,248 @@
+{
+  "artifact_type": "v0613_paper_autonomy_evidence",
+  "schema_version": 1,
+  "release_line": "v0.6.13",
+  "status": "planning_only",
+  "current_public_release": "v0.6.12",
+  "next_planned_release": "v0.6.13",
+  "source_version": "0.6.12",
+  "pypi_published": false,
+  "v0613_tag_created": false,
+  "v0613_github_release_created": false,
+  "safety": {
+    "live_trading_enabled": false,
+    "live_submit_enabled": false,
+    "broker_execution_enabled": false,
+    "provider_execution_enabled_by_default": false,
+    "credentials_or_secrets_added": false,
+    "profit_claims": false,
+    "no_risk_claims": false,
+    "live_readiness_claims": false,
+    "autonomous_live_readiness_claims": false
+  },
+  "candidates": [
+    {
+      "id": "CAND-021",
+      "title": "Post-Release Hygiene Consolidation",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/releases/v0.6.12-post-release-evidence.md",
+        "docs/releases/v0.6.12-post-release-evidence.json",
+        "docs/releases/v0.6.13-candidate-selection.md"
+      ],
+      "primary_scripts": [],
+      "primary_tests": [
+        "tests/test_v0613_post_release_hygiene.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_v0613_post_release_hygiene.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Post-release docs, checker, and tests only; no runtime trading, broker, provider, risk, approval, or kill-switch changes.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Makes the v0.6.12 public evidence canonical and keeps the v0.6.13 planning line explicit."
+    },
+    {
+      "id": "CAND-022",
+      "title": "Bounded Autonomy Governance",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/bounded-live-autonomy-governance.md",
+        "docs/autonomy-roadmap.md"
+      ],
+      "primary_scripts": [],
+      "primary_tests": [
+        "tests/test_bounded_autonomy_governance.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_bounded_autonomy_governance.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Governance docs and deterministic checks only; live autonomy remains externally gated and unavailable by default.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Documents the staged autonomy ladder and hard safety invariants for reviewers."
+    },
+    {
+      "id": "CAND-023",
+      "title": "Autonomous Paper Workflow Demo and Evidence Gate",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/autonomous-paper-workflow.md"
+      ],
+      "primary_scripts": [
+        "scripts/demo_autonomous_paper_workflow.sh"
+      ],
+      "primary_tests": [
+        "tests/test_autonomous_paper_workflow_demo.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_autonomous_paper_workflow_demo.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Paper-only demo and evidence gate; no live mode, provider keys, broker calls, or network requirement.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Gives reviewers a deterministic local L1 paper workflow they can run without credentials."
+    },
+    {
+      "id": "CAND-024",
+      "title": "Paper Mode Offline Provider Isolation and No-Network Gate",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/paper-provider-isolation.md"
+      ],
+      "primary_scripts": [
+        "scripts/demo_autonomous_paper_workflow.sh"
+      ],
+      "primary_tests": [
+        "tests/test_paper_provider_isolation.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_paper_provider_isolation.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Paper-mode provider isolation only; live mode stays fail-closed and no broker execution is added.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Proves paper workflows can remain offline and provider-free while preserving live safeguards."
+    },
+    {
+      "id": "CAND-025",
+      "title": "Autonomous Paper Strategy Evaluation Matrix and Promotion Gate",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/paper-strategy-evaluation.md"
+      ],
+      "primary_scripts": [
+        "scripts/demo_paper_strategy_evaluation.sh"
+      ],
+      "primary_tests": [
+        "tests/test_paper_strategy_evaluation.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_paper_strategy_evaluation.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Deterministic paper backtest comparison only; no provider, broker, live, safety, risk, or release side effects.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Shows sample-data strategy evaluation with paper-only follow-up decisions."
+    },
+    {
+      "id": "CAND-026",
+      "title": "Paper Strategy Sensitivity Matrix and Deterministic Fixture",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/paper-strategy-sensitivity.md"
+      ],
+      "primary_scripts": [
+        "scripts/demo_paper_strategy_sensitivity.sh"
+      ],
+      "primary_tests": [
+        "tests/test_paper_strategy_sensitivity.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_paper_strategy_sensitivity.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Deterministic paper parameter sensitivity only; no live promotion, provider calls, broker calls, or release side effects.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Helps reviewers see whether paper strategy behavior is parameter-sensitive on local fixtures."
+    },
+    {
+      "id": "CAND-027",
+      "title": "Multi-Regime Paper Strategy Robustness Report",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/paper-strategy-robustness.md"
+      ],
+      "primary_scripts": [
+        "scripts/demo_paper_strategy_robustness.sh"
+      ],
+      "primary_tests": [
+        "tests/test_paper_strategy_robustness.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_paper_strategy_robustness.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Synthetic multi-regime paper reporting only; no provider, broker, live, safety, risk, or release side effects.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Helps detect one-regime overfitting before any further paper-only follow-up."
+    },
+    {
+      "id": "CAND-028",
+      "title": "Paper Walk-Forward Robustness Pack and Stability Checks",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/paper-strategy-walk-forward.md"
+      ],
+      "primary_scripts": [
+        "scripts/demo_paper_strategy_walk_forward.sh"
+      ],
+      "primary_tests": [
+        "tests/test_paper_strategy_walk_forward.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_paper_strategy_walk_forward.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Deterministic chronological walk-forward paper testing only; no live promotion, provider calls, broker calls, or release side effects.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Adds rolling-window stability evidence for paper-only strategy review."
+    },
+    {
+      "id": "CAND-029",
+      "title": "Paper Strategy Candidate Scorecard and Promotion Ledger",
+      "status": "implemented",
+      "primary_docs": [
+        "docs/paper-strategy-scorecard.md"
+      ],
+      "primary_scripts": [
+        "scripts/demo_paper_strategy_scorecard.sh"
+      ],
+      "primary_tests": [
+        "tests/test_paper_strategy_scorecard.py"
+      ],
+      "primary_checkers": [
+        "scripts/check_paper_strategy_scorecard.py"
+      ],
+      "ci_gate": true,
+      "dev_gate": true,
+      "release_quick_gate": true,
+      "safety_boundary": "Paper strategy scorecard and ledger only; no live approval, provider execution, broker execution, or release side effects.",
+      "protected_runtime_boundary_status": "not_modified",
+      "release_tag_pypi_status": "no v0.6.13 tag, GitHub Release, source version bump, or PyPI publish",
+      "reviewer_value": "Aggregates paper evaluation, sensitivity, robustness, and walk-forward evidence into one candidate ledger."
+    }
+  ],
+  "gate_commands": [
+    "python3.11 scripts/check_v0613_paper_autonomy_evidence.py",
+    "python3.11 scripts/check_v0613_paper_autonomy_evidence.py --json",
+    "python3.11 -m pytest tests/test_v0613_paper_autonomy_evidence.py -q",
+    "./scripts/dev_check.sh",
+    "./scripts/ci_check.sh",
+    "./scripts/release_check.sh --quick"
+  ]
+}
