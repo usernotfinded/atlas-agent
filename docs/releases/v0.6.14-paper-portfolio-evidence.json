@@ -1,0 +1,91 @@
+{
+  "artifact_type": "v0614_paper_portfolio_evidence",
+  "schema_version": 1,
+  "release": "v0.6.14",
+  "release_state": "planning_only",
+  "current_public_release": "v0.6.13",
+  "source_version": "0.6.13",
+  "pypi_published": false,
+  "mode": "paper",
+  "provider_required": false,
+  "broker_required": false,
+  "network_required": false,
+  "live_readiness": false,
+  "not_financial_advice": true,
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-002",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-003",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-004",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-005",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-006",
+      "status": "implemented"
+    }
+  ],
+  "required_commands": [
+    "atlas backtest portfolio-proposal",
+    "atlas backtest portfolio-stress",
+    "atlas backtest portfolio-monitor",
+    "atlas backtest portfolio-recheck",
+    "atlas backtest portfolio-dossier",
+    "atlas backtest portfolio-replay"
+  ],
+  "required_docs": [
+    "docs/paper-portfolio-proposal.md",
+    "docs/paper-portfolio-stress.md",
+    "docs/paper-portfolio-monitoring.md",
+    "docs/paper-portfolio-recheck-ledger.md",
+    "docs/paper-portfolio-dossier.md",
+    "docs/paper-portfolio-replay.md"
+  ],
+  "required_demos": [
+    "scripts/demo_paper_portfolio_proposal.sh",
+    "scripts/demo_paper_portfolio_stress.sh",
+    "scripts/demo_paper_portfolio_monitoring.sh",
+    "scripts/demo_paper_portfolio_recheck.sh",
+    "scripts/demo_paper_portfolio_dossier.sh",
+    "scripts/demo_paper_portfolio_replay.sh"
+  ],
+  "required_checkers": [
+    "scripts/check_paper_portfolio_proposal.py",
+    "scripts/check_paper_portfolio_stress.py",
+    "scripts/check_paper_portfolio_monitoring.py",
+    "scripts/check_paper_portfolio_recheck.py",
+    "scripts/check_paper_portfolio_dossier.py",
+    "scripts/check_paper_portfolio_replay.py"
+  ],
+  "required_tests": [
+    "tests/test_paper_portfolio_proposal.py",
+    "tests/test_paper_portfolio_stress.py",
+    "tests/test_paper_portfolio_monitoring.py",
+    "tests/test_paper_portfolio_recheck.py",
+    "tests/test_paper_portfolio_dossier.py",
+    "tests/test_paper_portfolio_replay.py"
+  ],
+  "safety": {
+    "no_live_trading": true,
+    "no_broker_calls": true,
+    "no_provider_calls": true,
+    "no_notifications_sent": true,
+    "no_orders_generated": true,
+    "no_profit_claim": true,
+    "no_live_readiness_claim": true,
+    "no_autonomous_live_readiness_claim": true
+  }
+}
