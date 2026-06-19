@@ -1233,6 +1233,198 @@ def write_portfolio_recheck_reports(
     lines.append("Generated offline safely. No live data or APIs used.")
 
     with open(md_path, "w") as f:
-        f.write("\\n".join(lines) + "\\n")
+        f.write("\n".join(lines) + "\n")
 
     return json_path, md_path
+
+
+def build_paper_portfolio_dossier(
+    data_path: str,
+    symbol: str,
+    strategies: list[str] | None = None,
+    max_strategy_weight: float = 0.40,
+    min_cash_weight: float = 0.10,
+    max_stressed_drawdown: float = 0.25,
+    max_single_scenario_loss: float = 0.20,
+    monitor_window: int = 20,
+    recheck_threshold: float = 0.05,
+) -> dict[str, Any]:
+    """Generate a deterministic paper-only portfolio reviewer dossier."""
+    import hashlib
+    import json
+
+    proposal = build_paper_portfolio_proposal(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+    )
+    stress = build_paper_portfolio_stress(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+        max_stressed_drawdown=max_stressed_drawdown,
+        max_single_scenario_loss=max_single_scenario_loss,
+    )
+    monitoring = build_paper_portfolio_monitoring(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+        max_stressed_drawdown=max_stressed_drawdown,
+        max_single_scenario_loss=max_single_scenario_loss,
+        monitor_window=monitor_window,
+        recheck_threshold=recheck_threshold,
+    )
+    recheck = build_paper_portfolio_recheck(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+        max_stressed_drawdown=max_stressed_drawdown,
+        max_single_scenario_loss=max_single_scenario_loss,
+        monitor_window=monitor_window,
+        recheck_threshold=recheck_threshold,
+    )
+
+    def _hash(obj):
+        return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+
+    artifacts = [
+        {
+            "name": "paper-portfolio-proposal.json",
+            "artifact_type": "paper_portfolio_proposal",
+            "digest": _hash(proposal),
+        },
+        {
+            "name": "paper-portfolio-stress.json",
+            "artifact_type": "paper_portfolio_stress",
+            "digest": _hash(stress),
+        },
+        {
+            "name": "paper-portfolio-monitoring.json",
+            "artifact_type": "paper_portfolio_monitoring",
+            "digest": _hash(monitoring),
+        },
+        {
+            "name": "paper-portfolio-recheck-ledger.json",
+            "artifact_type": "paper_portfolio_recheck_ledger",
+            "digest": _hash(recheck),
+        },
+    ]
+
+    recheck_status = recheck.get("overall_review_status", "paper_recheck_ok")
+    if recheck_status == "paper_recheck_required":
+        dossier_status = "paper_dossier_recheck_required"
+    elif recheck_status == "paper_review_watchlist":
+        dossier_status = "paper_dossier_watchlist"
+    elif recheck_status == "paper_recheck_rejected":
+        dossier_status = "paper_dossier_rejected"
+    else:
+        dossier_status = "paper_dossier_complete"
+
+    human_review_checklist = [
+        {"item": "Review paper-only allocation guardrails", "required": True},
+        {"item": "Review stress constraints", "required": True},
+        {"item": "Review monitoring/recheck triggers", "required": True},
+        {"item": "Verify artifact consistency", "required": True},
+        {"item": "Verify safety boundaries", "required": True},
+    ]
+
+    return {
+        "artifact_type": "paper_portfolio_dossier",
+        "schema_version": 1,
+        "mode": "paper",
+        "provider_required": False,
+        "broker_required": False,
+        "network_required": False,
+        "live_readiness": False,
+        "not_financial_advice": True,
+        "symbol": symbol,
+        "data_source": data_path,
+        "overall_dossier_status": dossier_status,
+        "artifacts": artifacts,
+        "summaries": {
+            "proposal": {"status": proposal.get("overall_proposal_status")},
+            "stress": {"status": stress.get("overall_stress_status")},
+            "monitoring": {"status": monitoring.get("overall_monitoring_status")},
+            "recheck": {"status": recheck_status, "queue_size": len(recheck.get("review_queue", []))},
+        },
+        "human_review_checklist": human_review_checklist,
+        "safety": {
+            "no_live_trading": True,
+            "no_broker_calls": True,
+            "no_provider_calls": True,
+            "no_notifications_sent": True,
+            "no_orders_generated": True,
+            "no_profit_claim": True,
+            "no_live_readiness_claim": True,
+        },
+    }
+
+def write_portfolio_dossier_reports(
+    report: dict[str, Any],
+    output_dir: str,
+) -> tuple[str, str, str]:
+    """Write paper portfolio dossier, markdown, and evidence manifest to disk."""
+    import os
+    import json
+    import hashlib
+
+    os.makedirs(output_dir, exist_ok=True)
+    json_path = os.path.join(output_dir, "paper-portfolio-dossier.json")
+    md_path = os.path.join(output_dir, "paper-portfolio-dossier.md")
+    manifest_path = os.path.join(output_dir, "paper-portfolio-evidence-manifest.json")
+
+    with open(json_path, "w") as f:
+        json.dump(report, f, indent=2, sort_keys=True, default=str)
+
+    manifest = {
+        "manifest_type": "paper_portfolio_evidence_manifest",
+        "symbol": report.get("symbol"),
+        "dossier_digest": hashlib.sha256(json.dumps(report, sort_keys=True, default=str).encode("utf-8")).hexdigest(),
+        "artifacts": report.get("artifacts", []),
+    }
+
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2, sort_keys=True, default=str)
+
+    lines = [
+        "# Paper Portfolio Reviewer Dossier",
+        "",
+        "**PAPER ONLY. NOT FINANCIAL ADVICE. NO LIVE READINESS. NO PROFIT GUARANTEE.**",
+        "**NO PROVIDERS CALLED. NO BROKERS CALLED. NO REAL NOTIFICATIONS SENT. NO ORDERS GENERATED.**",
+        "",
+        f"- **Symbol:** {report.get('symbol')}",
+        f"- **Overall Dossier Status:** `{report.get('overall_dossier_status')}`",
+        "",
+        "## Human Review Checklist",
+        "",
+    ]
+    for item in report.get("human_review_checklist", []):
+        lines.append(f"- [ ] {item['item']} (Required: {item['required']})")
+
+    lines.extend([
+        "",
+        "## Summaries",
+        "",
+        f"- **Proposal:** `{report['summaries']['proposal']['status']}`",
+        f"- **Stress:** `{report['summaries']['stress']['status']}`",
+        f"- **Monitoring:** `{report['summaries']['monitoring']['status']}`",
+        f"- **Recheck:** `{report['summaries']['recheck']['status']}` (Queue size: {report['summaries']['recheck']['queue_size']})",
+        "",
+        "## Generated Artifacts",
+        "",
+    ])
+    for art in report.get("artifacts", []):
+        lines.append(f"- `{art['name']}`: {art['digest'][:8]}")
+
+    with open(md_path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+    return json_path, md_path, manifest_path

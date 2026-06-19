@@ -25,6 +25,12 @@
       "status": "implemented",
       "description": "Paper Portfolio Recheck Ledger and Human Review Queue",
       "notes": "Paper-only. Offline review queue. No live trading. No provider, broker calls, or notifications."
+    },
+    {
+      "id": "CAND-005",
+      "status": "implemented",
+      "description": "Paper Portfolio Reviewer Dossier and Evidence Bundle",
+      "notes": "Paper-only. Offline evidence bundle. No live trading. No provider, broker calls, or notifications."
     }
   ]
 }
