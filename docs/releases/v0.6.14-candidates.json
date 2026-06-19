@@ -13,6 +13,12 @@
       "status": "implemented",
       "description": "Paper Portfolio Stress Constraints and Drawdown Guard",
       "notes": "Paper-only. Offline synthetic stress. No live trading. No provider or broker calls."
+    },
+    {
+      "id": "CAND-003",
+      "status": "implemented",
+      "description": "Paper Portfolio Monitoring Simulation and Recheck Gate",
+      "notes": "Paper-only. Offline monitoring simulation. No live trading. No provider, broker calls, or notifications."
     }
   ]
 }
