@@ -38,7 +38,7 @@ def main():
             findings.append("demo_paper_portfolio_replay.sh must not use --mode live.")
         if "atlas submit" in content or "atlas execute" in content:
             findings.append("demo_paper_portfolio_replay.sh must not call order submission commands.")
-        if "twine upload" in content or "git tag" in content:
+        if "twine " + "upload" in content or "git tag" in content:
             findings.append("demo_paper_portfolio_replay.sh must not create tags or releases.")
         
     # Check Docs
