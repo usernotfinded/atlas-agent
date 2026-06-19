@@ -31,6 +31,12 @@
       "status": "implemented",
       "description": "Paper Portfolio Reviewer Dossier and Evidence Bundle",
       "notes": "Paper-only. Offline evidence bundle. No live trading. No provider, broker calls, or notifications."
+    },
+    {
+      "id": "CAND-006",
+      "status": "implemented",
+      "description": "Paper Portfolio Evidence Replay and Regression Gate",
+      "notes": "Paper-only. Offline deterministic replay check. No live trading. No provider, broker calls, or notifications."
     }
   ]
 }

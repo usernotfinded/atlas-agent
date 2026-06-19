@@ -66,9 +66,9 @@ def build_paper_portfolio_proposal(
 
     allocations = []
     excluded = []
-    
+
     candidates = [
-        s for s in scorecard["ranking"] 
+        s for s in scorecard["ranking"]
         if s["decision"] == "paper_follow_up_candidate"
     ]
     watchlist = [
@@ -81,7 +81,7 @@ def build_paper_portfolio_proposal(
     ]
 
     total_alloc = 0.0
-    
+
     if not candidates and not watchlist:
         proposal_status = "needs_more_testing"
         allocations.append({
@@ -98,11 +98,11 @@ def build_paper_portfolio_proposal(
         proposal_status = "paper_portfolio_proposal"
         if not candidates and watchlist:
             proposal_status = "paper_watchlist_portfolio"
-            
+
         eligible = candidates + watchlist
         target_weight_per_strategy = (1.0 - min_cash_weight) / len(eligible)
         assigned_weight = min(max_strategy_weight, target_weight_per_strategy)
-        
+
         for e in eligible:
             allocations.append({
                 "strategy": e["strategy"],
@@ -111,14 +111,14 @@ def build_paper_portfolio_proposal(
                 "reason": e["reason"]
             })
             total_alloc += assigned_weight
-        
+
         cash_weight = 1.0 - total_alloc
         allocations.append({
             "strategy": "cash",
             "paper_weight": cash_weight,
             "reason": "minimum paper cash reserve"
         })
-        
+
         for r in rejected:
             excluded.append({
                 "strategy": r["strategy"],
@@ -591,7 +591,7 @@ def render_portfolio_proposal_markdown(report: dict[str, Any]) -> str:
         "| Strategy | Reason |",
         "| --- | --- |",
     ])
-    
+
     if not report["excluded"]:
         lines.append("| None | N/A |")
     else:
@@ -1423,6 +1423,178 @@ def write_portfolio_dossier_reports(
     ])
     for art in report.get("artifacts", []):
         lines.append(f"- `{art['name']}`: {art['digest'][:8]}")
+
+    with open(md_path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+    return json_path, md_path, manifest_path
+
+
+def build_paper_portfolio_replay(
+    data_path: str,
+    symbol: str,
+    strategies: list[str] | None = None,
+    repeat: int = 2,
+    max_strategy_weight: float = 0.40,
+    min_cash_weight: float = 0.10,
+    max_stressed_drawdown: float = 0.25,
+    max_single_scenario_loss: float = 0.20,
+    monitor_window: int = 20,
+    recheck_threshold: float = 0.05,
+) -> dict[str, Any]:
+    """Generate a deterministic paper-only portfolio evidence replay and regression gate."""
+    import hashlib
+    import json
+
+    runs = []
+    comparisons = []
+    stable_artifacts = {}
+    overall_status = "paper_replay_pass"
+
+    # Capture the last dossier structure to check schema version
+    last_dossier = {}
+
+    for run_index in range(1, repeat + 1):
+        dossier = build_paper_portfolio_dossier(
+            data_path=data_path,
+            symbol=symbol,
+            strategies=strategies,
+            max_strategy_weight=max_strategy_weight,
+            min_cash_weight=min_cash_weight,
+            max_stressed_drawdown=max_stressed_drawdown,
+            max_single_scenario_loss=max_single_scenario_loss,
+            monitor_window=monitor_window,
+            recheck_threshold=recheck_threshold,
+        )
+        last_dossier = dossier
+
+        run_artifacts = []
+        for art in dossier.get("artifacts", []):
+            run_artifacts.append({
+                "name": art["name"],
+                "artifact_type": art["artifact_type"],
+                "stable_digest": art["digest"]
+            })
+
+        def _stable_hash(obj):
+            return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+
+        dossier_hash = _stable_hash(dossier)
+        run_artifacts.append({
+            "name": "paper-portfolio-dossier.json",
+            "artifact_type": "paper_portfolio_dossier",
+            "stable_digest": dossier_hash
+        })
+
+        runs.append({
+            "run_index": run_index,
+            "artifacts": run_artifacts
+        })
+
+        if run_index == 1:
+            for art in run_artifacts:
+                stable_artifacts[art["name"]] = art["stable_digest"]
+        else:
+            for art in run_artifacts:
+                name = art["name"]
+                expected = stable_artifacts.get(name)
+                actual = art["stable_digest"]
+                if expected != actual:
+                    overall_status = "paper_replay_drift_detected"
+                    comparisons.append({
+                        "artifact_name": name,
+                        "status": "mismatch",
+                        "expected_digest": expected,
+                        "stable_digest": actual,
+                    })
+                else:
+                    comparisons.append({
+                        "artifact_name": name,
+                        "status": "match",
+                        "stable_digest": actual,
+                    })
+
+    if last_dossier.get("schema_version") != 1:
+        overall_status = "paper_replay_schema_mismatch"
+    elif overall_status == "paper_replay_pass" and last_dossier.get("overall_dossier_status") in ("paper_dossier_recheck_required", "paper_dossier_watchlist"):
+        overall_status = "needs_recheck"
+    elif overall_status == "paper_replay_pass" and last_dossier.get("overall_dossier_status") == "paper_dossier_rejected":
+        overall_status = "rejected"
+
+    return {
+        "artifact_type": "paper_portfolio_replay",
+        "schema_version": 1,
+        "mode": "paper",
+        "provider_required": False,
+        "broker_required": False,
+        "network_required": False,
+        "live_readiness": False,
+        "not_financial_advice": True,
+        "symbol": symbol,
+        "data_source": data_path,
+        "repeat": repeat,
+        "overall_replay_status": overall_status,
+        "runs": runs,
+        "comparisons": comparisons,
+        "safety": {
+            "no_live_trading": True,
+            "no_broker_calls": True,
+            "no_provider_calls": True,
+            "no_notifications_sent": True,
+            "no_orders_generated": True,
+            "no_profit_claim": True,
+            "no_live_readiness_claim": True,
+        },
+    }
+
+def write_portfolio_replay_reports(
+    report: dict[str, Any],
+    output_dir: str,
+) -> tuple[str, str, str]:
+    """Write paper portfolio replay reports to disk."""
+    import os
+    import json
+    import hashlib
+
+    os.makedirs(output_dir, exist_ok=True)
+    json_path = os.path.join(output_dir, "paper-portfolio-replay.json")
+    md_path = os.path.join(output_dir, "paper-portfolio-replay.md")
+    manifest_path = os.path.join(output_dir, "paper-portfolio-regression-manifest.json")
+
+    with open(json_path, "w") as f:
+        json.dump(report, f, indent=2, sort_keys=True, default=str)
+
+    manifest = {
+        "manifest_type": "paper_portfolio_regression_manifest",
+        "symbol": report.get("symbol"),
+        "replay_digest": hashlib.sha256(json.dumps(report, sort_keys=True, default=str).encode("utf-8")).hexdigest(),
+        "runs": report.get("runs", []),
+        "comparisons": report.get("comparisons", []),
+    }
+
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2, sort_keys=True, default=str)
+
+    lines = [
+        "# Paper Portfolio Replay and Regression Gate",
+        "",
+        "**PAPER ONLY. NOT FINANCIAL ADVICE. NO LIVE READINESS. NO PROFIT GUARANTEE.**",
+        "**NO PROVIDERS CALLED. NO BROKERS CALLED. NO REAL NOTIFICATIONS SENT. NO ORDERS GENERATED.**",
+        "",
+        f"- **Symbol:** {report.get('symbol')}",
+        f"- **Overall Replay Status:** `{report.get('overall_replay_status')}`",
+        f"- **Repeat Count:** {report.get('repeat')}",
+        "",
+        "## Comparisons",
+        "",
+    ]
+
+    seen = set()
+    for comp in report.get("comparisons", []):
+        key = f"{comp['artifact_name']}-{comp['status']}"
+        if key not in seen:
+            lines.append(f"- `{comp['artifact_name']}`: `{comp['status']}` (Digest: {comp['stable_digest'][:8]})")
+            seen.add(key)
 
     with open(md_path, "w") as f:
         f.write("\n".join(lines) + "\n")
