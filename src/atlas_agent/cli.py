@@ -555,6 +555,28 @@ Safety First:
     backtest_scorecard.add_argument("--slippage-bps", type=float, default=0.0)
     backtest_scorecard.add_argument("--commission-bps", type=float, default=0.0)
     backtest_scorecard.add_argument("--json", action="store_true")
+
+    backtest_portfolio = backtest_sub.add_parser(
+        "portfolio-proposal",
+        help="Evaluate a deterministic paper-only portfolio proposal sandbox.",
+        description=(
+            "Evaluate strategies across evaluation, sensitivity, robustness, and walk-forward "
+            "paper gates to build a paper portfolio proposal allocation sandbox. No provider, "
+            "broker, network, or live trading path is used."
+        ),
+    )
+    backtest_portfolio.add_argument("--symbol", required=True)
+    backtest_portfolio.add_argument("--data", required=True)
+    backtest_portfolio.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_portfolio.add_argument("--max-strategy-weight", type=float, default=0.40)
+    backtest_portfolio.add_argument("--min-cash-weight", type=float, default=0.10)
+    backtest_portfolio.add_argument("--output-dir", required=True)
+    backtest_portfolio.add_argument("--json", action="store_true")
+
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
     backtest_runs = backtest_sub.add_parser("runs")
@@ -4715,6 +4737,36 @@ def main(argv: list[str] | None = None) -> int:
             print("No live trading, broker calls, provider calls, or network calls.")
             return 0
 
+        if args.backtest_command == "portfolio-proposal":
+            try:
+                from atlas_agent.backtest.portfolio import build_paper_portfolio_proposal, write_portfolio_proposal_reports
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                report = build_paper_portfolio_proposal(
+                    data_path=getattr(args, "data"),
+                    symbol=getattr(args, "symbol"),
+                    strategies=strategy_ids,
+                    max_strategy_weight=getattr(args, "max_strategy_weight", 0.40),
+                    min_cash_weight=getattr(args, "min_cash_weight", 0.10),
+                )
+                json_path, markdown_path = write_portfolio_proposal_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                import json
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            print(f"Paper portfolio proposal complete: {report['symbol']}")
+            print(f"Proposal status: {report['proposal_status']}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {markdown_path}")
+            print("No live trading, broker calls, provider calls, or network calls.")
+            return 0
 
         if args.backtest_command == "scorecard":
             try:

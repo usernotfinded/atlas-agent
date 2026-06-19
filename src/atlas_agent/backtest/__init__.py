@@ -96,10 +96,19 @@ __all__ = [
     "build_paper_strategy_scorecard",
     "render_strategy_scorecard_markdown",
     "write_strategy_scorecard_reports",
+    "build_paper_portfolio_proposal",
+    "render_portfolio_proposal_markdown",
+    "write_portfolio_proposal_reports",
 ]
 from atlas_agent.backtest.scorecard import (
     ALLOWED_SCORECARD_DECISIONS,
     build_paper_strategy_scorecard,
     render_strategy_scorecard_markdown,
     write_strategy_scorecard_reports,
+)
+
+from atlas_agent.backtest.portfolio import (
+    build_paper_portfolio_proposal,
+    render_portfolio_proposal_markdown,
+    write_portfolio_proposal_reports,
 )

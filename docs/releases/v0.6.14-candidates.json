@@ -1,5 +1,12 @@
 {
   "release_line": "v0.6.14",
   "status": "planning-only",
-  "candidates": []
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "status": "implemented",
+      "description": "Paper Portfolio Proposal Sandbox and Allocation Guard",
+      "notes": "Paper-only. No live trading. No provider calls."
+    }
+  ]
 }
