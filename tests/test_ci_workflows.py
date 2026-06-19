@@ -344,6 +344,11 @@ class TestFullTestWorkflow:
     def test_runs_full_pytest(self, full_test_content: str) -> None:
         assert "python3.11 -m pytest tests/ -q -n auto" in full_test_content
 
+    def test_uses_safe_github_token_for_release_checks(self, full_test_content: str) -> None:
+        assert "permissions:" in full_test_content
+        assert "contents: read" in full_test_content
+        assert "GH_TOKEN: ${{ github.token }}" in full_test_content
+
     def test_does_not_require_secrets(self, full_test_content: str) -> None:
         assert "secrets." not in full_test_content.lower()
 

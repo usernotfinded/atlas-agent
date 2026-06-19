@@ -8,12 +8,16 @@ on:
     types: [opened, synchronize, reopened, labeled]
     branches: [main]
 
+permissions:
+  contents: read
+
 env:
   PYTHON_BIN: python3.11
   PYTHONUNBUFFERED: "1"
   PYTHONDONTWRITEBYTECODE: "1"
   PYTEST_ADDOPTS: "-p no:cacheprovider"
   ATLAS_CI: "1"
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   full-test:
