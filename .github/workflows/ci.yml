@@ -70,10 +70,12 @@ jobs:
         run: python3.11 scripts/check_paper_strategy_scorecard.py
       - name: Paper portfolio proposal check
         run: python3.11 scripts/check_paper_portfolio_proposal.py
+      - name: Paper portfolio stress check
+        run: python3.11 scripts/check_paper_portfolio_stress.py
       - name: v0.6.13 paper autonomy evidence check
         run: python3.11 scripts/check_v0613_paper_autonomy_evidence.py
       - name: Paper strategy evaluation tests
-        run: python3.11 -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_v0613_paper_autonomy_evidence.py -q
+        run: python3.11 -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_paper_portfolio_stress.py tests/test_v0613_paper_autonomy_evidence.py -q
       - name: Feedback intake check
         run: python3.11 scripts/check_feedback_intake.py
       - name: Feedback taxonomy check
@@ -316,7 +318,7 @@ jobs:
             tests/test_docs_archive_hygiene.py \
             tests/test_release_assurance_snapshot_integration.py \
             tests/test_bounded_autonomy_governance.py \
-            tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_v0613_paper_autonomy_evidence.py \
+            tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_paper_portfolio_stress.py tests/test_v0613_paper_autonomy_evidence.py \
             -q
       - name: Release check quick
         run: ./scripts/release_check.sh --quick

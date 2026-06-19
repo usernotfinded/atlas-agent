@@ -60,6 +60,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] No credentials loaded by default in safety workflows
 - [ ] Paper mode can run without provider credentials or network ([docs/paper-provider-isolation.md](paper-provider-isolation.md))
 - [ ] Paper strategy robustness can run across deterministic synthetic regimes without provider credentials, broker credentials, network, or live mode ([docs/paper-strategy-robustness.md](paper-strategy-robustness.md))
+- [ ] Paper portfolio stress constraints run on deterministic synthetic scenarios without provider credentials, broker credentials, network, or live mode ([docs/paper-portfolio-stress.md](paper-portfolio-stress.md))
 
 ## Protected boundaries
 

@@ -96,9 +96,14 @@ __all__ = [
     "build_paper_strategy_scorecard",
     "render_strategy_scorecard_markdown",
     "write_strategy_scorecard_reports",
+    "ALLOWED_STRESS_STATUSES",
+    "STRESS_SCENARIOS",
     "build_paper_portfolio_proposal",
+    "build_paper_portfolio_stress",
     "render_portfolio_proposal_markdown",
+    "render_portfolio_stress_markdown",
     "write_portfolio_proposal_reports",
+    "write_portfolio_stress_reports",
 ]
 from atlas_agent.backtest.scorecard import (
     ALLOWED_SCORECARD_DECISIONS,
@@ -108,7 +113,12 @@ from atlas_agent.backtest.scorecard import (
 )
 
 from atlas_agent.backtest.portfolio import (
+    ALLOWED_STRESS_STATUSES,
+    STRESS_SCENARIOS,
     build_paper_portfolio_proposal,
+    build_paper_portfolio_stress,
     render_portfolio_proposal_markdown,
+    render_portfolio_stress_markdown,
     write_portfolio_proposal_reports,
+    write_portfolio_stress_reports,
 )

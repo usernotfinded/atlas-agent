@@ -60,6 +60,8 @@ The following checks pass on a clean local clone without credentials or network 
 - `bash scripts/demo_paper_strategy_robustness.sh` — paper strategy robustness runs offline without credentials, network, or broker contact
 - `python3.11 scripts/check_paper_strategy_walk_forward.py` — paper strategy walk-forward gate is safe and present
 - `python3.11 scripts/check_paper_strategy_scorecard.py` — paper strategy scorecard gate is safe and present
+- `python3.11 scripts/check_paper_portfolio_stress.py` — paper portfolio stress gate is safe and present
+- `bash scripts/demo_paper_portfolio_stress.sh` — paper portfolio stress runs offline without credentials, network, or broker contact
 - `python3.11 scripts/check_v0613_paper_autonomy_evidence.py` — v0.6.13 planning-only paper-autonomy evidence bundle is safe and present
 - `python3.11 -m pytest tests/test_v0613_paper_autonomy_evidence.py -q` — evidence bundle tests pass
 - `./scripts/release_check.sh --quick` — quick release gate passes

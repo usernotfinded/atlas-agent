@@ -153,6 +153,7 @@ Level 1 is **operator-supervised, local-only automation that runs entirely insid
 - [Paper Strategy Evaluation](paper-strategy-evaluation.md)
 - [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md) — deterministic sample-data strategy comparison with paper-only follow-up decisions.
 - [Paper Strategy Robustness Report](paper-strategy-robustness.md) — deterministic synthetic multi-regime strategy robustness for paper-only follow-up.
+- [Paper Portfolio Stress Constraints](paper-portfolio-stress.md) — deterministic synthetic stress checks for paper-only portfolio proposal follow-up.
 
 ## L2 — Live Suggestions with Human Approval
 

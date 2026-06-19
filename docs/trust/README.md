@@ -83,6 +83,7 @@ Paper strategy sensitivity is documented in [docs/paper-strategy-sensitivity.md]
 Paper strategy robustness is documented in [docs/paper-strategy-robustness.md](../paper-strategy-robustness.md).
 Paper strategy walk-forward stability is documented in [docs/paper-strategy-walk-forward.md](../paper-strategy-walk-forward.md).
 Paper strategy scorecard evidence is documented in [docs/paper-strategy-scorecard.md](../paper-strategy-scorecard.md).
+Paper portfolio stress constraints are documented in [docs/paper-portfolio-stress.md](../paper-portfolio-stress.md).
 The v0.6.13 paper-autonomy closure evidence is documented in
 [docs/releases/v0.6.13-paper-autonomy-evidence.md](../releases/v0.6.13-paper-autonomy-evidence.md).
 

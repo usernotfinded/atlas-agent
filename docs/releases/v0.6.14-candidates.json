@@ -7,6 +7,12 @@
       "status": "implemented",
       "description": "Paper Portfolio Proposal Sandbox and Allocation Guard",
       "notes": "Paper-only. No live trading. No provider calls."
+    },
+    {
+      "id": "CAND-002",
+      "status": "implemented",
+      "description": "Paper Portfolio Stress Constraints and Drawdown Guard",
+      "notes": "Paper-only. Offline synthetic stress. No live trading. No provider or broker calls."
     }
   ]
 }

@@ -160,6 +160,7 @@ SECONDS=0
 "$PYTHON_BIN" scripts/check_paper_strategy_walk_forward.py
 "$PYTHON_BIN" scripts/check_paper_strategy_scorecard.py
 "$PYTHON_BIN" scripts/check_paper_portfolio_proposal.py
+"$PYTHON_BIN" scripts/check_paper_portfolio_stress.py
 "$PYTHON_BIN" scripts/check_v0613_paper_autonomy_evidence.py
 "$PYTHON_BIN" scripts/check_v0613_final_reviewer_index.py
 "$PYTHON_BIN" scripts/check_v0613_release_cutover_preflight.py
@@ -173,7 +174,7 @@ SECONDS=0
 if [[ "${QUICK_MODE:-0}" == "1" ]]; then
     echo "Skipping tests in quick mode."
 else
-    "$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_v0613_paper_autonomy_evidence.py tests/test_v0613_final_reviewer_index.py tests/test_v0613_release_cutover_preflight.py tests/test_v0613_final_readiness_audit.py -q
+    "$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_paper_portfolio_stress.py tests/test_v0613_paper_autonomy_evidence.py tests/test_v0613_final_reviewer_index.py tests/test_v0613_release_cutover_preflight.py tests/test_v0613_final_readiness_audit.py -q
 fi
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
@@ -183,7 +184,7 @@ echo "========================================"
 echo "5d. paper strategy evaluation tests"
 echo "========================================"
 SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_v0613_paper_autonomy_evidence.py tests/test_v0613_final_reviewer_index.py -q
+"$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_paper_portfolio_stress.py tests/test_v0613_paper_autonomy_evidence.py tests/test_v0613_final_reviewer_index.py -q
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
