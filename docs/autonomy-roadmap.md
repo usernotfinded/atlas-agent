@@ -154,6 +154,8 @@ Level 1 is **operator-supervised, local-only automation that runs entirely insid
 - [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md) — deterministic sample-data strategy comparison with paper-only follow-up decisions.
 - [Paper Strategy Robustness Report](paper-strategy-robustness.md) — deterministic synthetic multi-regime strategy robustness for paper-only follow-up.
 - [Paper Portfolio Stress Constraints](paper-portfolio-stress.md) — deterministic synthetic stress checks for paper-only portfolio proposal follow-up.
+- [v0.6.14 Paper Portfolio Evidence Bundle](releases/v0.6.14-paper-portfolio-evidence.md) — planning-only CAND-001 through CAND-007 paper portfolio evidence closure.
+- [v0.6.14 Final Paper Portfolio Readiness Audit](releases/v0.6.14-final-readiness-audit.md) — planning-only CAND-008 Go/No-Go dossier for a future separately authorized cutover decision.
 
 ## L2 — Live Suggestions with Human Approval
 

@@ -146,7 +146,10 @@ For paper-only strategy comparison, see
 [Paper Strategy Scorecard](docs/paper-strategy-scorecard.md), plus
 [Paper Portfolio Stress Constraints](docs/paper-portfolio-stress.md). The
 [v0.6.13 Paper Autonomy Evidence Bundle](docs/releases/v0.6.13-paper-autonomy-evidence.md)
-collects CAND-021 through CAND-029 evidence for the planning-only line.
+collects CAND-021 through CAND-029 evidence for the historical planning line,
+while the [v0.6.14 Paper Portfolio Evidence Bundle](docs/releases/v0.6.14-paper-portfolio-evidence.md)
+and [v0.6.14 Final Paper Portfolio Readiness Audit](docs/releases/v0.6.14-final-readiness-audit.md)
+cover the planning-only paper portfolio chain through CAND-008.
 Historical results do not guarantee future performance.
 
 ## Configuration & Security
@@ -200,6 +203,8 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[Paper Portfolio Stress Constraints](docs/paper-portfolio-stress.md)** — deterministic paper-only synthetic stress checks for proposal drawdown, scenario loss, concentration, and cash guardrails. See `scripts/demo_paper_portfolio_stress.sh`.
 - **[Paper Portfolio Monitoring Simulation](docs/paper-portfolio-monitoring.md)** — deterministic paper-only monitoring simulation windows with recheck/watchlist triggers over sample data. See `scripts/demo_paper_portfolio_monitoring.sh`.
 - **[v0.6.13 Paper Autonomy Evidence Bundle](docs/releases/v0.6.13-paper-autonomy-evidence.md)** — planning-only CAND-021 through CAND-029 closure evidence with no release, tag, PyPI, or live-trading side effects.
+- **[v0.6.14 Paper Portfolio Evidence Bundle](docs/releases/v0.6.14-paper-portfolio-evidence.md)** — planning-only CAND-001 through CAND-007 paper portfolio closure evidence with no release, tag, PyPI, provider, broker, notification, or order side effects.
+- **[v0.6.14 Final Paper Portfolio Readiness Audit](docs/releases/v0.6.14-final-readiness-audit.md)** — planning-only CAND-008 Go/No-Go dossier for a future separately authorized cutover decision; it does not authorize a release.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.

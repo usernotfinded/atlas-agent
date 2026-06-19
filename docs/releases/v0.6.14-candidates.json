@@ -37,6 +37,18 @@
       "status": "implemented",
       "description": "Paper Portfolio Evidence Replay and Regression Gate",
       "notes": "Paper-only. Offline deterministic replay check. No live trading. No provider, broker calls, or notifications."
+    },
+    {
+      "id": "CAND-007",
+      "status": "implemented",
+      "description": "Paper Portfolio Evidence Bundle and Candidate Closure Gate",
+      "notes": "Paper-only. Offline evidence closure. No live trading. No provider, broker calls, or notifications."
+    },
+    {
+      "id": "CAND-008",
+      "status": "implemented",
+      "description": "Final Paper Portfolio Release-Readiness Audit and Go/No-Go Dossier",
+      "notes": "Paper-only. Offline readiness audit. No release cutover, tag, GitHub Release, PyPI publication, provider calls, broker calls, notifications, or orders."
     }
   ]
 }

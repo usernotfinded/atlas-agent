@@ -64,6 +64,9 @@ The following checks pass on a clean local clone without credentials or network 
 - `bash scripts/demo_paper_portfolio_stress.sh` — paper portfolio stress runs offline without credentials, network, or broker contact
 - `python3.11 scripts/check_v0613_paper_autonomy_evidence.py` — v0.6.13 planning-only paper-autonomy evidence bundle is safe and present
 - `python3.11 -m pytest tests/test_v0613_paper_autonomy_evidence.py -q` — evidence bundle tests pass
+- `python3.11 scripts/check_v0614_paper_portfolio_evidence.py` — v0.6.14 planning-only paper portfolio evidence bundle is safe and present
+- `python3.11 scripts/check_v0614_final_readiness_audit.py` — v0.6.14 planning-only final paper portfolio readiness audit is safe and present
+- `python3.11 -m pytest tests/test_v0614_final_readiness_audit.py -q` — final readiness audit tests pass
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI
@@ -134,6 +137,8 @@ No broker, no network, no credentials, no live trading.
 - `docs/releases/v0.6.13-candidate-selection.md` present — v0.6.13 candidate-selection gate (planning only)
 - `docs/releases/v0.6.13-paper-autonomy-evidence.md` present — planning-only CAND-021 through CAND-029 evidence bundle
 - `docs/releases/v0.6.13-paper-autonomy-evidence.json` present — machine-readable planning-only paper-autonomy evidence
+- `docs/releases/v0.6.14-paper-portfolio-evidence.md` present — planning-only CAND-001 through CAND-007 paper portfolio evidence bundle
+- `docs/releases/v0.6.14-final-readiness-audit.md` present — planning-only CAND-008 final paper portfolio readiness audit
 - `docs/autonomous-paper-workflow.md` present — L1 paper-only autonomy demo doc
 - `docs/releases/v0.6.13.md` present — v0.6.13 release notes (current public)
 - `docs/trust/v0.6.13-status.md` present — v0.6.13 trust status (current public)
@@ -148,7 +153,8 @@ No broker, no network, no credentials, no live trading.
 - Version on `main` is `0.6.13`; latest stable public GitHub release is `v0.6.13`. `v0.6.12`, `v0.6.11`, `v0.6.10`, `v0.6.9`, `v0.6.8`, `v0.6.7`, `v0.6.6`, `v0.6.5`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, and `v0.6.0` are historical.
 - `v0.6.13` is the current public release (tagged and published on GitHub); `v0.6.14` is the next planning line.
 - [v0.6.13 Post-Release Evidence](./releases/v0.6.13-post-release-evidence.md) records the deterministic cutover evidence.
-- [v0.6.13 Planning Seed](./releases/v0.6.13-plan.md) seeds the next planning line and does not claim a release.
+- [v0.6.14 Planning Seed](./releases/v0.6.14-plan.md) seeds the next planning line and does not claim a release.
+- [v0.6.14 Final Paper Portfolio Readiness Audit](./releases/v0.6.14-final-readiness-audit.md) records a planning-only Go/No-Go dossier for a future separately authorized cutover decision.
 
 ## Known limitations
 

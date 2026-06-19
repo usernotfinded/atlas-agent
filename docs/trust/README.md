@@ -70,6 +70,8 @@ gates.
 - [v0.6.13 Post-Release Evidence](../releases/v0.6.13-post-release-evidence.md) — deterministic cutover evidence and canonical public record
 - [v0.6.14 Planning Seed](../releases/v0.6.14-plan.md) — next-line planning notes
 - [v0.6.14 Candidate Selection](../releases/v0.6.14-candidate-selection.md) — candidate-selection gate
+- [v0.6.14 Paper Portfolio Evidence](../releases/v0.6.14-paper-portfolio-evidence.md) — planning-only CAND-001 through CAND-007 paper portfolio evidence
+- [v0.6.14 Final Paper Portfolio Readiness Audit](../releases/v0.6.14-final-readiness-audit.md) — planning-only CAND-008 Go/No-Go dossier for a future separately authorized cutover decision
 
 ## v0.6.12 Post-Release Evidence
 
@@ -122,7 +124,7 @@ brokers, enable trading, or require credentials.
 - Tag: `v0.6.13` (created and pushed)
 - Tag: `v0.6.11` (historical)
 - PyPI was not published
-- Package version in source metadata: `0.6.12`
+- Package version in source metadata: `0.6.13`
 - Auto-updater delivery: verified for `v0.6.13`; verified for `v0.6.12`; verified for `v0.6.11`
 
 ## What Is Ready
@@ -146,11 +148,17 @@ brokers, enable trading, or require credentials.
 - Paper-autonomy evidence bundle (`docs/releases/v0.6.13-paper-autonomy-evidence.md`
   and `.json`) plus `scripts/check_v0613_paper_autonomy_evidence.py` — planning-only,
   local, and no release side effects.
+- Paper portfolio evidence bundle (`docs/releases/v0.6.14-paper-portfolio-evidence.md`
+  and `.json`) plus `scripts/check_v0614_paper_portfolio_evidence.py` — planning-only,
+  local, and no release side effects.
+- Final paper portfolio readiness audit (`docs/releases/v0.6.14-final-readiness-audit.md`
+  and `.json`) plus `scripts/check_v0614_final_readiness_audit.py` — planning-only,
+  local, and no release side effects.
 
 ## What Is Not Ready
 
 - PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, `v0.6.11`, `v0.6.12`, or `v0.6.13`.
-- `v0.6.13` is the next planning line; CAND-021 through CAND-030 are planning
+- `v0.6.14` is the next planning line; CAND-001 through CAND-008 are planning
   candidates and do not create a release, tag, PyPI publication, or version bump.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.

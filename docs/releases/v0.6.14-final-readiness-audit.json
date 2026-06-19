@@ -1,0 +1,217 @@
+{
+  "artifact_type": "v0614_final_readiness_audit",
+  "schema_version": 1,
+  "release": "v0.6.14",
+  "release_state": "planning_only",
+  "current_public_release": "v0.6.13",
+  "next_planned_release": "v0.6.14",
+  "source_version": "0.6.13",
+  "pypi_published": false,
+  "tag_created": false,
+  "github_release_created": false,
+  "mode": "paper",
+  "provider_required": false,
+  "broker_required": false,
+  "network_required": false,
+  "live_readiness": false,
+  "not_financial_advice": true,
+  "owner_authorization_required": true,
+  "release_authorized": false,
+  "cutover_allowed": false,
+  "decision": "go_for_owner_authorized_cutover",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Paper Portfolio Proposal Sandbox and Allocation Guard",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-portfolio-proposal.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_portfolio_proposal.py"
+      ],
+      "tests": [
+        "tests/test_paper_portfolio_proposal.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_portfolio_proposal.sh"
+      ]
+    },
+    {
+      "id": "CAND-002",
+      "title": "Paper Portfolio Stress Constraints and Drawdown Guard",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-portfolio-stress.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_portfolio_stress.py"
+      ],
+      "tests": [
+        "tests/test_paper_portfolio_stress.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_portfolio_stress.sh"
+      ]
+    },
+    {
+      "id": "CAND-003",
+      "title": "Paper Portfolio Monitoring Simulation and Recheck Gate",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-portfolio-monitoring.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_portfolio_monitoring.py"
+      ],
+      "tests": [
+        "tests/test_paper_portfolio_monitoring.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_portfolio_monitoring.sh"
+      ]
+    },
+    {
+      "id": "CAND-004",
+      "title": "Paper Portfolio Recheck Ledger and Human Review Queue",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-portfolio-recheck-ledger.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_portfolio_recheck.py"
+      ],
+      "tests": [
+        "tests/test_paper_portfolio_recheck.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_portfolio_recheck.sh"
+      ]
+    },
+    {
+      "id": "CAND-005",
+      "title": "Paper Portfolio Reviewer Dossier and Evidence Bundle",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-portfolio-dossier.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_portfolio_dossier.py"
+      ],
+      "tests": [
+        "tests/test_paper_portfolio_dossier.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_portfolio_dossier.sh"
+      ]
+    },
+    {
+      "id": "CAND-006",
+      "title": "Paper Portfolio Evidence Replay and Regression Gate",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-portfolio-replay.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_portfolio_replay.py"
+      ],
+      "tests": [
+        "tests/test_paper_portfolio_replay.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_portfolio_replay.sh"
+      ]
+    },
+    {
+      "id": "CAND-007",
+      "title": "Paper Portfolio Evidence Bundle and Candidate Closure Gate",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/releases/v0.6.14-paper-portfolio-evidence.md",
+        "docs/releases/v0.6.14-paper-portfolio-evidence.json"
+      ],
+      "checkers": [
+        "scripts/check_v0614_paper_portfolio_evidence.py"
+      ],
+      "tests": [
+        "tests/test_v0614_paper_portfolio_evidence.py"
+      ],
+      "demos": [
+        "not_applicable"
+      ]
+    },
+    {
+      "id": "CAND-008",
+      "title": "Final Paper Portfolio Release-Readiness Audit and Go/No-Go Dossier",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/releases/v0.6.14-final-readiness-audit.md",
+        "docs/releases/v0.6.14-final-readiness-audit.json"
+      ],
+      "checkers": [
+        "scripts/check_v0614_final_readiness_audit.py"
+      ],
+      "tests": [
+        "tests/test_v0614_final_readiness_audit.py"
+      ],
+      "demos": [
+        "not_applicable"
+      ]
+    }
+  ],
+  "required_checks": [
+    "python3.11 scripts/check_paper_portfolio_proposal.py",
+    "python3.11 scripts/check_paper_portfolio_stress.py",
+    "python3.11 scripts/check_paper_portfolio_monitoring.py",
+    "python3.11 scripts/check_paper_portfolio_recheck.py",
+    "python3.11 scripts/check_paper_portfolio_dossier.py",
+    "python3.11 scripts/check_paper_portfolio_replay.py",
+    "python3.11 scripts/check_v0614_paper_portfolio_evidence.py",
+    "python3.11 scripts/check_v0614_final_readiness_audit.py",
+    "python3.11 scripts/check_version_consistency.py",
+    "python3.11 scripts/check_release_metadata.py",
+    "python3.11 scripts/check_forbidden_claims.py",
+    "python3.11 scripts/check_public_docs_consistency.py",
+    "python3.11 scripts/check_trust_center.py",
+    "./scripts/dev_check.sh",
+    "./scripts/ci_check.sh",
+    "./scripts/release_check.sh --quick"
+  ],
+  "safety": {
+    "no_live_trading": true,
+    "no_live_submit": true,
+    "no_broker_calls": true,
+    "no_provider_calls": true,
+    "no_notifications_sent": true,
+    "no_orders_generated": true,
+    "no_credentials_or_secrets": true,
+    "no_profit_claim": true,
+    "no_no_risk_claim": true,
+    "no_live_readiness_claim": true,
+    "no_autonomous_live_readiness_claim": true
+  }
+}

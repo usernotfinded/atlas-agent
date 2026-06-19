@@ -61,6 +61,7 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] Paper mode can run without provider credentials or network ([docs/paper-provider-isolation.md](paper-provider-isolation.md))
 - [ ] Paper strategy robustness can run across deterministic synthetic regimes without provider credentials, broker credentials, network, or live mode ([docs/paper-strategy-robustness.md](paper-strategy-robustness.md))
 - [ ] Paper portfolio stress constraints run on deterministic synthetic scenarios without provider credentials, broker credentials, network, or live mode ([docs/paper-portfolio-stress.md](paper-portfolio-stress.md))
+- [ ] v0.6.14 paper portfolio evidence and final readiness audit are planning-only, paper-only, and local ([docs/releases/v0.6.14-paper-portfolio-evidence.md](releases/v0.6.14-paper-portfolio-evidence.md), [docs/releases/v0.6.14-final-readiness-audit.md](releases/v0.6.14-final-readiness-audit.md))
 
 ## Protected boundaries
 
@@ -118,7 +119,10 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] `docs/releases/v0.6.13-candidate-selection.md` exists and `python3.11 scripts/check_v0613_post_release_hygiene.py` passes.
 - [ ] `docs/releases/v0.6.13-paper-autonomy-evidence.md` and `.json` exist and `python3.11 scripts/check_v0613_paper_autonomy_evidence.py` passes.
 - [ ] `python3.11 -m pytest tests/test_v0613_paper_autonomy_evidence.py -q` passes.
-- [ ] No active doc claims `v0.6.13` is released, tagged, published on GitHub, or published to PyPI.
+- [ ] `docs/releases/v0.6.14-paper-portfolio-evidence.md` and `.json` exist and `python3.11 scripts/check_v0614_paper_portfolio_evidence.py` passes.
+- [ ] `docs/releases/v0.6.14-final-readiness-audit.md` and `.json` exist and `python3.11 scripts/check_v0614_final_readiness_audit.py` passes.
+- [ ] `python3.11 -m pytest tests/test_v0614_final_readiness_audit.py -q` passes.
+- [ ] No active doc claims `v0.6.14` is released, tagged, published on GitHub, or published to PyPI.
 - [ ] No active doc claims `v0.6.11` is the current public release.
 
 ### Autonomous paper workflow
