@@ -19,6 +19,12 @@
       "status": "implemented",
       "description": "Paper Portfolio Monitoring Simulation and Recheck Gate",
       "notes": "Paper-only. Offline monitoring simulation. No live trading. No provider, broker calls, or notifications."
+    },
+    {
+      "id": "CAND-004",
+      "status": "implemented",
+      "description": "Paper Portfolio Recheck Ledger and Human Review Queue",
+      "notes": "Paper-only. Offline review queue. No live trading. No provider, broker calls, or notifications."
     }
   ]
 }

@@ -624,6 +624,30 @@ Safety First:
     backtest_portfolio_monitor.add_argument("--output-dir", required=True)
     backtest_portfolio_monitor.add_argument("--json", action="store_true")
 
+    backtest_portfolio_recheck = backtest_sub.add_parser(
+        "portfolio-recheck",
+        help=(
+            "Generate a deterministic paper-only portfolio recheck ledger and human "
+            "review queue using proposal, stress, and monitor artifacts. "
+            "No provider, broker, network, live trading, notification, or order path is used."
+        ),
+    )
+    backtest_portfolio_recheck.add_argument("--symbol", required=True)
+    backtest_portfolio_recheck.add_argument("--data", required=True)
+    backtest_portfolio_recheck.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_portfolio_recheck.add_argument("--max-strategy-weight", type=float, default=0.40)
+    backtest_portfolio_recheck.add_argument("--min-cash-weight", type=float, default=0.10)
+    backtest_portfolio_recheck.add_argument("--max-stressed-drawdown", type=float, default=0.25)
+    backtest_portfolio_recheck.add_argument("--max-single-scenario-loss", type=float, default=0.20)
+    backtest_portfolio_recheck.add_argument("--monitor-window", type=int, default=20)
+    backtest_portfolio_recheck.add_argument("--recheck-threshold", type=float, default=0.05)
+    backtest_portfolio_recheck.add_argument("--output-dir", required=True)
+    backtest_portfolio_recheck.add_argument("--json", action="store_true")
+
 
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
@@ -4887,7 +4911,42 @@ def main(argv: list[str] | None = None) -> int:
             print("No live trading, broker calls, provider calls, network calls, or notifications.")
             return 0
 
+        if args.backtest_command == "portfolio-recheck":
+            try:
+                from atlas_agent.backtest.portfolio import build_paper_portfolio_recheck, write_portfolio_recheck_reports
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                report = build_paper_portfolio_recheck(
+                    data_path=getattr(args, "data"),
+                    symbol=getattr(args, "symbol"),
+                    strategies=strategy_ids,
+                    max_strategy_weight=getattr(args, "max_strategy_weight", 0.40),
+                    min_cash_weight=getattr(args, "min_cash_weight", 0.10),
+                    max_stressed_drawdown=getattr(args, "max_stressed_drawdown", 0.25),
+                    max_single_scenario_loss=getattr(args, "max_single_scenario_loss", 0.20),
+                    monitor_window=getattr(args, "monitor_window", 20),
+                    recheck_threshold=getattr(args, "recheck_threshold", 0.05),
+                )
+                json_path, markdown_path = write_portfolio_recheck_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
 
+            if getattr(args, "json", False):
+                import json
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            print(f"Paper portfolio recheck ledger complete: {report['symbol']}")
+            print(f"Overall review status: {report['overall_review_status']}")
+            print(f"Review items generated: {len(report['review_items'])}")
+            print(f"Human review required in queue: {sum(1 for item in report['review_queue'] if item['human_review_required'])}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {markdown_path}")
+            print("No live trading, broker calls, provider calls, network calls, or notifications.")
+            return 0
         if args.backtest_command == "scorecard":
             try:
                 from atlas_agent.backtest.scorecard import build_paper_strategy_scorecard, write_strategy_scorecard_reports

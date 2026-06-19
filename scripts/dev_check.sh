@@ -129,6 +129,7 @@ SECONDS=0
 "$PYTHON_BIN" scripts/check_paper_portfolio_proposal.py
 "$PYTHON_BIN" scripts/check_paper_portfolio_stress.py
 "$PYTHON_BIN" scripts/check_paper_portfolio_monitoring.py
+"$PYTHON_BIN" scripts/check_paper_portfolio_recheck.py
 "$PYTHON_BIN" scripts/check_v0613_paper_autonomy_evidence.py
 "$PYTHON_BIN" scripts/check_v0613_final_reviewer_index.py
 "$PYTHON_BIN" scripts/check_v0613_release_cutover_preflight.py

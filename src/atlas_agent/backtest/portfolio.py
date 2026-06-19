@@ -1000,3 +1000,239 @@ def _overall_monitoring_status(events: list[dict[str, Any]]) -> str:
     if "paper_monitor_watchlist" in statuses:
         return "paper_monitor_watchlist"
     return "paper_monitor_ok"
+
+
+def build_paper_portfolio_recheck(
+    data_path: str,
+    symbol: str,
+    strategies: list[str] | None = None,
+    max_strategy_weight: float = 0.40,
+    min_cash_weight: float = 0.10,
+    max_stressed_drawdown: float = 0.25,
+    max_single_scenario_loss: float = 0.20,
+    monitor_window: int = 20,
+    recheck_threshold: float = 0.05,
+) -> dict[str, Any]:
+    """Generate a deterministic paper-only portfolio recheck ledger.
+
+    No provider network, broker calls, notifications, or live execution path used.
+    """
+    # 1. Generate prior artifacts deterministically
+    proposal = build_paper_portfolio_proposal(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+    )
+
+    stress = build_paper_portfolio_stress(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+        max_stressed_drawdown=max_stressed_drawdown,
+        max_single_scenario_loss=max_single_scenario_loss,
+    )
+
+    monitoring = build_paper_portfolio_monitoring(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+        max_stressed_drawdown=max_stressed_drawdown,
+        max_single_scenario_loss=max_single_scenario_loss,
+        monitor_window=monitor_window,
+        recheck_threshold=recheck_threshold,
+    )
+
+    review_items = []
+
+    # Check Proposal
+    if proposal.get("overall_proposal_status") in ("needs_more_testing", "rejected"):
+        review_items.append({
+            "id": "review-proposal-001",
+            "source": "proposal",
+            "trigger": "insufficient_evidence",
+            "status": "paper_recheck_required",
+            "paper_action": "paper_collect_more_evidence",
+            "severity": "medium",
+            "reason": "Proposal lacks stable evidence.",
+        })
+
+    # Check Stress
+    if stress.get("overall_stress_status") in ("watchlist", "needs_more_testing", "rejected"):
+        review_items.append({
+            "id": "review-stress-001",
+            "source": "stress",
+            "trigger": "stress_watchlist",
+            "status": "paper_review_watchlist",
+            "paper_action": "paper_watchlist_review",
+            "severity": "high",
+            "reason": "Stress boundaries breached in synthetic simulation.",
+        })
+
+    # Check Monitoring
+    for i, event in enumerate(monitoring.get("monitoring_events", [])):
+        if event.get("event_type") == "allocation_drift":
+            review_items.append({
+                "id": f"review-monitor-alloc-{i+1:03d}",
+                "source": "monitoring",
+                "trigger": "allocation_drift",
+                "status": "paper_recheck_required",
+                "paper_action": "paper_recheck",
+                "severity": "medium",
+                "reason": "Drift exceeded threshold in offline simulation.",
+            })
+        elif event.get("event_type") == "cash_reserve_breach":
+            review_items.append({
+                "id": f"review-monitor-cash-{i+1:03d}",
+                "source": "monitoring",
+                "trigger": "cash_reserve_breach",
+                "status": "paper_review_watchlist",
+                "paper_action": "paper_increase_cash_review",
+                "severity": "high",
+                "reason": "Cash reserves critically low in offline simulation.",
+            })
+        elif event.get("event_type") == "drawdown_breach":
+            review_items.append({
+                "id": f"review-monitor-dd-{i+1:03d}",
+                "source": "monitoring",
+                "trigger": "drawdown_breach",
+                "status": "paper_rejected",
+                "paper_action": "paper_reject_portfolio",
+                "severity": "critical",
+                "reason": "Hard drawdown stop exceeded in offline simulation.",
+            })
+
+    if monitoring.get("overall_monitoring_status") == "paper_monitor_watchlist":
+        review_items.append({
+            "id": "review-monitor-watchlist-001",
+            "source": "monitoring",
+            "trigger": "monitoring_watchlist",
+            "status": "paper_review_watchlist",
+            "paper_action": "paper_reduce_weight_review",
+            "severity": "medium",
+            "reason": "General watchlist trigger detected.",
+        })
+
+    if not review_items:
+        review_items.append({
+            "id": "review-clear-001",
+            "source": "system",
+            "trigger": "clean_run",
+            "status": "paper_review_clear",
+            "paper_action": "no_action_paper_only",
+            "severity": "info",
+            "reason": "No review triggers found in paper simulation.",
+        })
+
+    review_queue = []
+    for i, item in enumerate(review_items):
+        review_queue.append({
+            "rank": i + 1,
+            "review_item_id": item["id"],
+            "paper_action": item["paper_action"],
+            "human_review_required": item["status"] != "paper_review_clear",
+        })
+
+    overall_status = "paper_review_clear"
+    for item in review_items:
+        if item["status"] == "paper_rejected":
+            overall_status = "paper_rejected"
+            break
+        elif item["status"] in ("paper_recheck_required", "paper_review_watchlist"):
+            if overall_status != "paper_rejected":
+                overall_status = item["status"]
+
+    return {
+        "artifact_type": "paper_portfolio_recheck_ledger",
+        "schema_version": 1,
+        "mode": "paper",
+        "provider_required": False,
+        "broker_required": False,
+        "network_required": False,
+        "live_readiness": False,
+        "not_financial_advice": True,
+        "symbol": symbol,
+        "data_source": data_path,
+        "proposal_source": "generated",
+        "stress_source": "generated",
+        "monitoring_source": "generated",
+        "overall_review_status": overall_status,
+        "review_items": review_items,
+        "review_queue": review_queue,
+        "safety": {
+            "no_live_trading": True,
+            "no_broker_calls": True,
+            "no_provider_calls": True,
+            "no_notifications_sent": True,
+            "no_orders_generated": True,
+            "no_profit_claim": True,
+            "no_live_readiness_claim": True,
+        },
+    }
+
+
+def write_portfolio_recheck_reports(
+    report: dict[str, Any],
+    output_dir: str,
+) -> tuple[str, str]:
+    """Write paper portfolio recheck ledger and queue reports to disk."""
+    import os
+    import json
+
+    os.makedirs(output_dir, exist_ok=True)
+    json_path = os.path.join(output_dir, "paper-portfolio-recheck-ledger.json")
+    md_path = os.path.join(output_dir, "paper-portfolio-review-queue.md")
+
+    with open(json_path, "w") as f:
+        json.dump(report, f, indent=2, sort_keys=True, default=str)
+
+    lines = [
+        "# Paper Portfolio Review Queue",
+        "",
+        "> **Note:** This is a deterministic paper-only review queue simulation.",
+        "> It is NOT financial advice, does NOT imply live-readiness, and NO orders or real notifications are generated.",
+        "> It does NOT guarantee profit and is purely for offline sandbox verification.",
+        "",
+        f"**Symbol**: {report['symbol']}",
+        f"**Data Source**: {report['data_source']}",
+        f"**Overall Review Status**: `{report['overall_review_status']}`",
+        "",
+        "## Safety Assertions",
+        "- `live_readiness`: False",
+        "- `broker_required`: False",
+        "- `provider_required`: False",
+        "- `no_notifications_sent`: True",
+        "- `no_orders_generated`: True",
+        "",
+        "## Human Review Queue",
+    ]
+
+    for item in report["review_queue"]:
+        lines.append(f"### Rank {item['rank']} - {item['review_item_id']}")
+        lines.append(f"- **Action**: `{item['paper_action']}`")
+        lines.append(f"- **Human Review Required**: {item['human_review_required']}")
+        lines.append("")
+
+    lines.append("## Detailed Ledger Items")
+    for item in report["review_items"]:
+        lines.append(f"### {item['id']}")
+        lines.append(f"- **Source**: {item['source']}")
+        lines.append(f"- **Trigger**: `{item['trigger']}`")
+        lines.append(f"- **Status**: `{item['status']}`")
+        lines.append(f"- **Recommended Paper Action**: `{item['paper_action']}`")
+        lines.append(f"- **Severity**: {item['severity']}")
+        lines.append(f"- **Reason**: {item['reason']}")
+        lines.append("")
+
+    lines.append("---")
+    lines.append("Generated offline safely. No live data or APIs used.")
+
+    with open(md_path, "w") as f:
+        f.write("\\n".join(lines) + "\\n")
+
+    return json_path, md_path
