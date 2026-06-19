@@ -52,7 +52,7 @@ def check_all() -> list[str]:
         if "OPENAI_API_KEY" in content and 'export OPENAI_API_KEY=""' not in content:
             issues.append("Demo script must not leak or use real provider credentials")
         if "twine" + " upload" in content:
-            issues.append("Demo script must not reference twine upload")
+            issues.append("Demo script must not reference distribution upload")
 
     # 3. Docs validation
     docs = Path("docs/paper-portfolio-proposal.md")
