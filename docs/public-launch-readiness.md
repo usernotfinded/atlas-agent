@@ -70,6 +70,9 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_paper_human_review_pack.py` — v0.6.15 CAND-001 paper human review pack gate is safe and present
 - `python3.11 -m pytest tests/test_paper_human_review_pack.py -q` — paper human review pack tests pass
 - `bash scripts/demo_paper_human_review_pack.sh` — paper human review pack demo runs offline without credentials, network, or broker contact
+- `python3.11 scripts/check_paper_human_review_ledger.py` — v0.6.15 CAND-002 paper human review ledger gate is safe and present
+- `python3.11 -m pytest tests/test_paper_human_review_ledger.py -q` — paper human review ledger tests pass
+- `bash scripts/demo_paper_human_review_ledger.sh` — paper human review ledger demo runs offline without credentials, network, or broker contact
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI

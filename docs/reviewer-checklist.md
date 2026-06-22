@@ -63,7 +63,8 @@ Use this checklist before trusting or recommending the Atlas Agent repository.
 - [ ] Paper portfolio stress constraints run on deterministic synthetic scenarios without provider credentials, broker credentials, network, or live mode ([docs/paper-portfolio-stress.md](paper-portfolio-stress.md))
 - [ ] v0.6.14 paper portfolio evidence and final readiness audit are historical pre-cutover, paper-only, and local ([docs/releases/v0.6.14-paper-portfolio-evidence.md](releases/v0.6.14-paper-portfolio-evidence.md), [docs/releases/v0.6.14-final-readiness-audit.md](releases/v0.6.14-final-readiness-audit.md))
 - [ ] Paper human review pack is deterministic, offline, non-executable, and derived from paper portfolio evidence; docs/demo/checker/tests are present ([docs/paper-human-review-pack.md](paper-human-review-pack.md), `scripts/demo_paper_human_review_pack.sh`, `scripts/check_paper_human_review_pack.py`, `tests/test_paper_human_review_pack.py`)
-- [ ] `docs/releases/v0.6.15-plan.md`, `docs/releases/v0.6.15-candidates.md`, and `docs/releases/v0.6.15-candidates.json` are planning-only and list CAND-001 without claiming v0.6.15 is released
+- [ ] Paper human review ledger is deterministic, offline, non-executable, and produces simulated review decisions from the CAND-001 review pack; docs/demo/checker/tests are present ([docs/paper-human-review-ledger.md](paper-human-review-ledger.md), `scripts/demo_paper_human_review_ledger.sh`, `scripts/check_paper_human_review_ledger.py`, `tests/test_paper_human_review_ledger.py`)
+- [ ] `docs/releases/v0.6.15-plan.md`, `docs/releases/v0.6.15-candidates.md`, and `docs/releases/v0.6.15-candidates.json` are planning-only and list CAND-001 and CAND-002 without claiming v0.6.15 is released
 
 ## Protected boundaries
 

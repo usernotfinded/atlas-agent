@@ -5154,7 +5154,6 @@ def main(argv: list[str] | None = None) -> int:
                 if getattr(args, "review_pack", None):
                     report = build_paper_portfolio_review_ledger(review_pack_path=getattr(args, "review_pack"))
                 else:
-                    from atlas_agent.backtest.evaluation import parse_strategy_list
                     strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
                     report = build_paper_portfolio_review_ledger(
                         build_kwargs={
