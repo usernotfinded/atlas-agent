@@ -1966,6 +1966,8 @@ def build_paper_portfolio_review_ledger(
         "schema_version": REVIEW_LEDGER_SCHEMA_VERSION,
         "release": REVIEW_LEDGER_RELEASE,
         "source_release": REVIEW_LEDGER_SOURCE_RELEASE,
+        "symbol": pack.get("symbol", ""),
+        "data_source": pack.get("data_source", ""),
         "mode": "paper",
         "non_executable": True,
         "paper_only": True,
