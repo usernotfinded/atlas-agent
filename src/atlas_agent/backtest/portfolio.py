@@ -2102,3 +2102,454 @@ def render_portfolio_review_ledger_markdown(report: dict[str, Any]) -> str:
     ])
 
     return "\n".join(lines) + "\n"
+
+
+REVIEW_POLICY_ARTIFACT_TYPE = "paper_human_review_policy"
+REVIEW_POLICY_SCHEMA_VERSION = 1
+REVIEW_POLICY_RELEASE = "v0.6.15-planning"
+REVIEW_POLICY_SOURCE_RELEASE = "v0.6.14"
+
+ALLOWED_REVIEW_POLICY_STATUSES = {
+    "paper_policy_passed_with_live_blocked",
+    "paper_policy_needs_more_evidence",
+    "paper_policy_manual_review_required",
+    "paper_policy_blocked",
+}
+
+ALLOWED_POLICY_RESULT_STATES = {"passed", "blocked", "needs_more_paper_evidence", "manual_review_required"}
+
+POLICY_RULES = [
+    {"id": "require_non_executable_artifact", "description": "Artifact must declare non_executable=true."},
+    {"id": "require_paper_only_mode", "description": "Artifact must declare mode=paper and paper_only=true."},
+    {"id": "block_live_submit", "description": "live_submit_enabled must be false."},
+    {"id": "block_broker_submission", "description": "broker_required, broker_submission_allowed, and upstream broker_submission_allowed must be false."},
+    {"id": "block_provider_execution", "description": "provider_required, provider_execution_allowed, and upstream provider_required must be false."},
+    {"id": "block_real_notifications", "description": "notifications_sent and notification_sending_allowed must be false."},
+    {"id": "block_order_generation", "description": "orders_generated and real_order_generation_allowed must be false."},
+    {"id": "require_manual_review_for_future_live_work", "description": "Upstream ledger must contain manual_review_required decisions or pack must contain needs_human_review items."},
+    {"id": "require_no_profit_claims", "description": "Upstream safety block must declare no_profit_claim=true."},
+    {"id": "require_no_absolute_safety_claims", "description": "Upstream safety block must declare no_live_readiness_claim=true."},
+]
+
+
+def build_paper_portfolio_review_policy(
+    *,
+    review_pack_path: str | Path | None = None,
+    review_ledger_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    build_kwargs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a deterministic paper-only human review policy simulator report.
+
+    Consumes a paper human review pack and ledger (loaded from disk or built
+    deterministically from build_kwargs) and evaluates them against the fixed
+    policy rule set. The resulting artifact is strictly non-executable,
+    paper-only, and blocks all live-related paths.
+    """
+    if build_kwargs is not None:
+        pack = build_paper_portfolio_review_pack(**build_kwargs)
+        pack_text = json.dumps(pack, sort_keys=True, allow_nan=False)
+        pack_digest = hashlib.sha256(pack_text.encode("utf-8")).hexdigest()
+
+        ledger = build_paper_portfolio_review_ledger(build_kwargs=build_kwargs)
+        ledger_text = json.dumps(ledger, sort_keys=True, allow_nan=False)
+        ledger_digest = hashlib.sha256(ledger_text.encode("utf-8")).hexdigest()
+    else:
+        if review_pack_path is None or review_ledger_path is None:
+            raise ValueError(
+                "Either build_kwargs or both review_pack_path and review_ledger_path must be provided."
+            )
+        pack_path = Path(review_pack_path)
+        ledger_path = Path(review_ledger_path)
+        pack_text = pack_path.read_text(encoding="utf-8")
+        ledger_text = ledger_path.read_text(encoding="utf-8")
+        pack = json.loads(pack_text)
+        ledger = json.loads(ledger_text)
+        pack_digest = hashlib.sha256(pack_text.encode("utf-8")).hexdigest()
+        ledger_digest = hashlib.sha256(ledger_text.encode("utf-8")).hexdigest()
+
+    if pack.get("artifact_type") != "paper_human_review_pack":
+        raise ValueError("Source review pack artifact_type must be paper_human_review_pack.")
+    if pack.get("schema_version") != 1:
+        raise ValueError("Source review pack schema_version must be 1.")
+    if ledger.get("artifact_type") != "paper_human_review_ledger":
+        raise ValueError("Source review ledger artifact_type must be paper_human_review_ledger.")
+    if ledger.get("schema_version") != 1:
+        raise ValueError("Source review ledger schema_version must be 1.")
+
+    pack_safety = pack.get("safety", {})
+    ledger_safety = ledger.get("safety", {})
+    ledger_gate_summary = ledger.get("gate_summary", {})
+    decision_entries = ledger.get("decision_entries", [])
+    review_items = pack.get("review_items", [])
+
+    policy_results: list[dict[str, Any]] = []
+
+    # Rule 1
+    if pack.get("non_executable") is True and ledger.get("non_executable") is True:
+        policy_results.append({
+            "rule_id": "require_non_executable_artifact",
+            "state": "passed",
+            "reason": "Both upstream artifacts declare non_executable=true.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "require_non_executable_artifact",
+            "state": "blocked",
+            "reason": "One or both upstream artifacts do not declare non_executable=true.",
+        })
+
+    # Rule 2
+    if (
+        pack.get("mode") == "paper"
+        and pack.get("paper_only") is True
+        and ledger.get("mode") == "paper"
+        and ledger.get("paper_only") is True
+    ):
+        policy_results.append({
+            "rule_id": "require_paper_only_mode",
+            "state": "passed",
+            "reason": "Both upstream artifacts declare mode=paper and paper_only=true.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "require_paper_only_mode",
+            "state": "blocked",
+            "reason": "One or both upstream artifacts are not mode=paper and paper_only=true.",
+        })
+
+    # Rule 3
+    if pack.get("live_submit_enabled") is False and ledger.get("live_submit_enabled") is False:
+        policy_results.append({
+            "rule_id": "block_live_submit",
+            "state": "passed",
+            "reason": "live_submit_enabled is false in both upstream artifacts.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "block_live_submit",
+            "state": "blocked",
+            "reason": "live_submit_enabled is not false in one or both upstream artifacts.",
+        })
+
+    # Rule 4
+    broker_flags = [
+        pack.get("broker_required"),
+        pack.get("broker_submission_allowed", False),
+        ledger.get("broker_required", False),
+        ledger_gate_summary.get("broker_submission_allowed", False),
+    ]
+    if all(flag is False for flag in broker_flags):
+        policy_results.append({
+            "rule_id": "block_broker_submission",
+            "state": "passed",
+            "reason": "All broker submission flags are false.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "block_broker_submission",
+            "state": "blocked",
+            "reason": "A broker submission flag is not false.",
+        })
+
+    # Rule 5
+    provider_flags = [
+        pack.get("provider_required"),
+        pack.get("provider_execution_allowed", False),
+        ledger.get("provider_required", False),
+        ledger.get("provider_execution_allowed", False),
+    ]
+    if all(flag is False for flag in provider_flags):
+        policy_results.append({
+            "rule_id": "block_provider_execution",
+            "state": "passed",
+            "reason": "All provider execution flags are false.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "block_provider_execution",
+            "state": "blocked",
+            "reason": "A provider execution flag is not false.",
+        })
+
+    # Rule 6
+    notification_flags = [
+        pack.get("notifications_sent"),
+        pack.get("notification_sending_allowed", False),
+        ledger.get("notifications_sent"),
+        ledger.get("notification_sending_allowed", False),
+    ]
+    if all(flag is False for flag in notification_flags):
+        policy_results.append({
+            "rule_id": "block_real_notifications",
+            "state": "passed",
+            "reason": "All notification flags are false.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "block_real_notifications",
+            "state": "blocked",
+            "reason": "A notification flag is not false.",
+        })
+
+    # Rule 7
+    order_flags = [
+        pack.get("orders_generated"),
+        pack.get("real_order_generation_allowed", False),
+        ledger.get("orders_generated"),
+        ledger.get("real_order_generation_allowed", False),
+    ]
+    if all(flag is False for flag in order_flags):
+        policy_results.append({
+            "rule_id": "block_order_generation",
+            "state": "passed",
+            "reason": "All order generation flags are false.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "block_order_generation",
+            "state": "blocked",
+            "reason": "An order generation flag is not false.",
+        })
+
+    # Rule 8
+    has_manual_review_decisions = any(
+        entry.get("decision_status") == "manual_review_required"
+        for entry in decision_entries
+    )
+    has_needs_human_review_items = any(
+        item.get("status") == "needs_human_review"
+        for item in review_items
+    )
+    has_needs_more_evidence = any(
+        entry.get("decision_status") == "needs_more_paper_evidence"
+        for entry in decision_entries
+    ) or any(
+        item.get("status") == "needs_more_paper_testing"
+        for item in review_items
+    )
+    if has_manual_review_decisions or has_needs_human_review_items:
+        policy_results.append({
+            "rule_id": "require_manual_review_for_future_live_work",
+            "state": "passed",
+            "reason": "Upstream ledger contains manual_review_required decisions or pack contains needs_human_review items; future live work requires human review.",
+        })
+    elif has_needs_more_evidence:
+        policy_results.append({
+            "rule_id": "require_manual_review_for_future_live_work",
+            "state": "needs_more_paper_evidence",
+            "reason": "Upstream artifacts require more paper evidence before any future live-related work can be considered.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "require_manual_review_for_future_live_work",
+            "state": "manual_review_required",
+            "reason": "No explicit review items found; future live-related work still requires manual human review.",
+        })
+
+    # Rule 9
+    if pack_safety.get("no_profit_claim") is True and ledger_safety.get("no_profit_claim") is True:
+        policy_results.append({
+            "rule_id": "require_no_profit_claims",
+            "state": "passed",
+            "reason": "Both upstream safety blocks declare no_profit_claim=true.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "require_no_profit_claims",
+            "state": "blocked",
+            "reason": "One or both upstream safety blocks do not declare no_profit_claim=true.",
+        })
+
+    # Rule 10
+    if (
+        pack_safety.get("no_live_readiness_claim") is True
+        and ledger_safety.get("no_live_readiness_claim") is True
+    ):
+        policy_results.append({
+            "rule_id": "require_no_absolute_safety_claims",
+            "state": "passed",
+            "reason": "Both upstream safety blocks declare no_live_readiness_claim=true.",
+        })
+    else:
+        policy_results.append({
+            "rule_id": "require_no_absolute_safety_claims",
+            "state": "blocked",
+            "reason": "One or both upstream safety blocks do not declare no_live_readiness_claim=true.",
+        })
+
+    states = {result["state"] for result in policy_results}
+    if "blocked" in states:
+        overall_policy_status = "paper_policy_blocked"
+    elif "needs_more_paper_evidence" in states:
+        overall_policy_status = "paper_policy_needs_more_evidence"
+    elif "manual_review_required" in states:
+        overall_policy_status = "paper_policy_manual_review_required"
+    else:
+        overall_policy_status = "paper_policy_passed_with_live_blocked"
+
+    safety = {
+        "no_live_trading": True,
+        "no_broker_calls": True,
+        "no_provider_calls": True,
+        "no_notifications_sent": True,
+        "no_orders_generated": True,
+        "no_profit_claim": True,
+        "no_live_readiness_claim": True,
+        "no_real_human_approval": True,
+        "non_executable": True,
+        "paper_only": True,
+    }
+
+    report: dict[str, Any] = {
+        "artifact_type": REVIEW_POLICY_ARTIFACT_TYPE,
+        "schema_version": REVIEW_POLICY_SCHEMA_VERSION,
+        "release": REVIEW_POLICY_RELEASE,
+        "source_release": REVIEW_POLICY_SOURCE_RELEASE,
+        "mode": "paper",
+        "paper_only": True,
+        "non_executable": True,
+        "provider_required": False,
+        "broker_required": False,
+        "network_required": False,
+        "live_submit_enabled": False,
+        "orders_generated": False,
+        "notifications_sent": False,
+        "real_human_approval": False,
+        "not_financial_advice": True,
+        "not_live_ready": True,
+        "symbol": pack.get("symbol", ""),
+        "data_source": pack.get("data_source", ""),
+        "source_artifact_types": ["paper_human_review_pack", "paper_human_review_ledger"],
+        "source_artifact_digests": {
+            "paper_human_review_pack": pack_digest,
+            "paper_human_review_ledger": ledger_digest,
+        },
+        "overall_policy_status": overall_policy_status,
+        "policy_rules": POLICY_RULES,
+        "policy_results": policy_results,
+        "gate_summary": {
+            "paper_follow_up_allowed": True,
+            "live_path_blocked": True,
+            "broker_submission_allowed": False,
+            "provider_execution_allowed": False,
+            "notification_sending_allowed": False,
+            "real_order_generation_allowed": False,
+        },
+        "safety": safety,
+    }
+
+    if output_dir is not None:
+        write_portfolio_review_policy_reports(report, output_dir=output_dir)
+
+    return report
+
+
+def write_portfolio_review_policy_reports(
+    report: dict[str, Any],
+    *,
+    output_dir: str | Path,
+) -> tuple[Path, Path]:
+    """Write paper human review policy JSON and Markdown reports."""
+    destination = Path(output_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    json_path = destination / "paper-human-review-policy.json"
+    md_path = destination / "paper-human-review-policy.md"
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    md_path.write_text(
+        render_portfolio_review_policy_markdown(report), encoding="utf-8"
+    )
+    return json_path, md_path
+
+
+def render_portfolio_review_policy_markdown(report: dict[str, Any]) -> str:
+    """Render a non-executable paper-only human review policy Markdown report."""
+    lines = [
+        "# Paper Human Review Policy Simulator",
+        "",
+        "**PAPER-ONLY. NON-EXECUTABLE. NOT FINANCIAL ADVICE. NOT LIVE READY.**",
+        "**NO BROKER SUBMISSION. NO PROVIDER CALLS. NO REAL NOTIFICATIONS. NO ORDERS GENERATED.**",
+        "**NO ACCOUNT-SPECIFIC INSTRUCTIONS. NO PROFIT GUARANTEES. NO ABSOLUTE SAFETY CLAIMS. NO CLAIMS THAT RISK IS ELIMINATED.**",
+        "**NO LIVE-READINESS CLAIM. NO AUTONOMOUS LIVE TRADING READINESS CLAIM.**",
+        "**NO REAL HUMAN APPROVAL. POLICY DECISIONS ARE SIMULATED FOR PAPER REVIEW ONLY.**",
+        "",
+        f"- **Release**: `{report.get('release')}`",
+        f"- **Source Release**: `{report.get('source_release')}`",
+        f"- **Symbol**: `{report.get('symbol')}`",
+        f"- **Overall Policy Status**: `{report.get('overall_policy_status')}`",
+        "",
+        "## Safety Assertions",
+        "",
+        "| Property | Value |",
+        "|---|---|",
+        f"| `non_executable` | `{report.get('non_executable')}` |",
+        f"| `paper_only` | `{report.get('paper_only')}` |",
+        f"| `provider_required` | `{report.get('provider_required')}` |",
+        f"| `broker_required` | `{report.get('broker_required')}` |",
+        f"| `network_required` | `{report.get('network_required')}` |",
+        f"| `live_submit_enabled` | `{report.get('live_submit_enabled')}` |",
+        f"| `orders_generated` | `{report.get('orders_generated')}` |",
+        f"| `notifications_sent` | `{report.get('notifications_sent')}` |",
+        f"| `real_human_approval` | `{report.get('real_human_approval')}` |",
+        f"| `not_financial_advice` | `{report.get('not_financial_advice')}` |",
+        f"| `not_live_ready` | `{report.get('not_live_ready')}` |",
+        "",
+        "## Source Artifact Digests",
+        "",
+    ]
+
+    source_digests = report.get("source_artifact_digests", {})
+    for artifact_type, digest in source_digests.items():
+        lines.append(f"- `{artifact_type}`: `{digest[:8]}`")
+
+    lines.extend([
+        "",
+        "## Policy Rules and Results",
+        "",
+        "| Rule | State | Reason |",
+        "|---|---|---|",
+    ])
+
+    rule_descriptions = {rule["id"]: rule["description"] for rule in report.get("policy_rules", [])}
+    for result in report.get("policy_results", []):
+        rule_id = result.get("rule_id", "unknown")
+        description = rule_descriptions.get(rule_id, rule_id)
+        lines.append(
+            f"| `{rule_id}` — {description} | `{result.get('state')}` | {result.get('reason')} |"
+        )
+
+    lines.extend([
+        "",
+        "## Gate Summary",
+        "",
+        "| Property | Value |",
+        "|---|---|",
+    ])
+
+    gate_summary = report.get("gate_summary", {})
+    lines.append(f"| `paper_follow_up_allowed` | `{gate_summary.get('paper_follow_up_allowed')}` |")
+    lines.append(f"| `live_path_blocked` | `{gate_summary.get('live_path_blocked')}` |")
+    lines.append(f"| `broker_submission_allowed` | `{gate_summary.get('broker_submission_allowed')}` |")
+    lines.append(f"| `provider_execution_allowed` | `{gate_summary.get('provider_execution_allowed')}` |")
+    lines.append(f"| `notification_sending_allowed` | `{gate_summary.get('notification_sending_allowed')}` |")
+    lines.append(f"| `real_order_generation_allowed` | `{gate_summary.get('real_order_generation_allowed')}` |")
+
+    lines.extend([
+        "",
+        "## What This Policy Simulator Is NOT",
+        "",
+        "- It is NOT live trading approval.",
+        "- It is NOT a real human decision or authorization.",
+        "- It is NOT an executable order or broker submission.",
+        "- It is NOT a claim that the portfolio, strategy, or system is ready for live trading.",
+        "- It is NOT a guarantee of profit, outperformance, or risk-free operation.",
+        "- It does NOT call brokers, providers, notification services, or any network API.",
+        "",
+        "---",
+        "Generated offline from deterministic paper evidence. No live data or APIs used.",
+    ])
+
+    return "\n".join(lines) + "\n"

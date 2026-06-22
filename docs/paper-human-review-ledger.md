@@ -109,3 +109,8 @@ review ledger in a temporary directory.
 This feature is v0.6.15 CAND-002. The source/package version remains `0.6.14`,
 `v0.6.15` remains the next planning line, and no tag, GitHub Release, or PyPI
 publication is created by this candidate.
+
+The next step in the v0.6.15 planning line is the
+[Paper Human Review Policy Simulator](paper-human-review-policy.md) (CAND-003), which
+evaluates the CAND-001 review pack and this CAND-002 ledger against explicit
+blocked-live policy rules.

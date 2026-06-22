@@ -16,6 +16,12 @@
       "status": "proposed",
       "description": "Paper Human Review Ledger",
       "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval."
+    },
+    {
+      "id": "CAND-003",
+      "status": "implemented",
+      "description": "Paper Human Review Policy Simulator",
+      "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval. Live path blocked."
     }
   ]
 }

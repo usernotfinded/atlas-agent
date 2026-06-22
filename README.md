@@ -137,6 +137,7 @@ atlas backtest compare --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL --outpu
 atlas backtest robustness --fixtures data/sample/regimes/ohlcv_uptrend.csv,data/sample/regimes/ohlcv_downtrend.csv,data/sample/regimes/ohlcv_flat.csv,data/sample/regimes/ohlcv_volatile.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 atlas backtest portfolio-stress --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 atlas backtest portfolio-review-pack --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
+atlas backtest portfolio-review-policy --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 ```
 
 For paper-only strategy comparison, see
@@ -178,7 +179,7 @@ Common command families:
 | :--- | :--- | :--- |
 | **Workspace setup** | `atlas init`, `atlas setup`, `atlas validate`, `atlas config set ...` | Create and configure a safe paper workspace. |
 | **Paper workflow** | `atlas run --mode paper`, `atlas agent run --mode paper`, `atlas run-once --mode paper` | Run the agent in simulation without broker orders. |
-| **Backtesting** | `atlas backtest run --data ... --symbol ...`, `atlas backtest compare --data ... --symbol ... --output-dir ...`, `atlas backtest robustness --fixtures ... --symbol ... --output-dir ...`, `atlas backtest portfolio-stress --data ... --symbol ... --output-dir ...`, `atlas backtest portfolio-monitor --data ... --symbol ... --output-dir ...`, `atlas backtest list-strategies` | Deterministic local strategy simulation and paper-only strategy comparison. |
+| **Backtesting** | `atlas backtest run --data ... --symbol ...`, `atlas backtest compare --data ... --symbol ... --output-dir ...`, `atlas backtest robustness --fixtures ... --symbol ... --output-dir ...`, `atlas backtest portfolio-stress --data ... --symbol ... --output-dir ...`, `atlas backtest portfolio-monitor --data ... --symbol ... --output-dir ...`, `atlas backtest portfolio-review-pack --data ... --symbol ... --output-dir ...`, `atlas backtest portfolio-review-policy --data ... --symbol ... --output-dir ...`, `atlas backtest list-strategies` | Deterministic local strategy simulation and paper-only strategy comparison. |
 | **Research** | `atlas research run --symbol ...`, `atlas research list`, `atlas research show`, `atlas research plan`, `atlas research verify`, `atlas research summary`, `atlas research evaluate`, `atlas research prompt`, `atlas research simulate-provider`, `atlas research review-response`, `atlas research dossier` | Paper-only artifact generation and inspection. |
 | **Risk & safety** | `atlas risk status`, `atlas kill-switch status`, `atlas approve-order` | Inspect gates, kill switch, and approval queues. |
 | **Broker (read-only)** | `atlas broker sync` | Synchronize account, positions, and orders from the broker. |
@@ -209,6 +210,7 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[v0.6.14 Final Paper Portfolio Readiness Audit](docs/releases/v0.6.14-final-readiness-audit.md)** — historical pre-cutover CAND-008 Go/No-Go dossier preserved after the separately authorized GitHub-only release.
 - **[Paper Human Review Pack](docs/paper-human-review-pack.md)** — deterministic, offline, non-executable review dossier derived from v0.6.14 paper portfolio evidence. See `scripts/demo_paper_human_review_pack.sh`.
 - **[Paper Human Review Ledger](docs/paper-human-review-ledger.md)** — deterministic, offline, non-executable simulated human-review decision ledger derived from the CAND-001 review pack. See `scripts/demo_paper_human_review_ledger.sh`.
+- **[Paper Human Review Policy Simulator](docs/paper-human-review-policy.md)** — v0.6.15 CAND-003 deterministic, offline, non-executable policy simulation against the CAND-001 review pack and CAND-002 review ledger. Produces a blocked-live gate artifact; no live trading, broker submission, provider execution, notifications, orders, or real human approval. See `scripts/demo_paper_human_review_policy.sh`.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.
