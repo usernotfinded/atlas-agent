@@ -8,6 +8,14 @@ MD_FILE = "docs/releases/v0.6.13-final-readiness-audit.md"
 JSON_FILE = "docs/releases/v0.6.13-final-readiness-audit.json"
 
 
+def _copy_audit_files(tmp_path: Path) -> None:
+    for relative in (MD_FILE, JSON_FILE):
+        source = Path(relative)
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+
+
 def test_checker_passes_on_real_repo():
     root = Path(".")
     result = check(root)
@@ -47,10 +55,7 @@ def test_json_audit_properties():
 
 
 def test_unsafe_claim_fails(tmp_path):
-    root = Path(".")
-    shutil.copytree(root / "docs", tmp_path / "docs", dirs_exist_ok=True)
-    shutil.copytree(root / "scripts", tmp_path / "scripts", dirs_exist_ok=True)
-    shutil.copytree(root / "tests", tmp_path / "tests", dirs_exist_ok=True)
+    _copy_audit_files(tmp_path)
     
     md_path = tmp_path / MD_FILE
     md_path.write_text(md_path.read_text(encoding="utf-8") + "\n" * 100 + "This is a guaranteed profit.", encoding="utf-8")
@@ -61,8 +66,7 @@ def test_unsafe_claim_fails(tmp_path):
 
 
 def test_missing_candidate_in_json_fails(tmp_path):
-    root = Path(".")
-    shutil.copytree(root / "docs", tmp_path / "docs", dirs_exist_ok=True)
+    _copy_audit_files(tmp_path)
     
     json_path = tmp_path / JSON_FILE
     data = json.loads(json_path.read_text(encoding="utf-8"))
@@ -75,8 +79,7 @@ def test_missing_candidate_in_json_fails(tmp_path):
 
 
 def test_missing_preflight_reference_fails(tmp_path):
-    root = Path(".")
-    shutil.copytree(root / "docs", tmp_path / "docs", dirs_exist_ok=True)
+    _copy_audit_files(tmp_path)
     
     md_path = tmp_path / MD_FILE
     text = md_path.read_text(encoding="utf-8")
@@ -88,8 +91,7 @@ def test_missing_preflight_reference_fails(tmp_path):
     assert any("Missing reference to" in e for e in result["errors"])
 
 def test_checker_does_not_mutate_files(tmp_path):
-    root = Path(".")
-    shutil.copytree(root / "docs", tmp_path / "docs", dirs_exist_ok=True)
+    _copy_audit_files(tmp_path)
     
     md_path = tmp_path / MD_FILE
     before_stat = md_path.stat().st_mtime
