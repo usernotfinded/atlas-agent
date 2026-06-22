@@ -28,6 +28,12 @@
       "status": "implemented",
       "description": "Paper Human Review Replay and Regression Gate",
       "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval. Live path blocked. Deterministic replay/regression gate."
+    },
+    {
+      "id": "CAND-005",
+      "status": "implemented",
+      "description": "Paper Human Review Evidence Bundle and Candidate Closure Gate",
+      "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval. Reuses existing atlas backtest portfolio-review-replay to produce a v0.6.15 closure evidence bundle."
     }
   ]
 }

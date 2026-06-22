@@ -1,0 +1,95 @@
+{
+  "artifact_type": "v0615_paper_human_review_evidence",
+  "schema_version": 1,
+  "release": "v0.6.15",
+  "release_state": "planning_only",
+  "current_public_release": "v0.6.14",
+  "source_version": "0.6.14",
+  "next_planned_release": "v0.6.15",
+  "pypi_published": false,
+  "tag_created": false,
+  "github_release_created": false,
+  "mode": "paper",
+  "paper_only": true,
+  "non_executable": true,
+  "provider_required": false,
+  "broker_required": false,
+  "network_required": false,
+  "live_submit_enabled": false,
+  "orders_generated": false,
+  "notifications_sent": false,
+  "real_human_approval": false,
+  "live_path_blocked": true,
+  "not_financial_advice": true,
+  "not_live_ready": true,
+  "closure_decision": "paper_human_review_chain_closed",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-002",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-003",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-004",
+      "status": "implemented"
+    },
+    {
+      "id": "CAND-005",
+      "status": "implemented"
+    }
+  ],
+  "required_commands": [
+    "atlas backtest portfolio-review-pack",
+    "atlas backtest portfolio-review-ledger",
+    "atlas backtest portfolio-review-policy",
+    "atlas backtest portfolio-review-replay"
+  ],
+  "required_docs": [
+    "docs/paper-human-review-pack.md",
+    "docs/paper-human-review-ledger.md",
+    "docs/paper-human-review-policy.md",
+    "docs/paper-human-review-replay.md",
+    "docs/releases/v0.6.15-paper-human-review-evidence.md"
+  ],
+  "required_demos": [
+    "scripts/demo_paper_human_review_pack.sh",
+    "scripts/demo_paper_human_review_ledger.sh",
+    "scripts/demo_paper_human_review_policy.sh",
+    "scripts/demo_paper_human_review_replay.sh"
+  ],
+  "required_checkers": [
+    "scripts/check_paper_human_review_pack.py",
+    "scripts/check_paper_human_review_ledger.py",
+    "scripts/check_paper_human_review_policy.py",
+    "scripts/check_paper_human_review_replay.py",
+    "scripts/check_v0615_paper_human_review_evidence.py"
+  ],
+  "required_tests": [
+    "tests/test_paper_human_review_pack.py",
+    "tests/test_paper_human_review_ledger.py",
+    "tests/test_paper_human_review_policy.py",
+    "tests/test_paper_human_review_replay.py",
+    "tests/test_v0615_paper_human_review_evidence.py"
+  ],
+  "safety": {
+    "no_live_trading": true,
+    "no_live_submit": true,
+    "no_broker_calls": true,
+    "no_provider_calls": true,
+    "no_notifications_sent": true,
+    "no_orders_generated": true,
+    "no_real_human_approval": true,
+    "no_profit_claim": true,
+    "no_live_readiness_claim": true,
+    "no_autonomous_live_readiness_claim": true,
+    "no_absolute_safety_claim": true,
+    "no_zero_risk_claim": true
+  }
+}
