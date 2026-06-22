@@ -81,6 +81,8 @@ The following checks pass on a clean local clone without credentials or network 
 - `bash scripts/demo_paper_human_review_replay.sh` — paper human review replay demo runs offline without credentials, network, or broker contact
 - `python3.11 scripts/check_v0615_paper_human_review_evidence.py` — v0.6.15 CAND-005 paper human review evidence bundle and candidate closure gate is safe and present
 - `python3.11 -m pytest tests/test_v0615_paper_human_review_evidence.py -q` — paper human review evidence bundle tests pass
+- `python3.11 scripts/check_v0615_final_readiness_audit.py` — v0.6.15 CAND-006 final human review release-readiness audit is safe and present
+- `python3.11 -m pytest tests/test_v0615_final_readiness_audit.py -q` — final human review release-readiness audit tests pass
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI
@@ -149,6 +151,8 @@ No broker, no network, no credentials, no live trading.
 - `docs/releases/v0.6.13-post-release-evidence.json` present — historical machine-readable v0.6.13 evidence
 - `docs/releases/v0.6.14-plan.md` present — historical v0.6.14 planning seed
 - `docs/releases/v0.6.15-plan.md` present — v0.6.15 planning seed
+- `docs/releases/v0.6.15-final-readiness-audit.md` present — v0.6.15 CAND-006 planning-only Go/No-Go dossier
+- `docs/releases/v0.6.15-final-readiness-audit.json` present — machine-readable v0.6.15 final readiness audit
 - `docs/releases/v0.6.13-candidate-selection.md` present — v0.6.13 candidate-selection gate (planning only)
 - `docs/releases/v0.6.13-paper-autonomy-evidence.md` present — planning-only CAND-021 through CAND-029 evidence bundle
 - `docs/releases/v0.6.13-paper-autonomy-evidence.json` present — machine-readable planning-only paper-autonomy evidence

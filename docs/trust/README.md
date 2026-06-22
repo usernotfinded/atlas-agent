@@ -71,7 +71,8 @@ gates.
 - [v0.6.14 Post-Release Evidence](../releases/v0.6.14-post-release-evidence.md) — deterministic GitHub-only cutover record
 - [v0.6.14 Paper Portfolio Evidence](../releases/v0.6.14-paper-portfolio-evidence.md) — historical pre-cutover CAND-001 through CAND-007 evidence
 - [v0.6.14 Final Paper Portfolio Readiness Audit](../releases/v0.6.14-final-readiness-audit.md) — historical pre-cutover CAND-008 decision dossier
-- [v0.6.15 Planning Seed](../releases/v0.6.15-plan.md) — next-line planning notes; CAND-001 Paper Human Review Pack, CAND-002 Paper Human Review Ledger, CAND-003 Paper Human Review Policy Simulator, CAND-004 Paper Human Review Replay and Regression Gate, and CAND-005 Paper Human Review Evidence Bundle and Candidate Closure Gate are proposed as deterministic, offline, non-executable review artifacts with no live trading, broker, provider, notification, order, or real human approval side effects
+- [v0.6.15 Planning Seed](../releases/v0.6.15-plan.md) — next-line planning notes; CAND-001 Paper Human Review Pack, CAND-002 Paper Human Review Ledger, CAND-003 Paper Human Review Policy Simulator, CAND-004 Paper Human Review Replay and Regression Gate, CAND-005 Paper Human Review Evidence Bundle and Candidate Closure Gate, and CAND-006 Final Human Review Release-Readiness Audit are deterministic, offline, non-executable review artifacts with no live trading, broker, provider, notification, order, or real human approval side effects
+- [v0.6.15 Final Human Review Release-Readiness Audit](../releases/v0.6.15-final-readiness-audit.md) — planning-only CAND-006 Go/No-Go dossier for a future separately owner-authorized GitHub-only release cutover
 
 ## v0.6.12 Post-Release Evidence
 

@@ -1,0 +1,187 @@
+{
+  "artifact_type": "v0615_final_readiness_audit",
+  "schema_version": 1,
+  "release": "v0.6.15",
+  "release_state": "planning_only",
+  "current_public_release": "v0.6.14",
+  "source_version": "0.6.14",
+  "next_planned_release": "v0.6.15",
+  "pypi_published": false,
+  "tag_created": false,
+  "github_release_created": false,
+  "mode": "paper",
+  "paper_only": true,
+  "non_executable": true,
+  "provider_required": false,
+  "broker_required": false,
+  "network_required": false,
+  "live_submit_enabled": false,
+  "orders_generated": false,
+  "notifications_sent": false,
+  "real_human_approval": false,
+  "not_financial_advice": true,
+  "not_live_ready": true,
+  "owner_authorization_required": true,
+  "release_authorized": false,
+  "cutover_allowed": false,
+  "decision": "go_for_owner_authorized_cutover",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "title": "Paper Human Review Pack",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-human-review-pack.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_human_review_pack.py"
+      ],
+      "tests": [
+        "tests/test_paper_human_review_pack.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_human_review_pack.sh"
+      ]
+    },
+    {
+      "id": "CAND-002",
+      "title": "Paper Human Review Ledger",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-human-review-ledger.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_human_review_ledger.py"
+      ],
+      "tests": [
+        "tests/test_paper_human_review_ledger.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_human_review_ledger.sh"
+      ]
+    },
+    {
+      "id": "CAND-003",
+      "title": "Paper Human Review Policy Simulator",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-human-review-policy.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_human_review_policy.py"
+      ],
+      "tests": [
+        "tests/test_paper_human_review_policy.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_human_review_policy.sh"
+      ]
+    },
+    {
+      "id": "CAND-004",
+      "title": "Paper Human Review Replay and Regression Gate",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/paper-human-review-replay.md"
+      ],
+      "checkers": [
+        "scripts/check_paper_human_review_replay.py"
+      ],
+      "tests": [
+        "tests/test_paper_human_review_replay.py"
+      ],
+      "demos": [
+        "scripts/demo_paper_human_review_replay.sh"
+      ]
+    },
+    {
+      "id": "CAND-005",
+      "title": "Paper Human Review Evidence Bundle and Candidate Closure Gate",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/releases/v0.6.15-paper-human-review-evidence.md",
+        "docs/releases/v0.6.15-paper-human-review-evidence.json"
+      ],
+      "checkers": [
+        "scripts/check_v0615_paper_human_review_evidence.py"
+      ],
+      "tests": [
+        "tests/test_v0615_paper_human_review_evidence.py"
+      ],
+      "demos": [
+        "not_applicable"
+      ]
+    },
+    {
+      "id": "CAND-006",
+      "title": "Final Human Review Release-Readiness Audit and Go/No-Go Dossier",
+      "status": "complete",
+      "mode": "paper",
+      "paper_only": true,
+      "gate_integrated": true,
+      "docs": [
+        "docs/releases/v0.6.15-final-readiness-audit.md",
+        "docs/releases/v0.6.15-final-readiness-audit.json"
+      ],
+      "checkers": [
+        "scripts/check_v0615_final_readiness_audit.py"
+      ],
+      "tests": [
+        "tests/test_v0615_final_readiness_audit.py"
+      ],
+      "demos": [
+        "not_applicable"
+      ]
+    }
+  ],
+  "required_checks": [
+    "python3.11 scripts/check_paper_human_review_pack.py",
+    "python3.11 scripts/check_paper_human_review_ledger.py",
+    "python3.11 scripts/check_paper_human_review_policy.py",
+    "python3.11 scripts/check_paper_human_review_replay.py",
+    "python3.11 scripts/check_v0615_paper_human_review_evidence.py",
+    "python3.11 scripts/check_v0615_final_readiness_audit.py",
+    "python3.11 scripts/check_version_consistency.py",
+    "python3.11 scripts/check_release_metadata.py",
+    "python3.11 scripts/check_forbidden_claims.py",
+    "python3.11 scripts/check_public_docs_consistency.py",
+    "python3.11 scripts/check_trust_center.py",
+    "atlas backtest portfolio-review-pack",
+    "atlas backtest portfolio-review-ledger",
+    "atlas backtest portfolio-review-policy",
+    "atlas backtest portfolio-review-replay",
+    "./scripts/dev_check.sh",
+    "./scripts/ci_check.sh",
+    "./scripts/release_check.sh --quick"
+  ],
+  "safety": {
+    "no_live_trading": true,
+    "no_live_submit": true,
+    "no_broker_calls": true,
+    "no_provider_calls": true,
+    "no_notifications_sent": true,
+    "no_orders_generated": true,
+    "no_real_human_approval": true,
+    "no_credentials_or_secrets": true,
+    "no_profit_claim": true,
+    "no_absolute_safety_claim": true,
+    "no_no_risk_claim": true,
+    "no_live_readiness_claim": true,
+    "no_autonomous_live_readiness_claim": true
+  }
+}

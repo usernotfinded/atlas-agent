@@ -7,13 +7,13 @@
   "candidates": [
     {
       "id": "CAND-001",
-      "status": "proposed",
+      "status": "implemented",
       "description": "Paper Human Review Pack",
       "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders."
     },
     {
       "id": "CAND-002",
-      "status": "proposed",
+      "status": "implemented",
       "description": "Paper Human Review Ledger",
       "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval."
     },
@@ -34,6 +34,12 @@
       "status": "implemented",
       "description": "Paper Human Review Evidence Bundle and Candidate Closure Gate",
       "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval. Reuses existing atlas backtest portfolio-review-replay to produce a v0.6.15 closure evidence bundle."
+    },
+    {
+      "id": "CAND-006",
+      "status": "implemented",
+      "description": "Final Human Review Release-Readiness Audit and Go/No-Go Dossier",
+      "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval. Audits CAND-001 through CAND-005 for a future separately owner-authorized GitHub-only release cutover."
     }
   ]
 }
