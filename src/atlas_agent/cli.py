@@ -695,6 +695,28 @@ Safety First:
     backtest_portfolio_replay.add_argument("--output-dir", required=True)
     backtest_portfolio_replay.add_argument("--json", action="store_true")
 
+    backtest_portfolio_review_pack = backtest_sub.add_parser(
+        "portfolio-review-pack",
+        help=(
+            "Generate a deterministic paper-only human review pack. "
+            "No provider, broker, network, live trading, notification, or order path is used."
+        ),
+    )
+    backtest_portfolio_review_pack.add_argument("--symbol", required=True)
+    backtest_portfolio_review_pack.add_argument("--data", required=True)
+    backtest_portfolio_review_pack.add_argument(
+        "--strategies",
+        default=None,
+        help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_portfolio_review_pack.add_argument("--max-strategy-weight", type=float, default=0.40)
+    backtest_portfolio_review_pack.add_argument("--min-cash-weight", type=float, default=0.10)
+    backtest_portfolio_review_pack.add_argument("--max-stressed-drawdown", type=float, default=0.25)
+    backtest_portfolio_review_pack.add_argument("--max-single-scenario-loss", type=float, default=0.20)
+    backtest_portfolio_review_pack.add_argument("--monitor-window", type=int, default=20)
+    backtest_portfolio_review_pack.add_argument("--recheck-threshold", type=float, default=0.05)
+    backtest_portfolio_review_pack.add_argument("--output-dir", required=True)
+    backtest_portfolio_review_pack.add_argument("--json", action="store_true")
 
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
@@ -5068,6 +5090,42 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Report saved to: {json_path}")
             print(f"Markdown saved to: {md_path}")
             print("No live trading, broker calls, provider calls, network calls, or notifications.")
+            return 0
+
+        if args.backtest_command == "portfolio-review-pack":
+            try:
+                from atlas_agent.backtest.portfolio import build_paper_portfolio_review_pack, write_portfolio_review_pack_reports
+                strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                report = build_paper_portfolio_review_pack(
+                    data_path=getattr(args, "data"),
+                    symbol=getattr(args, "symbol"),
+                    strategies=strategy_ids,
+                    max_strategy_weight=getattr(args, "max_strategy_weight", 0.40),
+                    min_cash_weight=getattr(args, "min_cash_weight", 0.10),
+                    max_stressed_drawdown=getattr(args, "max_stressed_drawdown", 0.25),
+                    max_single_scenario_loss=getattr(args, "max_single_scenario_loss", 0.20),
+                    monitor_window=getattr(args, "monitor_window", 20),
+                    recheck_threshold=getattr(args, "recheck_threshold", 0.05),
+                )
+                json_path, md_path = write_portfolio_review_pack_reports(
+                    report,
+                    output_dir=getattr(args, "output_dir"),
+                )
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                import json
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            print(f"Paper human review pack generated: {report['symbol']}")
+            print(f"Overall review pack status: {report['overall_review_pack_status']}")
+            print(f"Review items: {len(report['review_items'])}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {md_path}")
+            print("Non-executable. No live trading, broker calls, provider calls, network calls, or notifications.")
             return 0
 
         if args.backtest_command == "scorecard":

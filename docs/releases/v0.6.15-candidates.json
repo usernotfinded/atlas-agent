@@ -4,5 +4,12 @@
   "current_public_release": "v0.6.14",
   "source_version": "0.6.14",
   "pypi_published": false,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "status": "proposed",
+      "description": "Paper Human Review Pack",
+      "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders."
+    }
+  ]
 }

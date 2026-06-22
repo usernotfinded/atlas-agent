@@ -136,6 +136,7 @@ atlas backtest run --symbol AAPL --data path/to/data.csv
 atlas backtest compare --data data/sample/ohlcv.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 atlas backtest robustness --fixtures data/sample/regimes/ohlcv_uptrend.csv,data/sample/regimes/ohlcv_downtrend.csv,data/sample/regimes/ohlcv_flat.csv,data/sample/regimes/ohlcv_volatile.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 atlas backtest portfolio-stress --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
+atlas backtest portfolio-review-pack --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 ```
 
 For paper-only strategy comparison, see
@@ -206,6 +207,7 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[v0.6.13 Paper Autonomy Evidence Bundle](docs/releases/v0.6.13-paper-autonomy-evidence.md)** — planning-only CAND-021 through CAND-029 closure evidence with no release, tag, PyPI, or live-trading side effects.
 - **[v0.6.14 Paper Portfolio Evidence Bundle](docs/releases/v0.6.14-paper-portfolio-evidence.md)** — historical pre-cutover CAND-001 through CAND-007 paper portfolio closure evidence.
 - **[v0.6.14 Final Paper Portfolio Readiness Audit](docs/releases/v0.6.14-final-readiness-audit.md)** — historical pre-cutover CAND-008 Go/No-Go dossier preserved after the separately authorized GitHub-only release.
+- **[Paper Human Review Pack](docs/paper-human-review-pack.md)** — deterministic, offline, non-executable review dossier derived from v0.6.14 paper portfolio evidence. See `scripts/demo_paper_human_review_pack.sh`.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.

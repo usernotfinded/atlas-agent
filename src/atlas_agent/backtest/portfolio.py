@@ -1600,3 +1600,268 @@ def write_portfolio_replay_reports(
         f.write("\n".join(lines) + "\n")
 
     return json_path, md_path, manifest_path
+
+
+REVIEW_PACK_ARTIFACT_TYPE = "paper_human_review_pack"
+REVIEW_PACK_SCHEMA_VERSION = 1
+REVIEW_PACK_RELEASE = "v0.6.15-planning"
+REVIEW_PACK_SOURCE_RELEASE = "v0.6.14"
+ALLOWED_REVIEW_PACK_STATUSES = {
+    "paper_review_pack_open",
+    "paper_review_pack_follow_up",
+    "paper_review_pack_rejected",
+}
+ALLOWED_REVIEW_ITEM_STATUSES = {
+    "needs_human_review",
+    "needs_more_paper_testing",
+    "rejected_from_review",
+    "paper_only_follow_up",
+}
+
+
+def build_paper_portfolio_review_pack(
+    *,
+    data_path: str | Path,
+    symbol: str,
+    strategies: list[str] | None = None,
+    proposal: dict[str, Any] | None = None,
+    stress: dict[str, Any] | None = None,
+    monitoring: dict[str, Any] | None = None,
+    recheck: dict[str, Any] | None = None,
+    dossier: dict[str, Any] | None = None,
+    replay: dict[str, Any] | None = None,
+    max_strategy_weight: float = 0.40,
+    min_cash_weight: float = 0.10,
+    max_stressed_drawdown: float = 0.25,
+    max_single_scenario_loss: float = 0.20,
+    monitor_window: int = 20,
+    recheck_threshold: float = 0.05,
+) -> dict[str, Any]:
+    """Generate a deterministic paper-only human review pack.
+
+    The pack converts paper portfolio evidence into a non-executable review
+    dossier. It does not generate orders, call providers or brokers, send
+    notifications, or claim live readiness.
+    """
+    dossier_report = dossier or build_paper_portfolio_dossier(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+        max_stressed_drawdown=max_stressed_drawdown,
+        max_single_scenario_loss=max_single_scenario_loss,
+        monitor_window=monitor_window,
+        recheck_threshold=recheck_threshold,
+    )
+    replay_report = replay or build_paper_portfolio_replay(
+        data_path=data_path,
+        symbol=symbol,
+        strategies=strategies,
+        repeat=2,
+        max_strategy_weight=max_strategy_weight,
+        min_cash_weight=min_cash_weight,
+        max_stressed_drawdown=max_stressed_drawdown,
+        max_single_scenario_loss=max_single_scenario_loss,
+        monitor_window=monitor_window,
+        recheck_threshold=recheck_threshold,
+    )
+
+    review_items: list[dict[str, Any]] = []
+
+    if replay_report.get("overall_replay_status") == "paper_replay_drift_detected":
+        review_items.append({
+            "id": "review-001",
+            "type": "paper_review_item",
+            "source": "paper_portfolio_replay",
+            "status": "needs_human_review",
+            "severity": "high",
+            "reason": "Replay detected deterministic drift between runs; human review required before any follow-up.",
+            "non_executable_action": "paper_only_follow_up",
+        })
+
+    if dossier_report.get("overall_dossier_status") == "paper_dossier_recheck_required":
+        review_items.append({
+            "id": "review-002",
+            "type": "paper_review_item",
+            "source": "paper_portfolio_dossier",
+            "status": "needs_human_review",
+            "severity": "high",
+            "reason": "Dossier recheck flag raised; reviewer must inspect artifacts offline.",
+            "non_executable_action": "paper_only_follow_up",
+        })
+    elif dossier_report.get("overall_dossier_status") == "paper_dossier_watchlist":
+        review_items.append({
+            "id": "review-003",
+            "type": "paper_review_item",
+            "source": "paper_portfolio_dossier",
+            "status": "needs_more_paper_testing",
+            "severity": "medium",
+            "reason": "Dossier watchlist status indicates more paper testing is needed.",
+            "non_executable_action": "paper_only_follow_up",
+        })
+    elif dossier_report.get("overall_dossier_status") == "paper_dossier_rejected":
+        review_items.append({
+            "id": "review-004",
+            "type": "paper_review_item",
+            "source": "paper_portfolio_dossier",
+            "status": "rejected_from_review",
+            "severity": "high",
+            "reason": "Dossier rejected; this candidate is closed from review.",
+            "non_executable_action": "paper_only_follow_up",
+        })
+
+    if not review_items:
+        review_items.append({
+            "id": "review-005",
+            "type": "paper_review_item",
+            "source": "paper_portfolio_review_pack",
+            "status": "needs_human_review",
+            "severity": "low",
+            "reason": "No automated flags raised; human reviewer should still confirm paper-only scope and safety invariants.",
+            "non_executable_action": "paper_only_follow_up",
+        })
+
+    if replay_report.get("overall_replay_status") in ("needs_recheck", "rejected"):
+        review_pack_status = "paper_review_pack_follow_up"
+    elif dossier_report.get("overall_dossier_status") in ("paper_dossier_recheck_required", "paper_dossier_watchlist"):
+        review_pack_status = "paper_review_pack_follow_up"
+    elif dossier_report.get("overall_dossier_status") == "paper_dossier_rejected":
+        review_pack_status = "paper_review_pack_rejected"
+    else:
+        review_pack_status = "paper_review_pack_open"
+
+    artifact_digests = []
+    for art in dossier_report.get("artifacts", []):
+        artifact_digests.append({
+            "name": art.get("name"),
+            "artifact_type": art.get("artifact_type"),
+            "digest": art.get("digest"),
+        })
+
+    return {
+        "artifact_type": REVIEW_PACK_ARTIFACT_TYPE,
+        "schema_version": REVIEW_PACK_SCHEMA_VERSION,
+        "release": REVIEW_PACK_RELEASE,
+        "mode": "paper",
+        "source_release": REVIEW_PACK_SOURCE_RELEASE,
+        "non_executable": True,
+        "paper_only": True,
+        "provider_required": False,
+        "broker_required": False,
+        "network_required": False,
+        "live_submit_enabled": False,
+        "orders_generated": False,
+        "notifications_sent": False,
+        "not_financial_advice": True,
+        "not_live_ready": True,
+        "symbol": symbol,
+        "data_source": str(data_path),
+        "overall_review_pack_status": review_pack_status,
+        "review_items": review_items,
+        "artifact_digests": artifact_digests,
+        "safety": {
+            "no_live_trading": True,
+            "no_broker_calls": True,
+            "no_provider_calls": True,
+            "no_notifications_sent": True,
+            "no_orders_generated": True,
+            "no_profit_claim": True,
+            "no_live_readiness_claim": True,
+            "non_executable": True,
+            "paper_only": True,
+        },
+    }
+
+
+def write_portfolio_review_pack_reports(
+    report: dict[str, Any],
+    *,
+    output_dir: str | Path,
+) -> tuple[Path, Path]:
+    """Write paper human review pack JSON and Markdown reports."""
+    destination = Path(output_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    json_path = destination / "paper-human-review-pack.json"
+    md_path = destination / "paper-human-review-pack.md"
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    md_path.write_text(render_portfolio_review_pack_markdown(report), encoding="utf-8")
+    return json_path, md_path
+
+
+def render_portfolio_review_pack_markdown(report: dict[str, Any]) -> str:
+    """Render a non-executable paper-only human review pack Markdown report."""
+    lines = [
+        "# Paper Human Review Pack",
+        "",
+        "**PAPER-ONLY. NON-EXECUTABLE. NOT FINANCIAL ADVICE. NOT LIVE READY.**",
+        "**NO BROKER SUBMISSION. NO PROVIDER CALLS. NO REAL NOTIFICATIONS. NO ORDERS GENERATED.**",
+        "**NO ACCOUNT-SPECIFIC INSTRUCTIONS. NO PROFIT GUARANTEES. NO ABSOLUTE SAFETY CLAIMS. NO CLAIMS THAT RISK IS ELIMINATED.**",
+        "**NO LIVE-READINESS CLAIM. NO AUTONOMOUS LIVE TRADING READINESS CLAIM.**",
+        "**HUMAN REVIEW IS REQUIRED BEFORE ANY FUTURE LIVE-RELATED WORK.**",
+        "",
+        f"- **Release**: `{report.get('release')}`",
+        f"- **Source Release**: `{report.get('source_release')}`",
+        f"- **Symbol**: `{report.get('symbol')}`",
+        f"- **Overall Review Pack Status**: `{report.get('overall_review_pack_status')}`",
+        "",
+        "## Safety Assertions",
+        "",
+        "| Property | Value |",
+        "|---|---|",
+        f"| `non_executable` | `{report.get('non_executable')}` |",
+        f"| `paper_only` | `{report.get('paper_only')}` |",
+        f"| `provider_required` | `{report.get('provider_required')}` |",
+        f"| `broker_required` | `{report.get('broker_required')}` |",
+        f"| `network_required` | `{report.get('network_required')}` |",
+        f"| `live_submit_enabled` | `{report.get('live_submit_enabled')}` |",
+        f"| `orders_generated` | `{report.get('orders_generated')}` |",
+        f"| `notifications_sent` | `{report.get('notifications_sent')}` |",
+        f"| `not_financial_advice` | `{report.get('not_financial_advice')}` |",
+        f"| `not_live_ready` | `{report.get('not_live_ready')}` |",
+        "",
+        "## Review Items",
+        "",
+    ]
+
+    for item in report.get("review_items", []):
+        lines.append(f"### {item.get('id')} ({item.get('source')})")
+        lines.append(f"- **Type**: `{item.get('type')}`")
+        lines.append(f"- **Status**: `{item.get('status')}`")
+        lines.append(f"- **Severity**: `{item.get('severity')}`")
+        lines.append(f"- **Reason**: {item.get('reason')}")
+        lines.append(f"- **Non-Executable Action**: `{item.get('non_executable_action')}`")
+        lines.append("")
+
+    lines.extend([
+        "## Source Artifact Digests",
+        "",
+    ])
+    for art in report.get("artifact_digests", []):
+        digest = art.get("digest", "")[:8] if art.get("digest") else "n/a"
+        lines.append(f"- `{art.get('name')}` ({art.get('artifact_type')}): `{digest}`")
+
+    lines.extend([
+        "",
+        "## What This Pack Is For",
+        "",
+        "This dossier helps a human reviewer understand what the paper system would like reviewed next. "
+        "It is intentionally non-executable: it cannot be confused with an order, trade instruction, "
+        "broker submission, provider request, or live-trading signal.",
+        "",
+        "## What This Pack Is NOT",
+        "",
+        "- It is NOT a live trading authorization.",
+        "- It is NOT an executable order ticket or account-specific instruction.",
+        "- It is NOT a claim that the portfolio, strategy, or system is ready for live trading.",
+        "- It is NOT a guarantee of profit, outperformance, or risk-free operation.",
+        "- It does NOT call brokers, providers, notification services, or any network API.",
+        "",
+        "---",
+        "Generated offline from deterministic paper portfolio evidence. No live data or APIs used.",
+    ])
+
+    return "\n".join(lines) + "\n"
