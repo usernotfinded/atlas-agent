@@ -718,6 +718,26 @@ Safety First:
     backtest_portfolio_review_pack.add_argument("--output-dir", required=True)
     backtest_portfolio_review_pack.add_argument("--json", action="store_true")
 
+    backtest_portfolio_review_ledger = backtest_sub.add_parser(
+        "portfolio-review-ledger",
+        help=(
+            "Generate a deterministic paper-only human review decision ledger. "
+            "No provider, broker, network, live trading, notification, order, or real human approval path is used."
+        ),
+    )
+    backtest_portfolio_review_ledger.add_argument("--review-pack", default=None, help="Path to a paper-human-review-pack.json artifact. If omitted, the ledger builds a review pack from the other arguments.")
+    backtest_portfolio_review_ledger.add_argument("--symbol", default=None)
+    backtest_portfolio_review_ledger.add_argument("--data", default=None)
+    backtest_portfolio_review_ledger.add_argument("--strategies", default=None, help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.")
+    backtest_portfolio_review_ledger.add_argument("--max-strategy-weight", type=float, default=0.40)
+    backtest_portfolio_review_ledger.add_argument("--min-cash-weight", type=float, default=0.10)
+    backtest_portfolio_review_ledger.add_argument("--max-stressed-drawdown", type=float, default=0.25)
+    backtest_portfolio_review_ledger.add_argument("--max-single-scenario-loss", type=float, default=0.20)
+    backtest_portfolio_review_ledger.add_argument("--monitor-window", type=int, default=20)
+    backtest_portfolio_review_ledger.add_argument("--recheck-threshold", type=float, default=0.05)
+    backtest_portfolio_review_ledger.add_argument("--output-dir", required=True)
+    backtest_portfolio_review_ledger.add_argument("--json", action="store_true")
+
     backtest_list = backtest_sub.add_parser("list-strategies")
     backtest_list.add_argument("--json", action="store_true")
     backtest_runs = backtest_sub.add_parser("runs")
@@ -5126,6 +5146,48 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Report saved to: {json_path}")
             print(f"Markdown saved to: {md_path}")
             print("Non-executable. No live trading, broker calls, provider calls, network calls, or notifications.")
+            return 0
+
+        if args.backtest_command == "portfolio-review-ledger":
+            try:
+                from atlas_agent.backtest.portfolio import build_paper_portfolio_review_ledger, write_portfolio_review_ledger_reports
+                if getattr(args, "review_pack", None):
+                    report = build_paper_portfolio_review_ledger(review_pack_path=getattr(args, "review_pack"))
+                else:
+                    from atlas_agent.backtest.evaluation import parse_strategy_list
+                    strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                    report = build_paper_portfolio_review_ledger(
+                        build_kwargs={
+                            "data_path": getattr(args, "data"),
+                            "symbol": getattr(args, "symbol"),
+                            "strategies": strategy_ids,
+                            "max_strategy_weight": getattr(args, "max_strategy_weight", 0.40),
+                            "min_cash_weight": getattr(args, "min_cash_weight", 0.10),
+                            "max_stressed_drawdown": getattr(args, "max_stressed_drawdown", 0.25),
+                            "max_single_scenario_loss": getattr(args, "max_single_scenario_loss", 0.20),
+                            "monitor_window": getattr(args, "monitor_window", 20),
+                            "recheck_threshold": getattr(args, "recheck_threshold", 0.05),
+                        }
+                    )
+                json_path, md_path = write_portfolio_review_ledger_reports(report, output_dir=getattr(args, "output_dir"))
+            except Exception as exc:
+                print(f"Error: {exc}")
+                return 1
+
+            if getattr(args, "json", False):
+                import json
+                print(json.dumps(report, indent=2, sort_keys=True, default=str))
+                return 0
+
+            print(f"Paper human review ledger generated: {report.get('symbol', 'n/a')}")
+            print(f"Overall review ledger status: {report['overall_review_ledger_status']}")
+            print(f"Decision entries: {len(report['decision_entries'])}")
+            print(f"Live approval granted: {report['gate_summary']['live_approval_granted']}")
+            print(f"Broker submission allowed: {report['gate_summary']['broker_submission_allowed']}")
+            print(f"Paper follow-up allowed: {report['gate_summary']['paper_follow_up_allowed']}")
+            print(f"Report saved to: {json_path}")
+            print(f"Markdown saved to: {md_path}")
+            print("Non-executable. No live trading, broker calls, provider calls, network calls, notifications, or real human approval.")
             return 0
 
         if args.backtest_command == "scorecard":

@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 from atlas_agent.backtest.portfolio import (
@@ -200,3 +201,103 @@ def test_ledger_source_digest_matches_loaded_file(tmp_path):
         json_text.encode("utf-8")
     ).hexdigest()
     assert ledger["source_artifact_digest"] == expected_digest
+
+
+
+def _run_cli(*args):
+    return subprocess.run(
+        ["python3.11", "-m", "atlas_agent.cli", "backtest", "portfolio-review-ledger", *args],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_ledger_cli_without_review_pack(tmp_path):
+    result = _run_cli(
+        "--symbol", "DEMO-SYMBOL",
+        "--data", str(DATA_PATH),
+        "--strategies", "buy_and_hold,moving_average_cross",
+        "--output-dir", str(tmp_path),
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    json_path = tmp_path / "paper-human-review-ledger.json"
+    md_path = tmp_path / "paper-human-review-ledger.md"
+    assert json_path.exists()
+    assert md_path.exists()
+
+    data = json.loads(json_path.read_text())
+    assert data["artifact_type"] == "paper_human_review_ledger"
+    assert data["schema_version"] == 1
+    assert data["mode"] == "paper"
+    assert data["non_executable"] is True
+    assert data["paper_only"] is True
+    assert data["provider_required"] is False
+    assert data["broker_required"] is False
+    assert data["network_required"] is False
+    assert data["live_submit_enabled"] is False
+    assert data["orders_generated"] is False
+    assert data["notifications_sent"] is False
+    assert data["real_human_approval"] is False
+    assert data["overall_review_ledger_status"] in ALLOWED_REVIEW_LEDGER_STATUSES
+    assert data["gate_summary"] == {
+        "live_approval_granted": False,
+        "broker_submission_allowed": False,
+        "paper_follow_up_allowed": True,
+    }
+    assert isinstance(data["decision_entries"], list)
+    for entry in data["decision_entries"]:
+        assert entry["decision_status"] in ALLOWED_DECISION_STATUSES
+
+
+def test_ledger_cli_with_review_pack(tmp_path):
+    pack = _build_review_pack()
+    pack_path = tmp_path / "paper-human-review-pack.json"
+    pack_path.write_text(json.dumps(pack, indent=2, sort_keys=True, allow_nan=False))
+
+    output_dir = tmp_path / "ledger"
+    result = _run_cli(
+        "--review-pack", str(pack_path),
+        "--output-dir", str(output_dir),
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    json_path = output_dir / "paper-human-review-ledger.json"
+    md_path = output_dir / "paper-human-review-ledger.md"
+    assert json_path.exists()
+    assert md_path.exists()
+
+    data = json.loads(json_path.read_text())
+    assert data["artifact_type"] == "paper_human_review_ledger"
+    assert data["source_artifact_type"] == "paper_human_review_pack"
+    assert len(data["decision_entries"]) == len(pack["review_items"])
+
+
+def test_ledger_cli_json_output(tmp_path):
+    result = _run_cli(
+        "--symbol", "DEMO-SYMBOL",
+        "--data", str(DATA_PATH),
+        "--strategies", "buy_and_hold",
+        "--output-dir", str(tmp_path),
+        "--json",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    data = json.loads(result.stdout)
+    assert data["artifact_type"] == "paper_human_review_ledger"
+    assert data["mode"] == "paper"
+    assert data["non_executable"] is True
+    assert data["overall_review_ledger_status"] in ALLOWED_REVIEW_LEDGER_STATUSES
+    assert data["gate_summary"]["live_approval_granted"] is False
+    assert data["gate_summary"]["broker_submission_allowed"] is False
+    assert data["gate_summary"]["paper_follow_up_allowed"] is True
+
+
+def test_ledger_cli_help_includes_command():
+    result = subprocess.run(
+        ["python3.11", "-m", "atlas_agent.cli", "backtest", "--help"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "portfolio-review-ledger" in result.stdout
